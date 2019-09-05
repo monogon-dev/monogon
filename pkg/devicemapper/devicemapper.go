@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package devicemapper
 
 import (
 	"bytes"
@@ -138,7 +138,16 @@ var fd uintptr
 func getFd() (uintptr, error) {
 	if fd == 0 {
 		f, err := os.Open("/dev/mapper/control")
-		if err != nil {
+		if os.IsNotExist(err) {
+			os.MkdirAll("/dev/mapper", 0755)
+			if err := unix.Mknod("/dev/mapper/control", unix.S_IFCHR|0600, int(unix.Mkdev(10, 236))); err != nil {
+				return 0, err
+			}
+			f, err = os.Open("/dev/mapper/control")
+			if err != nil {
+				return 0, err
+			}
+		} else if err != nil {
 			return 0, err
 		}
 		fd = f.Fd()
@@ -271,15 +280,15 @@ func Resume(name string) error {
 func CreateActiveDevice(name string, targets []Target) (uint64, error) {
 	dev, err := CreateDevice(name)
 	if err != nil {
-		return 0, errors.Wrap(err, "DM_DEV_CREATE failed")
+		return 0, fmt.Errorf("DM_DEV_CREATE failed: %w", err)
 	}
 	if err := LoadTable(name, targets); err != nil {
 		RemoveDevice(name)
-		return 0, errors.Wrap(err, "DM_TABLE_LOAD failed")
+		return 0, fmt.Errorf("DM_TABLE_LOAD failed: %w", err)
 	}
 	if err := Resume(name); err != nil {
 		RemoveDevice(name)
-		return 0, errors.Wrap(err, "DM_DEV_SUSPEND failed")
+		return 0, fmt.Errorf("DM_DEV_SUSPEND failed: %w", err)
 	}
 	return dev, nil
 }
