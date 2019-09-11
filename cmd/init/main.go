@@ -21,16 +21,25 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime/debug"
+	"smalltown/internal/network"
 	node2 "smalltown/internal/node"
 	"smalltown/internal/storage"
 	"smalltown/pkg/tpm"
-	"syscall"
 
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 )
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Init panicked:", r)
+			debug.PrintStack()
+		}
+		unix.Sync()
+		unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
+	}()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic(err)
@@ -122,6 +131,12 @@ func main() {
 		panic(err)
 	}
 
+	networkSvc, err := network.NewNetworkService(network.Config{}, logger.With(zap.String("component", "network")))
+	if err != nil {
+		panic(err)
+	}
+	networkSvc.Start()
+
 	node, err := node2.NewSmalltownNode(logger, "/esp/EFI/smalltown", "/data", 7833, 7834)
 	if err != nil {
 		panic(err)
@@ -140,8 +155,8 @@ func main() {
 			var status unix.WaitStatus
 			var rusage unix.Rusage
 			for {
-				res, err := unix.Wait4(-1, &status, syscall.WNOHANG, &rusage)
-				if err != nil {
+				res, err := unix.Wait4(-1, &status, unix.WNOHANG, &rusage)
+				if err != nil && err != unix.ECHILD {
 					logger.Error("Failed to wait on orphaned child", zap.Error(err))
 					break
 				}

@@ -1,0 +1,64 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From 780a94ddc5c50bded264bfc0dbfffdb4182cdc51 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@nexantic.com>
+Date: Mon, 9 Sep 2019 15:56:42 +0200
+Subject: [PATCH] Fixes for static compilation
+
+---
+ include/xfs.h | 6 +++---
+ mkfs/Makefile | 2 +-
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/include/xfs.h b/include/xfs.h
+index f2f675df..73687a16 100644
+--- a/include/xfs.h
++++ b/include/xfs.h
+@@ -6,7 +6,7 @@
+ #define __XFS_H__
+ 
+ #if defined(__linux__)
+-#include <xfs/linux.h>
++#include "linux.h"
+ #else
+ # error unknown platform... have fun porting!
+ #endif
+@@ -34,7 +34,7 @@ extern int xfs_assert_largefile[sizeof(off_t)-8];
+ #define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+ #endif
+ 
+-#include <xfs/xfs_types.h>
+-#include <xfs/xfs_fs.h>
++#include "xfs_types.h"
++#include "xfs_fs.h"
+ 
+ #endif	/* __XFS_H__ */
+diff --git a/mkfs/Makefile b/mkfs/Makefile
+index 31482b08..57fb355d 100644
+--- a/mkfs/Makefile
++++ b/mkfs/Makefile
+@@ -13,7 +13,7 @@ CFILES = proto.c xfs_mkfs.c
+ LLDLIBS += $(LIBXFS) $(LIBXCMD) $(LIBFROG) $(LIBRT) $(LIBPTHREAD) $(LIBBLKID) \
+ 	$(LIBUUID)
+ LTDEPENDENCIES += $(LIBXFS) $(LIBXCMD) $(LIBFROG)
+-LLDFLAGS = -static-libtool-libs
++LLDFLAGS = -all-static
+ 
+ default: depend $(LTCOMMAND)
+ 
+-- 
+2.20.1
+

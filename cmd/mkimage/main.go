@@ -44,8 +44,12 @@ var cfg = config.Config{
 }
 
 func main() {
-	os.Remove("smalltown.img")
-	diskImg, err := diskfs.Create("smalltown.img", 3*1024*1024*1024, diskfs.Raw)
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: mkimage <UEFI payload> <image path>")
+		os.Exit(2)
+	}
+	os.Remove(os.Args[2])
+	diskImg, err := diskfs.Create(os.Args[2], 3*1024*1024*1024, diskfs.Raw)
 	if err != nil {
 		fmt.Printf("Failed to create disk: %v", err)
 		os.Exit(1)
