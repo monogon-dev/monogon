@@ -17,14 +17,12 @@
 package main
 
 import (
-	"io/ioutil"
+	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"runtime/debug"
 	"smalltown/internal/network"
-	node2 "smalltown/internal/node"
-	"smalltown/internal/storage"
+	"smalltown/internal/node"
 	"smalltown/pkg/tpm"
 
 	"go.uber.org/zap"
@@ -38,6 +36,7 @@ func main() {
 			debug.PrintStack()
 		}
 		unix.Sync()
+		// TODO: Switch this to Reboot when init panics are less likely
 		unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
 	}()
 	logger, err := zap.NewDevelopment()
@@ -64,71 +63,8 @@ func main() {
 	signalChannel := make(chan os.Signal, 2)
 	signal.Notify(signalChannel)
 
-	if err := storage.FindPartitions(); err != nil {
-		logger.Panic("Failed to search for partitions", zap.Error(err))
-	}
-
-	if err := os.Mkdir("/esp", 0755); err != nil {
-		panic(err)
-	}
-
-	if err := unix.Mount(storage.ESPDevicePath, "/esp", "vfat", unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_SYNC, ""); err != nil {
-		logger.Panic("Failed to mount ESP partition", zap.Error(err))
-	}
-
 	if err := tpm.Initialize(logger.With(zap.String("component", "tpm"))); err != nil {
 		logger.Panic("Failed to initialize TPM 2.0", zap.Error(err))
-	}
-
-	// TODO(lorenz): This really doesn't belong here and needs to be asynchronous as well
-	var keyLocation = "/esp/EFI/smalltown/data-key.bin"
-	sealedKeyFile, err := os.Open(keyLocation)
-	if os.IsNotExist(err) {
-		logger.Info("Initializing encrypted storage, this might take a while...")
-		key, err := tpm.GenerateSafeKey(256 / 8)
-		if err != nil {
-			panic(err)
-		}
-		sealedKey, err := tpm.Seal(key, tpm.SecureBootPCRs)
-		if err != nil {
-			panic(err)
-		}
-		if err := storage.InitializeEncryptedBlockDevice("data", storage.SmalltownDataCryptPath, key); err != nil {
-			panic(err)
-		}
-		mkfsCmd := exec.Command("/bin/mkfs.xfs", "-qf", "/dev/data")
-		if _, err := mkfsCmd.Output(); err != nil {
-			panic(err)
-		}
-		// Existence of this file indicates that the encrypted storage has been successfully initialized
-		if err := ioutil.WriteFile(keyLocation, sealedKey, 0600); err != nil {
-			panic(err)
-		}
-		logger.Info("Initialized encrypted storage")
-	} else if err != nil {
-		panic(err)
-	} else {
-		sealedKey, err := ioutil.ReadAll(sealedKeyFile)
-		if err != nil {
-			panic(err)
-		}
-		key, err := tpm.Unseal(sealedKey)
-		if err != nil {
-			panic(err)
-		}
-		if err := storage.MapEncryptedBlockDevice("data", storage.SmalltownDataCryptPath, key); err != nil {
-			panic(err)
-		}
-		logger.Info("Opened encrypted storage")
-	}
-	sealedKeyFile.Close()
-
-	if err := os.Mkdir("/data", 0755); err != nil {
-		panic(err)
-	}
-
-	if err := unix.Mount("/dev/data", "/data", "xfs", unix.MS_NOEXEC|unix.MS_NODEV, ""); err != nil {
-		panic(err)
 	}
 
 	networkSvc, err := network.NewNetworkService(network.Config{}, logger.With(zap.String("component", "network")))
@@ -137,12 +73,12 @@ func main() {
 	}
 	networkSvc.Start()
 
-	node, err := node2.NewSmalltownNode(logger, "/esp/EFI/smalltown", "/data", 7833, 7834)
+	nodeInstance, err := node.NewSmalltownNode(logger, 7833, 7834)
 	if err != nil {
 		panic(err)
 	}
 
-	err = node.Start()
+	err = nodeInstance.Start()
 	if err != nil {
 		panic(err)
 	}

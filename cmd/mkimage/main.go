@@ -20,27 +20,17 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"smalltown/generated/common"
-	"smalltown/internal/config"
 
 	"github.com/diskfs/go-diskfs"
 	"github.com/diskfs/go-diskfs/disk"
 	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/partition/gpt"
-	"github.com/naoina/toml"
 )
 
 var SmalltownDataPartition gpt.Type = gpt.Type("9eeec464-6885-414a-b278-4305c51f7966")
 
 func mibToSectors(size uint64) uint64 {
 	return (size * 1024 * 1024) / 512
-}
-
-var cfg = config.Config{
-	NodeName:      "smalltown-testing",
-	DataDirectory: "/data",
-	ExternalHost:  "",
-	TrustBackend:  common.TrustBackend_DUMMY,
 }
 
 func main() {
@@ -112,16 +102,6 @@ func main() {
 	}
 	if _, err := efiPayload.Write(efiPayloadFull); err != nil {
 		fmt.Printf("Failed to write EFI payload: %v", err)
-		os.Exit(1)
-	}
-	configFile, err := fs.OpenFile("/EFI/smalltown/config.toml", os.O_CREATE|os.O_RDWR)
-	if err != nil {
-		fmt.Printf("Failed to open config for writing: %v", err)
-		os.Exit(1)
-	}
-	configData, _ := toml.Marshal(cfg)
-	if _, err := configFile.Write(configData); err != nil {
-		fmt.Printf("Failed to write config: %v", err)
 		os.Exit(1)
 	}
 	if err := diskImg.File.Close(); err != nil {
