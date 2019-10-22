@@ -23,6 +23,7 @@ genrule(
     outs = [
         "tpm/tpm2-00.permall",
     ],
+    tags = ["local"],
     cmd = """
     mkdir tpm
 
