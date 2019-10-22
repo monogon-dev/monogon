@@ -2,7 +2,9 @@
 
 ## Run build
 
-The build uses a Fedora 30 base image with a set of dependencies:
+The build uses a Fedora 30 base image with a set of dependencies.
+
+Start container shell:
 
 ```
 modprobe kvm
@@ -15,13 +17,13 @@ podman run -it --rm \
     -v /dev/null:/work/.idea \
     -v /dev/null:/work/.arcconfig \
     --device /dev/kvm \
+    --net=host \
     smalltown-builder bash
-
-scripts/fetch_third_party.sh
-scripts/build_artifacts.sh
-
-make launch
 ```
+
+Launch the VM:
+
+    bazelisk run scripts:launch
 
 Exit qemu using the monitor console: `Ctrl-A c quit`.
 

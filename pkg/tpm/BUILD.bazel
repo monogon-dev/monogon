@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["tpm.go"],
+    importpath = "git.monogon.dev/source/smalltown.git/pkg/tpm",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/sysfs:go_default_library",
+        "@com_github_gogo_protobuf//proto:go_default_library",
+        "@com_github_google_go_tpm//tpm2:go_default_library",
+        "@com_github_google_go_tpm_tools//proto:go_default_library",
+        "@com_github_google_go_tpm_tools//tpm2tools:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)
