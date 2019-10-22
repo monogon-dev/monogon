@@ -38,7 +38,7 @@ func main() {
 		fmt.Println("Usage: mkimage <UEFI payload> <image path>")
 		os.Exit(2)
 	}
-	os.Remove(os.Args[2])
+	_ = os.Remove(os.Args[2])
 	diskImg, err := diskfs.Create(os.Args[2], 3*1024*1024*1024, diskfs.Raw)
 	if err != nil {
 		fmt.Printf("Failed to create disk: %v", err)
