@@ -21,9 +21,9 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
-	"smalltown/internal/network"
-	"smalltown/internal/node"
-	"smalltown/pkg/tpm"
+	"git.monogon.dev/source/smalltown.git/internal/network"
+	"git.monogon.dev/source/smalltown.git/internal/node"
+	"git.monogon.dev/source/smalltown.git/pkg/tpm"
 
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"

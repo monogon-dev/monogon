@@ -18,10 +18,10 @@ package storage
 
 import (
 	"fmt"
+	"git.monogon.dev/source/smalltown.git/pkg/sysfs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"smalltown/pkg/sysfs"
 	"strconv"
 
 	"github.com/rekby/gpt"

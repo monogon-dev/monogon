@@ -18,12 +18,12 @@ package storage
 
 import (
 	"fmt"
+	"git.monogon.dev/source/smalltown.git/internal/common"
+	"git.monogon.dev/source/smalltown.git/pkg/tpm"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"smalltown/internal/common"
-	"smalltown/pkg/tpm"
 	"sync"
 
 	"go.uber.org/zap"

@@ -20,8 +20,8 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"git.monogon.dev/source/smalltown.git/pkg/devicemapper"
 	"os"
-	"smalltown/pkg/devicemapper"
 	"syscall"
 
 	"golang.org/x/sys/unix"

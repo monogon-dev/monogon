@@ -19,10 +19,10 @@ package tpm
 import (
 	"crypto/rand"
 	"fmt"
+	"git.monogon.dev/source/smalltown.git/pkg/sysfs"
 	"io"
 	"os"
 	"path/filepath"
-	"smalltown/pkg/sysfs"
 	"strconv"
 	"sync"
 
