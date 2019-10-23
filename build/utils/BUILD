@@ -38,7 +38,7 @@ genrule(
     echo "Compiling and installing musl..."
     (
         cd external/musl
-        ./configure --prefix=$$MUSL
+        ./configure --prefix=$$MUSL --syslibdir=$$MUSL/lib
         make -j 8 install
     ) > /dev/null
 
