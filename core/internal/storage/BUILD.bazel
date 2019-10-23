@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "blockdev.go",
+        "data.go",
+        "find.go",
+        "xfs.go",
+    ],
+    importpath = "git.monogon.dev/source/nexantic.git/core/internal/storage",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//core/internal/common:go_default_library",
+        "//core/pkg/devicemapper:go_default_library",
+        "//core/pkg/sysfs:go_default_library",
+        "//core/pkg/tpm:go_default_library",
+        "@com_github_rekby_gpt//:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)

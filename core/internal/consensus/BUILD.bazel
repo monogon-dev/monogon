@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["consensus.go"],
+    importpath = "git.monogon.dev/source/nexantic.git/core/internal/consensus",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//core/internal/common:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@io_etcd_go_etcd//clientv3:go_default_library",
+        "@io_etcd_go_etcd//clientv3/namespace:go_default_library",
+        "@io_etcd_go_etcd//embed:go_default_library",
+        "@io_etcd_go_etcd//etcdserver/api/membership:go_default_library",
+        "@io_etcd_go_etcd//pkg/types:go_default_library",
+        "@io_etcd_go_etcd//proxy/grpcproxy/adapter:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)

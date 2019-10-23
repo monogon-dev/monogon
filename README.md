@@ -1,20 +1,21 @@
-# Smalltown Operating System
+# Nexantic monorepo
 
-## Run build
+This is the monorepo storing all of nexantic's internal projects and libraries.
 
-The build uses a Fedora 30 base image with a set of dependencies.
-Guide has been tested on a Fedora 30 host, with latest rW deployed.
+## Environment
 
-Build the base image:
+All builds should be executed using the shipped `nexantic-dev` container which is automatically built by the create
+script.
 
-```
-podman build -t smalltown-builder .
-```
+The container contains all necessary dependencies and env configurations necessary to get started right away.
 
-Launch the VM:
+#### Usage
 
-```
-scripts/bin/bazel run scripts:launch
-```
+Spinning up: `scripts/create_container.sh` 
 
-Exit qemu using the monitor console: `Ctrl-A c quit`.
+Spinning down: `scripts/destroy_container.sh` 
+
+Running commands: `scripts/run_in_container.sh @`
+
+Using bazel: `scripts/bin/bazel @`
+ 

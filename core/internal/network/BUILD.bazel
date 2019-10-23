@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "git.monogon.dev/source/nexantic.git/core/internal/network",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//core/internal/common:go_default_library",
+        "@com_github_insomniacslk_dhcp//dhcpv4/nclient4:go_default_library",
+        "@com_github_vishvananda_netlink//:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)

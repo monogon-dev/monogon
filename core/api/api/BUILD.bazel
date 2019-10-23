@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+proto_library(
+    name = "api_proto",
+    srcs = ["schema.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["//core/api/common:common_proto"],
+)
+
+go_proto_library(
+    name = "api_go_proto",
+    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+    importpath = "git.monogon.dev/source/nexantic.git/core/generated/api",
+    proto = ":api_proto",
+    visibility = ["//visibility:public"],
+    deps = ["//core/api/common:go_default_library"],
+)
+
+go_library(
+    name = "go_default_library",
+    embed = [":api_go_proto"],
+    importpath = "git.monogon.dev/source/nexantic.git/core/generated/api",
+    visibility = ["//visibility:public"],
+)

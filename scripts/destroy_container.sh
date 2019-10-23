@@ -1,4 +1,4 @@
 #!/bin/bash
 
-podman stop smalltown-dev
-podman rm smalltown-dev --force
+podman stop nexantic-dev
+podman rm nexantic-dev --force

@@ -16,7 +16,7 @@ if ! [[ -d /sys/module/kvm ]]; then
 fi
 
 # Rebuild base image
-podman build -t smalltown-builder .
+podman build -t nexantic-builder build
 
 # Set up SELinux contexts to prevent the container from writing to
 # files that would allow for easy breakouts via tools ran on the host.
@@ -35,5 +35,5 @@ podman run -it -d \
     --device /dev/kvm \
     --privileged \
     --userns=keep-id \
-    --name=smalltown-dev \
-    smalltown-builder
+    --name=nexantic-dev \
+    nexantic-builder

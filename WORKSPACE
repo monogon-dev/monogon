@@ -1,4 +1,4 @@
-workspace(name = "smalltown")
+workspace(name = "nexantic")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
@@ -107,7 +107,7 @@ http_archive(
 # edk2-stable201908
 new_git_repository(
     name = "edk2",
-    build_file = "@//build/edk2:BUILD",
+    build_file = "@//core/build/edk2:BUILD",
     commit = "37eef91017ad042035090cae46557f9d6e2d5917",
     init_submodules = True,
     remote = "https://github.com/tianocore/edk2",
@@ -147,7 +147,7 @@ http_archive(
     build_file_content = all_content,
     patch_args = ["-p1"],
     patches = [
-        "@//build/utils/xfsprogs_dev:0001-Fixes-for-static-compilation.patch",
+        "@//core/build/utils/xfsprogs_dev:0001-Fixes-for-static-compilation.patch",
     ],
     sha256 = "6187f25f1744d1ecbb028b0ea210ad586d0f2dae24e258e4688c67740cc861ef",
     strip_prefix = "xfsprogs-dev-" + xfsprogs_dev_version,

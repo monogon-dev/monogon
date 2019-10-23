@@ -1,0 +1,158 @@
+// Copyright 2020 The Monogon Project Authors.
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package api;
+
+import "core/api/common/main.proto";
+
+option go_package = "git.monogon.dev/source/nexantic.git/core/generated/api";
+
+service ClusterManagement {
+    // Add a node to the Smalltown cluster
+    rpc AddNode (AddNodeRequest) returns (AddNodeResponse) {
+
+    }
+
+    // Remove a node from the Smalltown cluster
+    rpc RemoveNode (RemoveNodeRequest) returns (RemoveNodeRequest) {
+
+    }
+
+    // Get all cluster nodes
+    rpc GetNodes (GetNodesRequest) returns (GetNodesResponse) {
+
+    }
+}
+
+service SetupService {
+    // SetupNewCluster configures this node to either start a new Smalltown cluster or join an existing one
+    rpc Setup (SetupRequest) returns (SetupResponse) {
+
+    }
+
+    // JoinCluster can be called by another Smalltown node when the node has been put in to JOIN_CLUSTER mode using Setup.
+    // This request sets up all necessary config variables, joins the consensus and puts the node in production state.
+    rpc ProvisionCluster (ProvisionClusterRequest) returns (ProvisionClusterResponse) {
+
+    }
+
+    rpc Attest (AttestRequest) returns (AttestResponse) {
+
+    }
+}
+
+message SetupRequest {
+    oneof request {
+        NewClusterRequest newCluster = 1;
+        JoinClusterRequest joinCluster = 2;
+    }
+
+}
+
+message NewClusterRequest {
+    string nodeName = 1;
+    string externalHost = 2;
+    smalltown.common.TrustBackend trustBackend = 3;
+}
+
+message JoinClusterRequest {
+}
+
+message SetupResponse {
+    oneof response {
+        NewClusterResponse newCluster = 1;
+        JoinClusterResponse joinCluster = 2;
+    }
+}
+
+message NewClusterResponse {
+}
+
+message JoinClusterResponse {
+    string provisioningToken = 1;
+}
+
+message ProvisionClusterRequest {
+    string provisioningToken = 1;
+
+    string initialCluster = 2;
+    string nodeName = 3;
+    string externalHost = 4;
+    smalltown.common.TrustBackend trustBackend = 5;
+    bytes storeKey = 6;
+}
+
+message ProvisionClusterResponse {
+
+}
+
+message AttestRequest {
+    string challenge = 1;
+}
+
+message AttestResponse {
+    string response = 1;
+}
+
+message Key {
+    string label = 1;
+    string type = 2;
+}
+
+message CreateKeyRequest {
+    Key key = 1;
+}
+
+message CreateKeyResponse {
+
+}
+
+message AddNodeRequest {
+    string host = 1;
+    uint32 apiPort = 2;
+    uint32 consensusPort = 3;
+    string token = 4;
+    string name = 5;
+    smalltown.common.TrustBackend trustBackend = 6;
+}
+
+message AddNodeResponse {
+
+}
+
+message RemoveNodeRequest {
+
+}
+
+message RemoveNodeResponse {
+
+}
+
+message GetNodesRequest {
+
+}
+
+message GetNodesResponse {
+    repeated Node nodes = 1;
+}
+
+message Node {
+    uint64 id = 1;
+    string name = 2;
+    string address = 3;
+    bool synced = 4;
+}
