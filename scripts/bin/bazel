@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
-scripts/run_in_container.sh bazelisk $@ \
-    --repository_cache=/root/repo-cache
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+$DIR/../run_in_container.sh bazelisk $@
