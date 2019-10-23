@@ -32,6 +32,6 @@ podman run -it -d \
     -v repo-cache:/root/repo-cache \
     --tmpfs=/root/.cache/bazel:exec \
     --device /dev/kvm \
-    --net=host \
+    --privileged \
     --name=smalltown-dev \
     smalltown-builder
