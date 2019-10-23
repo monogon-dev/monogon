@@ -2,4 +2,4 @@
 set -euo pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-$DIR/../run_in_container.sh bazelisk $@
+$DIR/../run_in_container.sh bazel $@
