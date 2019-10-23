@@ -24,8 +24,13 @@ chcon -R system_u:object_r:container_file_t:s0 .
 chcon -R unconfined_u:object_r:user_home_t:s0 \
   .arcconfig .idea .git
 
+# TODO(leo): mount .cache/bazel on a volume (waiting for podman issue to be fixed)
+# https://github.com/containers/libpod/issues/4318
 podman run -it -d \
     -v $(pwd):/work \
+    -v smalltown-gomodcache:/root/go/pkg/mod/cache \
+    -v smalltown-gobuildcache:/root/.cache/go-build \
+    -v smalltown-bazelcache:/root/.cache/bazel/_bazel_root/cache \
     --tmpfs=/root/.cache/bazel:exec \
     --device /dev/kvm \
     --privileged \
