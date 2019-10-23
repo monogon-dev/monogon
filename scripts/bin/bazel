@@ -1,0 +1,4 @@
+#!/bin/bash
+
+scripts/run_in_container.sh bazelisk $@ \
+    --repository_cache=/root/repo-cache
