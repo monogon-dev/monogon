@@ -24,6 +24,8 @@ chcon -R system_u:object_r:container_file_t:s0 .
 chcon -R unconfined_u:object_r:user_home_t:s0 \
   .arcconfig .idea .git
 
+podman pod create --name nexantic
+
 # TODO(leo): mount .cache/bazel on a volume (waiting for podman issue to be fixed)
 # https://github.com/containers/libpod/issues/4318
 podman run -it -d \
@@ -35,5 +37,12 @@ podman run -it -d \
     --device /dev/kvm \
     --privileged \
     --userns=keep-id \
+    --pod nexantic \
     --name=nexantic-dev \
     nexantic-builder
+
+podman run -it -d \
+    --pod nexantic \
+    --ulimit nofile=262144:262144 \
+    --name=nexantic-cockroach \
+    cockroachdb/cockroach:v19.1.5 start --insecure

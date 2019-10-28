@@ -1,4 +1,4 @@
 #!/bin/bash
 
-podman stop nexantic-dev
-podman rm nexantic-dev --force
+podman pod stop nexantic
+podman pod rm nexantic --force

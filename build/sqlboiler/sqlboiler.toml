@@ -1,0 +1,9 @@
+[crdb]
+  dbname = "_dbname_"
+  host   = "localhost"
+  port   = 26257
+  user   = "root"
+  pass   = ""
+  sslmode = "disable"
+  schema = "public"
+  blacklist = ["migrations"]

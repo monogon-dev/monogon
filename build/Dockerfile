@@ -23,7 +23,8 @@ RUN dnf -y upgrade && \
 	which \
 	swtpm-tools \
 	rsync \
-	qemu-system-x86-core
+	qemu-system-x86-core \
+	postgresql
 
 # Workaround for a binutils bugs in F30, which generates invalid ELF binaries
 # when linking statically with musl.
