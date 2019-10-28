@@ -3,4 +3,4 @@
 # Locally, a symlink will be sufficient.
 
 mkdir -p generated
-cp -r bazel-bin/api/*/linux_amd64_stripped/*/git.monogon.dev/source/smalltown.git/generated/* generated/
+rsync -av --delete --exclude '*.a' bazel-bin/api/*/linux_amd64_stripped/*/git.monogon.dev/source/smalltown.git/generated/* generated/
