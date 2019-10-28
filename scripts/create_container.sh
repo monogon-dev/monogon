@@ -28,10 +28,10 @@ chcon -R unconfined_u:object_r:user_home_t:s0 \
 # https://github.com/containers/libpod/issues/4318
 podman run -it -d \
     -v $(pwd):/work \
-    -v smalltown-gopath:/root/go/pkg \
-    -v smalltown-gobuildcache:/root/.cache/go-build \
-    -v smalltown-bazelcache:/root/.cache/bazel/_bazel_root/cache \
-    --tmpfs=/root/.cache/bazel:exec \
+    -v smalltown-gopath:/user/go/pkg \
+    -v smalltown-gobuildcache:/user/.cache/go-build \
+    -v smalltown-bazelcache:/user/.cache/bazel/_bazel_root/cache \
+    --tmpfs=/user/.cache/bazel:exec \
     --device /dev/kvm \
     --privileged \
     --userns=keep-id \

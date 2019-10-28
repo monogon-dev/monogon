@@ -77,7 +77,7 @@ genrule(
         make configure
         ./configure CC="$$MUSL/bin/musl-gcc" CFLAGS="-static" --prefix=$$MUSL
         echo COMPILERING
-        make mkfs
+        make mkfs -j8
     ) > /dev/null
 
     cp external/xfsprogs_dev/mkfs/mkfs.xfs $(RULEDIR)
