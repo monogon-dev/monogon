@@ -86,6 +86,13 @@ message JoinClusterResponse {
     string provisioningToken = 1;
 }
 
+message ConsensusCertificates {
+    bytes ca = 1;
+    bytes crl = 2;
+    bytes cert = 3;
+    bytes key = 4;
+}
+
 message ProvisionClusterRequest {
     string provisioningToken = 1;
 
@@ -94,6 +101,7 @@ message ProvisionClusterRequest {
     string externalHost = 4;
     smalltown.common.TrustBackend trustBackend = 5;
     bytes storeKey = 6;
+    ConsensusCertificates certs = 7;
 }
 
 message ProvisionClusterResponse {

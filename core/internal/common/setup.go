@@ -16,13 +16,15 @@
 
 package common
 
+import "git.monogon.dev/source/nexantic.git/core/generated/api"
+
 type (
 	SetupService interface {
 		CurrentState() SmalltownState
 		GetJoinClusterToken() string
 		SetupNewCluster(name string, externalHost string) error
 		EnterJoinClusterMode() error
-		JoinCluster(name string, clusterString string, externalHost string) error
+		JoinCluster(name string, clusterString string, externalHost string, certs *api.ConsensusCertificates) error
 	}
 
 	SmalltownState string

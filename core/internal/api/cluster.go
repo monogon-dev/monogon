@@ -60,8 +60,13 @@ func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*sche
 		return nil, ErrAttestationFailed
 	}
 
+	consensusCerts, err := s.consensusService.IssueCertificate(req.Host)
+	if err != nil {
+		return nil, err
+	}
+
 	// Provision cluster info locally
-	memberID, err := s.consensusService.AddMember(ctx, req.Name, fmt.Sprintf("http://%s:%d", req.Host, req.ConsensusPort))
+	memberID, err := s.consensusService.AddMember(ctx, req.Name, fmt.Sprintf("https://%s:%d", req.Host, req.ConsensusPort))
 	if err != nil {
 		return nil, err
 	}
@@ -77,12 +82,17 @@ func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*sche
 		ExternalHost:      req.Host,
 		NodeName:          req.Name,
 		TrustBackend:      req.TrustBackend,
+		Certs:             consensusCerts,
 	})
 	if err != nil {
+		err3 := s.consensusService.RevokeCertificate(req.Host)
+		if err3 != nil {
+			s.Logger.Error("Failed to revoke a certificate after rollback, potential security risk", zap.Error(err3))
+		}
 		// Revert Consensus add member - might fail if consensus cannot be established
 		err2 := s.consensusService.RemoveMember(ctx, memberID)
-		if err2 != nil {
-			return nil, fmt.Errorf("Rollback failed after failed provisioning; err=%v; err_rb=%v", err, err2)
+		if err2 != nil || err3 != nil {
+			return nil, fmt.Errorf("Rollback failed after failed provisioning; err=%v; err_rb=%v; err_revoke=%v", err, err2, err3)
 		}
 		return nil, err
 	}

@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 )
 
@@ -87,7 +88,7 @@ func (s *Server) ProvisionCluster(ctx context.Context, req *schema.ProvisionClus
 	}
 
 	// Join cluster
-	err := s.setupService.JoinCluster(req.NodeName, req.InitialCluster, req.ExternalHost)
+	err := s.setupService.JoinCluster(req.NodeName, req.InitialCluster, req.ExternalHost, req.Certs)
 	if err != nil {
 		return nil, err
 	}

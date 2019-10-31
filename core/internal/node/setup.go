@@ -17,9 +17,11 @@
 package node
 
 import (
+	"git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 
 	"errors"
+
 	"go.uber.org/zap"
 )
 
@@ -67,8 +69,16 @@ func (s *SmalltownNode) SetupNewCluster(name string, externalHost string) error 
 	config.DataDir = dataPath
 	s.Consensus.SetConfig(config)
 
+	if err := s.Consensus.PrecreateCA(); err != nil {
+		return err
+	}
+
 	err = s.Consensus.Start()
 	if err != nil {
+		return err
+	}
+
+	if err := s.Consensus.InjectCA(); err != nil {
 		return err
 	}
 
@@ -91,7 +101,7 @@ func (s *SmalltownNode) EnterJoinClusterMode() error {
 	return nil
 }
 
-func (s *SmalltownNode) JoinCluster(name string, clusterString string, externalHost string) error {
+func (s *SmalltownNode) JoinCluster(name string, clusterString string, externalHost string, certs *api.ConsensusCertificates) error {
 	if s.state != common.StateClusterJoinMode {
 		return ErrNotInJoinMode
 	}
@@ -108,6 +118,9 @@ func (s *SmalltownNode) JoinCluster(name string, clusterString string, externalH
 	config.InitialCluster = clusterString
 	config.ExternalHost = externalHost
 	s.Consensus.SetConfig(config)
+	if err := s.Consensus.SetupCertificates(certs); err != nil {
+		return err
+	}
 
 	// Start consensus
 	err = s.Consensus.Start()

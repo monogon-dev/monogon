@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "ca.go",
+        "compat.go",
+    ],
+    importpath = "git.monogon.dev/source/nexantic.git/core/internal/consensus/ca",
+    visibility = ["//:__subpackages__"],
+)
