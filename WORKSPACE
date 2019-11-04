@@ -153,3 +153,25 @@ http_archive(
     strip_prefix = "xfsprogs-dev-" + xfsprogs_dev_version,
     urls = ["https://git.kernel.org/pub/scm/fs/xfs/xfsprogs-dev.git/snapshot/xfsprogs-dev-%s.tar.gz" % xfsprogs_dev_version],
 )
+
+# Kubernetes
+k8s_version = "1.16.2"
+
+http_archive(
+    name = "kubernetes",
+    patch_args = ["-p1"],
+    patches = [
+        "@//core/build/kubernetes:0001-avoid-unexpected-keyword-error-by-using-positional-p.patch"
+    ],
+    sha256 = "21d884b67abd1182958313474a40678ba8f3713e6b6f520401e42c02ba6ea302",
+    urls = ["https://dl.k8s.io/v%s/kubernetes-src.tar.gz" % k8s_version],
+)
+
+load("@kubernetes//build:workspace_mirror.bzl", "mirror")
+
+http_archive(
+    name = "io_k8s_repo_infra",
+    sha256 = "f6d65480241ec0fd7a0d01f432938b97d7395aeb8eefbe859bb877c9b4eafa56",
+    strip_prefix = "repo-infra-9f4571ad7242bf3ec4b47365062498c2528f9a5f",
+    urls = mirror("https://github.com/kubernetes/repo-infra/archive/9f4571ad7242bf3ec4b47365062498c2528f9a5f.tar.gz"),
+)
