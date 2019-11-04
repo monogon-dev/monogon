@@ -36,7 +36,6 @@ podman run -it -d \
     --tmpfs=/user/.cache/bazel:exec \
     --device /dev/kvm \
     --privileged \
-    --userns=keep-id \
     --pod nexantic \
     --name=nexantic-dev \
     nexantic-builder
