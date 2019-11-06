@@ -39,7 +39,7 @@ genrule(
     (
         cd external/musl
         ./configure --prefix=$$MUSL --syslibdir=$$MUSL/lib
-        make -j 8 install
+        make -j $$(nproc) install
     ) > /dev/null
 
     echo "Installing Linux kernel headers..."
@@ -63,7 +63,7 @@ genrule(
         --disable-makeinstall-chown \
         --disable-makeinstall-setuid \
         --with-bashcompletiondir=$$MUSL/usr/share/bash-completion
-        make -j8 libuuid.la libblkid.la
+        make -j $$(nproc) libuuid.la libblkid.la
         echo "Installing util_linux..."
         cp -v .libs/* $$MUSL/lib/
         mkdir -p $$MUSL/include/{uuid,blkid}

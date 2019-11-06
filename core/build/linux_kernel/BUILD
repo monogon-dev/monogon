@@ -20,7 +20,7 @@ genrule(
     cp $(locations @//core/build/utils) $$DIR/.bin/
     cp $(location initramfs.list) $$DIR/initramfs.list
 
-    (cd $$DIR && make -j 16) >/dev/null
+    (cd $$DIR && make -j $$(nproc)) >/dev/null
 
     cp $$DIR/arch/x86/boot/bzImage $(RULEDIR)
     """,
