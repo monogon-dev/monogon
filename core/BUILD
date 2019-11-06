@@ -1,15 +1,18 @@
 genrule(
     name = "image",
     srcs = [
-        "@//core/cmd/mkimage",
-        "@//core/build/linux_kernel:image",
+        "@//core/build/linux_kernel:bzImage",
+        "@//core/build/linux_kernel:initramfs",
     ],
     outs = [
         "smalltown.img",
     ],
     cmd = """
-    $(location @//core/cmd/mkimage) $(location @//core/build/linux_kernel:image) $@
+    $(location @//core/cmd/mkimage) $(location @//core/build/linux_kernel:bzImage) $@ $(location @//core/build/linux_kernel:initramfs)
     """,
+    tools = [
+        "@//core/cmd/mkimage",
+    ],
     visibility = ["//visibility:public"],
 )
 

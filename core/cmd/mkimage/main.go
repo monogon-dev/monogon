@@ -35,7 +35,7 @@ func mibToSectors(size uint64) uint64 {
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Println("Usage: mkimage <UEFI payload> <image path>")
+		fmt.Println("Usage: mkimage <UEFI payload> <output image path> <initramfs (optional)>")
 		os.Exit(2)
 	}
 	_ = os.Remove(os.Args[2])
@@ -55,12 +55,12 @@ func main() {
 				Type:  gpt.EFISystemPartition,
 				Name:  "ESP",
 				Start: mibToSectors(1),
-				End:   mibToSectors(128) - 1,
+				End:   mibToSectors(256) - 1,
 			},
 			{
 				Type:  SmalltownDataPartition,
 				Name:  "SIGNOS-DATA",
-				Start: mibToSectors(128),
+				Start: mibToSectors(256),
 				End:   mibToSectors(2560) - 1,
 			},
 		},
@@ -103,6 +103,28 @@ func main() {
 	if _, err := efiPayload.Write(efiPayloadFull); err != nil {
 		fmt.Printf("Failed to write EFI payload: %v", err)
 		os.Exit(1)
+	}
+	initramfs, err := fs.OpenFile("/EFI/smalltown/initramfs.cpio.lz4", os.O_CREATE|os.O_RDWR)
+	if err != nil {
+		fmt.Printf("Failed to open initramfs for writing: %v", err)
+		os.Exit(1)
+	}
+	// If we have more than two arguments, the second one is the initramfs
+	if len(os.Args) > 3 {
+		initramfsSrc, err := os.Open(os.Args[3])
+		if err != nil {
+			fmt.Printf("Failed to open initramfs for reading: %v", err)
+			os.Exit(1)
+		}
+		initramfsFull, err := ioutil.ReadAll(initramfsSrc)
+		if err != nil {
+			fmt.Printf("Failed to read initramfs: %v", err)
+			os.Exit(1)
+		}
+		if _, err := initramfs.Write(initramfsFull); err != nil {
+			fmt.Printf("Failed to write initramfs: %v", err)
+			os.Exit(1)
+		}
 	}
 	if err := diskImg.File.Close(); err != nil {
 		fmt.Printf("Failed to write image: %v", err)

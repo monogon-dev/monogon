@@ -94,9 +94,23 @@ all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//v
 
 linux_kernel_version = "4.19.72"
 
+# If we don't do this we're double-building Linux, once for the toolchain and once for the target
+make_gen_init_cpio_available = """
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+cc_binary(name = "gen_init_cpio", srcs = ["usr/gen_init_cpio.c"], visibility = ["//visibility:public"])
+"""
+
 http_archive(
     name = "linux_kernel",
-    build_file_content = all_content,
+    build_file_content = all_content + "\n" + make_gen_init_cpio_available,
+    patch_args = ["-p1"],
+    patches = [
+        # Fix is in mainline, but upstream hasn't backported it to 4.19.
+        # Will go away when we switch to 5.4 LTS
+        "@//core/build/linux_kernel:kbuild-add--fcf-protection-none-to-retpoline-flags.patch",
+        # Enable built-in cmdline for efistub
+        "@//core/build/linux_kernel:0001-x86-Allow-built-in-command-line-to-work-in-early-ker.patch",
+    ],
     sha256 = "f9fcb6b3bd29115ac55fc154e300c3dce2044502732f6842ad6c25e6f9f51f6d",
     strip_prefix = "linux-" + linux_kernel_version,
     urls = ["https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-%s.tar.xz" % linux_kernel_version],
@@ -161,7 +175,7 @@ http_archive(
     name = "kubernetes",
     patch_args = ["-p1"],
     patches = [
-        "@//core/build/kubernetes:0001-avoid-unexpected-keyword-error-by-using-positional-p.patch"
+        "@//core/build/kubernetes:0001-avoid-unexpected-keyword-error-by-using-positional-p.patch",
     ],
     sha256 = "21d884b67abd1182958313474a40678ba8f3713e6b6f520401e42c02ba6ea302",
     urls = ["https://dl.k8s.io/v%s/kubernetes-src.tar.gz" % k8s_version],

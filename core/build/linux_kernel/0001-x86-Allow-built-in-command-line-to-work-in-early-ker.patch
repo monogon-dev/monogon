@@ -1,0 +1,402 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From 73025c3f822aa19077abe4ece53b03b211faaf52 Mon Sep 17 00:00:00 2001
+From: Matthew Garrett <mjg59@coreos.com>
+Date: Thu, 9 Apr 2015 13:25:00 -0700
+Subject: [PATCH 1/2] x86: Allow built-in command line to work in early kernel
+ init
+
+The kernel supports having a command line built into it. Unfortunately this
+doesn't work in all cases - the built-in command line is only appended
+after we've jumped to the kernel proper, but various parts of the early
+boot process also pay attention to the command line.
+
+This patch moves the command line override code from the kernel itself to
+the early init code. Unfortunately the kernel can be executed by jumping
+to the 16-bit entry point, the UEFI entry point, directly to the 32-bit
+entry point or even to the entry point of the uncompressed image, and
+there is no guarantee that any of these will have access to data held in
+the others. As a result, four copies of the command line will be embedded
+in the kernel.
+
+This patch also defines a new field in boot_params in order to allow the
+earlier entry points to inform the generic setup code that the command line
+has already been appended and so shouldn't be added once more.
+
+Updated for Linux 4.19 by Lorenz Brun <lorenz@nexantic.com>
+
+Signed-off-by: Matthew Garrett <mjg59@coreos.com>
+---
+ Documentation/x86/zero-page.txt               |  1 +
+ arch/x86/boot/boot.h                          | 10 ++++
+ arch/x86/boot/cmdline.c                       | 37 ++++++++++++++
+ arch/x86/boot/compressed/cmdline.c            | 18 ++++++-
+ arch/x86/boot/compressed/eboot.c              |  3 ++
+ arch/x86/boot/compressed/misc.c               |  2 +
+ arch/x86/boot/compressed/misc.h               |  3 +-
+ arch/x86/boot/main.c                          |  3 ++
+ arch/x86/include/uapi/asm/bootparam.h         |  5 +-
+ arch/x86/kernel/setup.c                       | 16 +++---
+ .../firmware/efi/libstub/efi-stub-helper.c    | 50 +++++++++++++++++--
+ 11 files changed, 135 insertions(+), 13 deletions(-)
+
+diff --git a/Documentation/x86/zero-page.txt b/Documentation/x86/zero-page.txt
+index 97b7adbceda4..3d5e3a81b5fa 100644
+--- a/Documentation/x86/zero-page.txt
++++ b/Documentation/x86/zero-page.txt
+@@ -12,6 +12,7 @@ Offset	Proto	Name		Meaning
+ 000/040	ALL	screen_info	Text mode or frame buffer information
+ 				(struct screen_info)
+ 040/014	ALL	apm_bios_info	APM BIOS information (struct apm_bios_info)
++054/004	ALL	setup_flags	Flags passed from early kernel setup
+ 058/008	ALL	tboot_addr      Physical address of tboot shared page
+ 060/010	ALL	ist_info	Intel SpeedStep (IST) BIOS support information
+ 				(struct ist_info)
+diff --git a/arch/x86/boot/boot.h b/arch/x86/boot/boot.h
+index ef5a9cc66fb8..4dcf45570976 100644
+--- a/arch/x86/boot/boot.h
++++ b/arch/x86/boot/boot.h
+@@ -273,6 +273,7 @@ void intcall(u8 int_no, const struct biosregs *ireg, struct biosregs *oreg);
+ /* cmdline.c */
+ int __cmdline_find_option(unsigned long cmdline_ptr, const char *option, char *buffer, int bufsize);
+ int __cmdline_find_option_bool(unsigned long cmdline_ptr, const char *option);
++int __cmdline_init(unsigned long cmdline_ptr, struct boot_params *params);
+ static inline int cmdline_find_option(const char *option, char *buffer, int bufsize)
+ {
+ 	unsigned long cmd_line_ptr = boot_params.hdr.cmd_line_ptr;
+@@ -293,6 +294,15 @@ static inline int cmdline_find_option_bool(const char *option)
+ 	return __cmdline_find_option_bool(cmd_line_ptr, option);
+ }
+ 
++static inline int cmdline_init(void)
++{
++	unsigned long cmd_line_ptr = boot_params.hdr.cmd_line_ptr;
++
++	if (cmd_line_ptr >= 0x100000)
++		return -1;      /* inaccessible */
++
++	return __cmdline_init(cmd_line_ptr, &boot_params);
++}
+ /* cpu.c, cpucheck.c */
+ int check_cpu(int *cpu_level_ptr, int *req_level_ptr, u32 **err_flags_ptr);
+ int check_knl_erratum(void);
+diff --git a/arch/x86/boot/cmdline.c b/arch/x86/boot/cmdline.c
+index 625d21b0cd3f..2273d2797570 100644
+--- a/arch/x86/boot/cmdline.c
++++ b/arch/x86/boot/cmdline.c
+@@ -14,6 +14,10 @@
+ 
+ #include "boot.h"
+ 
++#ifdef CONFIG_CMDLINE_BOOL
++static char builtin_cmdline[] = CONFIG_CMDLINE;
++#endif
++
+ static inline int myisspace(u8 c)
+ {
+ 	return c <= ' ';	/* Close enough approximation */
+@@ -156,3 +160,36 @@ int __cmdline_find_option_bool(unsigned long cmdline_ptr, const char *option)
+ 
+ 	return 0;	/* Buffer overrun */
+ }
++
++int __cmdline_init(unsigned long cmdline_ptr, struct boot_params *params)
++{
++#ifdef CONFIG_CMDLINE_BOOL
++	addr_t cptr;
++	int i = 0;
++
++	if (!cmdline_ptr)
++		return -1;      /* No command line */
++
++	set_fs(cmdline_ptr >> 4);
++	cptr = cmdline_ptr & 0xf;
++
++#ifndef CONFIG_CMDLINE_OVERRIDE
++	while (cptr < 0x10000) {
++		char c = rdfs8(cptr);
++		if (!c) {
++			wrfs8(' ', cptr++);
++			break;
++		}
++		cptr++;
++	}
++#endif /* !CONFIG_CMDLINE_OVERRIDE */
++	while (builtin_cmdline[i] && cptr < 0xffff)
++		wrfs8(builtin_cmdline[i++], cptr++);
++
++	wrfs8('\0', cptr);
++
++	params->setup_flags |= SETUP_CMDLINE_APPENDED;
++#endif /* CONFIG_CMDLINE_BOOL */
++
++	return 0;
++}
+diff --git a/arch/x86/boot/compressed/cmdline.c b/arch/x86/boot/compressed/cmdline.c
+index af6cda0b7900..70fbf01f5f36 100644
+--- a/arch/x86/boot/compressed/cmdline.c
++++ b/arch/x86/boot/compressed/cmdline.c
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0
+ #include "misc.h"
+ 
+-#if CONFIG_EARLY_PRINTK || CONFIG_RANDOMIZE_BASE || CONFIG_X86_5LEVEL
++#if CONFIG_EARLY_PRINTK || CONFIG_RANDOMIZE_BASE || CONFIG_X86_5LEVEL || CONFIG_CMDLINE_BOOL
+ 
+ static unsigned long fs;
+ static inline void set_fs(unsigned long seg)
+@@ -13,6 +13,10 @@ static inline char rdfs8(addr_t addr)
+ {
+ 	return *((char *)(fs + addr));
+ }
++static inline void wrfs8(u8 v, addr_t addr)
++{
++	*((char *)(fs + addr)) = v;
++}
+ #include "../cmdline.c"
+ unsigned long get_cmd_line_ptr(void)
+ {
+@@ -31,4 +35,16 @@ int cmdline_find_option_bool(const char *option)
+ 	return __cmdline_find_option_bool(get_cmd_line_ptr(), option);
+ }
+ 
++int cmdline_init(void)
++{
++	if (!(boot_params->setup_flags & SETUP_CMDLINE_APPENDED))
++		return __cmdline_init(get_cmd_line_ptr(), boot_params);
++	return 0;
++}
++#else
++int cmdline_init(void)
++{
++#error "BAD"
++	return 0;
++}
+ #endif
+diff --git a/arch/x86/boot/compressed/eboot.c b/arch/x86/boot/compressed/eboot.c
+index 544ac4fafd11..0c8059ace733 100644
+--- a/arch/x86/boot/compressed/eboot.c
++++ b/arch/x86/boot/compressed/eboot.c
+@@ -451,6 +451,9 @@ struct boot_params *make_boot_params(struct efi_config *c)
+ 	/* Fill in upper bits of command line address, NOP on 32 bit  */
+ 	boot_params->ext_cmd_line_ptr = (u64)(unsigned long)cmdline_ptr >> 32;
+ 
++#ifdef CONFIG_CMDLINE_BOOL
++	boot_params->setup_flags |= SETUP_CMDLINE_APPENDED;
++#endif
+ 	hdr->ramdisk_image = 0;
+ 	hdr->ramdisk_size = 0;
+ 
+diff --git a/arch/x86/boot/compressed/misc.c b/arch/x86/boot/compressed/misc.c
+index 0387d7a96c84..90af5161dde4 100644
+--- a/arch/x86/boot/compressed/misc.c
++++ b/arch/x86/boot/compressed/misc.c
+@@ -365,6 +365,8 @@ asmlinkage __visible void *extract_kernel(void *rmode, memptr heap,
+ 	lines = boot_params->screen_info.orig_video_lines;
+ 	cols = boot_params->screen_info.orig_video_cols;
+ 
++	cmdline_init();
++
+ 	console_init();
+ 	debug_putstr("early console in extract_kernel\n");
+ 
+diff --git a/arch/x86/boot/compressed/misc.h b/arch/x86/boot/compressed/misc.h
+index 47fd18db6b3b..2e5e1d80ba38 100644
+--- a/arch/x86/boot/compressed/misc.h
++++ b/arch/x86/boot/compressed/misc.h
+@@ -61,10 +61,11 @@ static inline void debug_puthex(const char *s)
+ 
+ #endif
+ 
+-#if CONFIG_EARLY_PRINTK || CONFIG_RANDOMIZE_BASE
++#if CONFIG_EARLY_PRINTK || CONFIG_RANDOMIZE_BASE || CONFIG_CMDLINE_BOOL
+ /* cmdline.c */
+ int cmdline_find_option(const char *option, char *buffer, int bufsize);
+ int cmdline_find_option_bool(const char *option);
++int cmdline_init(void);
+ #endif
+ 
+ 
+diff --git a/arch/x86/boot/main.c b/arch/x86/boot/main.c
+index 9bcea386db65..e3275d57f024 100644
+--- a/arch/x86/boot/main.c
++++ b/arch/x86/boot/main.c
+@@ -137,6 +137,9 @@ void main(void)
+ 	/* First, copy the boot header into the "zeropage" */
+ 	copy_boot_params();
+ 
++	/* Handle built-in command line */
++	cmdline_init();
++
+ 	/* Initialize the early-boot console */
+ 	console_init();
+ 	if (cmdline_find_option_bool("debug"))
+diff --git a/arch/x86/include/uapi/asm/bootparam.h b/arch/x86/include/uapi/asm/bootparam.h
+index a06cbf019744..aee889f5400f 100644
+--- a/arch/x86/include/uapi/asm/bootparam.h
++++ b/arch/x86/include/uapi/asm/bootparam.h
+@@ -30,6 +30,9 @@
+ #define XLF_EFI_HANDOVER_64		(1<<3)
+ #define XLF_EFI_KEXEC			(1<<4)
+ 
++/* setup_flags */
++#define SETUP_CMDLINE_APPENDED		(1<<0)
++
+ #ifndef __ASSEMBLY__
+ 
+ #include <linux/types.h>
+@@ -152,7 +155,7 @@ struct jailhouse_setup_data {
+ struct boot_params {
+ 	struct screen_info screen_info;			/* 0x000 */
+ 	struct apm_bios_info apm_bios_info;		/* 0x040 */
+-	__u8  _pad2[4];					/* 0x054 */
++	__u32 setup_flags;				/* 0x054 */
+ 	__u64  tboot_addr;				/* 0x058 */
+ 	struct ist_info ist_info;			/* 0x060 */
+ 	__u8  _pad3[16];				/* 0x070 */
+diff --git a/arch/x86/kernel/setup.c b/arch/x86/kernel/setup.c
+index b4866badb235..c6ad8800349b 100644
+--- a/arch/x86/kernel/setup.c
++++ b/arch/x86/kernel/setup.c
+@@ -935,16 +935,18 @@ void __init setup_arch(char **cmdline_p)
+ 	bss_resource.end = __pa_symbol(__bss_stop)-1;
+ 
+ #ifdef CONFIG_CMDLINE_BOOL
++	if (!(boot_params.setup_flags & SETUP_CMDLINE_APPENDED)) {
+ #ifdef CONFIG_CMDLINE_OVERRIDE
+-	strlcpy(boot_command_line, builtin_cmdline, COMMAND_LINE_SIZE);
+-#else
+-	if (builtin_cmdline[0]) {
+-		/* append boot loader cmdline to builtin */
+-		strlcat(builtin_cmdline, " ", COMMAND_LINE_SIZE);
+-		strlcat(builtin_cmdline, boot_command_line, COMMAND_LINE_SIZE);
+ 		strlcpy(boot_command_line, builtin_cmdline, COMMAND_LINE_SIZE);
+-	}
++#else
++		if (builtin_cmdline[0]) {
++			/* append boot loader cmdline to builtin */
++			strlcat(builtin_cmdline, " ", COMMAND_LINE_SIZE);
++			strlcat(builtin_cmdline, boot_command_line, COMMAND_LINE_SIZE);
++			strlcpy(boot_command_line, builtin_cmdline, COMMAND_LINE_SIZE);
++		}
+ #endif
++	}
+ #endif
+ 
+ 	strlcpy(command_line, boot_command_line, COMMAND_LINE_SIZE);
+diff --git a/drivers/firmware/efi/libstub/efi-stub-helper.c b/drivers/firmware/efi/libstub/efi-stub-helper.c
+index 442f51c2a53d..61f65f8ac94f 100644
+--- a/drivers/firmware/efi/libstub/efi-stub-helper.c
++++ b/drivers/firmware/efi/libstub/efi-stub-helper.c
+@@ -12,9 +12,14 @@
+ 
+ #include <linux/efi.h>
+ #include <asm/efi.h>
++#include <asm/setup.h>
+ 
+ #include "efistub.h"
+ 
++#ifdef CONFIG_CMDLINE_BOOL
++static char builtin_cmdline[] = CONFIG_CMDLINE;
++#endif
++
+ /*
+  * Some firmware implementations have problems reading files in one go.
+  * A read chunk size of 1MB seems to work for most platforms.
+@@ -806,6 +811,20 @@ static u8 *efi_utf16_to_utf8(u8 *dst, const u16 *src, int n)
+ #ifndef MAX_CMDLINE_ADDRESS
+ #define MAX_CMDLINE_ADDRESS	ULONG_MAX
+ #endif
++static size_t efi_strlcat(char *dest, const char *src, size_t count)
++{
++	size_t dsize = strlen(dest);
++	size_t len = strlen(src);
++	size_t res = dsize + len;
++
++	dest += dsize;
++	count -= dsize;
++	if (len >= count)
++		len = count-1;
++	memcpy(dest, src, len);
++	dest[len] = 0;
++	return res;
++}
+ 
+ /*
+  * Convert the unicode UEFI command line to ASCII to pass to kernel.
+@@ -816,14 +835,16 @@ char *efi_convert_cmdline(efi_system_table_t *sys_table_arg,
+ 			  efi_loaded_image_t *image,
+ 			  int *cmd_line_len)
+ {
++	unsigned long cmdline_addr = 0;
++	int i;
++	efi_status_t status;
++#ifndef CONFIG_CMDLINE_OVERRIDE
+ 	const u16 *s2;
+ 	u8 *s1 = NULL;
+-	unsigned long cmdline_addr = 0;
+ 	int load_options_chars = image->load_options_size / 2; /* UTF-16 */
+ 	const u16 *options = image->load_options;
+ 	int options_bytes = 0;  /* UTF-8 bytes */
+ 	int options_chars = 0;  /* UTF-16 chars */
+-	efi_status_t status;
+ 	u16 zero = 0;
+ 
+ 	if (options) {
+@@ -842,8 +863,14 @@ char *efi_convert_cmdline(efi_system_table_t *sys_table_arg,
+ 
+ 	options_bytes++;	/* NUL termination */
+ 
++	
++#ifdef CONFIG_CMDLINE_BOOL
++	/* Add length of the built-in command line, plus a space */
++	options_bytes += strlen(builtin_cmdline);
++	options_bytes++;
++#endif
+ 	status = efi_high_alloc(sys_table_arg, options_bytes, 0,
+-				&cmdline_addr, MAX_CMDLINE_ADDRESS);
++		&cmdline_addr, MAX_CMDLINE_ADDRESS);
+ 	if (status != EFI_SUCCESS)
+ 		return NULL;
+ 
+@@ -853,7 +880,24 @@ char *efi_convert_cmdline(efi_system_table_t *sys_table_arg,
+ 	s1 = efi_utf16_to_utf8(s1, s2, options_chars);
+ 	*s1 = '\0';
+ 
++#ifdef CONFIG_CMDLINE_BOOL
++	efi_strlcat((char *)cmdline_addr, " ", COMMAND_LINE_SIZE);
++	efi_strlcat((char *)cmdline_addr, builtin_cmdline, COMMAND_LINE_SIZE);
++#endif
+ 	*cmd_line_len = options_bytes;
++#else /* CONFIG_CMDLINE_OVERRIDE */
++	status = efi_high_alloc(sys_table_arg, strlen(builtin_cmdline), 0,
++			       &cmdline_addr, MAX_CMDLINE_ADDRESS);
++	if (status != EFI_SUCCESS)
++		return NULL;
++	while (builtin_cmdline[i] && i < COMMAND_LINE_SIZE) {
++		((char *)cmdline_addr)[i] = builtin_cmdline[i];
++		i++;
++	}
++	((char *)cmdline_addr)[i] = '\0';
++	*cmd_line_len = strlen(builtin_cmdline);
++#endif /* CONFIG_CMDLINE_OVERRIDE */
++
+ 	return (char *)cmdline_addr;
+ }
+ 
+-- 
+2.20.1
+
