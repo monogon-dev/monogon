@@ -46,7 +46,7 @@ podman run -d \
 
 podman run \
     -v $(pwd):/work \
-    -v bazel-shared-cache:/user/.cache/bazel/_bazel_root \
+    -v ${CACHE_VOLUME}:/user/.cache/bazel/_bazel_root \
     --device /dev/kvm \
     --privileged \
     --pod ${POD} \
