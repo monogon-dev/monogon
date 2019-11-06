@@ -24,6 +24,8 @@ chcon -R system_u:object_r:container_file_t:s0 .
 chcon -R unconfined_u:object_r:user_home_t:s0 \
   .arcconfig .idea .git
 
+# Keep this in sync with ci.sh:
+
 podman pod create --name nexantic
 
 # TODO(leo): mount .cache/bazel on a volume (waiting for podman issue to be fixed)
