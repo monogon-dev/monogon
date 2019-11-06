@@ -48,15 +48,6 @@ podman run \
     ${TAG} \
     $@
 
-cat <<EOF
-{
-  "buildTargetPHID": "${BUILD_PHID}",
-  "type": "pass"
-}
-EOF
-
-env
-
 function conduit() {
   # Get Phabricator host from Git origin
   local pattern='ssh://(.+?):([0-9]+)'
