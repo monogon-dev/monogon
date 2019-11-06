@@ -17,6 +17,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -29,17 +30,25 @@ import (
 
 var SmalltownDataPartition gpt.Type = gpt.Type("9eeec464-6885-414a-b278-4305c51f7966")
 
+var (
+	efiPayloadPath = flag.String("efi", "", "UEFI payload")
+	outputPath     = flag.String("out", "", "Output disk image")
+	initramfsPath  = flag.String("initramfs", "", "External initramfs [optional]")
+)
+
 func mibToSectors(size uint64) uint64 {
 	return (size * 1024 * 1024) / 512
 }
 
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("Usage: mkimage <UEFI payload> <output image path> <initramfs (optional)>")
+	flag.Parse()
+	if *efiPayloadPath == "" || *outputPath == "" {
+		flag.PrintDefaults()
 		os.Exit(2)
 	}
-	_ = os.Remove(os.Args[2])
-	diskImg, err := diskfs.Create(os.Args[2], 3*1024*1024*1024, diskfs.Raw)
+
+	_ = os.Remove(*outputPath)
+	diskImg, err := diskfs.Create(*outputPath, 3*1024*1024*1024, diskfs.Raw)
 	if err != nil {
 		fmt.Printf("Failed to create disk: %v", err)
 		os.Exit(1)
@@ -89,7 +98,7 @@ func main() {
 		fmt.Printf("Failed to open EFI payload for writing: %v", err)
 		os.Exit(1)
 	}
-	efiPayloadSrc, err := os.Open(os.Args[1])
+	efiPayloadSrc, err := os.Open(*efiPayloadPath)
 	if err != nil {
 		fmt.Printf("Failed to open EFI payload for reading: %v", err)
 		os.Exit(1)
@@ -110,8 +119,8 @@ func main() {
 		os.Exit(1)
 	}
 	// If we have more than two arguments, the second one is the initramfs
-	if len(os.Args) > 3 {
-		initramfsSrc, err := os.Open(os.Args[3])
+	if *initramfsPath != "" {
+		initramfsSrc, err := os.Open(*initramfsPath)
 		if err != nil {
 			fmt.Printf("Failed to open initramfs for reading: %v", err)
 			os.Exit(1)

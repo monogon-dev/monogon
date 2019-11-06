@@ -8,7 +8,10 @@ genrule(
         "smalltown.img",
     ],
     cmd = """
-    $(location @//core/cmd/mkimage) $(location @//core/build/linux_kernel:bzImage) $@ $(location @//core/build/linux_kernel:initramfs)
+    $(location @//core/cmd/mkimage) \
+        -efi $(location @//core/build/linux_kernel:bzImage) \
+        -initramfs $(location @//core/build/linux_kernel:initramfs) \
+        -out $@
     """,
     tools = [
         "@//core/cmd/mkimage",
