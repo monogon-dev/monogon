@@ -9,6 +9,16 @@ shift; shift;
 TAG=nexantic-build-${BUILD_ID}
 POD=nexantic-build-${BUILD_ID}
 
+# We keep one Bazel build cache per working copy to avoid concurrency issues
+# (we cannot run multiple Bazel servers on a given _bazel_root)
+function getWorkingCopyID {
+  local pattern='/var/drydock/workingcopy-([0-9]+)/'
+  [[ "$(pwd)" =~ $pattern ]]
+  echo ${BASH_REMATCH[1]}
+}
+
+CACHE_VOLUME=bazel-cache-$(getWorkingCopyID)
+
 # New image for each build - the Dockerfile might have changed.
 # Rely on the build step cache to avoid costly rebuilds.
 podman build -t ${TAG} build
@@ -24,11 +34,7 @@ function cleanup {
 
 trap cleanup EXIT
 
-! podman volume create \
-    --opt device=tmpfs \
-    --opt type=tmpfs \
-    --opt o=nodev,exec \
-    bazel-shared-cache
+! podman volume create --opt o=nodev,exec ${CACHE_VOLUME}
 
 podman pod create --name ${POD}
 
