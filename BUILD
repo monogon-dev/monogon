@@ -11,6 +11,7 @@ go_library(
     importpath = "git.monogon.dev/source/nexantic.git",
     visibility = ["//visibility:public"],
     deps = [
+        "@com_github_kevinburke_go_bindata//:go_default_library",
         "@com_github_lopezator_sqlboiler_crdb//:go_default_library",
         "@com_github_rubenv_sql_migrate//sql-migrate:go_default_library",
         "@com_github_volatiletech_sqlboiler//:go_default_library",
