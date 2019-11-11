@@ -26,7 +26,7 @@ genrule(
     srcs = [
         "@//core/cmd/init",
         "@//core/build/utils:mkfs.xfs",
-        "@kubernetes//cmd/kube-apiserver",
+        "@//core/cmd/kube-controlplane",
     ],
     outs = [
         "initramfs.cpio.lz4",
@@ -39,7 +39,7 @@ nod /dev/null 0644 0 0 c 1 3
 file /init $(location @//core/cmd/init) 0755 0 0
 dir /bin 0755 0 0
 file /bin/mkfs.xfs $(location @//core/build/utils:mkfs.xfs) 0755 0 0
-file /bin/kube-apiserver $(location @kubernetes//cmd/kube-apiserver) 0755 0 0
+file /bin/kube-controlplane $(location @//core/cmd/kube-controlplane) 0755 0 0
 EOF
     """,
     tools = [

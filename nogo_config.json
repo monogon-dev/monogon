@@ -15,12 +15,12 @@
     "exclude_files": {
       "external/com_github_golang_protobuf/": "third_party",
       "external/com_github_grpc_ecosystem_grpc_gateway/runtime/": "third_party",
-      "external/kubernetes/staging/src/k8s.io/legacy-cloud-providers/vsphere/": "third_party"
+      "external/kubernetes/": "third_party"
     }
   },
   "unreachable": {
     "exclude_files": {
-      "external/kubernetes/vendor/gopkg.in/gcfg.v1": "third_party",
+      "external/kubernetes/": "third_party",
       "external/bazel_gazelle/pathtools": "third_party"
     }
   },
@@ -37,7 +37,17 @@
   },
   "unusedresult": {
     "exclude_files": {
-      "external/kubernetes/vendor/github.com/docker/spdystream": "third_party"
+      "external/kubernetes/": "third_party"
+    }
+  },
+  "structtag": {
+    "exclude_files": {
+      "external/kubernetes/": "third_party"
+    }
+  },
+  "printf": {
+    "exclude_files": {
+      "external/kubernetes/": "third_party"
     }
   }
 }

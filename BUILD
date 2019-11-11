@@ -4,6 +4,7 @@ load("@io_bazel_rules_go//go:def.bzl", "nogo")
 # gazelle:prefix git.monogon.dev/source/nexantic.git
 # gazelle:exclude core/generated
 # gazelle:exclude tools.go
+# gazelle:exclude core/cmd/kube-controlplane
 gazelle(name = "gazelle")
 
 # Shortcut for the Go SDK
