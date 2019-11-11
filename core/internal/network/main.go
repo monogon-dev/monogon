@@ -19,9 +19,10 @@ package network
 import (
 	"context"
 	"fmt"
-	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
 	"net"
 	"os"
+
+	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
 
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"github.com/vishvananda/netlink"
@@ -79,9 +80,8 @@ func addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP) error {
 		return err
 	}
 	if err := netlink.RouteAdd(&netlink.Route{
-		Dst: &net.IPNet{IP: net.IPv4(0, 0, 0, 0), Mask: net.IPv4Mask(0, 0, 0, 0)},
-		Gw:  gw,
-
+		Dst:   &net.IPNet{IP: net.IPv4(0, 0, 0, 0), Mask: net.IPv4Mask(0, 0, 0, 0)},
+		Gw:    gw,
 		Scope: netlink.SCOPE_UNIVERSE,
 	}); err != nil {
 		return fmt.Errorf("Failed to add default route: %w", err)
@@ -136,6 +136,10 @@ func (s *Service) OnStart() error {
 				ethernetLinks = append(ethernetLinks, link)
 			} else {
 				s.Logger.Info("Ignoring non-Ethernet interface", zap.String("interface", attrs.Name))
+			}
+		} else if link.Attrs().Name == "lo" {
+			if err := netlink.LinkSetUp(link); err != nil {
+				s.Logger.Error("Failed to take up loopback interface", zap.Error(err))
 			}
 		}
 	}
