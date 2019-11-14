@@ -14,10 +14,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package storage
 
-type (
-	Capability struct {
-		Name string
-	}
+import "errors"
+
+type DataPlace uint32
+
+const (
+	PlaceESP  DataPlace = 0
+	PlaceData           = 1
 )
+
+var (
+	// ErrNotInitialized will be returned when trying to access a place that's not yet initialized
+	ErrNotInitialized = errors.New("this place is not initialized")
+	// ErrUnknownPlace will be returned when trying to access a place that's not known
+	ErrUnknownPlace = errors.New("this place is not known")
+)
+
+type StorageManager interface {
+	GetPathInPlace(place DataPlace, path string) (string, error)
+}

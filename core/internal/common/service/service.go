@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package common
+package service
 
 import (
 	"errors"
@@ -74,7 +74,7 @@ func (b *BaseService) Start() error {
 	return nil
 }
 
-// Stop stops the service. THis is an atomic operation and should only be called on a running service.
+// Stop stops the service. This is an atomic operation and should only be called on a running service.
 func (b *BaseService) Stop() error {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()

@@ -20,8 +20,8 @@ import (
 	"fmt"
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
+	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
-	"github.com/casbin/casbin"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"net"
@@ -29,9 +29,8 @@ import (
 
 type (
 	Server struct {
-		*common.BaseService
+		*service.BaseService
 
-		ruleEnforcer *casbin.Enforcer
 		setupService common.SetupService
 		grpcServer   *grpc.Server
 
@@ -52,7 +51,7 @@ func NewApiServer(config *Config, logger *zap.Logger, setupService common.SetupS
 		consensusService: consensusService,
 	}
 
-	s.BaseService = common.NewBaseService("api", logger, s)
+	s.BaseService = service.NewBaseService("api", logger, s)
 
 	grpcServer := grpc.NewServer()
 	schema.RegisterClusterManagementServer(grpcServer, s)
@@ -75,7 +74,7 @@ func (s *Server) OnStart() error {
 		s.Logger.Error("API server failed", zap.Error(err))
 	}()
 
-	s.Logger.Info("GRPC listening", zap.String("host", listenHost))
+	s.Logger.Info("gRPC listening", zap.String("host", listenHost))
 
 	return nil
 }

@@ -36,8 +36,11 @@ func main() {
 			debug.PrintStack()
 		}
 		unix.Sync()
-		// TODO: Switch this to Reboot when init panics are less likely
-		unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
+		// TODO(lorenz): Switch this to Reboot when init panics are less likely
+		// Best effort, nothing we can do if this fails except printing the error to the console.
+		if err := unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF); err != nil {
+			panic(fmt.Sprintf("failed to halt node: %v\n", err))
+		}
 	}()
 	logger, err := zap.NewDevelopment()
 	if err != nil {
@@ -71,7 +74,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	networkSvc.Start()
+
+	if err := networkSvc.Start(); err != nil {
+		logger.Panic("Failed to start network service", zap.Error(err))
+	}
 
 	nodeInstance, err := node.NewSmalltownNode(logger, 7833, 7834)
 	if err != nil {

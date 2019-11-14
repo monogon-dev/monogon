@@ -14,7 +14,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// package ca implements a simple standards-compliant certificate authority.
+// It only supports ed25519 keys, and does not maintain any persistent state.
+//
+// CA and certificates successfully pass https://github.com/zmap/zlint
+// (minus the CA/B rules that a public CA would adhere to, which requires
+// things like OCSP servers, Certificate Policies and ECDSA/RSA-only keys).
 package ca
+
+// TODO(leo): add zlint test
 
 import (
 	"crypto"
@@ -48,7 +56,7 @@ type CA struct {
 // violates Section 4.2.1.2 of RFC 5280 without this. Should eventually be redundant.
 //
 // Taken from https://github.com/FiloSottile/mkcert/blob/master/cert.go#L295 written by one of Go's
-// crypto engineers
+// crypto engineers (BSD 3-clause).
 func calculateSKID(pubKey crypto.PublicKey) ([]byte, error) {
 	spkiASN1, err := x509.MarshalPKIXPublicKey(pubKey)
 	if err != nil {
@@ -67,6 +75,7 @@ func calculateSKID(pubKey crypto.PublicKey) ([]byte, error) {
 	return skid[:], nil
 }
 
+// New creates a new certificate authority with the given common name.
 func New(name string) (*CA, error) {
 	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -76,7 +85,7 @@ func New(name string) (*CA, error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 127)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to generate serial number: %w", err)
+		return nil, fmt.Errorf("failed to generate serial number: %w", err)
 	}
 
 	skid, err := calculateSKID(pubKey)
@@ -101,7 +110,7 @@ func New(name string) (*CA, error) {
 
 	caCertRaw, err := x509.CreateCertificate(rand.Reader, caCert, caCert, pubKey, privKey)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create root certificate: %w", err)
+		return nil, fmt.Errorf("failed to create root certificate: %w", err)
 	}
 
 	ca := &CA{
@@ -109,16 +118,17 @@ func New(name string) (*CA, error) {
 		CACertRaw:  caCertRaw,
 		CACert:     caCert,
 	}
-	if ca.reissueCRL() != nil {
+	if ca.ReissueCRL() != nil {
 		return nil, fmt.Errorf("failed to create initial CRL: %w", err)
 	}
 
 	return ca, nil
 }
 
+// FromCertificates restores CA state.
 func FromCertificates(caCert []byte, caKey []byte, crl []byte) (*CA, error) {
 	if len(caKey) != ed25519.PrivateKeySize {
-		return nil, errors.New("Invalid CA private key size")
+		return nil, errors.New("invalid CA private key size")
 	}
 	privateKey := ed25519.PrivateKey(caKey)
 
@@ -135,11 +145,11 @@ func FromCertificates(caCert []byte, caKey []byte, crl []byte) (*CA, error) {
 		CACertRaw:  caCert,
 		CACert:     caCertVal,
 		Revoked:    crlVal.TBSCertList.RevokedCertificates,
-		CRLRaw:     crl,
 	}, nil
 }
 
-func (ca *CA) IssueCertificate(hostname string) (cert []byte, privkey []byte, err error) {
+// IssueCertificate issues a certificate
+func (ca *CA) IssueCertificate(commonName string) (cert []byte, privkey []byte, err error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 127)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
@@ -159,7 +169,7 @@ func (ca *CA) IssueCertificate(hostname string) (cert []byte, privkey []byte, er
 	etcdCert := &x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			CommonName:         hostname,
+			CommonName:         commonName,
 			OrganizationalUnit: []string{"etcd"},
 		},
 		IsCA:                  false,
@@ -167,13 +177,13 @@ func (ca *CA) IssueCertificate(hostname string) (cert []byte, privkey []byte, er
 		NotBefore:             time.Now(),
 		NotAfter:              unknownNotAfter,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		DNSNames:              []string{hostname},
+		DNSNames:              []string{commonName},
 	}
 	cert, err = x509.CreateCertificate(rand.Reader, etcdCert, ca.CACert, pubKey, ca.PrivateKey)
 	return
 }
 
-func (ca *CA) reissueCRL() error {
+func (ca *CA) ReissueCRL() error {
 	compatCert := CompatCertificate(*ca.CACert)
 	newCRL, err := compatCert.CreateCRL(rand.Reader, ca.PrivateKey, ca.Revoked, time.Now(), unknownNotAfter)
 	if err != nil {
@@ -193,5 +203,5 @@ func (ca *CA) Revoke(serial *big.Int) error {
 		SerialNumber:   serial,
 		RevocationTime: time.Now(),
 	})
-	return ca.reissueCRL()
+	return ca.ReissueCRL()
 }

@@ -18,7 +18,6 @@ package storage
 
 import (
 	"fmt"
-	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/pkg/tpm"
 	"io/ioutil"
 	"os"
@@ -148,18 +147,18 @@ func (s *Manager) mountData() error {
 // GetPathInPlace returns a path in the given place
 // It may return ErrNotInitialized if the place you're trying to access
 // is not initialized or ErrUnknownPlace if the place is not known
-func (s *Manager) GetPathInPlace(place common.DataPlace, path string) (string, error) {
+func (s *Manager) GetPathInPlace(place DataPlace, path string) (string, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 	switch place {
-	case common.PlaceESP:
+	case PlaceESP:
 		return filepath.Join(espDataPath, path), nil
-	case common.PlaceData:
+	case PlaceData:
 		if s.dataReady {
 			return filepath.Join(dataMountPath, path), nil
 		}
-		return "", common.ErrNotInitialized
+		return "", ErrNotInitialized
 	default:
-		return "", common.ErrUnknownPlace
+		return "", ErrUnknownPlace
 	}
 }

@@ -22,7 +22,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
-	"git.monogon.dev/source/nexantic.git/core/internal/common"
+	"git.monogon.dev/source/nexantic.git/core/internal/common/grpc"
 
 	"errors"
 
@@ -35,7 +35,7 @@ var (
 
 func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*schema.AddNodeResponse, error) {
 	// Setup API client
-	c, err := common.NewSmalltownAPIClient(fmt.Sprintf("%s:%d", req.Host, req.ApiPort))
+	c, err := grpc.NewSmalltownAPIClient(fmt.Sprintf("%s:%d", req.Addr, s.config.Port))
 	if err != nil {
 		return nil, err
 	}
@@ -60,45 +60,44 @@ func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*sche
 		return nil, ErrAttestationFailed
 	}
 
-	consensusCerts, err := s.consensusService.IssueCertificate(req.Host)
+	consensusCerts, err := s.consensusService.IssueCertificate(req.Addr)
 	if err != nil {
 		return nil, err
 	}
 
-	// Provision cluster info locally
-	memberID, err := s.consensusService.AddMember(ctx, req.Name, fmt.Sprintf("https://%s:%d", req.Host, req.ConsensusPort))
+	// TODO(leo): fetch remote hostname rather than using the addr
+	name := req.Addr
+
+	// Add new node to local etcd cluster.
+	memberID, err := s.consensusService.AddMember(ctx, name, fmt.Sprintf("https://%s:%d", req.Addr, s.config.Port))
 	if err != nil {
 		return nil, err
 	}
 
-	s.Logger.Info("Added new node to consensus cluster; provisioning external node now",
-		zap.String("host", req.Host), zap.Uint32("port", req.ApiPort),
-		zap.Uint32("consensus_port", req.ConsensusPort), zap.String("name", req.Name))
+	s.Logger.Info("Added new node to consensus cluster; sending cluster join request to node",
+		zap.String("addr", req.Addr), zap.Uint16("port", s.config.Port))
 
-	// Provision cluster info externally
-	_, err = c.Setup.ProvisionCluster(ctx, &schema.ProvisionClusterRequest{
+	// Send JoinCluster request to new node to make it join.
+	_, err = c.Setup.JoinCluster(ctx, &schema.JoinClusterRequest{
 		InitialCluster:    s.consensusService.GetInitialClusterString(),
-		ProvisioningToken: req.Token,
-		ExternalHost:      req.Host,
-		NodeName:          req.Name,
-		TrustBackend:      req.TrustBackend,
+		ProvisioningToken: req.ProvisioningToken,
 		Certs:             consensusCerts,
 	})
 	if err != nil {
-		err3 := s.consensusService.RevokeCertificate(req.Host)
-		if err3 != nil {
-			s.Logger.Error("Failed to revoke a certificate after rollback, potential security risk", zap.Error(err3))
+		errRevoke := s.consensusService.RevokeCertificate(req.Addr)
+		if errRevoke != nil {
+			s.Logger.Error("Failed to revoke a certificate after rollback - potential security risk", zap.Error(errRevoke))
 		}
-		// Revert Consensus add member - might fail if consensus cannot be established
-		err2 := s.consensusService.RemoveMember(ctx, memberID)
-		if err2 != nil || err3 != nil {
-			return nil, fmt.Errorf("Rollback failed after failed provisioning; err=%v; err_rb=%v; err_revoke=%v", err, err2, err3)
+		// Revert etcd add member - might fail if consensus cannot be established.
+		errRemove := s.consensusService.RemoveMember(ctx, memberID)
+		if errRemove != nil || errRevoke != nil {
+			return nil, fmt.Errorf("rollback failed after failed provisioning; err=%v; err_rb=%v; err_revoke=%v", err, errRemove, errRevoke)
 		}
 		return nil, err
 	}
 	s.Logger.Info("Fully provisioned new node",
-		zap.String("host", req.Host), zap.Uint32("port", req.ApiPort),
-		zap.Uint32("consensus_port", req.ConsensusPort), zap.String("name", req.Name),
+		zap.String("host", req.Addr),
+		zap.Uint16("apiPort", s.config.Port),
 		zap.Uint64("member_id", memberID))
 
 	return &schema.AddNodeResponse{}, nil
@@ -108,7 +107,7 @@ func (s *Server) RemoveNode(context.Context, *schema.RemoveNodeRequest) (*schema
 	panic("implement me")
 }
 
-func (s *Server) GetNodes(context.Context, *schema.GetNodesRequest) (*schema.GetNodesResponse, error) {
+func (s *Server) ListNodes(context.Context, *schema.ListNodesRequest) (*schema.ListNodesResponse, error) {
 	nodes := s.consensusService.GetNodes()
 	resNodes := make([]*schema.Node, len(nodes))
 
@@ -121,7 +120,7 @@ func (s *Server) GetNodes(context.Context, *schema.GetNodesRequest) (*schema.Get
 		}
 	}
 
-	return &schema.GetNodesResponse{
+	return &schema.ListNodesResponse{
 		Nodes: resNodes,
 	}, nil
 }

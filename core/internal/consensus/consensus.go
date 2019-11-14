@@ -14,6 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// package consensus manages the embedded etcd cluster.
 package consensus
 
 import (
@@ -23,6 +24,7 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
+	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
 	"io/ioutil"
 	"math/rand"
 	"net/url"
@@ -33,7 +35,6 @@ import (
 	"time"
 
 	"git.monogon.dev/source/nexantic.git/core/generated/api"
-	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus/ca"
 	"github.com/pkg/errors"
 	"go.etcd.io/etcd/clientv3"
@@ -61,13 +62,16 @@ const (
 
 type (
 	Service struct {
-		*common.BaseService
+		*service.BaseService
 
-		etcd           *embed.Etcd
-		kv             clientv3.KV
-		ready          bool
-		bootstrapCA    *ca.CA
-		bootstrapCert  []byte
+		etcd  *embed.Etcd
+		kv    clientv3.KV
+		ready bool
+
+		// bootstrapCA and bootstrapCert cache the etcd cluster CA data during bootstrap.
+		bootstrapCA   *ca.CA
+		bootstrapCert []byte
+
 		watchCRLTicker *time.Ticker
 		lastCRL        []byte
 
@@ -79,10 +83,9 @@ type (
 		DataDir        string
 		InitialCluster string
 		NewCluster     bool
-
-		ExternalHost string
-		ListenHost   string
-		ListenPort   uint16
+		ExternalHost   string
+		ListenHost     string
+		ListenPort     uint16
 	}
 
 	Member struct {
@@ -97,12 +100,14 @@ func NewConsensusService(config Config, logger *zap.Logger) (*Service, error) {
 	consensusServer := &Service{
 		config: &config,
 	}
-	consensusServer.BaseService = common.NewBaseService("consensus", logger, consensusServer)
+	consensusServer.BaseService = service.NewBaseService("consensus", logger, consensusServer)
 
 	return consensusServer, nil
 }
 
 func (s *Service) OnStart() error {
+	// See: https://godoc.org/github.com/coreos/etcd/embed#Config
+
 	if s.config == nil {
 		return errors.New("config for consensus is nil")
 	}
@@ -121,17 +126,19 @@ func (s *Service) OnStart() error {
 	}
 	s.lastCRL = lastCRL
 
-	// Reset LCUrls because we don't want to expose any client
+	// Reset Listen Client URLs because we don't want to expose any client
 	cfg.LCUrls = nil
 
+	// Advertise Peer URLs
 	apURL, err := url.Parse(fmt.Sprintf("https://%s:%d", s.config.ExternalHost, s.config.ListenPort))
 	if err != nil {
-		return errors.Wrap(err, "invalid external_host or listen_port")
+		return fmt.Errorf("invalid external_host or listen_port: %w", err)
 	}
 
+	// Listen Peer URLs
 	lpURL, err := url.Parse(fmt.Sprintf("https://%s:%d", s.config.ListenHost, s.config.ListenPort))
 	if err != nil {
-		return errors.Wrap(err, "invalid listen_host or listen_port")
+		return fmt.Errorf("invalid listen_host or listen_port: %w", err)
 	}
 	cfg.APUrls = []url.URL{*apURL}
 	cfg.LPUrls = []url.URL{*lpURL}
@@ -160,11 +167,11 @@ func (s *Service) OnStart() error {
 
 	// Override the logger
 	//*server.GetLogger() = *s.Logger.With(zap.String("component", "etcd"))
+	// TODO(leo): can we uncomment this?
 
 	go func() {
 		s.Logger.Info("waiting for etcd to become ready")
 		<-s.etcd.Server.ReadyNotify()
-		s.ready = true
 		s.Logger.Info("etcd is now ready")
 	}()
 
@@ -177,7 +184,10 @@ func (s *Service) OnStart() error {
 	return nil
 }
 
-func (s *Service) SetupCertificates(certs *api.ConsensusCertificates) error {
+// WriteCertificateFiles writes the given node certificate data to local storage
+// such that it can be used by the embedded etcd server.
+// Unfortunately, we cannot pass the certificates directly to etcd.
+func (s *Service) WriteCertificateFiles(certs *api.ConsensusCertificates) error {
 	if err := ioutil.WriteFile(filepath.Join(s.config.DataDir, CRLPath), certs.Crl, 0600); err != nil {
 		return err
 	}
@@ -196,6 +206,7 @@ func (s *Service) SetupCertificates(certs *api.ConsensusCertificates) error {
 	return nil
 }
 
+// PrecreateCA generates the etcd cluster certificate authority and writes it to local storage.
 func (s *Service) PrecreateCA() error {
 	// Provision an etcd CA
 	etcdRootCA, err := ca.New("Smalltown etcd Root CA")
@@ -211,7 +222,7 @@ func (s *Service) PrecreateCA() error {
 	}
 	// Preserve certificate for later injection
 	s.bootstrapCert = cert
-	if err := s.SetupCertificates(&api.ConsensusCertificates{
+	if err := s.WriteCertificateFiles(&api.ConsensusCertificates{
 		Ca:   etcdRootCA.CACertRaw,
 		Crl:  etcdRootCA.CRLRaw,
 		Cert: cert,
@@ -227,14 +238,21 @@ const (
 	caPathEtcd     = "/etcd-ca/ca.der"
 	caKeyPathEtcd  = "/etcd-ca/ca-key.der"
 	crlPathEtcd    = "/etcd-ca/crl.der"
+
+	// This prefix stores the individual certs the etcd CA has issued.
 	certPrefixEtcd = "/etcd-ca/certs"
 )
 
+// InjectCA copies the CA from data cached during PrecreateCA to etcd.
+// Requires a previous call to PrecreateCA.
 func (s *Service) InjectCA() error {
+	if s.bootstrapCA == nil || s.bootstrapCert == nil {
+		panic("bootstrapCA or bootstrapCert are nil - missing PrecreateCA call?")
+	}
 	if _, err := s.kv.Put(context.Background(), caPathEtcd, string(s.bootstrapCA.CACertRaw)); err != nil {
 		return err
 	}
-	// TODO: Should be wrapped by the master key
+	// TODO(lorenz): Should be wrapped by the master key
 	if _, err := s.kv.Put(context.Background(), caKeyPathEtcd, string([]byte(*s.bootstrapCA.PrivateKey))); err != nil {
 		return err
 	}
@@ -261,12 +279,12 @@ func (s *Service) etcdGetSingle(path string) ([]byte, int64, error) {
 		return nil, -1, fmt.Errorf("failed to get key from etcd: %w", err)
 	}
 	if len(res.Kvs) != 1 {
-		return nil, -1, errors.New("key not available")
+		return nil, -1, errors.New("key not available or multiple keys returned")
 	}
 	return res.Kvs[0].Value, res.Kvs[0].ModRevision, nil
 }
 
-func (s *Service) takeCAOnline() (*ca.CA, int64, error) {
+func (s *Service) getCAFromEtcd() (*ca.CA, int64, error) {
 	// TODO: Technically this could be done in a single request, but it's more logic
 	caCert, _, err := s.etcdGetSingle(caPathEtcd)
 	if err != nil {
@@ -289,7 +307,7 @@ func (s *Service) takeCAOnline() (*ca.CA, int64, error) {
 }
 
 func (s *Service) IssueCertificate(hostname string) (*api.ConsensusCertificates, error) {
-	idCA, _, err := s.takeCAOnline()
+	idCA, _, err := s.getCAFromEtcd()
 	if err != nil {
 		return nil, err
 	}
@@ -303,6 +321,7 @@ func (s *Service) IssueCertificate(hostname string) (*api.ConsensusCertificates,
 	}
 	serial := hex.EncodeToString(certVal.SerialNumber.Bytes())
 	if _, err := s.kv.Put(context.Background(), path.Join(certPrefixEtcd, serial), string(cert)); err != nil {
+		// We issued a certificate, but failed to persist it. Return an error and forget it ever happened.
 		return nil, fmt.Errorf("failed to persist certificate: %w", err)
 	}
 	return &api.ConsensusCertificates{
@@ -316,7 +335,7 @@ func (s *Service) IssueCertificate(hostname string) (*api.ConsensusCertificates,
 func (s *Service) RevokeCertificate(hostname string) error {
 	rand.Seed(time.Now().UnixNano())
 	for {
-		idCA, crlRevision, err := s.takeCAOnline()
+		idCA, crlRevision, err := s.getCAFromEtcd()
 		if err != nil {
 			return err
 		}
@@ -338,6 +357,7 @@ func (s *Service) RevokeCertificate(hostname string) error {
 				}
 			}
 		}
+		// TODO(leo): this needs a test
 		cmp := clientv3.Compare(clientv3.ModRevision(crlPathEtcd), "=", crlRevision)
 		op := clientv3.OpPut(crlPathEtcd, string(idCA.CRLRaw))
 		res, err := s.kv.Txn(context.Background()).If(cmp).Then(op).Commit()
@@ -354,7 +374,7 @@ func (s *Service) RevokeCertificate(hostname string) error {
 }
 
 func (s *Service) watchCRL() {
-	// TODO: Change etcd client to WatchableKV and make this an actual watch
+	// TODO(lorenz): Change etcd client to WatchableKV and make this an actual watch
 	// This needs changes in more places, so leaving it now
 	s.watchCRLTicker = time.NewTicker(30 * time.Second)
 	for range s.watchCRLTicker.C {

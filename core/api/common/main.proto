@@ -19,11 +19,6 @@ syntax = "proto3";
 option go_package = "git.monogon.dev/source/nexantic.git/core/generated/common";
 package smalltown.common;
 
-message KV {
-    string key = 1;
-    bytes value = 2;
-}
-
 enum TrustBackend {
     DUMMY = 0;
     TPM = 1;

@@ -21,71 +21,87 @@ import "core/api/common/main.proto";
 
 option go_package = "git.monogon.dev/source/nexantic.git/core/generated/api";
 
+// TODO(leo): A "cluster" in terms of this API is an etcd cluster. We have
+// since realized that we will need multiple kinds of nodes in a Smalltown cluster
+// (like worker nodes), which aren't etcd members. This API is pretty strongly
+// coupled to etcd at this point. How do we handle cluster membership for workers?
+
+// The ClusterManagement service is used by an authenticated administrative user
+// to manage node membership in an existing Smalltown cluster.
 service ClusterManagement {
-    // Add a node to the Smalltown cluster
+    // Add a node to the cluster, subject to successful remote attestation.
     rpc AddNode (AddNodeRequest) returns (AddNodeResponse) {
 
     }
 
-    // Remove a node from the Smalltown cluster
+    // Remove a node from the cluster.
     rpc RemoveNode (RemoveNodeRequest) returns (RemoveNodeRequest) {
 
     }
 
-    // Get all cluster nodes
-    rpc GetNodes (GetNodesRequest) returns (GetNodesResponse) {
+    // List all cluster nodes
+    rpc ListNodes (ListNodesRequest) returns (ListNodesResponse) {
 
     }
 }
 
+// SetupService manages a single node's lifecycle, and it called either by an administrative
+// user while bootstrapping the cluster, or by existing nodes in a cluster.
 service SetupService {
-    // SetupNewCluster configures this node to either start a new Smalltown cluster or join an existing one
+    // Setup bootstraps an unprovisioned node and selects its bootstrapping mode
+    // (either joining an existing cluster, or creating a new one).
     rpc Setup (SetupRequest) returns (SetupResponse) {
 
     }
 
-    // JoinCluster can be called by another Smalltown node when the node has been put in to JOIN_CLUSTER mode using Setup.
-    // This request sets up all necessary config variables, joins the consensus and puts the node in production state.
-    rpc ProvisionCluster (ProvisionClusterRequest) returns (ProvisionClusterResponse) {
+    // BootstrapCluster is called by an administrative user to bootstrap the first node
+    // of a Smalltown cluster.
+    rpc BootstrapNewCluster (BootstrapNewClusterRequest) returns (BootstrapNewClusterResponse) {
 
     }
 
+    // JoinCluster can be called by another Smalltown node when the node has been put into
+    // JOIN_CLUSTER mode using Setup. This request sets up all necessary config variables,
+    // joins the consensus and puts the node into production state.
+    rpc JoinCluster (JoinClusterRequest) returns (JoinClusterResponse) {
+
+    }
+
+    // Attest is called by an existing cluster node to verify a node's remote
+    // attestation identity.
+    //
+    // This is not yet implemented, but at least the following values will be signed:
+    //
+    //  - the node's trust backend and other configuration
+    //    (such that the new node can verify whether it is in an acceptable state)
+    //
+    //  - the set of PCRs we use for sealing, which includes the firmware and secure boot state
+    //    (see pkg/tpm/tpm.go)
     rpc Attest (AttestRequest) returns (AttestResponse) {
 
     }
 }
 
 message SetupRequest {
-    oneof request {
-        NewClusterRequest newCluster = 1;
-        JoinClusterRequest joinCluster = 2;
-    }
-
-}
-
-message NewClusterRequest {
+    // Hostname for the new node
+    // TODO(leo): how will we handle hostnames? do we let the customer choose them? etc.
     string nodeName = 1;
-    string externalHost = 2;
-    smalltown.common.TrustBackend trustBackend = 3;
-}
-
-message JoinClusterRequest {
+    // Trust backend to be used. Right now, we support just one kind of trust
+    // backend (our internal one), but at some point, we might support external
+    // key management hardware. It has to be configured this early since it would
+    // also store cluster secrets used during provisioning and setup.
+    smalltown.common.TrustBackend trustBackend = 2;
 }
 
 message SetupResponse {
-    oneof response {
-        NewClusterResponse newCluster = 1;
-        JoinClusterResponse joinCluster = 2;
-    }
-}
-
-message NewClusterResponse {
-}
-
-message JoinClusterResponse {
+    // provisioningToken is a secret key that establishes a mutual trust-on-first-use
+    // relationship between the cluster and the new node (after passing attestation checks).
     string provisioningToken = 1;
 }
 
+// ConsensusCertificates is a node's individual etcd certificates.
+// When provisioning a new node, the existing node sends the new node
+// its certificates after authenticating it.
 message ConsensusCertificates {
     bytes ca = 1;
     bytes crl = 2;
@@ -93,18 +109,25 @@ message ConsensusCertificates {
     bytes key = 4;
 }
 
-message ProvisionClusterRequest {
+message JoinClusterRequest {
+    // The callee's provisioningToken. Knowledge of this token authenticates the caller.
     string provisioningToken = 1;
-
+    // Cluster bootstrap URI for etcd. The caller will set this to the
+    // list of existing nodes in the cluster. This value is only used during bootstrap.
     string initialCluster = 2;
-    string nodeName = 3;
-    string externalHost = 4;
-    smalltown.common.TrustBackend trustBackend = 5;
-    bytes storeKey = 6;
-    ConsensusCertificates certs = 7;
+    // New node's etcd client certificates
+    ConsensusCertificates certs = 3;
 }
 
-message ProvisionClusterResponse {
+message JoinClusterResponse {
+
+}
+
+message BootstrapNewClusterRequest {
+
+}
+
+message BootstrapNewClusterResponse {
 
 }
 
@@ -116,26 +139,12 @@ message AttestResponse {
     string response = 1;
 }
 
-message Key {
-    string label = 1;
-    string type = 2;
-}
-
-message CreateKeyRequest {
-    Key key = 1;
-}
-
-message CreateKeyResponse {
-
-}
-
 message AddNodeRequest {
-    string host = 1;
-    uint32 apiPort = 2;
-    uint32 consensusPort = 3;
-    string token = 4;
-    string name = 5;
-    smalltown.common.TrustBackend trustBackend = 6;
+    // New node's address to connect to.
+    // TODO(leo): Is this always an IP address?
+    string addr = 1;
+    // New node's provisioning token.
+    string provisioningToken = 4;
 }
 
 message AddNodeResponse {
@@ -150,17 +159,22 @@ message RemoveNodeResponse {
 
 }
 
-message GetNodesRequest {
+message ListNodesRequest {
 
 }
 
-message GetNodesResponse {
+message ListNodesResponse {
     repeated Node nodes = 1;
 }
 
+// Node describes a single node's etcd membership state
 message Node {
+    // etcd member ID
     uint64 id = 1;
+    // etcd member name
     string name = 2;
+    // etcd peer URL
     string address = 3;
+    // Whether the etcd member is synced with the cluster.
     bool synced = 4;
 }

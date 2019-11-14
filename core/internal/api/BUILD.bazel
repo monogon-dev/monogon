@@ -4,7 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "cluster.go",
-        "main.go",
+        "server.go",
         "setup.go",
     ],
     importpath = "git.monogon.dev/source/nexantic.git/core/internal/api",
@@ -12,8 +12,9 @@ go_library(
     deps = [
         "//core/api/api:go_default_library",
         "//core/internal/common:go_default_library",
+        "//core/internal/common/grpc:go_default_library",
+        "//core/internal/common/service:go_default_library",
         "//core/internal/consensus:go_default_library",
-        "@com_github_casbin_casbin//:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
         "@org_uber_go_zap//:go_default_library",
     ],

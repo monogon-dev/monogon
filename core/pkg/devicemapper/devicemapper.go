@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// package devicemapper is a thin wrapper for the devicemapper ioctl API.
+// See: https://github.com/torvalds/linux/blob/master/include/uapi/linux/dm-ioctl.h
 package devicemapper
 
 import (
@@ -120,13 +122,15 @@ func newReq() DMIoctl {
 	}
 }
 
+// stringToDelimitedBuf copies src to dst and returns an error if len(src) > len(dst),
+// or when the string contains a null byte.
 func stringToDelimitedBuf(dst []byte, src string) error {
 	if len(src) > len(dst)-1 {
-		return fmt.Errorf("String longer than target buffer (%v > %v)", len(src), len(dst)-1)
+		return fmt.Errorf("string longer than target buffer (%v > %v)", len(src), len(dst)-1)
 	}
 	for i := 0; i < len(src); i++ {
 		if src[i] == 0x00 {
-			return errors.New("String contains null byte, this is unsupported by DM")
+			return errors.New("string contains null byte, this is unsupported by DM")
 		}
 		dst[i] = src[i]
 	}
@@ -139,7 +143,7 @@ func getFd() (uintptr, error) {
 	if fd == 0 {
 		f, err := os.Open("/dev/mapper/control")
 		if os.IsNotExist(err) {
-			os.MkdirAll("/dev/mapper", 0755)
+			_ = os.MkdirAll("/dev/mapper", 0755)
 			if err := unix.Mknod("/dev/mapper/control", unix.S_IFCHR|0600, int(unix.Mkdev(10, 236))); err != nil {
 				return 0, err
 			}
@@ -283,11 +287,11 @@ func CreateActiveDevice(name string, targets []Target) (uint64, error) {
 		return 0, fmt.Errorf("DM_DEV_CREATE failed: %w", err)
 	}
 	if err := LoadTable(name, targets); err != nil {
-		RemoveDevice(name)
+		_ = RemoveDevice(name)
 		return 0, fmt.Errorf("DM_TABLE_LOAD failed: %w", err)
 	}
 	if err := Resume(name); err != nil {
-		RemoveDevice(name)
+		_ = RemoveDevice(name)
 		return 0, fmt.Errorf("DM_DEV_SUSPEND failed: %w", err)
 	}
 	return dev, nil

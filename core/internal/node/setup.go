@@ -19,6 +19,7 @@ package node
 import (
 	"git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
+	"git.monogon.dev/source/nexantic.git/core/internal/storage"
 
 	"errors"
 
@@ -41,19 +42,18 @@ func (s *SmalltownNode) GetJoinClusterToken() string {
 	return s.joinToken
 }
 
-func (s *SmalltownNode) SetupNewCluster(name string, externalHost string) error {
+func (s *SmalltownNode) SetupNewCluster() error {
 	if s.state == common.StateConfigured {
 		return ErrAlreadySetup
 	}
-	dataPath, err := s.Storage.GetPathInPlace(common.PlaceData, "etcd")
-	if err == common.ErrNotInitialized {
+	dataPath, err := s.Storage.GetPathInPlace(storage.PlaceData, "etcd")
+	if err == storage.ErrNotInitialized {
 		return ErrStorageNotInitialized
 	} else if err != nil {
 		return err
 	}
 
-	s.logger.Info("Setting up a new cluster", zap.String("name", name), zap.String("external_host", externalHost))
-
+	s.logger.Info("Setting up a new cluster")
 	s.logger.Info("Provisioning consensus")
 
 	// Make sure etcd is not yet provisioned
@@ -64,11 +64,11 @@ func (s *SmalltownNode) SetupNewCluster(name string, externalHost string) error 
 	// Spin up etcd
 	config := s.Consensus.GetConfig()
 	config.NewCluster = true
-	config.Name = name
-	config.ExternalHost = externalHost
+	config.Name = s.hostname
 	config.DataDir = dataPath
 	s.Consensus.SetConfig(config)
 
+	// Generate the cluster CA and store it to local storage.
 	if err := s.Consensus.PrecreateCA(); err != nil {
 		return err
 	}
@@ -78,6 +78,7 @@ func (s *SmalltownNode) SetupNewCluster(name string, externalHost string) error 
 		return err
 	}
 
+	// Now that the cluster is up and running, we can persist the CA to the cluster.
 	if err := s.Consensus.InjectCA(); err != nil {
 		return err
 	}
@@ -101,12 +102,12 @@ func (s *SmalltownNode) EnterJoinClusterMode() error {
 	return nil
 }
 
-func (s *SmalltownNode) JoinCluster(name string, clusterString string, externalHost string, certs *api.ConsensusCertificates) error {
+func (s *SmalltownNode) JoinCluster(clusterString string, certs *api.ConsensusCertificates) error {
 	if s.state != common.StateClusterJoinMode {
 		return ErrNotInJoinMode
 	}
 
-	s.logger.Info("Joining cluster", zap.String("cluster", clusterString), zap.String("name", name))
+	s.logger.Info("Joining cluster", zap.String("cluster", clusterString))
 
 	err := s.SetupBackend()
 	if err != nil {
@@ -114,11 +115,10 @@ func (s *SmalltownNode) JoinCluster(name string, clusterString string, externalH
 	}
 
 	config := s.Consensus.GetConfig()
-	config.Name = name
+	config.Name = s.hostname
 	config.InitialCluster = clusterString
-	config.ExternalHost = externalHost
 	s.Consensus.SetConfig(config)
-	if err := s.Consensus.SetupCertificates(certs); err != nil {
+	if err := s.Consensus.WriteCertificateFiles(certs); err != nil {
 		return err
 	}
 

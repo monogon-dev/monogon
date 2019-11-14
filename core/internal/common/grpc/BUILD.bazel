@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["grpc.go"],
+    importpath = "git.monogon.dev/source/nexantic.git/core/internal/common/grpc",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//core/api/api:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
+    ],
+)

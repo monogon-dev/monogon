@@ -22,8 +22,8 @@ import (
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
+	"os"
 
-	"github.com/casbin/casbin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -35,15 +35,20 @@ type (
 		Storage   *storage.Manager
 
 		logger       *zap.Logger
-		ruleEnforcer *casbin.Enforcer
 		state        common.SmalltownState
 		joinToken    string
+		hostname     string
 	}
 )
 
 func NewSmalltownNode(logger *zap.Logger, apiPort, consensusPort uint16) (*SmalltownNode, error) {
 	flag.Parse()
 	logger.Info("Creating Smalltown node")
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		panic(err)
+	}
 
 	storageManager, err := storage.Initialize(logger.With(zap.String("component", "storage")))
 	if err != nil {
@@ -52,10 +57,9 @@ func NewSmalltownNode(logger *zap.Logger, apiPort, consensusPort uint16) (*Small
 	}
 
 	consensusService, err := consensus.NewConsensusService(consensus.Config{
-		Name:         "test",
-		ExternalHost: "0.0.0.0",
-		ListenPort:   consensusPort,
-		ListenHost:   "0.0.0.0",
+		Name:       hostname,
+		ListenPort: consensusPort,
+		ListenHost: "0.0.0.0",
 	}, logger.With(zap.String("module", "consensus")))
 	if err != nil {
 		return nil, err
@@ -63,8 +67,9 @@ func NewSmalltownNode(logger *zap.Logger, apiPort, consensusPort uint16) (*Small
 
 	s := &SmalltownNode{
 		Consensus: consensusService,
-		logger:    logger,
 		Storage:   storageManager,
+		logger:    logger,
+		hostname:  hostname,
 	}
 
 	apiService, err := api.NewApiServer(&api.Config{
@@ -91,7 +96,7 @@ func (s *SmalltownNode) Start() error {
 			return err
 		}
 	} else {
-		s.logger.Info("Consensus is not provisioned")
+		s.logger.Info("Consensus is not provisioned, starting provisioning...")
 		err := s.startForSetup()
 		if err != nil {
 			return err

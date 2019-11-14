@@ -36,16 +36,51 @@ import (
 )
 
 var (
-	// SecureBootPCRs are all PCRs that measure the current Secure Boot configuration
+	// SecureBootPCRs are all PCRs that measure the current Secure Boot configuration.
+	// This is what we want if we rely on secure boot to verify boot integrity. The firmware
+	// hashes the secure boot policy and custom keys into the PCR.
+	//
+	// This requires an extra step that provisions the custom keys.
+	//
+	// Some background: https://mjg59.dreamwidth.org/48897.html?thread=1847297
+	// (the initramfs issue mentioned in the article has been solved by integrating
+	// it into the kernel binary, and we don't have a shim bootloader)
+	//
+	// PCR7 alone is not sufficient - it needs to be combined with firmware measurements.
 	SecureBootPCRs = []int{7}
 
 	// FirmwarePCRs are alle PCRs that contain the firmware measurements
 	// See https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final_-v15.pdf
-	FirmwarePCRs = []int{0, 2, 3}
+	FirmwarePCRs = []int{
+		0,  // platform firmware
+		2,  // option ROM code
+		3,  // option ROM configuration and data
+	}
 
-	// FullSystemPCRs are all PCRs that contain any measurements up to the currently running EFI
-	// payload.
-	FullSystemPCRs = []int{0, 1, 2, 3, 4}
+	// FullSystemPCRs are all PCRs that contain any measurements up to the currently running EFI payload.
+	FullSystemPCRs = []int{
+		0,  // platform firmware
+		1,  // host platform configuration
+		2,  // option ROM code
+		3,  // option ROM configuration and data
+		4,  // EFI payload
+	}
+
+	// Using FullSystemPCRs is the most secure, but also the most brittle option since updating the EFI
+	// binary, updating the platform firmware, changing platform settings or updating the binary
+	// would invalidate the sealed data. It's annoying (but possible) to predict values for PCR4,
+	// and even more annoying for the firmware PCR (comparison to known values on similar hardware
+	// is the only thing that comes to mind).
+	//
+	// See also: https://github.com/mxre/sealkey (generates PCR4 from EFI image, BSD license)
+	//
+	// Using only SecureBootPCRs is the easiest and still reasonably secure, if we assume that the
+	// platform knows how to take care of itself (i.e. Intel Boot Guard), and that secure boot
+	// is implemented properly. It is, however, a much larger amount of code we need to trust.
+	//
+	// We do not care about PCR 5 (GPT partition table) since modifying it is harmless. All of
+	// the boot options and cmdline are hardcoded in the kernel image, and we use no bootloader,
+	// so there's no PCR for bootloader configuration or kernel cmdline.
 )
 
 var (

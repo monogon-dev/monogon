@@ -34,66 +34,27 @@ var (
 )
 
 func (s *Server) Setup(c context.Context, r *schema.SetupRequest) (*schema.SetupResponse, error) {
-
-	switch r.Request.(type) {
-	case *schema.SetupRequest_JoinCluster:
-		token, err := s.enterJoinCluster(r.GetJoinCluster())
-		if err != nil {
-			return nil, err
-		}
-
-		return &schema.SetupResponse{
-			Response: &schema.SetupResponse_JoinCluster{
-				JoinCluster: &schema.JoinClusterResponse{
-					ProvisioningToken: token,
-				},
-			},
-		}, nil
-
-	case *schema.SetupRequest_NewCluster:
-		return &schema.SetupResponse{
-			Response: &schema.SetupResponse_NewCluster{
-				NewCluster: &schema.NewClusterResponse{},
-			},
-		}, s.setupNewCluster(r.GetNewCluster())
-	}
-
 	return &schema.SetupResponse{}, nil
 }
 
-func (s *Server) enterJoinCluster(r *schema.JoinClusterRequest) (string, error) {
-	err := s.setupService.EnterJoinClusterMode()
-	if err != nil {
-		return "", err
-	}
-
-	return s.setupService.GetJoinClusterToken(), nil
+func (s *Server) BootstrapNewCluster(context.Context, *schema.BootstrapNewClusterRequest) (*schema.BootstrapNewClusterResponse, error) {
+	err := s.setupService.SetupNewCluster()
+	return &schema.BootstrapNewClusterResponse{}, err
 }
 
-func (s *Server) setupNewCluster(r *schema.NewClusterRequest) error {
-	if len(r.NodeName) < MinNameLength {
-		return ErrInvalidNameLength
-	}
-	return s.setupService.SetupNewCluster(r.NodeName, r.ExternalHost)
-}
-
-func (s *Server) ProvisionCluster(ctx context.Context, req *schema.ProvisionClusterRequest) (*schema.ProvisionClusterResponse, error) {
-	if len(req.NodeName) < MinNameLength {
-		return nil, ErrInvalidNameLength
-	}
-
+func (s *Server) JoinCluster(ctx context.Context, req *schema.JoinClusterRequest) (*schema.JoinClusterResponse, error) {
 	// Verify provisioning token
 	if s.setupService.GetJoinClusterToken() != req.ProvisioningToken {
 		return nil, ErrInvalidProvisioningToken
 	}
 
 	// Join cluster
-	err := s.setupService.JoinCluster(req.NodeName, req.InitialCluster, req.ExternalHost, req.Certs)
+	err := s.setupService.JoinCluster(req.InitialCluster, req.Certs)
 	if err != nil {
 		return nil, err
 	}
 
-	return &schema.ProvisionClusterResponse{}, nil
+	return &schema.JoinClusterResponse{}, nil
 }
 
 func (s *Server) Attest(c context.Context, r *schema.AttestRequest) (*schema.AttestResponse, error) {

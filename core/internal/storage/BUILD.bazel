@@ -6,12 +6,11 @@ go_library(
         "blockdev.go",
         "data.go",
         "find.go",
-        "xfs.go",
+        "storage.go",
     ],
     importpath = "git.monogon.dev/source/nexantic.git/core/internal/storage",
     visibility = ["//:__subpackages__"],
     deps = [
-        "//core/internal/common:go_default_library",
         "//core/pkg/devicemapper:go_default_library",
         "//core/pkg/sysfs:go_default_library",
         "//core/pkg/tpm:go_default_library",

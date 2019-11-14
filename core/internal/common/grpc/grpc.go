@@ -14,22 +14,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package audit
+package grpc
 
-import "go.etcd.io/etcd/clientv3"
+import (
+	"git.monogon.dev/source/nexantic.git/core/generated/api"
+
+	"google.golang.org/grpc"
+)
 
 type (
-	Logger struct {
-		kv *clientv3.KV
+	SmalltownClient struct {
+		conn *grpc.ClientConn
+
+		Cluster api.ClusterManagementClient
+		Setup   api.SetupServiceClient
 	}
 )
 
-func NewAuditLogger(kv *clientv3.KV) (*Logger, error) {
-	return &Logger{
-		kv: kv,
-	}, nil
+func NewSmalltownAPIClient(address string) (*SmalltownClient, error) {
+	s := &SmalltownClient{}
+
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+	s.conn = conn
+
+	// Setup all client connections
+	s.Cluster = api.NewClusterManagementClient(conn)
+	s.Setup = api.NewSetupServiceClient(conn)
+
+	return s, nil
 }
 
-func Log(user, action, params string) error {
-	return nil
+func (s *SmalltownClient) Close() error {
+	return s.conn.Close()
 }

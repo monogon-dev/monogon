@@ -19,7 +19,7 @@ package network
 import (
 	"context"
 	"fmt"
-	"git.monogon.dev/source/nexantic.git/core/internal/common"
+	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
 	"net"
 	"os"
 
@@ -35,7 +35,7 @@ const (
 )
 
 type Service struct {
-	*common.BaseService
+	*service.BaseService
 	config      Config
 	dhcp4Client *nclient4.Client
 }
@@ -47,12 +47,12 @@ func NewNetworkService(config Config, logger *zap.Logger) (*Service, error) {
 	s := &Service{
 		config: config,
 	}
-	s.BaseService = common.NewBaseService("network", logger, s)
+	s.BaseService = service.NewBaseService("network", logger, s)
 	return s, nil
 }
 
 func setResolvconf(nameservers []net.IP, searchDomains []string) error {
-	os.Mkdir("/etc", 0755) // Error intentionally not checked
+	_ = os.Mkdir("/etc", 0755)
 	newResolvConf, err := os.Create(resolvConfSwapPath)
 	if err != nil {
 		return err
@@ -79,8 +79,8 @@ func addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP) error {
 		return err
 	}
 	if err := netlink.RouteAdd(&netlink.Route{
-		Dst:   &net.IPNet{IP: net.IPv4(0, 0, 0, 0), Mask: net.IPv4Mask(0, 0, 0, 0)},
-		Gw:    gw,
+		Dst: &net.IPNet{IP: net.IPv4(0, 0, 0, 0), Mask: net.IPv4Mask(0, 0, 0, 0)},
+		Gw:  gw,
 
 		Scope: netlink.SCOPE_UNIVERSE,
 	}); err != nil {
