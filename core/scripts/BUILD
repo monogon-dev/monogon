@@ -8,3 +8,11 @@ sh_binary(
     ],
     tags = ["local"],
 )
+
+sh_test(
+    name = "test_boot",
+    size = "small",
+    srcs = ["test_boot.sh"],
+    tags = ["local"],
+    deps = [":launch"],
+)

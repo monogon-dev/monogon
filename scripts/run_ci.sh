@@ -1,5 +1,6 @@
 #!/bin/bash
-# This script is executed by our CI
+# This helper scripts executes all Bazel tests in our CI environment.
+# https://phab.monogon.dev/harbormaster/plan/2/
 set -euo pipefail
 
 BUILD_ID=$1;
@@ -52,7 +53,7 @@ podman run \
     --pod ${POD} \
     --name=${POD}-bazel \
     ${TAG} \
-    $@
+    bazel test //...
 
 function conduit() {
   # Get Phabricator host from Git origin

@@ -96,7 +96,7 @@ linux_kernel_version = "4.19.72"
 
 http_archive(
     name = "linux_kernel",
-    build_file = "@//core/build/linux_kernel_repo:BUILD",
+    build_file = "@//core/build/linux_kernel_repo:BUILD.repo",
     patch_args = ["-p1"],
     patches = [
         # Fix is in mainline, but upstream hasn't backported it to 4.19.
@@ -115,7 +115,7 @@ http_archive(
 # edk2-stable201908
 new_git_repository(
     name = "edk2",
-    build_file = "@//core/build/edk2:BUILD",
+    build_file = "@//core/build/edk2:BUILD.repo",
     commit = "37eef91017ad042035090cae46557f9d6e2d5917",
     init_submodules = True,
     remote = "https://github.com/tianocore/edk2",
