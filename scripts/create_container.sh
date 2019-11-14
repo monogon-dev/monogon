@@ -20,8 +20,10 @@ podman build -t nexantic-builder build
 
 # Set up SELinux contexts to prevent the container from writing to
 # files that would allow for easy breakouts via tools ran on the host.
-chcon -R system_u:object_r:container_file_t:s0 .
-chcon -R unconfined_u:object_r:user_home_t:s0 \
+chcon -Rh system_u:object_r:container_file_t:s0 .
+
+# Ignore errors - these might already be masked, like when synchronizing the source.
+! chcon -Rh unconfined_u:object_r:user_home_t:s0 \
   .arcconfig .idea .git
 
 # Keep this in sync with ci.sh:
