@@ -6,13 +6,13 @@ sh_binary(
         "@//core:swtpm_data",
         "@edk2//:firmware",
     ],
-    tags = ["local"],
 )
 
 sh_test(
     name = "test_boot",
     size = "small",
     srcs = ["test_boot.sh"],
+    # expects wants a pty, which do not exist in the sandbox
     tags = ["local"],
     deps = [":launch"],
 )

@@ -1,6 +1,12 @@
 #!/bin/sh
 
-swtpm socket --tpmstate dir=core/tpm --ctrl type=unixio,path=tpm-socket --tpm2 &
+TMP=$(mktemp -d)
+trap "{ rm -rf "$TMP"; pkill -9 -P $$; }" EXIT
+
+# sandbox uses a symlink farm - without -L, we would just copy the symlinks
+cp -Lr core/tpm/* "${TMP}"
+
+swtpm socket --tpmstate dir=${TMP} --ctrl type=unixio,path=tpm-socket --tpm2 &
 
 qemu-system-x86_64 \
     -cpu host -smp sockets=1,cpus=1,cores=2,threads=2,maxcpus=4 -m 1024 -machine q35 -enable-kvm -nographic -nodefaults \
@@ -16,4 +22,5 @@ qemu-system-x86_64 \
     -global isa-debugcon.iobase=0x402 \
     -device ipmi-bmc-sim,id=ipmi0 \
     -device virtio-rng-pci \
-    -serial mon:stdio
+    -serial stdio \
+    | stdbuf -oL tr -d '\r' | cat -v
