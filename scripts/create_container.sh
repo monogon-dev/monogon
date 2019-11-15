@@ -30,14 +30,25 @@ chcon -Rh system_u:object_r:container_file_t:s0 .
 
 podman pod create --name nexantic
 
-# TODO(leo): mount .cache/bazel on a volume (waiting for podman issue to be fixed)
-# https://github.com/containers/libpod/issues/4318
+# Mount bazel root to identical paths inside and outside the container.
+# This caches build state even if the container is destroyed, and
+BAZEL_ROOT=${HOME}/.cache/bazel-nxt
+
+# The Bazel plugin injects a Bazel repository into the sync command line.
+# Look up the latest copy of it in either the user config folder
+# or the Jetbrains Toolbox dir (for non-standard setups).
+ASPECT_PATH=$(
+  dirname $(
+    find ~/.IntelliJIdea*/config/plugins/ijwb/* ~/.local/share/JetBrains \
+    -name intellij_info_impl.bzl -printf "%T+\t%p\n" | sort | tail -n 1))
+
+mkdir -p ${BAZEL_ROOT}
+
 podman run -it -d \
-    -v $(pwd):/work \
-    -v smalltown-gopath:/user/go/pkg \
-    -v smalltown-gobuildcache:/user/.cache/go-build \
-    -v smalltown-bazelcache:/user/.cache/bazel/_bazel_root/cache \
-    --tmpfs=/user/.cache/bazel:exec \
+    -v $(pwd):$(pwd) \
+    -w $(pwd) \
+    --volume=${BAZEL_ROOT}:${BAZEL_ROOT} \
+    -v ${ASPECT_PATH}:${ASPECT_PATH}:ro \
     --device /dev/kvm \
     --privileged \
     --pod nexantic \

@@ -1,5 +1,4 @@
 #!/bin/bash
 set -euo pipefail
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-$DIR/../run_in_container.sh bazel $@
+exec podman exec -it nexantic-dev bazel --output_user_root ${HOME}/.cache/bazel-nxt $@
