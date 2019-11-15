@@ -33,22 +33,22 @@ podman pod create --name nexantic
 # Mount bazel root to identical paths inside and outside the container.
 # This caches build state even if the container is destroyed, and
 BAZEL_ROOT=${HOME}/.cache/bazel-nxt
-
-# The Bazel plugin injects a Bazel repository into the sync command line.
-# Look up the latest copy of it in either the user config folder
-# or the Jetbrains Toolbox dir (for non-standard setups).
-ASPECT_PATH=$(
-  dirname $(
-    find ~/.IntelliJIdea*/config/plugins/ijwb/* ~/.local/share/JetBrains \
-    -name intellij_info_impl.bzl -printf "%T+\t%p\n" | sort | tail -n 1))
-
 mkdir -p ${BAZEL_ROOT}
+
+# The Bazel plugin injects a Bazel repository into the sync command line,
+# We need to copy the aspect repository and apply a custom patch.
+
+ASPECT_ORIG=${HOME}/.IntelliJIdea2019.2/config/plugins/ijwb/aspect
+
+ASPECT_PATH=${BAZEL_ROOT}/ijwb_aspect
+rm -rf "$ASPECT_PATH"
+cp -r "$ASPECT_ORIG" "$ASPECT_PATH"
+patch -d "$ASPECT_PATH" -p1 < scripts/patches/bazel_intellij_aspect_filter.patch
 
 podman run -it -d \
     -v $(pwd):$(pwd) \
     -w $(pwd) \
     --volume=${BAZEL_ROOT}:${BAZEL_ROOT} \
-    -v ${ASPECT_PATH}:${ASPECT_PATH}:ro \
     --device /dev/kvm \
     --privileged \
     --pod nexantic \

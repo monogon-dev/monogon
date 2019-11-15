@@ -1,4 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-exec podman exec -it nexantic-dev bazel --output_user_root ${HOME}/.cache/bazel-nxt $@
+# Override the intellij_aspect repository to point to our own copy that create_container.sh has applied patches to.
+#
+# The IntelliJ plugin sets the repository using a command line argument, which we need to replace:
+#   --override_repository=intellij_aspect=<...>/plugins/ijwb/aspect
+#
+ARGS=$(echo $@ | sed "s%--override_repository=intellij_aspect=[^ ]*%--override_repository=intellij_aspect=${HOME}/.cache/bazel-nxt/ijwb_aspect%")
+
+exec podman exec -it nexantic-dev bazel --output_user_root ${HOME}/.cache/bazel-nxt $ARGS

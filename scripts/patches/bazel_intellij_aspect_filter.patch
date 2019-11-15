@@ -1,0 +1,60 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+# We need to patch the IntelliJ Bazel aspect that is injected via the @intellij_bazel repository
+# to support our custom Go code generators.
+#
+# The plugin maintains a whitelist of rules it deems worthy of syncing.
+#
+# Since we really, *really* do not want to touch the Java code and fork the plugin, we instead monkey-patch
+# the intellij_aspect macro to pretend that our custom generators are, in fact, go_proto_library rules
+# (which behave exactly the same - they output Go sources).
+#
+--- a/intellij_info_impl.bzl.o
++++ b/intellij_info_impl.bzl
+@@ -312,7 +312,7 @@
+         files = target[OutputGroupInfo].go_generated_srcs.to_list()
+     else:
+         return None
+-    return [f for f in files if f.basename.endswith(".pb.go")]
++    return [f for f in files if f.basename.endswith(".go")]
+
+ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+     """Updates Go-specific output groups, returns false if not a recognized Go target."""
+@@ -897,10 +897,14 @@
+     file_name = file_name + ".intellij-info.txt"
+     ide_info_file = ctx.actions.declare_file(file_name)
+
++    kind = ctx.rule.kind
++    if kind in ["go_sqlboiler_library", "bindata"]:
++        kind = "go_proto_library"
++
+     target_key = make_target_key(target.label, aspect_ids)
+     ide_info = dict(
+         key = target_key,
+-        kind_string = ctx.rule.kind,
++        kind_string = kind,
+         deps = list(all_deps),
+         build_file_artifact_location = build_file_artifact_location(ctx),
+         tags = tags,
+@@ -937,7 +942,7 @@
+         output_groups = output_groups,
+         intellij_info = struct(
+             target_key = target_key,
+-            kind = ctx.rule.kind,
++            kind = kind,
+             output_groups = output_groups,
+             export_deps = export_deps,
+         ),
