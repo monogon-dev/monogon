@@ -61,7 +61,10 @@ go_repository(
 
 go_rules_dependencies()
 
-go_register_toolchains()
+go_register_toolchains(
+    go_version = "1.13",
+    nogo = "@//:nogo_vet",
+)
 
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
