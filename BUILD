@@ -4,3 +4,9 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 # gazelle:exclude core/generated
 # gazelle:exclude imports.go
 gazelle(name = "gazelle")
+
+# Shortcut for the Go SDK
+alias(
+    name = "go",
+    actual = "@go_sdk//:bin/go",
+)
