@@ -83,6 +83,14 @@ func (s *SmalltownNode) SetupNewCluster() error {
 		return err
 	}
 
+	if err := s.Kubernetes.NewCluster(); err != nil {
+		return err
+	}
+
+	if err := s.Kubernetes.Start(); err != nil {
+		return err
+	}
+
 	// Change system state
 	s.state = common.StateConfigured
 

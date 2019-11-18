@@ -18,9 +18,11 @@ package node
 
 import (
 	"flag"
+
 	"git.monogon.dev/source/nexantic.git/core/internal/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
+	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
 	"os"
 
@@ -30,14 +32,15 @@ import (
 
 type (
 	SmalltownNode struct {
-		Api       *api.Server
-		Consensus *consensus.Service
-		Storage   *storage.Manager
+		Api        *api.Server
+		Consensus  *consensus.Service
+		Storage    *storage.Manager
+		Kubernetes *kubernetes.Service
 
-		logger       *zap.Logger
-		state        common.SmalltownState
-		joinToken    string
-		hostname     string
+		logger    *zap.Logger
+		state     common.SmalltownState
+		joinToken string
+		hostname  string
 	}
 )
 
@@ -57,9 +60,10 @@ func NewSmalltownNode(logger *zap.Logger, apiPort, consensusPort uint16) (*Small
 	}
 
 	consensusService, err := consensus.NewConsensusService(consensus.Config{
-		Name:       hostname,
-		ListenPort: consensusPort,
-		ListenHost: "0.0.0.0",
+		Name:         hostname,
+		ListenPort:   consensusPort,
+		ListenHost:   "0.0.0.0",
+		ExternalHost: "10.0.2.15", // TODO: Once Multi-Node setups are actually used, this needs to be corrected
 	}, logger.With(zap.String("module", "consensus")))
 	if err != nil {
 		return nil, err
@@ -80,6 +84,8 @@ func NewSmalltownNode(logger *zap.Logger, apiPort, consensusPort uint16) (*Small
 	}
 
 	s.Api = apiService
+
+	s.Kubernetes = kubernetes.New(logger.With(zap.String("module", "kubernetes")), consensusService)
 
 	logger.Info("Created SmalltownNode")
 
@@ -138,6 +144,11 @@ func (s *SmalltownNode) startFull() error {
 	if err != nil {
 		s.logger.Error("Failed to start the API service", zap.Error(err))
 		return err
+	}
+
+	err = s.Kubernetes.Start()
+	if err != nil {
+		s.logger.Error("Failed to start the Kubernetes Service", zap.Error(err))
 	}
 
 	return nil

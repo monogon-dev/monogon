@@ -24,7 +24,6 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
 	"io/ioutil"
 	"math/rand"
 	"net/url"
@@ -34,7 +33,10 @@ import (
 	"strings"
 	"time"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
+
 	"git.monogon.dev/source/nexantic.git/core/generated/api"
+
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus/ca"
 	"github.com/pkg/errors"
 	"go.etcd.io/etcd/clientv3"
@@ -58,6 +60,10 @@ const (
 	KeyPath     = "cert-key.pem"
 	CRLPath     = "ca-crl.der"
 	CRLSwapPath = "ca-crl.der.swp"
+)
+
+const (
+	LocalListenerURL = "unix:///consensus/listener.sock:0"
 )
 
 type (
@@ -126,8 +132,15 @@ func (s *Service) OnStart() error {
 	}
 	s.lastCRL = lastCRL
 
-	// Reset Listen Client URLs because we don't want to expose any client
-	cfg.LCUrls = nil
+	// Expose etcd to local processes
+	if err := os.MkdirAll("/consensus", 0700); err != nil {
+		return fmt.Errorf("Failed to create consensus runtime state directory: %w", err)
+	}
+	listenerURL, err := url.Parse(LocalListenerURL)
+	if err != nil {
+		panic(err)
+	}
+	cfg.LCUrls = []url.URL{*listenerURL}
 
 	// Advertise Peer URLs
 	apURL, err := url.Parse(fmt.Sprintf("https://%s:%d", s.config.ExternalHost, s.config.ListenPort))
@@ -235,9 +248,9 @@ func (s *Service) PrecreateCA() error {
 }
 
 const (
-	caPathEtcd     = "/etcd-ca/ca.der"
-	caKeyPathEtcd  = "/etcd-ca/ca-key.der"
-	crlPathEtcd    = "/etcd-ca/crl.der"
+	caPathEtcd    = "/etcd-ca/ca.der"
+	caKeyPathEtcd = "/etcd-ca/ca-key.der"
+	crlPathEtcd   = "/etcd-ca/crl.der"
 
 	// This prefix stores the individual certs the etcd CA has issued.
 	certPrefixEtcd = "/etcd-ca/certs"

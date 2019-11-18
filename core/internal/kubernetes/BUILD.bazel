@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "apiserver.go",
+        "auth.go",
+        "controller-manager.go",
+        "scheduler.go",
+        "service.go",
+    ],
+    importpath = "git.monogon.dev/source/nexantic.git/core/internal/kubernetes",
+    visibility = ["//core:__subpackages__"],
+    deps = [
+        "//core/internal/common/service:go_default_library",
+        "//core/internal/consensus:go_default_library",
+        "//core/pkg/fileargs:go_default_library",
+        "@io_etcd_go_etcd//clientv3:go_default_library",
+        "@kubernetes//staging/src/k8s.io/client-go/tools/clientcmd:go_default_library",
+        "@kubernetes//staging/src/k8s.io/client-go/tools/clientcmd/api:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
+    ],
+)
