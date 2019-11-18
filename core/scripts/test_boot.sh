@@ -1,6 +1,6 @@
 #!/usr/bin/expect -f
 
-set timeout 30
+set timeout 60
 
 spawn core/scripts/launch.sh
 
