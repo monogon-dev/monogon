@@ -38,7 +38,7 @@ mkdir -p ${BAZEL_ROOT}
 # The Bazel plugin injects a Bazel repository into the sync command line,
 # We need to copy the aspect repository and apply a custom patch.
 
-ASPECT_ORIG=${HOME}/.IntelliJIdea2019.2/config/plugins/ijwb/aspect
+ASPECT_ORIG=${HOME}/.IntelliJIdea2019.3/config/plugins/ijwb/aspect
 
 ASPECT_PATH=${BAZEL_ROOT}/ijwb_aspect
 rm -rf "$ASPECT_PATH"
