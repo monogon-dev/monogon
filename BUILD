@@ -11,6 +11,14 @@ gazelle(name = "gazelle")
 alias(
     name = "go",
     actual = "@go_sdk//:bin/go",
+    visibility = ["//visibility:public"],
+)
+
+# Shortcut for kubectl
+alias(
+    name = "kubectl",
+    actual = "@kubernetes//cmd/kubectl:kubectl",
+    visibility = ["//visibility:public"],
 )
 
 # nogo linters

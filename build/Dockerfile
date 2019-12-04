@@ -25,7 +25,9 @@ RUN dnf -y upgrade && \
 	rsync \
 	qemu-system-x86-core \
 	postgresql \
-	expect
+	expect \
+	grpc-cli \
+	nc
 
 # Workaround for a binutils bugs in F30, which generates invalid ELF binaries
 # when linking statically with musl.

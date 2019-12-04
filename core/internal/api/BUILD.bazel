@@ -16,6 +16,7 @@ go_library(
         "//core/internal/common/service:go_default_library",
         "//core/internal/consensus:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//reflection:go_default_library",
         "@org_uber_go_zap//:go_default_library",
     ],
 )

@@ -24,6 +24,7 @@ import (
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"net"
 )
 
@@ -56,6 +57,8 @@ func NewApiServer(config *Config, logger *zap.Logger, setupService common.SetupS
 	grpcServer := grpc.NewServer()
 	schema.RegisterClusterManagementServer(grpcServer, s)
 	schema.RegisterSetupServiceServer(grpcServer, s)
+
+	reflection.Register(grpcServer)
 
 	s.grpcServer = grpcServer
 

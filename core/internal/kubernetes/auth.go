@@ -351,7 +351,7 @@ func issueCertificate(template x509.Certificate, caCert []byte, privateKey inter
 func makeLocalKubeconfig(ca, cert, key []byte) ([]byte, error) {
 	kubeconfig := configapi.NewConfig()
 	cluster := configapi.NewCluster()
-	cluster.Server = "https://localhost:6443"
+	cluster.Server = "https://127.0.0.1:6443"
 	cluster.CertificateAuthorityData = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: ca})
 	kubeconfig.Clusters["default"] = cluster
 	authInfo := configapi.NewAuthInfo()

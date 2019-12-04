@@ -29,6 +29,11 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const (
+	apiPort       = 7833
+	consensusPort = 7834
+)
+
 func main() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -79,7 +84,7 @@ func main() {
 		logger.Panic("Failed to start network service", zap.Error(err))
 	}
 
-	nodeInstance, err := node.NewSmalltownNode(logger, 7833, 7834)
+	nodeInstance, err := node.NewSmalltownNode(logger, apiPort, consensusPort)
 	if err != nil {
 		panic(err)
 	}
