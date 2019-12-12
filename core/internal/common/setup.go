@@ -16,27 +16,23 @@
 
 package common
 
-import "git.monogon.dev/source/nexantic.git/core/generated/api"
-
-// TODO(leo): merge api and node packages and get rid of this extra layer of indirection?
-
 type (
-	SetupService interface {
-		CurrentState() SmalltownState
-		GetJoinClusterToken() string
-		SetupNewCluster() error
-		EnterJoinClusterMode() error
-		JoinCluster(initialCluster string, certs *api.ConsensusCertificates) error
-	}
-
 	SmalltownState string
 )
 
 const (
-	// Node is unprovisioned and waits for Setup to be called.
-	StateSetupMode SmalltownState = "setup"
-	// Setup() has been called, node waits for a JoinCluster or BootstrapCluster call.
-	StateClusterJoinMode SmalltownState = "join"
+	// These are here to prevent depdendency loops
+	NodeServicePort     = 7835
+	ConsensusPort       = 7834
+	MasterServicePort   = 7833
+	ExternalServicePort = 7836
+)
+
+const (
+	// Node is provisioning a new cluster with itself as a master
+	StateNewClusterMode SmalltownState = "setup"
+	// Node is enrolling itself and waiting to be adopted
+	StateEnrollMode SmalltownState = "join"
 	// Node is fully provisioned.
-	StateConfigured SmalltownState = "configured"
+	StateJoined SmalltownState = "enrolled"
 )

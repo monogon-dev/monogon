@@ -14,37 +14,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grpc
+package main
 
 import (
-	"git.monogon.dev/source/nexantic.git/core/generated/api"
+	"context"
+	"io/ioutil"
+	"os"
 
+	"git.monogon.dev/source/nexantic.git/core/generated/api"
+	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 )
 
-type (
-	SmalltownClient struct {
-		conn *grpc.ClientConn
-
-		Cluster api.ClusterManagementClient
-	}
-)
-
-func NewSmalltownAPIClient(address string) (*SmalltownClient, error) {
-	s := &SmalltownClient{}
-
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
+func main() {
+	conn, err := grpc.Dial(os.Args[1], grpc.WithInsecure())
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	s.conn = conn
+	defer conn.Close()
+	cmc := api.NewClusterManagementClient(conn)
+	res, err := cmc.NewEnrolmentConfig(context.Background(), &api.NewEnrolmentConfigRequest{
+		Name: "test",
+	})
 
-	// Setup all client connections
-	s.Cluster = api.NewClusterManagementClient(conn)
-
-	return s, nil
-}
-
-func (s *SmalltownClient) Close() error {
-	return s.conn.Close()
+	if err != nil {
+		panic(err)
+	}
+	enrolmentConfigRaw, err := proto.Marshal(res.EnrolmentConfig)
+	ioutil.WriteFile("enrolment.pb", enrolmentConfigRaw, 0644)
 }

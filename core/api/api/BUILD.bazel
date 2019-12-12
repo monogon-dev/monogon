@@ -5,7 +5,6 @@ proto_library(
     name = "api_proto",
     srcs = ["schema.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//core/api/common:common_proto"],
 )
 
 go_proto_library(
@@ -14,7 +13,6 @@ go_proto_library(
     importpath = "git.monogon.dev/source/nexantic.git/core/generated/api",
     proto = ":api_proto",
     visibility = ["//visibility:public"],
-    deps = ["//core/api/common:go_default_library"],
 )
 
 go_library(

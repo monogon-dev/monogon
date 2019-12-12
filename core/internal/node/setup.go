@@ -17,11 +17,14 @@
 package node
 
 import (
+	"context"
+
 	"git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
-	"git.monogon.dev/source/nexantic.git/core/internal/storage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"errors"
 
 	"go.uber.org/zap"
 )
@@ -38,107 +41,58 @@ func (s *SmalltownNode) CurrentState() common.SmalltownState {
 	return s.state
 }
 
-func (s *SmalltownNode) GetJoinClusterToken() string {
-	return s.joinToken
-}
-
-func (s *SmalltownNode) SetupNewCluster() error {
-	if s.state == common.StateConfigured {
-		return ErrAlreadySetup
-	}
-	dataPath, err := s.Storage.GetPathInPlace(storage.PlaceData, "etcd")
-	if err == storage.ErrNotInitialized {
-		return ErrStorageNotInitialized
-	} else if err != nil {
-		return err
-	}
-
-	s.logger.Info("Setting up a new cluster")
-	s.logger.Info("Provisioning consensus")
-
-	// Make sure etcd is not yet provisioned
-	if s.Consensus.IsProvisioned() {
-		return ErrConsensusAlreadyProvisioned
-	}
-
-	// Spin up etcd
-	config := s.Consensus.GetConfig()
-	config.NewCluster = true
-	config.Name = s.hostname
-	config.DataDir = dataPath
-	s.Consensus.SetConfig(config)
-
-	// Generate the cluster CA and store it to local storage.
-	if err := s.Consensus.PrecreateCA(); err != nil {
-		return err
-	}
-
-	err = s.Consensus.Start()
+// InitializeNode contains functionality that needs to be executed regardless of what the node does
+// later on
+func (s *SmalltownNode) InitializeNode() (*api.NewNodeInfo, string, error) {
+	globalUnlockKey, err := s.Storage.InitializeData()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
-	// Now that the cluster is up and running, we can persist the CA to the cluster.
-	if err := s.Consensus.InjectCA(); err != nil {
-		return err
-	}
+	nodeIP := s.Network.GetIP(true)
 
-	if err := s.Kubernetes.NewCluster(); err != nil {
-		return err
-	}
-
-	if err := s.Kubernetes.Start(); err != nil {
-		return err
-	}
-
-	// Change system state
-	s.state = common.StateConfigured
-
-	s.logger.Info("New Cluster set up. Node is now fully operational")
-
-	return nil
-}
-
-func (s *SmalltownNode) EnterJoinClusterMode() error {
-	if s.state == common.StateConfigured {
-		return ErrAlreadySetup
-	}
-	s.state = common.StateClusterJoinMode
-
-	s.logger.Info("Node is now in the cluster join mode")
-
-	return nil
-}
-
-func (s *SmalltownNode) JoinCluster(clusterString string, certs *api.ConsensusCertificates) error {
-	if s.state != common.StateClusterJoinMode {
-		return ErrNotInJoinMode
-	}
-
-	s.logger.Info("Joining cluster", zap.String("cluster", clusterString))
-
-	err := s.SetupBackend()
+	nodeCert, nodeID, err := s.generateNodeID()
 	if err != nil {
-		return err
+		return nil, "", err
 	}
+
+	return &api.NewNodeInfo{
+		EnrolmentConfig: s.enrolmentConfig,
+		Ip:              []byte(*nodeIP),
+		IdCert:          nodeCert,
+		GlobalUnlockKey: globalUnlockKey,
+	}, nodeID, nil
+}
+
+func (s *SmalltownNode) JoinCluster(context context.Context, req *api.JoinClusterRequest) (*api.JoinClusterResponse, error) {
+	if s.state != common.StateEnrollMode {
+		return nil, ErrNotInJoinMode
+	}
+
+	s.logger.Info("Joining Consenus")
 
 	config := s.Consensus.GetConfig()
 	config.Name = s.hostname
-	config.InitialCluster = clusterString
+	config.InitialCluster = "default" // Clusters can't cross-join anyways due to cryptography
 	s.Consensus.SetConfig(config)
-	if err := s.Consensus.WriteCertificateFiles(certs); err != nil {
-		return err
+	var err error
+	if err != nil {
+		s.logger.Warn("Invalid JoinCluster request", zap.Error(err))
+		return nil, errors.New("invalid join request")
+	}
+	if err := s.Consensus.WriteCertificateFiles(req.Certs); err != nil {
+		return nil, err
 	}
 
 	// Start consensus
 	err = s.Consensus.Start()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	s.state = common.StateConfigured
+	s.state = common.StateJoined
 
 	s.logger.Info("Joined cluster. Node is now syncing.")
 
-	return nil
+	return &api.JoinClusterResponse{}, nil
 }

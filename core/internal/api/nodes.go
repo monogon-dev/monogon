@@ -14,37 +14,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grpc
-
-import (
-	"git.monogon.dev/source/nexantic.git/core/generated/api"
-
-	"google.golang.org/grpc"
-)
-
-type (
-	SmalltownClient struct {
-		conn *grpc.ClientConn
-
-		Cluster api.ClusterManagementClient
-	}
-)
-
-func NewSmalltownAPIClient(address string) (*SmalltownClient, error) {
-	s := &SmalltownClient{}
-
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-	s.conn = conn
-
-	// Setup all client connections
-	s.Cluster = api.NewClusterManagementClient(conn)
-
-	return s, nil
-}
-
-func (s *SmalltownClient) Close() error {
-	return s.conn.Close()
-}
+package api

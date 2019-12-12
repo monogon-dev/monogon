@@ -27,12 +27,6 @@ expect "Initialized encrypted storage" {} default {
   exit 1
 }
 
-print_stderr "Calling api.SetupService.Setup\n"
-system "grpc_cli --channel_creds_type=insecure call localhost:7833 api.SetupService.Setup -json_input '{\"nodeName\": \"node-1\"}'"
-
-print_stderr "Calling api.SetupService.BootstrapNewCluster\n"
-system "grpc_cli --channel_creds_type=insecure call localhost:7833 api.SetupService.BootstrapNewCluster ''"
-
 # Make an educated guess if the control plane came up
 expect -timeout 3 "\n" {
   exp_continue

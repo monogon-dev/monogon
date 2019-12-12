@@ -19,112 +19,97 @@ package api
 import (
 	"context"
 	"crypto/rand"
-	"encoding/hex"
-	"fmt"
+	"encoding/base64"
+	"io"
+
+	"git.monogon.dev/source/nexantic.git/core/generated/api"
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
-	"git.monogon.dev/source/nexantic.git/core/internal/common/grpc"
+	"github.com/gogo/protobuf/proto"
+	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"go.uber.org/zap"
 )
 
-var (
-	ErrAttestationFailed = status.Error(codes.PermissionDenied, "attestation failed")
-)
-
 func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*schema.AddNodeResponse, error) {
-	// Setup API client
-	c, err := grpc.NewSmalltownAPIClient(fmt.Sprintf("%s:%d", req.Addr, s.config.Port))
-	if err != nil {
-		return nil, err
-	}
-
-	// Check attestation
-	nonce := make([]byte, 20)
-	_, err = rand.Read(nonce)
-	if err != nil {
-		s.Logger.Error("Nonce generation failed", zap.Error(err))
-		return nil, status.Error(codes.Unavailable, "nonce generation failed")
-	}
-	hexNonce := hex.EncodeToString(nonce)
-
-	aRes, err := c.Setup.Attest(ctx, &schema.AttestRequest{
-		Challenge: hexNonce,
-	})
-	if err != nil {
-		s := status.Convert(err)
-		return nil, status.Errorf(s.Code(), "attestation failed: %v", s.Message())
-	}
-
-	//TODO(hendrik): Verify response
-	if aRes.Response != hexNonce {
-		return nil, ErrAttestationFailed
-	}
-
-	consensusCerts, err := s.consensusService.IssueCertificate(req.Addr)
-	if err != nil {
-		// Errors from IssueCertificate are always treated as internal
-		s.Logger.Error("Node certificate issuance failed", zap.String("addr", req.Addr), zap.Error(err))
-		return nil, status.Error(codes.Internal, "could not issue node certificate")
-	}
-
-	// TODO(leo): fetch remote hostname rather than using the addr
-	name := req.Addr
-
-	// Add new node to local etcd cluster.
-	memberID, err := s.consensusService.AddMember(ctx, name, fmt.Sprintf("https://%s:%d", req.Addr, s.config.Port))
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "failed to add node to etcd cluster: %v", err)
-	}
-
-	s.Logger.Info("Added new node to consensus cluster; sending cluster join request to node",
-		zap.String("addr", req.Addr), zap.Uint16("port", s.config.Port))
-
-	// Send JoinCluster request to new node to make it join.
-	_, err = c.Setup.JoinCluster(ctx, &schema.JoinClusterRequest{
-		InitialCluster:    s.consensusService.GetInitialClusterString(),
-		ProvisioningToken: req.ProvisioningToken,
-		Certs:             consensusCerts,
-	})
-	if err != nil {
-		errRevoke := s.consensusService.RevokeCertificate(req.Addr)
-		if errRevoke != nil {
-			s.Logger.Error("Failed to revoke a certificate after rollback - potential security risk", zap.Error(errRevoke))
-		}
-		// Revert etcd add member - might fail if consensus cannot be established.
-		errRemove := s.consensusService.RemoveMember(ctx, memberID)
-		if errRemove != nil || errRevoke != nil {
-			return nil, fmt.Errorf("rollback failed after failed provisioning; err=%v; err_rb=%v; err_revoke=%v", err, errRemove, errRevoke)
-		}
-		return nil, status.Errorf(codes.Unavailable, "failed to join etcd cluster with node: %v", err)
-	}
-	s.Logger.Info("Fully provisioned new node",
-		zap.String("host", req.Addr),
-		zap.Uint16("apiPort", s.config.Port),
-		zap.Uint64("member_id", memberID))
-
-	return &schema.AddNodeResponse{}, nil
+	return nil, status.Error(codes.Unimplemented, "Unimplemented")
 }
 
-func (s *Server) RemoveNode(context.Context, *schema.RemoveNodeRequest) (*schema.RemoveNodeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "unimplemented")
+func (s *Server) RemoveNode(ctx context.Context, req *schema.RemoveNodeRequest) (*schema.RemoveNodeRequest, error) {
+	return nil, status.Error(codes.Unimplemented, "Unimplemented")
 }
 
-func (s *Server) ListNodes(context.Context, *schema.ListNodesRequest) (*schema.ListNodesResponse, error) {
-	nodes := s.consensusService.GetNodes()
-	resNodes := make([]*schema.Node, len(nodes))
-
-	for i, node := range nodes {
-		resNodes[i] = &schema.Node{
-			Id:      node.ID,
-			Name:    node.Name,
-			Address: node.Address,
-			Synced:  node.Synced,
+func (s *Server) ListNodes(ctx context.Context, req *schema.ListNodesRequest) (*schema.ListNodesResponse, error) {
+	store := s.getStore()
+	res, err := store.Get(ctx, "nodes/", clientv3.WithPrefix())
+	if err != nil {
+		return nil, status.Error(codes.Unavailable, "Consensus unavailable")
+	}
+	var resNodes []*api.Node
+	for _, nodeEntry := range res.Kvs {
+		var node api.Node
+		if err := proto.Unmarshal(nodeEntry.Value, &node); err != nil {
+			s.Logger.Error("Encountered invalid node data", zap.Error(err))
+			return nil, status.Error(codes.Internal, "Invalid data")
 		}
+		// Zero out Global Unlock Key, it's never supposed to leave the cluster
+		node.GlobalUnlockKey = []byte{}
+
+		resNodes = append(resNodes, &node)
 	}
 
 	return &schema.ListNodesResponse{
 		Nodes: resNodes,
 	}, nil
+}
+
+func (s *Server) ListEnrolmentConfigs(ctx context.Context, req *api.ListEnrolmentConfigsRequest) (*api.ListEnrolmentConfigsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "Unimplemented")
+}
+
+func (s *Server) NewEnrolmentConfig(ctx context.Context, req *api.NewEnrolmentConfigRequest) (*api.NewEnrolmentConfigResponse, error) {
+	store := s.getStore()
+	token := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, token); err != nil {
+		return nil, status.Error(codes.Unavailable, "failed to get randonmess")
+	}
+	nodes, err := store.Get(ctx, "nodes/", clientv3.WithPrefix())
+	if err != nil {
+		return nil, status.Error(codes.Unavailable, "consensus unavailable")
+	}
+	var masterIPs [][]byte
+	for _, nodeKV := range nodes.Kvs {
+		var node api.Node
+		if err := proto.Unmarshal(nodeKV.Value, &node); err != nil {
+			return nil, status.Error(codes.Internal, "invalid node")
+		}
+		if node.State == api.Node_MASTER {
+			masterIPs = append(masterIPs, node.Address)
+		}
+	}
+	masterCert, err := s.GetMasterCert()
+	if err != nil {
+		return nil, status.Error(codes.Unavailable, "consensus unavailable")
+	}
+
+	enrolmentConfig := &api.EnrolmentConfig{
+		EnrolmentSecret: token,
+		MasterIps:       masterIPs,
+		MastersCert:     masterCert,
+	}
+	enrolmentConfigRaw, err := proto.Marshal(enrolmentConfig)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to encode config")
+	}
+	if _, err := store.Put(ctx, "enrolments/"+base64.RawURLEncoding.EncodeToString(token), string(enrolmentConfigRaw)); err != nil {
+		return nil, status.Error(codes.Unavailable, "consensus unavailable")
+	}
+	return &schema.NewEnrolmentConfigResponse{
+		EnrolmentConfig: enrolmentConfig,
+	}, nil
+}
+
+func (s *Server) RemoveEnrolmentConfig(ctx context.Context, req *api.RemoveEnrolmentConfigRequest) (*api.RemoveEnrolmentConfigResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "Unimplemented")
 }

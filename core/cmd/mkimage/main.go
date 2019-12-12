@@ -31,9 +31,10 @@ import (
 var SmalltownDataPartition gpt.Type = gpt.Type("9eeec464-6885-414a-b278-4305c51f7966")
 
 var (
-	efiPayloadPath = flag.String("efi", "", "UEFI payload")
-	outputPath     = flag.String("out", "", "Output disk image")
-	initramfsPath  = flag.String("initramfs", "", "External initramfs [optional]")
+	efiPayloadPath           = flag.String("efi", "", "UEFI payload")
+	outputPath               = flag.String("out", "", "Output disk image")
+	initramfsPath            = flag.String("initramfs", "", "External initramfs [optional]")
+	enrolmentCredentialsPath = flag.String("enrolment-credentials", "", "Enrolment credentials [optional]")
 )
 
 func mibToSectors(size uint64) uint64 {
@@ -132,6 +133,23 @@ func main() {
 		}
 		if _, err := initramfs.Write(initramfsFull); err != nil {
 			fmt.Printf("Failed to write initramfs: %v", err)
+			os.Exit(1)
+		}
+	}
+	if *enrolmentCredentialsPath != "" {
+		enrolmentCredentials, err := fs.OpenFile("/EFI/smalltown/enrolment.pb", os.O_CREATE|os.O_RDWR)
+		enrolmentCredentialsSrc, err := os.Open(*enrolmentCredentialsPath)
+		if err != nil {
+			fmt.Printf("Failed to open enrolment credentials for reading: %v", err)
+			os.Exit(1)
+		}
+		enrolmentCredentialsFull, err := ioutil.ReadAll(enrolmentCredentialsSrc)
+		if err != nil {
+			fmt.Printf("Failed to read enrolment credentials: %v", err)
+			os.Exit(1)
+		}
+		if _, err := enrolmentCredentials.Write(enrolmentCredentialsFull); err != nil {
+			fmt.Printf("Failed to write enrolment credentials")
 			os.Exit(1)
 		}
 	}

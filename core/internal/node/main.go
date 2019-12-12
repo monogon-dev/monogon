@@ -17,17 +17,43 @@
 package node
 
 import (
+	"bytes"
+	"crypto/ed25519"
+	"crypto/rand"
+	"crypto/sha512"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/base64"
+	"errors"
 	"flag"
+	"fmt"
+	"io/ioutil"
+	"math/big"
+	"net"
+	"time"
 
+	"os"
+
+	apipb "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
+	"git.monogon.dev/source/nexantic.git/core/internal/integrity/tpm2"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes"
+	"git.monogon.dev/source/nexantic.git/core/internal/network"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
-	"os"
+	"github.com/cenkalti/backoff/v4"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
-	"github.com/google/uuid"
+	"github.com/gogo/protobuf/proto"
 	"go.uber.org/zap"
+)
+
+var (
+	// From RFC 5280 Section 4.1.2.5
+	unknownNotAfter = time.Unix(253402300799, 0)
 )
 
 type (
@@ -36,15 +62,16 @@ type (
 		Consensus  *consensus.Service
 		Storage    *storage.Manager
 		Kubernetes *kubernetes.Service
+		Network    *network.Service
 
-		logger    *zap.Logger
-		state     common.SmalltownState
-		joinToken string
-		hostname  string
+		logger          *zap.Logger
+		state           common.SmalltownState
+		hostname        string
+		enrolmentConfig *apipb.EnrolmentConfig
 	}
 )
 
-func NewSmalltownNode(logger *zap.Logger, apiPort, consensusPort uint16) (*SmalltownNode, error) {
+func NewSmalltownNode(logger *zap.Logger) (*SmalltownNode, error) {
 	flag.Parse()
 	logger.Info("Creating Smalltown node")
 
@@ -53,17 +80,32 @@ func NewSmalltownNode(logger *zap.Logger, apiPort, consensusPort uint16) (*Small
 		panic(err)
 	}
 
+	networkService, err := network.NewNetworkService(network.Config{}, logger.With(zap.String("component", "network")))
+	if err != nil {
+		panic(err)
+	}
+
+	if err := networkService.Start(); err != nil {
+		logger.Panic("Failed to start network service", zap.Error(err))
+	}
+
 	storageManager, err := storage.Initialize(logger.With(zap.String("component", "storage")))
 	if err != nil {
 		logger.Error("Failed to initialize storage manager", zap.Error(err))
 		return nil, err
 	}
+	externalIP := networkService.GetIP(true)
+	if externalIP == nil {
+		logger.Panic("Waited for IP but didn't get one")
+	}
+
+	// Important to know if the GetIP above hangs
+	logger.Info("Node has IP", zap.String("ip", externalIP.String()))
 
 	consensusService, err := consensus.NewConsensusService(consensus.Config{
 		Name:         hostname,
-		ListenPort:   consensusPort,
 		ListenHost:   "0.0.0.0",
-		ExternalHost: "10.0.2.15", // TODO: Once Multi-Node setups are actually used, this needs to be corrected
+		ExternalHost: externalIP.String(),
 	}, logger.With(zap.String("module", "consensus")))
 	if err != nil {
 		return nil, err
@@ -72,13 +114,12 @@ func NewSmalltownNode(logger *zap.Logger, apiPort, consensusPort uint16) (*Small
 	s := &SmalltownNode{
 		Consensus: consensusService,
 		Storage:   storageManager,
+		Network:   networkService,
 		logger:    logger,
 		hostname:  hostname,
 	}
 
-	apiService, err := api.NewApiServer(&api.Config{
-		Port: apiPort,
-	}, logger.With(zap.String("module", "api")), s, s.Consensus)
+	apiService, err := api.NewApiServer(&api.Config{}, logger.With(zap.String("module", "api")), s.Consensus)
 	if err != nil {
 		return nil, err
 	}
@@ -95,47 +136,326 @@ func NewSmalltownNode(logger *zap.Logger, apiPort, consensusPort uint16) (*Small
 func (s *SmalltownNode) Start() error {
 	s.logger.Info("Starting Smalltown node")
 
-	if s.Consensus.IsProvisioned() {
-		s.logger.Info("Consensus is provisioned")
-		err := s.startFull()
-		if err != nil {
-			return err
-		}
-	} else {
-		s.logger.Info("Consensus is not provisioned, starting provisioning...")
-		err := s.startForSetup()
-		if err != nil {
-			return err
-		}
+	// TODO(lorenz): Abstracting enrolment sounds like a good idea, but ends up being painful
+	// because of things like storage access. I'm keeping it this way until the more complex
+	// enrolment procedures are fleshed out. This is also a bit panic()-happy, but there is really
+	// no good way out of an invalid enrolment configuration.
+	enrolmentPath, err := s.Storage.GetPathInPlace(storage.PlaceESP, "enrolment.pb")
+	if err != nil {
+		s.logger.Panic("ESP configuration partition not available", zap.Error(err))
 	}
+	enrolmentConfigRaw, err := ioutil.ReadFile(enrolmentPath)
+	if err == nil {
+		// We have an enrolment file, let's check its contents
+		var enrolmentConfig apipb.EnrolmentConfig
+		if err := proto.Unmarshal(enrolmentConfigRaw, &enrolmentConfig); err != nil {
+			s.logger.Panic("Invalid enrolment configuration provided", zap.Error(err))
+		}
+		s.enrolmentConfig = &enrolmentConfig
+		// The enrolment secret is only zeroed after
+		if len(enrolmentConfig.EnrolmentSecret) == 0 {
+			return s.startFull()
+		}
+		return s.startEnrolling()
+	} else if os.IsNotExist(err) {
+		// This is ok like this, once a new cluster has been set up the initial node also generates
+		// its own enrolment config
+		return s.startForSetup()
+	}
+	// Unknown error reading enrolment config (disk issues/invalid configuration format/...)
+	s.logger.Panic("Invalid enrolment configuration provided", zap.Error(err))
+	panic("Unreachable")
+}
+
+func (s *SmalltownNode) startEnrolling() error {
+	s.logger.Info("Initializing subsystems for enrolment")
+	s.state = common.StateEnrollMode
+
+	nodeInfo, nodeID, err := s.InitializeNode()
+	if err != nil {
+		return err
+	}
+
+	// We only support TPM2 at the moment, any abstractions here would be premature
+	trustAgent := tpm2.TPM2Agent{}
+
+	initializeOp := func() error {
+		if err := trustAgent.Initialize(*nodeInfo, *s.enrolmentConfig); err != nil {
+			s.logger.Warn("Failed to initialize integrity backend", zap.Error(err))
+			return err
+		}
+		return nil
+	}
+
+	if err := backoff.Retry(initializeOp, getIntegrityBackoff()); err != nil {
+		panic("invariant violated: integrity initialization retry can never fail")
+	}
+
+	enrolmentPath, err := s.Storage.GetPathInPlace(storage.PlaceESP, "enrolment.pb")
+	if err != nil {
+		panic(err)
+	}
+
+	s.enrolmentConfig.EnrolmentSecret = []byte{}
+	s.enrolmentConfig.NodeId = nodeID
+
+	enrolmentConfigRaw, err := proto.Marshal(s.enrolmentConfig)
+	if err != nil {
+		panic(err)
+	}
+	if err := ioutil.WriteFile(enrolmentPath, enrolmentConfigRaw, 0600); err != nil {
+		return err
+	}
+	s.logger.Info("Node successfully enrolled")
 
 	return nil
 }
 
 func (s *SmalltownNode) startForSetup() error {
-	s.logger.Info("Initializing subsystems for setup mode")
-	s.state = common.StateSetupMode
-	s.joinToken = uuid.New().String()
-
-	err := s.Api.Start()
+	s.logger.Info("Setting up a new cluster")
+	initData, nodeID, err := s.InitializeNode()
 	if err != nil {
-		s.logger.Error("Failed to start the API service", zap.Error(err))
 		return err
 	}
 
-	return nil
-}
+	if err := s.initNodeAPI(); err != nil {
+		return err
+	}
 
-func (s *SmalltownNode) startFull() error {
-	s.logger.Info("Initializing subsystems for production")
-	s.state = common.StateConfigured
-
-	err := s.SetupBackend()
+	dataPath, err := s.Storage.GetPathInPlace(storage.PlaceData, "etcd")
 	if err != nil {
+		return err
+	}
+
+	// Spin up etcd
+	config := s.Consensus.GetConfig()
+	config.NewCluster = true
+	config.Name = s.hostname
+	config.DataDir = dataPath
+	s.Consensus.SetConfig(config)
+
+	// Generate the cluster CA and store it to local storage.
+	if err := s.Consensus.PrecreateCA(); err != nil {
 		return err
 	}
 
 	err = s.Consensus.Start()
+	if err != nil {
+		return err
+	}
+
+	// Now that the cluster is up and running, we can persist the CA to the cluster.
+	if err := s.Consensus.InjectCA(); err != nil {
+		return err
+	}
+
+	if err := s.Api.BootstrapNewClusterHook(initData); err != nil {
+		return err
+	}
+
+	if err := s.Kubernetes.NewCluster(); err != nil {
+		return err
+	}
+
+	if err := s.Kubernetes.Start(); err != nil {
+		return err
+	}
+
+	if err := s.Api.Start(); err != nil {
+		s.logger.Error("Failed to start the API service", zap.Error(err))
+		return err
+	}
+
+	enrolmentPath, err := s.Storage.GetPathInPlace(storage.PlaceESP, "enrolment.pb")
+	if err != nil {
+		panic(err)
+	}
+
+	masterCert, err := s.Api.GetMasterCert()
+	if err != nil {
+		return err
+	}
+
+	enrolmentConfig := &apipb.EnrolmentConfig{
+		EnrolmentSecret: []byte{}, // First node is always already enrolled
+		MastersCert:     masterCert,
+		MasterIps:       [][]byte{[]byte(*s.Network.GetIP(true))},
+		NodeId:          nodeID,
+	}
+	enrolmentConfigRaw, err := proto.Marshal(enrolmentConfig)
+	if err != nil {
+		panic(err)
+	}
+	if err := ioutil.WriteFile(enrolmentPath, enrolmentConfigRaw, 0600); err != nil {
+		return err
+	}
+	masterCertFingerprint := sha512.Sum512_256(masterCert)
+	s.logger.Info("New Smalltown cluster successfully bootstrapped", zap.Binary("fingerprint", masterCertFingerprint[:]))
+
+	return nil
+}
+
+func (s *SmalltownNode) generateNodeID() ([]byte, string, error) {
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 127)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return []byte{}, "", fmt.Errorf("Failed to generate serial number: %w", err)
+	}
+
+	pubKey, privKeyRaw, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return []byte{}, "", err
+	}
+	privkey, err := x509.MarshalPKCS8PrivateKey(privKeyRaw)
+	if err != nil {
+		return []byte{}, "", err
+	}
+
+	nodeKeyPath, err := s.Storage.GetPathInPlace(storage.PlaceData, "node-key.der")
+	if err != nil {
+		return []byte{}, "", err
+	}
+
+	if err := ioutil.WriteFile(nodeKeyPath, privkey, 0600); err != nil {
+		return []byte{}, "", fmt.Errorf("failed to write node key: %w", err)
+	}
+
+	name := "smalltown-" + base64.RawStdEncoding.EncodeToString([]byte(pubKey))
+
+	// This has no SANs because it authenticates by public key, not by name
+	nodeCert := &x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			// We identify nodes by their ID public keys (not hashed since a strong hash is longer and serves no benefit)
+			CommonName: name,
+		},
+		IsCA:                  false,
+		BasicConstraintsValid: true,
+		NotBefore:             time.Now(),
+		NotAfter:              unknownNotAfter,
+		// Certificate is used both as server & client
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+	}
+	cert, err := x509.CreateCertificate(rand.Reader, nodeCert, nodeCert, pubKey, privKeyRaw)
+	if err != nil {
+		return []byte{}, "", err
+	}
+
+	nodeCertPath, err := s.Storage.GetPathInPlace(storage.PlaceData, "node.der")
+	if err != nil {
+		return []byte{}, "", err
+	}
+
+	if err := ioutil.WriteFile(nodeCertPath, cert, 0600); err != nil {
+		return []byte{}, "", fmt.Errorf("failed to write node cert: %w", err)
+	}
+	return cert, name, nil
+}
+
+func (s *SmalltownNode) initNodeAPI() error {
+	certPath, err := s.Storage.GetPathInPlace(storage.PlaceData, "node.der")
+	if err != nil {
+		s.logger.Panic("Invariant violated: Data is available once this is called")
+	}
+	keyPath, err := s.Storage.GetPathInPlace(storage.PlaceData, "node-key.der")
+	if err != nil {
+		s.logger.Panic("Invariant violated: Data is available once this is called")
+	}
+
+	certRaw, err := ioutil.ReadFile(certPath)
+	if err != nil {
+		return err
+	}
+	privKeyRaw, err := ioutil.ReadFile(keyPath)
+	if err != nil {
+		return err
+	}
+
+	var nodeID tls.Certificate
+
+	cert, err := x509.ParseCertificate(certRaw)
+	if err != nil {
+		return err
+	}
+
+	privKey, err := x509.ParsePKCS8PrivateKey(privKeyRaw)
+	if err != nil {
+		return err
+	}
+
+	nodeID.Certificate = [][]byte{certRaw}
+	nodeID.PrivateKey = privKey
+	nodeID.Leaf = cert
+
+	secureTransport := &tls.Config{
+		Certificates:       []tls.Certificate{nodeID},
+		ClientAuth:         tls.RequireAndVerifyClientCert,
+		InsecureSkipVerify: true,
+		// Critical function, please review any changes with care
+		// TODO(lorenz): Actively check that this actually provides the security guarantees that we need
+		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			for _, cert := range rawCerts {
+				// X.509 certificates in DER can be compared like this since DER has a unique representation
+				// for each certificate.
+				if bytes.Equal(cert, s.enrolmentConfig.MastersCert) {
+					return nil
+				}
+			}
+			return errors.New("failed to find authorized NMS certificate")
+		},
+		MinVersion: tls.VersionTLS13,
+	}
+	secureTransportCreds := credentials.NewTLS(secureTransport)
+
+	masterListenHost := fmt.Sprintf(":%d", common.NodeServicePort)
+	lis, err := net.Listen("tcp", masterListenHost)
+	if err != nil {
+		s.logger.Fatal("failed to listen", zap.Error(err))
+	}
+
+	nodeGRPCServer := grpc.NewServer(grpc.Creds(secureTransportCreds))
+	apipb.RegisterNodeServiceServer(nodeGRPCServer, s)
+	go func() {
+		if err := nodeGRPCServer.Serve(lis); err != nil {
+			panic(err) // Can only happen during initialization and is always fatal
+		}
+	}()
+	return nil
+}
+
+func getIntegrityBackoff() *backoff.ExponentialBackOff {
+	unlockBackoff := backoff.NewExponentialBackOff()
+	unlockBackoff.MaxElapsedTime = time.Duration(0)
+	unlockBackoff.InitialInterval = 5 * time.Second
+	unlockBackoff.MaxInterval = 5 * time.Minute
+	return unlockBackoff
+}
+
+func (s *SmalltownNode) startFull() error {
+	s.logger.Info("Initializing subsystems for production")
+	s.state = common.StateJoined
+
+	trustAgent := tpm2.TPM2Agent{}
+	unlockOp := func() error {
+		unlockKey, err := trustAgent.Unlock(*s.enrolmentConfig)
+		if err != nil {
+			s.logger.Warn("Failed to unlock", zap.Error(err))
+			return err
+		}
+		if err := s.Storage.MountData(unlockKey); err != nil {
+			s.logger.Panic("Failed to mount storage", zap.Error(err))
+			return err
+		}
+		return nil
+	}
+
+	if err := backoff.Retry(unlockOp, getIntegrityBackoff()); err != nil {
+		s.logger.Panic("Invariant violated: Unlock retry can never fail")
+	}
+
+	s.initNodeAPI()
+
+	err := s.Consensus.Start()
 	if err != nil {
 		return err
 	}
@@ -156,11 +476,5 @@ func (s *SmalltownNode) startFull() error {
 
 func (s *SmalltownNode) Stop() error {
 	s.logger.Info("Stopping Smalltown node")
-	return nil
-}
-
-func (s *SmalltownNode) SetupBackend() error {
-	s.logger.Debug("Creating trust backend")
-
 	return nil
 }

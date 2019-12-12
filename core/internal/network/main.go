@@ -21,9 +21,12 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sync"
+	"time"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
 
+	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"github.com/vishvananda/netlink"
 	"go.uber.org/zap"
@@ -39,6 +42,9 @@ type Service struct {
 	*service.BaseService
 	config      Config
 	dhcp4Client *nclient4.Client
+	ip          *net.IP
+	ipNotify    chan struct{}
+	lock        sync.Mutex
 }
 
 type Config struct {
@@ -46,7 +52,8 @@ type Config struct {
 
 func NewNetworkService(config Config, logger *zap.Logger) (*Service, error) {
 	s := &Service{
-		config: config,
+		config:   config,
+		ipNotify: make(chan struct{}),
 	}
 	s.BaseService = service.NewBaseService("network", logger, s)
 	return s, nil
@@ -105,18 +112,58 @@ func (s *Service) dhcpClient(iface netlink.Link) error {
 	if err != nil {
 		panic(err)
 	}
-	_, ack, err := client.Request(context.Background())
-	if err != nil {
-		panic(err)
+	var ack *dhcpv4.DHCPv4
+	for {
+		dhcpCtx, dhcpCtxCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer dhcpCtxCancel()
+		_, ack, err = client.Request(dhcpCtx)
+		if err == nil {
+			break
+		}
+		s.Logger.Info("DHCP request failed", zap.Error(err))
 	}
 	s.Logger.Info("Network service got IP", zap.String("ip", ack.YourIPAddr.String()))
 	if err := setResolvconf(ack.DNS(), []string{}); err != nil {
 		s.Logger.Warn("Failed to set resolvconf", zap.Error(err))
 	}
+
+	s.lock.Lock()
+	s.ip = &ack.YourIPAddr
+	s.lock.Unlock()
+loop:
+	for {
+		select {
+		case s.ipNotify <- struct{}{}:
+		default:
+			break loop
+		}
+	}
+
 	if err := addNetworkRoutes(iface, net.IPNet{IP: ack.YourIPAddr, Mask: ack.SubnetMask()}, ack.GatewayIPAddr); err != nil {
 		s.Logger.Warn("Failed to add routes", zap.Error(err))
 	}
 	return nil
+}
+
+// GetIP returns the current IP (and optionally waits for one to be assigned)
+func (s *Service) GetIP(wait bool) *net.IP {
+	s.lock.Lock()
+	if !wait {
+		ip := s.ip
+		s.lock.Unlock()
+		return ip
+	}
+
+	for {
+		if s.ip != nil {
+			ip := s.ip
+			s.lock.Unlock()
+			return ip
+		}
+		s.lock.Unlock()
+		<-s.ipNotify
+		s.lock.Lock()
+	}
 }
 
 func (s *Service) OnStart() error {

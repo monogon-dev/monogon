@@ -7,6 +7,7 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//core/api/api:go_default_library",
+        "//core/internal/common:go_default_library",
         "//core/internal/common/service:go_default_library",
         "//core/internal/consensus/ca:go_default_library",
         "@com_github_pkg_errors//:go_default_library",

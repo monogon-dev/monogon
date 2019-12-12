@@ -5,5 +5,4 @@ go_library(
     srcs = ["setup.go"],
     importpath = "git.monogon.dev/source/nexantic.git/core/internal/common",
     visibility = ["//:__subpackages__"],
-    deps = ["//core/api/api:go_default_library"],
 )

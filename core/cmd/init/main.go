@@ -18,12 +18,13 @@ package main
 
 import (
 	"fmt"
-	"git.monogon.dev/source/nexantic.git/core/internal/network"
-	"git.monogon.dev/source/nexantic.git/core/internal/node"
-	"git.monogon.dev/source/nexantic.git/core/pkg/tpm"
 	"os"
 	"os/signal"
 	"runtime/debug"
+
+	"git.monogon.dev/source/nexantic.git/core/internal/network"
+	"git.monogon.dev/source/nexantic.git/core/internal/node"
+	"git.monogon.dev/source/nexantic.git/core/pkg/tpm"
 
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -84,7 +85,7 @@ func main() {
 		logger.Panic("Failed to start network service", zap.Error(err))
 	}
 
-	nodeInstance, err := node.NewSmalltownNode(logger, apiPort, consensusPort)
+	nodeInstance, err := node.NewSmalltownNode(logger)
 	if err != nil {
 		panic(err)
 	}

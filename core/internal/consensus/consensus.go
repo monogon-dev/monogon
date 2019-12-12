@@ -33,6 +33,7 @@ import (
 	"strings"
 	"time"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
 
 	"git.monogon.dev/source/nexantic.git/core/generated/api"
@@ -91,7 +92,6 @@ type (
 		NewCluster     bool
 		ExternalHost   string
 		ListenHost     string
-		ListenPort     uint16
 	}
 
 	Member struct {
@@ -143,13 +143,13 @@ func (s *Service) OnStart() error {
 	cfg.LCUrls = []url.URL{*listenerURL}
 
 	// Advertise Peer URLs
-	apURL, err := url.Parse(fmt.Sprintf("https://%s:%d", s.config.ExternalHost, s.config.ListenPort))
+	apURL, err := url.Parse(fmt.Sprintf("https://%s:%d", s.config.ExternalHost, common.ConsensusPort))
 	if err != nil {
 		return fmt.Errorf("invalid external_host or listen_port: %w", err)
 	}
 
 	// Listen Peer URLs
-	lpURL, err := url.Parse(fmt.Sprintf("https://%s:%d", s.config.ListenHost, s.config.ListenPort))
+	lpURL, err := url.Parse(fmt.Sprintf("https://%s:%d", s.config.ListenHost, common.ConsensusPort))
 	if err != nil {
 		return fmt.Errorf("invalid listen_host or listen_port: %w", err)
 	}
