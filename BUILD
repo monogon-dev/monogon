@@ -1,5 +1,5 @@
 load("@bazel_gazelle//:def.bzl", "gazelle")
-load("@io_bazel_rules_go//go:def.bzl", "nogo")
+load("@io_bazel_rules_go//go:def.bzl", "go_path", "nogo")
 
 # gazelle:prefix git.monogon.dev/source/nexantic.git
 # gazelle:exclude core/generated
@@ -53,5 +53,14 @@ nogo(
         "@org_golang_x_tools//go/analysis/passes/unreachable:go_tool_library",
         "@org_golang_x_tools//go/analysis/passes/unsafeptr:go_tool_library",
         "@org_golang_x_tools//go/analysis/passes/unusedresult:go_tool_library",
+    ],
+)
+
+# Synthesize a fake GOPATH in bazel-bin/gopath for IDEs without Bazel support
+go_path(
+    name = "gopath",
+    mode = "link",
+    deps = [
+        "//core/cmd/init",
     ],
 )
