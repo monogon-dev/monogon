@@ -4,7 +4,7 @@ This is the monorepo storing all of nexantic's internal projects and libraries.
 
 ## Environment
 
-We assume a Fedora 30 or 31 host system provisioned using rW, and IntelliJ as the IDE.
+We assume a Fedora host system provisioned using rW, and IntelliJ as the IDE.
 
 For better reproducibility, all builds are executed in containers.
 
