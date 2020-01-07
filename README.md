@@ -17,20 +17,6 @@ Spinning down: `scripts/destroy_container.sh`
 Running commands: `scripts/run_in_container.sh <...>`
 
 Using bazel using a wrapper script: `scripts/bin/bazel <...>` (add to your local $PATH for convenience)
-
-#### Creating local symlinks for generated Go code
-
-Unfortunately, the Go tooling does not yet know about Bazel, so we need to copy generated code to
-the source tree such that native Go modules work.
-
-This creates a fake GOPATH and symlinks for generated packages:
-
-    scripts/symlink_generated_files.sh
-    bazel build :gopath
-    
-Any top-level Go targets that use generated code have to be dependencies of the :gopath target.
-
-See https://phab.monogon.dev/D305 for details.
  
 #### IntelliJ
 

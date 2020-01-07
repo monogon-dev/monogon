@@ -57,13 +57,3 @@ nogo(
         "@org_golang_x_tools//go/analysis/passes/unusedresult:go_tool_library",
     ],
 )
-
-# Synthesize a fake GOPATH in bazel-bin/gopath for IDEs without Bazel support
-go_path(
-    name = "gopath",
-    mode = "link",
-    deps = [
-        # All top-level Go targets that need IDE integration need to be listed here
-        "//core/cmd/init",
-    ],
-)
