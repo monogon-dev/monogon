@@ -5,6 +5,8 @@ load("@io_bazel_rules_go//go:def.bzl", "go_path", "nogo")
 # gazelle:exclude core/generated
 # gazelle:exclude tools.go
 # gazelle:exclude core/cmd/kube-controlplane
+# gazelle:resolve go k8s.io/client-go/tools/clientcmd @kubernetes//staging/src/k8s.io/client-go/tools/clientcmd:go_default_library
+# gazelle:resolve go k8s.io/client-go/tools/clientcmd/api @kubernetes//staging/src/k8s.io/client-go/tools/clientcmd/api:go_default_library
 gazelle(name = "gazelle")
 
 # Shortcut for the Go SDK

@@ -1,11 +1,10 @@
-
 sh_library(
     name = "vm_deps",
     data = [
         "@//core:image",
         "@//core:swtpm_data",
         "@edk2//:firmware",
-    ]
+    ],
 )
 
 sh_binary(
@@ -28,5 +27,8 @@ sh_test(
     srcs = ["test_boot.sh"],
     # expects wants a pty, which do not exist in the sandbox
     tags = ["local"],
-    deps = [":test_deps", ":vm_deps"],
+    deps = [
+        ":test_deps",
+        ":vm_deps",
+    ],
 )
