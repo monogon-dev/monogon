@@ -36,8 +36,8 @@ RUN dnf -y install fedora-repos-rawhide && \
 
 # Install Bazel binary
 RUN curl -o /usr/local/bin/bazel \
-    https://releases.bazel.build/1.1.0/release/bazel-1.1.0-linux-x86_64 && \
-    echo 'f54ab5f31b8d7c6a0ce9dee387af45b1d6577ff9625ef6c535896b59cdf8828a  /usr/local/bin/bazel' | sha256sum --check && \
+    https://releases.bazel.build/2.0.0/release/bazel-2.0.0-linux-x86_64 && \
+    echo '4df79462c6c3ecdeeee7af99fc269b52ab1aa4828ef3bc359c1837d3fafeeee7  /usr/local/bin/bazel' | sha256sum --check && \
     chmod +x /usr/local/bin/bazel
 
 # Use a shared Go module cache for gazelle

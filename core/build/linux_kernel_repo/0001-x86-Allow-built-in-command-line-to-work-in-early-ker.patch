@@ -37,39 +37,40 @@ earlier entry points to inform the generic setup code that the command line
 has already been appended and so shouldn't be added once more.
 
 Updated for Linux 4.19 by Lorenz Brun <lorenz@nexantic.com>
+Updated for Linux 5.4 by Leopold Schabel <leo@nexantic.com>
 
 Signed-off-by: Matthew Garrett <mjg59@coreos.com>
 ---
- Documentation/x86/zero-page.txt               |  1 +
+ Documentation/x86/zero-page.rst               |  1 +
  arch/x86/boot/boot.h                          | 10 ++++
  arch/x86/boot/cmdline.c                       | 37 ++++++++++++++
- arch/x86/boot/compressed/cmdline.c            | 18 ++++++-
+ arch/x86/boot/compressed/cmdline.c            | 10 ++++
  arch/x86/boot/compressed/eboot.c              |  3 ++
  arch/x86/boot/compressed/misc.c               |  2 +
- arch/x86/boot/compressed/misc.h               |  3 +-
+ arch/x86/boot/compressed/misc.h               |  1 +
  arch/x86/boot/main.c                          |  3 ++
  arch/x86/include/uapi/asm/bootparam.h         |  5 +-
  arch/x86/kernel/setup.c                       | 16 +++---
  .../firmware/efi/libstub/efi-stub-helper.c    | 50 +++++++++++++++++--
- 11 files changed, 135 insertions(+), 13 deletions(-)
+ 11 files changed, 127 insertions(+), 11 deletions(-)
 
-diff --git a/Documentation/x86/zero-page.txt b/Documentation/x86/zero-page.txt
-index 97b7adbceda4..3d5e3a81b5fa 100644
---- a/Documentation/x86/zero-page.txt
-+++ b/Documentation/x86/zero-page.txt
-@@ -12,6 +12,7 @@ Offset	Proto	Name		Meaning
- 000/040	ALL	screen_info	Text mode or frame buffer information
- 				(struct screen_info)
- 040/014	ALL	apm_bios_info	APM BIOS information (struct apm_bios_info)
-+054/004	ALL	setup_flags	Flags passed from early kernel setup
- 058/008	ALL	tboot_addr      Physical address of tboot shared page
- 060/010	ALL	ist_info	Intel SpeedStep (IST) BIOS support information
- 				(struct ist_info)
+diff --git a/Documentation/x86/zero-page.rst b/Documentation/x86/zero-page.rst
+index f088f5881666..3f84244dd573 100644
+--- a/Documentation/x86/zero-page.rst
++++ b/Documentation/x86/zero-page.rst
+@@ -16,6 +16,7 @@ Offset/Size	Proto	Name			Meaning
+ 000/040		ALL	screen_info		Text mode or frame buffer information
+ 						(struct screen_info)
+ 040/014		ALL	apm_bios_info		APM BIOS information (struct apm_bios_info)
++054/004		ALL	setup_flags			Flags passed from early kernel setup
+ 058/008		ALL	tboot_addr      	Physical address of tboot shared page
+ 060/010		ALL	ist_info		Intel SpeedStep (IST) BIOS support information
+ 						(struct ist_info)
 diff --git a/arch/x86/boot/boot.h b/arch/x86/boot/boot.h
-index ef5a9cc66fb8..4dcf45570976 100644
+index ca866f1cca2e..a97502baba73 100644
 --- a/arch/x86/boot/boot.h
 +++ b/arch/x86/boot/boot.h
-@@ -273,6 +273,7 @@ void intcall(u8 int_no, const struct biosregs *ireg, struct biosregs *oreg);
+@@ -269,6 +269,7 @@ void intcall(u8 int_no, const struct biosregs *ireg, struct biosregs *oreg);
  /* cmdline.c */
  int __cmdline_find_option(unsigned long cmdline_ptr, const char *option, char *buffer, int bufsize);
  int __cmdline_find_option_bool(unsigned long cmdline_ptr, const char *option);
@@ -77,10 +78,10 @@ index ef5a9cc66fb8..4dcf45570976 100644
  static inline int cmdline_find_option(const char *option, char *buffer, int bufsize)
  {
  	unsigned long cmd_line_ptr = boot_params.hdr.cmd_line_ptr;
-@@ -293,6 +294,15 @@ static inline int cmdline_find_option_bool(const char *option)
+@@ -289,6 +290,15 @@ static inline int cmdline_find_option_bool(const char *option)
  	return __cmdline_find_option_bool(cmd_line_ptr, option);
  }
- 
+
 +static inline int cmdline_init(void)
 +{
 +	unsigned long cmd_line_ptr = boot_params.hdr.cmd_line_ptr;
@@ -94,13 +95,13 @@ index ef5a9cc66fb8..4dcf45570976 100644
  int check_cpu(int *cpu_level_ptr, int *req_level_ptr, u32 **err_flags_ptr);
  int check_knl_erratum(void);
 diff --git a/arch/x86/boot/cmdline.c b/arch/x86/boot/cmdline.c
-index 625d21b0cd3f..2273d2797570 100644
+index 4ff01176c1cc..b5dfbe0b3209 100644
 --- a/arch/x86/boot/cmdline.c
 +++ b/arch/x86/boot/cmdline.c
-@@ -14,6 +14,10 @@
- 
+@@ -12,6 +12,10 @@
+
  #include "boot.h"
- 
+
 +#ifdef CONFIG_CMDLINE_BOOL
 +static char builtin_cmdline[] = CONFIG_CMDLINE;
 +#endif
@@ -108,8 +109,8 @@ index 625d21b0cd3f..2273d2797570 100644
  static inline int myisspace(u8 c)
  {
  	return c <= ' ';	/* Close enough approximation */
-@@ -156,3 +160,36 @@ int __cmdline_find_option_bool(unsigned long cmdline_ptr, const char *option)
- 
+@@ -154,3 +158,36 @@ int __cmdline_find_option_bool(unsigned long cmdline_ptr, const char *option)
+
  	return 0;	/* Buffer overrun */
  }
 +
@@ -146,19 +147,10 @@ index 625d21b0cd3f..2273d2797570 100644
 +	return 0;
 +}
 diff --git a/arch/x86/boot/compressed/cmdline.c b/arch/x86/boot/compressed/cmdline.c
-index af6cda0b7900..70fbf01f5f36 100644
+index f1add5d85da9..c69b27a5e76d 100644
 --- a/arch/x86/boot/compressed/cmdline.c
 +++ b/arch/x86/boot/compressed/cmdline.c
-@@ -1,7 +1,7 @@
- // SPDX-License-Identifier: GPL-2.0
- #include "misc.h"
- 
--#if CONFIG_EARLY_PRINTK || CONFIG_RANDOMIZE_BASE || CONFIG_X86_5LEVEL
-+#if CONFIG_EARLY_PRINTK || CONFIG_RANDOMIZE_BASE || CONFIG_X86_5LEVEL || CONFIG_CMDLINE_BOOL
- 
- static unsigned long fs;
- static inline void set_fs(unsigned long seg)
-@@ -13,6 +13,10 @@ static inline char rdfs8(addr_t addr)
+@@ -11,6 +11,10 @@ static inline char rdfs8(addr_t addr)
  {
  	return *((char *)(fs + addr));
  }
@@ -169,75 +161,63 @@ index af6cda0b7900..70fbf01f5f36 100644
  #include "../cmdline.c"
  unsigned long get_cmd_line_ptr(void)
  {
-@@ -31,4 +35,16 @@ int cmdline_find_option_bool(const char *option)
+@@ -28,3 +32,9 @@ int cmdline_find_option_bool(const char *option)
+ {
  	return __cmdline_find_option_bool(get_cmd_line_ptr(), option);
  }
- 
 +int cmdline_init(void)
 +{
 +	if (!(boot_params->setup_flags & SETUP_CMDLINE_APPENDED))
 +		return __cmdline_init(get_cmd_line_ptr(), boot_params);
 +	return 0;
 +}
-+#else
-+int cmdline_init(void)
-+{
-+#error "BAD"
-+	return 0;
-+}
- #endif
 diff --git a/arch/x86/boot/compressed/eboot.c b/arch/x86/boot/compressed/eboot.c
-index 544ac4fafd11..0c8059ace733 100644
+index 82bc60c8acb2..a325c5dd2700 100644
 --- a/arch/x86/boot/compressed/eboot.c
 +++ b/arch/x86/boot/compressed/eboot.c
-@@ -451,6 +451,9 @@ struct boot_params *make_boot_params(struct efi_config *c)
+@@ -447,6 +447,9 @@ struct boot_params *make_boot_params(struct efi_config *c)
  	/* Fill in upper bits of command line address, NOP on 32 bit  */
  	boot_params->ext_cmd_line_ptr = (u64)(unsigned long)cmdline_ptr >> 32;
- 
+
 +#ifdef CONFIG_CMDLINE_BOOL
 +	boot_params->setup_flags |= SETUP_CMDLINE_APPENDED;
 +#endif
  	hdr->ramdisk_image = 0;
  	hdr->ramdisk_size = 0;
- 
+
 diff --git a/arch/x86/boot/compressed/misc.c b/arch/x86/boot/compressed/misc.c
-index 0387d7a96c84..90af5161dde4 100644
+index 9652d5c2afda..05fd4372b630 100644
 --- a/arch/x86/boot/compressed/misc.c
 +++ b/arch/x86/boot/compressed/misc.c
-@@ -365,6 +365,8 @@ asmlinkage __visible void *extract_kernel(void *rmode, memptr heap,
+@@ -366,6 +366,8 @@ asmlinkage __visible void *extract_kernel(void *rmode, memptr heap,
  	lines = boot_params->screen_info.orig_video_lines;
  	cols = boot_params->screen_info.orig_video_cols;
- 
+
 +	cmdline_init();
 +
  	console_init();
- 	debug_putstr("early console in extract_kernel\n");
- 
+
+ 	/*
 diff --git a/arch/x86/boot/compressed/misc.h b/arch/x86/boot/compressed/misc.h
-index 47fd18db6b3b..2e5e1d80ba38 100644
+index c8181392f70d..e2f962e7c0d4 100644
 --- a/arch/x86/boot/compressed/misc.h
 +++ b/arch/x86/boot/compressed/misc.h
-@@ -61,10 +61,11 @@ static inline void debug_puthex(const char *s)
- 
- #endif
- 
--#if CONFIG_EARLY_PRINTK || CONFIG_RANDOMIZE_BASE
-+#if CONFIG_EARLY_PRINTK || CONFIG_RANDOMIZE_BASE || CONFIG_CMDLINE_BOOL
+@@ -68,6 +68,7 @@ static inline void debug_puthex(const char *s)
  /* cmdline.c */
  int cmdline_find_option(const char *option, char *buffer, int bufsize);
  int cmdline_find_option_bool(const char *option);
 +int cmdline_init(void);
- #endif
- 
- 
+
+ struct mem_vector {
+ 	unsigned long long start;
 diff --git a/arch/x86/boot/main.c b/arch/x86/boot/main.c
-index 9bcea386db65..e3275d57f024 100644
+index e3add857c2c9..e20e81253a7d 100644
 --- a/arch/x86/boot/main.c
 +++ b/arch/x86/boot/main.c
-@@ -137,6 +137,9 @@ void main(void)
+@@ -136,6 +136,9 @@ void main(void)
  	/* First, copy the boot header into the "zeropage" */
  	copy_boot_params();
- 
+
 +	/* Handle built-in command line */
 +	cmdline_init();
 +
@@ -245,20 +225,20 @@ index 9bcea386db65..e3275d57f024 100644
  	console_init();
  	if (cmdline_find_option_bool("debug"))
 diff --git a/arch/x86/include/uapi/asm/bootparam.h b/arch/x86/include/uapi/asm/bootparam.h
-index a06cbf019744..aee889f5400f 100644
+index c895df5482c5..bb3c2073a63a 100644
 --- a/arch/x86/include/uapi/asm/bootparam.h
 +++ b/arch/x86/include/uapi/asm/bootparam.h
-@@ -30,6 +30,9 @@
- #define XLF_EFI_HANDOVER_64		(1<<3)
- #define XLF_EFI_KEXEC			(1<<4)
- 
+@@ -32,6 +32,9 @@
+ #define XLF_5LEVEL			(1<<5)
+ #define XLF_5LEVEL_ENABLED		(1<<6)
+
 +/* setup_flags */
 +#define SETUP_CMDLINE_APPENDED		(1<<0)
 +
  #ifndef __ASSEMBLY__
- 
+
  #include <linux/types.h>
-@@ -152,7 +155,7 @@ struct jailhouse_setup_data {
+@@ -154,7 +157,7 @@ struct jailhouse_setup_data {
  struct boot_params {
  	struct screen_info screen_info;			/* 0x000 */
  	struct apm_bios_info apm_bios_info;		/* 0x040 */
@@ -266,14 +246,14 @@ index a06cbf019744..aee889f5400f 100644
 +	__u32 setup_flags;				/* 0x054 */
  	__u64  tboot_addr;				/* 0x058 */
  	struct ist_info ist_info;			/* 0x060 */
- 	__u8  _pad3[16];				/* 0x070 */
+ 	__u64 acpi_rsdp_addr;				/* 0x070 */
 diff --git a/arch/x86/kernel/setup.c b/arch/x86/kernel/setup.c
-index b4866badb235..c6ad8800349b 100644
+index 77ea96b794bd..7985d13f8e5b 100644
 --- a/arch/x86/kernel/setup.c
 +++ b/arch/x86/kernel/setup.c
-@@ -935,16 +935,18 @@ void __init setup_arch(char **cmdline_p)
+@@ -957,16 +957,18 @@ void __init setup_arch(char **cmdline_p)
  	bss_resource.end = __pa_symbol(__bss_stop)-1;
- 
+
  #ifdef CONFIG_CMDLINE_BOOL
 +	if (!(boot_params.setup_flags & SETUP_CMDLINE_APPENDED)) {
  #ifdef CONFIG_CMDLINE_OVERRIDE
@@ -295,20 +275,20 @@ index b4866badb235..c6ad8800349b 100644
  #endif
 +	}
  #endif
- 
+
  	strlcpy(command_line, boot_command_line, COMMAND_LINE_SIZE);
 diff --git a/drivers/firmware/efi/libstub/efi-stub-helper.c b/drivers/firmware/efi/libstub/efi-stub-helper.c
-index 442f51c2a53d..61f65f8ac94f 100644
+index 35dbc2791c97..87d1e390fb49 100644
 --- a/drivers/firmware/efi/libstub/efi-stub-helper.c
 +++ b/drivers/firmware/efi/libstub/efi-stub-helper.c
-@@ -12,9 +12,14 @@
- 
+@@ -9,9 +9,14 @@
+
  #include <linux/efi.h>
  #include <asm/efi.h>
 +#include <asm/setup.h>
- 
+
  #include "efistub.h"
- 
+
 +#ifdef CONFIG_CMDLINE_BOOL
 +static char builtin_cmdline[] = CONFIG_CMDLINE;
 +#endif
@@ -316,7 +296,7 @@ index 442f51c2a53d..61f65f8ac94f 100644
  /*
   * Some firmware implementations have problems reading files in one go.
   * A read chunk size of 1MB seems to work for most platforms.
-@@ -806,6 +811,20 @@ static u8 *efi_utf16_to_utf8(u8 *dst, const u16 *src, int n)
+@@ -799,6 +804,20 @@ static u8 *efi_utf16_to_utf8(u8 *dst, const u16 *src, int n)
  #ifndef MAX_CMDLINE_ADDRESS
  #define MAX_CMDLINE_ADDRESS	ULONG_MAX
  #endif
@@ -334,10 +314,10 @@ index 442f51c2a53d..61f65f8ac94f 100644
 +	dest[len] = 0;
 +	return res;
 +}
- 
+
  /*
   * Convert the unicode UEFI command line to ASCII to pass to kernel.
-@@ -816,14 +835,16 @@ char *efi_convert_cmdline(efi_system_table_t *sys_table_arg,
+@@ -809,14 +828,16 @@ char *efi_convert_cmdline(efi_system_table_t *sys_table_arg,
  			  efi_loaded_image_t *image,
  			  int *cmd_line_len)
  {
@@ -354,13 +334,13 @@ index 442f51c2a53d..61f65f8ac94f 100644
  	int options_chars = 0;  /* UTF-16 chars */
 -	efi_status_t status;
  	u16 zero = 0;
- 
+
  	if (options) {
-@@ -842,8 +863,14 @@ char *efi_convert_cmdline(efi_system_table_t *sys_table_arg,
- 
+@@ -835,8 +856,14 @@ char *efi_convert_cmdline(efi_system_table_t *sys_table_arg,
+
  	options_bytes++;	/* NUL termination */
- 
-+	
+
++
 +#ifdef CONFIG_CMDLINE_BOOL
 +	/* Add length of the built-in command line, plus a space */
 +	options_bytes += strlen(builtin_cmdline);
@@ -371,11 +351,11 @@ index 442f51c2a53d..61f65f8ac94f 100644
 +		&cmdline_addr, MAX_CMDLINE_ADDRESS);
  	if (status != EFI_SUCCESS)
  		return NULL;
- 
-@@ -853,7 +880,24 @@ char *efi_convert_cmdline(efi_system_table_t *sys_table_arg,
+
+@@ -846,7 +873,24 @@ char *efi_convert_cmdline(efi_system_table_t *sys_table_arg,
  	s1 = efi_utf16_to_utf8(s1, s2, options_chars);
  	*s1 = '\0';
- 
+
 +#ifdef CONFIG_CMDLINE_BOOL
 +	efi_strlcat((char *)cmdline_addr, " ", COMMAND_LINE_SIZE);
 +	efi_strlcat((char *)cmdline_addr, builtin_cmdline, COMMAND_LINE_SIZE);
@@ -396,7 +376,6 @@ index 442f51c2a53d..61f65f8ac94f 100644
 +
  	return (char *)cmdline_addr;
  }
- 
--- 
-2.20.1
 
+--
+2.24.1

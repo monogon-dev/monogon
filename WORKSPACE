@@ -22,7 +22,7 @@ bazel_skylib_workspace()
 
 load("@bazel_skylib//lib:versions.bzl", "versions")
 
-versions.check(minimum_bazel_version = "1.1.0")
+versions.check(minimum_bazel_version = "2.0.0")
 
 # Go and Gazelle
 
@@ -30,19 +30,19 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "842ec0e6b4fbfdd3de6150b61af92901eeb73681fd4d185746644c338f51d4c0",
+    sha256 = "e88471aea3a3a4f19ec1310a55ba94772d087e9ce46e41ae38ecebe17935de7b",
     urls = [
-        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/rules_go/releases/download/v0.20.1/rules_go-v0.20.1.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.20.1/rules_go-v0.20.1.tar.gz",
+        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/rules_go/releases/download/v0.20.3/rules_go-v0.20.3.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.20.3/rules_go-v0.20.3.tar.gz",
     ],
 )
 
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "41bff2a0b32b02f20c227d234aa25ef3783998e5453f7eade929704dcff7cd4b",
+    sha256 = "86c6d481b3f7aedc1d60c1c211c6f76da282ae197c3b3160f54bd3a8f847896f",
     urls = [
-        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/bazel-gazelle/releases/download/v0.19.0/bazel-gazelle-v0.19.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.19.0/bazel-gazelle-v0.19.0.tar.gz",
+        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/bazel-gazelle/releases/download/v0.19.1/bazel-gazelle-v0.19.1.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.19.1/bazel-gazelle-v0.19.1.tar.gz",
     ],
 )
 
@@ -95,22 +95,19 @@ all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//v
 
 # Linux kernel
 
-linux_kernel_version = "4.19.72"
+linux_kernel_version = "5.4.7"
 
 http_archive(
     name = "linux_kernel",
     build_file = "@//core/build/linux_kernel_repo:BUILD.repo",
     patch_args = ["-p1"],
     patches = [
-        # Fix is in mainline, but upstream hasn't backported it to 4.19.
-        # Will go away when we switch to 5.4 LTS
-        "@//core/build/linux_kernel_repo:0002-kbuild-add--fcf-protection-none-to-retpoline-flags.patch",
         # Enable built-in cmdline for efistub
         "@//core/build/linux_kernel_repo:0001-x86-Allow-built-in-command-line-to-work-in-early-ker.patch",
     ],
-    sha256 = "f9fcb6b3bd29115ac55fc154e300c3dce2044502732f6842ad6c25e6f9f51f6d",
+    sha256 = "abc9b21d9146d95853dac35f4c4489a0199aff53ee6eee4b0563d1b37079fcc9",
     strip_prefix = "linux-" + linux_kernel_version,
-    urls = ["https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-%s.tar.xz" % linux_kernel_version],
+    urls = ["https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-%s.tar.xz" % linux_kernel_version],
 )
 
 # EDK2
@@ -127,12 +124,12 @@ new_git_repository(
 
 # musl
 
-musl_version = "1.1.23"
+musl_version = "1.1.24"
 
 http_archive(
     name = "musl",
     build_file_content = all_content,
-    sha256 = "8a0feb41cef26c97dde382c014e68b9bb335c094bbc1356f6edaaf6b79bd14aa",
+    sha256 = "1370c9a812b2cf2a7d92802510cca0058cc37e66a7bedd70051f0a34015022a3",
     strip_prefix = "musl-" + musl_version,
     urls = ["https://www.musl-libc.org/releases/musl-%s.tar.gz" % musl_version],
 )
@@ -166,7 +163,7 @@ http_archive(
 )
 
 # Kubernetes
-k8s_version = "1.16.2"
+k8s_version = "1.16.4"
 
 http_archive(
     name = "kubernetes",
@@ -174,7 +171,7 @@ http_archive(
     patches = [
         "@//core/build/kubernetes:0001-avoid-unexpected-keyword-error-by-using-positional-p.patch",
     ],
-    sha256 = "21d884b67abd1182958313474a40678ba8f3713e6b6f520401e42c02ba6ea302",
+    sha256 = "3a49373ba56c73c282deb0cfa2ec7bfcc6bf46acb6992f01319eb703cbf68996",
     urls = ["https://dl.k8s.io/v%s/kubernetes-src.tar.gz" % k8s_version],
 )
 

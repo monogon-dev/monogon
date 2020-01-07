@@ -61,6 +61,7 @@ go_path(
     name = "gopath",
     mode = "link",
     deps = [
+        # All top-level Go targets that need IDE integration need to be listed here
         "//core/cmd/init",
     ],
 )
