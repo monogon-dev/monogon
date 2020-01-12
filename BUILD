@@ -32,7 +32,8 @@ nogo(
         "@org_golang_x_tools//go/analysis/passes/atomic:go_tool_library",
         "@org_golang_x_tools//go/analysis/passes/bools:go_tool_library",
         "@org_golang_x_tools//go/analysis/passes/buildtag:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/cgocall:go_tool_library",
+        # Disable cgocall because it fails processing com_github_mattn_go_sqlite3 before exclusions are applied
+        #"@org_golang_x_tools//go/analysis/passes/cgocall:go_tool_library",
         "@org_golang_x_tools//go/analysis/passes/composite:go_tool_library",
         "@org_golang_x_tools//go/analysis/passes/copylock:go_tool_library",
         "@org_golang_x_tools//go/analysis/passes/httpresponse:go_tool_library",

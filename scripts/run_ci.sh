@@ -67,7 +67,7 @@ podman run -d \
     --pod ${POD} \
     --ulimit nofile=262144:262144 \
     --name=${POD}-cockroach \
-    cockroachdb/cockroach:v19.1.5 start --insecure
+    cockroachdb/cockroach:v19.1.5 start --insecure --advertise-addr localhost
 
 podman run \
     -v $(pwd):/work \
