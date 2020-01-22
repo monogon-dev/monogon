@@ -18,9 +18,11 @@ package tpm
 
 // This file is adapted from github.com/google/go-tpm/tpm2/credactivation which outputs broken
 // challenges for unknown reasons. They use u16 length-delimited outputs for the challenge blobs
-// which is incorrect.
+// which is incorrect. Rather than rewriting the routine, we only applied minimal fixes to it
+// and skip the ECC part of the issue (because we would rather trust the proprietary RSA implementation).
+//
 // TODO(lorenz): I'll eventually deal with this upstream, but for now just fix it here (it's not that)
-// much code after all.
+// much code after all (https://github.com/google/go-tpm/issues/121)
 
 import (
 	"crypto/aes"

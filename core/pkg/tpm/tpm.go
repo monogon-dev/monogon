@@ -265,7 +265,7 @@ var akTemplate = tpm2.Public{
 
 func loadAK() error {
 	var err error
-	// Rationale: The AK is a EK-equivalent key and used only for attestation. Using a non-primary
+	// Rationale: The AK is an EK-equivalent key and used only for attestation. Using a non-primary
 	// key here would require us to store the wrapped version somewhere, which is inconvenient.
 	// This being a primary key in the Endorsement hierarchy means that it can always be recreated
 	// and can never be "destroyed". Under our security model this is of no concern since we identify

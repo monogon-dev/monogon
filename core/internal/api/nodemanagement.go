@@ -109,7 +109,7 @@ func (s *Server) TPM2BootstrapNode(newNodeInfo *api.NewNodeInfo) (*api.Node, err
 func (s *Server) TPM2Unlock(unlockServer api.NodeManagementService_TPM2UnlockServer) error {
 	nonce := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return status.Error(codes.Unavailable, "failed to get randonmess")
+		return status.Error(codes.Unavailable, "failed to get randomness")
 	}
 	if err := unlockServer.Send(&api.TPM2UnlockFlowResponse{
 		Stage: &api.TPM2UnlockFlowResponse_UnlockInit{
@@ -191,7 +191,7 @@ func (s *Server) NewTPM2NodeRegister(registerServer api.NodeManagementService_Ne
 
 	challengeNonce := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, challengeNonce); err != nil {
-		return status.Error(codes.Unavailable, "failed to get randonmess")
+		return status.Error(codes.Unavailable, "failed to get randomness")
 	}
 	challenge, challengeBlob, err := tpm.MakeAKChallenge(registerReq.EkPubkey, registerReq.AkPublic, challengeNonce)
 	if err != nil {
@@ -199,7 +199,7 @@ func (s *Server) NewTPM2NodeRegister(registerServer api.NodeManagementService_Ne
 	}
 	nonce := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return status.Error(codes.Unavailable, "failed to get randonmess")
+		return status.Error(codes.Unavailable, "failed to get randomness")
 	}
 	if err := registerServer.Send(&api.TPM2FlowResponse{Stage: &api.TPM2FlowResponse_AttestRequest{AttestRequest: &api.TPM2AttestRequest{
 		AkChallenge:       challenge,

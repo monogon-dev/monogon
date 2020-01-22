@@ -9,7 +9,7 @@
 # (see https://github.com/bazelbuild/bazel/blob/master/tools/bash/runfiles/runfiles.bash)
 set kubectl_path "external/kubernetes/cmd/kubectl/linux_amd64_pure_stripped/kubectl"
 
-set timeout 60
+set timeout 120
 
 proc print_stderr {msg} {
   send_error "\[TEST\] $msg\n"
@@ -38,7 +38,7 @@ expect -timeout 3 "\n" {
 spawn $kubectl_path cluster-info dump -s https://localhost:6443 --username none --password none --insecure-skip-tls-verify=true
 
 expect "User \"system:anonymous\" cannot list resource \"nodes\" in API group \"\" at the cluster scope" {} default {
-  print_stderr "Failed while waiting for encrypted storage\n"
+  print_stderr "Failed while waiting for kubectl test\n"
   exit 1
 }
 

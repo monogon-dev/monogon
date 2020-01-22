@@ -33,6 +33,7 @@ import (
 )
 
 // Agent specifices the interface which every integrity agent needs to fulfill
+// TODO: This interface is not yet used, we call the TPM2 agent directly.
 type Agent interface {
 	// Initialize needs to be called once and initializes the systems required to maintain integrity
 	// on the given platform.
@@ -42,8 +43,8 @@ type Agent interface {
 	// Initialize returns the cryptographic identity that it's bound to.
 	Initialize(newNode api.NewNodeInfo, enrolment api.EnrolmentConfig) (string, error)
 
-	// Unlock performs all required actions to assure the integrity of the platform and retrieves
-	// the unlock key in a secure manner
+	// Unlock performs all required actions to assure the integrity of the platform and securely retrieves
+	// the unlock key.
 	Unlock(enrolment api.EnrolmentConfig) ([]byte, error)
 }
 
