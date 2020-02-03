@@ -1,0 +1,22 @@
+genrule(
+    name = "bzImage",
+    srcs = [
+        "@linux//:all",
+        "linux-smalltown.config",
+    ],
+    outs = [
+        "bzImage",
+    ],
+    cmd = """
+    DIR=external/linux
+
+    mkdir $$DIR/.bin
+
+    cp $(location linux-smalltown.config) $$DIR/.config
+
+    (cd $$DIR && make -j $$(nproc) >/dev/null)
+
+    cp $$DIR/arch/x86/boot/bzImage $(RULEDIR)
+    """,
+    visibility = ["//visibility:public"],
+)

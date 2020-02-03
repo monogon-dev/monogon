@@ -1,16 +1,42 @@
 genrule(
+    name = "initramfs",
+    srcs = [
+        "//core/cmd/init",
+        "//core/build/utils:mkfs.xfs",
+        "//core/cmd/kube-controlplane",
+    ],
+    outs = [
+        "initramfs.cpio.lz4",
+    ],
+    cmd = """
+    $(location @linux//:gen_init_cpio) - <<- 'EOF' | lz4 -l > \"$@\" 
+dir /dev 0755 0 0
+nod /dev/console 0600 0 0 c 5 1
+nod /dev/null 0644 0 0 c 1 3
+file /init $(location //core/cmd/init) 0755 0 0
+dir /bin 0755 0 0
+file /bin/mkfs.xfs $(location //core/build/utils:mkfs.xfs) 0755 0 0
+file /bin/kube-controlplane $(location //core/cmd/kube-controlplane) 0755 0 0
+EOF
+    """,
+    tools = [
+        "@linux//:gen_init_cpio",
+    ],
+)
+
+genrule(
     name = "image",
     srcs = [
-        "//core/build/linux_kernel:bzImage",
-        "//core/build/linux_kernel:initramfs",
+        "//third_party/linux:bzImage",
+        ":initramfs",
     ],
     outs = [
         "smalltown.img",
     ],
     cmd = """
     $(location //core/cmd/mkimage) \
-        -efi $(location //core/build/linux_kernel:bzImage) \
-        -initramfs $(location //core/build/linux_kernel:initramfs) \
+        -efi $(location //third_party/linux:bzImage) \
+        -initramfs $(location :initramfs) \
         -out $@
     """,
     tools = [

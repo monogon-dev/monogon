@@ -95,19 +95,19 @@ all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//v
 
 # Linux kernel
 
-linux_kernel_version = "5.4.7"
+linux_version = "5.4.7"
 
 http_archive(
-    name = "linux_kernel",
-    build_file = "//core/build/linux_kernel_repo:BUILD.repo",
+    name = "linux",
+    build_file = "//third_party/linux/external:BUILD.repo",
     patch_args = ["-p1"],
     patches = [
         # Enable built-in cmdline for efistub
-        "//core/build/linux_kernel_repo:0001-x86-Allow-built-in-command-line-to-work-in-early-ker.patch",
+        "//third_party/linux/external:0001-x86-Allow-built-in-command-line-to-work-in-early-ker.patch",
     ],
     sha256 = "abc9b21d9146d95853dac35f4c4489a0199aff53ee6eee4b0563d1b37079fcc9",
-    strip_prefix = "linux-" + linux_kernel_version,
-    urls = ["https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-%s.tar.xz" % linux_kernel_version],
+    strip_prefix = "linux-" + linux_version,
+    urls = ["https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-%s.tar.xz" % linux_version],
 )
 
 # EDK2

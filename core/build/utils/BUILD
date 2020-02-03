@@ -27,7 +27,7 @@ genrule(
         "@xfsprogs_dev//:all",
         "@musl//:all",
         "@util_linux//:all",
-        "@linux_kernel//:all",
+        "@linux//:all",
     ],
     outs = [
         "mkfs.xfs",
@@ -44,7 +44,7 @@ genrule(
 
     echo "Installing Linux kernel headers..."
     (
-        cd external/linux_kernel
+        cd external/linux
         make headers_install ARCH=x86_64 INSTALL_HDR_PATH=$$MUSL
     ) > /dev/null
 
