@@ -3,11 +3,13 @@
 # https://phab.monogon.dev/harbormaster/plan/2/
 set -euo pipefail
 
+DOCKERFILE_HASH=$(sha1sum build/Dockerfile | cut -c -8)
+
 BUILD_ID=$1;
 BUILD_PHID=$2;
 shift; shift;
 
-TAG=nexantic-build-${BUILD_ID}
+TAG=nexantic-version-${DOCKERFILE_HASH}
 POD=nexantic-build-${BUILD_ID}
 
 # We keep one Bazel build cache per working copy to avoid concurrency issues
@@ -20,16 +22,19 @@ function getWorkingCopyID {
 
 CACHE_VOLUME=bazel-cache-$(getWorkingCopyID)
 
-# New image for each build - the Dockerfile might have changed.
-# Rely on the build step cache to avoid costly rebuilds.
-podman build -t ${TAG} build
+# We do our own image caching since the podman build step cache does
+# not work across different repository checkouts and is also easily
+# invalidated by multiple in-flight revisions with different Dockerfiles.
+if ! podman image inspect "$TAG" >/dev/null; then
+  echo "Could not find $TAG, building..."
+  podman build -t ${TAG} build
+fi
 
 # Keep this in sync with create_container.sh:
 
 function cleanup {
   rc=$?
   ! podman pod rm $POD --force
-  ! podman rmi $TAG --force
   exit $rc
 }
 

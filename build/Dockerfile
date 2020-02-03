@@ -1,3 +1,8 @@
+#
+# The CI only rebuilds this Dockerfile if its hash changes.
+# Do not reference any external files, since modifications to them won't trigger a rebuild.
+#
+
 FROM fedora:30
 
 RUN dnf -y upgrade && \
