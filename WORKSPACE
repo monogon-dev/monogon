@@ -99,11 +99,11 @@ linux_kernel_version = "5.4.7"
 
 http_archive(
     name = "linux_kernel",
-    build_file = "@//core/build/linux_kernel_repo:BUILD.repo",
+    build_file = "//core/build/linux_kernel_repo:BUILD.repo",
     patch_args = ["-p1"],
     patches = [
         # Enable built-in cmdline for efistub
-        "@//core/build/linux_kernel_repo:0001-x86-Allow-built-in-command-line-to-work-in-early-ker.patch",
+        "//core/build/linux_kernel_repo:0001-x86-Allow-built-in-command-line-to-work-in-early-ker.patch",
     ],
     sha256 = "abc9b21d9146d95853dac35f4c4489a0199aff53ee6eee4b0563d1b37079fcc9",
     strip_prefix = "linux-" + linux_kernel_version,
@@ -115,7 +115,7 @@ http_archive(
 # edk2-stable201908
 new_git_repository(
     name = "edk2",
-    build_file = "@//core/build/edk2:BUILD.repo",
+    build_file = "//core/build/edk2:BUILD.repo",
     commit = "37eef91017ad042035090cae46557f9d6e2d5917",
     init_submodules = True,
     remote = "https://github.com/tianocore/edk2",
@@ -155,7 +155,7 @@ http_archive(
     build_file_content = all_content,
     patch_args = ["-p1"],
     patches = [
-        "@//core/build/utils/xfsprogs_dev:0001-Fixes-for-static-compilation.patch",
+        "//core/build/utils/xfsprogs_dev:0001-Fixes-for-static-compilation.patch",
     ],
     sha256 = "6187f25f1744d1ecbb028b0ea210ad586d0f2dae24e258e4688c67740cc861ef",
     strip_prefix = "xfsprogs-dev-" + xfsprogs_dev_version,
@@ -169,7 +169,7 @@ http_archive(
     name = "kubernetes",
     patch_args = ["-p1"],
     patches = [
-        "@//core/build/kubernetes:0001-avoid-unexpected-keyword-error-by-using-positional-p.patch",
+        "//core/build/kubernetes:0001-avoid-unexpected-keyword-error-by-using-positional-p.patch",
     ],
     sha256 = "3a49373ba56c73c282deb0cfa2ec7bfcc6bf46acb6992f01319eb703cbf68996",
     urls = ["https://dl.k8s.io/v%s/kubernetes-src.tar.gz" % k8s_version],

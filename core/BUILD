@@ -1,20 +1,20 @@
 genrule(
     name = "image",
     srcs = [
-        "@//core/build/linux_kernel:bzImage",
-        "@//core/build/linux_kernel:initramfs",
+        "//core/build/linux_kernel:bzImage",
+        "//core/build/linux_kernel:initramfs",
     ],
     outs = [
         "smalltown.img",
     ],
     cmd = """
-    $(location @//core/cmd/mkimage) \
-        -efi $(location @//core/build/linux_kernel:bzImage) \
-        -initramfs $(location @//core/build/linux_kernel:initramfs) \
+    $(location //core/cmd/mkimage) \
+        -efi $(location //core/build/linux_kernel:bzImage) \
+        -initramfs $(location //core/build/linux_kernel:initramfs) \
         -out $@
     """,
     tools = [
-        "@//core/cmd/mkimage",
+        "//core/cmd/mkimage",
     ],
     visibility = ["//visibility:public"],
 )

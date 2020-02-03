@@ -107,8 +107,8 @@ sqlboiler = rule(
     attrs = {
         "srcs": attr.label_list(mandatory = True, allow_files = [".sql"]),
         "tables": attr.string_list(default = []),
-        "migrate_config": attr.label(allow_single_file = True, default = Label("@//build/sqlboiler:dbconfig.yml")),
-        "boiler_config": attr.label(allow_single_file = True, default = Label("@//build/sqlboiler:sqlboiler.toml")),
+        "migrate_config": attr.label(allow_single_file = True, default = Label("//build/sqlboiler:dbconfig.yml")),
+        "boiler_config": attr.label(allow_single_file = True, default = Label("//build/sqlboiler:sqlboiler.toml")),
         "boiler": attr.label(allow_single_file = True, default = Label("@com_github_volatiletech_sqlboiler//:sqlboiler")),
         "adapter": attr.label(allow_single_file = True, default = Label("@com_github_glerchundi_sqlboiler_crdb//:sqlboiler-crdb")),
         "migrate": attr.label(allow_single_file = True, default = Label("@com_github_rubenv_sql_migrate//sql-migrate:sql-migrate")),

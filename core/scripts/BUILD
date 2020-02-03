@@ -1,8 +1,8 @@
 sh_library(
     name = "vm_deps",
     data = [
-        "@//core:image",
-        "@//core:swtpm_data",
+        "//core:image",
+        "//core:swtpm_data",
         "@edk2//:firmware",
     ],
 )
