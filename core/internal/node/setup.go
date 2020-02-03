@@ -20,18 +20,18 @@ import (
 	"git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
-
-	"errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"go.uber.org/zap"
 )
 
 var (
-	ErrConsensusAlreadyProvisioned = errors.New("consensus is already provisioned; make sure the data folder is empty")
-	ErrAlreadySetup                = errors.New("node is already set up")
-	ErrNotInJoinMode               = errors.New("node is not in the cluster join mode")
-	ErrTrustNotInitialized         = errors.New("trust backend not initialized")
-	ErrStorageNotInitialized       = errors.New("storage not initialized")
+	ErrConsensusAlreadyProvisioned = status.Error(codes.FailedPrecondition, "consensus is already provisioned; make sure the data folder is empty")
+	ErrAlreadySetup                = status.Error(codes.FailedPrecondition, "node is already set up")
+	ErrNotInJoinMode               = status.Error(codes.FailedPrecondition, "node is not in the cluster join mode")
+	ErrTrustNotInitialized         = status.Error(codes.FailedPrecondition, "trust backend not initialized")
+	ErrStorageNotInitialized       = status.Error(codes.FailedPrecondition, "storage not initialized")
 )
 
 func (s *SmalltownNode) CurrentState() common.SmalltownState {

@@ -23,14 +23,14 @@ import (
 	"fmt"
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/grpc"
-
-	"errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"go.uber.org/zap"
 )
 
 var (
-	ErrAttestationFailed = errors.New("attestation_failed")
+	ErrAttestationFailed = status.Error(codes.PermissionDenied, "attestation failed")
 )
 
 func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*schema.AddNodeResponse, error) {
@@ -44,7 +44,8 @@ func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*sche
 	nonce := make([]byte, 20)
 	_, err = rand.Read(nonce)
 	if err != nil {
-		return nil, err
+		s.Logger.Error("Nonce generation failed", zap.Error(err))
+		return nil, status.Error(codes.Unavailable, "nonce generation failed")
 	}
 	hexNonce := hex.EncodeToString(nonce)
 
@@ -52,7 +53,8 @@ func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*sche
 		Challenge: hexNonce,
 	})
 	if err != nil {
-		return nil, err
+		s := status.Convert(err)
+		return nil, status.Errorf(s.Code(), "attestation failed: %v", s.Message())
 	}
 
 	//TODO(hendrik): Verify response
@@ -62,7 +64,9 @@ func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*sche
 
 	consensusCerts, err := s.consensusService.IssueCertificate(req.Addr)
 	if err != nil {
-		return nil, err
+		// Errors from IssueCertificate are always treated as internal
+		s.Logger.Error("Node certificate issuance failed", zap.String("addr", req.Addr), zap.Error(err))
+		return nil, status.Error(codes.Internal, "could not issue node certificate")
 	}
 
 	// TODO(leo): fetch remote hostname rather than using the addr
@@ -71,7 +75,7 @@ func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*sche
 	// Add new node to local etcd cluster.
 	memberID, err := s.consensusService.AddMember(ctx, name, fmt.Sprintf("https://%s:%d", req.Addr, s.config.Port))
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Unavailable, "failed to add node to etcd cluster: %v", err)
 	}
 
 	s.Logger.Info("Added new node to consensus cluster; sending cluster join request to node",
@@ -93,7 +97,7 @@ func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*sche
 		if errRemove != nil || errRevoke != nil {
 			return nil, fmt.Errorf("rollback failed after failed provisioning; err=%v; err_rb=%v; err_revoke=%v", err, errRemove, errRevoke)
 		}
-		return nil, err
+		return nil, status.Errorf(codes.Unavailable, "failed to join etcd cluster with node: %v", err)
 	}
 	s.Logger.Info("Fully provisioned new node",
 		zap.String("host", req.Addr),
@@ -104,7 +108,7 @@ func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*sche
 }
 
 func (s *Server) RemoveNode(context.Context, *schema.RemoveNodeRequest) (*schema.RemoveNodeResponse, error) {
-	panic("implement me")
+	return nil, status.Error(codes.Unimplemented, "unimplemented")
 }
 
 func (s *Server) ListNodes(context.Context, *schema.ListNodesRequest) (*schema.ListNodesResponse, error) {
