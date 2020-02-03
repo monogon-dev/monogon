@@ -44,6 +44,20 @@ trap cleanup EXIT
 
 podman pod create --name ${POD}
 
+podman run \
+    --rm \
+    -v $(pwd):/work \
+    -v ${CACHE_VOLUME}:/user/.cache/bazel/_bazel_root \
+    --privileged \
+    ${TAG} \
+    scripts/gazelle.sh
+
+if [[ ! -z "$(git status --porcelain)" ]]; then
+  echo "Unclean working directory after running scripts/gazelle.sh:"
+  git diff HEAD
+  exit 1
+fi
+
 podman run -d \
     --pod ${POD} \
     --ulimit nofile=262144:262144 \
