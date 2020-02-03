@@ -35,7 +35,7 @@ service ClusterManagement {
     }
 
     // Remove a node from the cluster.
-    rpc RemoveNode (RemoveNodeRequest) returns (RemoveNodeRequest) {
+    rpc RemoveNode (RemoveNodeRequest) returns (RemoveNodeResponse) {
 
     }
 

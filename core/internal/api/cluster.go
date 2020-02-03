@@ -103,7 +103,7 @@ func (s *Server) AddNode(ctx context.Context, req *schema.AddNodeRequest) (*sche
 	return &schema.AddNodeResponse{}, nil
 }
 
-func (s *Server) RemoveNode(context.Context, *schema.RemoveNodeRequest) (*schema.RemoveNodeRequest, error) {
+func (s *Server) RemoveNode(context.Context, *schema.RemoveNodeRequest) (*schema.RemoveNodeResponse, error) {
 	panic("implement me")
 }
 
