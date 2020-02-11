@@ -32,7 +32,8 @@ RUN dnf -y upgrade && \
 	postgresql \
 	expect \
 	grpc-cli \
-	nc
+	nc \
+	python-unversioned-command
 
 # Workaround for a binutils bugs in F30, which generates invalid ELF binaries
 # when linking statically with musl.

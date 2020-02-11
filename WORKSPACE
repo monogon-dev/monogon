@@ -183,3 +183,5 @@ http_archive(
     strip_prefix = "repo-infra-9f4571ad7242bf3ec4b47365062498c2528f9a5f",
     urls = mirror("https://github.com/kubernetes/repo-infra/archive/9f4571ad7242bf3ec4b47365062498c2528f9a5f.tar.gz"),
 )
+
+register_toolchains("//:host_python")

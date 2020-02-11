@@ -57,3 +57,31 @@ nogo(
         "@org_golang_x_tools//go/analysis/passes/unusedresult:go_tool_library",
     ],
 )
+
+load("@rules_python//python:defs.bzl", "py_runtime_pair")
+
+# Python toolchains - just use the host python for now.
+# TODO(T649): move to external (nix?) interpreters.
+py_runtime(
+    name = "host_python3",
+    interpreter_path = "/usr/bin/python3",
+    python_version = "PY3",
+)
+
+py_runtime(
+    name = "host_python2",
+    interpreter_path = "/usr/bin/python2",
+    python_version = "PY2",
+)
+
+py_runtime_pair(
+    name = "host_python_pair",
+    py2_runtime = ":host_python2",
+    py3_runtime = ":host_python3",
+)
+
+toolchain(
+    name = "host_python",
+    toolchain = ":host_python_pair",
+    toolchain_type = "@rules_python//python:toolchain_type",
+)
