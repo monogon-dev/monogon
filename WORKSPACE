@@ -72,8 +72,8 @@ gazelle_dependencies()
 
 # Load Gazelle-generated local dependencies
 
-# gazelle:repository_macro repositories.bzl%go_repositories
-load("//:repositories.bzl", "go_repositories")
+# gazelle:repository_macro third_party/go/repositories.bzl%go_repositories
+load("//third_party/go:repositories.bzl", "go_repositories")
 
 go_repositories()
 
