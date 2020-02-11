@@ -16,13 +16,6 @@ alias(
     visibility = ["//visibility:public"],
 )
 
-# Shortcut for kubectl
-alias(
-    name = "kubectl",
-    actual = "@kubernetes//cmd/kubectl:kubectl",
-    visibility = ["//visibility:public"],
-)
-
 # nogo linters
 nogo(
     name = "nogo_vet",
@@ -84,4 +77,12 @@ toolchain(
     name = "host_python",
     toolchain = ":host_python_pair",
     toolchain_type = "@rules_python//python:toolchain_type",
+)
+
+# Shortcut for kubectl when running through bazel run
+# (don't depend on this, it might turn into an env-based PATH shortcut, use
+# //third_party/kubernetes:kubectl instead)
+alias(
+    name = "kubectl",
+    actual = "//third_party/kubernetes:kubectl",
 )

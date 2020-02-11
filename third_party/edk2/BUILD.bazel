@@ -1,0 +1,5 @@
+alias(
+    name = "firmware",
+    actual = "@edk2//:firmware",
+    visibility = ["//visibility:public"],
+)

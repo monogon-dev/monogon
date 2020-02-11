@@ -22,9 +22,9 @@
 #    to how complex the third party build systems we touch are.
 
 genrule(
-    name = "utils",
+    name = "mkfs.extfs",
     srcs = [
-        "@xfsprogs_dev//:all",
+        "@xfsprogs//:all",
         "@musl//:all",
         "@util_linux//:all",
         "@linux//:all",
@@ -73,14 +73,14 @@ genrule(
 
     echo "Compiling mkfs.xfs..."
     (
-        cd external/xfsprogs_dev
+        cd external/xfsprogs
         make configure
         ./configure CC="$$MUSL/bin/musl-gcc" CFLAGS="-static" --prefix=$$MUSL
         echo COMPILERING
         make mkfs -j8
     ) > /dev/null
 
-    cp external/xfsprogs_dev/mkfs/mkfs.xfs $(RULEDIR)
+    cp external/xfsprogs/mkfs/mkfs.xfs $(RULEDIR)
     """,
     visibility = ["//visibility:public"],
 )

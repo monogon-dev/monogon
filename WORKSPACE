@@ -90,93 +90,26 @@ load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 
 protobuf_deps()
 
-# External repository filegroup shortcut
-all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
+# third_party external repositories
+load("//third_party/linux:external.bzl", "linux_external")
+linux_external(name="linux", version="5.4.7")
 
-# Linux kernel
+load("//third_party/edk2:external.bzl", "edk2_external")
+edk2_external(name="edk2")
 
-linux_version = "5.4.7"
+load("//third_party/kubernetes:external.bzl", "kubernetes_external")
+kubernetes_external(name="kubernetes", version="1.16.4")
 
-http_archive(
-    name = "linux",
-    build_file = "//third_party/linux/external:BUILD.repo",
-    patch_args = ["-p1"],
-    patches = [
-        # Enable built-in cmdline for efistub
-        "//third_party/linux/external:0001-x86-Allow-built-in-command-line-to-work-in-early-ker.patch",
-    ],
-    sha256 = "abc9b21d9146d95853dac35f4c4489a0199aff53ee6eee4b0563d1b37079fcc9",
-    strip_prefix = "linux-" + linux_version,
-    urls = ["https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-%s.tar.xz" % linux_version],
-)
+load("//third_party/musl:external.bzl", "musl_external")
+musl_external(name="musl", version="1.1.24")
 
-# EDK2
+load("//third_party/util-linux:external.bzl", "util_linux_external")
+util_linux_external(name="util_linux", version="2.34")
 
-# edk2-stable201908
-new_git_repository(
-    name = "edk2",
-    build_file = "//core/build/edk2:BUILD.repo",
-    commit = "37eef91017ad042035090cae46557f9d6e2d5917",
-    init_submodules = True,
-    remote = "https://github.com/tianocore/edk2",
-    shallow_since = "1567048229 +0800",
-)
-
-# musl
-
-musl_version = "1.1.24"
-
-http_archive(
-    name = "musl",
-    build_file_content = all_content,
-    sha256 = "1370c9a812b2cf2a7d92802510cca0058cc37e66a7bedd70051f0a34015022a3",
-    strip_prefix = "musl-" + musl_version,
-    urls = ["https://www.musl-libc.org/releases/musl-%s.tar.gz" % musl_version],
-)
-
-# util-linux
-
-util_linux_version = "2.34"
-
-http_archive(
-    name = "util_linux",
-    build_file_content = all_content,
-    sha256 = "1d0c1a38f8c14a2c251681907203cccc78704f5702f2ef4b438bed08344242f7",
-    strip_prefix = "util-linux-" + util_linux_version,
-    urls = ["https://git.kernel.org/pub/scm/utils/util-linux/util-linux.git/snapshot/util-linux-%s.tar.gz" % util_linux_version],
-)
-
-# xfsprogs-dev
-
-xfsprogs_dev_version = "5.2.1"
-
-http_archive(
-    name = "xfsprogs_dev",
-    build_file_content = all_content,
-    patch_args = ["-p1"],
-    patches = [
-        "//core/build/utils/xfsprogs_dev:0001-Fixes-for-static-compilation.patch",
-    ],
-    sha256 = "6187f25f1744d1ecbb028b0ea210ad586d0f2dae24e258e4688c67740cc861ef",
-    strip_prefix = "xfsprogs-dev-" + xfsprogs_dev_version,
-    urls = ["https://git.kernel.org/pub/scm/fs/xfs/xfsprogs-dev.git/snapshot/xfsprogs-dev-%s.tar.gz" % xfsprogs_dev_version],
-)
-
-# Kubernetes
-k8s_version = "1.16.4"
-
-http_archive(
-    name = "kubernetes",
-    patch_args = ["-p1"],
-    patches = [
-        "//core/build/kubernetes:0001-avoid-unexpected-keyword-error-by-using-positional-p.patch",
-    ],
-    sha256 = "3a49373ba56c73c282deb0cfa2ec7bfcc6bf46acb6992f01319eb703cbf68996",
-    urls = ["https://dl.k8s.io/v%s/kubernetes-src.tar.gz" % k8s_version],
-)
+load("//third_party/xfsprogs:external.bzl", "xfsprogs_external")
+xfsprogs_external(name="xfsprogs", version="5.2.1")
 
 load("@kubernetes//build:workspace_mirror.bzl", "mirror")
-
 http_archive(
     name = "io_k8s_repo_infra",
     sha256 = "f6d65480241ec0fd7a0d01f432938b97d7395aeb8eefbe859bb877c9b4eafa56",

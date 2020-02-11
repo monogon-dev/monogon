@@ -1,0 +1,5 @@
+alias(
+    name = "kubectl",
+    actual = "@kubernetes//cmd/kubectl",
+    visibility = ["//visibility:public"],
+)

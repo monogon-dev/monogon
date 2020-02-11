@@ -3,7 +3,7 @@ sh_library(
     data = [
         "//core:image",
         "//core:swtpm_data",
-        "@edk2//:firmware",
+        "//third_party/edk2:firmware",
     ],
 )
 
@@ -17,7 +17,7 @@ sh_library(
     name = "test_deps",
     data = [
         ":launch",
-        "//:kubectl",
+        "//third_party/kubernetes:kubectl",
     ],
 )
 
