@@ -18,6 +18,7 @@ package node
 
 import (
 	"bytes"
+	"context"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha512"
@@ -31,9 +32,8 @@ import (
 	"io/ioutil"
 	"math/big"
 	"net"
-	"time"
-
 	"os"
+	"time"
 
 	apipb "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/api"
@@ -43,12 +43,12 @@ import (
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes"
 	"git.monogon.dev/source/nexantic.git/core/internal/network"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
-	"github.com/cenkalti/backoff/v4"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/gogo/protobuf/proto"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var (
@@ -71,32 +71,22 @@ type (
 	}
 )
 
-func NewSmalltownNode(logger *zap.Logger) (*SmalltownNode, error) {
+func NewSmalltownNode(logger *zap.Logger, ntwk *network.Service, strg *storage.Manager) (*SmalltownNode, error) {
 	flag.Parse()
 	logger.Info("Creating Smalltown node")
+	ctx := context.Background()
 
 	hostname, err := os.Hostname()
 	if err != nil {
 		panic(err)
 	}
 
-	networkService, err := network.NewNetworkService(network.Config{}, logger.With(zap.String("component", "network")))
+	// Wait for IP adddress...
+	ctxT, ctxTC := context.WithTimeout(ctx, time.Second*10)
+	defer ctxTC()
+	externalIP, err := ntwk.GetIP(ctxT, true)
 	if err != nil {
-		panic(err)
-	}
-
-	if err := networkService.Start(); err != nil {
-		logger.Panic("Failed to start network service", zap.Error(err))
-	}
-
-	storageManager, err := storage.Initialize(logger.With(zap.String("component", "storage")))
-	if err != nil {
-		logger.Error("Failed to initialize storage manager", zap.Error(err))
-		return nil, err
-	}
-	externalIP := networkService.GetIP(true)
-	if externalIP == nil {
-		logger.Panic("Waited for IP but didn't get one")
+		logger.Panic("Could not get IP address", zap.Error(err))
 	}
 
 	// Important to know if the GetIP above hangs
@@ -113,8 +103,8 @@ func NewSmalltownNode(logger *zap.Logger) (*SmalltownNode, error) {
 
 	s := &SmalltownNode{
 		Consensus: consensusService,
-		Storage:   storageManager,
-		Network:   networkService,
+		Storage:   strg,
+		Network:   ntwk,
 		logger:    logger,
 		hostname:  hostname,
 	}
@@ -133,7 +123,7 @@ func NewSmalltownNode(logger *zap.Logger) (*SmalltownNode, error) {
 	return s, nil
 }
 
-func (s *SmalltownNode) Start() error {
+func (s *SmalltownNode) Start(ctx context.Context) error {
 	s.logger.Info("Starting Smalltown node")
 
 	// TODO(lorenz): Abstracting enrolment sounds like a good idea, but ends up being painful
@@ -156,22 +146,22 @@ func (s *SmalltownNode) Start() error {
 		if len(enrolmentConfig.EnrolmentSecret) == 0 {
 			return s.startFull()
 		}
-		return s.startEnrolling()
+		return s.startEnrolling(ctx)
 	} else if os.IsNotExist(err) {
 		// This is ok like this, once a new cluster has been set up the initial node also generates
 		// its own enrolment config
-		return s.startForSetup()
+		return s.startForSetup(ctx)
 	}
 	// Unknown error reading enrolment config (disk issues/invalid configuration format/...)
 	s.logger.Panic("Invalid enrolment configuration provided", zap.Error(err))
 	panic("Unreachable")
 }
 
-func (s *SmalltownNode) startEnrolling() error {
+func (s *SmalltownNode) startEnrolling(ctx context.Context) error {
 	s.logger.Info("Initializing subsystems for enrolment")
 	s.state = common.StateEnrollMode
 
-	nodeInfo, nodeID, err := s.InitializeNode()
+	nodeInfo, nodeID, err := s.InitializeNode(ctx)
 	if err != nil {
 		return err
 	}
@@ -211,9 +201,9 @@ func (s *SmalltownNode) startEnrolling() error {
 	return nil
 }
 
-func (s *SmalltownNode) startForSetup() error {
+func (s *SmalltownNode) startForSetup(ctx context.Context) error {
 	s.logger.Info("Setting up a new cluster")
-	initData, nodeID, err := s.InitializeNode()
+	initData, nodeID, err := s.InitializeNode(ctx)
 	if err != nil {
 		return err
 	}
@@ -276,10 +266,14 @@ func (s *SmalltownNode) startForSetup() error {
 		return err
 	}
 
+	ip, err := s.Network.GetIP(ctx, true)
+	if err != nil {
+		return fmt.Errorf("could not get node IP: %v", err)
+	}
 	enrolmentConfig := &apipb.EnrolmentConfig{
 		EnrolmentSecret: []byte{}, // First node is always already enrolled
 		MastersCert:     masterCert,
-		MasterIps:       [][]byte{[]byte(*s.Network.GetIP(true))},
+		MasterIps:       [][]byte{[]byte(*ip)},
 		NodeId:          nodeID,
 	}
 	enrolmentConfigRaw, err := proto.Marshal(enrolmentConfig)

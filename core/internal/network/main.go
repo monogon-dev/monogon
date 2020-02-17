@@ -21,13 +21,9 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"sync"
-	"time"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
 
-	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"github.com/vishvananda/netlink"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -40,11 +36,9 @@ const (
 
 type Service struct {
 	*service.BaseService
-	config      Config
-	dhcp4Client *nclient4.Client
-	ip          *net.IP
-	ipNotify    chan struct{}
-	lock        sync.Mutex
+	config Config
+
+	dhcp *dhcpClient
 }
 
 type Config struct {
@@ -52,8 +46,8 @@ type Config struct {
 
 func NewNetworkService(config Config, logger *zap.Logger) (*Service, error) {
 	s := &Service{
-		config:   config,
-		ipNotify: make(chan struct{}),
+		config: config,
+		dhcp:   newDHCPClient(logger),
 	}
 	s.BaseService = service.NewBaseService("network", logger, s)
 	return s, nil
@@ -91,79 +85,36 @@ func addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP) error {
 		Gw:    gw,
 		Scope: netlink.SCOPE_UNIVERSE,
 	}); err != nil {
-		return fmt.Errorf("Failed to add default route: %w", err)
+		return fmt.Errorf("failed to add default route: %w", err)
 	}
 	return nil
 }
 
-const (
-	stateInitialize = 1
-	stateSelect     = 2
-	stateBound      = 3
-	stateRenew      = 4
-	stateRebind     = 5
-)
+func (s *Service) useInterface(iface netlink.Link) error {
+	go s.dhcp.run(s.Context(), iface)
 
-var dhcpBroadcastAddr = &net.UDPAddr{IP: net.IP{255, 255, 255, 255}, Port: 67}
-
-// TODO(lorenz): This is a super terrible DHCP client, but it works for QEMU slirp
-func (s *Service) dhcpClient(iface netlink.Link) error {
-	client, err := nclient4.New(iface.Attrs().Name)
+	status, err := s.dhcp.status(s.Context(), true)
 	if err != nil {
-		panic(err)
-	}
-	var ack *dhcpv4.DHCPv4
-	for {
-		dhcpCtx, dhcpCtxCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer dhcpCtxCancel()
-		_, ack, err = client.Request(dhcpCtx)
-		if err == nil {
-			break
-		}
-		s.Logger.Info("DHCP request failed", zap.Error(err))
-	}
-	s.Logger.Info("Network service got IP", zap.String("ip", ack.YourIPAddr.String()))
-	if err := setResolvconf(ack.DNS(), []string{}); err != nil {
-		s.Logger.Warn("Failed to set resolvconf", zap.Error(err))
+		return fmt.Errorf("could not get DHCP status: %v", err)
 	}
 
-	s.lock.Lock()
-	s.ip = &ack.YourIPAddr
-	s.lock.Unlock()
-loop:
-	for {
-		select {
-		case s.ipNotify <- struct{}{}:
-		default:
-			break loop
-		}
+	if err := setResolvconf(status.DNS(), []string{}); err != nil {
+		s.Logger.Warn("failed to set resolvconf", zap.Error(err))
 	}
 
-	if err := addNetworkRoutes(iface, net.IPNet{IP: ack.YourIPAddr, Mask: ack.SubnetMask()}, ack.GatewayIPAddr); err != nil {
-		s.Logger.Warn("Failed to add routes", zap.Error(err))
+	if err := addNetworkRoutes(iface, net.IPNet{IP: status.YourIPAddr, Mask: status.SubnetMask()}, status.GatewayIPAddr); err != nil {
+		s.Logger.Warn("failed to add routes", zap.Error(err))
 	}
 	return nil
 }
 
 // GetIP returns the current IP (and optionally waits for one to be assigned)
-func (s *Service) GetIP(wait bool) *net.IP {
-	s.lock.Lock()
-	if !wait {
-		ip := s.ip
-		s.lock.Unlock()
-		return ip
+func (s *Service) GetIP(ctx context.Context, wait bool) (*net.IP, error) {
+	status, err := s.dhcp.status(ctx, wait)
+	if err != nil {
+		return nil, err
 	}
-
-	for {
-		if s.ip != nil {
-			ip := s.ip
-			s.lock.Unlock()
-			return ip
-		}
-		s.lock.Unlock()
-		<-s.ipNotify
-		s.lock.Lock()
-	}
+	return &status.YourIPAddr, nil
 }
 
 func (s *Service) OnStart() error {
@@ -190,13 +141,14 @@ func (s *Service) OnStart() error {
 			}
 		}
 	}
-	if len(ethernetLinks) == 1 {
-		link := ethernetLinks[0]
-		go s.dhcpClient(link)
-
-	} else {
-		s.Logger.Warn("Network service cannot yet handle more than one interface :(")
+	if len(ethernetLinks) != 1 {
+		s.Logger.Warn("Network service needs exactly one link, bailing")
+		return nil
 	}
+
+	link := ethernetLinks[0]
+	go s.useInterface(link)
+
 	return nil
 }
 

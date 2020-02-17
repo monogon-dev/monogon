@@ -17,9 +17,11 @@
 package service
 
 import (
+	"context"
 	"errors"
-	"go.uber.org/zap"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -43,6 +45,16 @@ type (
 
 		mutex   sync.Mutex
 		running bool
+
+		// A context that represents the lifecycle of a service.
+		// It is created right before impl.OnStart, and canceled
+		// right after impl.OnStop is.
+		// This is a transition mechanism from moving from OnStart/OnStop
+		// based lifecycle management of services to a context-based supervision
+		// tree.
+		// Service implementations should access this via .Context()
+		ctx  *context.Context
+		ctxC *context.CancelFunc
 	}
 )
 
@@ -51,6 +63,8 @@ func NewBaseService(name string, logger *zap.Logger, impl Service) *BaseService 
 		Logger: logger,
 		name:   name,
 		impl:   impl,
+		ctx:    nil,
+		ctxC:   nil,
 	}
 }
 
@@ -62,6 +76,10 @@ func (b *BaseService) Start() error {
 	if b.running {
 		return ErrAlreadyRunning
 	}
+
+	ctx, ctxC := context.WithCancel(context.Background())
+	b.ctx = &ctx
+	b.ctxC = &ctxC
 
 	err := b.impl.OnStart()
 	if err != nil {
@@ -83,7 +101,7 @@ func (b *BaseService) Stop() error {
 		return ErrNotRunning
 	}
 
-	err := b.impl.OnStart()
+	err := b.impl.OnStop()
 	if err != nil {
 		b.Logger.Error("Failed to stop service", zap.String("service", b.name), zap.Error(err))
 
@@ -91,6 +109,12 @@ func (b *BaseService) Stop() error {
 	}
 
 	b.running = false
+
+	// Kill context
+	(*b.ctxC)()
+	b.ctx = nil
+	b.ctxC = nil
+
 	b.Logger.Info("Stopped service", zap.String("service", b.name))
 	return nil
 }
@@ -101,4 +125,13 @@ func (b *BaseService) IsRunning() bool {
 	defer b.mutex.Unlock()
 
 	return b.running
+}
+
+// Context returns a context that can be used within OnStart() to create new
+// lightweight subservices that use a context for lifecycle management.
+// This is a transition measure before the Service library is rewritten to use
+// a more advanced context-and-returned-error supervision tree.
+// This context can also be used for blocking operations like IO, etc.
+func (b *BaseService) Context() context.Context {
+	return *b.ctx
 }

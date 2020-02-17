@@ -18,15 +18,15 @@ package node
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
-	"git.monogon.dev/source/nexantic.git/core/generated/api"
-	"git.monogon.dev/source/nexantic.git/core/internal/common"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"errors"
-
-	"go.uber.org/zap"
+	"git.monogon.dev/source/nexantic.git/core/generated/api"
+	"git.monogon.dev/source/nexantic.git/core/internal/common"
 )
 
 var (
@@ -43,13 +43,16 @@ func (s *SmalltownNode) CurrentState() common.SmalltownState {
 
 // InitializeNode contains functionality that needs to be executed regardless of what the node does
 // later on
-func (s *SmalltownNode) InitializeNode() (*api.NewNodeInfo, string, error) {
+func (s *SmalltownNode) InitializeNode(ctx context.Context) (*api.NewNodeInfo, string, error) {
 	globalUnlockKey, err := s.Storage.InitializeData()
 	if err != nil {
 		return nil, "", err
 	}
 
-	nodeIP := s.Network.GetIP(true)
+	nodeIP, err := s.Network.GetIP(ctx, true)
+	if err != nil {
+		return nil, "", fmt.Errorf("could not get IP: %v", err)
+	}
 
 	nodeCert, nodeID, err := s.generateNodeID()
 	if err != nil {

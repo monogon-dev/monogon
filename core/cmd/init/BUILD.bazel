@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//core/internal/network:go_default_library",
         "//core/internal/node:go_default_library",
+        "//core/internal/storage:go_default_library",
         "//core/pkg/tpm:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
         "@org_uber_go_zap//:go_default_library",

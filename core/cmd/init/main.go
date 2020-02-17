@@ -17,6 +17,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -24,6 +25,7 @@ import (
 
 	"git.monogon.dev/source/nexantic.git/core/internal/network"
 	"git.monogon.dev/source/nexantic.git/core/internal/node"
+	"git.monogon.dev/source/nexantic.git/core/internal/storage"
 	"git.monogon.dev/source/nexantic.git/core/pkg/tpm"
 
 	"go.uber.org/zap"
@@ -36,6 +38,7 @@ const (
 )
 
 func main() {
+	ctx := context.Background()
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Init panicked:", r)
@@ -76,6 +79,11 @@ func main() {
 		logger.Panic("Failed to initialize TPM 2.0", zap.Error(err))
 	}
 
+	storageManager, err := storage.Initialize(logger.With(zap.String("component", "storage")))
+	if err != nil {
+		panic(err)
+	}
+
 	networkSvc, err := network.NewNetworkService(network.Config{}, logger.With(zap.String("component", "network")))
 	if err != nil {
 		panic(err)
@@ -85,12 +93,12 @@ func main() {
 		logger.Panic("Failed to start network service", zap.Error(err))
 	}
 
-	nodeInstance, err := node.NewSmalltownNode(logger)
+	nodeInstance, err := node.NewSmalltownNode(logger, networkSvc, storageManager)
 	if err != nil {
 		panic(err)
 	}
 
-	err = nodeInstance.Start()
+	err = nodeInstance.Start(ctx)
 	if err != nil {
 		panic(err)
 	}

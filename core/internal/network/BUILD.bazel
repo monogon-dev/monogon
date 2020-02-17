@@ -2,7 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["main.go"],
+    srcs = [
+        "dhcp.go",
+        "main.go",
+    ],
     importpath = "git.monogon.dev/source/nexantic.git/core/internal/network",
     visibility = ["//:__subpackages__"],
     deps = [

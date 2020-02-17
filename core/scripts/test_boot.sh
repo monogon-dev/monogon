@@ -17,7 +17,7 @@ proc print_stderr {msg} {
 
 spawn core/scripts/launch.sh
 
-expect "Network service got IP" {} default {
+expect "DHCP client ASSIGNED" {} default {
   print_stderr "Failed while waiting for IP address\n"
   exit 1
 }
