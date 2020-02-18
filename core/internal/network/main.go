@@ -76,16 +76,23 @@ func setResolvconf(nameservers []net.IP, searchDomains []string) error {
 	return unix.Rename(resolvConfSwapPath, resolvConfPath)
 }
 
-func addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP) error {
+func (s *Service) addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP) error {
 	if err := netlink.AddrReplace(link, &netlink.Addr{IPNet: &addr}); err != nil {
 		return err
 	}
-	if err := netlink.RouteAdd(&netlink.Route{
+
+	if gw.IsUnspecified() {
+		s.Logger.Info("No default route set, only local network will be reachable", zap.String("local", addr.String()))
+		return nil
+	}
+
+	route := &netlink.Route{
 		Dst:   &net.IPNet{IP: net.IPv4(0, 0, 0, 0), Mask: net.IPv4Mask(0, 0, 0, 0)},
 		Gw:    gw,
 		Scope: netlink.SCOPE_UNIVERSE,
-	}); err != nil {
-		return fmt.Errorf("failed to add default route: %w", err)
+	}
+	if err := netlink.RouteAdd(route); err != nil {
+		return fmt.Errorf("could not add default route: netlink.RouteAdd(%+v): %v", route, err)
 	}
 	return nil
 }
@@ -98,11 +105,11 @@ func (s *Service) useInterface(iface netlink.Link) error {
 		return fmt.Errorf("could not get DHCP status: %v", err)
 	}
 
-	if err := setResolvconf(status.DNS(), []string{}); err != nil {
+	if err := setResolvconf(status.dns, []string{}); err != nil {
 		s.Logger.Warn("failed to set resolvconf", zap.Error(err))
 	}
 
-	if err := addNetworkRoutes(iface, net.IPNet{IP: status.YourIPAddr, Mask: status.SubnetMask()}, status.GatewayIPAddr); err != nil {
+	if err := s.addNetworkRoutes(iface, net.IPNet{IP: status.address.IP, Mask: status.address.Mask}, status.gateway); err != nil {
 		s.Logger.Warn("failed to add routes", zap.Error(err))
 	}
 	return nil
@@ -114,7 +121,7 @@ func (s *Service) GetIP(ctx context.Context, wait bool) (*net.IP, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &status.YourIPAddr, nil
+	return &status.address.IP, nil
 }
 
 func (s *Service) OnStart() error {
