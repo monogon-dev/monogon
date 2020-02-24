@@ -22,6 +22,9 @@ function getWorkingCopyID {
 
 CACHE_VOLUME=bazel-cache-$(getWorkingCopyID)
 
+# The Go pkg cache is safe to use concurrently.
+GOPKG_VOLUME=gopkg-cache
+
 # We do our own image caching since the podman build step cache does
 # not work across different repository checkouts and is also easily
 # invalidated by multiple in-flight revisions with different Dockerfiles.
@@ -41,6 +44,7 @@ function cleanup {
 trap cleanup EXIT
 
 ! podman volume create --opt o=nodev,exec ${CACHE_VOLUME}
+! podman volume create --opt o=nodev ${GOPKG_VOLUME}
 
 podman pod create --name ${POD}
 
@@ -48,6 +52,7 @@ podman run \
     --rm \
     -v $(pwd):/work \
     -v ${CACHE_VOLUME}:/user/.cache/bazel/_bazel_root \
+    -v ${GOPKG_VOLUME}:/user/go/pkg \
     --privileged \
     ${TAG} \
     scripts/gazelle.sh
@@ -67,6 +72,7 @@ podman run -d \
 podman run \
     -v $(pwd):/work \
     -v ${CACHE_VOLUME}:/user/.cache/bazel/_bazel_root \
+    -v ${GOPKG_VOLUME}:/user/go/pkg \
     --device /dev/kvm \
     --privileged \
     --pod ${POD} \
