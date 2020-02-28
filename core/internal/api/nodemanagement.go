@@ -29,13 +29,14 @@ import (
 	"fmt"
 	"io"
 
-	"git.monogon.dev/source/nexantic.git/core/generated/api"
-	"git.monogon.dev/source/nexantic.git/core/pkg/tpm"
 	"github.com/gogo/protobuf/proto"
 	"go.etcd.io/etcd/clientv3"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"git.monogon.dev/source/nexantic.git/core/generated/api"
+	"git.monogon.dev/source/nexantic.git/core/pkg/tpm"
 )
 
 const nodesPrefix = "nodes/"

@@ -20,10 +20,11 @@ import (
 	"errors"
 	"net"
 
-	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
-	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
 	"go.etcd.io/etcd/clientv3"
 	"go.uber.org/zap"
+
+	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
+	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
 )
 
 type Config struct {

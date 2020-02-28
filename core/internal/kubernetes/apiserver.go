@@ -26,8 +26,9 @@ import (
 	"os/exec"
 	"path"
 
-	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 	"go.etcd.io/etcd/clientv3"
+
+	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 )
 
 type apiserverConfig struct {

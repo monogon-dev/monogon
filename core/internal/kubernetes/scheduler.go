@@ -22,8 +22,9 @@ import (
 	"os"
 	"os/exec"
 
-	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 	"go.etcd.io/etcd/clientv3"
+
+	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 )
 
 type schedulerConfig struct {

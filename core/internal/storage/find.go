@@ -18,11 +18,12 @@ package storage
 
 import (
 	"fmt"
-	"git.monogon.dev/source/nexantic.git/core/pkg/sysfs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"git.monogon.dev/source/nexantic.git/core/pkg/sysfs"
 
 	"github.com/rekby/gpt"
 	"golang.org/x/sys/unix"

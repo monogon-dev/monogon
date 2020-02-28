@@ -25,10 +25,11 @@ import (
 	"net"
 	"strings"
 
-	"git.monogon.dev/source/nexantic.git/core/generated/api"
-	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"git.monogon.dev/source/nexantic.git/core/generated/api"
+	"git.monogon.dev/source/nexantic.git/core/internal/common"
 )
 
 // Agent specifices the interface which every integrity agent needs to fulfill

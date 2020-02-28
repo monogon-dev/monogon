@@ -24,9 +24,10 @@ import (
 	"path/filepath"
 	"sync"
 
-	"git.monogon.dev/source/nexantic.git/core/pkg/tpm"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
+
+	"git.monogon.dev/source/nexantic.git/core/pkg/tpm"
 )
 
 const (

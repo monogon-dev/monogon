@@ -29,16 +29,17 @@ import (
 	"net"
 	"time"
 
+	"go.etcd.io/etcd/clientv3"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/reflection"
+
 	"git.monogon.dev/source/nexantic.git/core/generated/api"
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
-	"go.etcd.io/etcd/clientv3"
-	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
-	"google.golang.org/grpc/credentials"
 )
 
 type (

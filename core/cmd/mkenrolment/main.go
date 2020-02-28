@@ -21,9 +21,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"git.monogon.dev/source/nexantic.git/core/generated/api"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
+
+	"git.monogon.dev/source/nexantic.git/core/generated/api"
 )
 
 func main() {

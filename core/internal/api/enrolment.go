@@ -22,9 +22,10 @@ import (
 	"errors"
 	"fmt"
 
-	"git.monogon.dev/source/nexantic.git/core/generated/api"
 	"github.com/gogo/protobuf/proto"
 	"go.etcd.io/etcd/clientv3"
+
+	"git.monogon.dev/source/nexantic.git/core/generated/api"
 )
 
 const enrolmentPrefix = "enrolments/"

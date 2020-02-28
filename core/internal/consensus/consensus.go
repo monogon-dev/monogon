@@ -38,7 +38,6 @@ import (
 
 	"git.monogon.dev/source/nexantic.git/core/generated/api"
 
-	"git.monogon.dev/source/nexantic.git/core/internal/consensus/ca"
 	"github.com/pkg/errors"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/clientv3/namespace"
@@ -48,6 +47,8 @@ import (
 	"go.etcd.io/etcd/proxy/grpcproxy/adapter"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
+
+	"git.monogon.dev/source/nexantic.git/core/internal/consensus/ca"
 )
 
 const (

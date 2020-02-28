@@ -20,9 +20,10 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"git.monogon.dev/source/nexantic.git/core/pkg/devicemapper"
 	"os"
 	"syscall"
+
+	"git.monogon.dev/source/nexantic.git/core/pkg/devicemapper"
 
 	"golang.org/x/sys/unix"
 )

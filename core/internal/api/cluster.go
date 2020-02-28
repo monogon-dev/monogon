@@ -22,12 +22,13 @@ import (
 	"encoding/base64"
 	"io"
 
-	"git.monogon.dev/source/nexantic.git/core/generated/api"
-	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"github.com/gogo/protobuf/proto"
 	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"git.monogon.dev/source/nexantic.git/core/generated/api"
+	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 
 	"go.uber.org/zap"
 )
