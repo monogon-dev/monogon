@@ -157,6 +157,7 @@ go_sqlboiler_library = go_rule(
                 Label("@com_github_volatiletech_sqlboiler//strmangle:go_default_library"),
                 Label("@com_github_volatiletech_sqlboiler//types:go_default_library"),
                 Label("@com_github_volatiletech_sqlboiler//queries/qmhelper:go_default_library"),
+                Label("@com_github_volatiletech_null//:go_default_library"),
             ],
         ),
     },
