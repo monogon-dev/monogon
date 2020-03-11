@@ -22,7 +22,7 @@ bazel_skylib_workspace()
 
 load("@bazel_skylib//lib:versions.bzl", "versions")
 
-versions.check(minimum_bazel_version = "2.0.0")
+versions.check(minimum_bazel_version = "2.2.0")
 
 # Go and Gazelle
 

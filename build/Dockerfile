@@ -3,7 +3,7 @@
 # Do not reference any external files, since modifications to them won't trigger a rebuild.
 #
 
-FROM fedora:30
+FROM fedora:31
 
 RUN dnf -y upgrade && \
     dnf -y install \
@@ -35,15 +35,10 @@ RUN dnf -y upgrade && \
 	nc \
 	python-unversioned-command
 
-# Workaround for a binutils bugs in F30, which generates invalid ELF binaries
-# when linking statically with musl.
-RUN dnf -y install fedora-repos-rawhide && \
-	dnf -y --disablerepo=* --enablerepo=rawhide --releasever=32 upgrade binutils
-
 # Install Bazel binary
 RUN curl -o /usr/local/bin/bazel \
-    https://releases.bazel.build/2.0.0/release/bazel-2.0.0-linux-x86_64 && \
-    echo '4df79462c6c3ecdeeee7af99fc269b52ab1aa4828ef3bc359c1837d3fafeeee7  /usr/local/bin/bazel' | sha256sum --check && \
+    https://releases.bazel.build/2.2.0/release/bazel-2.2.0-linux-x86_64 && \
+    echo 'b2f002ea0e6194a181af6ac84cd94bd8dc797722eb2354690bebac92dda233ff  /usr/local/bin/bazel' | sha256sum --check && \
     chmod +x /usr/local/bin/bazel
 
 # Use a shared Go module cache for gazelle
