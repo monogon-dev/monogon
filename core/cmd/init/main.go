@@ -55,22 +55,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	// Remount onto a tmpfs and re-exec if needed. Otherwise, keep running.
+	err = switchRoot(logger)
+	if err != nil {
+		panic(fmt.Errorf("could not remount root: %w", err))
+	}
+
 	logger.Info("Starting Smalltown Init")
-
-	// Set up bare minimum mounts
-	if err := os.Mkdir("/sys", 0755); err != nil {
-		panic(err)
-	}
-	if err := unix.Mount("sysfs", "/sys", "sysfs", unix.MS_NOEXEC|unix.MS_NOSUID|unix.MS_NODEV, ""); err != nil {
-		panic(err)
-	}
-
-	if err := os.Mkdir("/proc", 0755); err != nil {
-		panic(err)
-	}
-	if err := unix.Mount("procfs", "/proc", "proc", unix.MS_NOEXEC|unix.MS_NOSUID|unix.MS_NODEV, ""); err != nil {
-		panic(err)
-	}
 
 	signalChannel := make(chan os.Signal, 2)
 	signal.Notify(signalChannel)
@@ -81,7 +73,7 @@ func main() {
 
 	storageManager, err := storage.Initialize(logger.With(zap.String("component", "storage")))
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("could not initialize storage: %w", err))
 	}
 
 	networkSvc, err := network.NewNetworkService(network.Config{}, logger.With(zap.String("component", "network")))

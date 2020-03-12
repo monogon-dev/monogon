@@ -56,14 +56,7 @@ func FindPartitions() error {
 			if err != nil {
 				return fmt.Errorf("failed to convert uevent: %w", err)
 			}
-			minorDev, err := strconv.Atoi(ueventData["MINOR"])
-			if err != nil {
-				return fmt.Errorf("failed to convert uevent: %w", err)
-			}
 			devNodeName := fmt.Sprintf("/dev/%v", ueventData["DEVNAME"])
-			if err := unix.Mknod(devNodeName, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(minorDev)))); err != nil {
-				return fmt.Errorf("failed to create block device node: %w", err)
-			}
 			blkdev, err := os.Open(devNodeName)
 			if err != nil {
 				return fmt.Errorf("failed to open block device %v: %w", devNodeName, err)
