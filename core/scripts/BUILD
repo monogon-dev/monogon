@@ -23,7 +23,7 @@ sh_library(
 
 sh_test(
     name = "test_boot",
-    size = "small",
+    size = "medium",
     srcs = ["test_boot.sh"],
     # expects wants a pty, which do not exist in the sandbox
     tags = ["local"],
