@@ -30,10 +30,10 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "e88471aea3a3a4f19ec1310a55ba94772d087e9ce46e41ae38ecebe17935de7b",
+    sha256 = "e6a6c016b0663e06fa5fccf1cd8152eab8aa8180c583ec20c872f4f9953a7ac5",
     urls = [
-        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/rules_go/releases/download/v0.20.3/rules_go-v0.20.3.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.20.3/rules_go-v0.20.3.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.22.1/rules_go-v0.22.1.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.22.1/rules_go-v0.22.1.tar.gz",
     ],
 )
 
@@ -92,24 +92,46 @@ protobuf_deps()
 
 # third_party external repositories
 load("//third_party/linux:external.bzl", "linux_external")
-linux_external(name="linux", version="5.4.7")
+
+linux_external(
+    name = "linux",
+    version = "5.4.7",
+)
 
 load("//third_party/edk2:external.bzl", "edk2_external")
-edk2_external(name="edk2")
+
+edk2_external(name = "edk2")
 
 load("//third_party/kubernetes:external.bzl", "kubernetes_external")
-kubernetes_external(name="kubernetes", version="1.16.4")
+
+kubernetes_external(
+    name = "kubernetes",
+    version = "1.16.4",
+)
 
 load("//third_party/musl:external.bzl", "musl_external")
-musl_external(name="musl", version="1.1.24")
+
+musl_external(
+    name = "musl",
+    version = "1.1.24",
+)
 
 load("//third_party/util-linux:external.bzl", "util_linux_external")
-util_linux_external(name="util_linux", version="2.34")
+
+util_linux_external(
+    name = "util_linux",
+    version = "2.34",
+)
 
 load("//third_party/xfsprogs:external.bzl", "xfsprogs_external")
-xfsprogs_external(name="xfsprogs", version="5.2.1")
+
+xfsprogs_external(
+    name = "xfsprogs",
+    version = "5.2.1",
+)
 
 load("@kubernetes//build:workspace_mirror.bzl", "mirror")
+
 http_archive(
     name = "io_k8s_repo_infra",
     sha256 = "f6d65480241ec0fd7a0d01f432938b97d7395aeb8eefbe859bb877c9b4eafa56",
