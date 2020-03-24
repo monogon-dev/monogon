@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"runtime/debug"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/network"
 	"git.monogon.dev/source/nexantic.git/core/internal/node"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
@@ -38,7 +39,6 @@ const (
 )
 
 func main() {
-	ctx := context.Background()
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Init panicked:", r)
@@ -76,46 +76,56 @@ func main() {
 		panic(fmt.Errorf("could not initialize storage: %w", err))
 	}
 
-	networkSvc, err := network.NewNetworkService(network.Config{}, logger.With(zap.String("component", "network")))
+	networkSvc := network.New(network.Config{})
 	if err != nil {
 		panic(err)
 	}
 
-	if err := networkSvc.Start(); err != nil {
-		logger.Panic("Failed to start network service", zap.Error(err))
-	}
+	supervisor.New(context.Background(), logger, func(ctx context.Context) error {
+		if err := supervisor.Run(ctx, "network", networkSvc.Run); err != nil {
+			return err
+		}
 
-	nodeInstance, err := node.NewSmalltownNode(logger, networkSvc, storageManager)
-	if err != nil {
-		panic(err)
-	}
+		// TODO(q3k): convert node code to supervisor
+		nodeInstance, err := node.NewSmalltownNode(logger, networkSvc, storageManager)
+		if err != nil {
+			panic(err)
+		}
 
-	err = nodeInstance.Start(ctx)
-	if err != nil {
-		panic(err)
-	}
+		err = nodeInstance.Start(ctx)
+		if err != nil {
+			panic(err)
+		}
 
-	// We're PID1, so orphaned processes get reparented to us to clean up
-	for {
-		sig := <-signalChannel
-		switch sig {
-		case unix.SIGCHLD:
-			var status unix.WaitStatus
-			var rusage unix.Rusage
-			for {
-				res, err := unix.Wait4(-1, &status, unix.WNOHANG, &rusage)
-				if err != nil && err != unix.ECHILD {
-					logger.Error("Failed to wait on orphaned child", zap.Error(err))
-					break
-				}
-				if res <= 0 {
-					break
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
+
+		// We're PID1, so orphaned processes get reparented to us to clean up
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case sig := <-signalChannel:
+				switch sig {
+				case unix.SIGCHLD:
+					var status unix.WaitStatus
+					var rusage unix.Rusage
+					for {
+						res, err := unix.Wait4(-1, &status, unix.WNOHANG, &rusage)
+						if err != nil && err != unix.ECHILD {
+							logger.Error("Failed to wait on orphaned child", zap.Error(err))
+							break
+						}
+						if res <= 0 {
+							break
+						}
+					}
+				// TODO(lorenz): We can probably get more than just SIGCHLD as init, but I can't think
+				// of any others right now, just log them in case we hit any of them.
+				default:
+					logger.Warn("Got unexpected signal", zap.String("signal", sig.String()))
 				}
 			}
-		// TODO(lorenz): We can probably get more than just SIGCHLD as init, but I can't think
-		// of any others right now, just log them in case we hit any of them.
-		default:
-			logger.Warn("Got unexpected signal", zap.String("signal", sig.String()))
 		}
-	}
+	})
+	select {}
 }

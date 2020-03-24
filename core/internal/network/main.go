@@ -22,7 +22,7 @@ import (
 	"net"
 	"os"
 
-	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 
 	"github.com/vishvananda/netlink"
 	"go.uber.org/zap"
@@ -35,22 +35,20 @@ const (
 )
 
 type Service struct {
-	*service.BaseService
 	config Config
+	dhcp   *dhcpClient
 
-	dhcp *dhcpClient
+	logger *zap.Logger
 }
 
 type Config struct {
 }
 
-func NewNetworkService(config Config, logger *zap.Logger) (*Service, error) {
-	s := &Service{
+func New(config Config) *Service {
+	return &Service{
 		config: config,
-		dhcp:   newDHCPClient(logger),
+		dhcp:   newDHCPClient(),
 	}
-	s.BaseService = service.NewBaseService("network", logger, s)
-	return s, nil
 }
 
 func setResolvconf(nameservers []net.IP, searchDomains []string) error {
@@ -82,7 +80,7 @@ func (s *Service) addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP)
 	}
 
 	if gw.IsUnspecified() {
-		s.Logger.Info("No default route set, only local network will be reachable", zap.String("local", addr.String()))
+		s.logger.Info("No default route set, only local network will be reachable", zap.String("local", addr.String()))
 		return nil
 	}
 
@@ -97,21 +95,24 @@ func (s *Service) addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP)
 	return nil
 }
 
-func (s *Service) useInterface(iface netlink.Link) error {
-	go s.dhcp.run(s.Context(), iface)
-
-	status, err := s.dhcp.status(s.Context(), true)
+func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
+	err := supervisor.Run(ctx, "dhcp", s.dhcp.run(iface))
 	if err != nil {
-		return fmt.Errorf("could not get DHCP status: %v", err)
+		return err
+	}
+	status, err := s.dhcp.status(ctx, true)
+	if err != nil {
+		return fmt.Errorf("could not get DHCP status: %w", err)
 	}
 
 	if err := setResolvconf(status.dns, []string{}); err != nil {
-		s.Logger.Warn("failed to set resolvconf", zap.Error(err))
+		s.logger.Warn("failed to set resolvconf", zap.Error(err))
 	}
 
 	if err := s.addNetworkRoutes(iface, net.IPNet{IP: status.address.IP, Mask: status.address.Mask}, status.gateway); err != nil {
-		s.Logger.Warn("failed to add routes", zap.Error(err))
+		s.logger.Warn("failed to add routes", zap.Error(err))
 	}
+
 	return nil
 }
 
@@ -124,12 +125,15 @@ func (s *Service) GetIP(ctx context.Context, wait bool) (*net.IP, error) {
 	return &status.address.IP, nil
 }
 
-func (s *Service) OnStart() error {
-	s.Logger.Info("Starting network service")
+func (s *Service) Run(ctx context.Context) error {
+	s.logger = supervisor.Logger(ctx)
+	s.logger.Info("Starting network service")
+
 	links, err := netlink.LinkList()
 	if err != nil {
-		s.Logger.Fatal("Failed to list network links", zap.Error(err))
+		s.logger.Fatal("Failed to list network links", zap.Error(err))
 	}
+
 	var ethernetLinks []netlink.Link
 	for _, link := range links {
 		attrs := link.Attrs()
@@ -140,25 +144,24 @@ func (s *Service) OnStart() error {
 				}
 				ethernetLinks = append(ethernetLinks, link)
 			} else {
-				s.Logger.Info("Ignoring non-Ethernet interface", zap.String("interface", attrs.Name))
+				s.logger.Info("Ignoring non-Ethernet interface", zap.String("interface", attrs.Name))
 			}
 		} else if link.Attrs().Name == "lo" {
 			if err := netlink.LinkSetUp(link); err != nil {
-				s.Logger.Error("Failed to take up loopback interface", zap.Error(err))
+				s.logger.Error("Failed to take up loopback interface", zap.Error(err))
 			}
 		}
 	}
 	if len(ethernetLinks) != 1 {
-		s.Logger.Warn("Network service needs exactly one link, bailing")
-		return nil
+		s.logger.Warn("Network service needs exactly one link, bailing")
+	} else {
+		link := ethernetLinks[0]
+		if err := s.useInterface(ctx, link); err != nil {
+			return fmt.Errorf("failed to bring up link %s: %w", link.Attrs().Name, err)
+		}
 	}
 
-	link := ethernetLinks[0]
-	go s.useInterface(link)
-
-	return nil
-}
-
-func (s *Service) OnStop() error {
+	supervisor.Signal(ctx, supervisor.SignalHealthy)
+	supervisor.Signal(ctx, supervisor.SignalDone)
 	return nil
 }

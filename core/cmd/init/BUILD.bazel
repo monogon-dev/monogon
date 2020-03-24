@@ -9,6 +9,7 @@ go_library(
     importpath = "git.monogon.dev/source/nexantic.git/core/cmd/init",
     visibility = ["//visibility:private"],
     deps = [
+        "//core/internal/common/supervisor:go_default_library",
         "//core/internal/network:go_default_library",
         "//core/internal/node:go_default_library",
         "//core/internal/storage:go_default_library",

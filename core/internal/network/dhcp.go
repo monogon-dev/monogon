@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"net"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"github.com/vishvananda/netlink"
@@ -28,14 +30,12 @@ import (
 )
 
 type dhcpClient struct {
-	reqC   chan *dhcpStatusReq
-	logger *zap.Logger
+	reqC chan *dhcpStatusReq
 }
 
-func newDHCPClient(logger *zap.Logger) *dhcpClient {
+func newDHCPClient() *dhcpClient {
 	return &dhcpClient{
-		logger: logger,
-		reqC:   make(chan *dhcpStatusReq),
+		reqC: make(chan *dhcpStatusReq),
 	}
 }
 
@@ -65,54 +65,69 @@ func (s *dhcpStatus) String() string {
 	return fmt.Sprintf("Address: %s, Gateway: %s, DNS: %v", s.address.String(), s.gateway.String(), s.dns)
 }
 
-func (c *dhcpClient) run(ctx context.Context, iface netlink.Link) {
-	// Channel updated with address once one gets assigned/updated
-	newC := make(chan *dhcpStatus)
-	// Status requests waiting for configuration
-	waiters := []*dhcpStatusReq{}
+func (c *dhcpClient) run(iface netlink.Link) supervisor.Runnable {
+	return func(ctx context.Context) error {
+		logger := supervisor.Logger(ctx)
 
-	// Start lease acquisition
-	// TODO(q3k): actually maintain the lease instead of hoping we never get
-	// kicked off.
-	client, err := nclient4.New(iface.Attrs().Name)
-	if err != nil {
-		panic(err)
-	}
-	go func() {
-		_, ack, err := client.Request(ctx)
+		// Channel updated with address once one gets assigned/updated
+		newC := make(chan *dhcpStatus)
+		// Status requests waiting for configuration
+		waiters := []*dhcpStatusReq{}
+
+		// Start lease acquisition
+		// TODO(q3k): actually maintain the lease instead of hoping we never get
+		// kicked off.
+
+		client, err := nclient4.New(iface.Attrs().Name)
 		if err != nil {
-			c.logger.Error("DHCP lease request failed", zap.Error(err))
-			// TODO(q3k): implement retry logic with full state machine
+			return fmt.Errorf("nclient4.New: %w", err)
 		}
-		newC <- parseAck(ack)
-	}()
 
-	// State machine
-	// Two implicit states: WAITING -> ASSIGNED
-	// We start at WAITING, once we get a current config we move to ASSIGNED
-	// Once this becomes more complex (ie. has to handle link state changes)
-	// this should grow into a real state machine.
-	var current *dhcpStatus
-	c.logger.Info("DHCP client WAITING")
-	for {
-		select {
-		case <-ctx.Done():
-			// TODO(q3k): don't leave waiters hanging
-			return
-
-		case cfg := <-newC:
-			current = cfg
-			c.logger.Info("DHCP client ASSIGNED", zap.String("ip", current.String()))
-			for _, w := range waiters {
-				w.fulfill(current)
+		err = supervisor.Run(ctx, "client", func(ctx context.Context) error {
+			supervisor.Signal(ctx, supervisor.SignalHealthy)
+			_, ack, err := client.Request(ctx)
+			if err != nil {
+				// TODO(q3k): implement retry logic with full state machine
+				logger.Error("DHCP lease request failed", zap.Error(err))
+				return err
 			}
-			waiters = []*dhcpStatusReq{}
+			newC <- parseAck(ack)
+			supervisor.Signal(ctx, supervisor.SignalDone)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
 
-		case r := <-c.reqC:
-			if current != nil || !r.wait {
-				r.fulfill(current)
-			} else {
-				waiters = append(waiters, r)
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
+
+		// State machine
+		// Two implicit states: WAITING -> ASSIGNED
+		// We start at WAITING, once we get a current config we move to ASSIGNED
+		// Once this becomes more complex (ie. has to handle link state changes)
+		// this should grow into a real state machine.
+		var current *dhcpStatus
+		logger.Info("DHCP client WAITING")
+		for {
+			select {
+			case <-ctx.Done():
+				// TODO(q3k): don't leave waiters hanging
+				return err
+
+			case cfg := <-newC:
+				current = cfg
+				logger.Info("DHCP client ASSIGNED", zap.String("ip", current.String()))
+				for _, w := range waiters {
+					w.fulfill(current)
+				}
+				waiters = []*dhcpStatusReq{}
+
+			case r := <-c.reqC:
+				if current != nil || !r.wait {
+					r.fulfill(current)
+				} else {
+					waiters = append(waiters, r)
+				}
 			}
 		}
 	}
