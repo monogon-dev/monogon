@@ -6,7 +6,7 @@
 FROM fedora:31
 
 RUN dnf -y upgrade && \
-    dnf -y install \
+	dnf -y install \
 	"@Development Tools" \
 	g++ \
 	libuuid-devel \
@@ -33,7 +33,8 @@ RUN dnf -y upgrade && \
 	expect \
 	grpc-cli \
 	nc \
-	python-unversioned-command
+	python-unversioned-command \
+	openssl-devel
 
 # Install Bazel binary
 RUN curl -o /usr/local/bin/bazel \

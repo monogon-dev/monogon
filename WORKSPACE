@@ -95,7 +95,7 @@ load("//third_party/linux:external.bzl", "linux_external")
 
 linux_external(
     name = "linux",
-    version = "5.4.7",
+    version = "5.6",
 )
 
 load("//third_party/edk2:external.bzl", "edk2_external")
