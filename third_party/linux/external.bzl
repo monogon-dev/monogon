@@ -28,6 +28,10 @@ def linux_external(name, version):
         patches = [
             # Enable built-in cmdline for efistub
             "//third_party/linux/external:0001-x86-Allow-built-in-command-line-to-work-in-early-ker.patch",
+            # Add fsinfo() syscall
+            "//third_party/linux/external:0002-watch_queue-Introduce-a-non-repeating-system-unique-.patch",
+            "//third_party/linux/external:0003-fsinfo-Add-fsinfo-syscall-to-query-filesystem-inform.patch",
+            "//third_party/linux/external:0004-fsinfo-Allow-retrieval-of-superblock-devname-options.patch",
         ],
         sha256 = sums[version],
         strip_prefix = "linux-" + version,

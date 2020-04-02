@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "fsinfo.go",
+        "fsquota.go",
+    ],
+    importpath = "git.monogon.dev/source/nexantic.git/core/pkg/fsquota",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//core/pkg/fsquota/fsxattrs:go_default_library",
+        "//core/pkg/fsquota/quotactl:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
