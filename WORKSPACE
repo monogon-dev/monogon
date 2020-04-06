@@ -106,7 +106,7 @@ load("//third_party/kubernetes:external.bzl", "kubernetes_external")
 
 kubernetes_external(
     name = "kubernetes",
-    version = "1.16.4",
+    version = "1.18.0",
 )
 
 load("//third_party/musl:external.bzl", "musl_external")

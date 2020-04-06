@@ -19,12 +19,12 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 def kubernetes_external(name, version):
     sums = {
         "1.16.4": "3a49373ba56c73c282deb0cfa2ec7bfcc6bf46acb6992f01319eb703cbf68996",
+        "1.18.0": "d87be01d4c75ebf29f181fd6bfcfe7fdd097d9c519e50500e21e199f859e6226",
     }
     http_archive(
         name = name,
         patch_args = ["-p1"],
         patches = [
-            "//third_party/kubernetes/external:0001-avoid-unexpected-keyword-error-by-using-positional-p.patch",
         ],
         sha256 = sums[version],
         urls = ["https://dl.k8s.io/v%s/kubernetes-src.tar.gz" % version],
