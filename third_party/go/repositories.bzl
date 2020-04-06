@@ -1743,3 +1743,15 @@ def go_repositories():
         version = "v0.0.0-20160121211510-db5cfe13f5cc",
         sum = "h1:MksmcCZQWAQJCTA5T0jgI/0sJ51AVm4Z41MrmfczEoc=",
     )
+    go_repository(
+        name = "com_github_container_storage_interface_spec",
+        importpath = "github.com/container-storage-interface/spec",
+        sum = "h1:bD9KIVgaVKKkQ/UbVUY9kCaH/CJbhNxe0eeB4JeJV2s=",
+        version = "v1.2.0",
+    )
+    go_repository(
+        name = "io_k8s_sigs_structured_merge_diff_v3",
+        importpath = "sigs.k8s.io/structured-merge-diff/v3",
+        sum = "h1:dOmIZBMfhcHS09XZkMyUgkq5trg3/jRyJYFZUiaOp8E=",
+        version = "v3.0.0",
+    )

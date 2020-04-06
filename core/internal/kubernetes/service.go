@@ -30,6 +30,7 @@ import (
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
+	"git.monogon.dev/source/nexantic.git/core/internal/storage"
 	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
 )
 
@@ -41,6 +42,7 @@ type Config struct {
 
 type Service struct {
 	consensusService      *consensus.Service
+	storageService        *storage.Manager
 	logger                *zap.Logger
 	apiserverLogs         *logbuffer.LogBuffer
 	controllerManagerLogs *logbuffer.LogBuffer
@@ -48,9 +50,10 @@ type Service struct {
 	kubeletLogs           *logbuffer.LogBuffer
 }
 
-func New(logger *zap.Logger, consensusService *consensus.Service) *Service {
+func New(logger *zap.Logger, consensusService *consensus.Service, storageService *storage.Manager) *Service {
 	s := &Service{
 		consensusService:      consensusService,
+		storageService:        storageService,
 		logger:                logger,
 		apiserverLogs:         logbuffer.New(5000, 16384),
 		controllerManagerLogs: logbuffer.New(5000, 16384),
@@ -153,11 +156,13 @@ func (s *Service) Run() supervisor.Runnable {
 		if err := supervisor.Run(ctx, "scheduler", runScheduler(*schedulerConfig, s.schedulerLogs)); err != nil {
 			return err
 		}
-
 		if err := supervisor.Run(ctx, "kubelet", runKubelet(&KubeletSpec{}, s.kubeletLogs)); err != nil {
 			return err
 		}
 		if err := supervisor.Run(ctx, "reconciler", runReconciler(masterKubeconfig)); err != nil {
+			return err
+		}
+		if err := supervisor.Run(ctx, "csi-plugin", runCSIPlugin(s.storageService)); err != nil {
 			return err
 		}
 		supervisor.Signal(ctx, supervisor.SignalHealthy)

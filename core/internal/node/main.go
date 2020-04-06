@@ -128,7 +128,7 @@ func NewSmalltownNode(logger *zap.Logger, ntwk *network.Service, strg *storage.M
 
 	s.Api = apiService
 
-	s.Kubernetes = kubernetes.New(logger.With(zap.String("module", "kubernetes")), consensusService)
+	s.Kubernetes = kubernetes.New(logger.With(zap.String("module", "kubernetes")), consensusService, strg)
 
 	s.debugServer = grpc.NewServer()
 	apipb.RegisterNodeDebugServiceServer(s.debugServer, s)

@@ -112,6 +112,7 @@ func runKubelet(spec *KubeletSpec, output io.Writer) supervisor.Runnable {
 				"cpu":    "200m",
 				"memory": "300Mi",
 			},
+
 			// We're not going to use this, but let's make it point to a known-empty directory in case anybody manages to
 			// trigger it.
 			VolumePluginDir: "/kubernetes/conf/flexvolume-plugins",
