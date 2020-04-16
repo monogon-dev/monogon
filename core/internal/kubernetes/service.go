@@ -21,11 +21,16 @@ import (
 	"crypto/ed25519"
 	"errors"
 	"net"
+	"time"
+
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"go.etcd.io/etcd/clientv3"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/client-go/kubernetes"
 
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
@@ -147,6 +152,19 @@ func (s *Service) Run() supervisor.Runnable {
 			return err
 		}
 
+		rawClientConfig, err := clientcmd.NewClientConfigFromBytes(masterKubeconfig)
+		if err != nil {
+			return err
+		}
+
+		clientConfig, err := rawClientConfig.ClientConfig()
+		clientSet, err := kubernetes.NewForConfig(clientConfig)
+		if err != nil {
+			return err
+		}
+
+		informerFactory := informers.NewSharedInformerFactory(clientSet, 5*time.Minute)
+
 		if err := supervisor.Run(ctx, "apiserver", runAPIServer(*apiserverConfig, s.apiserverLogs)); err != nil {
 			return err
 		}
@@ -159,12 +177,16 @@ func (s *Service) Run() supervisor.Runnable {
 		if err := supervisor.Run(ctx, "kubelet", runKubelet(&KubeletSpec{}, s.kubeletLogs)); err != nil {
 			return err
 		}
-		if err := supervisor.Run(ctx, "reconciler", runReconciler(masterKubeconfig)); err != nil {
+		if err := supervisor.Run(ctx, "reconciler", runReconciler(clientSet)); err != nil {
 			return err
 		}
 		if err := supervisor.Run(ctx, "csi-plugin", runCSIPlugin(s.storageService)); err != nil {
 			return err
 		}
+		if err := supervisor.Run(ctx, "pv-provisioner", runCSIProvisioner(s.storageService, clientSet, informerFactory)); err != nil {
+			return err
+		}
+
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
 		supervisor.Signal(ctx, supervisor.SignalDone)
 		return nil

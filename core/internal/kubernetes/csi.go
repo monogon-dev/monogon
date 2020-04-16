@@ -42,7 +42,7 @@ import (
 // Derived from K8s spec for acceptable names, but shortened to 130 characters to avoid issues with
 // maximum path length. We don't provision longer names so this applies only if you manually create
 // a volume with a name of more than 130 characters.
-var acceptableNames = regexp.MustCompile("^[a-z][a-z0-9-\\.]{,128}[a-z]$")
+var acceptableNames = regexp.MustCompile("^[a-z][a-bz0-9-.]{0,128}[a-z0-9]$")
 
 const volumeDir = "volumes"
 

@@ -26,13 +26,14 @@ import (
 	"context"
 	"time"
 
+	storagev1 "k8s.io/api/storage/v1"
+
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/policy/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 )
@@ -176,25 +177,54 @@ var builtinClusterRoleBindings = []*rbacv1.ClusterRoleBinding{
 	},
 }
 
-type reconciler func(context.Context, *kubernetes.Clientset) error
+var reclaimPolicyDelete = corev1.PersistentVolumeReclaimDelete
+var waitForConsumerBinding = storagev1.VolumeBindingWaitForFirstConsumer
 
-func runReconciler(masterKubeconfig []byte) supervisor.Runnable {
+var builtinStorageClasses = []*storagev1.StorageClass{
+	{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "local",
+			Annotations: map[string]string{
+				"storageclass.kubernetes.io/is-default-class": "true",
+			},
+			Labels: map[string]string{
+				"smalltown.com/builtin": "true",
+			},
+		},
+		AllowVolumeExpansion: True(),
+		Provisioner:          csiProvisionerName,
+		ReclaimPolicy:        &reclaimPolicyDelete,
+		VolumeBindingMode:    &waitForConsumerBinding,
+	},
+}
+
+var builtinCSIDrivers = []*storagev1.CSIDriver{
+	{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: csiProvisionerName,
+			Labels: map[string]string{
+				"smalltown.com/builtin": "true",
+			},
+		},
+		Spec: storagev1.CSIDriverSpec{
+			AttachRequired:       False(),
+			PodInfoOnMount:       False(),
+			VolumeLifecycleModes: []storagev1.VolumeLifecycleMode{storagev1.VolumeLifecyclePersistent},
+		},
+	},
+}
+
+type reconciler func(context.Context, kubernetes.Interface) error
+
+func runReconciler(clientSet kubernetes.Interface) supervisor.Runnable {
 	return func(ctx context.Context) error {
 		log := supervisor.Logger(ctx)
-		rawClientConfig, err := clientcmd.NewClientConfigFromBytes(masterKubeconfig)
-		if err != nil {
-			return err
-		}
-
-		clientConfig, err := rawClientConfig.ClientConfig()
-		clientSet, err := kubernetes.NewForConfig(clientConfig)
-		if err != nil {
-			return err
-		}
 		reconcilers := map[string]reconciler{
 			"psps":                reconcilePSPs,
 			"clusterroles":        reconcileClusterRoles,
 			"clusterrolebindings": reconcileClusterRoleBindings,
+			"storageclasses":      reconcileSCs,
+			"csidrivers":          reconcileCSIDrivers,
 		}
 		t := time.NewTicker(10 * time.Second)
 		reconcile := func() {
@@ -217,7 +247,7 @@ func runReconciler(masterKubeconfig []byte) supervisor.Runnable {
 	}
 }
 
-func reconcilePSPs(ctx context.Context, clientSet *kubernetes.Clientset) error {
+func reconcilePSPs(ctx context.Context, clientSet kubernetes.Interface) error {
 	pspClient := clientSet.PolicyV1beta1().PodSecurityPolicies()
 	availablePSPs, err := pspClient.List(ctx, metav1.ListOptions{
 		LabelSelector: "smalltown.com/builtin=true",
@@ -250,7 +280,7 @@ func reconcilePSPs(ctx context.Context, clientSet *kubernetes.Clientset) error {
 	return nil
 }
 
-func reconcileClusterRoles(ctx context.Context, clientSet *kubernetes.Clientset) error {
+func reconcileClusterRoles(ctx context.Context, clientSet kubernetes.Interface) error {
 	crClient := clientSet.RbacV1().ClusterRoles()
 	availableCRs, err := crClient.List(ctx, metav1.ListOptions{
 		LabelSelector: "smalltown.com/builtin=true",
@@ -283,7 +313,7 @@ func reconcileClusterRoles(ctx context.Context, clientSet *kubernetes.Clientset)
 	return nil
 }
 
-func reconcileClusterRoleBindings(ctx context.Context, clientset *kubernetes.Clientset) error {
+func reconcileClusterRoleBindings(ctx context.Context, clientset kubernetes.Interface) error {
 	crbClient := clientset.RbacV1().ClusterRoleBindings()
 	availableCRBs, err := crbClient.List(ctx, metav1.ListOptions{
 		LabelSelector: "smalltown.com/builtin=true",
@@ -309,6 +339,72 @@ func reconcileClusterRoleBindings(ctx context.Context, clientset *kubernetes.Cli
 	for crbName, _ := range availableCRBMap {
 		if _, ok := expectedCRBMap[crbName]; !ok {
 			if err := crbClient.Delete(ctx, crbName, metav1.DeleteOptions{}); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func reconcileSCs(ctx context.Context, clientSet kubernetes.Interface) error {
+	scsClient := clientSet.StorageV1().StorageClasses()
+	availableSCs, err := scsClient.List(ctx, metav1.ListOptions{
+		LabelSelector: "smalltown.com/builtin=true",
+	})
+	if err != nil {
+		return err
+	}
+	availableSCMap := make(map[string]struct{})
+	for _, sc := range availableSCs.Items {
+		availableSCMap[sc.Name] = struct{}{}
+	}
+	expectedSCMap := make(map[string]*storagev1.StorageClass)
+	for _, sc := range builtinStorageClasses {
+		expectedSCMap[sc.Name] = sc
+	}
+	for scName, sc := range expectedSCMap {
+		if _, ok := availableSCMap[scName]; !ok {
+			if _, err := scsClient.Create(ctx, sc, metav1.CreateOptions{}); err != nil {
+				return err
+			}
+		}
+	}
+	for pspName, _ := range availableSCMap {
+		if _, ok := expectedSCMap[pspName]; !ok {
+			if err := scsClient.Delete(ctx, pspName, metav1.DeleteOptions{}); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func reconcileCSIDrivers(ctx context.Context, clientSet kubernetes.Interface) error {
+	drvClient := clientSet.StorageV1().CSIDrivers()
+	availableDrvs, err := drvClient.List(ctx, metav1.ListOptions{
+		LabelSelector: "smalltown.com/builtin=true",
+	})
+	if err != nil {
+		return err
+	}
+	availableDrvMap := make(map[string]struct{})
+	for _, drv := range availableDrvs.Items {
+		availableDrvMap[drv.Name] = struct{}{}
+	}
+	expectedDrvMap := make(map[string]*storagev1.CSIDriver)
+	for _, drv := range builtinCSIDrivers {
+		expectedDrvMap[drv.Name] = drv
+	}
+	for drvName, drv := range expectedDrvMap {
+		if _, ok := availableDrvMap[drvName]; !ok {
+			if _, err := drvClient.Create(ctx, drv, metav1.CreateOptions{}); err != nil {
+				return err
+			}
+		}
+	}
+	for pspName, _ := range availableDrvMap {
+		if _, ok := expectedDrvMap[pspName]; !ok {
+			if err := drvClient.Delete(ctx, pspName, metav1.DeleteOptions{}); err != nil {
 				return err
 			}
 		}

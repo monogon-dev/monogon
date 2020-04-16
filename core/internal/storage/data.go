@@ -166,7 +166,7 @@ func (s *Manager) mountData() error {
 		return err
 	}
 
-	if err := unix.Mount("/dev/data", "/data", "xfs", unix.MS_NOEXEC|unix.MS_NODEV, ""); err != nil {
+	if err := unix.Mount("/dev/data", "/data", "xfs", unix.MS_NOEXEC|unix.MS_NODEV, "pquota"); err != nil {
 		return err
 	}
 	return nil
