@@ -3,7 +3,7 @@
 # Do not reference any external files, since modifications to them won't trigger a rebuild.
 #
 
-FROM fedora:31
+FROM fedora:32
 
 RUN dnf -y upgrade && \
 	dnf -y install \
@@ -38,9 +38,9 @@ RUN dnf -y upgrade && \
 
 # Install Bazel binary
 RUN curl -o /usr/local/bin/bazel \
-    https://releases.bazel.build/2.2.0/release/bazel-2.2.0-linux-x86_64 && \
-    echo 'b2f002ea0e6194a181af6ac84cd94bd8dc797722eb2354690bebac92dda233ff  /usr/local/bin/bazel' | sha256sum --check && \
-    chmod +x /usr/local/bin/bazel
+	https://releases.bazel.build/2.2.0/release/bazel-2.2.0-linux-x86_64 && \
+	echo 'b2f002ea0e6194a181af6ac84cd94bd8dc797722eb2354690bebac92dda233ff  /usr/local/bin/bazel' | sha256sum --check && \
+	chmod +x /usr/local/bin/bazel
 
 # Use a shared Go module cache for gazelle
 # https://github.com/bazelbuild/bazel-gazelle/pull/535
