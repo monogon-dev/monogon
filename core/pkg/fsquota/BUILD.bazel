@@ -1,4 +1,5 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//core/tools/ktest:ktest.bzl", "ktest")
 
 go_library(
     name = "go_default_library",
@@ -13,4 +14,26 @@ go_library(
         "//core/pkg/fsquota/quotactl:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["fsquota_test.go"],
+    embed = [":go_default_library"],
+    pure = "on",
+    deps = [
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+ktest(
+    tester = ":go_default_test",
+    deps = [
+        "//third_party/xfsprogs:mkfs.xfs",
+    ],
+    initramfs_extra = """
+file /mkfs.xfs $(location //third_party/xfsprogs:mkfs.xfs) 0755 0 0
+    """,
+    cmdline = "ramdisk_size=51200",
 )

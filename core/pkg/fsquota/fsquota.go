@@ -137,7 +137,7 @@ func GetQuota(path string) (*Quota, error) {
 		return nil, err
 	}
 	return &Quota{
-		Bytes:      quota.BHardLimit,
+		Bytes:      quota.BHardLimit * 1024,
 		BytesUsed:  quota.CurSpace,
 		Inodes:     quota.IHardLimit,
 		InodesUsed: quota.CurInodes,
