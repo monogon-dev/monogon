@@ -1,5 +1,5 @@
 startup --batch_cpu_scheduling --io_nice_level 7
-build --jobs 12 --ram_utilization_factor 50
+build --jobs 12 --local_ram_resources=HOST_RAM*0.5
 test --jobs 12 --test_output=errors
 
 # Build with SELinux, needed for containerd & kubelet
