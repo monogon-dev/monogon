@@ -2,11 +2,7 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 load("@io_bazel_rules_go//go:def.bzl", "go_path", "nogo")
 
 # gazelle:prefix git.monogon.dev/source/nexantic.git
-# gazelle:exclude core/generated
-# gazelle:exclude tools.go
 # gazelle:exclude core/cmd/kube-controlplane
-# gazelle:resolve go k8s.io/client-go/tools/clientcmd @kubernetes//staging/src/k8s.io/client-go/tools/clientcmd:go_default_library
-# gazelle:resolve go k8s.io/client-go/tools/clientcmd/api @kubernetes//staging/src/k8s.io/client-go/tools/clientcmd/api:go_default_library
 gazelle(name = "gazelle")
 
 # Shortcut for the Go SDK
@@ -82,8 +78,8 @@ toolchain(
 
 # Shortcut for kubectl when running through bazel run
 # (don't depend on this, it might turn into an env-based PATH shortcut, use
-# //third_party/kubernetes:kubectl instead)
+# @io_k8s_kubernetes//cmd/kubectl instead)
 alias(
     name = "kubectl",
-    actual = "//third_party/kubernetes:kubectl",
+    actual = "@io_k8s_kubernetes//cmd/kubectl:kubectl",
 )

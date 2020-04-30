@@ -4,6 +4,16 @@ genrule(
         "//core/cmd/init",
         "//core/cmd/kube-controlplane",
         "//third_party/xfsprogs:mkfs.xfs",
+        "@io_k8s_kubernetes//cmd/kubelet:_kubelet-pure",
+        "@com_github_containerd_containerd//cmd/containerd",
+        "@com_github_containerd_containerd//cmd/containerd-shim",
+        "@com_github_containerd_containerd//cmd/containerd-shim-runc-v1",
+        "@com_github_containerd_containerd//cmd/containerd-shim-runc-v2",
+        "@com_github_containernetworking_plugins//plugins/main/loopback",
+        "@com_github_containernetworking_plugins//plugins/main/ptp",
+        "@com_github_containernetworking_plugins//plugins/ipam/host-local",
+        "@com_github_opencontainers_runc//:runc",
+        "@com_github_google_gvisor//runsc",
     ],
     outs = [
         "initramfs.cpio.lz4",
@@ -17,6 +27,18 @@ file /init $(location //core/cmd/init) 0755 0 0
 dir /bin 0755 0 0
 file /bin/mkfs.xfs $(location //third_party/xfsprogs:mkfs.xfs) 0755 0 0
 file /bin/kube-controlplane $(location //core/cmd/kube-controlplane) 0755 0 0
+file /bin/kubelet $(location @io_k8s_kubernetes//cmd/kubelet:_kubelet-pure) 0755 0 0
+dir /containerd 0755 0 0
+file /containerd/containerd $(location @com_github_containerd_containerd//cmd/containerd) 0755 0 0
+file /containerd/containerd-shim $(location @com_github_containerd_containerd//cmd/containerd-shim) 0755 0 0
+file /containerd/containerd-shim-runc-v1 $(location @com_github_containerd_containerd//cmd/containerd-shim-runc-v1) 0755 0 0
+file /containerd/containerd-shim-runc-v2 $(location @com_github_containerd_containerd//cmd/containerd-shim-runc-v2) 0755 0 0
+file /containerd/runsc $(location @com_github_google_gvisor//runsc) 0755 0 0
+file /containerd/runc $(location @com_github_opencontainers_runc//:runc) 0755 0 0
+dir /containerd/cni-plugins 0755 0 0
+file /containerd/cni-plugins/loopback $(location @com_github_containernetworking_plugins//plugins/main/loopback) 0755 0 0
+file /containerd/cni-plugins/ptp $(location @com_github_containernetworking_plugins//plugins/main/ptp) 0755 0 0
+file /containerd/cni-plugins/host-local $(location @com_github_containernetworking_plugins//plugins/ipam/host-local) 0755 0 0
 EOF
     """,
     tools = [

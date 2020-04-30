@@ -1,0 +1,97 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From 69b2c3b6e2594a3f28e4ea1141bef542456b3eb2 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@brun.one>
+Date: Wed, 5 Feb 2020 17:14:19 +0100
+Subject: [PATCH] Fix vdso include that breaks in an external
+
+---
+ vdso/cycle_clock.h | 2 +-
+ vdso/seqlock.h     | 4 ++--
+ vdso/vdso.cc       | 4 ++--
+ vdso/vdso_time.cc  | 8 ++++----
+ 4 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/vdso/cycle_clock.h b/vdso/cycle_clock.h
+index 5d3fbb25..fe15812c 100644
+--- a/vdso/cycle_clock.h
++++ b/vdso/cycle_clock.h
+@@ -17,7 +17,7 @@
+ 
+ #include <stdint.h>
+ 
+-#include "vdso/barrier.h"
++#include "barrier.h"
+ 
+ namespace vdso {
+ 
+diff --git a/vdso/seqlock.h b/vdso/seqlock.h
+index 7a173174..fff99748 100644
+--- a/vdso/seqlock.h
++++ b/vdso/seqlock.h
+@@ -18,8 +18,8 @@
+ 
+ #include <stdint.h>
+ 
+-#include "vdso/barrier.h"
+-#include "vdso/compiler.h"
++#include "barrier.h"
++#include "compiler.h"
+ 
+ namespace vdso {
+ 
+diff --git a/vdso/vdso.cc b/vdso/vdso.cc
+index 8bb80a7a..210d31ff 100644
+--- a/vdso/vdso.cc
++++ b/vdso/vdso.cc
+@@ -19,8 +19,8 @@
+ #include <sys/time.h>
+ #include <time.h>
+ 
+-#include "vdso/syscalls.h"
+-#include "vdso/vdso_time.h"
++#include "syscalls.h"
++#include "vdso_time.h"
+ 
+ namespace vdso {
+ namespace {
+diff --git a/vdso/vdso_time.cc b/vdso/vdso_time.cc
+index 1bb4bb86..fb5b281f 100644
+--- a/vdso/vdso_time.cc
++++ b/vdso/vdso_time.cc
+@@ -12,15 +12,15 @@
+ // See the License for the specific language governing permissions and
+ // limitations under the License.
+ 
+-#include "vdso/vdso_time.h"
++#include "vdso_time.h"
+ 
+ #include <stdint.h>
+ #include <sys/time.h>
+ #include <time.h>
+ 
+-#include "vdso/cycle_clock.h"
+-#include "vdso/seqlock.h"
+-#include "vdso/syscalls.h"
++#include "cycle_clock.h"
++#include "seqlock.h"
++#include "syscalls.h"
+ 
+ // struct params defines the layout of the parameter page maintained by the
+ // kernel (i.e., sentry).
+-- 
+2.20.1
+

@@ -1,29 +1,44 @@
 {
   "composites": {
     "exclude_files": {
-      "external/kubernetes/": "third_party",
+      "external/io_k8s_kubernetes/": "third_party",
       "external/bazel_gazelle/language/go/": "third_party",
-      "external/com_github_golang_protobuf/": "third_party"
+      "external/com_github_golang_protobuf/": "third_party",
+      "external/com_github_google_gvisor/": "third_party",
+      "external/io_k8s_apimachinery/pkg/runtime/serializer/versioning/": "third_party",
+      "external/io_k8s_sigs_structured_merge_diff/": "third_party",
+      "external/io_k8s_client_go/": "third_party",
+      "external/io_k8s_kube_openapi/": "third_party",
+      "external/io_k8s_apiserver/": "third_party",
+      "external/org_golang_x_tools/": "third_party",
+      "external/io_k8s_apiextensions_apiserver/": "third_party",
+      "external/org_golang_x_text/": "third_party"
     }
   },
   "copylocks": {
     "exclude_files": {
-      "external/kubernetes/": "third_party"
+      "external/io_k8s_kubernetes/": "third_party",
+      "external/com_github_google_gvisor/": "third_party",
+      "external/io_k8s_sigs_structured_merge_diff/": "third_party",
+      "external/io_k8s_component_base/": "third_party",
+      "external/io_k8s_apiserver/": "third_party"
     }
   },
   "lostcancel": {
     "exclude_files": {
       "external/com_github_golang_protobuf/": "third_party",
       "external/com_github_grpc_ecosystem_grpc_gateway/runtime/": "third_party",
-      "external/kubernetes/": "third_party",
+      "external/io_k8s_kubernetes/": "third_party",
       "external/com_github_denisenkom_go_mssqldb/": "third_party"
     }
   },
   "unreachable": {
     "exclude_files": {
-      "external/kubernetes/": "third_party",
+      "external/io_k8s_kubernetes/": "third_party",
       "external/bazel_gazelle/pathtools": "third_party",
-      "external/com_github_magiconair_properties": "third_party"
+      "external/com_github_magiconair_properties": "third_party",
+      "external/com_github_ghodss_yaml": "third_party",
+      "external/io_k8s_kubectl": "third_party"
     }
   },
   "assign": {
@@ -33,24 +48,29 @@
   },
   "unsafeptr": {
     "exclude_files": {
-      "external/kubernetes/vendor/github.com/modern-go/reflect2/": "third_party",
       "external/com_github_modern_go_reflect2/": "third_party",
-      "sqlite3.*go": "third_party"
+      "sqlite3.*go": "third_party",
+      "external/com_github_google_gvisor/": "third_party",
+      "external/io_k8s_sigs_structured_merge_diff/": "third_party"
     }
   },
   "unusedresult": {
     "exclude_files": {
-      "external/kubernetes/": "third_party"
+      "external/io_k8s_kubernetes/": "third_party",
+      "external/com_github_docker_spdystream": "third_party",
+      "external/io_k8s_apimachinery/": "third_party"
     }
   },
   "structtag": {
     "exclude_files": {
-      "external/kubernetes/": "third_party"
+      "external/io_k8s_kubernetes/": "third_party"
     }
   },
   "printf": {
     "exclude_files": {
-      "external/kubernetes/": "third_party"
+      "external/io_k8s_kubernetes/": "third_party",
+      "external/runc/vendor/github.com/vishvananda/netlink": "third_party",
+      "external/com_github_google_gvisor/": "third_party"
     }
   }
 }

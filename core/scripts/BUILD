@@ -17,7 +17,7 @@ sh_library(
     name = "test_deps",
     data = [
         ":launch",
-        "//third_party/kubernetes:kubectl",
+        "@io_k8s_kubernetes//cmd/kubectl",
     ],
 )
 

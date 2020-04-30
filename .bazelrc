@@ -3,4 +3,10 @@ build --jobs 12 --local_ram_resources=HOST_RAM*0.5
 test --jobs 12 --test_output=errors
 
 # Build with SELinux, needed for containerd & kubelet
-build --define gotags=selinux
+build --define gotags=selinux,no_zfs,no_aufs,no_devicemapper
+
+# Build with C++17.
+build --cxxopt=-std=c++17
+
+# Set workspace status file
+build --workspace_status_command=./build/print-workspace-status.sh

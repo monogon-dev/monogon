@@ -1,0 +1,29 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+This patch rips out azure/openstack auth support for k8s.io/client-go. This should be made configurable upstream.
+
+diff -ur io_k8s_client_go.orig/plugin/pkg/client/auth/plugins.go io_k8s_client_go/plugin/pkg/client/auth/plugins.go
+--- io_k8s_client_go.orig/plugin/pkg/client/auth/plugins.go	2020-04-16 17:46:53.965434780 +0200
++++ io_k8s_client_go/plugin/pkg/client/auth/plugins.go	2020-04-16 17:47:21.720538171 +0200
+@@ -18,8 +18,6 @@
+ 
+ import (
+ 	// Initialize all known client auth plugins.
+-	_ "k8s.io/client-go/plugin/pkg/client/auth/azure"
+ 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+ 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
+-	_ "k8s.io/client-go/plugin/pkg/client/auth/openstack"
+ )

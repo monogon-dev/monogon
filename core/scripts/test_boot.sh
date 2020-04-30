@@ -7,7 +7,7 @@
 # have to worry about cross-compilation or varying build environments.
 #
 # (see https://github.com/bazelbuild/bazel/blob/master/tools/bash/runfiles/runfiles.bash)
-set kubectl_path "external/kubernetes/cmd/kubectl/linux_amd64_pure_stripped/kubectl"
+set kubectl_path "external/io_k8s_kubernetes/cmd/kubectl/linux_amd64_pure_stripped/kubectl"
 
 set timeout 120
 

@@ -1,0 +1,30 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+This patch updates BUILD files to reflect changes in Go sources. This only needs to be applied because Gazelle applies patches after BUILDfile generation.
+
+diff -ur io_k8s_client_go.orig/plugin/pkg/client/auth/BUILD.bazel io_k8s_client_go/plugin/pkg/client/auth/BUILD.bazel
+--- io_k8s_client_go.orig/plugin/pkg/client/auth/BUILD.bazel 17:54:23.086143468 +0200
++++ io_k8s_client_go/plugin/pkg/client/auth/BUILD.bazel 17:56:17.098546899 +0200
+@@ -6,9 +6,7 @@
+     importpath = "k8s.io/client-go/plugin/pkg/client/auth",
+     visibility = ["//visibility:public"],
+     deps = [
+-        "//plugin/pkg/client/auth/azure:go_default_library",
+         "//plugin/pkg/client/auth/gcp:go_default_library",
+         "//plugin/pkg/client/auth/oidc:go_default_library",
+-        "//plugin/pkg/client/auth/openstack:go_default_library",
+     ],
+ )

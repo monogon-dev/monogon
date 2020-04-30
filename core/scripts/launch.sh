@@ -9,7 +9,7 @@ cp -Lr core/tpm/* "${TMP}"
 swtpm socket --tpmstate dir=${TMP} --ctrl type=unixio,path=tpm-socket --tpm2 &
 
 qemu-system-x86_64 \
-    -cpu host -smp sockets=1,cpus=1,cores=2,threads=2,maxcpus=4 -m 1024 -machine q35 -enable-kvm -nographic -nodefaults \
+    -cpu host -smp sockets=1,cpus=1,cores=2,threads=2,maxcpus=4 -m 2048 -machine q35 -enable-kvm -nographic -nodefaults \
     -drive if=pflash,format=raw,readonly,file=external/edk2/OVMF_CODE.fd \
     -drive if=pflash,format=raw,snapshot=on,file=external/edk2/OVMF_VARS.fd \
     -drive if=virtio,format=raw,snapshot=on,cache=unsafe,file=core/smalltown.img \

@@ -1,0 +1,47 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+This patch updates BUILD files to reflect changes in Go sources. This only needs to be applied because Gazelle applies patches after BUILDfile generation.
+
+diff -ur com_github_google_cadvisor.orig/fs/fs.go com_github_google_cadvisor/fs/fs.go
+--- com_github_google_cadvisor.orig/fs/BUILD.bazel	2020-04-15 17:54:23.086143468 +0200
++++ com_github_google_cadvisor/fs/BUILD.bazel	2020-04-15 17:56:17.098546899 +0200
+@@ -12,14 +12,12 @@
+         "@io_bazel_rules_go//go/platform:android": [
+             "//devicemapper:go_default_library",
+             "//utils:go_default_library",
+-            "@com_github_mistifyio_go_zfs//:go_default_library",
+             "@io_k8s_klog//:go_default_library",
+             "@io_k8s_utils//mount:go_default_library",
+         ],
+         "@io_bazel_rules_go//go/platform:linux": [
+             "//devicemapper:go_default_library",
+             "//utils:go_default_library",
+-            "@com_github_mistifyio_go_zfs//:go_default_library",
+             "@io_k8s_klog//:go_default_library",
+             "@io_k8s_utils//mount:go_default_library",
+         ],
+diff -ur com_github_google_cadvisor.orig/fs/fs.go com_github_google_cadvisor/fs/fs.go
+--- com_github_google_cadvisor.orig/container/docker/BUILD.bazel	2020-04-15 17:54:23.086143468 +0200
++++ com_github_google_cadvisor/container/docker/BUILD.bazel	2020-04-15 17:56:17.098546899 +0200
+@@ -21,7 +21,6 @@
+         "//info/v1:go_default_library",
+         "//machine:go_default_library",
+         "//watcher:go_default_library",
+-        "//zfs:go_default_library",
+         "@com_github_blang_semver//:go_default_library",
+         "@com_github_docker_docker//api/types:go_default_library",
+         "@com_github_docker_docker//api/types/container:go_default_library",
+
