@@ -8,5 +8,5 @@ build --define gotags=selinux,no_zfs,no_aufs,no_devicemapper
 # Build with C++17.
 build --cxxopt=-std=c++17
 
-# Set workspace status file
-build --workspace_status_command=./build/print-workspace-status.sh
+# Set workspace status file and stamp
+build --stamp --workspace_status_command=./build/print-workspace-status.sh

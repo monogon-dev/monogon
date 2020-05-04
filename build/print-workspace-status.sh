@@ -20,9 +20,9 @@ KUBERNETES_gitVersion="v1.19.0-alpha.2+nxt"
 cat <<EOF
 KUBERNETES_gitCommit $(git rev-parse "HEAD^{commit}")
 KUBERNETES_gitTreeState $KUBERNETES_gitTreeState
-KUBERNETES_gitVersion $KUBERNETES_gitVersion
-KUBERNETES_gitMajor $KUBERNETES_gitMajor
-KUBERNETES_gitMinor $KUBERNETES_gitMinor
+STABLE_KUBERNETES_gitVersion $KUBERNETES_gitVersion
+STABLE_KUBERNETES_gitMajor $KUBERNETES_gitMajor
+STABLE_KUBERNETES_gitMinor $KUBERNETES_gitMinor
 KUBERNETES_buildDate $(date \
   ${SOURCE_DATE_EPOCH:+"--date=@${SOURCE_DATE_EPOCH}"} \
  -u +'%Y-%m-%dT%H:%M:%SZ')

@@ -28,9 +28,12 @@ def version_x_defs():
     stamp_vars = [
         "buildDate",
         "gitCommit",
+        "gitTreeState",
+    ]
+
+    stable_stamp_vars = [
         "gitMajor",
         "gitMinor",
-        "gitTreeState",
         "gitVersion",
     ]
 
@@ -39,4 +42,7 @@ def version_x_defs():
     for pkg in stamp_pkgs:
         for var in stamp_vars:
             x_defs["%s.%s" % (pkg, var)] = "{KUBERNETES_%s}" % var
+    for pkg in stamp_pkgs:
+        for var in stable_stamp_vars:
+            x_defs["%s.%s" % (pkg, var)] = "{STABLE_KUBERNETES_%s}" % var
     return x_defs
