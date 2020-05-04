@@ -196,7 +196,7 @@ func TestSimple(t *testing.T) {
 		Signal(ctx, SignalHealthy)
 		Signal(ctx, SignalDone)
 		return nil
-	})
+	}, WithPropagatePanic)
 
 	// Expect both to start running.
 	select {
@@ -230,7 +230,7 @@ func TestSimpleFailure(t *testing.T) {
 		Signal(ctx, SignalHealthy)
 		Signal(ctx, SignalDone)
 		return nil
-	})
+	}, WithPropagatePanic)
 
 	two.becomeHealthy()
 	// Expect one to start running.
@@ -275,7 +275,7 @@ func TestDeepFailure(t *testing.T) {
 		Signal(ctx, SignalHealthy)
 		Signal(ctx, SignalDone)
 		return nil
-	})
+	}, WithPropagatePanic)
 
 	two.becomeHealthy()
 	// Expect one to start running.
@@ -296,18 +296,12 @@ func TestDeepFailure(t *testing.T) {
 	// And one should start running again.
 	select {
 	case <-h1:
-	case <-time.After(110 * time.Millisecond):
+	case <-time.After(100 * time.Millisecond):
 		t.Fatalf("runnable 'one' didn't restart on time")
 	}
 }
 
 func TestPanic(t *testing.T) {
-	catchPanicPrev := flagCatchPanic
-	flagCatchPanic = true
-	defer func() {
-		flagCatchPanic = catchPanicPrev
-	}()
-
 	h1 := make(chan struct{})
 	d1 := make(chan struct{})
 	two := newRC()
@@ -367,7 +361,7 @@ func TestMultipleLevelFailure(t *testing.T) {
 		Signal(ctx, SignalHealthy)
 		Signal(ctx, SignalDone)
 		return nil
-	})
+	}, WithPropagatePanic)
 }
 
 func TestBackoff(t *testing.T) {
@@ -382,7 +376,7 @@ func TestBackoff(t *testing.T) {
 		Signal(ctx, SignalHealthy)
 		Signal(ctx, SignalDone)
 		return nil
-	})
+	}, WithPropagatePanic)
 
 	one.becomeHealthy()
 	// Die a bunch of times in a row, this brings up the next exponential backoff to over a second.

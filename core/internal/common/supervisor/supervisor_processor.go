@@ -19,7 +19,6 @@ package supervisor
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"runtime/debug"
 	"time"
@@ -30,16 +29,6 @@ import (
 // The processor maintains runnable goroutines - ie., when requested will start one, and then once it exists it will
 // record the result and act accordingly. It is also responsible for detecting and acting upon supervision subtrees that
 // need to be restarted after death (via a 'GC' process)
-
-// flagCatchPanic is a global flag that configures whether panics from runnables are handled and treated as errors, or
-// cause a panic of the entire supervisor.
-// For production use cases, you likely want to catch panics.
-// For debugging and tests, you likely want panics to bubble up and abort the entire supervisor early.
-var flagCatchPanic = true
-
-func init() {
-	flag.BoolVar(&flagCatchPanic, "catch_panic", flagCatchPanic, "Catch service/runnable panics - disable this for development or testing")
-}
 
 // processorRequest is a request for the processor. Only one of the fields can be set.
 type processorRequest struct {
@@ -133,7 +122,7 @@ func (s *supervisor) processSchedule(r *processorRequestSchedule) {
 
 	n := s.nodeByDN(r.dn)
 	go func() {
-		if flagCatchPanic {
+		if !s.propagatePanic {
 			defer func() {
 				if rec := recover(); rec != nil {
 					s.pReq <- &processorRequest{

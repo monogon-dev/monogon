@@ -93,16 +93,35 @@ type supervisor struct {
 
 	// pReq is an interface channel to the lifecycle processor of the supervisor.
 	pReq chan *processorRequest
+
+	// propagate panics, ie. don't catch them.
+	propagatePanic bool
 }
+
+// SupervisorOpt are runtime configurable options for the supervisor.
+type SupervisorOpt func(s *supervisor)
+
+var (
+	// WithPropagatePanic prevents the Supervisor from catching panics in runnables and treating them as failures.
+	// This is useful to enable for testing and local debugging.
+	WithPropagatePanic = func(s *supervisor) {
+		s.propagatePanic = true
+	}
+)
 
 // New creates a new supervisor with its root running the given root runnable.
 // The given context can be used to cancel the entire supervision tree.
-func New(ctx context.Context, logger *zap.Logger, rootRunnable Runnable) {
+func New(ctx context.Context, logger *zap.Logger, rootRunnable Runnable, opts ...SupervisorOpt) {
 	sup := &supervisor{
 		logger:  logger,
 		ilogger: logger.Named("supervisor"),
 		pReq:    make(chan *processorRequest),
 	}
+
+	for _, o := range opts {
+		o(sup)
+	}
+
 	sup.root = newNode("root", rootRunnable, sup, nil)
 
 	go sup.processor(ctx)
