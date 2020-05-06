@@ -111,7 +111,7 @@ var (
 
 // New creates a new supervisor with its root running the given root runnable.
 // The given context can be used to cancel the entire supervision tree.
-func New(ctx context.Context, logger *zap.Logger, rootRunnable Runnable, opts ...SupervisorOpt) {
+func New(ctx context.Context, logger *zap.Logger, rootRunnable Runnable, opts ...SupervisorOpt) *supervisor {
 	sup := &supervisor{
 		logger:  logger,
 		ilogger: logger.Named("supervisor"),
@@ -129,4 +129,6 @@ func New(ctx context.Context, logger *zap.Logger, rootRunnable Runnable, opts ..
 	sup.pReq <- &processorRequest{
 		schedule: &processorRequestSchedule{dn: "root"},
 	}
+
+	return sup
 }

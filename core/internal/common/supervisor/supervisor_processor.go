@@ -32,8 +32,9 @@ import (
 
 // processorRequest is a request for the processor. Only one of the fields can be set.
 type processorRequest struct {
-	schedule *processorRequestSchedule
-	died     *processorRequestDied
+	schedule    *processorRequestSchedule
+	died        *processorRequestDied
+	waitSettled *processorRequestWaitSettled
 }
 
 // processorRequestSchedule requests that a given node's runnable be started.
@@ -47,15 +48,30 @@ type processorRequestDied struct {
 	err error
 }
 
+type processorRequestWaitSettled struct {
+	waiter chan struct{}
+}
+
 // processor is the main processing loop.
 func (s *supervisor) processor(ctx context.Context) {
 	s.ilogger.Info("supervisor processor started")
+
+	// Waiters waiting for the GC to be settled.
+	var waiters []chan struct{}
 
 	// The GC will run every millisecond if needed. Any time the processor requests a change in the supervision tree
 	// (ie a death or a new runnable) it will mark the state as dirty and run the GC on the next millisecond cycle.
 	gc := time.NewTicker(1 * time.Millisecond)
 	defer gc.Stop()
 	clean := true
+
+	// How long has the GC been clean. This is used to notify 'settled' waiters.
+	cleanCycles := 0
+
+	markDirty := func() {
+		clean = false
+		cleanCycles = 0
+	}
 
 	for {
 		select {
@@ -71,14 +87,25 @@ func (s *supervisor) processor(ctx context.Context) {
 				s.ilogger.Debug("gc done", zap.Duration("elapsed", time.Since(gcStart)))
 			}
 			clean = true
+			cleanCycles += 1
+
+			// This threshold is somewhat arbitrary. It's a balance between test speed and test reliability.
+			if cleanCycles > 50 {
+				for _, w := range waiters {
+					close(w)
+				}
+				waiters = nil
+			}
 		case r := <-s.pReq:
 			switch {
 			case r.schedule != nil:
 				s.processSchedule(r.schedule)
-				clean = false
+				markDirty()
 			case r.died != nil:
 				s.processDied(r.died)
-				clean = false
+				markDirty()
+			case r.waitSettled != nil:
+				waiters = append(waiters, r.waitSettled.waiter)
 			default:
 				panic(fmt.Errorf("unhandled request %+v", r))
 			}
@@ -174,6 +201,7 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 
 	// Simple case: the context was canceled and the returned error is the context error.
 	if err := ctx.Err(); err != nil && perr == err {
+		s.ilogger.Debug("runnable returned after context cancel", zap.String("dn", n.dn()))
 		// Mark the node as canceled successfully.
 		n.state = nodeStateCanceled
 		return
@@ -244,7 +272,7 @@ func (s *supervisor) processGC() {
 	}
 
 	tPhase1 := time.Now()
-	s.ilogger.Debug("gc phase 1 done", zap.Any("leaves", leaves))
+	s.ilogger.Debug("gc phase 1 done", zap.Any("leaves", len(leaves)))
 
 	// Phase two: traverse tree from node to root and make note of all subtrees that can be restarted.
 	// A subtree is restartable/ready iff every node in that subtree is either CANCELED, DEAD or DONE.
@@ -322,7 +350,7 @@ func (s *supervisor) processGC() {
 	}
 
 	tPhase2 := time.Now()
-	s.ilogger.Debug("gc phase 2 done", zap.Any("ready", ready))
+	s.ilogger.Debug("gc phase 2 done", zap.Any("ready", len(ready)))
 
 	// Phase 3: traverse tree from root to find largest subtrees that need to be restarted and are ready to be
 	// restarted.
@@ -349,10 +377,13 @@ func (s *supervisor) processGC() {
 			want[cur.dn()] = true
 		}
 
-		// If it should and can be restarted, that's all we want.
+		// If it should be restarted and is ready to be restarted...
 		if want[cur.dn()] && ready[cur.dn()] {
-			can[cur.dn()] = true
-			continue
+			// And its parent context is valid (ie hasn't been canceled), mark it as restartable.
+			if cur.parent == nil || cur.parent.ctx.Err() == nil {
+				can[cur.dn()] = true
+				continue
+			}
 		}
 
 		// Otherwise, traverse further down the tree to see if something else needs to be done.
@@ -362,19 +393,20 @@ func (s *supervisor) processGC() {
 	}
 
 	tPhase3 := time.Now()
-	s.ilogger.Debug("gc phase 3 done", zap.Any("want", want), zap.Any("can", can))
+	s.ilogger.Debug("gc phase 3 done", zap.Any("want", len(want)), zap.Any("can", len(can)))
 
 	// Reinitialize and reschedule all subtrees
 	for dn, _ := range can {
 		n := s.nodeByDN(dn)
-		bo := time.Duration(0)
+
 		// Only back off when the node unexpectedly died - not when it got canceled.
+		bo := time.Duration(0)
 		if n.state == nodeStateDead {
 			bo = n.bo.NextBackOff()
 		}
+
 		// Prepare node for rescheduling - remove its children, reset its state to new.
 		n.reset()
-
 		s.ilogger.Info("rescheduling supervised node", zap.String("dn", dn), zap.Duration("backoff", bo))
 
 		// Reschedule node runnable to run after backoff.

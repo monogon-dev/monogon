@@ -185,7 +185,7 @@ func TestSimple(t *testing.T) {
 	log, _ := zap.NewDevelopment()
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
-	New(ctx, log, func(ctx context.Context) error {
+	s := New(ctx, log, func(ctx context.Context) error {
 		err := RunGroup(ctx, map[string]Runnable{
 			"one": runnableBecomesHealthy(h1, d1),
 			"two": runnableBecomesHealthy(h2, d2),
@@ -199,15 +199,16 @@ func TestSimple(t *testing.T) {
 	}, WithPropagatePanic)
 
 	// Expect both to start running.
+	s.waitSettleError(ctx, t)
 	select {
 	case <-h1:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("runnable 'one' didn't start one time")
+	default:
+		t.Fatalf("runnable 'one' didn't start")
 	}
 	select {
 	case <-h2:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("runnable 'one' didn't start one time")
+	default:
+		t.Fatalf("runnable 'one' didn't start")
 	}
 }
 
@@ -217,9 +218,9 @@ func TestSimpleFailure(t *testing.T) {
 	two := newRC()
 
 	log, _ := zap.NewDevelopment()
-	ctx, ctxC := context.WithCancel(context.Background())
+	ctx, ctxC := context.WithTimeout(context.Background(), 10*time.Second)
 	defer ctxC()
-	New(ctx, log, func(ctx context.Context) error {
+	s := New(ctx, log, func(ctx context.Context) error {
 		err := RunGroup(ctx, map[string]Runnable{
 			"one": runnableBecomesHealthy(h1, d1),
 			"two": two.runnable(),
@@ -231,28 +232,32 @@ func TestSimpleFailure(t *testing.T) {
 		Signal(ctx, SignalDone)
 		return nil
 	}, WithPropagatePanic)
+	s.waitSettleError(ctx, t)
 
 	two.becomeHealthy()
+	s.waitSettleError(ctx, t)
 	// Expect one to start running.
 	select {
 	case <-h1:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("runnable 'one' didn't start one time")
+	default:
+		t.Fatalf("runnable 'one' didn't start")
 	}
 
 	// Kill off two, one should restart.
 	two.die()
+	s.waitSettleError(ctx, t)
 	select {
 	case <-d1:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("runnable 'one' didn't acknowledge cancel on time")
+	default:
+		t.Fatalf("runnable 'one' didn't acknowledge cancel")
 	}
 
 	// And one should start running again.
+	s.waitSettleError(ctx, t)
 	select {
 	case <-h1:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("runnable 'one' didn't restart on time")
+	default:
+		t.Fatalf("runnable 'one' didn't restart")
 	}
 }
 
@@ -262,11 +267,12 @@ func TestDeepFailure(t *testing.T) {
 	two := newRC()
 
 	log, _ := zap.NewDevelopment()
-	ctx, ctxC := context.WithCancel(context.Background())
+
+	ctx, ctxC := context.WithTimeout(context.Background(), 10*time.Second)
 	defer ctxC()
-	New(ctx, log, func(ctx context.Context) error {
+	s := New(ctx, log, func(ctx context.Context) error {
 		err := RunGroup(ctx, map[string]Runnable{
-			"one": runnableSpawnsMore(h1, d1, 4),
+			"one": runnableSpawnsMore(h1, d1, 5),
 			"two": two.runnable(),
 		})
 		if err != nil {
@@ -278,26 +284,29 @@ func TestDeepFailure(t *testing.T) {
 	}, WithPropagatePanic)
 
 	two.becomeHealthy()
+	s.waitSettleError(ctx, t)
 	// Expect one to start running.
 	select {
 	case <-h1:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("runnable 'one' didn't start one time")
+	default:
+		t.Fatalf("runnable 'one' didn't start")
 	}
 
 	// Kill off two, one should restart.
 	two.die()
+	s.waitSettleError(ctx, t)
 	select {
 	case <-d1:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("runnable 'one' didn't acknowledge cancel on time")
+	default:
+		t.Fatalf("runnable 'one' didn't acknowledge cancel")
 	}
 
 	// And one should start running again.
+	s.waitSettleError(ctx, t)
 	select {
 	case <-h1:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("runnable 'one' didn't restart on time")
+	default:
+		t.Fatalf("runnable 'one' didn't restart")
 	}
 }
 
@@ -309,7 +318,7 @@ func TestPanic(t *testing.T) {
 	log, _ := zap.NewDevelopment()
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
-	New(ctx, log, func(ctx context.Context) error {
+	s := New(ctx, log, func(ctx context.Context) error {
 		err := RunGroup(ctx, map[string]Runnable{
 			"one": runnableBecomesHealthy(h1, d1),
 			"two": two.runnable(),
@@ -323,26 +332,29 @@ func TestPanic(t *testing.T) {
 	})
 
 	two.becomeHealthy()
+	s.waitSettleError(ctx, t)
 	// Expect one to start running.
 	select {
 	case <-h1:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("runnable 'one' didn't start one time")
+	default:
+		t.Fatalf("runnable 'one' didn't start")
 	}
 
 	// Kill off two, one should restart.
 	two.panic()
+	s.waitSettleError(ctx, t)
 	select {
 	case <-d1:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("runnable 'one' didn't acknowledge cancel on time")
+	default:
+		t.Fatalf("runnable 'one' didn't acknowledge cancel")
 	}
 
 	// And one should start running again.
+	s.waitSettleError(ctx, t)
 	select {
 	case <-h1:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("runnable 'one' didn't restart on time")
+	default:
+		t.Fatalf("runnable 'one' didn't restart")
 	}
 }
 
@@ -366,10 +378,12 @@ func TestMultipleLevelFailure(t *testing.T) {
 
 func TestBackoff(t *testing.T) {
 	one := newRC()
+
 	log, _ := zap.NewDevelopment()
-	ctx, ctxC := context.WithCancel(context.Background())
+	ctx, ctxC := context.WithTimeout(context.Background(), 20*time.Second)
 	defer ctxC()
-	New(ctx, log, func(ctx context.Context) error {
+
+	s := New(ctx, log, func(ctx context.Context) error {
 		if err := Run(ctx, "one", one.runnable()); err != nil {
 			return err
 		}
@@ -391,17 +405,18 @@ func TestBackoff(t *testing.T) {
 	one.waitState(rcRunnableStateHealthy)
 	taken := time.Since(start)
 	if taken < 1*time.Second {
-		t.Errorf("Runnable took %v to restarted, wanted at least a second from backoff", taken)
+		t.Errorf("Runnable took %v to restart, wanted at least a second from backoff", taken)
 	}
 
+	s.waitSettleError(ctx, t)
 	// Now that we've become healthy, die again. Becoming healthy resets the backoff.
 	start = time.Now()
 	one.die()
 	one.becomeHealthy()
 	one.waitState(rcRunnableStateHealthy)
 	taken = time.Since(start)
-	if taken > 500*time.Millisecond || taken < 100*time.Millisecond {
-		t.Errorf("Runnable took %v to restarted, wanted at least 100ms from backoff and at most 500ms from backoff reset", taken)
+	if taken > 1*time.Second || taken < 100*time.Millisecond {
+		t.Errorf("Runnable took %v to restart, wanted at least 100ms from backoff and at most 1s from backoff reset", taken)
 	}
 }
 
@@ -426,7 +441,7 @@ func TestResilience(t *testing.T) {
 	oneSibling := newRC()
 
 	oneTest := func() {
-		timeout := time.NewTicker(100 * time.Millisecond)
+		timeout := time.NewTicker(1000 * time.Millisecond)
 		ping := make(chan struct{})
 		req <- ping
 		select {
