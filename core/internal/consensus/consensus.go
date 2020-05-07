@@ -46,6 +46,7 @@ import (
 	"go.etcd.io/etcd/pkg/types"
 	"go.etcd.io/etcd/proxy/grpcproxy/adapter"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"golang.org/x/sys/unix"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus/ca"
@@ -172,6 +173,11 @@ func (s *Service) OnStart() error {
 	}
 
 	cfg.Logger = DefaultLogger
+	cfg.ZapLoggerBuilder = embed.NewZapCoreLoggerBuilder(
+		s.Logger.With(zap.String("component", "etcd")).WithOptions(zap.IncreaseLevel(zapcore.WarnLevel)),
+		s.Logger.Core(),
+		nil,
+	)
 
 	server, err := embed.StartEtcd(cfg)
 	if err != nil {

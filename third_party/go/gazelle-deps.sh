@@ -175,7 +175,7 @@ gazelle github.com/munnerz/goautoneg@a7dc8b61c822
 gazelle github.com/NYTimes/gziphandler@56545f4a5d46
 gazelleGHRelease vishvananda netlink v1.1.0
 gazelleGHRelease googleapis gnostic v0.4.1
-gazelle go.uber.org/zap@27376062155ad36be76b0f12cf1572a221d3a48c # v1.10.0
+gazelle go.uber.org/zap@feeb9a050b31b40eec6f2470e7599eeeadfe5bdd # v1.15.0
 gazelleGHRelease coreos go-semver v0.3.0
 gazelle go.uber.org/multierr@3c4937480c32f4c13a875a1829af76c98ca3d40a # v1.1.0
 gazelle go.uber.org/atomic@1ea20fb1cbb1cc08cbd0d913a96dead89aa18289 # v1.3.2
