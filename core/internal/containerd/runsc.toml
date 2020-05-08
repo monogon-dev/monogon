@@ -1,0 +1,5 @@
+root = "/containerd/run/runsc"
+[runsc_config]
+debug = "false"
+# Setting intentionally left here in case anybody needs it since it is hard to find
+#debug-log = "/containerd/run/runsc-logs/"

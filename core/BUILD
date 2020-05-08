@@ -6,14 +6,18 @@ genrule(
         "//third_party/xfsprogs:mkfs.xfs",
         "@io_k8s_kubernetes//cmd/kubelet:_kubelet-pure",
         "@com_github_containerd_containerd//cmd/containerd",
-        "@com_github_containerd_containerd//cmd/containerd-shim",
-        "@com_github_containerd_containerd//cmd/containerd-shim-runc-v1",
         "@com_github_containerd_containerd//cmd/containerd-shim-runc-v2",
         "@com_github_containernetworking_plugins//plugins/main/loopback",
         "@com_github_containernetworking_plugins//plugins/main/ptp",
         "@com_github_containernetworking_plugins//plugins/ipam/host-local",
         "@com_github_opencontainers_runc//:runc",
         "@com_github_google_gvisor//runsc",
+        "@com_github_google_gvisor_containerd_shim//cmd/containerd-shim-runsc-v1",
+        "//core/internal/containerd:ptp.json",
+        "//core/internal/containerd:loopback.json",
+        "//core/internal/containerd:config.toml",
+        "//core/internal/containerd:runsc.toml",
+        "@cacerts//file",
     ],
     outs = [
         "initramfs.cpio.lz4",
@@ -23,22 +27,31 @@ genrule(
 dir /dev 0755 0 0
 nod /dev/console 0600 0 0 c 5 1
 nod /dev/null 0644 0 0 c 1 3
+nod /dev/ptmx 0644 0 0 c 5 2
 file /init $(location //core/cmd/init) 0755 0 0
+dir /etc 0755 0 0
+dir /etc/ssl 0755 0 0
+file /etc/ssl/cert.pem $(location @cacerts//file) 0444 0 0
 dir /bin 0755 0 0
 file /bin/mkfs.xfs $(location //third_party/xfsprogs:mkfs.xfs) 0755 0 0
 file /bin/kube-controlplane $(location //core/cmd/kube-controlplane) 0755 0 0
 file /bin/kubelet $(location @io_k8s_kubernetes//cmd/kubelet:_kubelet-pure) 0755 0 0
 dir /containerd 0755 0 0
-file /containerd/containerd $(location @com_github_containerd_containerd//cmd/containerd) 0755 0 0
-file /containerd/containerd-shim $(location @com_github_containerd_containerd//cmd/containerd-shim) 0755 0 0
-file /containerd/containerd-shim-runc-v1 $(location @com_github_containerd_containerd//cmd/containerd-shim-runc-v1) 0755 0 0
-file /containerd/containerd-shim-runc-v2 $(location @com_github_containerd_containerd//cmd/containerd-shim-runc-v2) 0755 0 0
-file /containerd/runsc $(location @com_github_google_gvisor//runsc) 0755 0 0
-file /containerd/runc $(location @com_github_opencontainers_runc//:runc) 0755 0 0
-dir /containerd/cni-plugins 0755 0 0
-file /containerd/cni-plugins/loopback $(location @com_github_containernetworking_plugins//plugins/main/loopback) 0755 0 0
-file /containerd/cni-plugins/ptp $(location @com_github_containernetworking_plugins//plugins/main/ptp) 0755 0 0
-file /containerd/cni-plugins/host-local $(location @com_github_containernetworking_plugins//plugins/ipam/host-local) 0755 0 0
+dir /containerd/bin 0755 0 0
+file /containerd/bin/containerd $(location @com_github_containerd_containerd//cmd/containerd) 0755 0 0
+file /containerd/bin/containerd-shim-runsc-v1 $(location @com_github_google_gvisor_containerd_shim//cmd/containerd-shim-runsc-v1) 0755 0 0
+file /containerd/bin/runsc $(location @com_github_google_gvisor//runsc) 0755 0 0
+dir /containerd/bin/cni 0755 0 0
+file /containerd/bin/cni/loopback $(location @com_github_containernetworking_plugins//plugins/main/loopback) 0755 0 0
+file /containerd/bin/cni/ptp $(location @com_github_containernetworking_plugins//plugins/main/ptp) 0755 0 0
+file /containerd/bin/cni/host-local $(location @com_github_containernetworking_plugins//plugins/ipam/host-local) 0755 0 0
+dir /containerd/run 0755 0 0
+dir /containerd/conf 0755 0 0
+dir /containerd/conf/cni 0755 0 0
+file /containerd/conf/cni/10-ptp.conf $(location //core/internal/containerd:ptp.json) 0444 0 0
+file /containerd/conf/cni/99-loopback.conf $(location //core/internal/containerd:loopback.json) 0444 0 0
+file /containerd/conf/config.toml $(location //core/internal/containerd:config.toml) 0444 0 0
+file /containerd/conf/runsc.toml $(location //core/internal/containerd:runsc.toml) 0444 0 0
 EOF
     """,
     tools = [

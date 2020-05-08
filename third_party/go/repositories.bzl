@@ -86,6 +86,36 @@ def go_repositories():
         patch_args = ["-p1"],
     )
     go_repository(
+        name = "com_github_google_gvisor_containerd_shim",
+        importpath = "github.com/google/gvisor-containerd-shim",
+        sum = "h1:RdBNQHpoQ3ekzfXYIV4+nQJ3a2xLnIHuZJkM40OEtyA=",
+        version = "v0.0.4",
+        patches = [
+            "//third_party/go/patches:gvisor-containerd-shim.patch",
+            "//third_party/go/patches:gvisor-containerd-shim-build.patch",
+            # Patches below are being upstreamed
+            "//third_party/go/patches:gvisor-containerd-shim-nogo.patch",
+            "//third_party/go/patches:gvisor-shim-root.patch",
+        ],
+        patch_args = ["-p1"],
+    )
+
+    # containerd, Not an actual release, pinned to commit 8e685f78cf66e2901b2fbed2fdddd64449a74ab9 that has support for the required build tags.
+    # Also patched for pure mode and some other issues
+    go_repository(
+        name = "com_github_containerd_containerd",
+        build_file_proto_mode = "disable",
+        build_tags = ["no_zfs", "no_aufs", "no_devicemapper", "no_btrfs"],
+        importpath = "github.com/containerd/containerd",
+        sum = "h1:IeFaEbvx6mQe9K1cXG2K7zynPwge3YUrQlLTyiNiveU=",
+        version = "v1.3.1-0.20200218165203-8e685f78cf66",
+        patches = [
+            "//third_party/go/patches:containerd-build.patch",
+        ],
+        patch_args = ["-p1"],
+    )
+
+    go_repository(
         name = "io_k8s_repo_infra",
         importpath = "k8s.io/repo-infra",
         sum = "h1:PQyAIB6SRdV0a3Vj/VA39L1uANW36k/zg3tOk/Ffh3U=",
@@ -681,14 +711,6 @@ def go_repositories():
         importpath = "github.com/golang/groupcache",
         sum = "h1:LbsanbbD6LieFkXbj9YNNBupiGHJgFeLpO0j0Fza1h8=",
         version = "v0.0.0-20160516000752-02826c3e7903",
-    )
-    go_repository(
-        name = "com_github_containerd_containerd",
-        build_file_proto_mode = "disable",
-        build_tags = ["no_zfs", "no_aufs", "no_devicemapper", "no_btrfs"],
-        importpath = "github.com/containerd/containerd",
-        sum = "h1:IeFaEbvx6mQe9K1cXG2K7zynPwge3YUrQlLTyiNiveU=",
-        version = "v1.3.1-0.20200218165203-8e685f78cf66",
     )
     go_repository(
         name = "com_github_beorn7_perks",

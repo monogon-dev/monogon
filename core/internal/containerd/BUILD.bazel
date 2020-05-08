@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "git.monogon.dev/source/nexantic.git/core/internal/containerd",
+    visibility = ["//core:__subpackages__"],
+    deps = [
+        "//core/pkg/logbuffer:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+exports_files([
+    "config.toml",
+    "runsc.toml",
+    "loopback.json",
+    "ptp.json",
+])

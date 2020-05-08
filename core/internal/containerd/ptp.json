@@ -1,0 +1,12 @@
+{
+  "name": "k8s-pod-network",
+  "cniVersion": "0.3.1",
+  "type": "ptp",
+  "mtu": 1420,
+  "ipam": {
+    "type": "host-local",
+    "subnet": "192.168.198.0/24",
+    "routes": [{ "dst": "0.0.0.0/0" }],
+    "dataDir": "/containerd/run/ipam"
+  }
+}
