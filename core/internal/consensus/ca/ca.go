@@ -184,8 +184,7 @@ func (ca *CA) IssueCertificate(commonName string) (cert []byte, privkey []byte, 
 }
 
 func (ca *CA) ReissueCRL() error {
-	compatCert := CompatCertificate(*ca.CACert)
-	newCRL, err := compatCert.CreateCRL(rand.Reader, ca.PrivateKey, ca.Revoked, time.Now(), unknownNotAfter)
+	newCRL, err := ca.CACert.CreateCRL(rand.Reader, ca.PrivateKey, ca.Revoked, time.Now(), unknownNotAfter)
 	if err != nil {
 		return err
 	}

@@ -80,7 +80,7 @@ go_repository(
 go_rules_dependencies()
 
 go_register_toolchains(
-    go_version = "1.13",
+    go_version = "1.14",
     nogo = "@//:nogo_vet",
 )
 
