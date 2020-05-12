@@ -24,7 +24,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"crypto/x509"
-	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -53,7 +53,7 @@ func nodeId(idCert []byte) (string, error) {
 		return "", errors.New("invalid node identity certificate")
 	}
 
-	return "smalltown-" + base64.RawStdEncoding.EncodeToString([]byte(pubKey)), nil
+	return "smalltown-" + hex.EncodeToString([]byte(pubKey[:16])), nil
 }
 
 func (s *Server) registerNewNode(node *api.Node) error {
@@ -242,7 +242,7 @@ func (s *Server) NewTPM2NodeRegister(registerServer api.NodeManagementService_Ne
 	newNodeInfo := newNodeInfoVariant.NewNodeInfo
 
 	store := s.getStore()
-	res, err := store.Get(registerServer.Context(), "enrolments/"+base64.RawURLEncoding.EncodeToString(newNodeInfo.EnrolmentConfig.EnrolmentSecret))
+	res, err := store.Get(registerServer.Context(), "enrolments/"+hex.EncodeToString(newNodeInfo.EnrolmentConfig.EnrolmentSecret))
 	if err != nil {
 		return status.Error(codes.Unavailable, "Consensus unavailable")
 	}

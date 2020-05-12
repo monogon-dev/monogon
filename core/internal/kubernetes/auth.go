@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"os"
 	"path"
 	"time"
 
@@ -232,7 +233,7 @@ func newCluster(consensusKV clientv3.KV) error {
 	}
 
 	kubeletClientCert, kubeletClientKey, err := issueCertificate(
-		clientCertTemplate("kube-apiserver-kubelet-client", []string{"system:masters"}),
+		clientCertTemplate("smalltown:apiserver-kubelet-client", []string{}),
 		idCA, idKey,
 	)
 	if err != nil {
@@ -311,6 +312,34 @@ func newCluster(consensusKV clientv3.KV) error {
 		return fmt.Errorf("failed to issue certificate for scheduler: %w", err)
 	}
 	if err := storeCert(consensusKV, "scheduler", schedulerCert, schedulerKey); err != nil {
+		return err
+	}
+
+	masterClientCert, masterClientKey, err := issueCertificate(
+		clientCertTemplate("smalltown:master", []string{"system:masters"}),
+		idCA, idKey,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to issue certificate for master client: %w", err)
+	}
+
+	masterClientKubeconfig, err := makeLocalKubeconfig(idCA, masterClientCert,
+		masterClientKey)
+	if err != nil {
+		return fmt.Errorf("failed to create kubeconfig for master client: %w", err)
+	}
+
+	_, err = consensusKV.Put(context.Background(), path.Join(etcdPath, "master.kubeconfig"),
+		string(masterClientKubeconfig))
+	if err != nil {
+		return fmt.Errorf("failed to store master kubeconfig: %w", err)
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+	if err := bootstrapLocalKubelet(consensusKV, hostname); err != nil {
 		return err
 	}
 

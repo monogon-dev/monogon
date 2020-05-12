@@ -1,0 +1,274 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From b16e57cc52a437465bbd12c24fb05fe5790afe1d Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@brun.one>
+Date: Tue, 17 Mar 2020 21:41:08 +0100
+Subject: [PATCH 2/3] Add a native volume metrics implementation
+
+---
+ pkg/volume/BUILD                  |   3 +
+ pkg/volume/metrics_native.go      | 101 +++++++++++++++++++++++++++++
+ pkg/volume/metrics_native_test.go | 102 ++++++++++++++++++++++++++++++
+ 3 files changed, 206 insertions(+)
+ create mode 100644 pkg/volume/metrics_native.go
+ create mode 100644 pkg/volume/metrics_native_test.go
+
+diff --git a/pkg/volume/BUILD b/pkg/volume/BUILD
+index 720b13406dc..b6e4b7e6d6f 100644
+--- a/pkg/volume/BUILD
++++ b/pkg/volume/BUILD
+@@ -7,6 +7,7 @@ go_library(
+         "metrics_cached.go",
+         "metrics_du.go",
+         "metrics_errors.go",
++        "metrics_native.go",
+         "metrics_nil.go",
+         "metrics_statfs.go",
+         "noop_expandable_plugin.go",
+@@ -35,6 +36,7 @@ go_library(
+         "@io_k8s_client_go//tools/cache:go_default_library",
+         "@io_k8s_client_go//tools/record:go_default_library",
+         "@io_k8s_cloud_provider//:go_default_library",
++        "@org_golang_x_sys//unix:go_default_library",
+         "@io_k8s_klog//:go_default_library",
+         "@io_k8s_utils//exec:go_default_library",
+         "@io_k8s_utils//mount:go_default_library",
+@@ -55,6 +57,7 @@ go_test(
+     name = "go_default_test",
+     srcs = [
+         "metrics_du_test.go",
++        "metrics_native_test.go",
+         "metrics_nil_test.go",
+         "metrics_statfs_test.go",
+         "plugins_test.go",
+diff --git a/pkg/volume/metrics_native.go b/pkg/volume/metrics_native.go
+new file mode 100644
+index 00000000000..3934b946f2e
+--- /dev/null
++++ b/pkg/volume/metrics_native.go
+@@ -0,0 +1,101 @@
++/*
++Copyright 2020 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package volume
++
++import (
++	"os"
++	"path/filepath"
++
++	"golang.org/x/sys/unix"
++	"k8s.io/apimachinery/pkg/api/resource"
++	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
++)
++
++var _ MetricsProvider = &metricsNative{}
++
++// MetricsNative represents a MetricsProvider that calculates the volume metrics with either a quota
++// or by walking the path using syscalls.
++type metricsNative struct {
++	path string
++}
++
++// NewMetricsNative returns a new metricsNative provider
++func NewMetricsNative(path string) MetricsProvider {
++	return &metricsNative{path}
++}
++
++// GetMetrics returns an empty Metrics and an error.
++// See MetricsProvider.GetMetrics
++func (m *metricsNative) GetMetrics() (*Metrics, error) {
++	var inodesCount int64
++	var bytesCount int64
++
++	var getMetricsRecursive func(path string) error
++	getMetricsRecursive = func(path string) error {
++		var stat unix.Stat_t
++		err := unix.Lstat(path, &stat)
++		if os.IsNotExist(err) {
++			return nil
++		} else if err != nil {
++			return err
++		}
++		// TODO: This double-counts hardlinks
++		bytesCount += stat.Blocks * 512
++		inodesCount++
++		if stat.Mode&unix.S_IFDIR != 0 && stat.Mode&unix.S_IFLNK == 0 {
++			fd, err := os.Open(path)
++			if os.IsNotExist(err) {
++				return nil
++			} else if err != nil {
++				return err
++			}
++			// We manually close fd before recursing, otherwise we have too many FDs open
++
++			entries, err := fd.Readdirnames(0)
++			if err != nil {
++				fd.Close()
++				return err
++			}
++			fd.Close()
++			for _, entry := range entries {
++				if err := getMetricsRecursive(filepath.Join(path, entry)); err != nil {
++					return err
++				}
++			}
++		}
++		return nil
++	}
++
++	if err := getMetricsRecursive(m.path); err != nil {
++		return &Metrics{}, err
++	}
++
++	var statfs unix.Statfs_t
++	if err := unix.Statfs(m.path, &statfs); err != nil {
++		return &Metrics{}, err
++	}
++
++	return &Metrics{
++		Time:       metav1.Now(),
++		Used:       resource.NewQuantity(bytesCount, resource.BinarySI),
++		InodesUsed: resource.NewQuantity(inodesCount, resource.BinarySI),
++		Available:  resource.NewQuantity(int64(statfs.Bavail)*statfs.Bsize, resource.BinarySI),
++		Capacity:   resource.NewQuantity(int64(statfs.Blocks)*statfs.Bsize, resource.BinarySI),
++		Inodes:     resource.NewQuantity(int64(statfs.Files)*statfs.Bsize, resource.BinarySI),
++		InodesFree: resource.NewQuantity(int64(statfs.Ffree)*statfs.Bsize, resource.BinarySI),
++	}, nil
++}
+diff --git a/pkg/volume/metrics_native_test.go b/pkg/volume/metrics_native_test.go
+new file mode 100644
+index 00000000000..2d5546591ce
+--- /dev/null
++++ b/pkg/volume/metrics_native_test.go
+@@ -0,0 +1,102 @@
++// +build linux
++
++/*
++Copyright 2015 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package volume_test
++
++import (
++	"io/ioutil"
++	"os"
++	"path/filepath"
++	"testing"
++
++	utiltesting "k8s.io/client-go/util/testing"
++	. "k8s.io/kubernetes/pkg/volume"
++	volumetest "k8s.io/kubernetes/pkg/volume/testing"
++)
++
++// TestMetricsNativeGetCapacity tests that MetricsNative can read disk usage
++// for path
++func TestMetricsNativeGetCapacity(t *testing.T) {
++	tmpDir, err := utiltesting.MkTmpdir("metrics_du_test")
++	if err != nil {
++		t.Fatalf("Can't make a tmp dir: %v", err)
++	}
++	defer os.RemoveAll(tmpDir)
++	metrics := NewMetricsNative(tmpDir)
++
++	expectedEmptyDirUsage, err := volumetest.FindEmptyDirectoryUsageOnTmpfs()
++	if err != nil {
++		t.Errorf("Unexpected error finding expected empty directory usage on tmpfs: %v", err)
++	}
++
++	actual, err := metrics.GetMetrics()
++	if err != nil {
++		t.Errorf("Unexpected error when calling GetMetrics %v", err)
++	}
++	if e, a := expectedEmptyDirUsage.Value(), actual.Used.Value(); e != a {
++		t.Errorf("Unexpected value for empty directory; expected %v, got %v", e, a)
++	}
++
++	// TODO(pwittroc): Figure out a way to test these values for correctness, maybe by formatting and mounting a file
++	// as a filesystem
++	if a := actual.Capacity.Value(); a <= 0 {
++		t.Errorf("Expected Capacity %d to be greater than 0.", a)
++	}
++	if a := actual.Available.Value(); a <= 0 {
++		t.Errorf("Expected Available %d to be greater than 0.", a)
++	}
++
++	// Write a file in a directory and expect Used to increase
++	os.MkdirAll(filepath.Join(tmpDir, "d1"), 0755)
++	ioutil.WriteFile(filepath.Join(tmpDir, "d1", "f1"), []byte("Hello World"), os.ModeTemporary)
++	actual, err = metrics.GetMetrics()
++	if err != nil {
++		t.Errorf("Unexpected error when calling GetMetrics %v", err)
++	}
++	if e, a := (2*expectedEmptyDirUsage.Value() + getExpectedBlockSize(filepath.Join(tmpDir, "d1", "f1"))), actual.Used.Value(); e != a {
++		t.Errorf("Unexpected Used for directory with file.  Expected %v, got %d.", e, a)
++	}
++}
++
++// TestMetricsNativeRequireInit tests that if MetricsNative is not initialized with a path, GetMetrics
++// returns an error
++func TestMetricsNativeRequirePath(t *testing.T) {
++	metrics := NewMetricsNative("")
++	actual, err := metrics.GetMetrics()
++	expected := &Metrics{}
++	if !volumetest.MetricsEqualIgnoreTimestamp(actual, expected) {
++		t.Errorf("Expected empty Metrics from uninitialized MetricsNative, actual %v", *actual)
++	}
++	if err == nil {
++		t.Errorf("Expected error when calling GetMetrics on uninitialized MetricsNative, actual nil")
++	}
++}
++
++// TestMetricsNativeRealDirectory tests that if MetricsNative is initialized to a non-existent path, GetMetrics
++// returns an error
++func TestMetricsNativeRequireRealDirectory(t *testing.T) {
++	metrics := NewMetricsNative("/not/a/real/directory")
++	actual, err := metrics.GetMetrics()
++	expected := &Metrics{}
++	if !volumetest.MetricsEqualIgnoreTimestamp(actual, expected) {
++		t.Errorf("Expected empty Metrics from incorrectly initialized MetricsNative, actual %v", *actual)
++	}
++	if err == nil {
++		t.Errorf("Expected error when calling GetMetrics on incorrectly initialized MetricsNative, actual nil")
++	}
++}
+-- 
+2.25.1
+

@@ -17,10 +17,11 @@
 package kubernetes
 
 import (
+	"context"
 	"encoding/pem"
 	"fmt"
+	"go.uber.org/zap"
 	"net"
-	"os"
 	"os/exec"
 
 	"go.etcd.io/etcd/clientv3"
@@ -60,13 +61,13 @@ func getPKIControllerManagerConfig(consensusKV clientv3.KV) (*controllerManagerC
 	return &config, nil
 }
 
-func runControllerManager(config controllerManagerConfig) error {
+func (s *Service) runControllerManager(ctx context.Context, config controllerManagerConfig) error {
 	args, err := fileargs.New()
 	if err != nil {
 		panic(err) // If this fails, something is very wrong. Just crash.
 	}
 	defer args.Close()
-	cmd := exec.Command("/bin/kube-controlplane", "kube-controller-manager",
+	cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kube-controller-manager",
 		args.FileOpt("--kubeconfig", "kubeconfig", config.kubeConfig),
 		args.FileOpt("--service-account-private-key-file", "service-account-privkey.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serviceAccountPrivKey})),
@@ -83,7 +84,14 @@ func runControllerManager(config controllerManagerConfig) error {
 	if args.Error() != nil {
 		return fmt.Errorf("failed to use fileargs: %w", err)
 	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	cmd.Stdout = s.controllerManagerLogs
+	cmd.Stderr = s.controllerManagerLogs
+	err = cmd.Run()
+	fmt.Fprintf(s.controllerManagerLogs, "controller-manager stopped: %v\n", err)
+	if ctx.Err() == context.Canceled {
+		s.logger.Info("controller-manager stopped", zap.Error(err))
+	} else {
+		s.logger.Warn("controller-manager stopped unexpectedly", zap.Error(err))
+	}
+	return err
 }

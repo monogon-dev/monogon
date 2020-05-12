@@ -25,14 +25,16 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
+	"git.monogon.dev/source/nexantic.git/core/internal/containerd"
 	"io/ioutil"
 	"math/big"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	apipb "git.monogon.dev/source/nexantic.git/core/generated/api"
@@ -43,6 +45,7 @@ import (
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes"
 	"git.monogon.dev/source/nexantic.git/core/internal/network"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
+	"golang.org/x/sys/unix"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gogo/protobuf/proto"
@@ -62,12 +65,15 @@ type (
 		Consensus  *consensus.Service
 		Storage    *storage.Manager
 		Kubernetes *kubernetes.Service
+		Containerd *containerd.Service
 		Network    *network.Service
 
 		logger          *zap.Logger
 		state           common.SmalltownState
 		hostname        string
 		enrolmentConfig *apipb.EnrolmentConfig
+
+		debugServer *grpc.Server
 	}
 )
 
@@ -101,12 +107,18 @@ func NewSmalltownNode(logger *zap.Logger, ntwk *network.Service, strg *storage.M
 		return nil, err
 	}
 
+	containerdService, err := containerd.New()
+	if err != nil {
+		return nil, err
+	}
+
 	s := &SmalltownNode{
-		Consensus: consensusService,
-		Storage:   strg,
-		Network:   ntwk,
-		logger:    logger,
-		hostname:  hostname,
+		Consensus:  consensusService,
+		Containerd: containerdService,
+		Storage:    strg,
+		Network:    ntwk,
+		logger:     logger,
+		hostname:   hostname,
 	}
 
 	apiService, err := api.NewApiServer(&api.Config{}, logger.With(zap.String("module", "api")), s.Consensus)
@@ -118,6 +130,9 @@ func NewSmalltownNode(logger *zap.Logger, ntwk *network.Service, strg *storage.M
 
 	s.Kubernetes = kubernetes.New(logger.With(zap.String("module", "kubernetes")), consensusService)
 
+	s.debugServer = grpc.NewServer()
+	apipb.RegisterNodeDebugServiceServer(s.debugServer, s)
+
 	logger.Info("Created SmalltownNode")
 
 	return s, nil
@@ -125,6 +140,8 @@ func NewSmalltownNode(logger *zap.Logger, ntwk *network.Service, strg *storage.M
 
 func (s *SmalltownNode) Start(ctx context.Context) error {
 	s.logger.Info("Starting Smalltown node")
+
+	s.startDebugSvc()
 
 	// TODO(lorenz): Abstracting enrolment sounds like a good idea, but ends up being painful
 	// because of things like storage access. I'm keeping it this way until the more complex
@@ -157,12 +174,41 @@ func (s *SmalltownNode) Start(ctx context.Context) error {
 	panic("Unreachable")
 }
 
+func (s *SmalltownNode) startDebugSvc() {
+	debugListenHost := fmt.Sprintf(":%v", common.DebugServicePort)
+	debugListener, err := net.Listen("tcp", debugListenHost)
+	if err != nil {
+		s.logger.Fatal("failed to listen", zap.Error(err))
+	}
+
+	go func() {
+		if err := s.debugServer.Serve(debugListener); err != nil {
+			s.logger.Fatal("failed to serve", zap.Error(err))
+		}
+	}()
+}
+
+func (s *SmalltownNode) initHostname() error {
+	if err := unix.Sethostname([]byte(s.hostname)); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile("/etc/hosts", []byte(fmt.Sprintf("%v %v", "127.0.0.1", s.hostname)), 0644); err != nil {
+		return err
+	}
+	return ioutil.WriteFile("/etc/machine-id", []byte(strings.TrimPrefix(s.hostname, "smalltown-")), 0644)
+}
+
 func (s *SmalltownNode) startEnrolling(ctx context.Context) error {
 	s.logger.Info("Initializing subsystems for enrolment")
 	s.state = common.StateEnrollMode
 
 	nodeInfo, nodeID, err := s.InitializeNode(ctx)
 	if err != nil {
+		return err
+	}
+
+	s.hostname = nodeID
+	if err := s.initHostname(); err != nil {
 		return err
 	}
 
@@ -207,10 +253,17 @@ func (s *SmalltownNode) startForSetup(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	s.hostname = nodeID
+	if err := s.initHostname(); err != nil {
+		return err
+	}
 
 	if err := s.initNodeAPI(); err != nil {
 		return err
 	}
+
+	// TODO: Use supervisor.Run for this
+	go s.Containerd.Run()(context.TODO())
 
 	dataPath, err := s.Storage.GetPathInPlace(storage.PlaceData, "etcd")
 	if err != nil {
@@ -314,7 +367,7 @@ func (s *SmalltownNode) generateNodeID() ([]byte, string, error) {
 		return []byte{}, "", fmt.Errorf("failed to write node key: %w", err)
 	}
 
-	name := "smalltown-" + base64.RawStdEncoding.EncodeToString([]byte(pubKey))
+	name := "smalltown-" + hex.EncodeToString([]byte(pubKey[:16]))
 
 	// This has no SANs because it authenticates by public key, not by name
 	nodeCert := &x509.Certificate{
@@ -429,6 +482,11 @@ func (s *SmalltownNode) startFull() error {
 	s.logger.Info("Initializing subsystems for production")
 	s.state = common.StateJoined
 
+	s.hostname = s.enrolmentConfig.NodeId
+	if err := s.initHostname(); err != nil {
+		return err
+	}
+
 	trustAgent := tpm2.TPM2Agent{}
 	unlockOp := func() error {
 		unlockKey, err := trustAgent.Unlock(*s.enrolmentConfig)
@@ -448,6 +506,9 @@ func (s *SmalltownNode) startFull() error {
 	}
 
 	s.initNodeAPI()
+
+	// TODO: Use supervisor.Run for this
+	go s.Containerd.Run()(context.TODO())
 
 	err := s.Consensus.Start()
 	if err != nil {

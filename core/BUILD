@@ -2,7 +2,7 @@ genrule(
     name = "initramfs",
     srcs = [
         "//core/cmd/init",
-        "//core/cmd/kube-controlplane",
+        "//core/cmd/kube",
         "//third_party/xfsprogs:mkfs.xfs",
         "@io_k8s_kubernetes//cmd/kubelet:_kubelet-pure",
         "@com_github_containerd_containerd//cmd/containerd",
@@ -18,6 +18,7 @@ genrule(
         "//core/internal/containerd:config.toml",
         "//core/internal/containerd:runsc.toml",
         "@cacerts//file",
+        ":os-release-info",
     ],
     outs = [
         "initramfs.cpio.lz4",
@@ -27,15 +28,20 @@ genrule(
 dir /dev 0755 0 0
 nod /dev/console 0600 0 0 c 5 1
 nod /dev/null 0644 0 0 c 1 3
+nod /dev/kmsg 0644 0 0 c 1 11
 nod /dev/ptmx 0644 0 0 c 5 2
 file /init $(location //core/cmd/init) 0755 0 0
 dir /etc 0755 0 0
+file /etc/os-release $(location :os-release-info) 0644 0 0
 dir /etc/ssl 0755 0 0
 file /etc/ssl/cert.pem $(location @cacerts//file) 0444 0 0
 dir /bin 0755 0 0
 file /bin/mkfs.xfs $(location //third_party/xfsprogs:mkfs.xfs) 0755 0 0
-file /bin/kube-controlplane $(location //core/cmd/kube-controlplane) 0755 0 0
-file /bin/kubelet $(location @io_k8s_kubernetes//cmd/kubelet:_kubelet-pure) 0755 0 0
+dir /kubernetes 0755 0 0
+dir /kubernetes/bin 0755 0 0
+file /kubernetes/bin/kube $(location //core/cmd/kube) 0755 0 0
+dir /kubernetes/conf 0755 0 0
+dir /kubernetes/conf/flexvolume-plugins 0755 0 0
 dir /containerd 0755 0 0
 dir /containerd/bin 0755 0 0
 file /containerd/bin/containerd $(location @com_github_containerd_containerd//cmd/containerd) 0755 0 0
@@ -118,4 +124,13 @@ EOF
     cp tpm/ca/signkey.pem $(location tpm/signkey.pem)
     """,
     visibility = ["//visibility:public"],
+)
+
+load("//core/build/genosrelease:defs.bzl", "os_release")
+
+os_release(
+    name = "os-release-info",
+    os_id = "smalltown",
+    os_name = "Smalltown",
+    stamp_var = "STABLE_SIGNOS_version",
 )

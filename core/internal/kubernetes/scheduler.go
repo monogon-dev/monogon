@@ -17,12 +17,13 @@
 package kubernetes
 
 import (
+	"context"
 	"encoding/pem"
 	"fmt"
-	"os"
 	"os/exec"
 
 	"go.etcd.io/etcd/clientv3"
+	"go.uber.org/zap"
 
 	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 )
@@ -47,13 +48,13 @@ func getPKISchedulerConfig(consensusKV clientv3.KV) (*schedulerConfig, error) {
 	return &config, nil
 }
 
-func runScheduler(config schedulerConfig) error {
+func (s *Service) runScheduler(ctx context.Context, config schedulerConfig) error {
 	args, err := fileargs.New()
 	if err != nil {
 		panic(err) // If this fails, something is very wrong. Just crash.
 	}
 	defer args.Close()
-	cmd := exec.Command("/bin/kube-controlplane", "kube-scheduler",
+	cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kube-scheduler",
 		args.FileOpt("--kubeconfig", "kubeconfig", config.kubeConfig),
 		"--port=0", // Kill insecure serving
 		args.FileOpt("--tls-cert-file", "server-cert.pem",
@@ -64,7 +65,14 @@ func runScheduler(config schedulerConfig) error {
 	if args.Error() != nil {
 		return fmt.Errorf("failed to use fileargs: %w", err)
 	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	cmd.Stdout = s.schedulerLogs
+	cmd.Stderr = s.schedulerLogs
+	err = cmd.Run()
+	fmt.Fprintf(s.schedulerLogs, "scheduler stopped: %v\n", err)
+	if ctx.Err() == context.Canceled {
+		s.logger.Info("scheduler stopped", zap.Error(err))
+	} else {
+		s.logger.Warn("scheduler stopped unexpectedly", zap.Error(err))
+	}
+	return err
 }

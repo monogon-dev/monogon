@@ -81,6 +81,47 @@ service NodeService {
     }
 }
 
+message GetDebugKubeconfigRequest {
+    string id = 1; // Kubernetes identity (user)
+    repeated string groups = 2; // Kubernetes groups
+}
+
+message GetDebugKubeconfigResponse {
+    string debug_kubeconfig = 1;
+}
+
+message GetComponentLogsRequest {
+    // For supported paths see core/internal/node/debug.go
+    repeated string component_path = 1;
+    uint32 tail_lines = 2; // 0 = whole ring buffer
+}
+
+message GetComponentLogsResponse {
+    repeated string line = 1;
+}
+
+message GetConditionRequest {
+    string name = 1;
+}
+
+message GetConditionResponse {
+    bool ok = 1;
+}
+// NodeDebugService exposes debug and testing endpoints that allow introspection into a running Smalltown instance.
+// It is not authenticated and will be disabled in production. It is currently consumed by core/cmd/dbg and
+// by tests. For exact documentation of the available parameters please look at core/internal/node/debug.go.
+service NodeDebugService {
+    // GetDebugKubeconfig issues kubeconfigs with arbitrary identities and groups for debugging
+    rpc GetDebugKubeconfig(GetDebugKubeconfigRequest) returns (GetDebugKubeconfigResponse) {
+    }
+    // GetComponentLogs dumps various log ringbuffers for binaries that we run.
+    rpc GetComponentLogs(GetComponentLogsRequest) returns (GetComponentLogsResponse) {
+    }
+    // GetCondition gives the current status of various conditions inside Smalltown. Mainly used for testing.
+    rpc GetCondition(GetConditionRequest) returns (GetConditionResponse) {
+    }
+}
+
 // NodeManagementService runs on all masters, is identified by the
 // NodeManagementService TLS certificate. It is used by nodes to
 // initially join the cluster or subsequently request the cluster unlock secret

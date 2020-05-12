@@ -26,6 +26,7 @@ const (
 	ConsensusPort       = 7834
 	MasterServicePort   = 7833
 	ExternalServicePort = 7836
+	DebugServicePort    = 7837
 )
 
 const (

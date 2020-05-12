@@ -62,6 +62,11 @@ func main() {
 		panic(fmt.Errorf("could not remount root: %w", err))
 	}
 
+	// Linux kernel default is 4096 which is far too low. Raise it to 1M which is what gVisor suggests.
+	if err := unix.Setrlimit(unix.RLIMIT_NOFILE, &unix.Rlimit{Cur: 1048576, Max: 1048576}); err != nil {
+		logger.Panic("Failed to raise rlimits", zap.Error(err))
+	}
+
 	logger.Info("Starting Smalltown Init")
 
 	signalChannel := make(chan os.Signal, 2)

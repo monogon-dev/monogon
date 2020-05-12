@@ -35,6 +35,7 @@ var (
 	outputPath               = flag.String("out", "", "Output disk image")
 	initramfsPath            = flag.String("initramfs", "", "External initramfs [optional]")
 	enrolmentCredentialsPath = flag.String("enrolment-credentials", "", "Enrolment credentials [optional]")
+	dataPartitionSizeMiB     = flag.Uint64("data-partition-size", 2048, "Override the data partition size (default 2048 MiB)")
 )
 
 func mibToSectors(size uint64) uint64 {
@@ -71,7 +72,7 @@ func main() {
 				Type:  SmalltownDataPartition,
 				Name:  "SIGNOS-DATA",
 				Start: mibToSectors(256),
-				End:   mibToSectors(2560) - 1,
+				End:   mibToSectors(*dataPartitionSizeMiB+256) - 1,
 			},
 		},
 	}

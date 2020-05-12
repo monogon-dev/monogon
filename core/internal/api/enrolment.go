@@ -18,7 +18,7 @@ package api
 
 import (
 	"context"
-	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -38,7 +38,7 @@ type EnrolmentStore struct {
 
 func (s *EnrolmentStore) GetBySecret(ctx context.Context, secret []byte) (*api.EnrolmentConfig, error) {
 
-	res, err := s.backend.Get(ctx, enrolmentPrefix+base64.RawURLEncoding.EncodeToString(secret))
+	res, err := s.backend.Get(ctx, enrolmentPrefix+hex.EncodeToString(secret))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query consensus: %w", err)
 	}

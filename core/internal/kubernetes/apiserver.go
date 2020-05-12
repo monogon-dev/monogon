@@ -21,8 +21,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"net"
-	"os"
 	"os/exec"
 	"path"
 
@@ -65,13 +65,13 @@ func getPKIApiserverConfig(consensusKV clientv3.KV) (*apiserverConfig, error) {
 	return &config, nil
 }
 
-func runAPIServer(config apiserverConfig) error {
+func (s *Service) runAPIServer(ctx context.Context, config apiserverConfig) error {
 	args, err := fileargs.New()
 	if err != nil {
 		panic(err) // If this fails, something is very wrong. Just crash.
 	}
 	defer args.Close()
-	cmd := exec.Command("/bin/kube-controlplane", "kube-apiserver",
+	cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kube-apiserver",
 		fmt.Sprintf("--advertise-address=%v", config.advertiseAddress.String()),
 		"--authorization-mode=Node,RBAC",
 		args.FileOpt("--client-ca-file", "client-ca.pem",
@@ -85,7 +85,7 @@ func runAPIServer(config apiserverConfig) error {
 			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.kubeletClientCert})),
 		args.FileOpt("--kubelet-client-key", "kubelet-client-key.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.kubeletClientKey})),
-		"--kubelet-preferred-address-types=InternalIP",
+		"--kubelet-preferred-address-types=Hostname",
 		args.FileOpt("--proxy-client-cert-file", "aggregation-client-cert.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.aggregationClientCert})),
 		args.FileOpt("--proxy-client-key-file", "aggregation-client-key.pem",
@@ -107,8 +107,14 @@ func runAPIServer(config apiserverConfig) error {
 	if args.Error() != nil {
 		return err
 	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = s.apiserverLogs
+	cmd.Stderr = s.apiserverLogs
 	err = cmd.Run()
+	fmt.Fprintf(s.apiserverLogs, "apiserver stopped: %v\n", err)
+	if ctx.Err() == context.Canceled {
+		s.logger.Info("apiserver stopped", zap.Error(err))
+	} else {
+		s.logger.Warn("apiserver stopped unexpectedly", zap.Error(err))
+	}
 	return err
 }

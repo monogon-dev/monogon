@@ -14,8 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//+build ignore
-
 /*
 Copyright 2014 The Kubernetes Authors.
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +48,7 @@ import (
 	kubeapiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
 	kubecontrollermanager "k8s.io/kubernetes/cmd/kube-controller-manager/app"
 	kubescheduler "k8s.io/kubernetes/cmd/kube-scheduler/app"
+	kubelet "k8s.io/kubernetes/cmd/kubelet/app"
 )
 
 func main() {
@@ -95,16 +94,18 @@ func NewHyperKubeCommand() (*cobra.Command, []func() *cobra.Command) {
 	apiserver := func() *cobra.Command { return kubeapiserver.NewAPIServerCommand() }
 	controller := func() *cobra.Command { return kubecontrollermanager.NewControllerManagerCommand() }
 	scheduler := func() *cobra.Command { return kubescheduler.NewSchedulerCommand() }
+	kubelet := func() *cobra.Command { return kubelet.NewKubeletCommand() }
 
 	commandFns := []func() *cobra.Command{
 		apiserver,
 		controller,
 		scheduler,
+		kubelet,
 	}
 
 	cmd := &cobra.Command{
-		Use:   "kube-controlplane",
-		Short: "Combines all Kubernetes Control Plane components in a single binary",
+		Use:   "kube",
+		Short: "Combines all Kubernetes components in a single binary",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 0 {
 				cmd.Help()

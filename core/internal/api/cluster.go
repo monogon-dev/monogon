@@ -19,7 +19,7 @@ package api
 import (
 	"context"
 	"crypto/rand"
-	"encoding/base64"
+	"encoding/hex"
 	"io"
 
 	"github.com/gogo/protobuf/proto"
@@ -103,7 +103,7 @@ func (s *Server) NewEnrolmentConfig(ctx context.Context, req *api.NewEnrolmentCo
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to encode config")
 	}
-	if _, err := store.Put(ctx, "enrolments/"+base64.RawURLEncoding.EncodeToString(token), string(enrolmentConfigRaw)); err != nil {
+	if _, err := store.Put(ctx, "enrolments/"+hex.EncodeToString(token), string(enrolmentConfigRaw)); err != nil {
 		return nil, status.Error(codes.Unavailable, "consensus unavailable")
 	}
 	return &schema.NewEnrolmentConfigResponse{

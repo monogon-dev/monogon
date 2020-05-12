@@ -22,12 +22,19 @@ func depsKubernetes(p *planner) {
 		"k8s.io/kubernetes", "v1.19.0-alpha.2",
 		buildTags("providerless"),
 		disabledProtoBuild,
-		patches("k8s-kubernetes.patch", "k8s-kubernetes-build.patch"),
+		patches(
+			"k8s-kubernetes.patch",
+			"k8s-kubernetes-build.patch",
+			"k8s-native-metrics.patch",
+			"k8s-use-native.patch",
+		),
 	).inject(
 		// repo infra, not requested by k8s, but used with bazel
 		"k8s.io/repo-infra", "df02ded38f9506e5bbcbf21702034b4fef815f2f",
 	).with(patches("k8s-client-go.patch", "k8s-client-go-build.patch")).use(
 		"k8s.io/client-go",
+	).with(patches("k8s-native-mounter.patch")).use(
+		"k8s.io/utils",
 	).use(
 		"k8s.io/cli-runtime",
 		"k8s.io/client-go",
@@ -137,7 +144,6 @@ func depsKubernetes(p *planner) {
 		"k8s.io/gengo",
 		"k8s.io/heapster",
 		"k8s.io/kube-openapi",
-		"k8s.io/utils",
 		"sigs.k8s.io/apiserver-network-proxy/konnectivity-client",
 		"sigs.k8s.io/kustomize",
 		"sigs.k8s.io/structured-merge-diff/v3",

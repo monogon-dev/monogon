@@ -18,6 +18,8 @@ package containerd
 
 import (
 	"context"
+	"fmt"
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"os"
 	"os/exec"
 
@@ -26,23 +28,32 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// Implements supervisor.Runnable for later integration
+type Service struct {
+	Log *logbuffer.LogBuffer
+}
 
-func RunContainerd(ctx context.Context) error {
-	containerdLog := logbuffer.New(1000, 16384)
-	cmd := exec.CommandContext(ctx, "/containerd/bin/containerd", "--config", "/containerd/conf/config.toml")
-	cmd.Stdout = containerdLog
-	cmd.Stderr = containerdLog
-	cmd.Env = []string{"PATH=/containerd/bin", "TMPDIR=/containerd/run/tmp"}
+func New() (*Service, error) {
+	return &Service{Log: logbuffer.New(5000, 16384)}, nil
+}
 
-	if err := unix.Mount("tmpfs", "/containerd/run", "tmpfs", 0, ""); err != nil {
-		panic(err)
+func (s *Service) Run() supervisor.Runnable {
+	return func(ctx context.Context) error {
+		cmd := exec.CommandContext(ctx, "/containerd/bin/containerd", "--config", "/containerd/conf/config.toml")
+		cmd.Stdout = s.Log
+		cmd.Stderr = s.Log
+		cmd.Env = []string{"PATH=/containerd/bin", "TMPDIR=/containerd/run/tmp"}
+
+		if err := unix.Mount("tmpfs", "/containerd/run", "tmpfs", 0, ""); err != nil {
+			panic(err)
+		}
+		if err := os.MkdirAll("/containerd/run/tmp", 0755); err != nil {
+			panic(err)
+		}
+
+		// TODO(lorenz): Healthcheck against CRI RuntimeService.Status() and SignalHealthy
+
+		err := cmd.Run()
+		fmt.Fprintf(s.Log, "containerd stopped: %v\n", err)
+		return err
 	}
-	if err := os.MkdirAll("/containerd/run/tmp", 0755); err != nil {
-		panic(err)
-	}
-
-	// TODO(lorenz): Healthcheck against cri.Status() RPC
-
-	return cmd.Run()
 }

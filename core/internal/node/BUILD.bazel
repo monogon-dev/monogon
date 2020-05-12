@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
+        "debug.go",
         "main.go",
         "setup.go",
     ],
@@ -13,6 +14,7 @@ go_library(
         "//core/internal/api:go_default_library",
         "//core/internal/common:go_default_library",
         "//core/internal/consensus:go_default_library",
+        "//core/internal/containerd:go_default_library",
         "//core/internal/integrity/tpm2:go_default_library",
         "//core/internal/kubernetes:go_default_library",
         "//core/internal/network:go_default_library",
@@ -23,6 +25,7 @@ go_library(
         "@org_golang_google_grpc//codes:go_default_library",
         "@org_golang_google_grpc//credentials:go_default_library",
         "@org_golang_google_grpc//status:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
         "@org_uber_go_zap//:go_default_library",
     ],
 )

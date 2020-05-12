@@ -52,6 +52,7 @@ func depsSQLBoiler(p *planner) {
 		"github.com/mattn/go-sqlite3",
 		"github.com/mitchellh/cli",
 		"github.com/posener/complete",
+		"github.com/joho/godotenv",
 		"gopkg.in/gorp.v1",
 	)
 }

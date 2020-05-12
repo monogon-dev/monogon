@@ -17,8 +17,17 @@
 package kubernetes
 
 import (
+	"context"
+	"crypto/ed25519"
 	"errors"
+	"fmt"
 	"net"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
+	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
 
 	"go.etcd.io/etcd/clientv3"
 	"go.uber.org/zap"
@@ -35,14 +44,22 @@ type Config struct {
 
 type Service struct {
 	*service.BaseService
-	consensusService *consensus.Service
-	logger           *zap.Logger
+	consensusService      *consensus.Service
+	logger                *zap.Logger
+	apiserverLogs         *logbuffer.LogBuffer
+	controllerManagerLogs *logbuffer.LogBuffer
+	schedulerLogs         *logbuffer.LogBuffer
+	kubeletLogs           *logbuffer.LogBuffer
 }
 
 func New(logger *zap.Logger, consensusService *consensus.Service) *Service {
 	s := &Service{
-		consensusService: consensusService,
-		logger:           logger,
+		consensusService:      consensusService,
+		logger:                logger,
+		apiserverLogs:         logbuffer.New(5000, 16384),
+		controllerManagerLogs: logbuffer.New(5000, 16384),
+		schedulerLogs:         logbuffer.New(5000, 16384),
+		kubeletLogs:           logbuffer.New(5000, 16384),
 	}
 	s.BaseService = service.NewBaseService("kubernetes", logger, s)
 	return s
@@ -54,6 +71,40 @@ func (s *Service) getKV() clientv3.KV {
 
 func (s *Service) NewCluster() error {
 	return newCluster(s.getKV())
+}
+
+// GetComponentLogs grabs logs from various Kubernetes binaries
+func (s *Service) GetComponentLogs(component string, n int) ([]string, error) {
+	switch component {
+	case "apiserver":
+		return s.apiserverLogs.ReadLinesTruncated(n, "..."), nil
+	case "controller-manager":
+		return s.controllerManagerLogs.ReadLinesTruncated(n, "..."), nil
+	case "scheduler":
+		return s.schedulerLogs.ReadLinesTruncated(n, "..."), nil
+	case "kubelet":
+		return s.kubeletLogs.ReadLinesTruncated(n, "..."), nil
+	default:
+		return []string{}, errors.New("component not available")
+	}
+}
+
+// GetDebugKubeconfig issues a kubeconfig for an arbitrary given identity. Useful for debugging and testing.
+func (s *Service) GetDebugKubeconfig(ctx context.Context, request *schema.GetDebugKubeconfigRequest) (*schema.GetDebugKubeconfigResponse, error) {
+	idCA, idKeyRaw, err := getCert(s.getKV(), "id-ca")
+	idKey := ed25519.PrivateKey(idKeyRaw)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "Failed to load ID CA: %v", err)
+	}
+	debugCert, debugKey, err := issueCertificate(clientCertTemplate(request.Id, request.Groups), idCA, idKey)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "Failed to issue certs for kubeconfig: %v\n", err)
+	}
+	debugKubeconfig, err := makeLocalKubeconfig(idCA, debugCert, debugKey)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "Failed to generate kubeconfig: %v", err)
+	}
+	return &schema.GetDebugKubeconfigResponse{DebugKubeconfig: string(debugKubeconfig)}, nil
 }
 
 func (s *Service) OnStart() error {
@@ -85,14 +136,30 @@ func (s *Service) OnStart() error {
 		return err
 	}
 
+	masterKubeconfig, err := getSingle(consensusKV, "master.kubeconfig")
+	if err != nil {
+		return err
+	}
+
+	// TODO(lorenz): Once internal/node is part of the supervisor tree, these should all be supervisor runnables
 	go func() {
-		runAPIServer(*apiserverConfig)
+		s.runAPIServer(context.TODO(), *apiserverConfig)
 	}()
 	go func() {
-		runControllerManager(*controllerManagerConfig)
+		s.runControllerManager(context.TODO(), *controllerManagerConfig)
 	}()
 	go func() {
-		runScheduler(*schedulerConfig)
+		s.runScheduler(context.TODO(), *schedulerConfig)
+	}()
+
+	go func() {
+		if err := s.runKubelet(context.TODO(), &KubeletSpec{}); err != nil {
+			fmt.Printf("Failed to launch kubelet: %v\n", err)
+		}
+	}()
+
+	go func() {
+		go runReconciler(context.TODO(), masterKubeconfig, s.logger)
 	}()
 
 	return nil

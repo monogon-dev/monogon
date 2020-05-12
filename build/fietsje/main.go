@@ -89,6 +89,7 @@ func main() {
 	p.collect("github.com/diskfs/go-diskfs", "v1.0.0").use(
 		"gopkg.in/djherbis/times.v1",
 	)
+
 	// used by //build/bindata
 	p.collect("github.com/kevinburke/go-bindata", "v3.16.0")
 

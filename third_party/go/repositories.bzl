@@ -828,6 +828,12 @@ def go_repositories():
         sum = "h1:742eGXur0715JMq73aD95/FU0XpVKXqNuTnEfXsLOYQ=",
     )
     go_repository(
+        name = "com_github_joho_godotenv",
+        importpath = "github.com/joho/godotenv",
+        version = "v1.3.0",
+        sum = "h1:Zjp+RcGpHhGlrMbJzXTrZZPrWj+1vfm90La1wgB6Bhc=",
+    )
+    go_repository(
         name = "com_github_jonboulle_clockwork",
         importpath = "github.com/jonboulle/clockwork",
         version = "v0.1.0",
@@ -1667,6 +1673,8 @@ def go_repositories():
         patches = [
             "//third_party/go/patches:k8s-kubernetes.patch",
             "//third_party/go/patches:k8s-kubernetes-build.patch",
+            "//third_party/go/patches:k8s-native-metrics.patch",
+            "//third_party/go/patches:k8s-use-native.patch",
         ],
         patch_args = ["-p1"],
     )
@@ -1700,6 +1708,10 @@ def go_repositories():
         importpath = "k8s.io/utils",
         version = "v0.0.0-20200324210504-a9aa75ae1b89",
         sum = "h1:d4vVOjXm687F1iLSP2q3lyPPuyvTUt3aVoBpi2DqRsU=",
+        patches = [
+            "//third_party/go/patches:k8s-native-mounter.patch",
+        ],
+        patch_args = ["-p1"],
     )
     go_repository(
         name = "io_k8s_sigs_apiserver_network_proxy_konnectivity_client",

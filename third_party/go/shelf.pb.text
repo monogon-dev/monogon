@@ -972,6 +972,13 @@ entry: <
   semver: "v0.0.0-20160618110441-2cf9dc699c56"
 >
 entry: <
+  import_path: "github.com/joho/godotenv"
+  version: "v1.3.0"
+  bazel_name: "com_github_joho_godotenv"
+  sum: "h1:Zjp+RcGpHhGlrMbJzXTrZZPrWj+1vfm90La1wgB6Bhc="
+  semver: "v1.3.0"
+>
+entry: <
   import_path: "github.com/jonboulle/clockwork"
   version: "v0.1.0"
   bazel_name: "com_github_jonboulle_clockwork"
