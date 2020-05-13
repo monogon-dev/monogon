@@ -19,21 +19,27 @@ package containerd
 import (
 	"context"
 	"fmt"
-	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+	"io"
 	"os"
 	"os/exec"
+	"time"
+
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 
 	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
 
 	"golang.org/x/sys/unix"
 )
 
+const runscLogsFIFOPath = "/containerd/run/runsc-logs.fifo"
+
 type Service struct {
-	Log *logbuffer.LogBuffer
+	Log      *logbuffer.LogBuffer
+	RunscLog *logbuffer.LogBuffer
 }
 
 func New() (*Service, error) {
-	return &Service{Log: logbuffer.New(5000, 16384)}, nil
+	return &Service{Log: logbuffer.New(5000, 16384), RunscLog: logbuffer.New(5000, 16384)}, nil
 }
 
 func (s *Service) Run() supervisor.Runnable {
@@ -50,9 +56,30 @@ func (s *Service) Run() supervisor.Runnable {
 			panic(err)
 		}
 
+		runscFifo, err := os.OpenFile(runscLogsFIFOPath, os.O_CREATE|os.O_RDONLY, os.ModeNamedPipe|0777)
+		if err != nil {
+			return err
+		}
+		go func() {
+			for {
+				n, err := io.Copy(s.RunscLog, runscFifo)
+				if n == 0 && err == nil {
+					// Hack because pipes/FIFOs can return zero reads when nobody is writing. To avoid busy-looping,
+					// sleep a bit before retrying. This does not loose data since the FIFO internal buffer will
+					// stall writes when it becomes full. 10ms maximum stall in a non-latency critical process (reading
+					// debug logs) is not an issue for us.
+					time.Sleep(10 * time.Millisecond)
+				} else if err != nil {
+					// TODO: Use supervisor.Logger() and Error() before exiting. Should never happen.
+					fmt.Println(err)
+					return // It's likely that this will busy-loop printing errors if it encounters one, so bail
+				}
+			}
+		}()
+
 		// TODO(lorenz): Healthcheck against CRI RuntimeService.Status() and SignalHealthy
 
-		err := cmd.Run()
+		err = cmd.Run()
 		fmt.Fprintf(s.Log, "containerd stopped: %v\n", err)
 		return err
 	}

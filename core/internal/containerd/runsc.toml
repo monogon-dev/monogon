@@ -1,5 +1,6 @@
 root = "/containerd/run/runsc"
 [runsc_config]
-debug = "false"
-# Setting intentionally left here in case anybody needs it since it is hard to find
-#debug-log = "/containerd/run/runsc-logs/"
+debug = "true"
+debug-log = "/containerd/run/runsc-logs.fifo"
+panic-log = "/containerd/run/runsc-logs.fifo"
+log = "/containerd/run/runsc-logs.fifo"

@@ -49,7 +49,11 @@ func (s *SmalltownNode) GetComponentLogs(ctx context.Context, req *schema.GetCom
 	var err error
 	switch req.ComponentPath[0] {
 	case "containerd":
-		lines = s.Containerd.Log.ReadLinesTruncated(linesToRead, "...")
+		if len(req.ComponentPath) < 2 {
+			lines = s.Containerd.Log.ReadLinesTruncated(linesToRead, "...")
+		} else if req.ComponentPath[1] == "runsc" {
+			lines = s.Containerd.RunscLog.ReadLinesTruncated(linesToRead, "...")
+		}
 	case "kube":
 		if len(req.ComponentPath) < 2 {
 			return nil, status.Error(codes.NotFound, "Component not found")
