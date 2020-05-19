@@ -20,12 +20,13 @@ import (
 	"context"
 	"encoding/pem"
 	"fmt"
-	"go.uber.org/zap"
+	"io"
 	"net"
 	"os/exec"
 
 	"go.etcd.io/etcd/clientv3"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 )
 
@@ -61,37 +62,36 @@ func getPKIControllerManagerConfig(consensusKV clientv3.KV) (*controllerManagerC
 	return &config, nil
 }
 
-func (s *Service) runControllerManager(ctx context.Context, config controllerManagerConfig) error {
-	args, err := fileargs.New()
-	if err != nil {
-		panic(err) // If this fails, something is very wrong. Just crash.
+func runControllerManager(config controllerManagerConfig, output io.Writer) supervisor.Runnable {
+	return func(ctx context.Context) error {
+		args, err := fileargs.New()
+		if err != nil {
+			panic(err) // If this fails, something is very wrong. Just crash.
+		}
+		defer args.Close()
+
+		cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kube-controller-manager",
+			args.FileOpt("--kubeconfig", "kubeconfig", config.kubeConfig),
+			args.FileOpt("--service-account-private-key-file", "service-account-privkey.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serviceAccountPrivKey})),
+			args.FileOpt("--root-ca-file", "root-ca.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.rootCA})),
+			"--port=0",                               // Kill insecure serving
+			"--use-service-account-credentials=true", // Enables things like PSP enforcement
+			fmt.Sprintf("--cluster-cidr=%v", config.clusterNet.String()),
+			args.FileOpt("--tls-cert-file", "server-cert.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.serverCert})),
+			args.FileOpt("--tls-private-key-file", "server-key.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serverKey})),
+		)
+		if args.Error() != nil {
+			return fmt.Errorf("failed to use fileargs: %w", err)
+		}
+		cmd.Stdout = output
+		cmd.Stderr = output
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
+		err = cmd.Run()
+		fmt.Fprintf(output, "controller-manager stopped: %v\n", err)
+		return err
 	}
-	defer args.Close()
-	cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kube-controller-manager",
-		args.FileOpt("--kubeconfig", "kubeconfig", config.kubeConfig),
-		args.FileOpt("--service-account-private-key-file", "service-account-privkey.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serviceAccountPrivKey})),
-		args.FileOpt("--root-ca-file", "root-ca.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.rootCA})),
-		"--port=0",                               // Kill insecure serving
-		"--use-service-account-credentials=true", // Enables things like PSP enforcement
-		fmt.Sprintf("--cluster-cidr=%v", config.clusterNet.String()),
-		args.FileOpt("--tls-cert-file", "server-cert.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.serverCert})),
-		args.FileOpt("--tls-private-key-file", "server-key.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serverKey})),
-	)
-	if args.Error() != nil {
-		return fmt.Errorf("failed to use fileargs: %w", err)
-	}
-	cmd.Stdout = s.controllerManagerLogs
-	cmd.Stderr = s.controllerManagerLogs
-	err = cmd.Run()
-	fmt.Fprintf(s.controllerManagerLogs, "controller-manager stopped: %v\n", err)
-	if ctx.Err() == context.Canceled {
-		s.logger.Info("controller-manager stopped", zap.Error(err))
-	} else {
-		s.logger.Warn("controller-manager stopped unexpectedly", zap.Error(err))
-	}
-	return err
 }

@@ -21,13 +21,14 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
+	"io"
 	"net"
 	"os/exec"
 	"path"
 
 	"go.etcd.io/etcd/clientv3"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 )
 
@@ -65,56 +66,54 @@ func getPKIApiserverConfig(consensusKV clientv3.KV) (*apiserverConfig, error) {
 	return &config, nil
 }
 
-func (s *Service) runAPIServer(ctx context.Context, config apiserverConfig) error {
-	args, err := fileargs.New()
-	if err != nil {
-		panic(err) // If this fails, something is very wrong. Just crash.
-	}
-	defer args.Close()
-	cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kube-apiserver",
-		fmt.Sprintf("--advertise-address=%v", config.advertiseAddress.String()),
-		"--authorization-mode=Node,RBAC",
-		args.FileOpt("--client-ca-file", "client-ca.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.idCA})),
-		"--enable-admission-plugins=NodeRestriction,PodSecurityPolicy",
-		"--enable-aggregator-routing=true",
-		"--insecure-port=0",
-		// Due to the magic of GRPC this really needs four slashes and a :0
-		fmt.Sprintf("--etcd-servers=%v", "unix:////consensus/listener.sock:0"),
-		args.FileOpt("--kubelet-client-certificate", "kubelet-client-cert.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.kubeletClientCert})),
-		args.FileOpt("--kubelet-client-key", "kubelet-client-key.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.kubeletClientKey})),
-		"--kubelet-preferred-address-types=Hostname",
-		args.FileOpt("--proxy-client-cert-file", "aggregation-client-cert.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.aggregationClientCert})),
-		args.FileOpt("--proxy-client-key-file", "aggregation-client-key.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.aggregationClientKey})),
-		"--requestheader-allowed-names=front-proxy-client",
-		args.FileOpt("--requestheader-client-ca-file", "aggregation-ca.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.aggregationCA})),
-		"--requestheader-extra-headers-prefix=X-Remote-Extra-",
-		"--requestheader-group-headers=X-Remote-Group",
-		"--requestheader-username-headers=X-Remote-User",
-		args.FileOpt("--service-account-key-file", "service-account-pubkey.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serviceAccountPrivKey})),
-		fmt.Sprintf("--service-cluster-ip-range=%v", config.serviceIPRange.String()),
-		args.FileOpt("--tls-cert-file", "server-cert.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.serverCert})),
-		args.FileOpt("--tls-private-key-file", "server-key.pem",
-			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serverKey})),
-	)
-	if args.Error() != nil {
+func runAPIServer(config apiserverConfig, output io.Writer) supervisor.Runnable {
+	return func(ctx context.Context) error {
+		args, err := fileargs.New()
+		if err != nil {
+			panic(err) // If this fails, something is very wrong. Just crash.
+		}
+		defer args.Close()
+		cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kube-apiserver",
+			fmt.Sprintf("--advertise-address=%v", config.advertiseAddress.String()),
+			"--authorization-mode=Node,RBAC",
+			args.FileOpt("--client-ca-file", "client-ca.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.idCA})),
+			"--enable-admission-plugins=NodeRestriction,PodSecurityPolicy",
+			"--enable-aggregator-routing=true",
+			"--insecure-port=0",
+			// Due to the magic of GRPC this really needs four slashes and a :0
+			fmt.Sprintf("--etcd-servers=%v", "unix:////consensus/listener.sock:0"),
+			args.FileOpt("--kubelet-client-certificate", "kubelet-client-cert.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.kubeletClientCert})),
+			args.FileOpt("--kubelet-client-key", "kubelet-client-key.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.kubeletClientKey})),
+			"--kubelet-preferred-address-types=Hostname",
+			args.FileOpt("--proxy-client-cert-file", "aggregation-client-cert.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.aggregationClientCert})),
+			args.FileOpt("--proxy-client-key-file", "aggregation-client-key.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.aggregationClientKey})),
+			"--requestheader-allowed-names=front-proxy-client",
+			args.FileOpt("--requestheader-client-ca-file", "aggregation-ca.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.aggregationCA})),
+			"--requestheader-extra-headers-prefix=X-Remote-Extra-",
+			"--requestheader-group-headers=X-Remote-Group",
+			"--requestheader-username-headers=X-Remote-User",
+			args.FileOpt("--service-account-key-file", "service-account-pubkey.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serviceAccountPrivKey})),
+			fmt.Sprintf("--service-cluster-ip-range=%v", config.serviceIPRange.String()),
+			args.FileOpt("--tls-cert-file", "server-cert.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.serverCert})),
+			args.FileOpt("--tls-private-key-file", "server-key.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serverKey})),
+		)
+		if args.Error() != nil {
+			return err
+		}
+		cmd.Stdout = output
+		cmd.Stderr = output
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
+		err = cmd.Run()
+		fmt.Fprintf(output, "apiserver stopped: %v\n", err)
 		return err
 	}
-	cmd.Stdout = s.apiserverLogs
-	cmd.Stderr = s.apiserverLogs
-	err = cmd.Run()
-	fmt.Fprintf(s.apiserverLogs, "apiserver stopped: %v\n", err)
-	if ctx.Err() == context.Canceled {
-		s.logger.Info("apiserver stopped", zap.Error(err))
-	} else {
-		s.logger.Warn("apiserver stopped unexpectedly", zap.Error(err))
-	}
-	return err
 }

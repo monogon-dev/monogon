@@ -33,6 +33,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 )
 
 const builtinRBACPrefix = "smalltown:"
@@ -174,47 +176,49 @@ var builtinClusterRoleBindings = []*rbacv1.ClusterRoleBinding{
 	},
 }
 
-func runReconciler(ctx context.Context, masterKubeconfig []byte, log *zap.Logger) error {
-	rawClientConfig, err := clientcmd.NewClientConfigFromBytes(masterKubeconfig)
-	if err != nil {
-		return err
-	}
+type reconciler func(context.Context, *kubernetes.Clientset) error
 
-	clientConfig, err := rawClientConfig.ClientConfig()
-	clientset, err := kubernetes.NewForConfig(clientConfig)
-	if err != nil {
-		return err
-	}
-	t := time.NewTicker(10 * time.Second)
-	for {
-		err = reconcile(ctx, clientset)
-		select {
-		case <-t.C:
-			err = reconcile(ctx, clientset)
-			if err != nil {
-				log.Warn("Failed to reconcile built-in resources", zap.Error(err))
+func runReconciler(masterKubeconfig []byte) supervisor.Runnable {
+	return func(ctx context.Context) error {
+		log := supervisor.Logger(ctx)
+		rawClientConfig, err := clientcmd.NewClientConfigFromBytes(masterKubeconfig)
+		if err != nil {
+			return err
+		}
+
+		clientConfig, err := rawClientConfig.ClientConfig()
+		clientSet, err := kubernetes.NewForConfig(clientConfig)
+		if err != nil {
+			return err
+		}
+		reconcilers := map[string]reconciler{
+			"psps":                reconcilePSPs,
+			"clusterroles":        reconcileClusterRoles,
+			"clusterrolebindings": reconcileClusterRoleBindings,
+		}
+		t := time.NewTicker(10 * time.Second)
+		reconcile := func() {
+			for name, reconciler := range reconcilers {
+				if err := reconciler(ctx, clientSet); err != nil {
+					log.Warn("Failed to reconcile built-in resources", zap.String("kind", name), zap.Error(err))
+				}
 			}
-		case <-ctx.Done():
-			return nil
+		}
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
+		reconcile()
+		for {
+			select {
+			case <-t.C:
+				reconcile()
+			case <-ctx.Done():
+				return nil
+			}
 		}
 	}
 }
 
-func reconcile(ctx context.Context, clientset *kubernetes.Clientset) error {
-	if err := reconcilePSPs(ctx, clientset); err != nil {
-		return err
-	}
-	if err := reconcileClusterRoles(ctx, clientset); err != nil {
-		return err
-	}
-	if err := reconcileClusterRoleBindings(ctx, clientset); err != nil {
-		return err
-	}
-	return nil
-}
-
-func reconcilePSPs(ctx context.Context, clientset *kubernetes.Clientset) error {
-	pspClient := clientset.PolicyV1beta1().PodSecurityPolicies()
+func reconcilePSPs(ctx context.Context, clientSet *kubernetes.Clientset) error {
+	pspClient := clientSet.PolicyV1beta1().PodSecurityPolicies()
 	availablePSPs, err := pspClient.List(ctx, metav1.ListOptions{
 		LabelSelector: "smalltown.com/builtin=true",
 	})
@@ -246,8 +250,8 @@ func reconcilePSPs(ctx context.Context, clientset *kubernetes.Clientset) error {
 	return nil
 }
 
-func reconcileClusterRoles(ctx context.Context, clientset *kubernetes.Clientset) error {
-	crClient := clientset.RbacV1().ClusterRoles()
+func reconcileClusterRoles(ctx context.Context, clientSet *kubernetes.Clientset) error {
+	crClient := clientSet.RbacV1().ClusterRoles()
 	availableCRs, err := crClient.List(ctx, metav1.ListOptions{
 		LabelSelector: "smalltown.com/builtin=true",
 	})

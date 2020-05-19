@@ -22,17 +22,18 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"go.uber.org/zap"
+	"io"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 
-	"net"
-
-	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 	"go.etcd.io/etcd/clientv3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubelet/config/v1beta1"
+	kubeletconfig "k8s.io/kubelet/config/v1beta1"
+
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 )
 
 type KubeletSpec struct {
@@ -77,65 +78,63 @@ func bootstrapLocalKubelet(consensusKV clientv3.KV, nodeName string) error {
 	return nil
 }
 
-func (s *Service) runKubelet(ctx context.Context, spec *KubeletSpec) error {
-	fargs, err := fileargs.New()
-	if err != nil {
-		return err
-	}
-	var clusterDNS []string
-	for _, dnsIP := range spec.clusterDNS {
-		clusterDNS = append(clusterDNS, dnsIP.String())
-	}
+func runKubelet(spec *KubeletSpec, output io.Writer) supervisor.Runnable {
+	return func(ctx context.Context) error {
+		fargs, err := fileargs.New()
+		if err != nil {
+			return err
+		}
+		var clusterDNS []string
+		for _, dnsIP := range spec.clusterDNS {
+			clusterDNS = append(clusterDNS, dnsIP.String())
+		}
 
-	kubeletConf := &v1beta1.KubeletConfiguration{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "KubeletConfiguration",
-			APIVersion: v1beta1.GroupName + "/v1beta1",
-		},
-		TLSCertFile:       "/data/kubernetes/kubelet.crt",
-		TLSPrivateKeyFile: "/data/kubernetes/kubelet.key",
-		TLSMinVersion:     "VersionTLS13",
-		ClusterDNS:        clusterDNS,
-		Authentication: v1beta1.KubeletAuthentication{
-			X509: v1beta1.KubeletX509Authentication{
-				ClientCAFile: "/data/kubernetes/ca.crt",
+		kubeletConf := &kubeletconfig.KubeletConfiguration{
+			TypeMeta: v1.TypeMeta{
+				Kind:       "KubeletConfiguration",
+				APIVersion: kubeletconfig.GroupName + "/v1beta1",
 			},
-		},
-		ClusterDomain:                "cluster.local",
-		EnableControllerAttachDetach: False(),
-		HairpinMode:                  "none",
-		MakeIPTablesUtilChains:       False(), // We don't have iptables
-		FailSwapOn:                   False(), // Our kernel doesn't have swap enabled which breaks Kubelet's detection
-		KubeReserved: map[string]string{
-			"cpu":    "200m",
-			"memory": "300Mi",
-		},
-		// We're not going to use this, but let's make it point to a known-empty directory in case anybody manages to
-		// trigger it.
-		VolumePluginDir: "/kubernetes/conf/flexvolume-plugins",
-	}
+			TLSCertFile:       "/data/kubernetes/kubelet.crt",
+			TLSPrivateKeyFile: "/data/kubernetes/kubelet.key",
+			TLSMinVersion:     "VersionTLS13",
+			ClusterDNS:        clusterDNS,
+			Authentication: kubeletconfig.KubeletAuthentication{
+				X509: kubeletconfig.KubeletX509Authentication{
+					ClientCAFile: "/data/kubernetes/ca.crt",
+				},
+			},
+			ClusterDomain:                "cluster.local", // cluster.local is hardcoded in the certificate too currently
+			EnableControllerAttachDetach: False(),
+			HairpinMode:                  "none",
+			MakeIPTablesUtilChains:       False(), // We don't have iptables
+			FailSwapOn:                   False(), // Our kernel doesn't have swap enabled which breaks Kubelet's detection
+			KubeReserved: map[string]string{
+				"cpu":    "200m",
+				"memory": "300Mi",
+			},
+			// We're not going to use this, but let's make it point to a known-empty directory in case anybody manages to
+			// trigger it.
+			VolumePluginDir: "/kubernetes/conf/flexvolume-plugins",
+		}
 
-	configRaw, err := json.Marshal(kubeletConf)
-	if err != nil {
+		configRaw, err := json.Marshal(kubeletConf)
+		if err != nil {
+			return err
+		}
+		cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kubelet",
+			fargs.FileOpt("--config", "config.json", configRaw),
+			"--container-runtime=remote",
+			"--container-runtime-endpoint=unix:///containerd/run/containerd.sock",
+			"--kubeconfig=/data/kubernetes/kubelet.kubeconfig",
+			"--root-dir=/data/kubernetes/kubelet",
+		)
+		cmd.Env = []string{"PATH=/kubernetes/bin"}
+		cmd.Stdout = output
+		cmd.Stderr = output
+
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
+		err = cmd.Run()
+		fmt.Fprintf(output, "kubelet stopped: %v\n", err)
 		return err
 	}
-	cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kubelet",
-		fargs.FileOpt("--config", "config.json", configRaw),
-		"--container-runtime=remote",
-		"--container-runtime-endpoint=unix:///containerd/run/containerd.sock",
-		"--kubeconfig=/data/kubernetes/kubelet.kubeconfig",
-		"--root-dir=/data/kubernetes/kubelet",
-	)
-	cmd.Env = []string{"PATH=/kubernetes/bin"}
-	cmd.Stdout = s.kubeletLogs
-	cmd.Stderr = s.kubeletLogs
-
-	err = cmd.Run()
-	fmt.Fprintf(s.kubeletLogs, "kubelet stopped: %v\n", err)
-	if ctx.Err() == context.Canceled {
-		s.logger.Info("kubelet stopped", zap.Error(err))
-	} else {
-		s.logger.Warn("kubelet stopped unexpectedly", zap.Error(err))
-	}
-	return err
 }

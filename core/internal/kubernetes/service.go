@@ -20,20 +20,17 @@ import (
 	"context"
 	"crypto/ed25519"
 	"errors"
-	"fmt"
 	"net"
 
+	"go.etcd.io/etcd/clientv3"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
-	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
-
-	"go.etcd.io/etcd/clientv3"
-	"go.uber.org/zap"
-
-	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
+	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
 )
 
 type Config struct {
@@ -43,7 +40,6 @@ type Config struct {
 }
 
 type Service struct {
-	*service.BaseService
 	consensusService      *consensus.Service
 	logger                *zap.Logger
 	apiserverLogs         *logbuffer.LogBuffer
@@ -61,7 +57,6 @@ func New(logger *zap.Logger, consensusService *consensus.Service) *Service {
 		schedulerLogs:         logbuffer.New(5000, 16384),
 		kubeletLogs:           logbuffer.New(5000, 16384),
 	}
-	s.BaseService = service.NewBaseService("kubernetes", logger, s)
 	return s
 }
 
@@ -107,65 +102,66 @@ func (s *Service) GetDebugKubeconfig(ctx context.Context, request *schema.GetDeb
 	return &schema.GetDebugKubeconfigResponse{DebugKubeconfig: string(debugKubeconfig)}, nil
 }
 
-func (s *Service) OnStart() error {
-	config := Config{
-		AdvertiseAddress: net.IP{10, 0, 2, 15}, // Depends on networking
-		ServiceIPRange: net.IPNet{ // TODO: Decide if configurable / final value
-			IP:   net.IP{192, 168, 188, 0},
-			Mask: net.IPMask{0xff, 0xff, 0xff, 0x00}, // /24, but Go stores as a literal mask
-		},
-		ClusterNet: net.IPNet{
-			IP:   net.IP{192, 168, 188, 0},
-			Mask: net.IPMask{0xff, 0xff, 0xfd, 0x00}, // /22
-		},
-	}
-	consensusKV := s.getKV()
-	apiserverConfig, err := getPKIApiserverConfig(consensusKV)
-	if err != nil {
-		return err
-	}
-	apiserverConfig.advertiseAddress = config.AdvertiseAddress
-	apiserverConfig.serviceIPRange = config.ServiceIPRange
-	controllerManagerConfig, err := getPKIControllerManagerConfig(consensusKV)
-	if err != nil {
-		return err
-	}
-	controllerManagerConfig.clusterNet = config.ClusterNet
-	schedulerConfig, err := getPKISchedulerConfig(consensusKV)
-	if err != nil {
-		return err
-	}
-
-	masterKubeconfig, err := getSingle(consensusKV, "master.kubeconfig")
-	if err != nil {
-		return err
-	}
-
-	// TODO(lorenz): Once internal/node is part of the supervisor tree, these should all be supervisor runnables
-	go func() {
-		s.runAPIServer(context.TODO(), *apiserverConfig)
-	}()
-	go func() {
-		s.runControllerManager(context.TODO(), *controllerManagerConfig)
-	}()
-	go func() {
-		s.runScheduler(context.TODO(), *schedulerConfig)
-	}()
-
-	go func() {
-		if err := s.runKubelet(context.TODO(), &KubeletSpec{}); err != nil {
-			fmt.Printf("Failed to launch kubelet: %v\n", err)
-		}
-	}()
-
-	go func() {
-		go runReconciler(context.TODO(), masterKubeconfig, s.logger)
-	}()
-
+func (s *Service) Start() error {
+	// TODO(lorenz): This creates a new supervision tree, it should instead attach to the root one. But for that SmalltownNode needs
+	// to be ported to supervisor.
+	supervisor.New(context.TODO(), s.logger, s.Run())
 	return nil
 }
 
-func (s *Service) OnStop() error {
-	// Requires advanced process management and not necessary for MVP
-	return errors.New("Not implemented")
+func (s *Service) Run() supervisor.Runnable {
+	return func(ctx context.Context) error {
+		config := Config{
+			AdvertiseAddress: net.IP{10, 0, 2, 15}, // Depends on networking
+			ServiceIPRange: net.IPNet{ // TODO: Decide if configurable / final value
+				IP:   net.IP{192, 168, 188, 0},
+				Mask: net.IPMask{0xff, 0xff, 0xff, 0x00}, // /24, but Go stores as a literal mask
+			},
+			ClusterNet: net.IPNet{
+				IP:   net.IP{192, 168, 188, 0},
+				Mask: net.IPMask{0xff, 0xff, 0xfd, 0x00}, // /22
+			},
+		}
+		consensusKV := s.getKV()
+		apiserverConfig, err := getPKIApiserverConfig(consensusKV)
+		if err != nil {
+			return err
+		}
+		apiserverConfig.advertiseAddress = config.AdvertiseAddress
+		apiserverConfig.serviceIPRange = config.ServiceIPRange
+		controllerManagerConfig, err := getPKIControllerManagerConfig(consensusKV)
+		if err != nil {
+			return err
+		}
+		controllerManagerConfig.clusterNet = config.ClusterNet
+		schedulerConfig, err := getPKISchedulerConfig(consensusKV)
+		if err != nil {
+			return err
+		}
+
+		masterKubeconfig, err := getSingle(consensusKV, "master.kubeconfig")
+		if err != nil {
+			return err
+		}
+
+		if err := supervisor.Run(ctx, "apiserver", runAPIServer(*apiserverConfig, s.apiserverLogs)); err != nil {
+			return err
+		}
+		if err := supervisor.Run(ctx, "controller-manager", runControllerManager(*controllerManagerConfig, s.controllerManagerLogs)); err != nil {
+			return err
+		}
+		if err := supervisor.Run(ctx, "scheduler", runScheduler(*schedulerConfig, s.schedulerLogs)); err != nil {
+			return err
+		}
+
+		if err := supervisor.Run(ctx, "kubelet", runKubelet(&KubeletSpec{}, s.kubeletLogs)); err != nil {
+			return err
+		}
+		if err := supervisor.Run(ctx, "reconciler", runReconciler(masterKubeconfig)); err != nil {
+			return err
+		}
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
+		supervisor.Signal(ctx, supervisor.SignalDone)
+		return nil
+	}
 }
