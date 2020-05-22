@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "dependency.go",
+        "deps_containerd.go",
+        "deps_gvisor.go",
+        "deps_kubernetes.go",
+        "deps_sqlboiler.go",
+        "main.go",
+        "planner.go",
+        "render.go",
+        "shelf.go",
+        "transitive.go",
+    ],
+    importpath = "git.monogon.dev/source/nexantic.git/build/fietsje",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/fietsje/proto:go_default_library",
+        "@bazel_gazelle//label:go_default_library",
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@org_golang_x_mod//modfile:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "fietsje",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
+
+exports_files(
+    [
+        "fietsje.bash.in",
+    ],
+    visibility = ["//visibility:public"],
+)

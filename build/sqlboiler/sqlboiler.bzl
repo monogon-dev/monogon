@@ -76,7 +76,7 @@ def _sqlboiler_impl(ctx):
         command += "cp \"{}\" migrations/\n".format(f.path)
 
     # Copy in adapter
-    command += "cp \"{}\" .\n".format(ctx.file.adapter.path)
+    command += "cp \"{}\" sqlboiler-crdb\n".format(ctx.file.adapter.path)
 
     # Apply sql-migrate
     command += "{} up --config \"{}\" \n".format(ctx.file.migrate.path, ctx.file.migrate_config.basename)
@@ -109,8 +109,8 @@ sqlboiler = rule(
         "tables": attr.string_list(default = []),
         "migrate_config": attr.label(allow_single_file = True, default = Label("//build/sqlboiler:dbconfig.yml")),
         "boiler_config": attr.label(allow_single_file = True, default = Label("//build/sqlboiler:sqlboiler.toml")),
-        "boiler": attr.label(allow_single_file = True, default = Label("@com_github_volatiletech_sqlboiler//:sqlboiler")),
-        "adapter": attr.label(allow_single_file = True, default = Label("@com_github_glerchundi_sqlboiler_crdb//:sqlboiler-crdb")),
+        "boiler": attr.label(allow_single_file = True, default = Label("@com_github_volatiletech_sqlboiler_v4//:v4")),
+        "adapter": attr.label(allow_single_file = True, default = Label("@com_github_glerchundi_sqlboiler_crdb_v4//:v4")),
         "migrate": attr.label(allow_single_file = True, default = Label("@com_github_rubenv_sql_migrate//sql-migrate:sql-migrate")),
     },
 )
@@ -149,15 +149,14 @@ go_sqlboiler_library = go_rule(
                 Label("@com_github_lib_pq//:go_default_library"),
                 Label("@com_github_pkg_errors//:go_default_library"),
                 Label("@com_github_spf13_viper//:go_default_library"),
-                Label("@com_github_volatiletech_sqlboiler//boil:go_default_library"),
-                Label("@com_github_volatiletech_sqlboiler//drivers:go_default_library"),
-                Label("@com_github_volatiletech_sqlboiler//queries:go_default_library"),
-                Label("@com_github_volatiletech_sqlboiler//queries/qm:go_default_library"),
-                Label("@com_github_volatiletech_sqlboiler//randomize:go_default_library"),
-                Label("@com_github_volatiletech_sqlboiler//strmangle:go_default_library"),
-                Label("@com_github_volatiletech_sqlboiler//types:go_default_library"),
-                Label("@com_github_volatiletech_sqlboiler//queries/qmhelper:go_default_library"),
-                Label("@com_github_volatiletech_null//:go_default_library"),
+                Label("@com_github_volatiletech_strmangle//:go_default_library"),
+                Label("@com_github_volatiletech_sqlboiler_v4//boil:go_default_library"),
+                Label("@com_github_volatiletech_sqlboiler_v4//drivers:go_default_library"),
+                Label("@com_github_volatiletech_sqlboiler_v4//queries:go_default_library"),
+                Label("@com_github_volatiletech_sqlboiler_v4//queries/qm:go_default_library"),
+                Label("@com_github_volatiletech_sqlboiler_v4//types:go_default_library"),
+                Label("@com_github_volatiletech_sqlboiler_v4//queries/qmhelper:go_default_library"),
+                Label("@com_github_volatiletech_null_v8//:go_default_library"),
             ],
         ),
     },

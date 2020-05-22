@@ -1,9 +1,12 @@
 load("@bazel_gazelle//:def.bzl", "gazelle")
+load("//build/fietsje:def.bzl", "fietsje")
 load("@io_bazel_rules_go//go:def.bzl", "go_path", "nogo")
 
 # gazelle:prefix git.monogon.dev/source/nexantic.git
 # gazelle:exclude core/cmd/kube-controlplane
 gazelle(name = "gazelle")
+
+fietsje(name = "fietsje")
 
 # Shortcut for the Go SDK
 alias(
