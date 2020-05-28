@@ -121,6 +121,24 @@ func (c *collection) use(paths ...string) *collection {
 	return c.with().use(paths...)
 }
 
+// replace injects a new dependency with a replacement importpath. This is used to reflect 'replace' stanzas in go.mod
+// files of third-party dependencies. This is not done automatically by Fietsje, as a replacement is global to the
+// entire build tree, and should be done knowingly and explicitly by configuration. The 'oldpath' importpath will be
+// visible to the build system, but will be backed at 'newpath' locked at 'version'.
+func (c *collection) replace(oldpath, newpath, version string) *collection {
+	// Ensure oldpath is in use. We want as little replacements as possible, and if it's not being used by anything,
+	// it means that we likely don't need it.
+	c.use(oldpath)
+
+	d := c.highlevel.child(oldpath, version)
+	d.replace = newpath
+	c.transitive[oldpath] = d
+	c.p.available[oldpath] = d
+	c.p.enabled[oldpath] = true
+
+	return c
+}
+
 // inject adds a dependency to a collection as if requested by the high-level dependency of the collection. This should
 // be used sparingly, for instance when high-level dependencies contain bazel code that uses some external workspaces
 // from Go modules, and those workspaces are not defined in parsed transitive dependency definitions like go.mod/sum.
@@ -167,6 +185,16 @@ func disabledProtoBuild(d *dependency) {
 func patches(patches ...string) buildOpt {
 	return func(d *dependency) {
 		d.patches = patches
+	}
+}
+
+func forceBazelGeneration(d *dependency) {
+	d.forceBazelGeneration = true
+}
+
+func buildExtraArgs(args ...string) buildOpt {
+	return func(d *dependency) {
+		d.buildExtraArgs = args
 	}
 }
 

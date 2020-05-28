@@ -22,7 +22,8 @@
       "external/io_k8s_sigs_structured_merge_diff/": "third_party",
       "external/io_k8s_component_base/": "third_party",
       "external/io_k8s_apiserver/": "third_party",
-      "external/org_golang_google_protobuf/": "third_party"
+      "external/org_golang_google_protobuf/": "third_party",
+      "external/com_github_armon_go_metrics/": "third_party"
     }
   },
   "lostcancel": {
@@ -40,7 +41,8 @@
       "external/com_github_magiconair_properties": "third_party",
       "external/com_github_ghodss_yaml": "third_party",
       "external/io_k8s_kubectl": "third_party",
-      "external/org_golang_google_protobuf/": "third_party"
+      "external/org_golang_google_protobuf/": "third_party",
+      "external/com_github_shirou_gopsutil/": "unreachable"
     }
   },
   "assign": {
@@ -73,6 +75,11 @@
       "external/io_k8s_kubernetes/": "third_party",
       "external/runc/vendor/github.com/vishvananda/netlink": "third_party",
       "external/com_github_google_gvisor/": "third_party"
+    }
+  },
+  "structtag": {
+    "exclude_files": {
+      "external/com_github_c9s_goprocinfo/": "third_party"
     }
   }
 }

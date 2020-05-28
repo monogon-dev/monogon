@@ -65,6 +65,7 @@ func main() {
 	depsKubernetes(p)
 	depsContainerd(p)
 	depsGVisor(p)
+	depsCilium(p)
 	depsSQLBoiler(p)
 
 	// our own deps, common
@@ -92,7 +93,7 @@ func main() {
 	p.collect("github.com/kevinburke/go-bindata", "v3.16.0")
 
 	// used by deltagen
-	p.collect("github.com/lyft/protoc-gen-star", "v0.4.14")
+	p.collectOverride("github.com/lyft/protoc-gen-star", "v0.4.14")
 
 	// First generate the repositories starlark rule into memory. This is because rendering will lock all unlocked
 	// dependencies, which might take a while. If a use were to interrupt it now, they would end up with an incomplete

@@ -47,8 +47,14 @@ func (p *planner) render(w io.Writer) error {
 		fmt.Fprintf(w, "        importpath = %q,\n", d.importpath)
 		fmt.Fprintf(w, "        version = %q,\n", d.locked.semver)
 		fmt.Fprintf(w, "        sum = %q,\n", d.locked.sum)
+		if d.replace != "" {
+			fmt.Fprintf(w, "        replace = %q,\n", d.replace)
+		}
 		if d.disableProtoBuild {
 			fmt.Fprintf(w, "        build_file_proto_mode = %q,\n", "disable")
+		}
+		if d.forceBazelGeneration {
+			fmt.Fprintf(w, "        build_file_generation = %q,\n", "on")
 		}
 		if d.buildTags != nil {
 			fmt.Fprintf(w, "        build_tags = [\n")
@@ -64,6 +70,13 @@ func (p *planner) render(w io.Writer) error {
 			}
 			fmt.Fprintf(w, "        ],\n")
 			fmt.Fprintf(w, "        patch_args = [%q],\n", "-p1")
+		}
+		if d.buildExtraArgs != nil {
+			fmt.Fprintf(w, "        build_extra_args = [\n")
+			for _, arg := range d.buildExtraArgs {
+				fmt.Fprintf(w, "            %q,\n", arg)
+			}
+			fmt.Fprintf(w, "        ],\n")
 		}
 
 		fmt.Fprintf(w, "    )\n")

@@ -121,7 +121,6 @@ func depsKubernetes(p *planner) {
 		"github.com/robfig/cron",
 		"github.com/soheilhy/cmux",
 		"github.com/spf13/afero",
-		"github.com/spf13/cobra",
 		"github.com/spf13/pflag",
 		"github.com/tmc/grpc-websocket-proxy",
 		"github.com/vishvananda/netlink",

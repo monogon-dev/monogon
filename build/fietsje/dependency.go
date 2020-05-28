@@ -44,9 +44,22 @@ type dependency struct {
 	shelf *shelf
 
 	// Build specific settings passed to gazelle.
-	disableProtoBuild bool
-	buildTags         []string
-	patches           []string
+	disableProtoBuild    bool
+	forceBazelGeneration bool
+	buildTags            []string
+	patches              []string
+	buildExtraArgs       []string
+	// replace is an importpath that this dependency will replace. If this is set, this dependency will be visible
+	// in the build as 'importpath', but downloaded at 'replace'/'version'. This might be slighly confusing, but
+	// follows the semantics of what Gazelle exposes via 'replace' in 'go_repository'.
+	replace string
+}
+
+func (d *dependency) remoteImportpath() string {
+	if d.replace != "" {
+		return d.replace
+	}
+	return d.importpath
 }
 
 // locked is information about a dependency resolved from the go module system. It is expensive to get, and as such
@@ -73,6 +86,9 @@ func (d *dependency) child(importpath, version string) *dependency {
 }
 
 func (d *dependency) String() string {
+	if d.replace != "" {
+		return fmt.Sprintf("%s@%s (replacing %s)", d.replace, d.version, d.importpath)
+	}
 	return fmt.Sprintf("%s@%s", d.importpath, d.version)
 }
 
@@ -86,7 +102,7 @@ func (d *dependency) lock() error {
 	}
 
 	// If already locked in the shelf, use that.
-	if shelved := d.shelf.get(d.importpath, d.version); shelved != nil {
+	if shelved := d.shelf.get(d.remoteImportpath(), d.version); shelved != nil {
 		d.locked = shelved
 		return nil
 	}
@@ -115,7 +131,7 @@ func (d *dependency) lock() error {
 	log.Printf("%s: locked to %s", d, d.locked)
 
 	// Save locked version to shelf.
-	d.shelf.put(d.importpath, d.version, d.locked)
+	d.shelf.put(d.remoteImportpath(), d.version, d.locked)
 	return d.shelf.save()
 }
 
@@ -133,7 +149,7 @@ func (d *dependency) download() (version, dir, sum string, err error) {
 	}
 	goTool := filepath.Join(goroot, "bin", "go")
 
-	query := fmt.Sprintf("%s@%s", d.importpath, d.version)
+	query := fmt.Sprintf("%s@%s", d.remoteImportpath(), d.version)
 	cmd := exec.Command(goTool, "mod", "download", "-json", "--", query)
 	out, err := cmd.Output()
 	if err != nil {
