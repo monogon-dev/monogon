@@ -242,6 +242,10 @@ def go_repositories():
             "no_devicemapper",
             "no_btrfs",
         ],
+        patches = [
+            "//third_party/go/patches:containerd-build.patch",
+        ],
+        patch_args = ["-p1"],
     )
     go_repository(
         name = "com_github_containerd_continuity",

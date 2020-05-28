@@ -21,6 +21,7 @@ func depsContainerd(p *planner) {
 		"github.com/containerd/containerd", "8e685f78cf66e2901b2fbed2fdddd64449a74ab9",
 		buildTags("no_zfs", "no_aufs", "no_devicemapper", "no_btrfs"),
 		disabledProtoBuild,
+		patches("containerd-build.patch"),
 	).use(
 		"github.com/BurntSushi/toml",
 		"github.com/Microsoft/go-winio",
