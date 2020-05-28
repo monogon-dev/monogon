@@ -14,27 +14,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package common
+package e2e
 
-type (
-	SmalltownState string
+import (
+	"context"
+	"errors"
+	"time"
+
+	apipb "git.monogon.dev/source/nexantic.git/core/generated/api"
 )
 
-const (
-	// These are here to prevent depdendency loops
-	NodeServicePort     = 7835
-	ConsensusPort       = 7834
-	MasterServicePort   = 7833
-	ExternalServicePort = 7836
-	DebugServicePort    = 7837
-	KubernetesAPIPort   = 6443
-)
-
-const (
-	// Node is provisioning a new cluster with itself as a master
-	StateNewClusterMode SmalltownState = "setup"
-	// Node is enrolling itself and waiting to be adopted
-	StateEnrollMode SmalltownState = "join"
-	// Node is fully provisioned.
-	StateJoined SmalltownState = "enrolled"
-)
+func waitForCondition(ctx context.Context, client apipb.NodeDebugServiceClient, condition string) error {
+	var lastErr = errors.New("No RPC for checking condition completed")
+	for {
+		res, err := client.GetCondition(ctx, &apipb.GetConditionRequest{Name: condition})
+		if err != nil {
+			if err == ctx.Err() {
+				return err
+			}
+			lastErr = err
+		}
+		if err == nil && res.Ok {
+			return nil
+		}
+		select {
+		case <-time.After(1 * time.Second):
+		case <-ctx.Done():
+			return lastErr
+		}
+	}
+}

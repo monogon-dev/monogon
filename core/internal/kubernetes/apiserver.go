@@ -26,6 +26,8 @@ import (
 	"os/exec"
 	"path"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/common"
+
 	"go.etcd.io/etcd/clientv3"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
@@ -81,6 +83,7 @@ func runAPIServer(config apiserverConfig, output io.Writer) supervisor.Runnable 
 			"--enable-admission-plugins=NodeRestriction,PodSecurityPolicy",
 			"--enable-aggregator-routing=true",
 			"--insecure-port=0",
+			fmt.Sprintf("--secure-port=%v", common.KubernetesAPIPort),
 			// Due to the magic of GRPC this really needs four slashes and a :0
 			fmt.Sprintf("--etcd-servers=%v", "unix:////consensus/listener.sock:0"),
 			args.FileOpt("--kubelet-client-certificate", "kubelet-client-cert.pem",

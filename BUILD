@@ -91,3 +91,9 @@ alias(
     name = "dlv",
     actual = "@com_github_go_delve_delve//cmd/dlv:dlv",
 )
+
+# Shortcut for launching a single Smalltown instance
+alias(
+    name = "launch",
+    actual = "//core/cmd/launch",
+)

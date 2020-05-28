@@ -34,6 +34,8 @@ import (
 	"path"
 	"time"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/common"
+
 	"go.etcd.io/etcd/clientv3"
 	"k8s.io/client-go/tools/clientcmd"
 	configapi "k8s.io/client-go/tools/clientcmd/api"
@@ -381,7 +383,7 @@ func issueCertificate(template x509.Certificate, caCert []byte, privateKey inter
 func makeLocalKubeconfig(ca, cert, key []byte) ([]byte, error) {
 	kubeconfig := configapi.NewConfig()
 	cluster := configapi.NewCluster()
-	cluster.Server = "https://127.0.0.1:6443"
+	cluster.Server = fmt.Sprintf("https://127.0.0.1:%v", common.KubernetesAPIPort)
 	cluster.CertificateAuthorityData = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: ca})
 	kubeconfig.Clusters["default"] = cluster
 	authInfo := configapi.NewAuthInfo()

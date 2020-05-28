@@ -16,6 +16,7 @@ go_library(
     visibility = ["//core:__subpackages__"],
     deps = [
         "//core/api/api:go_default_library",
+        "//core/internal/common:go_default_library",
         "//core/internal/common/supervisor:go_default_library",
         "//core/internal/consensus:go_default_library",
         "//core/internal/kubernetes/reconciler:go_default_library",

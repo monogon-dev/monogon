@@ -95,6 +95,9 @@ func (s *Service) GetComponentLogs(component string, n int) ([]string, error) {
 
 // GetDebugKubeconfig issues a kubeconfig for an arbitrary given identity. Useful for debugging and testing.
 func (s *Service) GetDebugKubeconfig(ctx context.Context, request *schema.GetDebugKubeconfigRequest) (*schema.GetDebugKubeconfigResponse, error) {
+	if !s.consensusService.IsReady() {
+		return nil, status.Error(codes.Unavailable, "Consensus not ready yet")
+	}
 	idCA, idKeyRaw, err := getCert(s.getKV(), "id-ca")
 	idKey := ed25519.PrivateKey(idKeyRaw)
 	if err != nil {

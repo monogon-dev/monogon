@@ -33,11 +33,6 @@ import (
 	"strings"
 	"time"
 
-	"git.monogon.dev/source/nexantic.git/core/internal/common"
-	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
-
-	"git.monogon.dev/source/nexantic.git/core/generated/api"
-
 	"github.com/pkg/errors"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/clientv3/namespace"
@@ -45,10 +40,14 @@ import (
 	"go.etcd.io/etcd/etcdserver/api/membership"
 	"go.etcd.io/etcd/pkg/types"
 	"go.etcd.io/etcd/proxy/grpcproxy/adapter"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sys/unix"
 
+	"git.monogon.dev/source/nexantic.git/core/generated/api"
+	"git.monogon.dev/source/nexantic.git/core/internal/common"
+	"git.monogon.dev/source/nexantic.git/core/internal/common/service"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus/ca"
 )
 
@@ -75,7 +74,7 @@ type (
 
 		etcd  *embed.Etcd
 		kv    clientv3.KV
-		ready bool
+		ready atomic.Bool
 
 		// bootstrapCA and bootstrapCert cache the etcd cluster CA data during bootstrap.
 		bootstrapCA   *ca.CA
@@ -192,6 +191,7 @@ func (s *Service) OnStart() error {
 	go func() {
 		s.Logger.Info("waiting for etcd to become ready")
 		<-s.etcd.Server.ReadyNotify()
+		s.ready.Store(true)
 		s.Logger.Info("etcd is now ready")
 	}()
 
@@ -432,7 +432,7 @@ func (s *Service) IsProvisioned() bool {
 
 // IsReady returns whether etcd is ready and synced
 func (s *Service) IsReady() bool {
-	return s.ready
+	return s.ready.Load()
 }
 
 // AddMember adds a new etcd member to the cluster

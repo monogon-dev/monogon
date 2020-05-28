@@ -14,27 +14,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package common
+package main
 
-type (
-	SmalltownState string
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"git.monogon.dev/source/nexantic.git/core/internal/launch"
 )
 
-const (
-	// These are here to prevent depdendency loops
-	NodeServicePort     = 7835
-	ConsensusPort       = 7834
-	MasterServicePort   = 7833
-	ExternalServicePort = 7836
-	DebugServicePort    = 7837
-	KubernetesAPIPort   = 6443
-)
-
-const (
-	// Node is provisioning a new cluster with itself as a master
-	StateNewClusterMode SmalltownState = "setup"
-	// Node is enrolling itself and waiting to be adopted
-	StateEnrollMode SmalltownState = "join"
-	// Node is fully provisioned.
-	StateJoined SmalltownState = "enrolled"
-)
+func main() {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		<-sigs
+		cancel()
+	}()
+	if err := launch.Launch(ctx, launch.Options{Ports: launch.IdentityPortMap()}); err != nil {
+		if err == ctx.Err() {
+			return
+		}
+		fmt.Printf("Failed to execute: %v\n", err)
+	}
+}
