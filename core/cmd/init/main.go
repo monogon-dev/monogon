@@ -124,6 +124,12 @@ func main() {
 							break
 						}
 					}
+				case unix.SIGURG:
+					// Go 1.14 introduced asynchronous preemption, which uses SIGURG.
+					// In order not to break backwards compatibility in the unlikely case
+					// of an application actually using SIGURG on its own, they're not filtering them.
+					// (https://github.com/golang/go/issues/37942)
+					logger.Debug("Ignoring SIGURG")
 				// TODO(lorenz): We can probably get more than just SIGCHLD as init, but I can't think
 				// of any others right now, just log them in case we hit any of them.
 				default:
