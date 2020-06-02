@@ -10,7 +10,6 @@ genrule(
         "@com_github_containernetworking_plugins//plugins/main/loopback",
         "@com_github_containernetworking_plugins//plugins/main/ptp",
         "@com_github_containernetworking_plugins//plugins/ipam/host-local",
-        "@com_github_opencontainers_runc//:runc",
         "@com_github_google_gvisor//runsc",
         "@com_github_google_gvisor_containerd_shim//cmd/containerd-shim-runsc-v1",
         "//core/internal/containerd:ptp.json",

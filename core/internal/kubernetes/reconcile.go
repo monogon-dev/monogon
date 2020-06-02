@@ -116,6 +116,9 @@ var builtinClusterRoles = []*rbacv1.ClusterRole{
 	{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: rbac("psp-default"),
+			Labels: map[string]string{
+				"smalltown.com/builtin": "true",
+			},
 			Annotations: map[string]string{
 				"kubernetes.io/description": "This role grants access to the \"default\" PSP.",
 			},
@@ -135,6 +138,9 @@ var builtinClusterRoleBindings = []*rbacv1.ClusterRoleBinding{
 	{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: rbac("default-psp-for-sa"),
+			Labels: map[string]string{
+				"smalltown.com/builtin": "true",
+			},
 			Annotations: map[string]string{
 				"kubernetes.io/description": "This binding grants every service account access to the \"default\" PSP. " +
 					"Creation of Pods is still restricted by other RBAC roles. Otherwise no pods (unprivileged or not) " +
@@ -157,6 +163,9 @@ var builtinClusterRoleBindings = []*rbacv1.ClusterRoleBinding{
 	{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: rbac("apiserver-kubelet-client"),
+			Labels: map[string]string{
+				"smalltown.com/builtin": "true",
+			},
 			Annotations: map[string]string{
 				"kubernetes.io/description": "This binding grants the apiserver access to the kubelets. This enables " +
 					"lots of built-in functionality like reading logs or forwarding ports via the API.",
