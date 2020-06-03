@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -211,17 +212,32 @@ func Launch(ctx context.Context, options Options) error {
 		qemuArgs = append(qemuArgs, "-no-reboot")
 	}
 
-	tpmCtx, tpmStop := context.WithCancel(
-		ctx)
-	tpmEmuCmd := exec.CommandContext(tpmCtx, "swtpm", "socket", "--tpm2", "--tpmstate", "dir="+tpmTargetDir, "--ctrl", "type=unixio,path="+tpmSocketPath)
-	systemCmd := exec.CommandContext(ctx, "qemu-system-x86_64", qemuArgs...)
+	// Start TPM emulator as a subprocess
+	tpmCtx, tpmCancel := context.WithCancel(ctx)
+	defer tpmCancel()
 
+	tpmEmuCmd := exec.CommandContext(tpmCtx, "swtpm", "socket", "--tpm2", "--tpmstate", "dir="+tpmTargetDir, "--ctrl", "type=unixio,path="+tpmSocketPath)
 	tpmEmuCmd.Stderr = os.Stderr
 	tpmEmuCmd.Stdout = os.Stdout
+
+	err = tpmEmuCmd.Start()
+	if err != nil {
+		return fmt.Errorf("failed to start TPM emulator: %w", err)
+	}
+
+	// Start the main qemu binary
+	systemCmd := exec.CommandContext(ctx, "qemu-system-x86_64", qemuArgs...)
 	systemCmd.Stderr = os.Stderr
 	systemCmd.Stdout = os.Stdout
-	go tpmEmuCmd.Run()
+
 	err = systemCmd.Run()
-	tpmStop()
-	return err
+
+	// Stop TPM emulator and wait for it to exit to properly reap the child process
+	tpmCancel()
+	log.Print("Waiting for TPM emulator to exit")
+	// Wait returns a SIGKILL error because we just cancelled its context.
+	// We still need to call it to avoid creating zombies.
+	_ = tpmEmuCmd.Wait()
+
+	return nil
 }

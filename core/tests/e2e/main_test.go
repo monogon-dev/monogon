@@ -24,7 +24,6 @@ import (
 	"net/http"
 	_ "net/http"
 	_ "net/http/pprof"
-	"os"
 	"testing"
 	"time"
 
@@ -46,26 +45,24 @@ func TestE2E(t *testing.T) {
 	}()
 	// Set a global timeout to make sure this terminates
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
 	portMap, err := launch.ConflictFreePortMap()
 	if err != nil {
 		t.Fatalf("Failed to acquire ports for e2e test: %v", err)
 	}
+
+	procExit := make(chan struct{})
+
 	go func() {
 		if err := launch.Launch(ctx, launch.Options{Ports: portMap}); err != nil {
 			panic(err)
 		}
+		close(procExit)
 	}()
 	grpcClient, err := portMap.DialGRPC(common.DebugServicePort, grpc.WithInsecure())
 	if err != nil {
 		fmt.Printf("Failed to dial debug service (is it running): %v\n", err)
 	}
 	debugClient := apipb.NewNodeDebugServiceClient(grpcClient)
-
-	go func() {
-		<-ctx.Done()
-		fmt.Fprintf(os.Stderr, "Main context canceled\n")
-	}()
 
 	// This exists to keep the parent around while all the children race
 	// It currently tests both a set of OS-level conditions and Kubernetes Deployments and StatefulSets
@@ -166,4 +163,9 @@ func TestE2E(t *testing.T) {
 			})
 		})
 	})
+
+	// Cancel the main context and wait for our subprocesses to exit
+	// to avoid leaking them and blocking the parent.
+	cancel()
+	<-procExit
 }
