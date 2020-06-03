@@ -28,12 +28,13 @@ import (
 	"os"
 	"os/exec"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler"
+	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
+
 	"go.etcd.io/etcd/clientv3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
-
-	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
-	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 )
 
 type KubeletSpec struct {
@@ -103,11 +104,12 @@ func runKubelet(spec *KubeletSpec, output io.Writer) supervisor.Runnable {
 					ClientCAFile: "/data/kubernetes/ca.crt",
 				},
 			},
+			// TODO(q3k): move reconciler.False to a generic package, fix the following references.
 			ClusterDomain:                "cluster.local", // cluster.local is hardcoded in the certificate too currently
-			EnableControllerAttachDetach: False(),
+			EnableControllerAttachDetach: reconciler.False(),
 			HairpinMode:                  "none",
-			MakeIPTablesUtilChains:       False(), // We don't have iptables
-			FailSwapOn:                   False(), // Our kernel doesn't have swap enabled which breaks Kubelet's detection
+			MakeIPTablesUtilChains:       reconciler.False(), // We don't have iptables
+			FailSwapOn:                   reconciler.False(), // Our kernel doesn't have swap enabled which breaks Kubelet's detection
 			KubeReserved: map[string]string{
 				"cpu":    "200m",
 				"memory": "300Mi",

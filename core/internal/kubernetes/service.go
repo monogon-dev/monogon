@@ -35,6 +35,7 @@ import (
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
+	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
 	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
 )
@@ -177,7 +178,7 @@ func (s *Service) Run() supervisor.Runnable {
 		if err := supervisor.Run(ctx, "kubelet", runKubelet(&KubeletSpec{}, s.kubeletLogs)); err != nil {
 			return err
 		}
-		if err := supervisor.Run(ctx, "reconciler", runReconciler(clientSet)); err != nil {
+		if err := supervisor.Run(ctx, "reconciler", reconciler.Run(clientSet)); err != nil {
 			return err
 		}
 		if err := supervisor.Run(ctx, "csi-plugin", runCSIPlugin(s.storageService)); err != nil {

@@ -47,6 +47,7 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
+// ONCHANGE(//core/internal/kubernetes/reconciler:resources_csi.go): needs to match csiProvisionerName declared.
 const csiProvisionerName = "com.nexantic.smalltown.vfs"
 
 // csiProvisioner is responsible for the provisioning and deprovisioning of CSI-based container volumes. It runs on all
