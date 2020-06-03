@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	_ "net/http"
 	_ "net/http/pprof"
@@ -40,9 +41,23 @@ import (
 // TestE2E is the main E2E test entrypoint for single-node freshly-bootstrapped E2E tests. It starts a full Smalltown node
 // in bootstrap mode and then runs tests against it. The actual tests it performs are located in the RunGroup subtest.
 func TestE2E(t *testing.T) {
+	// Run pprof server for debugging
 	go func() {
-		log.Println(http.ListenAndServe("localhost:0", nil))
+		addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+		if err != nil {
+			panic(err)
+		}
+
+		l, err := net.ListenTCP("tcp", addr)
+		if err != nil {
+			log.Fatalf("Failed to listen on pprof port: %s", l.Addr())
+		}
+		defer l.Close()
+
+		log.Printf("pprof server listening on %s", l.Addr())
+		log.Printf("pprof server returned an error: %v", http.Serve(l, nil))
 	}()
+
 	// Set a global timeout to make sure this terminates
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	portMap, err := launch.ConflictFreePortMap()
