@@ -85,3 +85,9 @@ alias(
     name = "kubectl",
     actual = "@io_k8s_kubernetes//cmd/kubectl:kubectl",
 )
+
+# Shortcut for the Delve debugger for interactive debugging
+alias(
+    name = "dlv",
+    actual = "@com_github_go_delve_delve//cmd/dlv:dlv",
+)

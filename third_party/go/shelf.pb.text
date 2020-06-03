@@ -391,6 +391,13 @@ entry: <
   semver: "v0.0.0-20180108230652-97fdf19511ea"
 >
 entry: <
+  import_path: "github.com/cosiner/argv"
+  version: "v0.0.0-20170225145430-13bacc38a0a5"
+  bazel_name: "com_github_cosiner_argv"
+  sum: "h1:rIXlvz2IWiupMFlC45cZCXZFvKX/ExBcSLrDy2G0Lp8="
+  semver: "v0.0.0-20170225145430-13bacc38a0a5"
+>
+entry: <
   import_path: "github.com/cpuguy83/go-md2man"
   version: "7762f7e404f8416dfa1d9bb6a8c192aa9acb4d19"
   bazel_name: "com_github_cpuguy83_go_md2man"
@@ -587,6 +594,13 @@ entry: <
   semver: "v4.0.0-20200507103349-d540ee52783e"
 >
 entry: <
+  import_path: "github.com/go-delve/delve"
+  version: "v1.4.1"
+  bazel_name: "com_github_go_delve_delve"
+  sum: "h1:kZs0umEv+VKnK84kY9/ZXWrakdLTeRTyYjFdgLelZCQ="
+  semver: "v1.4.1"
+>
+entry: <
   import_path: "github.com/go-openapi/analysis"
   version: "v0.19.5"
   bazel_name: "com_github_go_openapi_analysis"
@@ -753,6 +767,13 @@ entry: <
   bazel_name: "com_github_google_go_cmp"
   sum: "h1:xsAVV57WRhGj6kEIi8ReJzQlHHqcBYCElAvkovg3B/4="
   semver: "v0.4.0"
+>
+entry: <
+  import_path: "github.com/google/go-dap"
+  version: "v0.2.0"
+  bazel_name: "com_github_google_go_dap"
+  sum: "h1:whjIGQRumwbR40qRU7CEKuFLmePUUc2s4Nt9DoXXxWk="
+  semver: "v0.2.0"
 >
 entry: <
   import_path: "github.com/google/go-tpm"
@@ -1329,6 +1350,13 @@ entry: <
   semver: "v2.0.1+incompatible"
 >
 entry: <
+  import_path: "github.com/peterh/liner"
+  version: "v0.0.0-20170317030525-88609521dc4b"
+  bazel_name: "com_github_peterh_liner"
+  sum: "h1:8uaXtUkxiy+T/zdLWuxa/PG4so0TPZDZfafFNNSaptE="
+  semver: "v0.0.0-20170317030525-88609521dc4b"
+>
+entry: <
   import_path: "github.com/petermattis/goid"
   version: "v0.0.0-20180202154549-b0b1615b78e5"
   bazel_name: "com_github_petermattis_goid"
@@ -1672,6 +1700,13 @@ entry: <
   semver: "v0.22.0"
 >
 entry: <
+  import_path: "go.starlark.net"
+  version: "v0.0.0-20190702223751-32f345186213"
+  bazel_name: "net_starlark_go"
+  sum: "h1:lkYv5AKwvvduv5XWP6szk/bvvgO6aDeUujhZQXIFTes="
+  semver: "v0.0.0-20190702223751-32f345186213"
+>
+entry: <
   import_path: "go.uber.org/atomic"
   version: "v1.3.2"
   bazel_name: "org_uber_go_atomic"
@@ -1698,6 +1733,13 @@ entry: <
   bazel_name: "org_uber_go_zap"
   sum: "h1:ZZCA22JRF2gQE5FoNmhmrf7jeJJ2uhqDUNRYKm8dvmM="
   semver: "v1.15.0"
+>
+entry: <
+  import_path: "golang.org/x/arch"
+  version: "v0.0.0-20190927153633-4e8777c89be4"
+  bazel_name: "org_golang_x_arch"
+  sum: "h1:QlVATYS7JBoZMVaf+cNjb90WD/beKVHnIxFKT4QaHVI="
+  semver: "v0.0.0-20190927153633-4e8777c89be4"
 >
 entry: <
   import_path: "golang.org/x/crypto"

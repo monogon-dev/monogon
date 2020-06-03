@@ -6,6 +6,7 @@ go_library(
         "dependency.go",
         "deps_cilium.go",
         "deps_containerd.go",
+        "deps_delve.go",
         "deps_gvisor.go",
         "deps_kubernetes.go",
         "deps_sqlboiler.go",

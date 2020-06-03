@@ -55,7 +55,8 @@
       "external/com_github_modern_go_reflect2/": "third_party",
       "sqlite3.*go": "third_party",
       "external/com_github_google_gvisor/": "third_party",
-      "external/io_k8s_sigs_structured_merge_diff/": "third_party"
+      "external/io_k8s_sigs_structured_merge_diff/": "third_party",
+      "external/com_github_go_delve_delve/": "third_party"
     }
   },
   "unusedresult": {
