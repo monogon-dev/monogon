@@ -53,6 +53,7 @@ podman run -it -d \
     --privileged \
     --pod nexantic \
     --name=nexantic-dev \
+    --net=host \
     nexantic-builder
 
 podman run -it -d \
