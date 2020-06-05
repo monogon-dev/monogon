@@ -32,8 +32,8 @@ http_archive(
     # Pin slightly above 0.23.0 (and 0.23.1 prerelease at time of writing) to pull in this commit.
     # This fixes https://github.com/bazelbuild/rules_go/issues/2499, which started manifesting at 0.22.4.
     name = "io_bazel_rules_go",
-    strip_prefix = "rules_go-c07100d793fc0cdb20bc4f0361c1d53987ba259b",
     sha256 = "89501e6e6ae6308e82239f0c8e53dceaa428ad8de471a7f8be8b99a1717bb7d8",
+    strip_prefix = "rules_go-c07100d793fc0cdb20bc4f0361c1d53987ba259b",
     urls = [
         "https://github.com/bazelbuild/rules_go/archive/c07100d793fc0cdb20bc4f0361c1d53987ba259b.zip",
     ],
@@ -176,4 +176,14 @@ http_file(
     name = "cacerts",
     sha256 = "adf770dfd574a0d6026bfaa270cb6879b063957177a991d453ff1d302c02081f",
     urls = ["https://curl.haxx.se/ca/cacert-2020-01-01.pem"],
+)
+
+# lz4, the library and the tool.
+http_archive(
+    name = "com_github_lz4_lz4",
+    patch_args = ["-p1"],
+    patches = ["//third_party/lz4:build.patch"],
+    sha256 = "658ba6191fa44c92280d4aa2c271b0f4fbc0e34d249578dd05e50e76d0e5efcc",
+    strip_prefix = "lz4-1.9.2",
+    urls = ["https://github.com/lz4/lz4/archive/v1.9.2.tar.gz"],
 )
