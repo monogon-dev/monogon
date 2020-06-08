@@ -242,10 +242,6 @@ def go_repositories():
             "no_devicemapper",
             "no_btrfs",
         ],
-        patches = [
-            "//third_party/go/patches:containerd-build.patch",
-        ],
-        patch_args = ["-p1"],
     )
     go_repository(
         name = "com_github_containerd_continuity",
@@ -301,10 +297,6 @@ def go_repositories():
         importpath = "github.com/containernetworking/plugins",
         version = "v0.8.2",
         sum = "h1:5lnwfsAYO+V7yXhysJKy3E1A2Gy9oVut031zfdOzI9w=",
-        patches = [
-            "//third_party/go/patches:cni-plugins-build.patch",
-        ],
-        patch_args = ["-p1"],
     )
     go_repository(
         name = "com_github_coreos_go_iptables",

@@ -34,6 +34,11 @@ smalltown_initramfs(
         "@com_github_containernetworking_plugins//plugins/main/loopback": "/containerd/bin/cni/loopback",
         "@com_github_containernetworking_plugins//plugins/main/ptp": "/containerd/bin/cni/ptp",
         "@com_github_containernetworking_plugins//plugins/ipam/host-local": "/containerd/bin/cni/host-local",
+
+        # Cilium binaries
+        "@com_github_cilium_cilium//cilium": "/cilium/bin/cilium",
+        "@com_github_cilium_cilium//daemon": "/cilium/bin/daemon",
+        "@com_github_cilium_cilium//operator": "/cilium/bin/operator",
     },
 )
 

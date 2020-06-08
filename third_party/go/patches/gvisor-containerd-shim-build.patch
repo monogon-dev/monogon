@@ -16,7 +16,7 @@ limitations under the License.
 From d92dc4195d4de5149e7e55890fa856837a35217e Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@brun.one>
 Date: Mon, 4 May 2020 15:33:40 +0200
-Subject: [PATCH] Reflect code patches in Bazel and build pure
+Subject: [PATCH] Reflect code patches in Bazel
 
 ---
  cmd/containerd-shim-runsc-v1/BUILD.bazel |  1 +
@@ -26,17 +26,6 @@ Subject: [PATCH] Reflect code patches in Bazel and build pure
  pkg/v2/BUILD.bazel                       | 14 ++++++++------
  5 files changed, 16 insertions(+), 11 deletions(-)
 
-diff --git a/cmd/containerd-shim-runsc-v1/BUILD.bazel b/cmd/containerd-shim-runsc-v1/BUILD.bazel
-index 8fb6a86..d58f069 100644
---- a/cmd/containerd-shim-runsc-v1/BUILD.bazel
-+++ b/cmd/containerd-shim-runsc-v1/BUILD.bazel
-@@ -14,5 +14,6 @@ go_library(
- go_binary(
-     name = "containerd-shim-runsc-v1",
-     embed = [":go_default_library"],
-+    pure = "on",
-     visibility = ["//visibility:public"],
- )
 diff --git a/cmd/gvisor-containerd-shim/BUILD.bazel b/cmd/gvisor-containerd-shim/BUILD.bazel
 index 8478746..f6a6fa2 100644
 --- a/cmd/gvisor-containerd-shim/BUILD.bazel

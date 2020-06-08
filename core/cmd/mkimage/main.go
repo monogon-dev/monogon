@@ -36,6 +36,7 @@ var (
 	initramfsPath            = flag.String("initramfs", "", "External initramfs [optional]")
 	enrolmentCredentialsPath = flag.String("enrolment-credentials", "", "Enrolment credentials [optional]")
 	dataPartitionSizeMiB     = flag.Uint64("data-partition-size", 2048, "Override the data partition size (default 2048 MiB)")
+	espPartitionSizeMiB      = flag.Uint64("esp-partition-size", 512, "Override the ESP partition size (default: 512MiB)")
 )
 
 func mibToSectors(size uint64) uint64 {
@@ -66,13 +67,13 @@ func main() {
 				Type:  gpt.EFISystemPartition,
 				Name:  "ESP",
 				Start: mibToSectors(1),
-				End:   mibToSectors(256) - 1,
+				End:   mibToSectors(*espPartitionSizeMiB) - 1,
 			},
 			{
 				Type:  SmalltownDataPartition,
 				Name:  "SIGNOS-DATA",
-				Start: mibToSectors(256),
-				End:   mibToSectors(*dataPartitionSizeMiB+256) - 1,
+				Start: mibToSectors(*espPartitionSizeMiB),
+				End:   mibToSectors(*espPartitionSizeMiB+*dataPartitionSizeMiB) - 1,
 			},
 		},
 	}

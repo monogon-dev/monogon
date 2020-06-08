@@ -14,6 +14,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+def _build_pure_transition_impl(settings, attr):
+    """
+    Transition that enables pure, static build of Go binaries.
+    """
+    return {
+        "@io_bazel_rules_go//go/config:pure": True,
+        "@io_bazel_rules_go//go/config:static": True,
+    }
+
+build_pure_transition = transition(
+    implementation = _build_pure_transition_impl,
+    inputs = [],
+    outputs = [
+        "@io_bazel_rules_go//go/config:pure",
+        "@io_bazel_rules_go//go/config:static",
+    ],
+)
+
 def _smalltown_initramfs_impl(ctx):
     """
     Generate an lz4-compressed initramfs based on a label/file list.
@@ -143,6 +161,8 @@ smalltown_initramfs = rule(
                 Dictionary of Labels to String, placing a given Label's output file in the initramfs at the location
                 specified by the String value. The specified labels must only have a single output.
             """,
+            # Attach pure transition to ensure all binaries added to the initramfs are pure/static binaries.
+            cfg = build_pure_transition,
         ),
         "extra_dirs": attr.string_list(
             default = [],
@@ -167,6 +187,11 @@ smalltown_initramfs = rule(
             default = Label("//build/savestdout"),
             executable = True,
             cfg = "host",
+        ),
+
+        # Allow for transitions to be attached to this rule.
+        "_whitelist_function_transition": attr.label(
+            default = "@bazel_tools//tools/whitelists/function_transition_whitelist",
         ),
     },
 )
