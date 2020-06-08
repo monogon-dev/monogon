@@ -55,10 +55,19 @@ podman run \
     -v ${GOPKG_VOLUME}:/user/go/pkg \
     --privileged \
     ${TAG} \
+    bazel run //:fietsje
+
+podman run \
+    --rm \
+    -v $(pwd):/work \
+    -v ${CACHE_VOLUME}:/user/.cache/bazel/_bazel_root \
+    -v ${GOPKG_VOLUME}:/user/go/pkg \
+    --privileged \
+    ${TAG} \
     scripts/gazelle.sh
 
 if [[ ! -z "$(git status --porcelain)" ]]; then
-  echo "Unclean working directory after running scripts/gazelle.sh:"
+  echo "Unclean working directory after running scripts/gazelle.sh and fietsje:"
   git diff HEAD
   exit 1
 fi
