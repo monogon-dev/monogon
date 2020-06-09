@@ -16,10 +16,14 @@
 
 package main
 
+// mkimage is a tool to generate a Smalltown disk image containing the given EFI payload, and optionally, a given external
+// initramfs image and enrolment credentials.
+
 import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 
 	diskfs "github.com/diskfs/go-diskfs"
@@ -31,12 +35,12 @@ import (
 var SmalltownDataPartition gpt.Type = gpt.Type("9eeec464-6885-414a-b278-4305c51f7966")
 
 var (
-	efiPayloadPath           = flag.String("efi", "", "UEFI payload")
-	outputPath               = flag.String("out", "", "Output disk image")
-	initramfsPath            = flag.String("initramfs", "", "External initramfs [optional]")
-	enrolmentCredentialsPath = flag.String("enrolment-credentials", "", "Enrolment credentials [optional]")
-	dataPartitionSizeMiB     = flag.Uint64("data-partition-size", 2048, "Override the data partition size (default 2048 MiB)")
-	espPartitionSizeMiB      = flag.Uint64("esp-partition-size", 512, "Override the ESP partition size (default: 512MiB)")
+	flagEFI                  string
+	flagOut                  string
+	flagInitramfs            string
+	flagEnrolmentCredentials string
+	flagDataPartitionSize    uint64
+	flagESPPartitionSize     uint64
 )
 
 func mibToSectors(size uint64) uint64 {
@@ -44,17 +48,22 @@ func mibToSectors(size uint64) uint64 {
 }
 
 func main() {
+	flag.StringVar(&flagEFI, "efi", "", "UEFI payload")
+	flag.StringVar(&flagOut, "out", "", "Output disk image")
+	flag.StringVar(&flagInitramfs, "initramfs", "", "External initramfs [optional]")
+	flag.StringVar(&flagEnrolmentCredentials, "enrolment_credentials", "", "Enrolment credentials [optional]")
+	flag.Uint64Var(&flagDataPartitionSize, "data_partition_size", 2048, "Override the data partition size (default 2048 MiB)")
+	flag.Uint64Var(&flagESPPartitionSize, "esp_partition_size", 512, "Override the ESP partition size (default: 512MiB)")
 	flag.Parse()
-	if *efiPayloadPath == "" || *outputPath == "" {
-		flag.PrintDefaults()
-		os.Exit(2)
+
+	if flagEFI == "" || flagOut == "" {
+		log.Fatalf("efi and initramfs must be set")
 	}
 
-	_ = os.Remove(*outputPath)
-	diskImg, err := diskfs.Create(*outputPath, 3*1024*1024*1024, diskfs.Raw)
+	_ = os.Remove(flagOut)
+	diskImg, err := diskfs.Create(flagOut, 3*1024*1024*1024, diskfs.Raw)
 	if err != nil {
-		fmt.Printf("Failed to create disk: %v", err)
-		os.Exit(1)
+		log.Fatalf("diskfs.Create(%q): %v", flagOut, err)
 	}
 
 	table := &gpt.Table{
@@ -67,97 +76,66 @@ func main() {
 				Type:  gpt.EFISystemPartition,
 				Name:  "ESP",
 				Start: mibToSectors(1),
-				End:   mibToSectors(*espPartitionSizeMiB) - 1,
+				End:   mibToSectors(flagESPPartitionSize) - 1,
 			},
 			{
 				Type:  SmalltownDataPartition,
 				Name:  "SIGNOS-DATA",
-				Start: mibToSectors(*espPartitionSizeMiB),
-				End:   mibToSectors(*espPartitionSizeMiB+*dataPartitionSizeMiB) - 1,
+				Start: mibToSectors(flagESPPartitionSize),
+				End:   mibToSectors(flagESPPartitionSize+flagDataPartitionSize) - 1,
 			},
 		},
 	}
 	if err := diskImg.Partition(table); err != nil {
-		fmt.Printf("Failed to apply partition table: %v", err)
-		os.Exit(1)
+		log.Fatalf("Failed to apply partition table: %v", err)
 	}
 
 	fs, err := diskImg.CreateFilesystem(disk.FilesystemSpec{Partition: 1, FSType: filesystem.TypeFat32, VolumeLabel: "ESP"})
 	if err != nil {
-		fmt.Printf("Failed to create filesystem: %v", err)
-		os.Exit(1)
+		log.Fatalf("Failed to create filesystem: %v", err)
 	}
-	if err := fs.Mkdir("/EFI"); err != nil {
-		panic(err)
-	}
-	if err := fs.Mkdir("/EFI/BOOT"); err != nil {
-		panic(err)
-	}
-	if err := fs.Mkdir("/EFI/smalltown"); err != nil {
-		panic(err)
-	}
-	efiPayload, err := fs.OpenFile("/EFI/BOOT/BOOTX64.EFI", os.O_CREATE|os.O_RDWR)
-	if err != nil {
-		fmt.Printf("Failed to open EFI payload for writing: %v", err)
-		os.Exit(1)
-	}
-	efiPayloadSrc, err := os.Open(*efiPayloadPath)
-	if err != nil {
-		fmt.Printf("Failed to open EFI payload for reading: %v", err)
-		os.Exit(1)
-	}
-	defer efiPayloadSrc.Close()
-	// If this is streamed (e.g. using io.Copy) it exposes a bug in diskfs, so do it in one go.
-	efiPayloadFull, err := ioutil.ReadAll(efiPayloadSrc)
-	if err != nil {
-		panic(err)
-	}
-	if _, err := efiPayload.Write(efiPayloadFull); err != nil {
-		fmt.Printf("Failed to write EFI payload: %v", err)
-		os.Exit(1)
-	}
-	initramfs, err := fs.OpenFile("/EFI/smalltown/initramfs.cpio.lz4", os.O_CREATE|os.O_RDWR)
-	if err != nil {
-		fmt.Printf("Failed to open initramfs for writing: %v", err)
-		os.Exit(1)
-	}
-	// If we have more than two arguments, the second one is the initramfs
-	if *initramfsPath != "" {
-		initramfsSrc, err := os.Open(*initramfsPath)
-		if err != nil {
-			fmt.Printf("Failed to open initramfs for reading: %v", err)
-			os.Exit(1)
-		}
-		initramfsFull, err := ioutil.ReadAll(initramfsSrc)
-		if err != nil {
-			fmt.Printf("Failed to read initramfs: %v", err)
-			os.Exit(1)
-		}
-		if _, err := initramfs.Write(initramfsFull); err != nil {
-			fmt.Printf("Failed to write initramfs: %v", err)
-			os.Exit(1)
+
+	// Create EFI partition structure.
+	for _, dir := range []string{"/EFI", "/EFI/BOOT", "/EFI/smalltown"} {
+		if err := fs.Mkdir(dir); err != nil {
+			log.Fatalf("Mkdir(%q): %v", dir, err)
 		}
 	}
-	if *enrolmentCredentialsPath != "" {
-		enrolmentCredentials, err := fs.OpenFile("/EFI/smalltown/enrolment.pb", os.O_CREATE|os.O_RDWR)
-		enrolmentCredentialsSrc, err := os.Open(*enrolmentCredentialsPath)
-		if err != nil {
-			fmt.Printf("Failed to open enrolment credentials for reading: %v", err)
-			os.Exit(1)
-		}
-		enrolmentCredentialsFull, err := ioutil.ReadAll(enrolmentCredentialsSrc)
-		if err != nil {
-			fmt.Printf("Failed to read enrolment credentials: %v", err)
-			os.Exit(1)
-		}
-		if _, err := enrolmentCredentials.Write(enrolmentCredentialsFull); err != nil {
-			fmt.Printf("Failed to write enrolment credentials")
-			os.Exit(1)
-		}
+
+	put(fs, flagEFI, "/EFI/BOOT/BOOTX64.EFI")
+
+	if flagInitramfs != "" {
+		put(fs, flagInitramfs, "/EFI/smalltown/initramfs.cpio.lz4")
 	}
+
+	if flagEnrolmentCredentials != "" {
+		put(fs, flagEnrolmentCredentials, "/EFI/smalltown/enrolment.pb")
+	}
+
 	if err := diskImg.File.Close(); err != nil {
-		fmt.Printf("Failed to write image: %v", err)
+		log.Fatalf("Failed to finalize image: %v", err)
+	}
+	log.Printf("Success! You can now boot %v", flagOut)
+}
+
+// put copies a file from the host filesystem into the target image.
+func put(fs filesystem.FileSystem, src, dst string) {
+	target, err := fs.OpenFile(dst, os.O_CREATE|os.O_RDWR)
+	if err != nil {
+		log.Fatalf("fs.OpenFile(%q): %v", dst, err)
+	}
+	source, err := os.Open(src)
+	if err != nil {
+		log.Fatalf("os.Open(%q): %v", src, err)
+	}
+	defer source.Close()
+	// If this is streamed (e.g. using io.Copy) it exposes a bug in diskfs, so do it in one go.
+	data, err := ioutil.ReadAll(source)
+	if err != nil {
+		log.Fatalf("Reading %q: %v", src, err)
+	}
+	if _, err := target.Write(data); err != nil {
+		fmt.Printf("writing file %q: %v", dst, err)
 		os.Exit(1)
 	}
-	fmt.Println("Success! You can now boot smalltown.img")
 }
