@@ -38,6 +38,18 @@ import (
 	"git.monogon.dev/source/nexantic.git/core/internal/launch"
 )
 
+const (
+	// Timeout for the global test context.
+	//
+	// Bazel would eventually time out the test after 900s ("large") if, for some reason,
+	// the context cancellation fails to abort it.
+	globalTestTimeout = 600 * time.Second
+
+	// Timeouts for individual end-to-end tests of different sizes.
+	smallTestTimeout = 30 * time.Second
+	largeTestTimeout = 120 * time.Second
+)
+
 // TestE2E is the main E2E test entrypoint for single-node freshly-bootstrapped E2E tests. It starts a full Smalltown node
 // in bootstrap mode and then runs tests against it. The actual tests it performs are located in the RunGroup subtest.
 func TestE2E(t *testing.T) {
@@ -59,7 +71,7 @@ func TestE2E(t *testing.T) {
 	}()
 
 	// Set a global timeout to make sure this terminates
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), globalTestTimeout)
 	portMap, err := launch.ConflictFreePortMap()
 	if err != nil {
 		t.Fatalf("Failed to acquire ports for e2e test: %v", err)
@@ -84,31 +96,29 @@ func TestE2E(t *testing.T) {
 	t.Run("RunGroup", func(t *testing.T) {
 		t.Run("IP available", func(t *testing.T) {
 			t.Parallel()
-			const timeoutSec = 10
-			ctx, cancel := context.WithTimeout(ctx, timeoutSec*time.Second)
+			ctx, cancel := context.WithTimeout(ctx, smallTestTimeout)
 			defer cancel()
 			if err := waitForCondition(ctx, debugClient, "IPAssigned"); err != nil {
-				t.Errorf("Condition IPAvailable not met in %vs: %v", timeoutSec, err)
+				t.Errorf("Condition IPAvailable not met in %s: %v", smallTestTimeout, err)
 			}
 		})
 		t.Run("Data available", func(t *testing.T) {
 			t.Parallel()
-			const timeoutSec = 30
-			ctx, cancel := context.WithTimeout(ctx, timeoutSec*time.Second)
+			ctx, cancel := context.WithTimeout(ctx, largeTestTimeout)
 			defer cancel()
 			if err := waitForCondition(ctx, debugClient, "DataAvailable"); err != nil {
-				t.Errorf("Condition DataAvailable not met in %vs: %v", timeoutSec, err)
+				t.Errorf("Condition DataAvailable not met in %vs: %v", largeTestTimeout, err)
 			}
 		})
 		t.Run("Get Kubernetes Debug Kubeconfig", func(t *testing.T) {
 			t.Parallel()
-			selfCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			selfCtx, cancel := context.WithTimeout(ctx, largeTestTimeout)
 			defer cancel()
 			clientSet, err := getKubeClientSet(selfCtx, debugClient, portMap[common.KubernetesAPIPort])
 			if err != nil {
 				t.Fatal(err)
 			}
-			testEventual(t, "Node is registered and ready", ctx, 30*time.Second, func(ctx context.Context) error {
+			testEventual(t, "Node is registered and ready", ctx, largeTestTimeout, func(ctx context.Context) error {
 				nodes, err := clientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 				if err != nil {
 					return err
@@ -130,11 +140,11 @@ func TestE2E(t *testing.T) {
 				}
 				return nil
 			})
-			testEventual(t, "Simple deployment", ctx, 30*time.Second, func(ctx context.Context) error {
+			testEventual(t, "Simple deployment", ctx, largeTestTimeout, func(ctx context.Context) error {
 				_, err := clientSet.AppsV1().Deployments("default").Create(ctx, makeTestDeploymentSpec("test-deploy-1"), metav1.CreateOptions{})
 				return err
 			})
-			testEventual(t, "Simple deployment is running", ctx, 40*time.Second, func(ctx context.Context) error {
+			testEventual(t, "Simple deployment is running", ctx, largeTestTimeout, func(ctx context.Context) error {
 				res, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{LabelSelector: "name=test-deploy-1"})
 				if err != nil {
 					return err
@@ -153,11 +163,11 @@ func TestE2E(t *testing.T) {
 					return fmt.Errorf("pod is not ready: %v", events.Items[0].Message)
 				}
 			})
-			testEventual(t, "Simple StatefulSet with PVC", ctx, 30*time.Second, func(ctx context.Context) error {
+			testEventual(t, "Simple StatefulSet with PVC", ctx, largeTestTimeout, func(ctx context.Context) error {
 				_, err := clientSet.AppsV1().StatefulSets("default").Create(ctx, makeTestStatefulSet("test-statefulset-1"), metav1.CreateOptions{})
 				return err
 			})
-			testEventual(t, "Simple StatefulSet with PVC is running", ctx, 40*time.Second, func(ctx context.Context) error {
+			testEventual(t, "Simple StatefulSet with PVC is running", ctx, largeTestTimeout, func(ctx context.Context) error {
 				res, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{LabelSelector: "name=test-statefulset-1"})
 				if err != nil {
 					return err
