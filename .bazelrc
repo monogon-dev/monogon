@@ -10,3 +10,11 @@ build --cxxopt=-std=c++17
 
 # Set workspace status file and stamp
 build --stamp --workspace_status_command=./build/print-workspace-status.sh
+
+# Use our custom-configured host C++ toolchain.
+build --crosstool_top=//build/toolchain:host_cc_suite
+build --cpu=k8
+
+# Use the default Bazel C++ toolchain to build the tools used during the
+# build.
+build --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
