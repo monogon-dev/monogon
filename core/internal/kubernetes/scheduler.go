@@ -26,6 +26,7 @@ import (
 	"go.etcd.io/etcd/clientv3"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 )
 
@@ -35,14 +36,14 @@ type schedulerConfig struct {
 	serverKey  []byte
 }
 
-func getPKISchedulerConfig(consensusKV clientv3.KV) (*schedulerConfig, error) {
+func getPKISchedulerConfig(ctx context.Context, kv clientv3.KV, kpki *pki.KubernetesPKI) (*schedulerConfig, error) {
 	var config schedulerConfig
 	var err error
-	config.serverCert, config.serverKey, err = getCert(consensusKV, "scheduler")
+	config.serverCert, config.serverKey, err = kpki.Certificate(ctx, pki.Scheduler, kv)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get scheduler serving certificate: %w", err)
 	}
-	config.kubeConfig, err = getSingle(consensusKV, "scheduler.kubeconfig")
+	config.kubeConfig, err = kpki.Kubeconfig(ctx, pki.SchedulerClient, kv)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get scheduler kubeconfig: %w", err)
 	}

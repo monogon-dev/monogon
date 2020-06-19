@@ -18,7 +18,6 @@ package kubernetes
 
 import (
 	"context"
-	"crypto/ed25519"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -28,52 +27,64 @@ import (
 	"os"
 	"os/exec"
 
+	"go.etcd.io/etcd/clientv3"
+
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler"
 	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 
-	"go.etcd.io/etcd/clientv3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
+)
+
+var (
+	kubeletRoot       = "/data/kubernetes"
+	kubeletKubeconfig = kubeletRoot + "/kubelet.kubeconfig"
+	kubeletCACert     = kubeletRoot + "/ca.crt"
+	kubeletCert       = kubeletRoot + "/kubelet.crt"
+	kubeletKey        = kubeletRoot + "/kubelet.key"
 )
 
 type KubeletSpec struct {
 	clusterDNS []net.IP
 }
 
-func bootstrapLocalKubelet(consensusKV clientv3.KV, nodeName string) error {
-	idCA, idKeyRaw, err := getCert(consensusKV, "id-ca")
+func createKubeletConfig(ctx context.Context, kv clientv3.KV, kpki *pki.KubernetesPKI, nodeName string) error {
+	identity := fmt.Sprintf("system:node:%s", nodeName)
+
+	ca := kpki.Certificates[pki.IdCA]
+	cacert, _, err := ca.Ensure(ctx, kv)
 	if err != nil {
-		return err
-	}
-	idKey := ed25519.PrivateKey(idKeyRaw)
-	cert, key, err := issueCertificate(clientCertTemplate("system:node:"+nodeName, []string{"system:nodes"}), idCA, idKey)
-	if err != nil {
-		return err
-	}
-	kubeconfig, err := makeLocalKubeconfig(idCA, cert, key)
-	if err != nil {
-		return err
+		return fmt.Errorf("could not ensure ca certificate: %w", err)
 	}
 
-	serverCert, serverKey, err := issueCertificate(serverCertTemplate([]string{nodeName}, []net.IP{}), idCA, idKey)
+	kubeconfig, err := pki.New(ca, "", pki.Client(identity, []string{"system:nodes"})).Kubeconfig(ctx, kv)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not create volatile kubelet client cert: %w", err)
 	}
-	if err := os.MkdirAll("/data/kubernetes", 0755); err != nil {
-		return err
+
+	cert, key, err := pki.New(ca, "volatile", pki.Server([]string{nodeName}, nil)).Ensure(ctx, kv)
+	if err != nil {
+		return fmt.Errorf("could not create volatile kubelet server cert: %w", err)
 	}
-	if err := ioutil.WriteFile("/data/kubernetes/kubelet.kubeconfig", kubeconfig, 0400); err != nil {
-		return err
+
+	if err := os.MkdirAll(kubeletRoot, 0755); err != nil {
+		return fmt.Errorf("could not create kubelet root directory: %w", err)
 	}
-	if err := ioutil.WriteFile("/data/kubernetes/ca.crt", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: idCA}), 0400); err != nil {
-		return err
-	}
-	if err := ioutil.WriteFile("/data/kubernetes/kubelet.crt", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: serverCert}), 0400); err != nil {
-		return err
-	}
-	if err := ioutil.WriteFile("/data/kubernetes/kubelet.key", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: serverKey}), 0400); err != nil {
-		return err
+	// TODO(q3k): this should probably become its own function //core/internal/kubernetes/pki.
+	for _, el := range []struct {
+		target string
+		data   []byte
+	}{
+		{kubeletKubeconfig, kubeconfig},
+		{kubeletCACert, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cacert})},
+		{kubeletCert, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert})},
+		{kubeletKey, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key})},
+	} {
+		if err := ioutil.WriteFile(el.target, el.data, 0400); err != nil {
+			return fmt.Errorf("could not write %q: %w", el.target, err)
+		}
 	}
 
 	return nil

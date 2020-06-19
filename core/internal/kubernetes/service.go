@@ -18,9 +18,10 @@ package kubernetes
 
 import (
 	"context"
-	"crypto/ed25519"
 	"errors"
+	"fmt"
 	"net"
+	"os"
 	"time"
 
 	"k8s.io/client-go/informers"
@@ -35,6 +36,7 @@ import (
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
+	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
 	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
@@ -47,25 +49,32 @@ type Config struct {
 }
 
 type Service struct {
-	consensusService      *consensus.Service
-	storageService        *storage.Manager
-	logger                *zap.Logger
+	consensusService *consensus.Service
+	storageService   *storage.Manager
+	logger           *zap.Logger
+
 	apiserverLogs         *logbuffer.LogBuffer
 	controllerManagerLogs *logbuffer.LogBuffer
 	schedulerLogs         *logbuffer.LogBuffer
 	kubeletLogs           *logbuffer.LogBuffer
+
+	kpki *pki.KubernetesPKI
 }
 
 func New(logger *zap.Logger, consensusService *consensus.Service, storageService *storage.Manager) *Service {
 	s := &Service{
-		consensusService:      consensusService,
-		storageService:        storageService,
-		logger:                logger,
+		consensusService: consensusService,
+		storageService:   storageService,
+		logger:           logger,
+
 		apiserverLogs:         logbuffer.New(5000, 16384),
 		controllerManagerLogs: logbuffer.New(5000, 16384),
 		schedulerLogs:         logbuffer.New(5000, 16384),
 		kubeletLogs:           logbuffer.New(5000, 16384),
+
+		kpki: pki.NewKubernetes(logger.Named("pki")),
 	}
+
 	return s
 }
 
@@ -74,7 +83,9 @@ func (s *Service) getKV() clientv3.KV {
 }
 
 func (s *Service) NewCluster() error {
-	return newCluster(s.getKV())
+	// TODO(q3k): this needs to be passed by the caller.
+	ctx := context.TODO()
+	return s.kpki.EnsureAll(ctx, s.getKV())
 }
 
 // GetComponentLogs grabs logs from various Kubernetes binaries
@@ -98,16 +109,8 @@ func (s *Service) GetDebugKubeconfig(ctx context.Context, request *schema.GetDeb
 	if !s.consensusService.IsReady() {
 		return nil, status.Error(codes.Unavailable, "Consensus not ready yet")
 	}
-	idCA, idKeyRaw, err := getCert(s.getKV(), "id-ca")
-	idKey := ed25519.PrivateKey(idKeyRaw)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "Failed to load ID CA: %v", err)
-	}
-	debugCert, debugKey, err := issueCertificate(clientCertTemplate(request.Id, request.Groups), idCA, idKey)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "Failed to issue certs for kubeconfig: %v\n", err)
-	}
-	debugKubeconfig, err := makeLocalKubeconfig(idCA, debugCert, debugKey)
+	ca := s.kpki.Certificates[pki.IdCA]
+	debugKubeconfig, err := pki.New(ca, "", pki.Client(request.Id, request.Groups)).Kubeconfig(ctx, s.getKV())
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "Failed to generate kubeconfig: %v", err)
 	}
@@ -135,60 +138,65 @@ func (s *Service) Run() supervisor.Runnable {
 			},
 		}
 		consensusKV := s.getKV()
-		apiserverConfig, err := getPKIApiserverConfig(consensusKV)
+		apiserverConfig, err := getPKIApiserverConfig(ctx, consensusKV, s.kpki)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not generate apiserver pki config: %w", err)
 		}
 		apiserverConfig.advertiseAddress = config.AdvertiseAddress
 		apiserverConfig.serviceIPRange = config.ServiceIPRange
-		controllerManagerConfig, err := getPKIControllerManagerConfig(consensusKV)
+		controllerManagerConfig, err := getPKIControllerManagerConfig(ctx, consensusKV, s.kpki)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not generate controller manager pki config: %w", err)
 		}
 		controllerManagerConfig.clusterNet = config.ClusterNet
-		schedulerConfig, err := getPKISchedulerConfig(consensusKV)
+		schedulerConfig, err := getPKISchedulerConfig(ctx, consensusKV, s.kpki)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not generate scheduler pki config: %w", err)
 		}
 
-		masterKubeconfig, err := getSingle(consensusKV, "master.kubeconfig")
+		masterKubeconfig, err := s.kpki.Kubeconfig(ctx, pki.Master, consensusKV)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not generate master kubeconfig: %w", err)
 		}
 
 		rawClientConfig, err := clientcmd.NewClientConfigFromBytes(masterKubeconfig)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not generate kubernetes client config: %w", err)
 		}
 
 		clientConfig, err := rawClientConfig.ClientConfig()
 		clientSet, err := kubernetes.NewForConfig(clientConfig)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not generate kubernetes client: %w", err)
 		}
 
 		informerFactory := informers.NewSharedInformerFactory(clientSet, 5*time.Minute)
 
-		if err := supervisor.Run(ctx, "apiserver", runAPIServer(*apiserverConfig, s.apiserverLogs)); err != nil {
-			return err
+		hostname, err := os.Hostname()
+		if err != nil {
+			return fmt.Errorf("failed to get hostname: %w", err)
 		}
-		if err := supervisor.Run(ctx, "controller-manager", runControllerManager(*controllerManagerConfig, s.controllerManagerLogs)); err != nil {
-			return err
+		err = createKubeletConfig(ctx, consensusKV, s.kpki, hostname)
+		if err != nil {
+			return fmt.Errorf("could not created kubelet config: %w", err)
 		}
-		if err := supervisor.Run(ctx, "scheduler", runScheduler(*schedulerConfig, s.schedulerLogs)); err != nil {
-			return err
-		}
-		if err := supervisor.Run(ctx, "kubelet", runKubelet(&KubeletSpec{}, s.kubeletLogs)); err != nil {
-			return err
-		}
-		if err := supervisor.Run(ctx, "reconciler", reconciler.Run(clientSet)); err != nil {
-			return err
-		}
-		if err := supervisor.Run(ctx, "csi-plugin", runCSIPlugin(s.storageService)); err != nil {
-			return err
-		}
-		if err := supervisor.Run(ctx, "pv-provisioner", runCSIProvisioner(s.storageService, clientSet, informerFactory)); err != nil {
-			return err
+
+		for _, sub := range []struct {
+			name     string
+			runnable supervisor.Runnable
+		}{
+			{"apiserver", runAPIServer(*apiserverConfig, s.apiserverLogs)},
+			{"controller-manager", runControllerManager(*controllerManagerConfig, s.controllerManagerLogs)},
+			{"scheduler", runScheduler(*schedulerConfig, s.schedulerLogs)},
+			{"kubelet", runKubelet(&KubeletSpec{}, s.kubeletLogs)},
+			{"reconciler", reconciler.Run(clientSet)},
+			{"csi-plugin", runCSIPlugin(s.storageService)},
+			{"pv-provisioner", runCSIProvisioner(s.storageService, clientSet, informerFactory)},
+		} {
+			err := supervisor.Run(ctx, sub.name, sub.runnable)
+			if err != nil {
+				return fmt.Errorf("could not run sub-service %q: %w", sub.name, err)
+			}
 		}
 
 		supervisor.Signal(ctx, supervisor.SignalHealthy)

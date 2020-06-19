@@ -24,10 +24,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
-
 	"go.uber.org/zap"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
 	"git.monogon.dev/source/nexantic.git/core/pkg/fsquota"
 

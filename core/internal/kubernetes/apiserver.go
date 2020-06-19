@@ -19,19 +19,17 @@ package kubernetes
 import (
 	"context"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"io"
 	"net"
 	"os/exec"
-	"path"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
+	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 
 	"go.etcd.io/etcd/clientv3"
-
-	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
-	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 )
 
 type apiserverConfig struct {
@@ -49,22 +47,37 @@ type apiserverConfig struct {
 	serverKey             []byte
 }
 
-func getPKIApiserverConfig(consensusKV clientv3.KV) (*apiserverConfig, error) {
+func getPKIApiserverConfig(ctx context.Context, kv clientv3.KV, kpki *pki.KubernetesPKI) (*apiserverConfig, error) {
 	var config apiserverConfig
+
+	for _, el := range []struct {
+		targetCert *[]byte
+		targetKey  *[]byte
+		name       pki.KubeCertificateName
+	}{
+		{&config.idCA, nil, pki.IdCA},
+		{&config.kubeletClientCert, &config.kubeletClientKey, pki.KubeletClient},
+		{&config.aggregationCA, nil, pki.AggregationCA},
+		{&config.aggregationClientCert, &config.aggregationClientKey, pki.FrontProxyClient},
+		{&config.serverCert, &config.serverKey, pki.APIServer},
+	} {
+		cert, key, err := kpki.Certificate(ctx, el.name, kv)
+		if err != nil {
+			return nil, fmt.Errorf("could not load certificate %q from PKI: %w", el.name, err)
+		}
+		if el.targetCert != nil {
+			*el.targetCert = cert
+		}
+		if el.targetKey != nil {
+			*el.targetKey = key
+		}
+	}
+
 	var err error
-	config.idCA, _, err = getCert(consensusKV, "id-ca")
-	config.kubeletClientCert, config.kubeletClientKey, err = getCert(consensusKV, "kubelet-client")
-	config.aggregationCA, _, err = getCert(consensusKV, "aggregation-ca")
-	config.aggregationClientCert, config.aggregationClientKey, err = getCert(consensusKV, "front-proxy-client")
-	config.serverCert, config.serverKey, err = getCert(consensusKV, "apiserver")
-	saPrivkey, err := consensusKV.Get(context.Background(), path.Join(etcdPath, "service-account-privkey.der"))
+	config.serviceAccountPrivKey, err = kpki.ServiceAccountKey(ctx, kv)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get serviceaccount privkey: %w", err)
+		return nil, fmt.Errorf("could not load serviceaccount privkey: %w", err)
 	}
-	if len(saPrivkey.Kvs) != 1 {
-		return nil, errors.New("failed to get serviceaccount privkey: not found")
-	}
-	config.serviceAccountPrivKey = saPrivkey.Kvs[0].Value
 	return &config, nil
 }
 
