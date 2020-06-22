@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kubernetes
+package pki
 
 import (
 	"context"
@@ -28,6 +28,7 @@ import (
 	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"net"
 	"os"
@@ -42,7 +43,7 @@ import (
 )
 
 const (
-	etcdPath = "/kube-pki/"
+	EtcdPath = "/kube-pki/"
 )
 
 var (
@@ -52,7 +53,7 @@ var (
 
 // Directly derived from Kubernetes PKI requirements documented at
 // https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually
-func clientCertTemplate(identity string, groups []string) x509.Certificate {
+func ClientCertTemplate(identity string, groups []string) x509.Certificate {
 	return x509.Certificate{
 		Subject: pkix.Name{
 			CommonName:   identity,
@@ -62,7 +63,7 @@ func clientCertTemplate(identity string, groups []string) x509.Certificate {
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 	}
 }
-func serverCertTemplate(dnsNames []string, ips []net.IP) x509.Certificate {
+func ServerCertTemplate(dnsNames []string, ips []net.IP) x509.Certificate {
 	return x509.Certificate{
 		Subject:     pkix.Name{},
 		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
@@ -133,8 +134,8 @@ func newCA(name string) ([]byte, ed25519.PrivateKey, error) {
 }
 
 func storeCert(consensusKV clientv3.KV, name string, cert []byte, key []byte) error {
-	certPath := path.Join(etcdPath, fmt.Sprintf("%v-cert.der", name))
-	keyPath := path.Join(etcdPath, fmt.Sprintf("%v-key.der", name))
+	certPath := path.Join(EtcdPath, fmt.Sprintf("%v-cert.der", name))
+	keyPath := path.Join(EtcdPath, fmt.Sprintf("%v-key.der", name))
 	if _, err := consensusKV.Put(context.Background(), certPath, string(cert)); err != nil {
 		return fmt.Errorf("failed to store certificate: %w", err)
 	}
@@ -144,9 +145,9 @@ func storeCert(consensusKV clientv3.KV, name string, cert []byte, key []byte) er
 	return nil
 }
 
-func getCert(consensusKV clientv3.KV, name string) (cert []byte, key []byte, err error) {
-	certPath := path.Join(etcdPath, fmt.Sprintf("%v-cert.der", name))
-	keyPath := path.Join(etcdPath, fmt.Sprintf("%v-key.der", name))
+func GetCert(consensusKV clientv3.KV, name string) (cert []byte, key []byte, err error) {
+	certPath := path.Join(EtcdPath, fmt.Sprintf("%v-cert.der", name))
+	keyPath := path.Join(EtcdPath, fmt.Sprintf("%v-key.der", name))
 	certRes, err := consensusKV.Get(context.Background(), certPath)
 	if err != nil {
 		err = fmt.Errorf("failed to get certificate: %w", err)
@@ -166,8 +167,8 @@ func getCert(consensusKV clientv3.KV, name string) (cert []byte, key []byte, err
 	return
 }
 
-func getSingle(consensusKV clientv3.KV, name string) ([]byte, error) {
-	res, err := consensusKV.Get(context.Background(), path.Join(etcdPath, name))
+func GetSingle(consensusKV clientv3.KV, name string) ([]byte, error) {
+	res, err := consensusKV.Get(context.Background(), path.Join(EtcdPath, name))
 	if err != nil {
 		return []byte{}, fmt.Errorf("failed to get PKI item: %w", err)
 	}
@@ -182,7 +183,7 @@ func getSingle(consensusKV clientv3.KV, name string) ([]byte, error) {
 // the need for revocation and makes the logic much simpler. Thus PKI data can NEVER be stored
 // outside of etcd or other secure storage locations. All PKI data is stored in DER form and not
 // PEM encoded since that would require more logic to deal with it.
-func newCluster(consensusKV clientv3.KV) error {
+func NewCluster(consensusKV clientv3.KV) error {
 	// This whole issuance procedure is pretty repetitive, but abstracts badly because a lot of it
 	// is subtly different.
 	idCA, idKey, err := newCA("Smalltown Kubernetes ID CA")
@@ -209,14 +210,14 @@ func newCluster(consensusKV clientv3.KV) error {
 	if err != nil {
 		panic(err) // Always a programmer error
 	}
-	_, err = consensusKV.Put(context.Background(), path.Join(etcdPath, "service-account-privkey.der"),
+	_, err = consensusKV.Put(context.Background(), path.Join(EtcdPath, "service-account-privkey.der"),
 		string(serviceAccountPrivKey))
 	if err != nil {
 		return fmt.Errorf("failed to store service-account-privkey.der: %w", err)
 	}
 
-	apiserverCert, apiserverKey, err := issueCertificate(
-		serverCertTemplate([]string{
+	apiserverCert, apiserverKey, err := IssueCertificate(
+		ServerCertTemplate([]string{
 			"kubernetes",
 			"kubernetes.default",
 			"kubernetes.default.svc",
@@ -234,8 +235,8 @@ func newCluster(consensusKV clientv3.KV) error {
 		return err
 	}
 
-	kubeletClientCert, kubeletClientKey, err := issueCertificate(
-		clientCertTemplate("smalltown:apiserver-kubelet-client", []string{}),
+	kubeletClientCert, kubeletClientKey, err := IssueCertificate(
+		ClientCertTemplate("smalltown:apiserver-kubelet-client", []string{}),
 		idCA, idKey,
 	)
 	if err != nil {
@@ -245,8 +246,8 @@ func newCluster(consensusKV clientv3.KV) error {
 		return err
 	}
 
-	frontProxyClientCert, frontProxyClientKey, err := issueCertificate(
-		clientCertTemplate("front-proxy-client", []string{}),
+	frontProxyClientCert, frontProxyClientKey, err := IssueCertificate(
+		ClientCertTemplate("front-proxy-client", []string{}),
 		aggregationCA, aggregationKey,
 	)
 	if err != nil {
@@ -256,28 +257,28 @@ func newCluster(consensusKV clientv3.KV) error {
 		return err
 	}
 
-	controllerManagerClientCert, controllerManagerClientKey, err := issueCertificate(
-		clientCertTemplate("system:kube-controller-manager", []string{}),
+	controllerManagerClientCert, controllerManagerClientKey, err := IssueCertificate(
+		ClientCertTemplate("system:kube-controller-manager", []string{}),
 		idCA, idKey,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to issue certificate for controller-manager client: %w", err)
 	}
 
-	controllerManagerKubeconfig, err := makeLocalKubeconfig(idCA, controllerManagerClientCert,
+	controllerManagerKubeconfig, err := MakeLocalKubeconfig(idCA, controllerManagerClientCert,
 		controllerManagerClientKey)
 	if err != nil {
 		return fmt.Errorf("failed to create kubeconfig for controller-manager: %w", err)
 	}
 
-	_, err = consensusKV.Put(context.Background(), path.Join(etcdPath, "controller-manager.kubeconfig"),
+	_, err = consensusKV.Put(context.Background(), path.Join(EtcdPath, "controller-manager.kubeconfig"),
 		string(controllerManagerKubeconfig))
 	if err != nil {
 		return fmt.Errorf("failed to store controller-manager kubeconfig: %w", err)
 	}
 
-	controllerManagerCert, controllerManagerKey, err := issueCertificate(
-		serverCertTemplate([]string{"kube-controller-manager.local"}, []net.IP{}),
+	controllerManagerCert, controllerManagerKey, err := IssueCertificate(
+		ServerCertTemplate([]string{"kube-controller-manager.local"}, []net.IP{}),
 		idCA, idKey,
 	)
 	if err != nil {
@@ -287,27 +288,27 @@ func newCluster(consensusKV clientv3.KV) error {
 		return err
 	}
 
-	schedulerClientCert, schedulerClientKey, err := issueCertificate(
-		clientCertTemplate("system:kube-scheduler", []string{}),
+	schedulerClientCert, schedulerClientKey, err := IssueCertificate(
+		ClientCertTemplate("system:kube-scheduler", []string{}),
 		idCA, idKey,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to issue certificate for scheduler client: %w", err)
 	}
 
-	schedulerKubeconfig, err := makeLocalKubeconfig(idCA, schedulerClientCert, schedulerClientKey)
+	schedulerKubeconfig, err := MakeLocalKubeconfig(idCA, schedulerClientCert, schedulerClientKey)
 	if err != nil {
 		return fmt.Errorf("failed to create kubeconfig for scheduler: %w", err)
 	}
 
-	_, err = consensusKV.Put(context.Background(), path.Join(etcdPath, "scheduler.kubeconfig"),
+	_, err = consensusKV.Put(context.Background(), path.Join(EtcdPath, "scheduler.kubeconfig"),
 		string(schedulerKubeconfig))
 	if err != nil {
 		return fmt.Errorf("failed to store controller-manager kubeconfig: %w", err)
 	}
 
-	schedulerCert, schedulerKey, err := issueCertificate(
-		serverCertTemplate([]string{"kube-scheduler.local"}, []net.IP{}),
+	schedulerCert, schedulerKey, err := IssueCertificate(
+		ServerCertTemplate([]string{"kube-scheduler.local"}, []net.IP{}),
 		idCA, idKey,
 	)
 	if err != nil {
@@ -317,21 +318,21 @@ func newCluster(consensusKV clientv3.KV) error {
 		return err
 	}
 
-	masterClientCert, masterClientKey, err := issueCertificate(
-		clientCertTemplate("smalltown:master", []string{"system:masters"}),
+	masterClientCert, masterClientKey, err := IssueCertificate(
+		ClientCertTemplate("smalltown:master", []string{"system:masters"}),
 		idCA, idKey,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to issue certificate for master client: %w", err)
 	}
 
-	masterClientKubeconfig, err := makeLocalKubeconfig(idCA, masterClientCert,
+	masterClientKubeconfig, err := MakeLocalKubeconfig(idCA, masterClientCert,
 		masterClientKey)
 	if err != nil {
 		return fmt.Errorf("failed to create kubeconfig for master client: %w", err)
 	}
 
-	_, err = consensusKV.Put(context.Background(), path.Join(etcdPath, "master.kubeconfig"),
+	_, err = consensusKV.Put(context.Background(), path.Join(EtcdPath, "master.kubeconfig"),
 		string(masterClientKubeconfig))
 	if err != nil {
 		return fmt.Errorf("failed to store master kubeconfig: %w", err)
@@ -348,7 +349,7 @@ func newCluster(consensusKV clientv3.KV) error {
 	return nil
 }
 
-func issueCertificate(template x509.Certificate, caCert []byte, privateKey interface{}) (cert []byte, privkey []byte, err error) {
+func IssueCertificate(template x509.Certificate, caCert []byte, privateKey interface{}) (cert []byte, privkey []byte, err error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 127)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
@@ -380,7 +381,7 @@ func issueCertificate(template x509.Certificate, caCert []byte, privateKey inter
 	return
 }
 
-func makeLocalKubeconfig(ca, cert, key []byte) ([]byte, error) {
+func MakeLocalKubeconfig(ca, cert, key []byte) ([]byte, error) {
 	kubeconfig := configapi.NewConfig()
 	cluster := configapi.NewCluster()
 	cluster.Server = fmt.Sprintf("https://127.0.0.1:%v", common.KubernetesAPIPort)
@@ -396,4 +397,42 @@ func makeLocalKubeconfig(ca, cert, key []byte) ([]byte, error) {
 	kubeconfig.Contexts["default"] = ctx
 	kubeconfig.CurrentContext = "default"
 	return clientcmd.Write(*kubeconfig)
+}
+
+func bootstrapLocalKubelet(consensusKV clientv3.KV, nodeName string) error {
+	idCA, idKeyRaw, err := GetCert(consensusKV, "id-ca")
+	if err != nil {
+		return err
+	}
+	idKey := ed25519.PrivateKey(idKeyRaw)
+	cert, key, err := IssueCertificate(ClientCertTemplate("system:node:"+nodeName, []string{"system:nodes"}), idCA, idKey)
+	if err != nil {
+		return err
+	}
+	kubeconfig, err := MakeLocalKubeconfig(idCA, cert, key)
+	if err != nil {
+		return err
+	}
+
+	serverCert, serverKey, err := IssueCertificate(ServerCertTemplate([]string{nodeName}, []net.IP{}), idCA, idKey)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll("/data/kubernetes", 0755); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile("/data/kubernetes/kubelet.kubeconfig", kubeconfig, 0400); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile("/data/kubernetes/ca.crt", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: idCA}), 0400); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile("/data/kubernetes/kubelet.crt", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: serverCert}), 0400); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile("/data/kubernetes/kubelet.key", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: serverKey}), 0400); err != nil {
+		return err
+	}
+
+	return nil
 }

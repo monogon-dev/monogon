@@ -60,4 +60,5 @@ podman run -it -d \
     --pod nexantic \
     --ulimit nofile=262144:262144 \
     --name=nexantic-cockroach \
-    cockroachdb/cockroach:v19.1.5 start --insecure
+    --net=host \
+    cockroachdb/cockroach:v19.1.5 start --insecure  --advertise-addr localhost

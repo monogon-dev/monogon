@@ -27,6 +27,7 @@ import (
 	"go.etcd.io/etcd/clientv3"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 )
 
@@ -43,19 +44,19 @@ type controllerManagerConfig struct {
 func getPKIControllerManagerConfig(consensusKV clientv3.KV) (*controllerManagerConfig, error) {
 	var config controllerManagerConfig
 	var err error
-	config.rootCA, _, err = getCert(consensusKV, "id-ca")
+	config.rootCA, _, err = pki.GetCert(consensusKV, "id-ca")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ID root CA: %w", err)
 	}
-	config.serverCert, config.serverKey, err = getCert(consensusKV, "controller-manager")
+	config.serverCert, config.serverKey, err = pki.GetCert(consensusKV, "controller-manager")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get controller-manager serving certificate: %w", err)
 	}
-	config.serviceAccountPrivKey, err = getSingle(consensusKV, "service-account-privkey.der")
+	config.serviceAccountPrivKey, err = pki.GetSingle(consensusKV, "service-account-privkey.der")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get serviceaccount privkey: %w", err)
 	}
-	config.kubeConfig, err = getSingle(consensusKV, "controller-manager.kubeconfig")
+	config.kubeConfig, err = pki.GetSingle(consensusKV, "controller-manager.kubeconfig")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get controller-manager kubeconfig: %w", err)
 	}
