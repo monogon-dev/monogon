@@ -18,22 +18,65 @@ package kubernetes
 
 import (
 	"context"
+	"crypto/ed25519"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
+	"os"
 	"os/exec"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler"
 	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 
+	"go.etcd.io/etcd/clientv3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 )
 
 type KubeletSpec struct {
 	clusterDNS []net.IP
+}
+
+func bootstrapLocalKubelet(consensusKV clientv3.KV, nodeName string) error {
+	idCA, idKeyRaw, err := getCert(consensusKV, "id-ca")
+	if err != nil {
+		return err
+	}
+	idKey := ed25519.PrivateKey(idKeyRaw)
+	cert, key, err := issueCertificate(clientCertTemplate("system:node:"+nodeName, []string{"system:nodes"}), idCA, idKey)
+	if err != nil {
+		return err
+	}
+	kubeconfig, err := makeLocalKubeconfig(idCA, cert, key)
+	if err != nil {
+		return err
+	}
+
+	serverCert, serverKey, err := issueCertificate(serverCertTemplate([]string{nodeName}, []net.IP{}), idCA, idKey)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll("/data/kubernetes", 0755); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile("/data/kubernetes/kubelet.kubeconfig", kubeconfig, 0400); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile("/data/kubernetes/ca.crt", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: idCA}), 0400); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile("/data/kubernetes/kubelet.crt", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: serverCert}), 0400); err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile("/data/kubernetes/kubelet.key", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: serverKey}), 0400); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func runKubelet(spec *KubeletSpec, output io.Writer) supervisor.Runnable {

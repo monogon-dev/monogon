@@ -35,7 +35,6 @@ import (
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
-	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
 	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
@@ -75,7 +74,7 @@ func (s *Service) getKV() clientv3.KV {
 }
 
 func (s *Service) NewCluster() error {
-	return pki.NewCluster(s.getKV())
+	return newCluster(s.getKV())
 }
 
 // GetComponentLogs grabs logs from various Kubernetes binaries
@@ -99,16 +98,16 @@ func (s *Service) GetDebugKubeconfig(ctx context.Context, request *schema.GetDeb
 	if !s.consensusService.IsReady() {
 		return nil, status.Error(codes.Unavailable, "Consensus not ready yet")
 	}
-	idCA, idKeyRaw, err := pki.GetCert(s.getKV(), "id-ca")
+	idCA, idKeyRaw, err := getCert(s.getKV(), "id-ca")
 	idKey := ed25519.PrivateKey(idKeyRaw)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "Failed to load ID CA: %v", err)
 	}
-	debugCert, debugKey, err := pki.IssueCertificate(pki.ClientCertTemplate(request.Id, request.Groups), idCA, idKey)
+	debugCert, debugKey, err := issueCertificate(clientCertTemplate(request.Id, request.Groups), idCA, idKey)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "Failed to issue certs for kubeconfig: %v\n", err)
 	}
-	debugKubeconfig, err := pki.MakeLocalKubeconfig(idCA, debugCert, debugKey)
+	debugKubeconfig, err := makeLocalKubeconfig(idCA, debugCert, debugKey)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "Failed to generate kubeconfig: %v", err)
 	}
@@ -152,7 +151,7 @@ func (s *Service) Run() supervisor.Runnable {
 			return err
 		}
 
-		masterKubeconfig, err := pki.GetSingle(consensusKV, "master.kubeconfig")
+		masterKubeconfig, err := getSingle(consensusKV, "master.kubeconfig")
 		if err != nil {
 			return err
 		}

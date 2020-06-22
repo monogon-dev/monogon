@@ -27,11 +27,11 @@ import (
 	"path"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
-	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
-	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
-	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 
 	"go.etcd.io/etcd/clientv3"
+
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 )
 
 type apiserverConfig struct {
@@ -52,12 +52,12 @@ type apiserverConfig struct {
 func getPKIApiserverConfig(consensusKV clientv3.KV) (*apiserverConfig, error) {
 	var config apiserverConfig
 	var err error
-	config.idCA, _, err = pki.GetCert(consensusKV, "id-ca")
-	config.kubeletClientCert, config.kubeletClientKey, err = pki.GetCert(consensusKV, "kubelet-client")
-	config.aggregationCA, _, err = pki.GetCert(consensusKV, "aggregation-ca")
-	config.aggregationClientCert, config.aggregationClientKey, err = pki.GetCert(consensusKV, "front-proxy-client")
-	config.serverCert, config.serverKey, err = pki.GetCert(consensusKV, "apiserver")
-	saPrivkey, err := consensusKV.Get(context.Background(), path.Join(pki.EtcdPath, "service-account-privkey.der"))
+	config.idCA, _, err = getCert(consensusKV, "id-ca")
+	config.kubeletClientCert, config.kubeletClientKey, err = getCert(consensusKV, "kubelet-client")
+	config.aggregationCA, _, err = getCert(consensusKV, "aggregation-ca")
+	config.aggregationClientCert, config.aggregationClientKey, err = getCert(consensusKV, "front-proxy-client")
+	config.serverCert, config.serverKey, err = getCert(consensusKV, "apiserver")
+	saPrivkey, err := consensusKV.Get(context.Background(), path.Join(etcdPath, "service-account-privkey.der"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get serviceaccount privkey: %w", err)
 	}

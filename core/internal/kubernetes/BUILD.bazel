@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "apiserver.go",
+        "auth.go",
         "controller-manager.go",
         "csi.go",
         "kubelet.go",
@@ -18,7 +19,6 @@ go_library(
         "//core/internal/common:go_default_library",
         "//core/internal/common/supervisor:go_default_library",
         "//core/internal/consensus:go_default_library",
-        "//core/internal/kubernetes/pki:go_default_library",
         "//core/internal/kubernetes/reconciler:go_default_library",
         "//core/internal/storage:go_default_library",
         "//core/pkg/fileargs:go_default_library",
@@ -39,6 +39,7 @@ go_library(
         "@io_k8s_client_go//kubernetes/typed/core/v1:go_default_library",
         "@io_k8s_client_go//tools/cache:go_default_library",
         "@io_k8s_client_go//tools/clientcmd:go_default_library",
+        "@io_k8s_client_go//tools/clientcmd/api:go_default_library",
         "@io_k8s_client_go//tools/record:go_default_library",
         "@io_k8s_client_go//tools/reference:go_default_library",
         "@io_k8s_client_go//util/workqueue:go_default_library",
