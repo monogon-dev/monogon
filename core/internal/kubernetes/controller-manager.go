@@ -41,6 +41,8 @@ type controllerManagerConfig struct {
 	serverKey             []byte
 }
 
+var clusterNet = net.IPNet{IP: net.IP{10, 0, 0, 0}, Mask: net.IPMask{255, 255, 0, 0}}
+
 func getPKIControllerManagerConfig(ctx context.Context, kv clientv3.KV, kpki *pki.KubernetesPKI) (*controllerManagerConfig, error) {
 	var config controllerManagerConfig
 	var err error
@@ -84,7 +86,10 @@ func runControllerManager(config controllerManagerConfig, output io.Writer) supe
 				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.serverCert})),
 			args.FileOpt("--tls-private-key-file", "server-key.pem",
 				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serverKey})),
+			"--allocate-node-cidrs",
+			"--cluster-cidr="+clusterNet.String(),
 		)
+
 		if args.Error() != nil {
 			return fmt.Errorf("failed to use fileargs: %w", err)
 		}

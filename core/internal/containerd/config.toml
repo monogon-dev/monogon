@@ -90,8 +90,8 @@ oom_score = 0
     [plugins."io.containerd.grpc.v1.cri".cni]
       bin_dir = "/containerd/bin/cni"
       conf_dir = "/containerd/conf/cni"
-      max_conf_num = 1
-      conf_template = ""
+      max_conf_num = 0
+      conf_template = "/containerd/conf/cnispec.gojson"
     [plugins."io.containerd.grpc.v1.cri".registry]
       [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
         [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]

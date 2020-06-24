@@ -15,6 +15,5 @@ go_library(
 exports_files([
     "config.toml",
     "runsc.toml",
-    "loopback.json",
-    "ptp.json",
+    "cnispec.gojson",
 ])

@@ -103,7 +103,7 @@ func runAPIServer(config apiserverConfig, output io.Writer) supervisor.Runnable 
 				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.kubeletClientCert})),
 			args.FileOpt("--kubelet-client-key", "kubelet-client-key.pem",
 				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.kubeletClientKey})),
-			"--kubelet-preferred-address-types=Hostname",
+			"--kubelet-preferred-address-types=InternalIP",
 			args.FileOpt("--proxy-client-cert-file", "aggregation-client-cert.pem",
 				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.aggregationClientCert})),
 			args.FileOpt("--proxy-client-key-file", "aggregation-client-key.pem",

@@ -1001,10 +1001,16 @@ def go_repositories():
         sum = "h1:lez6TS6aAau+8wXUP3G9I3TGlmPFEq2CTxBaRqY6AGE=",
     )
     go_repository(
+        name = "com_github_mdlayher_genetlink",
+        importpath = "github.com/mdlayher/genetlink",
+        version = "v1.0.0",
+        sum = "h1:OoHN1OdyEIkScEmRgxLEe2M9U8ClMytqA5niynLtfj0=",
+    )
+    go_repository(
         name = "com_github_mdlayher_netlink",
         importpath = "github.com/mdlayher/netlink",
-        version = "v0.0.0-20191009155606-de872b0d824b",
-        sum = "h1:W3er9pI7mt2gOqOWzwvx20iJ8Akiqz1mUMTxU6wdvl8=",
+        version = "v1.1.0",
+        sum = "h1:mpdLgm+brq10nI9zM1BpX1kpDbh3NLl3RSnVq6ZSkfg=",
     )
     go_repository(
         name = "com_github_mdlayher_raw",
@@ -1527,6 +1533,12 @@ def go_repositories():
         importpath = "golang.org/x/xerrors",
         version = "v0.0.0-20191204190536-9bdfabe68543",
         sum = "h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4=",
+    )
+    go_repository(
+        name = "com_zx2c4_golang_wireguard_wgctrl",
+        importpath = "golang.zx2c4.com/wireguard/wgctrl",
+        version = "v0.0.0-20200515170644-ec7f26be9d9e",
+        sum = "h1:fqDhK9OlzaaiFjnyaAfR9Q1RPKCK7OCTLlHGP9f74Nk=",
     )
     go_repository(
         name = "org_gonum_v1_gonum",

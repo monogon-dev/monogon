@@ -19,6 +19,7 @@ package network
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 
@@ -133,6 +134,10 @@ func (s *Service) Run(ctx context.Context) error {
 	links, err := netlink.LinkList()
 	if err != nil {
 		s.logger.Fatal("Failed to list network links", zap.Error(err))
+	}
+
+	if err := ioutil.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1\n"), 0644); err != nil {
+		s.logger.Panic("Failed to enable IPv4 forwarding", zap.Error(err))
 	}
 
 	var ethernetLinks []netlink.Link

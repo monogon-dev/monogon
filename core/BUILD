@@ -36,8 +36,7 @@ smalltown_initramfs(
         # Containerd config files
         "//core/internal/containerd:runsc.toml": "/containerd/conf/runsc.toml",
         "//core/internal/containerd:config.toml": "/containerd/conf/config.toml",
-        "//core/internal/containerd:loopback.json": "/containerd/conf/cni/99-loopback.conf",
-        "//core/internal/containerd:ptp.json": "/containerd/conf/cni/10-ptp.conf",
+        "//core/internal/containerd:cnispec.gojson": "/containerd/conf/cnispec.gojson",
 
         # CNI Plugins
         "@com_github_containernetworking_plugins//plugins/main/loopback": "/containerd/bin/cni/loopback",

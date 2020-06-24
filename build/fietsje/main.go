@@ -102,7 +102,12 @@ func main() {
 	// Used by //core/cmd/nanoswitch
 	p.collect("github.com/google/nftables", "7127d9d22474b437f0e8136ddb21855df29790bf").use(
 		"github.com/koneu/natend",
+	)
+
+	// used by //core//kubernetes/clusternet
+	p.collect("golang.zx2c4.com/wireguard/wgctrl", "ec7f26be9d9e47a32a2789f8c346031978485cbf").use(
 		"github.com/mdlayher/netlink",
+		"github.com/mdlayher/genetlink",
 	)
 
 	// First generate the repositories starlark rule into memory. This is because rendering will lock all unlocked

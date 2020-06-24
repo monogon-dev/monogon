@@ -34,6 +34,7 @@ const (
 	MasterServicePort   = 7833
 	ExternalServicePort = 7836
 	DebugServicePort    = 7837
+	WireGuardPort       = 7838
 	KubernetesAPIPort   = 6443
 	DebuggerPort        = 2345
 )

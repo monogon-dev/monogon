@@ -1504,11 +1504,18 @@ entry: <
   semver: "v0.0.0-20190606142754-0394541c37b7"
 >
 entry: <
+  import_path: "github.com/mdlayher/genetlink"
+  version: "v1.0.0"
+  bazel_name: "com_github_mdlayher_genetlink"
+  sum: "h1:OoHN1OdyEIkScEmRgxLEe2M9U8ClMytqA5niynLtfj0="
+  semver: "v1.0.0"
+>
+entry: <
   import_path: "github.com/mdlayher/netlink"
-  version: "v0.0.0-20191009155606-de872b0d824b"
+  version: "v1.1.0"
   bazel_name: "com_github_mdlayher_netlink"
-  sum: "h1:W3er9pI7mt2gOqOWzwvx20iJ8Akiqz1mUMTxU6wdvl8="
-  semver: "v0.0.0-20191009155606-de872b0d824b"
+  sum: "h1:mpdLgm+brq10nI9zM1BpX1kpDbh3NLl3RSnVq6ZSkfg="
+  semver: "v1.1.0"
 >
 entry: <
   import_path: "github.com/mdlayher/raw"
@@ -2391,6 +2398,13 @@ entry: <
   bazel_name: "org_golang_x_xerrors"
   sum: "h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4="
   semver: "v0.0.0-20191204190536-9bdfabe68543"
+>
+entry: <
+  import_path: "golang.zx2c4.com/wireguard/wgctrl"
+  version: "ec7f26be9d9e47a32a2789f8c346031978485cbf"
+  bazel_name: "com_zx2c4_golang_wireguard_wgctrl"
+  sum: "h1:fqDhK9OlzaaiFjnyaAfR9Q1RPKCK7OCTLlHGP9f74Nk="
+  semver: "v0.0.0-20200515170644-ec7f26be9d9e"
 >
 entry: <
   import_path: "gonum.org/v1/gonum"

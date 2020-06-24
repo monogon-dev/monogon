@@ -24,18 +24,18 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/tools/clientcmd"
-
 	"go.etcd.io/etcd/clientv3"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 
 	schema "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
+	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/clusternet"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
@@ -181,6 +181,11 @@ func (s *Service) Run() supervisor.Runnable {
 			return fmt.Errorf("could not created kubelet config: %w", err)
 		}
 
+		key, err := clusternet.EnsureOnDiskKey()
+		if err != nil {
+			return fmt.Errorf("failed to ensure cluster key: %w", err)
+		}
+
 		for _, sub := range []struct {
 			name     string
 			runnable supervisor.Runnable
@@ -192,6 +197,7 @@ func (s *Service) Run() supervisor.Runnable {
 			{"reconciler", reconciler.Run(clientSet)},
 			{"csi-plugin", runCSIPlugin(s.storageService)},
 			{"pv-provisioner", runCSIProvisioner(s.storageService, clientSet, informerFactory)},
+			{"clusternet", clusternet.Run(informerFactory, clusterNet, clientSet, key)},
 		} {
 			err := supervisor.Run(ctx, sub.name, sub.runnable)
 			if err != nil {
