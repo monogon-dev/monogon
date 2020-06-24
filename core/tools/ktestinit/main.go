@@ -74,7 +74,10 @@ func main() {
 		} else if err != nil {
 			fmt.Printf("Failed to execute tests (tests didn't run): %v", err)
 		}
+	} else {
+		ioConn.Write([]byte{0})
 	}
+	ioConn.Close()
 
 	unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART)
 }

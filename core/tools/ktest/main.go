@@ -19,15 +19,14 @@
 package main
 
 import (
-	"crypto/rand"
+	"context"
 	"flag"
-	"fmt"
 	"io"
 	"log"
-	"net"
 	"os"
-	"os/exec"
-	"path/filepath"
+	"time"
+
+	"git.monogon.dev/source/nexantic.git/core/internal/launch"
 )
 
 var (
@@ -39,63 +38,38 @@ var (
 func main() {
 	flag.Parse()
 
-	// Create a temporary socket for passing data (currently only exit code)
-	// TODO: Land https://patchwork.ozlabs.org/project/qemu-devel/patch/1357671226-11334-1-git-send-email-alexander_barabash@mentor.com/
-	tmpDir := os.TempDir()
-	token := make([]byte, 16)
-	if _, err := io.ReadFull(rand.Reader, token); err != nil {
-		log.Fatal(err)
-	}
-
-	socketPath := filepath.Join(tmpDir, fmt.Sprintf("qemu-io-%x", token))
-	l, err := net.Listen("unix", socketPath)
+	hostFeedbackConn, vmFeedbackConn, err := launch.NewSocketPair()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to create socket pair: %v", err)
 	}
-	defer l.Close()
-	defer os.Remove(socketPath)
-
-	// Start a QEMU microvm (https://github.com/qemu/qemu/blob/master/docs/microvm.rst) with only
-	// a RNG and two character devices (one for console, one for OOB communication) attached.
-	cmd := exec.Command("qemu-system-x86_64", "-nodefaults", "-no-user-config", "-nographic", "-no-reboot",
-		"-accel", "kvm", "-cpu", "host",
-		"-M", "microvm,x-option-roms=off,pic=off,pit=off,rtc=off,isa-serial=off",
-		"-kernel", *kernelPath,
-		"-append", "reboot=t console=hvc0 quiet "+*cmdline,
-		"-initrd", *initrdPath,
-		"-device", "virtio-rng-device,max-bytes=1024,period=1000",
-		"-device", "virtio-serial-device,max_ports=2",
-		"-chardev", "stdio,id=con0", "-device", "virtconsole,chardev=con0",
-		"-chardev", "socket,id=io,path="+socketPath, "-device", "virtserialport,chardev=io",
-	)
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 
 	exitCodeChan := make(chan uint8, 1)
 
 	go func() {
-		conn, err := l.Accept()
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer conn.Close()
+		defer hostFeedbackConn.Close()
 
 		returnCode := make([]byte, 1)
-		if _, err := conn.Read(returnCode); err != nil && err != io.EOF {
+		if _, err := io.ReadFull(hostFeedbackConn, returnCode); err != nil {
 			log.Fatalf("Failed to read socket: %v", err)
 		}
 		exitCodeChan <- returnCode[0]
 	}()
 
-	if err := cmd.Run(); err != nil {
-		log.Fatalf("Failed to run QEMU: %v", err)
+	if err := launch.RunMicroVM(context.Background(), &launch.MicroVMOptions{
+		KernelPath:                  *kernelPath,
+		InitramfsPath:               *initrdPath,
+		Cmdline:                     *cmdline,
+		SerialPort:                  os.Stdout,
+		ExtraChardevs:               []*os.File{vmFeedbackConn},
+		DisableHostNetworkInterface: true,
+	}); err != nil {
+		log.Fatalf("Failed to run ktest VM: %v", err)
 	}
+
 	select {
 	case exitCode := <-exitCodeChan:
 		os.Exit(int(exitCode))
-	default:
-		log.Printf("Failed to get an error code back")
-		os.Exit(1)
+	case <-time.After(1 * time.Second):
+		log.Fatal("Failed to get an error code back (test runtime probably crashed)")
 	}
 }

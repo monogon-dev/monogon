@@ -6,6 +6,7 @@ go_library(
     srcs = ["main.go"],
     importpath = "git.monogon.dev/source/nexantic.git/core/tools/ktest",
     visibility = ["//visibility:private"],
+    deps = ["//core/internal/launch:go_default_library"],
 )
 
 go_binary(

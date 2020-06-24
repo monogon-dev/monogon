@@ -57,5 +57,6 @@ EOF
             "//core/tools/ktest",
             ":test_initramfs",
             "//core/tools/ktest:linux-testing",
+            "@com_github_bonzini_qboot//:qboot-bin",
         ],
     )

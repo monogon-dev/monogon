@@ -29,7 +29,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"git.monogon.dev/source/nexantic.git/core/internal/containerd"
 	"io/ioutil"
 	"math/big"
 	"net"
@@ -37,21 +36,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
+	"github.com/gogo/protobuf/proto"
+	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
 	apipb "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/consensus"
+	"git.monogon.dev/source/nexantic.git/core/internal/containerd"
 	"git.monogon.dev/source/nexantic.git/core/internal/integrity/tpm2"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes"
 	"git.monogon.dev/source/nexantic.git/core/internal/network"
 	"git.monogon.dev/source/nexantic.git/core/internal/storage"
-	"golang.org/x/sys/unix"
-
-	"github.com/cenkalti/backoff/v4"
-	"github.com/gogo/protobuf/proto"
-	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 var (
@@ -152,6 +152,9 @@ func (s *SmalltownNode) Start(ctx context.Context) error {
 		s.logger.Panic("ESP configuration partition not available", zap.Error(err))
 	}
 	enrolmentConfigRaw, err := ioutil.ReadFile(enrolmentPath)
+	if os.IsNotExist(err) {
+		enrolmentConfigRaw, err = ioutil.ReadFile("/sys/firmware/qemu_fw_cfg/by_name/com.nexantic.smalltown/enrolment.pb/raw")
+	}
 	if err == nil {
 		// We have an enrolment file, let's check its contents
 		var enrolmentConfig apipb.EnrolmentConfig

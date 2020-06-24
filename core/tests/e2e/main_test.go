@@ -25,6 +25,7 @@ import (
 	"net/http"
 	_ "net/http"
 	_ "net/http/pprof"
+	"os"
 	"testing"
 	"time"
 
@@ -80,7 +81,7 @@ func TestE2E(t *testing.T) {
 	procExit := make(chan struct{})
 
 	go func() {
-		if err := launch.Launch(ctx, launch.Options{Ports: portMap}); err != nil {
+		if err := launch.Launch(ctx, launch.Options{Ports: portMap, SerialPort: os.Stdout}); err != nil {
 			panic(err)
 		}
 		close(procExit)
