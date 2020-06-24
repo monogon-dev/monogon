@@ -832,6 +832,13 @@ entry: <
   semver: "v0.0.4"
 >
 entry: <
+  import_path: "github.com/google/nftables"
+  version: "7127d9d22474b437f0e8136ddb21855df29790bf"
+  bazel_name: "com_github_google_nftables"
+  sum: "h1:D6bN82zzK92ywYsE+Zjca7EHZCRZbcNTU3At7WdxQ+c="
+  semver: "v0.0.0-20200316075819-7127d9d22474"
+>
+entry: <
   import_path: "github.com/google/subcommands"
   version: "v0.0.0-20190508160503-636abe8753b8"
   bazel_name: "com_github_google_subcommands"
@@ -1035,6 +1042,13 @@ entry: <
   semver: "v3.16.0+incompatible"
 >
 entry: <
+  import_path: "github.com/koneu/natend"
+  version: "v0.0.0-20150829182554-ec0926ea948d"
+  bazel_name: "com_github_koneu_natend"
+  sum: "h1:MFX8DxRnKMY/2M3H61iSsVbo/n3h0MWGmWNN1UViOU0="
+  semver: "v0.0.0-20150829182554-ec0926ea948d"
+>
+entry: <
   import_path: "github.com/konsorten/go-windows-terminal-sequences"
   version: "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
   bazel_name: "com_github_konsorten_go_windows_terminal_sequences"
@@ -1152,6 +1166,13 @@ entry: <
   bazel_name: "com_github_mdlayher_ethernet"
   sum: "h1:lez6TS6aAau+8wXUP3G9I3TGlmPFEq2CTxBaRqY6AGE="
   semver: "v0.0.0-20190606142754-0394541c37b7"
+>
+entry: <
+  import_path: "github.com/mdlayher/netlink"
+  version: "v0.0.0-20191009155606-de872b0d824b"
+  bazel_name: "com_github_mdlayher_netlink"
+  sum: "h1:W3er9pI7mt2gOqOWzwvx20iJ8Akiqz1mUMTxU6wdvl8="
+  semver: "v0.0.0-20191009155606-de872b0d824b"
 >
 entry: <
   import_path: "github.com/mdlayher/raw"

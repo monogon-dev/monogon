@@ -22,11 +22,12 @@ import (
 	"net"
 	"os"
 
-	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
-
 	"github.com/vishvananda/netlink"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
+
+	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/core/internal/network/dhcp"
 )
 
 const (
@@ -36,7 +37,7 @@ const (
 
 type Service struct {
 	config Config
-	dhcp   *dhcpClient
+	dhcp   *dhcp.Client
 
 	logger *zap.Logger
 }
@@ -47,7 +48,7 @@ type Config struct {
 func New(config Config) *Service {
 	return &Service{
 		config: config,
-		dhcp:   newDHCPClient(),
+		dhcp:   dhcp.New(),
 	}
 }
 
@@ -76,7 +77,7 @@ func setResolvconf(nameservers []net.IP, searchDomains []string) error {
 
 func (s *Service) addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP) error {
 	if err := netlink.AddrReplace(link, &netlink.Addr{IPNet: &addr}); err != nil {
-		return err
+		return fmt.Errorf("failed to add DHCP address to network interface \"%v\": %w", link.Attrs().Name, err)
 	}
 
 	if gw.IsUnspecified() {
@@ -96,20 +97,20 @@ func (s *Service) addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP)
 }
 
 func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
-	err := supervisor.Run(ctx, "dhcp", s.dhcp.run(iface))
+	err := supervisor.Run(ctx, "dhcp", s.dhcp.Run(iface))
 	if err != nil {
 		return err
 	}
-	status, err := s.dhcp.status(ctx, true)
+	status, err := s.dhcp.Status(ctx, true)
 	if err != nil {
-		return fmt.Errorf("could not get DHCP status: %w", err)
+		return fmt.Errorf("could not get DHCP Status: %w", err)
 	}
 
-	if err := setResolvconf(status.dns, []string{}); err != nil {
+	if err := setResolvconf(status.DNS, []string{}); err != nil {
 		s.logger.Warn("failed to set resolvconf", zap.Error(err))
 	}
 
-	if err := s.addNetworkRoutes(iface, net.IPNet{IP: status.address.IP, Mask: status.address.Mask}, status.gateway); err != nil {
+	if err := s.addNetworkRoutes(iface, status.Address, status.Gateway); err != nil {
 		s.logger.Warn("failed to add routes", zap.Error(err))
 	}
 
@@ -118,11 +119,11 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 
 // GetIP returns the current IP (and optionally waits for one to be assigned)
 func (s *Service) GetIP(ctx context.Context, wait bool) (*net.IP, error) {
-	status, err := s.dhcp.status(ctx, wait)
+	status, err := s.dhcp.Status(ctx, wait)
 	if err != nil {
 		return nil, err
 	}
-	return &status.address.IP, nil
+	return &status.Address.IP, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {

@@ -18,7 +18,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -38,6 +38,6 @@ func main() {
 		if err == ctx.Err() {
 			return
 		}
-		fmt.Printf("Failed to execute: %v\n", err)
+		log.Fatalf("Failed to execute: %v\n", err)
 	}
 }

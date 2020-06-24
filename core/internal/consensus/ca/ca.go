@@ -35,6 +35,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net"
 	"time"
 )
 
@@ -150,7 +151,7 @@ func FromCertificates(caCert []byte, caKey []byte, crl []byte) (*CA, error) {
 }
 
 // IssueCertificate issues a certificate
-func (ca *CA) IssueCertificate(commonName string) (cert []byte, privkey []byte, err error) {
+func (ca *CA) IssueCertificate(commonName string, ip net.IP) (cert []byte, privkey []byte, err error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 127)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
@@ -179,6 +180,7 @@ func (ca *CA) IssueCertificate(commonName string) (cert []byte, privkey []byte, 
 		NotAfter:              unknownNotAfter,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		DNSNames:              []string{commonName},
+		IPAddresses:           []net.IP{ip},
 	}
 	cert, err = x509.CreateCertificate(rand.Reader, etcdCert, ca.CACert, pubKey, ca.PrivateKey)
 	return

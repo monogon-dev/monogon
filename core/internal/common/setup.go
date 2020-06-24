@@ -16,6 +16,13 @@
 
 package common
 
+import (
+	"crypto/ed25519"
+	"encoding/hex"
+	"errors"
+	"strings"
+)
+
 type (
 	SmalltownState string
 )
@@ -38,3 +45,14 @@ const (
 	// Node is fully provisioned.
 	StateJoined SmalltownState = "enrolled"
 )
+
+func NameFromIDKey(pubKey ed25519.PublicKey) string {
+	return "smalltown-" + hex.EncodeToString(pubKey[:16])
+}
+
+func IDKeyPrefixFromName(name string) ([]byte, error) {
+	if !strings.HasPrefix(name, "smalltown-") {
+		return []byte{}, errors.New("invalid name")
+	}
+	return hex.DecodeString(strings.TrimPrefix(name, "smalltown-"))
+}

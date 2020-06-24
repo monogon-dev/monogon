@@ -18,10 +18,11 @@ package node
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"os"
 
-	"go.uber.org/zap"
+	"git.monogon.dev/source/nexantic.git/core/internal/storage"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -61,28 +62,34 @@ func (s *SmalltownNode) InitializeNode(ctx context.Context) (*api.NewNodeInfo, s
 
 	return &api.NewNodeInfo{
 		EnrolmentConfig: s.enrolmentConfig,
-		Ip:              []byte(*nodeIP),
+		Ip:              *nodeIP,
 		IdCert:          nodeCert,
 		GlobalUnlockKey: globalUnlockKey,
 	}, nodeID, nil
 }
 
-func (s *SmalltownNode) JoinCluster(context context.Context, req *api.JoinClusterRequest) (*api.JoinClusterResponse, error) {
+func (s *SmalltownNode) JoinCluster(ctx context.Context, req *api.JoinClusterRequest) (*api.JoinClusterResponse, error) {
 	if s.state != common.StateEnrollMode {
 		return nil, ErrNotInJoinMode
 	}
 
 	s.logger.Info("Joining Consenus")
 
+	dataPath, err := s.Storage.GetPathInPlace(storage.PlaceData, "etcd")
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "Data partition not available: %v", err)
+	}
+
+	if err := os.MkdirAll(dataPath, 0600); err != nil {
+		return nil, status.Errorf(codes.Internal, "Cannot create path on data partition: %v", err)
+	}
+
 	config := s.Consensus.GetConfig()
 	config.Name = s.hostname
-	config.InitialCluster = "default" // Clusters can't cross-join anyways due to cryptography
+	config.InitialCluster = req.InitialCluster
+	config.DataDir = dataPath
 	s.Consensus.SetConfig(config)
-	var err error
-	if err != nil {
-		s.logger.Warn("Invalid JoinCluster request", zap.Error(err))
-		return nil, errors.New("invalid join request")
-	}
+
 	if err := s.Consensus.WriteCertificateFiles(req.Certs); err != nil {
 		return nil, err
 	}
@@ -94,6 +101,8 @@ func (s *SmalltownNode) JoinCluster(context context.Context, req *api.JoinCluste
 	}
 
 	s.state = common.StateJoined
+	go s.Containerd.Run()(context.TODO())
+	s.Kubernetes.Start()
 
 	s.logger.Info("Joined cluster. Node is now syncing.")
 

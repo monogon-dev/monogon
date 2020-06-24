@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package network
+package dhcp
 
 import (
 	"context"
@@ -29,48 +29,48 @@ import (
 	"go.uber.org/zap"
 )
 
-type dhcpClient struct {
+type Client struct {
 	reqC chan *dhcpStatusReq
 }
 
-func newDHCPClient() *dhcpClient {
-	return &dhcpClient{
+func New() *Client {
+	return &Client{
 		reqC: make(chan *dhcpStatusReq),
 	}
 }
 
 type dhcpStatusReq struct {
-	resC chan *dhcpStatus
+	resC chan *Status
 	wait bool
 }
 
-func (r *dhcpStatusReq) fulfill(s *dhcpStatus) {
+func (r *dhcpStatusReq) fulfill(s *Status) {
 	go func() {
 		r.resC <- s
 	}()
 }
 
-// dhcpStatus is the IPv4 configuration provisioned via DHCP for a given interface. It does not necessarily represent
+// Status is the IPv4 configuration provisioned via DHCP for a given interface. It does not necessarily represent
 // a configuration that is active or even valid.
-type dhcpStatus struct {
-	// address is 'our' (the node's) IPv4 address on the network.
-	address net.IPNet
-	// gateway is the default gateway/router of this network, or 0.0.0.0 if none was given.
-	gateway net.IP
-	// dns is a list of IPv4 DNS servers to use.
-	dns []net.IP
+type Status struct {
+	// Address is 'our' (the node's) IPv4 Address on the network.
+	Address net.IPNet
+	// Gateway is the default Gateway/router of this network, or 0.0.0.0 if none was given.
+	Gateway net.IP
+	// DNS is a list of IPv4 DNS servers to use.
+	DNS []net.IP
 }
 
-func (s *dhcpStatus) String() string {
-	return fmt.Sprintf("Address: %s, Gateway: %s, DNS: %v", s.address.String(), s.gateway.String(), s.dns)
+func (s *Status) String() string {
+	return fmt.Sprintf("Address: %s, Gateway: %s, DNS: %v", s.Address.String(), s.Gateway.String(), s.DNS)
 }
 
-func (c *dhcpClient) run(iface netlink.Link) supervisor.Runnable {
+func (c *Client) Run(iface netlink.Link) supervisor.Runnable {
 	return func(ctx context.Context) error {
 		logger := supervisor.Logger(ctx)
 
-		// Channel updated with address once one gets assigned/updated
-		newC := make(chan *dhcpStatus)
+		// Channel updated with Address once one gets assigned/updated
+		newC := make(chan *Status)
 		// Status requests waiting for configuration
 		waiters := []*dhcpStatusReq{}
 
@@ -106,7 +106,7 @@ func (c *dhcpClient) run(iface netlink.Link) supervisor.Runnable {
 		// We start at WAITING, once we get a current config we move to ASSIGNED
 		// Once this becomes more complex (ie. has to handle link state changes)
 		// this should grow into a real state machine.
-		var current *dhcpStatus
+		var current *Status
 		logger.Info("DHCP client WAITING")
 		for {
 			select {
@@ -133,28 +133,28 @@ func (c *dhcpClient) run(iface netlink.Link) supervisor.Runnable {
 	}
 }
 
-// parseAck turns an internal status (from the dhcpv4 library) into a dhcpStatus
-func parseAck(ack *dhcpv4.DHCPv4) *dhcpStatus {
+// parseAck turns an internal Status (from the dhcpv4 library) into a Status
+func parseAck(ack *dhcpv4.DHCPv4) *Status {
 	address := net.IPNet{IP: ack.YourIPAddr, Mask: ack.SubnetMask()}
 
-	// DHCP routers are optional - if none are provided, assume no router and set gateway to 0.0.0.0
-	// (this makes gateway.IsUnspecified() == true)
+	// DHCP routers are optional - if none are provided, assume no router and set Gateway to 0.0.0.0
+	// (this makes Gateway.IsUnspecified() == true)
 	gateway, _, _ := net.ParseCIDR("0.0.0.0/0")
 	if routers := ack.Router(); len(routers) > 0 {
 		gateway = routers[0]
 	}
-	return &dhcpStatus{
-		address: address,
-		gateway: gateway,
-		dns:     ack.DNS(),
+	return &Status{
+		Address: address,
+		Gateway: gateway,
+		DNS:     ack.DNS(),
 	}
 }
 
-// status returns the DHCP configuration requested from us by the local DHCP server.
-// If wait is true, this function will block until a DHCP configuration is available. Otherwise, a nil status may be
+// Status returns the DHCP configuration requested from us by the local DHCP server.
+// If wait is true, this function will block until a DHCP configuration is available. Otherwise, a nil Status may be
 // returned to indicate that no configuration has been received yet.
-func (c *dhcpClient) status(ctx context.Context, wait bool) (*dhcpStatus, error) {
-	resC := make(chan *dhcpStatus)
+func (c *Client) Status(ctx context.Context, wait bool) (*Status, error) {
+	resC := make(chan *Status)
 	c.reqC <- &dhcpStatusReq{
 		resC: resC,
 		wait: wait,

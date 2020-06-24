@@ -104,7 +104,7 @@ func InitializeEncryptedBlockDevice(name, baseName string, encryptionKey []byte)
 		return err
 	}
 	defer integrityPartition.Close()
-	zeroed512BBuf := make([]byte, 4096)
+	zeroed512BBuf := make([]byte, 4096*128)
 	if _, err := integrityPartition.Write(zeroed512BBuf); err != nil {
 		return fmt.Errorf("failed to wipe header: %w", err)
 	}

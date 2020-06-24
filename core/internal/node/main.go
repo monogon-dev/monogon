@@ -25,7 +25,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
@@ -215,6 +214,10 @@ func (s *SmalltownNode) startEnrolling(ctx context.Context) error {
 		return err
 	}
 
+	if err := s.initNodeAPI(); err != nil {
+		return err
+	}
+
 	// We only support TPM2 at the moment, any abstractions here would be premature
 	trustAgent := tpm2.TPM2Agent{}
 
@@ -281,7 +284,11 @@ func (s *SmalltownNode) startForSetup(ctx context.Context) error {
 	s.Consensus.SetConfig(config)
 
 	// Generate the cluster CA and store it to local storage.
-	if err := s.Consensus.PrecreateCA(); err != nil {
+	extIP, err := s.Network.GetIP(ctx, true)
+	if err != nil {
+		return err
+	}
+	if err := s.Consensus.PrecreateCA(*extIP); err != nil {
 		return err
 	}
 
@@ -370,7 +377,7 @@ func (s *SmalltownNode) generateNodeID() ([]byte, string, error) {
 		return []byte{}, "", fmt.Errorf("failed to write node key: %w", err)
 	}
 
-	name := "smalltown-" + hex.EncodeToString([]byte(pubKey[:16]))
+	name := common.NameFromIDKey(pubKey)
 
 	// This has no SANs because it authenticates by public key, not by name
 	nodeCert := &x509.Certificate{
@@ -439,7 +446,7 @@ func (s *SmalltownNode) initNodeAPI() error {
 
 	secureTransport := &tls.Config{
 		Certificates:       []tls.Certificate{nodeID},
-		ClientAuth:         tls.RequireAndVerifyClientCert,
+		ClientAuth:         tls.RequestClientCert,
 		InsecureSkipVerify: true,
 		// Critical function, please review any changes with care
 		// TODO(lorenz): Actively check that this actually provides the security guarantees that we need
@@ -451,6 +458,7 @@ func (s *SmalltownNode) initNodeAPI() error {
 					return nil
 				}
 			}
+			s.logger.Warn("Rejecting NodeService connection with no trusted client certificate")
 			return errors.New("failed to find authorized NMS certificate")
 		},
 		MinVersion: tls.VersionTLS13,
@@ -470,6 +478,7 @@ func (s *SmalltownNode) initNodeAPI() error {
 			panic(err) // Can only happen during initialization and is always fatal
 		}
 	}()
+
 	return nil
 }
 

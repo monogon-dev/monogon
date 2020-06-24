@@ -99,6 +99,12 @@ func main() {
 	// for interactive debugging during development (//:dlv alias)
 	depsDelve(p)
 
+	// Used by //core/cmd/nanoswitch
+	p.collect("github.com/google/nftables", "7127d9d22474b437f0e8136ddb21855df29790bf").use(
+		"github.com/koneu/natend",
+		"github.com/mdlayher/netlink",
+	)
+
 	// First generate the repositories starlark rule into memory. This is because rendering will lock all unlocked
 	// dependencies, which might take a while. If a use were to interrupt it now, they would end up with an incomplete
 	// repositories.bzl and would have to restore from git.

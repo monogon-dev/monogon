@@ -23,19 +23,26 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
+	"net"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
+	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"go.etcd.io/etcd/clientv3"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
 	"git.monogon.dev/source/nexantic.git/core/generated/api"
+	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/pkg/tpm"
 )
 
@@ -53,7 +60,7 @@ func nodeId(idCert []byte) (string, error) {
 		return "", errors.New("invalid node identity certificate")
 	}
 
-	return "smalltown-" + hex.EncodeToString([]byte(pubKey[:16])), nil
+	return common.NameFromIDKey(pubKey), nil
 }
 
 func (s *Server) registerNewNode(node *api.Node) error {
@@ -178,6 +185,42 @@ func (s *Server) TPM2Unlock(unlockServer api.NodeManagementService_TPM2UnlockSer
 	}})
 }
 
+func (s *Server) dialNode(ctx context.Context, node *api.Node) (api.NodeServiceClient, error) {
+	masterID, err := s.loadMasterCert()
+	if err != nil {
+		return nil, err
+	}
+
+	secureTransport := &tls.Config{
+		Certificates:       []tls.Certificate{*masterID},
+		InsecureSkipVerify: true,
+		// Critical function, please review any changes with care
+		// TODO(lorenz): Actively check that this actually provides the security guarantees that we need
+		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			for _, cert := range rawCerts {
+				// X.509 certificates in DER can be compared like this since DER has a unique representation
+				// for each certificate.
+				if bytes.Equal(cert, node.IdCert) {
+					return nil
+				}
+			}
+			return errors.New("failed to find authorized Node certificate")
+		},
+		MinVersion: tls.VersionTLS13,
+	}
+	addr := net.IP(node.Address)
+	opts := []grpcretry.CallOption{
+		grpcretry.WithBackoff(grpcretry.BackoffExponential(100 * time.Millisecond)),
+	}
+	clientCreds := grpc.WithTransportCredentials(credentials.NewTLS(secureTransport))
+	clientConn, err := grpc.DialContext(ctx, fmt.Sprintf("%v:%v", addr, common.NodeServicePort), clientCreds,
+		grpc.WithUnaryInterceptor(grpcretry.UnaryClientInterceptor(opts...)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial node service: %w", err)
+	}
+	return api.NewNodeServiceClient(clientConn), nil
+}
+
 func (s *Server) NewTPM2NodeRegister(registerServer api.NodeManagementService_NewTPM2NodeRegisterServer) error {
 	registerReqContainer, err := registerServer.Recv()
 	if err != nil {
@@ -258,8 +301,17 @@ func (s *Server) NewTPM2NodeRegister(registerServer api.NodeManagementService_Ne
 	}
 
 	// TODO: Plug in policy engine here
+	idCert, err := x509.ParseCertificate(newNodeInfo.IdCert)
+	if err != nil {
+		return err
+	}
+	nodeIdPubKey, ok := idCert.PublicKey.(ed25519.PublicKey)
+	if !ok || len(nodeIdPubKey) != ed25519.PublicKeySize {
+		return status.Error(codes.InvalidArgument, "Invalid ID certificate public key")
+	}
 
 	node := api.Node{
+		Name:    common.NameFromIDKey(nodeIdPubKey),
 		Address: newNodeInfo.Ip,
 		Integrity: &api.Node_Tpm2{Tpm2: &api.NodeTPM2{
 			AkPub:    registerReq.AkPublic,
@@ -268,13 +320,35 @@ func (s *Server) NewTPM2NodeRegister(registerServer api.NodeManagementService_Ne
 		}},
 		GlobalUnlockKey: newNodeInfo.GlobalUnlockKey,
 		IdCert:          newNodeInfo.IdCert,
-		State:           api.Node_UNININITALIZED,
+		State:           api.Node_MASTER,
 	}
 
 	if err := s.registerNewNode(&node); err != nil {
 		s.Logger.Error("failed to register a node", zap.Error(err))
 		return status.Error(codes.Internal, "failed to register node")
 	}
+
+	go func() {
+		ctx := context.Background()
+		nodeClient, err := s.dialNode(ctx, &node)
+		if err != nil {
+			s.Logger.Warn("Failed to join newly enrolled node", zap.Error(err))
+			return
+		}
+		newCerts, initialCluster, err := s.consensusService.ProvisionMember(node.Name, node.Address)
+		if err != nil {
+			s.Logger.Warn("Failed to join newly enrolled node", zap.Error(err))
+			return
+		}
+		_, err = nodeClient.JoinCluster(ctx, &api.JoinClusterRequest{
+			InitialCluster: initialCluster,
+			Certs:          newCerts,
+		}, grpcretry.WithMax(10))
+		if err != nil {
+			s.Logger.Warn("Failed to join newly enrolled node", zap.Error(err))
+			return
+		}
+	}()
 
 	return nil
 }

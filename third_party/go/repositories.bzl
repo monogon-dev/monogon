@@ -712,6 +712,12 @@ def go_repositories():
         patch_args = ["-p1"],
     )
     go_repository(
+        name = "com_github_google_nftables",
+        importpath = "github.com/google/nftables",
+        version = "v0.0.0-20200316075819-7127d9d22474",
+        sum = "h1:D6bN82zzK92ywYsE+Zjca7EHZCRZbcNTU3At7WdxQ+c=",
+    )
+    go_repository(
         name = "com_github_google_subcommands",
         importpath = "github.com/google/subcommands",
         version = "v0.0.0-20190508160503-636abe8753b8",
@@ -874,6 +880,12 @@ def go_repositories():
         sum = "h1:TFzFZop2KxGhqNwsyjgmIh5JOrpG940MZlm5gNbxr8g=",
     )
     go_repository(
+        name = "com_github_koneu_natend",
+        importpath = "github.com/koneu/natend",
+        version = "v0.0.0-20150829182554-ec0926ea948d",
+        sum = "h1:MFX8DxRnKMY/2M3H61iSsVbo/n3h0MWGmWNN1UViOU0=",
+    )
+    go_repository(
         name = "com_github_konsorten_go_windows_terminal_sequences",
         importpath = "github.com/konsorten/go-windows-terminal-sequences",
         version = "v1.0.1",
@@ -974,6 +986,12 @@ def go_repositories():
         importpath = "github.com/mdlayher/ethernet",
         version = "v0.0.0-20190606142754-0394541c37b7",
         sum = "h1:lez6TS6aAau+8wXUP3G9I3TGlmPFEq2CTxBaRqY6AGE=",
+    )
+    go_repository(
+        name = "com_github_mdlayher_netlink",
+        importpath = "github.com/mdlayher/netlink",
+        version = "v0.0.0-20191009155606-de872b0d824b",
+        sum = "h1:W3er9pI7mt2gOqOWzwvx20iJ8Akiqz1mUMTxU6wdvl8=",
     )
     go_repository(
         name = "com_github_mdlayher_raw",
