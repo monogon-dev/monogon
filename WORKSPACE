@@ -187,3 +187,12 @@ http_archive(
     strip_prefix = "lz4-1.9.2",
     urls = ["https://github.com/lz4/lz4/archive/v1.9.2.tar.gz"],
 )
+
+# qboot bootloader for MicroVMs
+http_archive(
+    name = "com_github_bonzini_qboot",
+    build_file = "//third_party/qboot:qboot.bzl",
+    sha256 = "a643b2486fbee57b969659d408984094ca9afa1a048317dd3f5d3022e47213e8",
+    strip_prefix = "qboot-a5300c4949b8d4de2d34bedfaed66793f48ec948",
+    urls = ["https://github.com/bonzini/qboot/archive/a5300c4949b8d4de2d34bedfaed66793f48ec948.tar.gz"],
+)
