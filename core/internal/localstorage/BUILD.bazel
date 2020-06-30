@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "directory_data.go",
+        "directory_pki.go",
+        "directory_root.go",
+        "storage.go",
+    ],
+    importpath = "git.monogon.dev/source/nexantic.git/core/internal/localstorage",
+    visibility = ["//core:__subpackages__"],
+    deps = [
+        "//core/internal/localstorage/crypt:go_default_library",
+        "//core/internal/localstorage/declarative:go_default_library",
+        "//core/pkg/tpm:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["storage_test.go"],
+    embed = [":go_default_library"],
+    deps = ["//core/internal/localstorage/declarative:go_default_library"],
+)
