@@ -47,6 +47,9 @@ type FilePlacement interface {
 // backends, and set on all directories during placement by a given backend.
 type DirectoryPlacement interface {
 	Placement
+	// MkdirAll creates this directory and all its parents on backing stores that have a physical directory
+	// structure.
+	MkdirAll(file os.FileMode) error
 }
 
 // DirectoryPlacer is a placement backend-defined function that, given the path returned by the parent of a directory,

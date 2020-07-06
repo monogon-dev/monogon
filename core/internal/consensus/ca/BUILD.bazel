@@ -5,4 +5,5 @@ go_library(
     srcs = ["ca.go"],
     importpath = "git.monogon.dev/source/nexantic.git/core/internal/consensus/ca",
     visibility = ["//:__subpackages__"],
+    deps = ["@io_etcd_go_etcd//clientv3:go_default_library"],
 )

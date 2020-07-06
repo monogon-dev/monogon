@@ -39,22 +39,8 @@ import (
 
 	apipb "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
+	freeport "git.monogon.dev/source/nexantic.git/golibs/common"
 )
-
-// This is more of a best-effort solution and not guaranteed to give us unused ports (since we're not immediately using
-// them), but AFAIK qemu cannot dynamically select hostfwd ports
-func getFreePort() (uint16, io.Closer, error) {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		return 0, nil, err
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return 0, nil, err
-	}
-	return uint16(l.Addr().(*net.TCPAddr).Port), l, nil
-}
 
 type qemuValue map[string][]string
 
@@ -167,7 +153,7 @@ func IdentityPortMap() PortMap {
 func ConflictFreePortMap() (PortMap, error) {
 	portMap := make(PortMap)
 	for _, port := range requiredPorts {
-		mappedPort, listenCloser, err := getFreePort()
+		mappedPort, listenCloser, err := freeport.AllocateTCPPort()
 		if err != nil {
 			return portMap, fmt.Errorf("failed to get free host port: %w", err)
 		}

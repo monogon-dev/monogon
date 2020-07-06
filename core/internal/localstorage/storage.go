@@ -39,9 +39,10 @@ import (
 
 type Root struct {
 	declarative.Directory
-	ESP  ESPDirectory  `dir:"esp"`
-	Data DataDirectory `dir:"data"`
-	Etc  EtcDirectory  `dif:"etc"`
+	ESP       ESPDirectory       `dir:"esp"`
+	Data      DataDirectory      `dir:"data"`
+	Etc       EtcDirectory       `dir:"etc"`
+	Ephemeral EphemeralDirectory `dir:"ephemeral"`
 }
 
 type PKIDirectory struct {
@@ -77,16 +78,30 @@ type DataDirectory struct {
 	// mounted is set by DataDirectory when it is mounted. It ensures it's only mounted once.
 	mounted bool
 
-	Etcd struct {
-		declarative.Directory
-		MemberPKI PKIDirectory `dir:"member_pki"`
-	} `dir:"etcd"`
+	Etcd    DataEtcdDirectory     `dir:"etcd"`
 	Node    PKIDirectory          `dir:"node_pki"`
 	Volumes declarative.Directory `dir:"volumes"`
+}
+
+type DataEtcdDirectory struct {
+	declarative.Directory
+	PeerPKI PKIDirectory          `dir:"peer_pki"`
+	PeerCRL declarative.File      `file:"peer_crl"`
+	Data    declarative.Directory `dir:"data"`
 }
 
 type EtcDirectory struct {
 	declarative.Directory
 	Hosts     declarative.File `file:"hosts"`
 	MachineID declarative.File `file:"machine_id"`
+}
+
+type EphemeralDirectory struct {
+	declarative.Directory
+	Consensus EphemeralConsensusDirectory `dir:"consensus"`
+}
+
+type EphemeralConsensusDirectory struct {
+	declarative.Directory
+	ClientSocket declarative.File `file:"client.sock"`
 }

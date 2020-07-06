@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "go_default_library",
@@ -6,20 +6,28 @@ go_library(
     importpath = "git.monogon.dev/source/nexantic.git/core/internal/consensus",
     visibility = ["//:__subpackages__"],
     deps = [
-        "//core/api/api:go_default_library",
         "//core/internal/common:go_default_library",
-        "//core/internal/common/service:go_default_library",
+        "//core/internal/common/supervisor:go_default_library",
         "//core/internal/consensus/ca:go_default_library",
-        "@com_github_pkg_errors//:go_default_library",
+        "//core/internal/localstorage:go_default_library",
         "@io_etcd_go_etcd//clientv3:go_default_library",
         "@io_etcd_go_etcd//clientv3/namespace:go_default_library",
         "@io_etcd_go_etcd//embed:go_default_library",
-        "@io_etcd_go_etcd//etcdserver/api/membership:go_default_library",
-        "@io_etcd_go_etcd//pkg/types:go_default_library",
-        "@io_etcd_go_etcd//proxy/grpcproxy/adapter:go_default_library",
-        "@org_golang_x_sys//unix:go_default_library",
         "@org_uber_go_atomic//:go_default_library",
         "@org_uber_go_zap//:go_default_library",
         "@org_uber_go_zap//zapcore:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["consensus_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//core/internal/common/supervisor:go_default_library",
+        "//core/internal/localstorage:go_default_library",
+        "//core/internal/localstorage/declarative:go_default_library",
+        "//golibs/common:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
     ],
 )

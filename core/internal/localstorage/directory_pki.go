@@ -135,3 +135,33 @@ func (p *PKIDirectory) EnsureSelfSigned(namer CertificateTemplateNamer) (*tls.Ce
 		Leaf:        cert,
 	}, nil
 }
+
+// AllExist returns true if all PKI files (cert, key, CA cert) are present on the backing
+// store.
+func (p *PKIDirectory) AllExist() (bool, error) {
+	for _, d := range []*declarative.File{&p.CACertificate, &p.Certificate, &p.Key} {
+		exists, err := d.Exists()
+		if err != nil {
+			return false, fmt.Errorf("failed to check %q: %v", d.FullPath(), err)
+		}
+		if !exists {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+// AllAbsent returns true if all PKI files (cert, key, CA cert) are missing from the backing
+// store.
+func (p *PKIDirectory) AllAbsent() (bool, error) {
+	for _, d := range []*declarative.File{&p.CACertificate, &p.Certificate, &p.Key} {
+		exists, err := d.Exists()
+		if err != nil {
+			return false, fmt.Errorf("failed to check %q: %v", d.FullPath(), err)
+		}
+		if exists {
+			return false, nil
+		}
+	}
+	return true, nil
+}

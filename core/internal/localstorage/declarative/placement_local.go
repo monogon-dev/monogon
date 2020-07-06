@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"golang.org/x/sys/unix"
 )
 
 // FSRoot is a root of a storage backend that resides on the local filesystem.
@@ -56,8 +58,28 @@ func (f *FSPlacement) Read() ([]byte, error) {
 	return ioutil.ReadFile(f.FullPath())
 }
 
+// Write performs an atomic file write, via a temporary file.
 func (f *FSPlacement) Write(d []byte, mode os.FileMode) error {
-	return ioutil.WriteFile(f.FullPath(), d, mode)
+	tmp, err := ioutil.TempFile("", "")
+	if err != nil {
+		return fmt.Errorf("temporary file creation failed: %w", err)
+	}
+	defer tmp.Close()
+	defer os.Remove(tmp.Name())
+	if _, err := tmp.Write(d); err != nil {
+		return fmt.Errorf("temporary file write failed: %w", err)
+	}
+	tmp.Close()
+
+	if err := unix.Rename(tmp.Name(), f.FullPath()); err != nil {
+		return fmt.Errorf("renaming target file failed: %w", err)
+	}
+
+	return nil
+}
+
+func (f *FSPlacement) MkdirAll(perm os.FileMode) error {
+	return os.MkdirAll(f.FullPath(), perm)
 }
 
 // PlaceFS takes a pointer to a Directory or a pointer to a structure embedding Directory and places it at a given
@@ -84,7 +106,7 @@ func PlaceFS(dd interface{}, root string) error {
 		np := pathFor(parent, this)
 		return &FSPlacement{path: np, root: r}
 	}
-	err := place(dd, "", "", dp, fp)
+	err := place(dd, r.root, "", dp, fp)
 	if err != nil {
 		return fmt.Errorf("could not place: %w", err)
 	}
