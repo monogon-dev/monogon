@@ -1,5 +1,14 @@
 load("//core/build:def.bzl", "smalltown_initramfs")
 
+# debug_build checks if we're building in debug mode and enables various debug features for the image. Currently this
+# is only used for attaching a Delve debugger to init when it's enabled.
+config_setting(
+    name = "debug_build",
+    values = {
+        "compilation_mode": "dbg",
+    },
+)
+
 smalltown_initramfs(
     name = "initramfs",
     extra_dirs = [
@@ -39,6 +48,9 @@ smalltown_initramfs(
         "@com_github_cilium_cilium//cilium": "/cilium/bin/cilium",
         "@com_github_cilium_cilium//daemon": "/cilium/bin/daemon",
         "@com_github_cilium_cilium//operator": "/cilium/bin/operator",
+
+        # Delve
+        "@com_github_go_delve_delve//cmd/dlv:dlv": "/dlv",
     },
 )
 

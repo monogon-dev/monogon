@@ -86,6 +86,9 @@ func main() {
 		panic(err)
 	}
 
+	// This function initializes a headless Delve if this is a debug build or does nothing if it's not
+	initializeDebugger(networkSvc)
+
 	supervisor.New(context.Background(), logger, func(ctx context.Context) error {
 		if err := supervisor.Run(ctx, "network", networkSvc.Run); err != nil {
 			return err

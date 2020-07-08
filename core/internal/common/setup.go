@@ -35,6 +35,7 @@ const (
 	ExternalServicePort = 7836
 	DebugServicePort    = 7837
 	KubernetesAPIPort   = 6443
+	DebuggerPort        = 2345
 )
 
 const (

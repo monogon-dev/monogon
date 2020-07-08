@@ -2,13 +2,18 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
     name = "go_default_library",
+    # keep
     srcs = [
         "main.go",
         "switchroot.go",
-    ],
+    ] + select({
+        "//core:debug_build": ["debug_enabled.go"],
+        "//conditions:default": ["debug_disabled.go"],
+    }),
     importpath = "git.monogon.dev/source/nexantic.git/core/cmd/init",
     visibility = ["//visibility:private"],
     deps = [
+        "//core/internal/common:go_default_library",  # keep
         "//core/internal/common/supervisor:go_default_library",
         "//core/internal/network:go_default_library",
         "//core/internal/node:go_default_library",

@@ -148,7 +148,7 @@ type Options struct {
 }
 
 var requiredPorts = []uint16{common.ConsensusPort, common.NodeServicePort, common.MasterServicePort,
-	common.ExternalServicePort, common.DebugServicePort, common.KubernetesAPIPort}
+	common.ExternalServicePort, common.DebugServicePort, common.KubernetesAPIPort, common.DebuggerPort}
 
 // IdentityPortMap returns a port map where each VM port is mapped onto itself on the host. This is mainly useful
 // for development against Smalltown. The dbg command requires this mapping.

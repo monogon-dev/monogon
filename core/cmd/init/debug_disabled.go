@@ -16,28 +16,8 @@
 
 package main
 
-import (
-	"context"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
+import "git.monogon.dev/source/nexantic.git/core/internal/network"
 
-	"git.monogon.dev/source/nexantic.git/core/internal/launch"
-)
-
-func main() {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		<-sigs
-		cancel()
-	}()
-	if err := launch.Launch(ctx, launch.Options{Ports: launch.IdentityPortMap(), SerialPort: os.Stdout}); err != nil {
-		if err == ctx.Err() {
-			return
-		}
-		log.Fatalf("Failed to execute: %v\n", err)
-	}
+// initializeDebugger does nothing in a non-debug build
+func initializeDebugger(*network.Service) {
 }
