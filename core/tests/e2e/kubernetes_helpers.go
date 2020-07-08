@@ -38,7 +38,9 @@ import (
 func getKubeClientSet(ctx context.Context, client apipb.NodeDebugServiceClient, port uint16) (kubernetes.Interface, error) {
 	var lastErr = errors.New("context canceled before any operation completed")
 	for {
-		res, err := client.GetDebugKubeconfig(context.Background(), &apipb.GetDebugKubeconfigRequest{Id: "debug-user", Groups: []string{"system:masters"}})
+		reqCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		res, err := client.GetDebugKubeconfig(reqCtx, &apipb.GetDebugKubeconfigRequest{Id: "debug-user", Groups: []string{"system:masters"}})
 		if err == nil {
 			rawClientConfig, err := clientcmd.NewClientConfigFromBytes([]byte(res.DebugKubeconfig))
 			if err != nil {

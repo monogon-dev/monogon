@@ -27,7 +27,9 @@ import (
 func waitForCondition(ctx context.Context, client apipb.NodeDebugServiceClient, condition string) error {
 	var lastErr = errors.New("No RPC for checking condition completed")
 	for {
-		res, err := client.GetCondition(ctx, &apipb.GetConditionRequest{Name: condition})
+		reqCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		res, err := client.GetCondition(reqCtx, &apipb.GetConditionRequest{Name: condition})
 		if err != nil {
 			if err == ctx.Err() {
 				return err
