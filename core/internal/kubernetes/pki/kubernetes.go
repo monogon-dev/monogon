@@ -103,7 +103,7 @@ func NewKubernetes(l *zap.Logger, kv clientv3.KV) *KubernetesPKI {
 			"kubernetes.default.svc.cluster.local",
 			"localhost",
 		},
-		[]net.IP{{127, 0, 0, 1}}, // TODO(q3k): add service network internal apiserver address
+		[]net.IP{{10, 0, 255, 1}, {127, 0, 0, 1}}, // TODO(q3k): add service network internal apiserver address
 	))
 	make(IdCA, KubeletClient, Client("smalltown:apiserver-kubelet-client", nil))
 	make(IdCA, ControllerManagerClient, Client("system:kube-controller-manager", nil))

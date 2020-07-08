@@ -1258,6 +1258,22 @@ def go_repositories():
         sum = "h1:0U2s5loxrTy6/VgfVoLuVLFJcURKLH49ie0zSch7gh4=",
     )
     go_repository(
+        name = "com_github_sbezverk_nfproxy",
+        importpath = "github.com/sbezverk/nfproxy",
+        version = "v0.0.0-20200514180651-7fac5f39824e",
+        sum = "h1:fJ2lHQ7ZUjmgJbvVQ509ioBmrGHcbvlwfjUieExw/dU=",
+        patches = [
+            "//third_party/go/patches:nfproxy.patch",
+        ],
+        patch_args = ["-p1"],
+    )
+    go_repository(
+        name = "com_github_sbezverk_nftableslib",
+        importpath = "github.com/sbezverk/nftableslib",
+        version = "v0.0.0-20200402150358-c20bed91f482",
+        sum = "h1:k7gEZ/EwJhHDTRXFUZQlE4/p1cmoha7zL7PWCDG3ZHQ=",
+    )
+    go_repository(
         name = "com_github_seccomp_libseccomp_golang",
         importpath = "github.com/seccomp/libseccomp-golang",
         version = "v0.9.1",

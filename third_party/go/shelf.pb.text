@@ -1959,6 +1959,20 @@ entry: <
   semver: "v0.2.1-0.20190427202633-1595213edefa"
 >
 entry: <
+  import_path: "github.com/sbezverk/nfproxy"
+  version: "7fac5f39824e7f34228b08ba8b7640770ca6a9f4"
+  bazel_name: "com_github_sbezverk_nfproxy"
+  sum: "h1:fJ2lHQ7ZUjmgJbvVQ509ioBmrGHcbvlwfjUieExw/dU="
+  semver: "v0.0.0-20200514180651-7fac5f39824e"
+>
+entry: <
+  import_path: "github.com/sbezverk/nftableslib"
+  version: "v0.0.0-20200402150358-c20bed91f482"
+  bazel_name: "com_github_sbezverk_nftableslib"
+  sum: "h1:k7gEZ/EwJhHDTRXFUZQlE4/p1cmoha7zL7PWCDG3ZHQ="
+  semver: "v0.0.0-20200402150358-c20bed91f482"
+>
+entry: <
   import_path: "github.com/seccomp/libseccomp-golang"
   version: "689e3c1541a84461afc49c1c87352a6cedf72e9c"
   bazel_name: "com_github_seccomp_libseccomp_golang"

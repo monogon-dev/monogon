@@ -23,6 +23,9 @@ import (
 	"net"
 	"os"
 
+	"github.com/google/nftables"
+	"github.com/google/nftables/expr"
+
 	"github.com/vishvananda/netlink"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -97,6 +100,13 @@ func (s *Service) addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP)
 	return nil
 }
 
+// nfifname converts an interface name into 16 bytes padded with zeroes (for nftables)
+func nfifname(n string) []byte {
+	b := make([]byte, 16)
+	copy(b, []byte(n+"\x00"))
+	return b
+}
+
 func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 	err := supervisor.Run(ctx, "dhcp", s.dhcp.Run(iface))
 	if err != nil {
@@ -113,6 +123,40 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 
 	if err := s.addNetworkRoutes(iface, status.Address, status.Gateway); err != nil {
 		s.logger.Warn("failed to add routes", zap.Error(err))
+	}
+
+	c := nftables.Conn{}
+
+	nat := c.AddTable(&nftables.Table{
+		Family: nftables.TableFamilyIPv4,
+		Name:   "nat",
+	})
+
+	postrouting := c.AddChain(&nftables.Chain{
+		Name:     "postrouting",
+		Hooknum:  nftables.ChainHookPostrouting,
+		Priority: nftables.ChainPriorityNATSource,
+		Table:    nat,
+		Type:     nftables.ChainTypeNAT,
+	})
+
+	// Masquerade/SNAT all traffic going out of the external interface
+	c.AddRule(&nftables.Rule{
+		Table: nat,
+		Chain: postrouting,
+		Exprs: []expr.Any{
+			&expr.Meta{Key: expr.MetaKeyOIFNAME, Register: 1},
+			&expr.Cmp{
+				Op:       expr.CmpOpEq,
+				Register: 1,
+				Data:     nfifname(iface.Attrs().Name),
+			},
+			&expr.Masq{},
+		},
+	})
+
+	if err := c.Flush(); err != nil {
+		panic(err)
 	}
 
 	return nil

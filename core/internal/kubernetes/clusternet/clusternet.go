@@ -108,6 +108,7 @@ func (s *Service) ensureNode(newNode *corev1.Node) error {
 		}
 		allowedIPs = append(allowedIPs, *podNet)
 	}
+	allowedIPs = append(allowedIPs, net.IPNet{IP: internalIP, Mask: net.CIDRMask(32, 32)})
 	s.logger.Debug("Adding/Updating WireGuard peer node", zap.String("node", newNode.Name),
 		zap.String("endpointIP", internalIP.String()), zap.Any("allowedIPs", allowedIPs))
 	// WireGuard's kernel side has create/update semantics on peers by default. So we can just add the peer multiple

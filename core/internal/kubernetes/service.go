@@ -33,6 +33,7 @@ import (
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/clusternet"
+	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/nfproxy"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler"
 	"git.monogon.dev/source/nexantic.git/core/internal/localstorage"
@@ -156,6 +157,11 @@ func (s *Service) Run(ctx context.Context) error {
 		DataDirectory:   &s.c.Root.Data.Kubernetes.ClusterNetworking,
 	}
 
+	nfproxy := nfproxy.Service{
+		ClusterCIDR: s.c.ClusterNet,
+		ClientSet:   clientSet,
+	}
+
 	for _, sub := range []struct {
 		name     string
 		runnable supervisor.Runnable
@@ -168,6 +174,7 @@ func (s *Service) Run(ctx context.Context) error {
 		{"csi-plugin", csiPlugin.Run},
 		{"csi-provisioner", csiProvisioner.Run},
 		{"clusternet", clusternet.Run},
+		{"nfproxy", nfproxy.Run},
 	} {
 		err := supervisor.Run(ctx, sub.name, sub.runnable)
 		if err != nil {

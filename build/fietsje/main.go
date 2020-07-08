@@ -110,6 +110,13 @@ func main() {
 		"github.com/mdlayher/genetlink",
 	)
 
+	p.collect(
+		"github.com/sbezverk/nfproxy", "7fac5f39824e7f34228b08ba8b7640770ca6a9f4",
+		patches("nfproxy.patch"),
+	).use(
+		"github.com/sbezverk/nftableslib",
+	)
+
 	// First generate the repositories starlark rule into memory. This is because rendering will lock all unlocked
 	// dependencies, which might take a while. If a use were to interrupt it now, they would end up with an incomplete
 	// repositories.bzl and would have to restore from git.
