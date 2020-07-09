@@ -17,6 +17,16 @@ Spinning down: `scripts/destroy_container.sh`
 Running commands: `scripts/run_in_container.sh <...>`
 
 Using bazel using a wrapper script: `scripts/bin/bazel <...>` (add to your local $PATH for convenience)
+
+#### Run a single node cluster
+
+Launch the node:
+
+    bazel run //:launch
+    
+Run a kubectl command:
+
+    bazel run //core/cmd/dbg -- kubectl describe
  
 #### IntelliJ
 
