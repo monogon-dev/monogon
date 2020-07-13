@@ -82,9 +82,7 @@ func (s *supervisor) processor(ctx context.Context) {
 			return
 		case <-gc.C:
 			if !clean {
-				gcStart := time.Now()
 				s.processGC()
-				s.ilogger.Debug("gc done", zap.Duration("elapsed", time.Since(gcStart)))
 			}
 			clean = true
 			cleanCycles += 1
@@ -201,7 +199,6 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 
 	// Simple case: the context was canceled and the returned error is the context error.
 	if err := ctx.Err(); err != nil && perr == err {
-		s.ilogger.Debug("runnable returned after context cancel", zap.String("dn", n.dn()))
 		// Mark the node as canceled successfully.
 		n.state = nodeStateCanceled
 		return
@@ -249,8 +246,6 @@ func (s *supervisor) processGC() {
 	// also finds the smallest set of largest subtrees that can be restarted, ie. if there's multiple DEAD runnables
 	// that can be restarted at once, it will do so.
 
-	tStart := time.Now()
-
 	// Phase one: Find all leaves.
 	// This is a simple DFS that finds all the leaves of the tree, ie all nodes that do not have children nodes.
 	leaves := make(map[string]bool)
@@ -270,9 +265,6 @@ func (s *supervisor) processGC() {
 			leaves[cur.dn()] = true
 		}
 	}
-
-	tPhase1 := time.Now()
-	s.ilogger.Debug("gc phase 1 done", zap.Any("leaves", len(leaves)))
 
 	// Phase two: traverse tree from node to root and make note of all subtrees that can be restarted.
 	// A subtree is restartable/ready iff every node in that subtree is either CANCELED, DEAD or DONE.
@@ -349,9 +341,6 @@ func (s *supervisor) processGC() {
 		}
 	}
 
-	tPhase2 := time.Now()
-	s.ilogger.Debug("gc phase 2 done", zap.Any("ready", len(ready)))
-
 	// Phase 3: traverse tree from root to find largest subtrees that need to be restarted and are ready to be
 	// restarted.
 
@@ -392,9 +381,6 @@ func (s *supervisor) processGC() {
 		}
 	}
 
-	tPhase3 := time.Now()
-	s.ilogger.Debug("gc phase 3 done", zap.Any("want", len(want)), zap.Any("can", len(can)))
-
 	// Reinitialize and reschedule all subtrees
 	for dn, _ := range can {
 		n := s.nodeByDN(dn)
@@ -417,13 +403,4 @@ func (s *supervisor) processGC() {
 			}
 		}(n, bo)
 	}
-
-	tPhase4 := time.Now()
-	s.ilogger.Debug("gc phase 4 done")
-
-	s.ilogger.Debug("gc timings",
-		zap.Duration("phase1", tPhase1.Sub(tStart)),
-		zap.Duration("phase2", tPhase2.Sub(tPhase1)),
-		zap.Duration("phase3", tPhase3.Sub(tPhase2)),
-		zap.Duration("phase4", tPhase4.Sub(tPhase3)))
 }
