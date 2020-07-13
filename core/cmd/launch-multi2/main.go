@@ -29,7 +29,6 @@ import (
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/launch"
-	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
 
 func main() {
@@ -73,16 +72,9 @@ func main() {
 			panic(err)
 		}
 		defer conn.Close()
-		cmc := api.NewClusterManagementClient(conn)
-		res, err := cmc.NewEnrolmentConfig(context.Background(), &api.NewEnrolmentConfigRequest{
-			Name: "test",
-		}, grpcretry.WithMax(10))
-		if err != nil {
-			log.Fatalf("Failed to get enrolment config: %v", err)
-		}
-		if err := launch.Launch(ctx, launch.Options{ConnectToSocket: vm1, EnrolmentConfig: res.EnrolmentConfig, SerialPort: os.Stdout}); err != nil {
-			log.Fatalf("Failed to launch vm1: %v", err)
-		}
+		// TODO(D591): this gets implemented there.
+		_ = vm1
+		panic("unimplemented")
 	}()
 	if err := launch.RunMicroVM(ctx, &launch.MicroVMOptions{
 		SerialPort:             os.Stdout,

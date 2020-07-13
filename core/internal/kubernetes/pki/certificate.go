@@ -106,6 +106,12 @@ func (c *Certificate) etcdPaths() (cert, key string) {
 
 // ensure returns a DER-encoded x509 certificate and internally encoded bare ed25519 key for a given Certificate,
 // in memory (if volatile), loading it from etcd, or creating and saving it on etcd if needed.
+// This function is safe to call in parallel from multiple etcd clients (including across machines), but it will error
+// in case a concurrent certificate generation happens. These errors are, however, safe to retry - as long as all the
+// certificate creators (ie., Smalltown nodes) run the same version of this code.
+// TODO(q3k): in the future, this should be handled better - especially as we introduce new certificates, or worse,
+// change the issuance chain. As a stopgap measure, an explicit per-certificate or even global lock can be implemented.
+// And, even before that, we can handle concurrency errors in a smarter way.
 func (c *Certificate) ensure(ctx context.Context, kv clientv3.KV) (cert, key []byte, err error) {
 	if c.name == "" {
 		// Volatile certificate - generate.
@@ -149,14 +155,21 @@ func (c *Certificate) ensure(ctx context.Context, kv clientv3.KV) (cert, key []b
 		return
 	}
 
-	// Save to etcd in transaction. This ensures that no partial writes happen.
-	_, err = kv.Txn(ctx).
+	// Save to etcd in transaction. This ensures that no partial writes happen, and that we haven't been raced to the
+	// save.
+	res, err := kv.Txn(ctx).
+		If(
+			clientv3.Compare(clientv3.CreateRevision(certPath), "=", 0),
+			clientv3.Compare(clientv3.CreateRevision(keyPath), "=", 0),
+		).
 		Then(
 			clientv3.OpPut(certPath, string(cert)),
 			clientv3.OpPut(keyPath, string(key)),
 		).Commit()
 	if err != nil {
 		err = fmt.Errorf("failed to write newly issued certificate: %w", err)
+	} else if !res.Succeeded {
+		err = fmt.Errorf("certificate issuance transaction failed: concurrent write")
 	}
 
 	return

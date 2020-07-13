@@ -47,7 +47,7 @@ const (
 	globalTestTimeout = 600 * time.Second
 
 	// Timeouts for individual end-to-end tests of different sizes.
-	smallTestTimeout = 30 * time.Second
+	smallTestTimeout = 60 * time.Second
 	largeTestTimeout = 120 * time.Second
 )
 
