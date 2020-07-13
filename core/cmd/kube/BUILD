@@ -1,4 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@//third_party/go:kubernetes_version_def.bzl", "version_x_defs")
 
 go_library(
     name = "go_default_library",
@@ -24,4 +25,5 @@ go_binary(
     embed = [":go_default_library"],
     pure = "on",
     visibility = ["//visibility:public"],
+    x_defs = version_x_defs(),
 )

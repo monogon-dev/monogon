@@ -244,14 +244,14 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/plugins.go io_k8s_kubernetes/cmd
  	_ "k8s.io/kubernetes/pkg/credentialprovider/gcp"
  
  	"k8s.io/component-base/featuregate"
-@@ -28,27 +26,13 @@
+@@ -28,27 +26,15 @@
  
  	// Volume plugins
  	"k8s.io/kubernetes/pkg/volume"
 -	"k8s.io/kubernetes/pkg/volume/cephfs"
  	"k8s.io/kubernetes/pkg/volume/configmap"
  	"k8s.io/kubernetes/pkg/volume/csi"
--	"k8s.io/kubernetes/pkg/volume/downwardapi"
+ 	"k8s.io/kubernetes/pkg/volume/downwardapi"
  	"k8s.io/kubernetes/pkg/volume/emptydir"
 -	"k8s.io/kubernetes/pkg/volume/fc"
  	"k8s.io/kubernetes/pkg/volume/flexvolume"
@@ -263,7 +263,7 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/plugins.go io_k8s_kubernetes/cmd
  	"k8s.io/kubernetes/pkg/volume/local"
 -	"k8s.io/kubernetes/pkg/volume/nfs"
 -	"k8s.io/kubernetes/pkg/volume/portworx"
--	"k8s.io/kubernetes/pkg/volume/projected"
+ 	"k8s.io/kubernetes/pkg/volume/projected"
 -	"k8s.io/kubernetes/pkg/volume/quobyte"
 -	"k8s.io/kubernetes/pkg/volume/rbd"
 -	"k8s.io/kubernetes/pkg/volume/scaleio"
@@ -272,7 +272,7 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/plugins.go io_k8s_kubernetes/cmd
  
  	// Cloud providers
  	_ "k8s.io/kubernetes/pkg/cloudprovider/providers"
-@@ -64,30 +48,11 @@
+@@ -64,30 +48,13 @@
  	//
  	// Kubelet does not currently need to configure volume plugins.
  	// If/when it does, see kube-controller-manager/app/plugins.go for example of using volume.VolumeConfig
@@ -291,11 +291,11 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/plugins.go io_k8s_kubernetes/cmd
 -	allPlugins = append(allPlugins, rbd.ProbeVolumePlugins()...)
 -	allPlugins = append(allPlugins, quobyte.ProbeVolumePlugins()...)
 -	allPlugins = append(allPlugins, cephfs.ProbeVolumePlugins()...)
--	allPlugins = append(allPlugins, downwardapi.ProbeVolumePlugins()...)
+ 	allPlugins = append(allPlugins, downwardapi.ProbeVolumePlugins()...)
 -	allPlugins = append(allPlugins, fc.ProbeVolumePlugins()...)
 -	allPlugins = append(allPlugins, flocker.ProbeVolumePlugins()...)
  	allPlugins = append(allPlugins, configmap.ProbeVolumePlugins()...)
--	allPlugins = append(allPlugins, projected.ProbeVolumePlugins()...)
+ 	allPlugins = append(allPlugins, projected.ProbeVolumePlugins()...)
 -	allPlugins = append(allPlugins, portworx.ProbeVolumePlugins()...)
 -	allPlugins = append(allPlugins, scaleio.ProbeVolumePlugins()...)
  	allPlugins = append(allPlugins, local.ProbeVolumePlugins()...)
