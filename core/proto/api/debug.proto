@@ -28,6 +28,9 @@ service NodeDebugService {
     rpc GetDebugKubeconfig(GetDebugKubeconfigRequest) returns (GetDebugKubeconfigResponse);
     // GetComponentLogs dumps various log ringbuffers for binaries that we run.
     rpc GetComponentLogs(GetComponentLogsRequest) returns (GetComponentLogsResponse);
+    // GetGoldenTicket requests a 'golden ticket' which can be used to enroll any node into the cluster.
+    // This bypasses integrity checks.
+    rpc GetGoldenTicket(GetGoldenTicketRequest) returns (GetGoldenTicketResponse);
 }
 
 
@@ -48,4 +51,14 @@ message GetComponentLogsRequest {
 
 message GetComponentLogsResponse {
     repeated string line = 1;
+}
+
+message GetGoldenTicketRequest {
+    // IP address at which the new node will run.
+    string external_ip = 1;
+}
+
+message GetGoldenTicketResponse {
+    // Ticket to use in the new node's EnrolmentConfig.
+    GoldenTicket ticket = 1;
 }

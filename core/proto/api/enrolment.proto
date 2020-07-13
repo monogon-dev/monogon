@@ -18,8 +18,46 @@ syntax = "proto3";
 package smalltown.core.proto.api;
 option go_package = "git.monogon.dev/source/nexantic.git/core/proto/api";
 
-// The EnrolmentConfig is one of the inputs for the integrity mechanism.
+// EnrolmentConfig is the single boot configuration file contained in the Smalltown ESP. It configures
+// the way the node will start up (what cluster it will join/enroll into/create).
 message EnrolmentConfig {
+    // Debug/temporary cluster enrolment method. If set, the node will attempt to enroll into the
+    // cluster that this ticket was generated for. Otherwise, a new cluster will be created.
+    GoldenTicket golden_ticket = 1;
+
     // Filled in by node after it is enrolled
-    string node_id = 1;
+    string node_id = 2;
+}
+
+// GoldenTicket is a ticket that allows any node to enroll into a cluster, bypassing any integrity
+// checks.
+//
+// Currently, enrolling into a cluster does not use a TPM-based workflow, and instead
+// bases on a simplified workflow of joining consensus by being started with a
+// TLS client certificate. This is a short-circuit fix to allow multi-node
+// clusters for testing before we design the final cluster node lifecycle system.
+message GoldenTicket {
+    // Etcd peer CA certificate.
+    bytes etcd_ca_cert = 1;
+    // Etcd peer client certificate.
+    bytes etcd_client_cert = 2;
+    // Etcd peer client key.
+    bytes etcd_client_key = 3;
+    // Initial etcd peer CRL.
+    bytes etcd_crl = 4;
+
+    message EtcdPeer {
+        string name = 1;
+        string address = 2;
+    }
+    // All other current etcd peers in the cluster.
+    repeated EtcdPeer peers = 5;
+    // The peer that this node should start running.
+    EtcdPeer this = 6;
+
+    // Node configuration. Currently unused (in the future, this will be used to run a node
+    // management service separate from etcd clustering).
+    string node_id = 7;
+    bytes node_cert = 8;
+    bytes node_key = 9;
 }

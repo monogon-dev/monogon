@@ -29,6 +29,7 @@ import (
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/launch"
+	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
 
 func main() {
@@ -66,15 +67,28 @@ func main() {
 		opts := []grpcretry.CallOption{
 			grpcretry.WithBackoff(grpcretry.BackoffExponential(100 * time.Millisecond)),
 		}
-		conn, err := nanoswitchPortMap.DialGRPC(common.ExternalServicePort, grpc.WithInsecure(),
+		conn, err := nanoswitchPortMap.DialGRPC(common.DebugServicePort, grpc.WithInsecure(),
 			grpc.WithUnaryInterceptor(grpcretry.UnaryClientInterceptor(opts...)))
 		if err != nil {
 			panic(err)
 		}
 		defer conn.Close()
-		// TODO(D591): this gets implemented there.
-		_ = vm1
-		panic("unimplemented")
+		debug := apb.NewNodeDebugServiceClient(conn)
+		res, err := debug.GetGoldenTicket(ctx, &apb.GetGoldenTicketRequest{
+			// HACK: this is assigned by DHCP, and we assume that everything goes well.
+			ExternalIp: "10.1.0.3",
+		}, grpcretry.WithMax(10))
+		if err != nil {
+			log.Fatalf("Failed to get golden ticket: %v", err)
+		}
+
+		ec := &apb.EnrolmentConfig{
+			GoldenTicket: res.Ticket,
+		}
+
+		if err := launch.Launch(ctx, launch.Options{ConnectToSocket: vm1, EnrolmentConfig: ec, SerialPort: os.Stdout}); err != nil {
+			log.Fatalf("Failed to launch vm1: %v", err)
+		}
 	}()
 	if err := launch.RunMicroVM(ctx, &launch.MicroVMOptions{
 		SerialPort:             os.Stdout,

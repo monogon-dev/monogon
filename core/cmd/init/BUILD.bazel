@@ -17,6 +17,7 @@ go_library(
         "//core/internal/cluster:go_default_library",
         "//core/internal/common:go_default_library",
         "//core/internal/common/supervisor:go_default_library",
+        "//core/internal/consensus/ca:go_default_library",
         "//core/internal/containerd:go_default_library",
         "//core/internal/kubernetes:go_default_library",
         "//core/internal/kubernetes/pki:go_default_library",

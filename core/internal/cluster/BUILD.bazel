@@ -9,10 +9,13 @@ go_library(
     importpath = "git.monogon.dev/source/nexantic.git/core/internal/cluster",
     visibility = ["//core:__subpackages__"],
     deps = [
+        "//core/internal/common:go_default_library",
         "//core/internal/common/supervisor:go_default_library",
         "//core/internal/consensus:go_default_library",
         "//core/internal/localstorage:go_default_library",
+        "//core/internal/localstorage/declarative:go_default_library",
         "//core/internal/network:go_default_library",
+        "//core/proto/api:go_default_library",
         "//core/proto/internal:go_default_library",
         "@com_github_cenkalti_backoff_v4//:go_default_library",
         "@com_github_golang_protobuf//proto:go_default_library",

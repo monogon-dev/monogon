@@ -18,8 +18,12 @@ package main
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"crypto/x509"
 	"fmt"
 	"log"
+	"math/big"
 	"net"
 	"os"
 	"os/signal"
@@ -28,10 +32,13 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/cluster"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/core/internal/consensus/ca"
 	"git.monogon.dev/source/nexantic.git/core/internal/containerd"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
@@ -267,4 +274,92 @@ func main() {
 			}
 		}
 	}
+}
+
+// nodeCertificate creates a node key/certificate for a foreign node. This is duplicated code with localstorage's
+// PKIDirectory EnsureSelfSigned, but is temporary (and specific to 'golden tickets').
+func (s *debugService) nodeCertificate() (cert, key []byte, err error) {
+	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		err = fmt.Errorf("failed to generate key: %w", err)
+		return
+	}
+
+	key, err = x509.MarshalPKCS8PrivateKey(privKey)
+	if err != nil {
+		err = fmt.Errorf("failed to marshal key: %w", err)
+		return
+	}
+
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 127)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		err = fmt.Errorf("failed to generate serial number: %w", err)
+		return
+	}
+
+	template := localstorage.CertificateForNode(pubKey)
+	template.SerialNumber = serialNumber
+
+	cert, err = x509.CreateCertificate(rand.Reader, &template, &template, pubKey, privKey)
+	if err != nil {
+		err = fmt.Errorf("could not sign certificate: %w", err)
+		return
+	}
+	return
+}
+
+func (s *debugService) GetGoldenTicket(ctx context.Context, req *apb.GetGoldenTicketRequest) (*apb.GetGoldenTicketResponse, error) {
+	ip := net.ParseIP(req.ExternalIp)
+	if ip == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "could not parse IP %q", req.ExternalIp)
+	}
+	this := s.cluster.Node()
+
+	certRaw, key, err := s.nodeCertificate()
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "failed to generate node certificate: %v", err)
+	}
+	cert, err := x509.ParseCertificate(certRaw)
+	if err != nil {
+		panic(err)
+	}
+	kv := s.cluster.ConsensusKVRoot()
+	ca, err := ca.Load(ctx, kv)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not load CA: %v", err)
+	}
+	etcdCert, etcdKey, err := ca.Issue(ctx, kv, cert.Subject.CommonName, ip)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not generate etcd peer certificate: %v", err)
+	}
+	etcdCRL, err := ca.GetCurrentCRL(ctx, kv)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not get etcd CRL: %v", err)
+	}
+
+	// Add new etcd member to etcd cluster.
+	etcd := s.cluster.ConsensusCluster()
+	etcdAddr := fmt.Sprintf("https://%s:%d", ip.String(), common.ConsensusPort)
+	_, err = etcd.MemberAddAsLearner(ctx, []string{etcdAddr})
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not add as new etcd consensus member: %v", err)
+	}
+
+	return &apb.GetGoldenTicketResponse{
+		Ticket: &apb.GoldenTicket{
+			EtcdCaCert:     ca.CACertRaw,
+			EtcdClientCert: etcdCert,
+			EtcdClientKey:  etcdKey,
+			EtcdCrl:        etcdCRL,
+			Peers: []*apb.GoldenTicket_EtcdPeer{
+				{Name: this.ID(), Address: this.Address().String()},
+			},
+			This: &apb.GoldenTicket_EtcdPeer{Name: cert.Subject.CommonName, Address: ip.String()},
+
+			NodeId:   cert.Subject.CommonName,
+			NodeCert: certRaw,
+			NodeKey:  key,
+		},
+	}, nil
 }
