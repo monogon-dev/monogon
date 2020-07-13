@@ -38,6 +38,9 @@ smalltown_initramfs(
         "//core/internal/containerd:config.toml": "/containerd/conf/config.toml",
         "//core/internal/containerd:cnispec.gojson": "/containerd/conf/cnispec.gojson",
 
+        # Containerd preseed bundles
+        "//core/tests/e2e/preseedtest:preseedtest.tar": "/containerd/preseed/k8s.io/preseedtest.tar",
+
         # CNI Plugins
         "@com_github_containernetworking_plugins//plugins/main/loopback": "/containerd/bin/cni/loopback",
         "@com_github_containernetworking_plugins//plugins/main/ptp": "/containerd/bin/cni/ptp",

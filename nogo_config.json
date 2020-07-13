@@ -12,7 +12,8 @@
       "external/io_k8s_apiserver/": "third_party",
       "external/org_golang_x_tools/": "third_party",
       "external/io_k8s_apiextensions_apiserver/": "third_party",
-      "external/org_golang_x_text/": "third_party"
+      "external/org_golang_x_text/": "third_party",
+      "external/io_bazel_rules_docker/": "third_party"
     }
   },
   "copylocks": {
@@ -69,7 +70,8 @@
   },
   "structtag": {
     "exclude_files": {
-      "external/io_k8s_kubernetes/": "third_party"
+      "external/io_k8s_kubernetes/": "third_party",
+      "external/com_github_c9s_goprocinfo/": "third_party"
     }
   },
   "printf": {
@@ -78,11 +80,6 @@
       "external/runc/vendor/github.com/vishvananda/netlink": "third_party",
       "external/com_github_google_gvisor/": "third_party",
       "external/com_github_sbezverk_nfproxy/": "third_party"
-    }
-  },
-  "structtag": {
-    "exclude_files": {
-      "external/com_github_c9s_goprocinfo/": "third_party"
     }
   }
 }
