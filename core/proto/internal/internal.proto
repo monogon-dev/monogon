@@ -1,0 +1,43 @@
+// Copyright 2020 The Monogon Project Authors.
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+option go_package = "git.monogon.dev/source/nexantic.git/core/proto/internal";
+package smalltown.core.proto.internal;
+
+// Node describes a single node's state in etcd
+message Node {
+    // Individual node service certificate.
+    bytes certificate = 1;
+    // Node's individual cluster part of the disk encryption key.
+    bytes cluster_unlock_key = 2;
+    // Node address. This is currently an IPv4 address because that is what the
+    // network service uses, but would also support IPv6. See EnrolmentConfig for a
+    // discussion on why we use IP addresses rather than some kind of resolver.
+    string address = 3;
+
+    message Roles {
+        message ConsensusMember {
+            string etcd_member_name = 1;
+        }
+        ConsensusMember consensus_member = 1;
+        message KubernetesWorker {
+            string node_name = 1;
+        }
+        KubernetesWorker kubernetes_worker = 2;
+    }
+    Roles roles = 4;
+}

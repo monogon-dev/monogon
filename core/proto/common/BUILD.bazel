@@ -4,13 +4,13 @@ load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
 
 proto_library(
     name = "common_proto",
-    srcs = ["main.proto"],
+    srcs = ["common.proto"],
     visibility = ["//visibility:public"],
 )
 
 go_proto_library(
     name = "common_go_proto",
-    importpath = "git.monogon.dev/source/nexantic.git/core/generated/common",
+    importpath = "git.monogon.dev/source/nexantic.git/core/proto/common",
     proto = ":common_proto",
     visibility = ["//visibility:public"],
 )
@@ -18,6 +18,6 @@ go_proto_library(
 go_library(
     name = "go_default_library",
     embed = [":common_go_proto"],
-    importpath = "git.monogon.dev/source/nexantic.git/core/generated/common",
+    importpath = "git.monogon.dev/source/nexantic.git/core/proto/common",
     visibility = ["//visibility:public"],
 )

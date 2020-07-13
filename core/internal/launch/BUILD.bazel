@@ -6,8 +6,8 @@ go_library(
     importpath = "git.monogon.dev/source/nexantic.git/core/internal/launch",
     visibility = ["//core:__subpackages__"],
     deps = [
-        "//core/api/api:go_default_library",
         "//core/internal/common:go_default_library",
+        "//core/proto/api:go_default_library",
         "//golibs/common:go_default_library",
         "@com_github_golang_protobuf//proto:go_default_library",
         "@org_golang_google_grpc//:go_default_library",

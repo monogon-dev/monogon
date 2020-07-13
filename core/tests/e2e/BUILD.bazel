@@ -10,7 +10,7 @@ go_library(
     importpath = "git.monogon.dev/source/nexantic.git/core/tests/e2e",
     visibility = ["//visibility:private"],
     deps = [
-        "//core/api/api:go_default_library",
+        "//core/proto/api:go_default_library",
         "@io_k8s_api//apps/v1:go_default_library",
         "@io_k8s_api//core/v1:go_default_library",
         "@io_k8s_apimachinery//pkg/api/resource:go_default_library",
@@ -33,9 +33,9 @@ go_test(
     embed = [":go_default_library"],
     rundir = ".",
     deps = [
-        "//core/api/api:go_default_library",
         "//core/internal/common:go_default_library",
         "//core/internal/launch:go_default_library",
+        "//core/proto/api:go_default_library",
         "@io_k8s_api//core/v1:go_default_library",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
         "@io_k8s_kubernetes//pkg/api/v1/pod:go_default_library",

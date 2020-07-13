@@ -33,17 +33,18 @@ import (
 	"k8s.io/kubectl/pkg/util/logs"
 	"k8s.io/kubernetes/pkg/kubectl/cmd"
 
-	apipb "git.monogon.dev/source/nexantic.git/core/generated/api"
+	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
 
 func main() {
+	ctx := context.Background()
 	// Hardcode localhost since this should never be used to interface with a production node because of missing
 	// encryption & authentication
 	grpcClient, err := grpc.Dial("localhost:7837", grpc.WithInsecure())
 	if err != nil {
 		fmt.Printf("Failed to dial debug service (is it running): %v\n", err)
 	}
-	debugClient := apipb.NewNodeDebugServiceClient(grpcClient)
+	debugClient := apb.NewNodeDebugServiceClient(grpcClient)
 	if len(os.Args) < 2 {
 		fmt.Println("Please specify a subcommand")
 		os.Exit(1)
@@ -68,7 +69,7 @@ func main() {
 	case "logs":
 		logsCmd.Parse(os.Args[2:])
 		componentPath := strings.Split(logsCmd.Arg(0), ".")
-		res, err := debugClient.GetComponentLogs(context.Background(), &apipb.GetComponentLogsRequest{ComponentPath: componentPath, TailLines: uint32(*logsTailN)})
+		res, err := debugClient.GetComponentLogs(ctx, &apb.GetComponentLogsRequest{ComponentPath: componentPath, TailLines: uint32(*logsTailN)})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to get logs: %v\n", err)
 			os.Exit(1)
@@ -80,7 +81,7 @@ func main() {
 	case "condition":
 		conditionCmd.Parse(os.Args[2:])
 		condition := conditionCmd.Arg(0)
-		res, err := debugClient.GetCondition(context.Background(), &apipb.GetConditionRequest{Name: condition})
+		res, err := debugClient.GetCondition(ctx, &apb.GetConditionRequest{Name: condition})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to get condition: %v\n", err)
 			os.Exit(1)
@@ -96,7 +97,7 @@ func main() {
 		defer kubeconfigFile.Close()
 		defer os.Remove(kubeconfigFile.Name())
 
-		res, err := debugClient.GetDebugKubeconfig(context.Background(), &apipb.GetDebugKubeconfigRequest{Id: "debug-user", Groups: []string{"system:masters"}})
+		res, err := debugClient.GetDebugKubeconfig(ctx, &apb.GetDebugKubeconfigRequest{Id: "debug-user", Groups: []string{"system:masters"}})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to get kubeconfig: %v\n", err)
 			os.Exit(1)

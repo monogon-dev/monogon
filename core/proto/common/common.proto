@@ -15,9 +15,8 @@
 // limitations under the License.
 
 syntax = "proto3";
-
-option go_package = "git.monogon.dev/source/nexantic.git/core/generated/common";
-package smalltown.common;
+package smalltown.core.proto.common;
+option go_package = "git.monogon.dev/source/nexantic.git/core/proto/common";
 
 enum TrustBackend {
     DUMMY = 0;

@@ -21,15 +21,15 @@ import (
 	"errors"
 	"time"
 
-	apipb "git.monogon.dev/source/nexantic.git/core/generated/api"
+	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
 
-func waitForCondition(ctx context.Context, client apipb.NodeDebugServiceClient, condition string) error {
+func waitForCondition(ctx context.Context, client apb.NodeDebugServiceClient, condition string) error {
 	var lastErr = errors.New("No RPC for checking condition completed")
 	for {
-		reqCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		reqT, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		res, err := client.GetCondition(reqCtx, &apipb.GetConditionRequest{Name: condition})
+		res, err := client.GetCondition(reqT, &apb.GetConditionRequest{Name: condition})
 		if err != nil {
 			if err == ctx.Err() {
 				return err

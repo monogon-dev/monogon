@@ -1,0 +1,61 @@
+// Copyright 2020 The Monogon Project Authors.
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package smalltown.core.proto.api;
+option go_package = "git.monogon.dev/source/nexantic.git/core/proto/api";
+
+import "core/proto/api/enrolment.proto";
+
+// NodeDebugService exposes debug and testing endpoints that allow introspection into a running Smalltown instance.
+// It is not authenticated and will be disabled in production. It is currently consumed by core/cmd/dbg and
+// by tests. For exact documentation of the available parameters please look at core/internal/node/debug.go.
+service NodeDebugService {
+    // GetDebugKubeconfig issues kubeconfigs with arbitrary identities and groups for debugging
+    rpc GetDebugKubeconfig(GetDebugKubeconfigRequest) returns (GetDebugKubeconfigResponse);
+    // GetComponentLogs dumps various log ringbuffers for binaries that we run.
+    rpc GetComponentLogs(GetComponentLogsRequest) returns (GetComponentLogsResponse);
+    // GetCondition gives the current status of various conditions inside Smalltown. Mainly used for testing.
+    rpc GetCondition(GetConditionRequest) returns (GetConditionResponse);
+}
+
+
+message GetDebugKubeconfigRequest {
+    string id = 1; // Kubernetes identity (user)
+    repeated string groups = 2; // Kubernetes groups
+}
+
+message GetDebugKubeconfigResponse {
+    string debug_kubeconfig = 1;
+}
+
+message GetComponentLogsRequest {
+    // For supported paths see core/internal/node/debug.go
+    repeated string component_path = 1;
+    uint32 tail_lines = 2; // 0 = whole ring buffer
+}
+
+message GetComponentLogsResponse {
+    repeated string line = 1;
+}
+
+message GetConditionRequest {
+    string name = 1;
+}
+
+message GetConditionResponse {
+    bool ok = 1;
+}

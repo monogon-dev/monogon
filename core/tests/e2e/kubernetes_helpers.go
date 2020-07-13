@@ -30,17 +30,17 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	apipb "git.monogon.dev/source/nexantic.git/core/generated/api"
+	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
 
 // getKubeClientSet gets a Kubeconfig from the debug API and creates a K8s ClientSet using it. The identity used has
 // the system:masters group and thus has RBAC access to everything.
-func getKubeClientSet(ctx context.Context, client apipb.NodeDebugServiceClient, port uint16) (kubernetes.Interface, error) {
+func getKubeClientSet(ctx context.Context, client apb.NodeDebugServiceClient, port uint16) (kubernetes.Interface, error) {
 	var lastErr = errors.New("context canceled before any operation completed")
 	for {
-		reqCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		reqT, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		res, err := client.GetDebugKubeconfig(reqCtx, &apipb.GetDebugKubeconfigRequest{Id: "debug-user", Groups: []string{"system:masters"}})
+		res, err := client.GetDebugKubeconfig(reqT, &apb.GetDebugKubeconfigRequest{Id: "debug-user", Groups: []string{"system:masters"}})
 		if err == nil {
 			rawClientConfig, err := clientcmd.NewClientConfigFromBytes([]byte(res.DebugKubeconfig))
 			if err != nil {

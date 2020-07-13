@@ -34,9 +34,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 
-	apipb "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/launch"
+	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
 
 const (
@@ -90,7 +90,7 @@ func TestE2E(t *testing.T) {
 	if err != nil {
 		fmt.Printf("Failed to dial debug service (is it running): %v\n", err)
 	}
-	debugClient := apipb.NewNodeDebugServiceClient(grpcClient)
+	debugClient := apb.NewNodeDebugServiceClient(grpcClient)
 
 	// This exists to keep the parent around while all the children race
 	// It currently tests both a set of OS-level conditions and Kubernetes Deployments and StatefulSets

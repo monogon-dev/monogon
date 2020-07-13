@@ -37,8 +37,8 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	apipb "git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
+	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 	freeport "git.monogon.dev/source/nexantic.git/golibs/common"
 )
 
@@ -130,7 +130,7 @@ type Options struct {
 	SerialPort *os.File
 
 	// EnrolmentConfig is passed into the VM and subsequently used for bootstrapping if no enrolment config is built-in
-	EnrolmentConfig *apipb.EnrolmentConfig
+	EnrolmentConfig *apb.EnrolmentConfig
 }
 
 var requiredPorts = []uint16{common.ConsensusPort, common.NodeServicePort, common.MasterServicePort,

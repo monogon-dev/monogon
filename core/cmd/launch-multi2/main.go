@@ -27,9 +27,9 @@ import (
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
 
-	"git.monogon.dev/source/nexantic.git/core/generated/api"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/launch"
+	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
 
 func main() {
