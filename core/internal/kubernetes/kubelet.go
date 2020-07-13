@@ -22,133 +22,130 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
-	"os"
 	"os/exec"
-
-	"go.etcd.io/etcd/clientv3"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler"
+	"git.monogon.dev/source/nexantic.git/core/internal/localstorage"
+	"git.monogon.dev/source/nexantic.git/core/internal/localstorage/declarative"
 	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 )
 
-var (
-	kubeletRoot       = "/data/kubernetes"
-	kubeletKubeconfig = kubeletRoot + "/kubelet.kubeconfig"
-	kubeletCACert     = kubeletRoot + "/ca.crt"
-	kubeletCert       = kubeletRoot + "/kubelet.crt"
-	kubeletKey        = kubeletRoot + "/kubelet.key"
-)
-
-type KubeletSpec struct {
-	clusterDNS []net.IP
+type kubeletService struct {
+	NodeName           string
+	ClusterDNS         []net.IP
+	KubeletDirectory   *localstorage.DataKubernetesKubeletDirectory
+	EphemeralDirectory *localstorage.EphemeralDirectory
+	Output             io.Writer
+	KPKI               *pki.KubernetesPKI
 }
 
-func createKubeletConfig(ctx context.Context, kv clientv3.KV, kpki *pki.KubernetesPKI, nodeName string) error {
-	identity := fmt.Sprintf("system:node:%s", nodeName)
+func (s *kubeletService) createCertificates(ctx context.Context) error {
+	identity := fmt.Sprintf("system:node:%s", s.NodeName)
 
-	ca := kpki.Certificates[pki.IdCA]
-	cacert, _, err := ca.Ensure(ctx, kv)
+	ca := s.KPKI.Certificates[pki.IdCA]
+	cacert, _, err := ca.Ensure(ctx, s.KPKI.KV)
 	if err != nil {
 		return fmt.Errorf("could not ensure ca certificate: %w", err)
 	}
 
-	kubeconfig, err := pki.New(ca, "", pki.Client(identity, []string{"system:nodes"})).Kubeconfig(ctx, kv)
+	kubeconfig, err := pki.New(ca, "", pki.Client(identity, []string{"system:nodes"})).Kubeconfig(ctx, s.KPKI.KV)
 	if err != nil {
 		return fmt.Errorf("could not create volatile kubelet client cert: %w", err)
 	}
 
-	cert, key, err := pki.New(ca, "volatile", pki.Server([]string{nodeName}, nil)).Ensure(ctx, kv)
+	cert, key, err := pki.New(ca, "", pki.Server([]string{s.NodeName}, nil)).Ensure(ctx, s.KPKI.KV)
 	if err != nil {
 		return fmt.Errorf("could not create volatile kubelet server cert: %w", err)
 	}
 
-	if err := os.MkdirAll(kubeletRoot, 0755); err != nil {
-		return fmt.Errorf("could not create kubelet root directory: %w", err)
-	}
 	// TODO(q3k): this should probably become its own function //core/internal/kubernetes/pki.
 	for _, el := range []struct {
-		target string
+		target declarative.FilePlacement
 		data   []byte
 	}{
-		{kubeletKubeconfig, kubeconfig},
-		{kubeletCACert, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cacert})},
-		{kubeletCert, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert})},
-		{kubeletKey, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key})},
+		{s.KubeletDirectory.Kubeconfig, kubeconfig},
+		{s.KubeletDirectory.PKI.CACertificate, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cacert})},
+		{s.KubeletDirectory.PKI.Certificate, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert})},
+		{s.KubeletDirectory.PKI.Key, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key})},
 	} {
-		if err := ioutil.WriteFile(el.target, el.data, 0400); err != nil {
-			return fmt.Errorf("could not write %q: %w", el.target, err)
+		if err := el.target.Write(el.data, 0400); err != nil {
+			return fmt.Errorf("could not write %v: %w", el.target, err)
 		}
 	}
 
 	return nil
 }
 
-func runKubelet(spec *KubeletSpec, output io.Writer) supervisor.Runnable {
-	return func(ctx context.Context) error {
-		fargs, err := fileargs.New()
-		if err != nil {
-			return err
-		}
-		var clusterDNS []string
-		for _, dnsIP := range spec.clusterDNS {
-			clusterDNS = append(clusterDNS, dnsIP.String())
-		}
+func (s *kubeletService) configure() *kubeletconfig.KubeletConfiguration {
+	var clusterDNS []string
+	for _, dnsIP := range s.ClusterDNS {
+		clusterDNS = append(clusterDNS, dnsIP.String())
+	}
 
-		kubeletConf := &kubeletconfig.KubeletConfiguration{
-			TypeMeta: v1.TypeMeta{
-				Kind:       "KubeletConfiguration",
-				APIVersion: kubeletconfig.GroupName + "/v1beta1",
+	return &kubeletconfig.KubeletConfiguration{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "KubeletConfiguration",
+			APIVersion: kubeletconfig.GroupName + "/v1beta1",
+		},
+		TLSCertFile:       s.KubeletDirectory.PKI.Certificate.FullPath(),
+		TLSPrivateKeyFile: s.KubeletDirectory.PKI.Key.FullPath(),
+		TLSMinVersion:     "VersionTLS13",
+		ClusterDNS:        clusterDNS,
+		Authentication: kubeletconfig.KubeletAuthentication{
+			X509: kubeletconfig.KubeletX509Authentication{
+				ClientCAFile: s.KubeletDirectory.PKI.CACertificate.FullPath(),
 			},
-			TLSCertFile:       "/data/kubernetes/kubelet.crt",
-			TLSPrivateKeyFile: "/data/kubernetes/kubelet.key",
-			TLSMinVersion:     "VersionTLS13",
-			ClusterDNS:        clusterDNS,
-			Authentication: kubeletconfig.KubeletAuthentication{
-				X509: kubeletconfig.KubeletX509Authentication{
-					ClientCAFile: "/data/kubernetes/ca.crt",
-				},
-			},
-			// TODO(q3k): move reconciler.False to a generic package, fix the following references.
-			ClusterDomain:                "cluster.local", // cluster.local is hardcoded in the certificate too currently
-			EnableControllerAttachDetach: reconciler.False(),
-			HairpinMode:                  "none",
-			MakeIPTablesUtilChains:       reconciler.False(), // We don't have iptables
-			FailSwapOn:                   reconciler.False(), // Our kernel doesn't have swap enabled which breaks Kubelet's detection
-			KubeReserved: map[string]string{
-				"cpu":    "200m",
-				"memory": "300Mi",
-			},
+		},
+		// TODO(q3k): move reconciler.False to a generic package, fix the following references.
+		ClusterDomain:                "cluster.local", // cluster.local is hardcoded in the certificate too currently
+		EnableControllerAttachDetach: reconciler.False(),
+		HairpinMode:                  "none",
+		MakeIPTablesUtilChains:       reconciler.False(), // We don't have iptables
+		FailSwapOn:                   reconciler.False(), // Our kernel doesn't have swap enabled which breaks Kubelet's detection
+		KubeReserved: map[string]string{
+			"cpu":    "200m",
+			"memory": "300Mi",
+		},
 
-			// We're not going to use this, but let's make it point to a known-empty directory in case anybody manages to
-			// trigger it.
-			VolumePluginDir: "/kubernetes/conf/flexvolume-plugins",
-		}
+		// We're not going to use this, but let's make it point to a known-empty directory in case anybody manages to
+		// trigger it.
+		VolumePluginDir: s.EphemeralDirectory.FlexvolumePlugins.FullPath(),
+	}
+}
 
-		configRaw, err := json.Marshal(kubeletConf)
-		if err != nil {
-			return err
-		}
-		cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kubelet",
-			fargs.FileOpt("--config", "config.json", configRaw),
-			"--container-runtime=remote",
-			"--container-runtime-endpoint=unix:///containerd/run/containerd.sock",
-			"--kubeconfig=/data/kubernetes/kubelet.kubeconfig",
-			"--root-dir=/data/kubernetes/kubelet",
-		)
-		cmd.Env = []string{"PATH=/kubernetes/bin"}
-		cmd.Stdout = output
-		cmd.Stderr = output
+func (s *kubeletService) Run(ctx context.Context) error {
+	if err := s.createCertificates(ctx); err != nil {
+		return fmt.Errorf("when creating certificates: %w", err)
+	}
 
-		supervisor.Signal(ctx, supervisor.SignalHealthy)
-		err = cmd.Run()
-		fmt.Fprintf(output, "kubelet stopped: %v\n", err)
+	configRaw, err := json.Marshal(s.configure())
+	if err != nil {
+		return fmt.Errorf("when marshaling kubelet configuration: %w", err)
+	}
+
+	fargs, err := fileargs.New()
+	if err != nil {
 		return err
 	}
+	cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kubelet",
+		fargs.FileOpt("--config", "config.json", configRaw),
+		"--container-runtime=remote",
+		fmt.Sprintf("--container-runtime-endpoint=unix://%s", s.EphemeralDirectory.Containerd.ClientSocket.FullPath()),
+		fmt.Sprintf("--kubeconfig=%s", s.KubeletDirectory.Kubeconfig.FullPath()),
+		fmt.Sprintf("--root-dir=%s", s.KubeletDirectory.FullPath()),
+	)
+	cmd.Env = []string{"PATH=/kubernetes/bin"}
+	cmd.Stdout = s.Output
+	cmd.Stderr = s.Output
+
+	supervisor.Signal(ctx, supervisor.SignalHealthy)
+	err = cmd.Run()
+	fmt.Fprintf(s.Output, "kubelet stopped: %v\n", err)
+	return err
 }

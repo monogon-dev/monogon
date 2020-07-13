@@ -21,6 +21,8 @@ import (
 	"os"
 	"os/exec"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/localstorage/declarative"
+
 	"golang.org/x/sys/unix"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/localstorage/crypt"
@@ -112,6 +114,22 @@ func (d *DataDirectory) MountNew(unlock *ESPLocalUnlockFile) ([]byte, error) {
 
 	if err := d.mount(); err != nil {
 		return nil, fmt.Errorf("mounting: %w", err)
+	}
+
+	// TODO(q3k): do this automatically?
+	for _, d := range []declarative.DirectoryPlacement{
+		d.Etcd, d.Etcd.Data, d.Etcd.PeerPKI,
+		d.Containerd,
+		d.Kubernetes,
+		d.Kubernetes.Kubelet, d.Kubernetes.Kubelet.PKI, d.Kubernetes.Kubelet.Plugins, d.Kubernetes.Kubelet.PluginsRegistry,
+		d.Kubernetes.ClusterNetworking,
+		d.Node,
+		d.Volumes,
+	} {
+		err := d.MkdirAll(0700)
+		if err != nil {
+			return nil, fmt.Errorf("creating directory failed: %w", err)
+		}
 	}
 
 	if err := unlock.Write(localUnlockBlob, 0600); err != nil {

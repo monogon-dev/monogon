@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sync"
 
 	"golang.org/x/sys/unix"
 )
@@ -31,8 +32,9 @@ type FSRoot struct {
 }
 
 type FSPlacement struct {
-	root *FSRoot
-	path string
+	root      *FSRoot
+	path      string
+	writeLock sync.Mutex
 }
 
 func (f *FSPlacement) FullPath() string {
@@ -60,18 +62,17 @@ func (f *FSPlacement) Read() ([]byte, error) {
 
 // Write performs an atomic file write, via a temporary file.
 func (f *FSPlacement) Write(d []byte, mode os.FileMode) error {
-	tmp, err := ioutil.TempFile("", "")
-	if err != nil {
-		return fmt.Errorf("temporary file creation failed: %w", err)
-	}
-	defer tmp.Close()
-	defer os.Remove(tmp.Name())
-	if _, err := tmp.Write(d); err != nil {
+	f.writeLock.Lock()
+	defer f.writeLock.Unlock()
+
+	// TODO(q3k): ensure that these do not collide with an existing sibling file, or generate this suffix randomly.
+	tmp := f.FullPath() + ".__smalltown_tmp"
+	defer os.Remove(tmp)
+	if err := ioutil.WriteFile(tmp, d, mode); err != nil {
 		return fmt.Errorf("temporary file write failed: %w", err)
 	}
-	tmp.Close()
 
-	if err := unix.Rename(tmp.Name(), f.FullPath()); err != nil {
+	if err := unix.Rename(tmp, f.FullPath()); err != nil {
 		return fmt.Errorf("renaming target file failed: %w", err)
 	}
 

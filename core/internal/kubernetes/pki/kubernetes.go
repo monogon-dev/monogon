@@ -78,12 +78,14 @@ const (
 // which can be retrieved, or be used to generate Kubeconfigs from.
 type KubernetesPKI struct {
 	logger       *zap.Logger
+	KV           clientv3.KV
 	Certificates map[KubeCertificateName]*Certificate
 }
 
-func NewKubernetes(l *zap.Logger) *KubernetesPKI {
+func NewKubernetes(l *zap.Logger, kv clientv3.KV) *KubernetesPKI {
 	pki := KubernetesPKI{
 		logger:       l,
+		KV:           kv,
 		Certificates: make(map[KubeCertificateName]*Certificate),
 	}
 
@@ -117,15 +119,15 @@ func NewKubernetes(l *zap.Logger) *KubernetesPKI {
 }
 
 // EnsureAll ensures that all static certificates (and the serviceaccount key) are present on etcd.
-func (k *KubernetesPKI) EnsureAll(ctx context.Context, kv clientv3.KV) error {
+func (k *KubernetesPKI) EnsureAll(ctx context.Context) error {
 	for n, v := range k.Certificates {
 		k.logger.Info("ensureing certificate existence", zap.String("name", string(n)))
-		_, _, err := v.Ensure(ctx, kv)
+		_, _, err := v.Ensure(ctx, k.KV)
 		if err != nil {
 			return fmt.Errorf("could not ensure certificate %q exists: %w", n, err)
 		}
 	}
-	_, err := k.ServiceAccountKey(ctx, kv)
+	_, err := k.ServiceAccountKey(ctx)
 	if err != nil {
 		return fmt.Errorf("could not ensure service account key exists: %w", err)
 	}
@@ -134,23 +136,23 @@ func (k *KubernetesPKI) EnsureAll(ctx context.Context, kv clientv3.KV) error {
 
 // Kubeconfig generates a kubeconfig blob for a given certificate name. The same lifetime semantics as in .Certificate
 // apply.
-func (k *KubernetesPKI) Kubeconfig(ctx context.Context, name KubeCertificateName, kv clientv3.KV) ([]byte, error) {
+func (k *KubernetesPKI) Kubeconfig(ctx context.Context, name KubeCertificateName) ([]byte, error) {
 	c, ok := k.Certificates[name]
 	if !ok {
 		return nil, fmt.Errorf("no certificate %q", name)
 	}
-	return c.Kubeconfig(ctx, kv)
+	return c.Kubeconfig(ctx, k.KV)
 }
 
 // Certificate retrieves an x509 DER-encoded (but not PEM-wrapped) key and certificate for a given certificate name.
 // If the requested certificate is volatile, it will be created on demand. Otherwise it will be created on etcd (if not
 // present), and retrieved from there.
-func (k *KubernetesPKI) Certificate(ctx context.Context, name KubeCertificateName, kv clientv3.KV) (cert, key []byte, err error) {
+func (k *KubernetesPKI) Certificate(ctx context.Context, name KubeCertificateName) (cert, key []byte, err error) {
 	c, ok := k.Certificates[name]
 	if !ok {
 		return nil, nil, fmt.Errorf("no certificate %q", name)
 	}
-	return c.Ensure(ctx, kv)
+	return c.Ensure(ctx, k.KV)
 }
 
 // Kubeconfig generates a kubeconfig blob for this certificate. The same lifetime semantics as in .Ensure apply.
@@ -191,14 +193,14 @@ func (c *Certificate) Kubeconfig(ctx context.Context, kv clientv3.KV) ([]byte, e
 
 // ServiceAccountKey retrieves (and possible generates and stores on etcd) the Kubernetes service account key. The
 // returned data is ready to be used by Kubernetes components (in PKIX form).
-func (k *KubernetesPKI) ServiceAccountKey(ctx context.Context, kv clientv3.KV) ([]byte, error) {
+func (k *KubernetesPKI) ServiceAccountKey(ctx context.Context) ([]byte, error) {
 	// TODO(q3k): this should be abstracted away once we abstract away etcd access into a library with try-or-create
 	// semantics.
 
 	path := etcdPath("%s.der", serviceAccountKeyName)
 
 	// Try loading  key from etcd.
-	keyRes, err := kv.Get(ctx, path)
+	keyRes, err := k.KV.Get(ctx, path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get key from etcd: %w", err)
 	}
@@ -219,7 +221,7 @@ func (k *KubernetesPKI) ServiceAccountKey(ctx context.Context, kv clientv3.KV) (
 	}
 
 	// Save to etcd.
-	_, err = kv.Put(ctx, path, string(key))
+	_, err = k.KV.Put(ctx, path, string(key))
 	if err != nil {
 		err = fmt.Errorf("failed to write newly generated key: %w", err)
 	}

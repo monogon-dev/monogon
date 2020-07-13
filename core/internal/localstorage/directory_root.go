@@ -24,6 +24,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/localstorage/crypt"
+	"git.monogon.dev/source/nexantic.git/core/internal/localstorage/declarative"
 )
 
 func (r *Root) Start(ctx context.Context) error {
@@ -47,6 +48,36 @@ func (r *Root) Start(ctx context.Context) error {
 	}
 
 	r.Data.canMount = true
+
+	if err := os.Mkdir(r.Tmp.FullPath(), 0777); err != nil {
+		return fmt.Errorf("making /tmp directory: %w", err)
+	}
+
+	if err := unix.Mount("tmpfs", r.Tmp.FullPath(), "tmpfs", unix.MS_NOEXEC|unix.MS_NODEV, ""); err != nil {
+		return fmt.Errorf("mounting /tmp: %w", err)
+	}
+
+	// TODO(q3k): do this automatically?
+	for _, d := range []declarative.DirectoryPlacement{
+		r.Etc,
+		r.Ephemeral,
+		r.Ephemeral.Consensus,
+		r.Ephemeral.Containerd, r.Ephemeral.Containerd.Tmp, r.Ephemeral.Containerd.RunSC, r.Ephemeral.Containerd.IPAM,
+		r.Ephemeral.FlexvolumePlugins,
+	} {
+		err := d.MkdirAll(0700)
+		if err != nil {
+			return fmt.Errorf("creating directory failed: %w", err)
+		}
+	}
+
+	for _, d := range []declarative.DirectoryPlacement{
+		r.Ephemeral, r.Ephemeral.Containerd, r.Ephemeral.Containerd.Tmp,
+	} {
+		if err := os.Chmod(d.FullPath(), 0755); err != nil {
+			return fmt.Errorf("failed to chmod containerd tmp path: %w", err)
+		}
+	}
 
 	return nil
 }

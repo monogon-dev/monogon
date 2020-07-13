@@ -24,8 +24,6 @@ import (
 	"net"
 	"os/exec"
 
-	"go.etcd.io/etcd/clientv3"
-
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
@@ -41,24 +39,22 @@ type controllerManagerConfig struct {
 	serverKey             []byte
 }
 
-var clusterNet = net.IPNet{IP: net.IP{10, 0, 0, 0}, Mask: net.IPMask{255, 255, 0, 0}}
-
-func getPKIControllerManagerConfig(ctx context.Context, kv clientv3.KV, kpki *pki.KubernetesPKI) (*controllerManagerConfig, error) {
+func getPKIControllerManagerConfig(ctx context.Context, kpki *pki.KubernetesPKI) (*controllerManagerConfig, error) {
 	var config controllerManagerConfig
 	var err error
-	config.rootCA, _, err = kpki.Certificate(ctx, pki.IdCA, kv)
+	config.rootCA, _, err = kpki.Certificate(ctx, pki.IdCA)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ID root CA: %w", err)
 	}
-	config.serverCert, config.serverKey, err = kpki.Certificate(ctx, pki.ControllerManager, kv)
+	config.serverCert, config.serverKey, err = kpki.Certificate(ctx, pki.ControllerManager)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get controller-manager serving certificate: %w", err)
 	}
-	config.serviceAccountPrivKey, err = kpki.ServiceAccountKey(ctx, kv)
+	config.serviceAccountPrivKey, err = kpki.ServiceAccountKey(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get serviceaccount privkey: %w", err)
 	}
-	config.kubeConfig, err = kpki.Kubeconfig(ctx, pki.ControllerManagerClient, kv)
+	config.kubeConfig, err = kpki.Kubeconfig(ctx, pki.ControllerManagerClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get controller-manager kubeconfig: %w", err)
 	}
@@ -87,7 +83,7 @@ func runControllerManager(config controllerManagerConfig, output io.Writer) supe
 			args.FileOpt("--tls-private-key-file", "server-key.pem",
 				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serverKey})),
 			"--allocate-node-cidrs",
-			"--cluster-cidr="+clusterNet.String(),
+			"--cluster-cidr="+config.clusterNet.String(),
 		)
 
 		if args.Error() != nil {

@@ -39,10 +39,16 @@ import (
 
 type Root struct {
 	declarative.Directory
-	ESP       ESPDirectory       `dir:"esp"`
-	Data      DataDirectory      `dir:"data"`
-	Etc       EtcDirectory       `dir:"etc"`
+	// UEFI ESP partition, mounted from plaintext storage.
+	ESP ESPDirectory `dir:"esp"`
+	// Persistent Data partition, mounted from encrypted and authenticated storage.
+	Data DataDirectory `dir:"data"`
+	// FHS-standard /etc directory, containes /etc/hosts, /etc/machine-id, and other compatibility files.
+	Etc EtcDirectory `dir:"etc"`
+	// Ephemeral data, used by runtime, stored in tmpfs. Things like sockets, temporary config files, etc.
 	Ephemeral EphemeralDirectory `dir:"ephemeral"`
+	// FHS-standard /tmp directory, used by ioutil.TempFile.
+	Tmp TmpDirectory `dir:"tmp"`
 }
 
 type PKIDirectory struct {
@@ -78,9 +84,11 @@ type DataDirectory struct {
 	// mounted is set by DataDirectory when it is mounted. It ensures it's only mounted once.
 	mounted bool
 
-	Etcd    DataEtcdDirectory     `dir:"etcd"`
-	Node    PKIDirectory          `dir:"node_pki"`
-	Volumes declarative.Directory `dir:"volumes"`
+	Containerd declarative.Directory   `dir:"containerd"`
+	Etcd       DataEtcdDirectory       `dir:"etcd"`
+	Kubernetes DataKubernetesDirectory `dir:"kubernetes"`
+	Node       PKIDirectory            `dir:"node_pki"`
+	Volumes    DataVolumesDirectory    `dir:"volumes"`
 }
 
 type DataEtcdDirectory struct {
@@ -90,18 +98,64 @@ type DataEtcdDirectory struct {
 	Data    declarative.Directory `dir:"data"`
 }
 
+type DataKubernetesDirectory struct {
+	declarative.Directory
+	ClusterNetworking DataKubernetesClusterNetworkingDirectory `dir:"clusternet"`
+	Kubelet           DataKubernetesKubeletDirectory           `dir:"kubelet"`
+}
+
+type DataKubernetesClusterNetworkingDirectory struct {
+	declarative.Directory
+	Key declarative.File `file:"private.key"`
+}
+
+type DataKubernetesKubeletDirectory struct {
+	declarative.Directory
+	Kubeconfig declarative.File `file:"kubeconfig"`
+	PKI        PKIDirectory     `dir:"pki"`
+
+	Plugins struct {
+		declarative.Directory
+		VFS declarative.File `file:"com.smalltown.vfs.sock"`
+	} `dir:"plugins"`
+
+	PluginsRegistry struct {
+		declarative.Directory
+		VFSReg declarative.File `file:"com.smalltown.vfs-reg.sock"`
+	} `dir:"plugins_registry"`
+}
+
+type DataVolumesDirectory struct {
+	declarative.Directory
+}
+
 type EtcDirectory struct {
 	declarative.Directory
 	Hosts     declarative.File `file:"hosts"`
-	MachineID declarative.File `file:"machine_id"`
+	MachineID declarative.File `file:"machine-id"`
 }
 
 type EphemeralDirectory struct {
 	declarative.Directory
-	Consensus EphemeralConsensusDirectory `dir:"consensus"`
+	Consensus         EphemeralConsensusDirectory  `dir:"consensus"`
+	Containerd        EphemeralContainerdDirectory `dir:"containerd"`
+	FlexvolumePlugins declarative.Directory        `dir:"flexvolume_plugins"`
 }
 
 type EphemeralConsensusDirectory struct {
 	declarative.Directory
 	ClientSocket declarative.File `file:"client.sock"`
+}
+
+type EphemeralContainerdDirectory struct {
+	declarative.Directory
+	ClientSocket  declarative.File      `file:"client.sock"`
+	RunSCLogsFIFO declarative.File      `file:"runsc-logs.fifo"`
+	Tmp           declarative.Directory `dir:"tmp"`
+	RunSC         declarative.Directory `dir:"runsc"`
+	IPAM          declarative.Directory `dir:"ipam"`
+}
+
+type TmpDirectory struct {
+	declarative.Directory
 }

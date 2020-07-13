@@ -1,6 +1,6 @@
-root = "/containerd/run/runsc"
+root = "/ephemeral/containerd/runsc"
 [runsc_config]
 debug = "true"
-debug-log = "/containerd/run/runsc-logs.fifo"
-panic-log = "/containerd/run/runsc-logs.fifo"
-log = "/containerd/run/runsc-logs.fifo"
+debug-log = "/ephemeral/containerd/runsc-logs.fifo"
+panic-log = "/ephemeral/containerd/runsc-logs.fifo"
+log = "/ephemeral/containerd/runsc-logs.fifo"

@@ -16,9 +16,9 @@ go_library(
         "//core/internal/common:go_default_library",  # keep
         "//core/internal/common/supervisor:go_default_library",
         "//core/internal/network:go_default_library",
-        "//core/internal/node:go_default_library",
-        "//core/internal/storage:go_default_library",
         "//core/pkg/tpm:go_default_library",
+        "@de_cinfra_git_source_nexantic_git//core/internal/node:go_default_library",
+        "@de_cinfra_git_source_nexantic_git//core/internal/storage:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
         "@org_uber_go_zap//:go_default_library",
     ],

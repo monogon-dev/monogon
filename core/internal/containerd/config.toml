@@ -1,13 +1,13 @@
 version = 2
 root = "/data/containerd"
-state = "/containerd/run"
+state = "/ephemeral/containerd"
 plugin_dir = ""
 disabled_plugins = []
 required_plugins = []
 oom_score = 0
 
 [grpc]
-  address = "/containerd/run/containerd.sock"
+  address = "/ephemeral/containerd/client.sock"
   tcp_address = ""
   tcp_tls_cert = ""
   tcp_tls_key = ""
