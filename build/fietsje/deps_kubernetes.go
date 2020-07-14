@@ -19,7 +19,7 @@ package main
 func depsKubernetes(p *planner) {
 	// containerd and its deps
 	p.collect(
-		"k8s.io/kubernetes", "v1.19.0-alpha.2",
+		"k8s.io/kubernetes", "v1.19.0-rc.0",
 		buildTags("providerless"),
 		disabledProtoBuild,
 		patches(
@@ -69,7 +69,7 @@ func depsKubernetes(p *planner) {
 		"github.com/bgentry/speakeasy",
 		"github.com/blang/semver",
 		"github.com/chai2010/gettext-go",
-		"github.com/checkpoint-restore/go-criu",
+		"github.com/checkpoint-restore/go-criu/v4",
 		"github.com/container-storage-interface/spec",
 		"github.com/coreos/go-oidc",
 		"github.com/coreos/go-semver",
@@ -79,6 +79,7 @@ func depsKubernetes(p *planner) {
 		"github.com/daviddengcn/go-colortext",
 		"github.com/dgrijalva/jwt-go",
 		"github.com/docker/go-connections",
+		"github.com/docker/distribution",
 		"github.com/dustin/go-humanize",
 		"github.com/euank/go-kmsg-parser",
 		"github.com/evanphx/json-patch",
@@ -115,9 +116,11 @@ func depsKubernetes(p *planner) {
 		"github.com/mattn/go-isatty",
 		"github.com/mattn/go-runewidth",
 		"github.com/mindprince/gonvml",
+		"github.com/mistifyio/go-zfs",
 		"github.com/mitchellh/go-wordwrap",
 		"github.com/mitchellh/mapstructure",
 		"github.com/moby/term",
+		"github.com/moby/sys/mountinfo",
 		"github.com/morikuni/aec",
 		"github.com/mrunalp/fileutils",
 		"github.com/munnerz/goautoneg",
@@ -126,9 +129,11 @@ func depsKubernetes(p *planner) {
 		"github.com/peterbourgon/diskv",
 		"github.com/pquerna/cachecontrol",
 		"github.com/robfig/cron",
+		"github.com/russross/blackfriday",
 		"github.com/soheilhy/cmux",
 		"github.com/spf13/afero",
 		"github.com/spf13/pflag",
+		"github.com/stretchr/testify",
 		"github.com/tmc/grpc-websocket-proxy",
 		"github.com/vishvananda/netlink",
 		"github.com/vishvananda/netns",
@@ -148,7 +153,7 @@ func depsKubernetes(p *planner) {
 		"sigs.k8s.io/kustomize",
 		"sigs.k8s.io/structured-merge-diff/v3",
 		"vbom.ml/util",
-	).with(patches("cadvisor.patch", "cadvisor-build.patch")).use(
+	).use(
 		"github.com/google/cadvisor",
 	).with(disabledProtoBuild).use(
 		"go.etcd.io/etcd",

@@ -209,7 +209,7 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/options/globalflags.go io_k8s_ku
 @@ -28,10 +28,6 @@
  	"k8s.io/component-base/logs"
  	"k8s.io/component-base/version/verflag"
- 	"k8s.io/klog"
+ 	"k8s.io/klog/v2"
 -
 -	// ensure libs have a chance to globally register their flags
 -	_ "k8s.io/kubernetes/pkg/credentialprovider/azure"
@@ -301,42 +301,6 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/plugins.go io_k8s_kubernetes/cmd
  	allPlugins = append(allPlugins, local.ProbeVolumePlugins()...)
 -	allPlugins = append(allPlugins, storageos.ProbeVolumePlugins()...)
  	allPlugins = append(allPlugins, csi.ProbeVolumePlugins()...)
- 	return allPlugins, nil
- }
-diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/plugins_providers.go io_k8s_kubernetes/cmd/kubelet/app/plugins_providers.go
---- io_k8s_kubernetes.orig/cmd/kubelet/app/plugins_providers.go	2020-04-15 13:43:57.827669732 +0200
-+++ io_k8s_kubernetes/cmd/kubelet/app/plugins_providers.go	2020-04-15 16:29:49.402465237 +0200
-@@ -24,13 +24,7 @@
- 	"k8s.io/klog"
- 	"k8s.io/kubernetes/pkg/features"
- 	"k8s.io/kubernetes/pkg/volume"
--	"k8s.io/kubernetes/pkg/volume/awsebs"
--	"k8s.io/kubernetes/pkg/volume/azure_dd"
--	"k8s.io/kubernetes/pkg/volume/azure_file"
--	"k8s.io/kubernetes/pkg/volume/cinder"
- 	"k8s.io/kubernetes/pkg/volume/csimigration"
--	"k8s.io/kubernetes/pkg/volume/gcepd"
--	"k8s.io/kubernetes/pkg/volume/vsphere_volume"
- )
- 
- type probeFn func() []volume.VolumePlugin
-@@ -60,11 +54,6 @@
- 
- func appendLegacyProviderVolumes(allPlugins []volume.VolumePlugin, featureGate featuregate.FeatureGate) ([]volume.VolumePlugin, error) {
- 	pluginMigrationStatus := make(map[string]pluginInfo)
--	pluginMigrationStatus[plugins.AWSEBSInTreePluginName] = pluginInfo{pluginMigrationFeature: features.CSIMigrationAWS, pluginMigrationCompleteFeature: features.CSIMigrationAWSComplete, pluginProbeFunction: awsebs.ProbeVolumePlugins}
--	pluginMigrationStatus[plugins.GCEPDInTreePluginName] = pluginInfo{pluginMigrationFeature: features.CSIMigrationGCE, pluginMigrationCompleteFeature: features.CSIMigrationGCEComplete, pluginProbeFunction: gcepd.ProbeVolumePlugins}
--	pluginMigrationStatus[plugins.CinderInTreePluginName] = pluginInfo{pluginMigrationFeature: features.CSIMigrationOpenStack, pluginMigrationCompleteFeature: features.CSIMigrationOpenStackComplete, pluginProbeFunction: cinder.ProbeVolumePlugins}
--	pluginMigrationStatus[plugins.AzureDiskInTreePluginName] = pluginInfo{pluginMigrationFeature: features.CSIMigrationAzureDisk, pluginMigrationCompleteFeature: features.CSIMigrationAzureDiskComplete, pluginProbeFunction: azure_dd.ProbeVolumePlugins}
--	pluginMigrationStatus[plugins.AzureFileInTreePluginName] = pluginInfo{pluginMigrationFeature: features.CSIMigrationAzureFile, pluginMigrationCompleteFeature: features.CSIMigrationAzureFileComplete, pluginProbeFunction: azure_file.ProbeVolumePlugins}
- 
- 	var err error
- 	for pluginName, pluginInfo := range pluginMigrationStatus {
-@@ -74,6 +63,5 @@
- 		}
- 	}
- 
--	allPlugins = append(allPlugins, vsphere_volume.ProbeVolumePlugins()...)
  	return allPlugins, nil
  }
 diff -ur io_k8s_kubernetes.orig/cmd/kubelet/BUILD io_k8s_kubernetes/cmd/kubelet/BUILD

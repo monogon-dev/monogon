@@ -60,7 +60,7 @@ index 41f69efe3f0..01182684653 100644
  	"syscall"
  
 +	"golang.org/x/sys/unix"
- 	"k8s.io/klog"
+ 	"k8s.io/klog/v2"
  	utilexec "k8s.io/utils/exec"
  	utilio "k8s.io/utils/io"
 @@ -49,8 +51,10 @@ const (

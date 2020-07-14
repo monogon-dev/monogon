@@ -42,7 +42,8 @@
       "external/com_github_ghodss_yaml": "third_party",
       "external/io_k8s_kubectl": "third_party",
       "external/org_golang_google_protobuf/": "third_party",
-      "external/com_github_shirou_gopsutil/": "unreachable"
+      "external/com_github_shirou_gopsutil/": "unreachable",
+      "external/io_k8s_apimachinery/": "third_party"
     }
   },
   "assign": {

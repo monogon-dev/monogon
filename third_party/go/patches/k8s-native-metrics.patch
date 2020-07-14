@@ -43,7 +43,7 @@ index 720b13406dc..b6e4b7e6d6f 100644
          "@io_k8s_client_go//tools/record:go_default_library",
          "@io_k8s_cloud_provider//:go_default_library",
 +        "@org_golang_x_sys//unix:go_default_library",
-         "@io_k8s_klog//:go_default_library",
+         "@io_k8s_klog_v2//:go_default_library",
          "@io_k8s_utils//exec:go_default_library",
          "@io_k8s_utils//mount:go_default_library",
 @@ -55,6 +57,7 @@ go_test(
