@@ -129,13 +129,13 @@ func InitializeEncryptedBlockDevice(name, baseName string, encryptionKey []byte)
 		return err
 	}
 
-	blkdev, err := os.OpenFile(fmt.Sprintf("/dev/%v", name), unix.O_DIRECT|os.O_WRONLY, 0000)
+	blkdev, err := os.OpenFile(fmt.Sprintf("/dev/%v", name), unix.O_DIRECT|os.O_WRONLY|os.O_SYNC, 0000)
 	if err != nil {
 		return fmt.Errorf("failed to open new encrypted device for zeroing: %w", err)
 	}
 	defer blkdev.Close()
 	blockSize, err := unix.IoctlGetUint32(int(blkdev.Fd()), unix.BLKSSZGET)
-	zeroedBuf := make([]byte, blockSize*100) // Make it faster
+	zeroedBuf := make([]byte, blockSize*10000) // Make it faster
 	for {
 		_, err := blkdev.Write(zeroedBuf)
 		if e, ok := err.(*os.PathError); ok && e.Err == syscall.ENOSPC {
