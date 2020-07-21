@@ -28,8 +28,6 @@ service NodeDebugService {
     rpc GetDebugKubeconfig(GetDebugKubeconfigRequest) returns (GetDebugKubeconfigResponse);
     // GetComponentLogs dumps various log ringbuffers for binaries that we run.
     rpc GetComponentLogs(GetComponentLogsRequest) returns (GetComponentLogsResponse);
-    // GetCondition gives the current status of various conditions inside Smalltown. Mainly used for testing.
-    rpc GetCondition(GetConditionRequest) returns (GetConditionResponse);
 }
 
 
@@ -50,12 +48,4 @@ message GetComponentLogsRequest {
 
 message GetComponentLogsResponse {
     repeated string line = 1;
-}
-
-message GetConditionRequest {
-    string name = 1;
-}
-
-message GetConditionResponse {
-    bool ok = 1;
 }

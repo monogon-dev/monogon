@@ -74,22 +74,3 @@ func (s *debugService) GetComponentLogs(ctx context.Context, req *apb.GetCompone
 	}
 	return &apb.GetComponentLogsResponse{Line: lines}, nil
 }
-
-// GetCondition checks for various conditions exposed by different services. Mostly intended for testing. If you need
-// to make sure something is available in an E2E test, consider adding a condition here.
-// TODO(q3k): since all conditions are now 'true' after the node lifecycle refactor, remove this call - or, start the
-// debug service earlier.
-func (s *debugService) GetCondition(ctx context.Context, req *apb.GetConditionRequest) (*apb.GetConditionResponse, error) {
-	var ok bool
-	switch req.Name {
-	case "IPAssigned":
-		ok = true
-	case "DataAvailable":
-		ok = true
-	default:
-		return nil, status.Errorf(codes.NotFound, "condition %v not found", req.Name)
-	}
-	return &apb.GetConditionResponse{
-		Ok: ok,
-	}, nil
-}

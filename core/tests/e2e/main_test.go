@@ -95,22 +95,6 @@ func TestE2E(t *testing.T) {
 	// This exists to keep the parent around while all the children race
 	// It currently tests both a set of OS-level conditions and Kubernetes Deployments and StatefulSets
 	t.Run("RunGroup", func(t *testing.T) {
-		t.Run("IP available", func(t *testing.T) {
-			t.Parallel()
-			ctx, cancel := context.WithTimeout(ctx, smallTestTimeout)
-			defer cancel()
-			if err := waitForCondition(ctx, debugClient, "IPAssigned"); err != nil {
-				t.Errorf("Condition IPAvailable not met in %s: %v", smallTestTimeout, err)
-			}
-		})
-		t.Run("Data available", func(t *testing.T) {
-			t.Parallel()
-			ctx, cancel := context.WithTimeout(ctx, largeTestTimeout)
-			defer cancel()
-			if err := waitForCondition(ctx, debugClient, "DataAvailable"); err != nil {
-				t.Errorf("Condition DataAvailable not met in %vs: %v", largeTestTimeout, err)
-			}
-		})
 		t.Run("Get Kubernetes Debug Kubeconfig", func(t *testing.T) {
 			t.Parallel()
 			selfCtx, cancel := context.WithTimeout(ctx, largeTestTimeout)

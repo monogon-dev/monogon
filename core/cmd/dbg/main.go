@@ -78,15 +78,6 @@ func main() {
 			fmt.Println(line)
 		}
 		return
-	case "condition":
-		conditionCmd.Parse(os.Args[2:])
-		condition := conditionCmd.Arg(0)
-		res, err := debugClient.GetCondition(ctx, &apb.GetConditionRequest{Name: condition})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to get condition: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Println(res.Ok)
 	case "kubectl":
 		// Always get a kubeconfig with cluster-admin (group system:masters), kubectl itself can impersonate
 		kubeconfigFile, err := ioutil.TempFile("", "dbg_kubeconfig")
