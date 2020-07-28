@@ -188,6 +188,13 @@ func patches(patches ...string) buildOpt {
 	}
 }
 
+// prePatches applies patches in affected dependencies before BUILD file generation.
+func prePatches(patches ...string) buildOpt {
+	return func(d *dependency) {
+		d.prePatches = patches
+	}
+}
+
 func forceBazelGeneration(d *dependency) {
 	d.forceBazelGeneration = true
 }

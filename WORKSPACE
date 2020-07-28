@@ -41,6 +41,10 @@ http_archive(
 
 http_archive(
     name = "bazel_gazelle",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/gazelle:add-prepatching.patch",
+    ],
     sha256 = "bfd86b3cbe855d6c16c6fce60d76bd51f5c8dbc9cfcaef7a2bb5c1aafd0710e8",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.21.0/bazel-gazelle-v0.21.0.tar.gz",

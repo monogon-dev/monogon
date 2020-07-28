@@ -48,6 +48,7 @@ type dependency struct {
 	forceBazelGeneration bool
 	buildTags            []string
 	patches              []string
+	prePatches           []string
 	buildExtraArgs       []string
 	// replace is an importpath that this dependency will replace. If this is set, this dependency will be visible
 	// in the build as 'importpath', but downloaded at 'replace'/'version'. This might be slighly confusing, but

@@ -69,6 +69,15 @@ func (p *planner) render(w io.Writer) error {
 				fmt.Fprintf(w, "            %q,\n", "//third_party/go/patches:"+patch)
 			}
 			fmt.Fprintf(w, "        ],\n")
+		}
+		if d.prePatches != nil {
+			fmt.Fprintf(w, "        pre_patches = [\n")
+			for _, patch := range d.prePatches {
+				fmt.Fprintf(w, "            %q,\n", "//third_party/go/patches:"+patch)
+			}
+			fmt.Fprintf(w, "        ],\n")
+		}
+		if d.patches != nil || d.prePatches != nil {
 			fmt.Fprintf(w, "        patch_args = [%q],\n", "-p1")
 		}
 		if d.buildExtraArgs != nil {
