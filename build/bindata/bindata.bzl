@@ -34,7 +34,7 @@ def _bindata_impl(ctx):
         "-pkg",
         ctx.attr.package,
         "-prefix",
-        ctx.label.package,
+        ctx.label.workspace_root,
         "-o",
         out,
     ])
