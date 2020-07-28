@@ -73,7 +73,7 @@ func TestE2E(t *testing.T) {
 
 	// Set a global timeout to make sure this terminates
 	ctx, cancel := context.WithTimeout(context.Background(), globalTestTimeout)
-	portMap, err := launch.ConflictFreePortMap()
+	portMap, err := launch.ConflictFreePortMap(launch.NodePorts)
 	if err != nil {
 		t.Fatalf("Failed to acquire ports for e2e test: %v", err)
 	}
@@ -99,7 +99,7 @@ func TestE2E(t *testing.T) {
 			t.Parallel()
 			selfCtx, cancel := context.WithTimeout(ctx, largeTestTimeout)
 			defer cancel()
-			clientSet, err := getKubeClientSet(selfCtx, debugClient, portMap[common.KubernetesAPIPort])
+			clientSet, err := GetKubeClientSet(selfCtx, debugClient, portMap[common.KubernetesAPIPort])
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -7,7 +7,7 @@ go_library(
         "utils.go",
     ],
     importpath = "git.monogon.dev/source/nexantic.git/core/tests/e2e",
-    visibility = ["//visibility:private"],
+    visibility = ["//core/tests:__subpackages__"],
     deps = [
         "//core/proto/api:go_default_library",
         "@io_k8s_api//apps/v1:go_default_library",

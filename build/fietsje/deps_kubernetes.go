@@ -28,10 +28,13 @@ func depsKubernetes(p *planner) {
 			"k8s-native-metrics.patch",
 			"k8s-use-native.patch",
 		),
+		prePatches(
+			"k8s-e2e-tests-providerless.patch",
+		),
 	).inject(
 		// repo infra, not requested by k8s, but used with bazel
 		"k8s.io/repo-infra", "df02ded38f9506e5bbcbf21702034b4fef815f2f",
-	).with(patches("k8s-client-go.patch", "k8s-client-go-build.patch")).use(
+	).with(prePatches("k8s-client-go.patch")).use(
 		"k8s.io/client-go",
 	).with(patches("k8s-native-mounter.patch")).use(
 		"k8s.io/utils",
@@ -81,6 +84,7 @@ func depsKubernetes(p *planner) {
 		"github.com/docker/go-connections",
 		"github.com/docker/distribution",
 		"github.com/dustin/go-humanize",
+		"github.com/elazarl/goproxy",
 		"github.com/euank/go-kmsg-parser",
 		"github.com/evanphx/json-patch",
 		"github.com/exponent-io/jsonpath",
@@ -107,6 +111,7 @@ func depsKubernetes(p *planner) {
 		"github.com/grpc-ecosystem/go-grpc-middleware",
 		"github.com/grpc-ecosystem/go-grpc-prometheus",
 		"github.com/grpc-ecosystem/grpc-gateway",
+		"github.com/hpcloud/tail",
 		"github.com/jonboulle/clockwork",
 		"github.com/karrick/godirwalk",
 		"github.com/liggitt/tabwriter",
@@ -126,6 +131,8 @@ func depsKubernetes(p *planner) {
 		"github.com/munnerz/goautoneg",
 		"github.com/mxk/go-flowrate",
 		"github.com/olekukonko/tablewriter",
+		"github.com/onsi/ginkgo",
+		"github.com/onsi/gomega",
 		"github.com/peterbourgon/diskv",
 		"github.com/pquerna/cachecontrol",
 		"github.com/robfig/cron",
@@ -144,8 +151,10 @@ func depsKubernetes(p *planner) {
 		"go.uber.org/zap",
 		"golang.org/x/xerrors",
 		"gonum.org/v1/gonum",
+		"gopkg.in/fsnotify.v1",
 		"gopkg.in/natefinch/lumberjack.v2",
 		"gopkg.in/square/go-jose.v2",
+		"gopkg.in/tomb.v1",
 		"k8s.io/gengo",
 		"k8s.io/heapster",
 		"k8s.io/kube-openapi",

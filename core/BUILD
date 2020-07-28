@@ -43,6 +43,7 @@ smalltown_initramfs(
 
         # Containerd preseed bundles
         "//core/tests/e2e/preseedtest:preseedtest.tar": "/containerd/preseed/k8s.io/preseedtest.tar",
+        "//core/tests/e2e/k8s_cts:k8s_cts_image.tar": "/containerd/preseed/k8s.io/k8s_cts.tar",
 
         # CNI Plugins
         "@com_github_containernetworking_plugins//plugins/main/loopback": "/containerd/bin/cni/loopback",

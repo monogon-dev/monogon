@@ -741,6 +741,13 @@ entry: <
   semver: "v1.0.0"
 >
 entry: <
+  import_path: "github.com/elazarl/goproxy"
+  version: "v0.0.0-20180725130230-947c36da3153"
+  bazel_name: "com_github_elazarl_goproxy"
+  sum: "h1:yUdfgN0XgIJw7foRItutHYUIhlcKzcSf5vDpdhQAKTc="
+  semver: "v0.0.0-20180725130230-947c36da3153"
+>
+entry: <
   import_path: "github.com/emicklei/go-restful"
   version: "b993709ae1a4f6dd19cfa475232614441b11c9d5"
   bazel_name: "com_github_emicklei_go_restful"
@@ -1329,6 +1336,13 @@ entry: <
   semver: "v0.8.5"
 >
 entry: <
+  import_path: "github.com/hpcloud/tail"
+  version: "v1.0.0"
+  bazel_name: "com_github_hpcloud_tail"
+  sum: "h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI="
+  semver: "v1.0.0"
+>
+entry: <
   import_path: "github.com/imdario/mergo"
   version: "7c29201646fa3de8506f701213473dd407f19646"
   bazel_name: "com_github_imdario_mergo"
@@ -1733,6 +1747,20 @@ entry: <
   bazel_name: "com_github_olekukonko_tablewriter"
   sum: "h1:58+kh9C6jJVXYjt8IE48G2eWl6BjwU5Gj0gqY84fy78="
   semver: "v0.0.0-20170122224234-a0225b3f23b5"
+>
+entry: <
+  import_path: "github.com/onsi/ginkgo"
+  version: "v1.11.0"
+  bazel_name: "com_github_onsi_ginkgo"
+  sum: "h1:JAKSXpt1YjtLA7YpPiqO9ss6sNXEsPfSGdwN0UHqzrw="
+  semver: "v1.11.0"
+>
+entry: <
+  import_path: "github.com/onsi/gomega"
+  version: "v1.7.0"
+  bazel_name: "com_github_onsi_gomega"
+  sum: "h1:XPnZz8VVBHjVsy1vzJmRwIcSwiUO+JFfrv/xGiigmME="
+  semver: "v1.7.0"
 >
 entry: <
   import_path: "github.com/op/go-logging"
@@ -2519,6 +2547,13 @@ entry: <
   semver: "v1.2.0"
 >
 entry: <
+  import_path: "gopkg.in/fsnotify.v1"
+  version: "v1.4.7"
+  bazel_name: "in_gopkg_fsnotify_v1"
+  sum: "h1:xOHLXZwVvI9hhs+cLKq5+I5onOuwQLhQwiu63xxlHs4="
+  semver: "v1.4.7"
+>
+entry: <
   import_path: "gopkg.in/gorp.v1"
   version: "v1.7.2"
   bazel_name: "in_gopkg_gorp_v1"
@@ -2559,6 +2594,13 @@ entry: <
   bazel_name: "in_gopkg_square_go_jose_v2"
   sum: "h1:orlkJ3myw8CN1nVQHBFfloD+L3egixIa4FvUP6RosSA="
   semver: "v2.2.2"
+>
+entry: <
+  import_path: "gopkg.in/tomb.v1"
+  version: "v1.0.0-20141024135613-dd632973f1e7"
+  bazel_name: "in_gopkg_tomb_v1"
+  sum: "h1:uRGJdciOHaEIrze2W8Q3AKkepLTh2hOroT7a+7czfdQ="
+  semver: "v1.0.0-20141024135613-dd632973f1e7"
 >
 entry: <
   import_path: "gopkg.in/yaml.v2"

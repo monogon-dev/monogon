@@ -348,3 +348,58 @@ diff -ur io_k8s_kubernetes.orig/pkg/kubelet/cadvisor/cadvisor_linux.go io_k8s_ku
  	_ "github.com/google/cadvisor/utils/cloudinfo/gce"
 
  	"github.com/google/cadvisor/cache/memory"
+
+--- io_k8s_kubernetes.orig/test/e2e/BUILD 2020-07-22 10:51:20.277358305 +0200
++++ io_k8s_kubernetes/test/e2e/BUILD   2020-07-22 10:56:43.451577495 +0200
+@@ -5,7 +5,7 @@
+     go_test = "go_test_conditional_pure",
+ )
+ load("@io_bazel_rules_go//go:def.bzl", "go_library")
+-load("//staging/src/k8s.io/component-base/version:def.bzl", "version_x_defs")
++load("@//third_party/go:kubernetes_version_def.bzl", "version_x_defs")
+
+ go_test(
+     name = "go_default_test",
+
+--- io_k8s_kubernetes.orig/test/e2e/generated/BUILD
++++ io_k8s_kubernetes/test/e2e/generated/BUILD
+@@ -4,23 +4,24 @@ load(
+     "@io_bazel_rules_go//go:def.bzl",
+     "go_library",
+ )
+-load("//build:bindata.bzl", "go_bindata")
++load("@nexantic//build/bindata:bindata.bzl", "bindata")
+
+ go_library(
+     name = "go_default_library",
+     srcs = [
+-        "bindata.go",
+         "gobindata_util.go",
+         "main.go",
+     ],
++    embed = [
++        ":bindata",
++    ],
+     importpath = "k8s.io/kubernetes/test/e2e/generated",
+     deps = [
+         "@io_k8s_klog_v2//:go_default_library",
+     ],
+ )
+
+-# IMPORTANT: if you make any changes here, you must also update hack/generate-bindata.sh.
+-go_bindata(
++bindata(
+     name = "bindata",
+     srcs = [
+         "//test/conformance/testdata:all-srcs",
+@@ -29,9 +30,7 @@ go_bindata(
+         "//test/fixtures:all-srcs",
+         "//test/images:all-srcs",
+     ],
+-    outs = ["bindata.go"],
+-    compress = True,
+-    include_metadata = False,
++    package = "generated",
+ )
+
+ filegroup(

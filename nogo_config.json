@@ -25,7 +25,8 @@
       "external/io_k8s_component_base/": "third_party",
       "external/io_k8s_apiserver/": "third_party",
       "external/org_golang_google_protobuf/": "third_party",
-      "external/com_github_armon_go_metrics/": "third_party"
+      "external/com_github_armon_go_metrics/": "third_party",
+      "external/com_github_elazarl_goproxy/": "third_party"
     }
   },
   "lostcancel": {

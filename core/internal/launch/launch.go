@@ -32,6 +32,9 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
+
+	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/sys/unix"
@@ -133,26 +136,27 @@ type Options struct {
 	EnrolmentConfig *apb.EnrolmentConfig
 }
 
-var requiredPorts = []uint16{common.ConsensusPort, common.NodeServicePort, common.MasterServicePort,
+// NodePorts is the list of ports a fully operational Smalltown node listens on
+var NodePorts = []uint16{common.ConsensusPort, common.NodeServicePort, common.MasterServicePort,
 	common.ExternalServicePort, common.DebugServicePort, common.KubernetesAPIPort, common.DebuggerPort}
 
-// IdentityPortMap returns a port map where each VM port is mapped onto itself on the host. This is mainly useful
+// IdentityPortMap returns a port map where each given port is mapped onto itself on the host. This is mainly useful
 // for development against Smalltown. The dbg command requires this mapping.
-func IdentityPortMap() PortMap {
+func IdentityPortMap(ports []uint16) PortMap {
 	portMap := make(PortMap)
-	for _, port := range requiredPorts {
+	for _, port := range ports {
 		portMap[port] = port
 	}
 	return portMap
 }
 
-// ConflictFreePortMap returns a port map where each VM port is mapped onto a random free port on the host. This is
+// ConflictFreePortMap returns a port map where each given port is mapped onto a random free port on the host. This is
 // intended for automated testing where multiple instances of Smalltown might be running. Please call this function for
 // each Launch command separately and as close to it as possible since it cannot guarantee that the ports will remain
 // free.
-func ConflictFreePortMap() (PortMap, error) {
+func ConflictFreePortMap(ports []uint16) (PortMap, error) {
 	portMap := make(PortMap)
-	for _, port := range requiredPorts {
+	for _, port := range ports {
 		mappedPort, listenCloser, err := freeport.AllocateTCPPort()
 		if err != nil {
 			return portMap, fmt.Errorf("failed to get free host port: %w", err)
@@ -459,4 +463,96 @@ type QEMUError exec.ExitError
 
 func (e *QEMUError) Error() string {
 	return fmt.Sprintf("%v: %v", e.String(), string(e.Stderr))
+}
+
+// NanoswitchPorts contains all ports forwarded by Nanoswitch to the first VM
+var NanoswitchPorts = []uint16{
+	common.ExternalServicePort,
+	common.DebugServicePort,
+	common.KubernetesAPIPort,
+}
+
+// ClusterOptions contains all options for launching a Smalltown cluster
+type ClusterOptions struct {
+	// The number of nodes this cluster should be started with initially
+	NumNodes int
+}
+
+// LaunchCluster launches a cluster of Smalltown VMs together with a Nanoswitch instance to network them all together.
+func LaunchCluster(ctx context.Context, opts ClusterOptions) (apb.NodeDebugServiceClient, PortMap, error) {
+	var switchPorts []*os.File
+	var vmPorts []*os.File
+	for i := 0; i < opts.NumNodes; i++ {
+		switchPort, vmPort, err := NewSocketPair()
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to get socketpair: %w", err)
+		}
+		switchPorts = append(switchPorts, switchPort)
+		vmPorts = append(vmPorts, vmPort)
+	}
+
+	if opts.NumNodes == 0 {
+		return nil, nil, errors.New("refusing to start cluster with zero nodes")
+	}
+
+	if opts.NumNodes > 2 {
+		return nil, nil, errors.New("launching more than 2 nodes is unsupported pending replacement of golden tickets")
+	}
+
+	go func() {
+		if err := Launch(ctx, Options{ConnectToSocket: vmPorts[0]}); err != nil {
+			// Launch() only terminates when QEMU has terminated. At that point our function probably doesn't run anymore
+			// so we have no way of communicating the error back up, so let's just log it. Also a failure in launching
+			// VMs should be very visible by the unavailability of the clients we return.
+			log.Printf("Failed to launch vm0: %v", err)
+		}
+	}()
+
+	portMap, err := ConflictFreePortMap(NanoswitchPorts)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to allocate ephemeral ports: %w", err)
+	}
+
+	go func() {
+		if err := RunMicroVM(ctx, &MicroVMOptions{
+			KernelPath:             "core/tools/ktest/linux-testing.elf",
+			InitramfsPath:          "core/cmd/nanoswitch/initramfs.lz4",
+			ExtraNetworkInterfaces: switchPorts,
+			PortMap:                portMap,
+		}); err != nil {
+			log.Printf("Failed to launch nanoswitch: %v", err)
+		}
+	}()
+	copts := []grpcretry.CallOption{
+		grpcretry.WithBackoff(grpcretry.BackoffExponential(100 * time.Millisecond)),
+	}
+	conn, err := portMap.DialGRPC(common.DebugServicePort, grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(grpcretry.UnaryClientInterceptor(copts...)))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to dial debug service: %w", err)
+	}
+	defer conn.Close()
+	debug := apb.NewNodeDebugServiceClient(conn)
+
+	if opts.NumNodes == 2 {
+		res, err := debug.GetGoldenTicket(ctx, &apb.GetGoldenTicketRequest{
+			// HACK: this is assigned by DHCP, and we assume that everything goes well.
+			ExternalIp: "10.1.0.3",
+		}, grpcretry.WithMax(10))
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to get golden ticket: %w", err)
+		}
+
+		ec := &apb.EnrolmentConfig{
+			GoldenTicket: res.Ticket,
+		}
+
+		go func() {
+			if err := Launch(ctx, Options{ConnectToSocket: vmPorts[1], EnrolmentConfig: ec}); err != nil {
+				log.Printf("Failed to launch vm1: %v", err)
+			}
+		}()
+	}
+
+	return debug, portMap, nil
 }

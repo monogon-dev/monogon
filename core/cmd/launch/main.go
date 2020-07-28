@@ -34,7 +34,7 @@ func main() {
 		<-sigs
 		cancel()
 	}()
-	if err := launch.Launch(ctx, launch.Options{Ports: launch.IdentityPortMap(), SerialPort: os.Stdout}); err != nil {
+	if err := launch.Launch(ctx, launch.Options{Ports: launch.IdentityPortMap(launch.NodePorts), SerialPort: os.Stdout}); err != nil {
 		if err == ctx.Err() {
 			return
 		}

@@ -465,6 +465,12 @@ def go_repositories():
         sum = "h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=",
     )
     go_repository(
+        name = "com_github_elazarl_goproxy",
+        importpath = "github.com/elazarl/goproxy",
+        version = "v0.0.0-20180725130230-947c36da3153",
+        sum = "h1:yUdfgN0XgIJw7foRItutHYUIhlcKzcSf5vDpdhQAKTc=",
+    )
+    go_repository(
         name = "com_github_emicklei_go_restful",
         importpath = "github.com/emicklei/go-restful",
         version = "v2.9.5+incompatible",
@@ -879,6 +885,12 @@ def go_repositories():
         sum = "h1:YZ7UKsJv+hKjqGVUUbtE3HNj79Eln2oQ75tniF6iPt0=",
     )
     go_repository(
+        name = "com_github_hpcloud_tail",
+        importpath = "github.com/hpcloud/tail",
+        version = "v1.0.0",
+        sum = "h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI=",
+    )
+    go_repository(
         name = "com_github_imdario_mergo",
         importpath = "github.com/imdario/mergo",
         version = "v0.3.7",
@@ -1154,6 +1166,18 @@ def go_repositories():
         importpath = "github.com/olekukonko/tablewriter",
         version = "v0.0.0-20170122224234-a0225b3f23b5",
         sum = "h1:58+kh9C6jJVXYjt8IE48G2eWl6BjwU5Gj0gqY84fy78=",
+    )
+    go_repository(
+        name = "com_github_onsi_ginkgo",
+        importpath = "github.com/onsi/ginkgo",
+        version = "v1.11.0",
+        sum = "h1:JAKSXpt1YjtLA7YpPiqO9ss6sNXEsPfSGdwN0UHqzrw=",
+    )
+    go_repository(
+        name = "com_github_onsi_gomega",
+        importpath = "github.com/onsi/gomega",
+        version = "v1.7.0",
+        sum = "h1:XPnZz8VVBHjVsy1vzJmRwIcSwiUO+JFfrv/xGiigmME=",
     )
     go_repository(
         name = "com_github_opencontainers_go_digest",
@@ -1633,6 +1657,12 @@ def go_repositories():
         sum = "h1:UCvDKl1L/fmBygl2Y7hubXCnY7t4Yj46ZrBFNUipFbM=",
     )
     go_repository(
+        name = "in_gopkg_fsnotify_v1",
+        importpath = "gopkg.in/fsnotify.v1",
+        version = "v1.4.7",
+        sum = "h1:xOHLXZwVvI9hhs+cLKq5+I5onOuwQLhQwiu63xxlHs4=",
+    )
+    go_repository(
         name = "in_gopkg_gorp_v1",
         importpath = "gopkg.in/gorp.v1",
         version = "v1.7.2",
@@ -1661,6 +1691,12 @@ def go_repositories():
         importpath = "gopkg.in/square/go-jose.v2",
         version = "v2.2.2",
         sum = "h1:orlkJ3myw8CN1nVQHBFfloD+L3egixIa4FvUP6RosSA=",
+    )
+    go_repository(
+        name = "in_gopkg_tomb_v1",
+        importpath = "gopkg.in/tomb.v1",
+        version = "v1.0.0-20141024135613-dd632973f1e7",
+        sum = "h1:uRGJdciOHaEIrze2W8Q3AKkepLTh2hOroT7a+7czfdQ=",
     )
     go_repository(
         name = "in_gopkg_yaml_v2",
@@ -1707,9 +1743,8 @@ def go_repositories():
         importpath = "k8s.io/client-go",
         version = "v0.19.0-rc.0",
         sum = "h1:6WW8MElhoLeYcLiN4ky1159XG5E39KYdmLCrV/6lNiE=",
-        patches = [
+        pre_patches = [
             "//third_party/go/patches:k8s-client-go.patch",
-            "//third_party/go/patches:k8s-client-go-build.patch",
         ],
         patch_args = ["-p1"],
     )
@@ -1820,6 +1855,9 @@ def go_repositories():
             "//third_party/go/patches:k8s-kubernetes-build.patch",
             "//third_party/go/patches:k8s-native-metrics.patch",
             "//third_party/go/patches:k8s-use-native.patch",
+        ],
+        pre_patches = [
+            "//third_party/go/patches:k8s-e2e-tests-providerless.patch",
         ],
         patch_args = ["-p1"],
     )

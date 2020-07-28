@@ -1,0 +1,5085 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From 43752b6c34f49080de3a66b79cbcd92b214c1f01 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@nexantic.com>
+Date: Mon, 20 Jul 2020 16:50:56 +0200
+Subject: [PATCH] POC Make e2e test suite support providerless
+
+---
+ .../custom_metrics_stackdriver_autoscaling.go |   2 +
+ test/e2e/cloud/imports.go                     |   2 +
+ test/e2e/e2e.go                               |  10 -
+ test/e2e/e2e_providers.go                     |  32 +
+ .../framework/providers/gce/firewall_test.go  |   2 +
+ .../instrumentation/monitoring/accelerator.go |   2 +
+ .../monitoring/custom_metrics_deployments.go  |   2 +
+ .../monitoring/custom_metrics_stackdriver.go  |   4 +-
+ .../instrumentation/monitoring/stackdriver.go |   2 +
+ .../monitoring/stackdriver_metadata_agent.go  |   4 +-
+ test/e2e/network/firewall.go                  |   2 +
+ test/e2e/network/ingress.go                   |   2 +
+ test/e2e/network/ingress_scale.go             |   2 +
+ test/e2e/network/network_tiers.go             |   2 +
+ test/e2e/network/scale/ingress.go             |   2 +
+ .../network/scale/localrun/ingress_scale.go   |   2 +-
+ test/e2e/network/service.go                   | 912 ----------------
+ test/e2e/network/service_providers.go         | 980 ++++++++++++++++++
+ test/e2e/node/recreate_node.go                |   2 +
+ test/e2e/scheduling/nvidia-gpus.go            |   2 +
+ test/e2e/scheduling/ubernetes_lite_volumes.go |   2 +
+ test/e2e/storage/drivers/in_tree.go           | 732 -------------
+ test/e2e/storage/drivers/in_tree_providers.go | 751 ++++++++++++++
+ test/e2e/storage/in_tree_volumes.go           |   5 -
+ test/e2e/storage/in_tree_volumes_providers.go |  46 +
+ .../nfs_persistent_volume-disruptive.go       |   2 +-
+ test/e2e/storage/pd.go                        |   2 +
+ test/e2e/storage/persistent_volumes-gce.go    |   3 +
+ test/e2e/storage/regional_pd.go               |   3 +
+ test/e2e/storage/volume_provisioning.go       | 527 ----------
+ .../storage/volume_provisioning_providers.go  | 577 +++++++++++
+ test/e2e/upgrades/nvidia-gpu.go               |   2 +
+ 32 files changed, 2432 insertions(+), 2190 deletions(-)
+ create mode 100644 test/e2e/e2e_providers.go
+ create mode 100644 test/e2e/network/service_providers.go
+ create mode 100644 test/e2e/storage/drivers/in_tree_providers.go
+ create mode 100644 test/e2e/storage/in_tree_volumes_providers.go
+ create mode 100644 test/e2e/storage/volume_provisioning_providers.go
+
+diff --git a/test/e2e/autoscaling/custom_metrics_stackdriver_autoscaling.go b/test/e2e/autoscaling/custom_metrics_stackdriver_autoscaling.go
+index d3a7862d338..8bacec7fe1d 100644
+--- a/test/e2e/autoscaling/custom_metrics_stackdriver_autoscaling.go
++++ b/test/e2e/autoscaling/custom_metrics_stackdriver_autoscaling.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/cloud/imports.go b/test/e2e/cloud/imports.go
+index 5aa1def97d1..382cb1a2264 100644
+--- a/test/e2e/cloud/imports.go
++++ b/test/e2e/cloud/imports.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2019 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/e2e.go b/test/e2e/e2e.go
+index d1e23325d69..f5717e417e7 100644
+--- a/test/e2e/e2e.go
++++ b/test/e2e/e2e.go
+@@ -53,16 +53,6 @@ import (
+ 	utilnet "k8s.io/utils/net"
+ 
+ 	clientset "k8s.io/client-go/kubernetes"
+-	// ensure auth plugins are loaded
+-	_ "k8s.io/client-go/plugin/pkg/client/auth"
+-
+-	// ensure that cloud providers are loaded
+-	_ "k8s.io/kubernetes/test/e2e/framework/providers/aws"
+-	_ "k8s.io/kubernetes/test/e2e/framework/providers/azure"
+-	_ "k8s.io/kubernetes/test/e2e/framework/providers/gce"
+-	_ "k8s.io/kubernetes/test/e2e/framework/providers/kubemark"
+-	_ "k8s.io/kubernetes/test/e2e/framework/providers/openstack"
+-	_ "k8s.io/kubernetes/test/e2e/framework/providers/vsphere"
+ )
+ 
+ const (
+diff --git a/test/e2e/e2e_providers.go b/test/e2e/e2e_providers.go
+new file mode 100644
+index 00000000000..cf96642b110
+--- /dev/null
++++ b/test/e2e/e2e_providers.go
+@@ -0,0 +1,32 @@
++// +build !providerless
++
++/*
++Copyright 2020 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package e2e
++
++import (
++	// ensure auth plugins are loaded
++	_ "k8s.io/client-go/plugin/pkg/client/auth"
++
++	// ensure that cloud providers are loaded
++	_ "k8s.io/kubernetes/test/e2e/framework/providers/aws"
++	_ "k8s.io/kubernetes/test/e2e/framework/providers/azure"
++	_ "k8s.io/kubernetes/test/e2e/framework/providers/gce"
++	_ "k8s.io/kubernetes/test/e2e/framework/providers/kubemark"
++	_ "k8s.io/kubernetes/test/e2e/framework/providers/openstack"
++	_ "k8s.io/kubernetes/test/e2e/framework/providers/vsphere"
++)
+diff --git a/test/e2e/framework/providers/gce/firewall_test.go b/test/e2e/framework/providers/gce/firewall_test.go
+index 647441dc962..2a92543a5a7 100644
+--- a/test/e2e/framework/providers/gce/firewall_test.go
++++ b/test/e2e/framework/providers/gce/firewall_test.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2018 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/instrumentation/monitoring/accelerator.go b/test/e2e/instrumentation/monitoring/accelerator.go
+index 90047e46ea1..6fa094e6a18 100644
+--- a/test/e2e/instrumentation/monitoring/accelerator.go
++++ b/test/e2e/instrumentation/monitoring/accelerator.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/instrumentation/monitoring/custom_metrics_deployments.go b/test/e2e/instrumentation/monitoring/custom_metrics_deployments.go
+index de80b129315..8d96b93bf11 100644
+--- a/test/e2e/instrumentation/monitoring/custom_metrics_deployments.go
++++ b/test/e2e/instrumentation/monitoring/custom_metrics_deployments.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/instrumentation/monitoring/custom_metrics_stackdriver.go b/test/e2e/instrumentation/monitoring/custom_metrics_stackdriver.go
+index 277b5a0ab24..ddbc3f20802 100644
+--- a/test/e2e/instrumentation/monitoring/custom_metrics_stackdriver.go
++++ b/test/e2e/instrumentation/monitoring/custom_metrics_stackdriver.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+ 
+@@ -21,7 +23,7 @@ import (
+ 	"time"
+ 
+ 	gcm "google.golang.org/api/monitoring/v3"
+-	"k8s.io/api/core/v1"
++	v1 "k8s.io/api/core/v1"
+ 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ 	"k8s.io/apimachinery/pkg/labels"
+ 	"k8s.io/apimachinery/pkg/runtime/schema"
+diff --git a/test/e2e/instrumentation/monitoring/stackdriver.go b/test/e2e/instrumentation/monitoring/stackdriver.go
+index dbc5e51c20d..3db0120900b 100644
+--- a/test/e2e/instrumentation/monitoring/stackdriver.go
++++ b/test/e2e/instrumentation/monitoring/stackdriver.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/instrumentation/monitoring/stackdriver_metadata_agent.go b/test/e2e/instrumentation/monitoring/stackdriver_metadata_agent.go
+index 321591344db..bad9be5b5bf 100644
+--- a/test/e2e/instrumentation/monitoring/stackdriver_metadata_agent.go
++++ b/test/e2e/instrumentation/monitoring/stackdriver_metadata_agent.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+ 
+@@ -24,7 +26,7 @@ import (
+ 	"reflect"
+ 	"time"
+ 
+-	"k8s.io/api/core/v1"
++	v1 "k8s.io/api/core/v1"
+ 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ 	clientset "k8s.io/client-go/kubernetes"
+ 	"k8s.io/kubernetes/test/e2e/framework"
+diff --git a/test/e2e/network/firewall.go b/test/e2e/network/firewall.go
+index f4200f5a30c..f8612ed75a9 100644
+--- a/test/e2e/network/firewall.go
++++ b/test/e2e/network/firewall.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2016 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/network/ingress.go b/test/e2e/network/ingress.go
+index f1bce918e8f..1a37badbd7b 100644
+--- a/test/e2e/network/ingress.go
++++ b/test/e2e/network/ingress.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2015 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/network/ingress_scale.go b/test/e2e/network/ingress_scale.go
+index 6cc8585b7b2..867c834868c 100644
+--- a/test/e2e/network/ingress_scale.go
++++ b/test/e2e/network/ingress_scale.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2018 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/network/network_tiers.go b/test/e2e/network/network_tiers.go
+index 5ae68a5a1ee..f3ea1f72a6b 100644
+--- a/test/e2e/network/network_tiers.go
++++ b/test/e2e/network/network_tiers.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/network/scale/ingress.go b/test/e2e/network/scale/ingress.go
+index 954296beb52..43ad9c9b618 100644
+--- a/test/e2e/network/scale/ingress.go
++++ b/test/e2e/network/scale/ingress.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2018 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/network/scale/localrun/ingress_scale.go b/test/e2e/network/scale/localrun/ingress_scale.go
+index 2e2c39884da..5a27f5f4cb2 100644
+--- a/test/e2e/network/scale/localrun/ingress_scale.go
++++ b/test/e2e/network/scale/localrun/ingress_scale.go
+@@ -27,7 +27,7 @@ import (
+ 
+ 	"k8s.io/klog/v2"
+ 
+-	"k8s.io/api/core/v1"
++	v1 "k8s.io/api/core/v1"
+ 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ 	clientset "k8s.io/client-go/kubernetes"
+ 	"k8s.io/client-go/tools/clientcmd"
+diff --git a/test/e2e/network/service.go b/test/e2e/network/service.go
+index cce449b5e8e..db7328efbe8 100644
+--- a/test/e2e/network/service.go
++++ b/test/e2e/network/service.go
+@@ -17,7 +17,6 @@ limitations under the License.
+ package network
+ 
+ import (
+-	"bytes"
+ 	"context"
+ 	"encoding/json"
+ 	"errors"
+@@ -32,8 +31,6 @@ import (
+ 
+ 	utilnet "k8s.io/apimachinery/pkg/util/net"
+ 
+-	compute "google.golang.org/api/compute/v1"
+-
+ 	appsv1 "k8s.io/api/apps/v1"
+ 	v1 "k8s.io/api/core/v1"
+ 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+@@ -47,11 +44,9 @@ import (
+ 	"k8s.io/kubernetes/test/e2e/framework"
+ 	e2edeployment "k8s.io/kubernetes/test/e2e/framework/deployment"
+ 	e2eendpoints "k8s.io/kubernetes/test/e2e/framework/endpoints"
+-	e2ekubesystem "k8s.io/kubernetes/test/e2e/framework/kubesystem"
+ 	e2enetwork "k8s.io/kubernetes/test/e2e/framework/network"
+ 	e2enode "k8s.io/kubernetes/test/e2e/framework/node"
+ 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
+-	"k8s.io/kubernetes/test/e2e/framework/providers/gce"
+ 	e2erc "k8s.io/kubernetes/test/e2e/framework/rc"
+ 	e2eservice "k8s.io/kubernetes/test/e2e/framework/service"
+ 	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
+@@ -59,7 +54,6 @@ import (
+ 	"k8s.io/kubernetes/test/e2e/storage/utils"
+ 	testutils "k8s.io/kubernetes/test/utils"
+ 	imageutils "k8s.io/kubernetes/test/utils/image"
+-	gcecloud "k8s.io/legacy-cloud-providers/gce"
+ 
+ 	"github.com/onsi/ginkgo"
+ 	"github.com/onsi/gomega"
+@@ -1191,375 +1185,6 @@ var _ = SIGDescribe("Services", func() {
+ 		framework.ExpectNoError(err)
+ 	})
+ 
+-	// TODO: Get rid of [DisabledForLargeClusters] tag when issue #56138 is fixed.
+-	ginkgo.It("should be able to change the type and ports of a service [Slow] [DisabledForLargeClusters]", func() {
+-		// requires cloud load-balancer support
+-		e2eskipper.SkipUnlessProviderIs("gce", "gke", "aws")
+-
+-		loadBalancerSupportsUDP := !framework.ProviderIs("aws")
+-
+-		loadBalancerLagTimeout := e2eservice.LoadBalancerLagTimeoutDefault
+-		if framework.ProviderIs("aws") {
+-			loadBalancerLagTimeout = e2eservice.LoadBalancerLagTimeoutAWS
+-		}
+-		loadBalancerCreateTimeout := e2eservice.GetServiceLoadBalancerCreationTimeout(cs)
+-
+-		// This test is more monolithic than we'd like because LB turnup can be
+-		// very slow, so we lumped all the tests into one LB lifecycle.
+-
+-		serviceName := "mutability-test"
+-		ns1 := f.Namespace.Name // LB1 in ns1 on TCP
+-		framework.Logf("namespace for TCP test: %s", ns1)
+-
+-		ginkgo.By("creating a second namespace")
+-		namespacePtr, err := f.CreateNamespace("services", nil)
+-		framework.ExpectNoError(err, "failed to create namespace")
+-		ns2 := namespacePtr.Name // LB2 in ns2 on UDP
+-		framework.Logf("namespace for UDP test: %s", ns2)
+-
+-		nodeIP, err := e2enode.PickIP(cs) // for later
+-		framework.ExpectNoError(err)
+-
+-		// Test TCP and UDP Services.  Services with the same name in different
+-		// namespaces should get different node ports and load balancers.
+-
+-		ginkgo.By("creating a TCP service " + serviceName + " with type=ClusterIP in namespace " + ns1)
+-		tcpJig := e2eservice.NewTestJig(cs, ns1, serviceName)
+-		tcpService, err := tcpJig.CreateTCPService(nil)
+-		framework.ExpectNoError(err)
+-
+-		ginkgo.By("creating a UDP service " + serviceName + " with type=ClusterIP in namespace " + ns2)
+-		udpJig := e2eservice.NewTestJig(cs, ns2, serviceName)
+-		udpService, err := udpJig.CreateUDPService(nil)
+-		framework.ExpectNoError(err)
+-
+-		ginkgo.By("verifying that TCP and UDP use the same port")
+-		if tcpService.Spec.Ports[0].Port != udpService.Spec.Ports[0].Port {
+-			framework.Failf("expected to use the same port for TCP and UDP")
+-		}
+-		svcPort := int(tcpService.Spec.Ports[0].Port)
+-		framework.Logf("service port (TCP and UDP): %d", svcPort)
+-
+-		ginkgo.By("creating a pod to be part of the TCP service " + serviceName)
+-		_, err = tcpJig.Run(nil)
+-		framework.ExpectNoError(err)
+-
+-		ginkgo.By("creating a pod to be part of the UDP service " + serviceName)
+-		_, err = udpJig.Run(nil)
+-		framework.ExpectNoError(err)
+-
+-		// Change the services to NodePort.
+-
+-		ginkgo.By("changing the TCP service to type=NodePort")
+-		tcpService, err = tcpJig.UpdateService(func(s *v1.Service) {
+-			s.Spec.Type = v1.ServiceTypeNodePort
+-		})
+-		framework.ExpectNoError(err)
+-		tcpNodePort := int(tcpService.Spec.Ports[0].NodePort)
+-		framework.Logf("TCP node port: %d", tcpNodePort)
+-
+-		ginkgo.By("changing the UDP service to type=NodePort")
+-		udpService, err = udpJig.UpdateService(func(s *v1.Service) {
+-			s.Spec.Type = v1.ServiceTypeNodePort
+-		})
+-		framework.ExpectNoError(err)
+-		udpNodePort := int(udpService.Spec.Ports[0].NodePort)
+-		framework.Logf("UDP node port: %d", udpNodePort)
+-
+-		ginkgo.By("hitting the TCP service's NodePort")
+-		e2eservice.TestReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("hitting the UDP service's NodePort")
+-		testReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		// Change the services to LoadBalancer.
+-
+-		// Here we test that LoadBalancers can receive static IP addresses.  This isn't
+-		// necessary, but is an additional feature this monolithic test checks.
+-		requestedIP := ""
+-		staticIPName := ""
+-		if framework.ProviderIs("gce", "gke") {
+-			ginkgo.By("creating a static load balancer IP")
+-			staticIPName = fmt.Sprintf("e2e-external-lb-test-%s", framework.RunID)
+-			gceCloud, err := gce.GetGCECloud()
+-			framework.ExpectNoError(err, "failed to get GCE cloud provider")
+-
+-			err = gceCloud.ReserveRegionAddress(&compute.Address{Name: staticIPName}, gceCloud.Region())
+-			defer func() {
+-				if staticIPName != "" {
+-					// Release GCE static IP - this is not kube-managed and will not be automatically released.
+-					if err := gceCloud.DeleteRegionAddress(staticIPName, gceCloud.Region()); err != nil {
+-						framework.Logf("failed to release static IP %s: %v", staticIPName, err)
+-					}
+-				}
+-			}()
+-			framework.ExpectNoError(err, "failed to create region address: %s", staticIPName)
+-			reservedAddr, err := gceCloud.GetRegionAddress(staticIPName, gceCloud.Region())
+-			framework.ExpectNoError(err, "failed to get region address: %s", staticIPName)
+-
+-			requestedIP = reservedAddr.Address
+-			framework.Logf("Allocated static load balancer IP: %s", requestedIP)
+-		}
+-
+-		ginkgo.By("changing the TCP service to type=LoadBalancer")
+-		tcpService, err = tcpJig.UpdateService(func(s *v1.Service) {
+-			s.Spec.LoadBalancerIP = requestedIP // will be "" if not applicable
+-			s.Spec.Type = v1.ServiceTypeLoadBalancer
+-		})
+-		framework.ExpectNoError(err)
+-
+-		if loadBalancerSupportsUDP {
+-			ginkgo.By("changing the UDP service to type=LoadBalancer")
+-			udpService, err = udpJig.UpdateService(func(s *v1.Service) {
+-				s.Spec.Type = v1.ServiceTypeLoadBalancer
+-			})
+-			framework.ExpectNoError(err)
+-		}
+-		serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(tcpService))
+-		if loadBalancerSupportsUDP {
+-			serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(udpService))
+-		}
+-
+-		ginkgo.By("waiting for the TCP service to have a load balancer")
+-		// Wait for the load balancer to be created asynchronously
+-		tcpService, err = tcpJig.WaitForLoadBalancer(loadBalancerCreateTimeout)
+-		framework.ExpectNoError(err)
+-		if int(tcpService.Spec.Ports[0].NodePort) != tcpNodePort {
+-			framework.Failf("TCP Spec.Ports[0].NodePort changed (%d -> %d) when not expected", tcpNodePort, tcpService.Spec.Ports[0].NodePort)
+-		}
+-		if requestedIP != "" && e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]) != requestedIP {
+-			framework.Failf("unexpected TCP Status.LoadBalancer.Ingress (expected %s, got %s)", requestedIP, e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]))
+-		}
+-		tcpIngressIP := e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0])
+-		framework.Logf("TCP load balancer: %s", tcpIngressIP)
+-
+-		if framework.ProviderIs("gce", "gke") {
+-			// Do this as early as possible, which overrides the `defer` above.
+-			// This is mostly out of fear of leaking the IP in a timeout case
+-			// (as of this writing we're not 100% sure where the leaks are
+-			// coming from, so this is first-aid rather than surgery).
+-			ginkgo.By("demoting the static IP to ephemeral")
+-			if staticIPName != "" {
+-				gceCloud, err := gce.GetGCECloud()
+-				framework.ExpectNoError(err, "failed to get GCE cloud provider")
+-				// Deleting it after it is attached "demotes" it to an
+-				// ephemeral IP, which can be auto-released.
+-				if err := gceCloud.DeleteRegionAddress(staticIPName, gceCloud.Region()); err != nil {
+-					framework.Failf("failed to release static IP %s: %v", staticIPName, err)
+-				}
+-				staticIPName = ""
+-			}
+-		}
+-
+-		var udpIngressIP string
+-		if loadBalancerSupportsUDP {
+-			ginkgo.By("waiting for the UDP service to have a load balancer")
+-			// 2nd one should be faster since they ran in parallel.
+-			udpService, err = udpJig.WaitForLoadBalancer(loadBalancerCreateTimeout)
+-			framework.ExpectNoError(err)
+-			if int(udpService.Spec.Ports[0].NodePort) != udpNodePort {
+-				framework.Failf("UDP Spec.Ports[0].NodePort changed (%d -> %d) when not expected", udpNodePort, udpService.Spec.Ports[0].NodePort)
+-			}
+-			udpIngressIP = e2eservice.GetIngressPoint(&udpService.Status.LoadBalancer.Ingress[0])
+-			framework.Logf("UDP load balancer: %s", udpIngressIP)
+-
+-			ginkgo.By("verifying that TCP and UDP use different load balancers")
+-			if tcpIngressIP == udpIngressIP {
+-				framework.Failf("Load balancers are not different: %s", e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]))
+-			}
+-		}
+-
+-		ginkgo.By("hitting the TCP service's NodePort")
+-		e2eservice.TestReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("hitting the UDP service's NodePort")
+-		testReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("hitting the TCP service's LoadBalancer")
+-		e2eservice.TestReachableHTTP(tcpIngressIP, svcPort, loadBalancerLagTimeout)
+-
+-		if loadBalancerSupportsUDP {
+-			ginkgo.By("hitting the UDP service's LoadBalancer")
+-			testReachableUDP(udpIngressIP, svcPort, loadBalancerLagTimeout)
+-		}
+-
+-		// Change the services' node ports.
+-
+-		ginkgo.By("changing the TCP service's NodePort")
+-		tcpService, err = tcpJig.ChangeServiceNodePort(tcpNodePort)
+-		framework.ExpectNoError(err)
+-		tcpNodePortOld := tcpNodePort
+-		tcpNodePort = int(tcpService.Spec.Ports[0].NodePort)
+-		if tcpNodePort == tcpNodePortOld {
+-			framework.Failf("TCP Spec.Ports[0].NodePort (%d) did not change", tcpNodePort)
+-		}
+-		if e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]) != tcpIngressIP {
+-			framework.Failf("TCP Status.LoadBalancer.Ingress changed (%s -> %s) when not expected", tcpIngressIP, e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]))
+-		}
+-		framework.Logf("TCP node port: %d", tcpNodePort)
+-
+-		ginkgo.By("changing the UDP service's NodePort")
+-		udpService, err = udpJig.ChangeServiceNodePort(udpNodePort)
+-		framework.ExpectNoError(err)
+-		udpNodePortOld := udpNodePort
+-		udpNodePort = int(udpService.Spec.Ports[0].NodePort)
+-		if udpNodePort == udpNodePortOld {
+-			framework.Failf("UDP Spec.Ports[0].NodePort (%d) did not change", udpNodePort)
+-		}
+-		if loadBalancerSupportsUDP && e2eservice.GetIngressPoint(&udpService.Status.LoadBalancer.Ingress[0]) != udpIngressIP {
+-			framework.Failf("UDP Status.LoadBalancer.Ingress changed (%s -> %s) when not expected", udpIngressIP, e2eservice.GetIngressPoint(&udpService.Status.LoadBalancer.Ingress[0]))
+-		}
+-		framework.Logf("UDP node port: %d", udpNodePort)
+-
+-		ginkgo.By("hitting the TCP service's new NodePort")
+-		e2eservice.TestReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("hitting the UDP service's new NodePort")
+-		testReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("checking the old TCP NodePort is closed")
+-		testNotReachableHTTP(nodeIP, tcpNodePortOld, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("checking the old UDP NodePort is closed")
+-		testNotReachableUDP(nodeIP, udpNodePortOld, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("hitting the TCP service's LoadBalancer")
+-		e2eservice.TestReachableHTTP(tcpIngressIP, svcPort, loadBalancerLagTimeout)
+-
+-		if loadBalancerSupportsUDP {
+-			ginkgo.By("hitting the UDP service's LoadBalancer")
+-			testReachableUDP(udpIngressIP, svcPort, loadBalancerLagTimeout)
+-		}
+-
+-		// Change the services' main ports.
+-
+-		ginkgo.By("changing the TCP service's port")
+-		tcpService, err = tcpJig.UpdateService(func(s *v1.Service) {
+-			s.Spec.Ports[0].Port++
+-		})
+-		framework.ExpectNoError(err)
+-		svcPortOld := svcPort
+-		svcPort = int(tcpService.Spec.Ports[0].Port)
+-		if svcPort == svcPortOld {
+-			framework.Failf("TCP Spec.Ports[0].Port (%d) did not change", svcPort)
+-		}
+-		if int(tcpService.Spec.Ports[0].NodePort) != tcpNodePort {
+-			framework.Failf("TCP Spec.Ports[0].NodePort (%d) changed", tcpService.Spec.Ports[0].NodePort)
+-		}
+-		if e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]) != tcpIngressIP {
+-			framework.Failf("TCP Status.LoadBalancer.Ingress changed (%s -> %s) when not expected", tcpIngressIP, e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]))
+-		}
+-
+-		ginkgo.By("changing the UDP service's port")
+-		udpService, err = udpJig.UpdateService(func(s *v1.Service) {
+-			s.Spec.Ports[0].Port++
+-		})
+-		framework.ExpectNoError(err)
+-		if int(udpService.Spec.Ports[0].Port) != svcPort {
+-			framework.Failf("UDP Spec.Ports[0].Port (%d) did not change", udpService.Spec.Ports[0].Port)
+-		}
+-		if int(udpService.Spec.Ports[0].NodePort) != udpNodePort {
+-			framework.Failf("UDP Spec.Ports[0].NodePort (%d) changed", udpService.Spec.Ports[0].NodePort)
+-		}
+-		if loadBalancerSupportsUDP && e2eservice.GetIngressPoint(&udpService.Status.LoadBalancer.Ingress[0]) != udpIngressIP {
+-			framework.Failf("UDP Status.LoadBalancer.Ingress changed (%s -> %s) when not expected", udpIngressIP, e2eservice.GetIngressPoint(&udpService.Status.LoadBalancer.Ingress[0]))
+-		}
+-
+-		framework.Logf("service port (TCP and UDP): %d", svcPort)
+-
+-		ginkgo.By("hitting the TCP service's NodePort")
+-		e2eservice.TestReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("hitting the UDP service's NodePort")
+-		testReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("hitting the TCP service's LoadBalancer")
+-		e2eservice.TestReachableHTTP(tcpIngressIP, svcPort, loadBalancerCreateTimeout)
+-
+-		if loadBalancerSupportsUDP {
+-			ginkgo.By("hitting the UDP service's LoadBalancer")
+-			testReachableUDP(udpIngressIP, svcPort, loadBalancerCreateTimeout)
+-		}
+-
+-		ginkgo.By("Scaling the pods to 0")
+-		err = tcpJig.Scale(0)
+-		framework.ExpectNoError(err)
+-		err = udpJig.Scale(0)
+-		framework.ExpectNoError(err)
+-
+-		ginkgo.By("looking for ICMP REJECT on the TCP service's NodePort")
+-		testRejectedHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("looking for ICMP REJECT on the UDP service's NodePort")
+-		testRejectedUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("looking for ICMP REJECT on the TCP service's LoadBalancer")
+-		testRejectedHTTP(tcpIngressIP, svcPort, loadBalancerCreateTimeout)
+-
+-		if loadBalancerSupportsUDP {
+-			ginkgo.By("looking for ICMP REJECT on the UDP service's LoadBalancer")
+-			testRejectedUDP(udpIngressIP, svcPort, loadBalancerCreateTimeout)
+-		}
+-
+-		ginkgo.By("Scaling the pods to 1")
+-		err = tcpJig.Scale(1)
+-		framework.ExpectNoError(err)
+-		err = udpJig.Scale(1)
+-		framework.ExpectNoError(err)
+-
+-		ginkgo.By("hitting the TCP service's NodePort")
+-		e2eservice.TestReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("hitting the UDP service's NodePort")
+-		testReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("hitting the TCP service's LoadBalancer")
+-		e2eservice.TestReachableHTTP(tcpIngressIP, svcPort, loadBalancerCreateTimeout)
+-
+-		if loadBalancerSupportsUDP {
+-			ginkgo.By("hitting the UDP service's LoadBalancer")
+-			testReachableUDP(udpIngressIP, svcPort, loadBalancerCreateTimeout)
+-		}
+-
+-		// Change the services back to ClusterIP.
+-
+-		ginkgo.By("changing TCP service back to type=ClusterIP")
+-		_, err = tcpJig.UpdateService(func(s *v1.Service) {
+-			s.Spec.Type = v1.ServiceTypeClusterIP
+-			s.Spec.Ports[0].NodePort = 0
+-		})
+-		framework.ExpectNoError(err)
+-		// Wait for the load balancer to be destroyed asynchronously
+-		_, err = tcpJig.WaitForLoadBalancerDestroy(tcpIngressIP, svcPort, loadBalancerCreateTimeout)
+-		framework.ExpectNoError(err)
+-
+-		ginkgo.By("changing UDP service back to type=ClusterIP")
+-		_, err = udpJig.UpdateService(func(s *v1.Service) {
+-			s.Spec.Type = v1.ServiceTypeClusterIP
+-			s.Spec.Ports[0].NodePort = 0
+-		})
+-		framework.ExpectNoError(err)
+-		if loadBalancerSupportsUDP {
+-			// Wait for the load balancer to be destroyed asynchronously
+-			_, err = udpJig.WaitForLoadBalancerDestroy(udpIngressIP, svcPort, loadBalancerCreateTimeout)
+-			framework.ExpectNoError(err)
+-		}
+-
+-		ginkgo.By("checking the TCP NodePort is closed")
+-		testNotReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("checking the UDP NodePort is closed")
+-		testNotReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
+-
+-		ginkgo.By("checking the TCP LoadBalancer is closed")
+-		testNotReachableHTTP(tcpIngressIP, svcPort, loadBalancerLagTimeout)
+-
+-		if loadBalancerSupportsUDP {
+-			ginkgo.By("checking the UDP LoadBalancer is closed")
+-			testNotReachableUDP(udpIngressIP, svcPort, loadBalancerLagTimeout)
+-		}
+-	})
+-
+ 	/*
+ 		Testname: Service, update NodePort, same port different protocol
+ 		Description: Create a service to accept TCP requests. By default, created service MUST be of type ClusterIP and an ClusterIP MUST be assigned to the service.
+@@ -2202,199 +1827,6 @@ var _ = SIGDescribe("Services", func() {
+ 		checkReachabilityFromPod(true, normalReachabilityTimeout, namespace, dropPod.Name, svcIP)
+ 	})
+ 
+-	ginkgo.It("should be able to create an internal type load balancer [Slow]", func() {
+-		e2eskipper.SkipUnlessProviderIs("azure", "gke", "gce")
+-
+-		createTimeout := e2eservice.GetServiceLoadBalancerCreationTimeout(cs)
+-		pollInterval := framework.Poll * 10
+-
+-		namespace := f.Namespace.Name
+-		serviceName := "lb-internal"
+-		jig := e2eservice.NewTestJig(cs, namespace, serviceName)
+-
+-		ginkgo.By("creating pod to be part of service " + serviceName)
+-		_, err := jig.Run(nil)
+-		framework.ExpectNoError(err)
+-
+-		enableILB, disableILB := enableAndDisableInternalLB()
+-
+-		isInternalEndpoint := func(lbIngress *v1.LoadBalancerIngress) bool {
+-			ingressEndpoint := e2eservice.GetIngressPoint(lbIngress)
+-			// Needs update for providers using hostname as endpoint.
+-			return strings.HasPrefix(ingressEndpoint, "10.")
+-		}
+-
+-		ginkgo.By("creating a service with type LoadBalancer and cloud specific Internal-LB annotation enabled")
+-		svc, err := jig.CreateTCPService(func(svc *v1.Service) {
+-			svc.Spec.Type = v1.ServiceTypeLoadBalancer
+-			enableILB(svc)
+-		})
+-		framework.ExpectNoError(err)
+-
+-		defer func() {
+-			ginkgo.By("Clean up loadbalancer service")
+-			e2eservice.WaitForServiceDeletedWithFinalizer(cs, svc.Namespace, svc.Name)
+-		}()
+-
+-		svc, err = jig.WaitForLoadBalancer(createTimeout)
+-		framework.ExpectNoError(err)
+-		lbIngress := &svc.Status.LoadBalancer.Ingress[0]
+-		svcPort := int(svc.Spec.Ports[0].Port)
+-		// should have an internal IP.
+-		framework.ExpectEqual(isInternalEndpoint(lbIngress), true)
+-
+-		// ILBs are not accessible from the test orchestrator, so it's necessary to use
+-		//  a pod to test the service.
+-		ginkgo.By("hitting the internal load balancer from pod")
+-		framework.Logf("creating pod with host network")
+-		hostExec := launchHostExecPod(f.ClientSet, f.Namespace.Name, "ilb-host-exec")
+-
+-		framework.Logf("Waiting up to %v for service %q's internal LB to respond to requests", createTimeout, serviceName)
+-		tcpIngressIP := e2eservice.GetIngressPoint(lbIngress)
+-		if pollErr := wait.PollImmediate(pollInterval, createTimeout, func() (bool, error) {
+-			cmd := fmt.Sprintf(`curl -m 5 'http://%v:%v/echo?msg=hello'`, tcpIngressIP, svcPort)
+-			stdout, err := framework.RunHostCmd(hostExec.Namespace, hostExec.Name, cmd)
+-			if err != nil {
+-				framework.Logf("error curling; stdout: %v. err: %v", stdout, err)
+-				return false, nil
+-			}
+-
+-			if !strings.Contains(stdout, "hello") {
+-				framework.Logf("Expected output to contain 'hello', got %q; retrying...", stdout)
+-				return false, nil
+-			}
+-
+-			framework.Logf("Successful curl; stdout: %v", stdout)
+-			return true, nil
+-		}); pollErr != nil {
+-			framework.Failf("ginkgo.Failed to hit ILB IP, err: %v", pollErr)
+-		}
+-
+-		ginkgo.By("switching to external type LoadBalancer")
+-		svc, err = jig.UpdateService(func(svc *v1.Service) {
+-			disableILB(svc)
+-		})
+-		framework.ExpectNoError(err)
+-		framework.Logf("Waiting up to %v for service %q to have an external LoadBalancer", createTimeout, serviceName)
+-		if pollErr := wait.PollImmediate(pollInterval, createTimeout, func() (bool, error) {
+-			svc, err := cs.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
+-			if err != nil {
+-				return false, err
+-			}
+-			lbIngress = &svc.Status.LoadBalancer.Ingress[0]
+-			return !isInternalEndpoint(lbIngress), nil
+-		}); pollErr != nil {
+-			framework.Failf("Loadbalancer IP not changed to external.")
+-		}
+-		// should have an external IP.
+-		gomega.Expect(isInternalEndpoint(lbIngress)).To(gomega.BeFalse())
+-
+-		ginkgo.By("hitting the external load balancer")
+-		framework.Logf("Waiting up to %v for service %q's external LB to respond to requests", createTimeout, serviceName)
+-		tcpIngressIP = e2eservice.GetIngressPoint(lbIngress)
+-		e2eservice.TestReachableHTTP(tcpIngressIP, svcPort, e2eservice.LoadBalancerLagTimeoutDefault)
+-
+-		// GCE cannot test a specific IP because the test may not own it. This cloud specific condition
+-		// will be removed when GCP supports similar functionality.
+-		if framework.ProviderIs("azure") {
+-			ginkgo.By("switching back to interal type LoadBalancer, with static IP specified.")
+-			internalStaticIP := "10.240.11.11"
+-			svc, err = jig.UpdateService(func(svc *v1.Service) {
+-				svc.Spec.LoadBalancerIP = internalStaticIP
+-				enableILB(svc)
+-			})
+-			framework.ExpectNoError(err)
+-			framework.Logf("Waiting up to %v for service %q to have an internal LoadBalancer", createTimeout, serviceName)
+-			if pollErr := wait.PollImmediate(pollInterval, createTimeout, func() (bool, error) {
+-				svc, err := cs.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
+-				if err != nil {
+-					return false, err
+-				}
+-				lbIngress = &svc.Status.LoadBalancer.Ingress[0]
+-				return isInternalEndpoint(lbIngress), nil
+-			}); pollErr != nil {
+-				framework.Failf("Loadbalancer IP not changed to internal.")
+-			}
+-			// should have the given static internal IP.
+-			framework.ExpectEqual(e2eservice.GetIngressPoint(lbIngress), internalStaticIP)
+-		}
+-	})
+-
+-	// This test creates a load balancer, make sure its health check interval
+-	// equals to gceHcCheckIntervalSeconds. Then the interval is manipulated
+-	// to be something else, see if the interval will be reconciled.
+-	ginkgo.It("should reconcile LB health check interval [Slow][Serial]", func() {
+-		const gceHcCheckIntervalSeconds = int64(8)
+-		// This test is for clusters on GCE.
+-		// (It restarts kube-controller-manager, which we don't support on GKE)
+-		e2eskipper.SkipUnlessProviderIs("gce")
+-		e2eskipper.SkipUnlessSSHKeyPresent()
+-
+-		clusterID, err := gce.GetClusterID(cs)
+-		if err != nil {
+-			framework.Failf("framework.GetClusterID(cs) = _, %v; want nil", err)
+-		}
+-		gceCloud, err := gce.GetGCECloud()
+-		if err != nil {
+-			framework.Failf("framework.GetGCECloud() = _, %v; want nil", err)
+-		}
+-
+-		namespace := f.Namespace.Name
+-		serviceName := "lb-hc-int"
+-		jig := e2eservice.NewTestJig(cs, namespace, serviceName)
+-
+-		ginkgo.By("create load balancer service")
+-		// Create loadbalancer service with source range from node[0] and podAccept
+-		svc, err := jig.CreateTCPService(func(svc *v1.Service) {
+-			svc.Spec.Type = v1.ServiceTypeLoadBalancer
+-		})
+-		framework.ExpectNoError(err)
+-
+-		defer func() {
+-			ginkgo.By("Clean up loadbalancer service")
+-			e2eservice.WaitForServiceDeletedWithFinalizer(cs, svc.Namespace, svc.Name)
+-		}()
+-
+-		svc, err = jig.WaitForLoadBalancer(e2eservice.GetServiceLoadBalancerCreationTimeout(cs))
+-		framework.ExpectNoError(err)
+-
+-		hcName := gcecloud.MakeNodesHealthCheckName(clusterID)
+-		hc, err := gceCloud.GetHTTPHealthCheck(hcName)
+-		if err != nil {
+-			framework.Failf("gceCloud.GetHttpHealthCheck(%q) = _, %v; want nil", hcName, err)
+-		}
+-		framework.ExpectEqual(hc.CheckIntervalSec, gceHcCheckIntervalSeconds)
+-
+-		ginkgo.By("modify the health check interval")
+-		hc.CheckIntervalSec = gceHcCheckIntervalSeconds - 1
+-		if err = gceCloud.UpdateHTTPHealthCheck(hc); err != nil {
+-			framework.Failf("gcecloud.UpdateHttpHealthCheck(%#v) = %v; want nil", hc, err)
+-		}
+-
+-		ginkgo.By("restart kube-controller-manager")
+-		if err := e2ekubesystem.RestartControllerManager(); err != nil {
+-			framework.Failf("e2ekubesystem.RestartControllerManager() = %v; want nil", err)
+-		}
+-		if err := e2ekubesystem.WaitForControllerManagerUp(); err != nil {
+-			framework.Failf("e2ekubesystem.WaitForControllerManagerUp() = %v; want nil", err)
+-		}
+-
+-		ginkgo.By("health check should be reconciled")
+-		pollInterval := framework.Poll * 10
+-		loadBalancerPropagationTimeout := e2eservice.GetServiceLoadBalancerPropagationTimeout(cs)
+-		if pollErr := wait.PollImmediate(pollInterval, loadBalancerPropagationTimeout, func() (bool, error) {
+-			hc, err := gceCloud.GetHTTPHealthCheck(hcName)
+-			if err != nil {
+-				framework.Logf("ginkgo.Failed to get HttpHealthCheck(%q): %v", hcName, err)
+-				return false, err
+-			}
+-			framework.Logf("hc.CheckIntervalSec = %v", hc.CheckIntervalSec)
+-			return hc.CheckIntervalSec == gceHcCheckIntervalSeconds, nil
+-		}); pollErr != nil {
+-			framework.Failf("Health check %q does not reconcile its check interval to %d.", hcName, gceHcCheckIntervalSeconds)
+-		}
+-	})
+-
+ 	/*
+ 		Release: v1.19
+ 		Testname: Service, ClusterIP type, session affinity to ClientIP
+@@ -2880,350 +2312,6 @@ var _ = SIGDescribe("Services", func() {
+ 	})
+ })
+ 
+-var _ = SIGDescribe("ESIPP [Slow]", func() {
+-	f := framework.NewDefaultFramework("esipp")
+-	var loadBalancerCreateTimeout time.Duration
+-
+-	var cs clientset.Interface
+-	serviceLBNames := []string{}
+-
+-	ginkgo.BeforeEach(func() {
+-		// requires cloud load-balancer support - this feature currently supported only on GCE/GKE
+-		e2eskipper.SkipUnlessProviderIs("gce", "gke")
+-
+-		cs = f.ClientSet
+-		loadBalancerCreateTimeout = e2eservice.GetServiceLoadBalancerCreationTimeout(cs)
+-	})
+-
+-	ginkgo.AfterEach(func() {
+-		if ginkgo.CurrentGinkgoTestDescription().Failed {
+-			DescribeSvc(f.Namespace.Name)
+-		}
+-		for _, lb := range serviceLBNames {
+-			framework.Logf("cleaning load balancer resource for %s", lb)
+-			e2eservice.CleanupServiceResources(cs, lb, framework.TestContext.CloudConfig.Region, framework.TestContext.CloudConfig.Zone)
+-		}
+-		//reset serviceLBNames
+-		serviceLBNames = []string{}
+-	})
+-
+-	ginkgo.It("should work for type=LoadBalancer", func() {
+-		namespace := f.Namespace.Name
+-		serviceName := "external-local-lb"
+-		jig := e2eservice.NewTestJig(cs, namespace, serviceName)
+-
+-		svc, err := jig.CreateOnlyLocalLoadBalancerService(loadBalancerCreateTimeout, true, nil)
+-		framework.ExpectNoError(err)
+-		serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(svc))
+-		healthCheckNodePort := int(svc.Spec.HealthCheckNodePort)
+-		if healthCheckNodePort == 0 {
+-			framework.Failf("Service HealthCheck NodePort was not allocated")
+-		}
+-		defer func() {
+-			err = jig.ChangeServiceType(v1.ServiceTypeClusterIP, loadBalancerCreateTimeout)
+-			framework.ExpectNoError(err)
+-
+-			// Make sure we didn't leak the health check node port.
+-			threshold := 2
+-			nodes, err := jig.GetEndpointNodes()
+-			framework.ExpectNoError(err)
+-			for _, ips := range nodes {
+-				err := TestHTTPHealthCheckNodePort(ips[0], healthCheckNodePort, "/healthz", e2eservice.KubeProxyEndpointLagTimeout, false, threshold)
+-				framework.ExpectNoError(err)
+-			}
+-			err = cs.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{})
+-			framework.ExpectNoError(err)
+-		}()
+-
+-		svcTCPPort := int(svc.Spec.Ports[0].Port)
+-		ingressIP := e2eservice.GetIngressPoint(&svc.Status.LoadBalancer.Ingress[0])
+-
+-		ginkgo.By("reading clientIP using the TCP service's service port via its external VIP")
+-		content := GetHTTPContent(ingressIP, svcTCPPort, e2eservice.KubeProxyLagTimeout, "/clientip")
+-		clientIP := content.String()
+-		framework.Logf("ClientIP detected by target pod using VIP:SvcPort is %s", clientIP)
+-
+-		ginkgo.By("checking if Source IP is preserved")
+-		if strings.HasPrefix(clientIP, "10.") {
+-			framework.Failf("Source IP was NOT preserved")
+-		}
+-	})
+-
+-	ginkgo.It("should work for type=NodePort", func() {
+-		namespace := f.Namespace.Name
+-		serviceName := "external-local-nodeport"
+-		jig := e2eservice.NewTestJig(cs, namespace, serviceName)
+-
+-		svc, err := jig.CreateOnlyLocalNodePortService(true)
+-		framework.ExpectNoError(err)
+-		defer func() {
+-			err := cs.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{})
+-			framework.ExpectNoError(err)
+-		}()
+-
+-		tcpNodePort := int(svc.Spec.Ports[0].NodePort)
+-		endpointsNodeMap, err := jig.GetEndpointNodes()
+-		framework.ExpectNoError(err)
+-		path := "/clientip"
+-
+-		for nodeName, nodeIPs := range endpointsNodeMap {
+-			nodeIP := nodeIPs[0]
+-			ginkgo.By(fmt.Sprintf("reading clientIP using the TCP service's NodePort, on node %v: %v%v%v", nodeName, nodeIP, tcpNodePort, path))
+-			content := GetHTTPContent(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout, path)
+-			clientIP := content.String()
+-			framework.Logf("ClientIP detected by target pod using NodePort is %s", clientIP)
+-			if strings.HasPrefix(clientIP, "10.") {
+-				framework.Failf("Source IP was NOT preserved")
+-			}
+-		}
+-	})
+-
+-	ginkgo.It("should only target nodes with endpoints", func() {
+-		namespace := f.Namespace.Name
+-		serviceName := "external-local-nodes"
+-		jig := e2eservice.NewTestJig(cs, namespace, serviceName)
+-		nodes, err := e2enode.GetBoundedReadySchedulableNodes(cs, e2eservice.MaxNodesForEndpointsTests)
+-		framework.ExpectNoError(err)
+-
+-		svc, err := jig.CreateOnlyLocalLoadBalancerService(loadBalancerCreateTimeout, false,
+-			func(svc *v1.Service) {
+-				// Change service port to avoid collision with opened hostPorts
+-				// in other tests that run in parallel.
+-				if len(svc.Spec.Ports) != 0 {
+-					svc.Spec.Ports[0].TargetPort = intstr.FromInt(int(svc.Spec.Ports[0].Port))
+-					svc.Spec.Ports[0].Port = 8081
+-				}
+-
+-			})
+-		framework.ExpectNoError(err)
+-		serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(svc))
+-		defer func() {
+-			err = jig.ChangeServiceType(v1.ServiceTypeClusterIP, loadBalancerCreateTimeout)
+-			framework.ExpectNoError(err)
+-			err := cs.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{})
+-			framework.ExpectNoError(err)
+-		}()
+-
+-		healthCheckNodePort := int(svc.Spec.HealthCheckNodePort)
+-		if healthCheckNodePort == 0 {
+-			framework.Failf("Service HealthCheck NodePort was not allocated")
+-		}
+-
+-		ips := e2enode.CollectAddresses(nodes, v1.NodeExternalIP)
+-
+-		ingressIP := e2eservice.GetIngressPoint(&svc.Status.LoadBalancer.Ingress[0])
+-		svcTCPPort := int(svc.Spec.Ports[0].Port)
+-
+-		threshold := 2
+-		path := "/healthz"
+-		for i := 0; i < len(nodes.Items); i++ {
+-			endpointNodeName := nodes.Items[i].Name
+-
+-			ginkgo.By("creating a pod to be part of the service " + serviceName + " on node " + endpointNodeName)
+-			_, err = jig.Run(func(rc *v1.ReplicationController) {
+-				rc.Name = serviceName
+-				if endpointNodeName != "" {
+-					rc.Spec.Template.Spec.NodeName = endpointNodeName
+-				}
+-			})
+-			framework.ExpectNoError(err)
+-
+-			ginkgo.By(fmt.Sprintf("waiting for service endpoint on node %v", endpointNodeName))
+-			err = jig.WaitForEndpointOnNode(endpointNodeName)
+-			framework.ExpectNoError(err)
+-
+-			// HealthCheck should pass only on the node where num(endpoints) > 0
+-			// All other nodes should fail the healthcheck on the service healthCheckNodePort
+-			for n, publicIP := range ips {
+-				// Make sure the loadbalancer picked up the health check change.
+-				// Confirm traffic can reach backend through LB before checking healthcheck nodeport.
+-				e2eservice.TestReachableHTTP(ingressIP, svcTCPPort, e2eservice.KubeProxyLagTimeout)
+-				expectedSuccess := nodes.Items[n].Name == endpointNodeName
+-				port := strconv.Itoa(healthCheckNodePort)
+-				ipPort := net.JoinHostPort(publicIP, port)
+-				framework.Logf("Health checking %s, http://%s%s, expectedSuccess %v", nodes.Items[n].Name, ipPort, path, expectedSuccess)
+-				err := TestHTTPHealthCheckNodePort(publicIP, healthCheckNodePort, path, e2eservice.KubeProxyEndpointLagTimeout, expectedSuccess, threshold)
+-				framework.ExpectNoError(err)
+-			}
+-			framework.ExpectNoError(e2erc.DeleteRCAndWaitForGC(f.ClientSet, namespace, serviceName))
+-		}
+-	})
+-
+-	ginkgo.It("should work from pods", func() {
+-		var err error
+-		namespace := f.Namespace.Name
+-		serviceName := "external-local-pods"
+-		jig := e2eservice.NewTestJig(cs, namespace, serviceName)
+-
+-		svc, err := jig.CreateOnlyLocalLoadBalancerService(loadBalancerCreateTimeout, true, nil)
+-		framework.ExpectNoError(err)
+-		serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(svc))
+-		defer func() {
+-			err = jig.ChangeServiceType(v1.ServiceTypeClusterIP, loadBalancerCreateTimeout)
+-			framework.ExpectNoError(err)
+-			err := cs.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{})
+-			framework.ExpectNoError(err)
+-		}()
+-
+-		ingressIP := e2eservice.GetIngressPoint(&svc.Status.LoadBalancer.Ingress[0])
+-		port := strconv.Itoa(int(svc.Spec.Ports[0].Port))
+-		ipPort := net.JoinHostPort(ingressIP, port)
+-		path := fmt.Sprintf("%s/clientip", ipPort)
+-
+-		ginkgo.By("Creating pause pod deployment to make sure, pausePods are in desired state")
+-		deployment := createPausePodDeployment(cs, "pause-pod-deployment", namespace, 1)
+-		framework.ExpectNoError(e2edeployment.WaitForDeploymentComplete(cs, deployment), "Failed to complete pause pod deployment")
+-
+-		defer func() {
+-			framework.Logf("Deleting deployment")
+-			err = cs.AppsV1().Deployments(namespace).Delete(context.TODO(), deployment.Name, metav1.DeleteOptions{})
+-			framework.ExpectNoError(err, "Failed to delete deployment %s", deployment.Name)
+-		}()
+-
+-		deployment, err = cs.AppsV1().Deployments(namespace).Get(context.TODO(), deployment.Name, metav1.GetOptions{})
+-		framework.ExpectNoError(err, "Error in retrieving pause pod deployment")
+-		labelSelector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
+-		framework.ExpectNoError(err, "Error in setting LabelSelector as selector from deployment")
+-
+-		pausePods, err := cs.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector.String()})
+-		framework.ExpectNoError(err, "Error in listing pods associated with pause pod deployments")
+-
+-		pausePod := pausePods.Items[0]
+-		framework.Logf("Waiting up to %v curl %v", e2eservice.KubeProxyLagTimeout, path)
+-		cmd := fmt.Sprintf(`curl -q -s --connect-timeout 30 %v`, path)
+-
+-		var srcIP string
+-		loadBalancerPropagationTimeout := e2eservice.GetServiceLoadBalancerPropagationTimeout(cs)
+-		ginkgo.By(fmt.Sprintf("Hitting external lb %v from pod %v on node %v", ingressIP, pausePod.Name, pausePod.Spec.NodeName))
+-		if pollErr := wait.PollImmediate(framework.Poll, loadBalancerPropagationTimeout, func() (bool, error) {
+-			stdout, err := framework.RunHostCmd(pausePod.Namespace, pausePod.Name, cmd)
+-			if err != nil {
+-				framework.Logf("got err: %v, retry until timeout", err)
+-				return false, nil
+-			}
+-			srcIP = strings.TrimSpace(strings.Split(stdout, ":")[0])
+-			return srcIP == pausePod.Status.PodIP, nil
+-		}); pollErr != nil {
+-			framework.Failf("Source IP not preserved from %v, expected '%v' got '%v'", pausePod.Name, pausePod.Status.PodIP, srcIP)
+-		}
+-	})
+-
+-	// TODO: Get rid of [DisabledForLargeClusters] tag when issue #90047 is fixed.
+-	ginkgo.It("should handle updates to ExternalTrafficPolicy field [DisabledForLargeClusters]", func() {
+-		namespace := f.Namespace.Name
+-		serviceName := "external-local-update"
+-		jig := e2eservice.NewTestJig(cs, namespace, serviceName)
+-
+-		nodes, err := e2enode.GetBoundedReadySchedulableNodes(cs, e2eservice.MaxNodesForEndpointsTests)
+-		framework.ExpectNoError(err)
+-		if len(nodes.Items) < 2 {
+-			framework.Failf("Need at least 2 nodes to verify source ip from a node without endpoint")
+-		}
+-
+-		svc, err := jig.CreateOnlyLocalLoadBalancerService(loadBalancerCreateTimeout, true, nil)
+-		framework.ExpectNoError(err)
+-		serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(svc))
+-		defer func() {
+-			err = jig.ChangeServiceType(v1.ServiceTypeClusterIP, loadBalancerCreateTimeout)
+-			framework.ExpectNoError(err)
+-			err := cs.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{})
+-			framework.ExpectNoError(err)
+-		}()
+-
+-		// save the health check node port because it disappears when ESIPP is turned off.
+-		healthCheckNodePort := int(svc.Spec.HealthCheckNodePort)
+-
+-		ginkgo.By("turning ESIPP off")
+-		svc, err = jig.UpdateService(func(svc *v1.Service) {
+-			svc.Spec.ExternalTrafficPolicy = v1.ServiceExternalTrafficPolicyTypeCluster
+-		})
+-		framework.ExpectNoError(err)
+-		if svc.Spec.HealthCheckNodePort > 0 {
+-			framework.Failf("Service HealthCheck NodePort still present")
+-		}
+-
+-		endpointNodeMap, err := jig.GetEndpointNodes()
+-		framework.ExpectNoError(err)
+-		noEndpointNodeMap := map[string][]string{}
+-		for _, n := range nodes.Items {
+-			if _, ok := endpointNodeMap[n.Name]; ok {
+-				continue
+-			}
+-			noEndpointNodeMap[n.Name] = e2enode.GetAddresses(&n, v1.NodeExternalIP)
+-		}
+-
+-		svcTCPPort := int(svc.Spec.Ports[0].Port)
+-		svcNodePort := int(svc.Spec.Ports[0].NodePort)
+-		ingressIP := e2eservice.GetIngressPoint(&svc.Status.LoadBalancer.Ingress[0])
+-		path := "/clientip"
+-
+-		ginkgo.By(fmt.Sprintf("endpoints present on nodes %v, absent on nodes %v", endpointNodeMap, noEndpointNodeMap))
+-		for nodeName, nodeIPs := range noEndpointNodeMap {
+-			ginkgo.By(fmt.Sprintf("Checking %v (%v:%v%v) proxies to endpoints on another node", nodeName, nodeIPs[0], svcNodePort, path))
+-			GetHTTPContent(nodeIPs[0], svcNodePort, e2eservice.KubeProxyLagTimeout, path)
+-		}
+-
+-		for nodeName, nodeIPs := range endpointNodeMap {
+-			ginkgo.By(fmt.Sprintf("checking kube-proxy health check fails on node with endpoint (%s), public IP %s", nodeName, nodeIPs[0]))
+-			var body bytes.Buffer
+-			pollfn := func() (bool, error) {
+-				result := e2enetwork.PokeHTTP(nodeIPs[0], healthCheckNodePort, "/healthz", nil)
+-				if result.Code == 0 {
+-					return true, nil
+-				}
+-				body.Reset()
+-				body.Write(result.Body)
+-				return false, nil
+-			}
+-			if pollErr := wait.PollImmediate(framework.Poll, e2eservice.TestTimeout, pollfn); pollErr != nil {
+-				framework.Failf("Kube-proxy still exposing health check on node %v:%v, after ESIPP was turned off. body %s",
+-					nodeName, healthCheckNodePort, body.String())
+-			}
+-		}
+-
+-		// Poll till kube-proxy re-adds the MASQUERADE rule on the node.
+-		ginkgo.By(fmt.Sprintf("checking source ip is NOT preserved through loadbalancer %v", ingressIP))
+-		var clientIP string
+-		pollErr := wait.PollImmediate(framework.Poll, e2eservice.KubeProxyLagTimeout, func() (bool, error) {
+-			content := GetHTTPContent(ingressIP, svcTCPPort, e2eservice.KubeProxyLagTimeout, "/clientip")
+-			clientIP = content.String()
+-			if strings.HasPrefix(clientIP, "10.") {
+-				return true, nil
+-			}
+-			return false, nil
+-		})
+-		if pollErr != nil {
+-			framework.Failf("Source IP WAS preserved even after ESIPP turned off. Got %v, expected a ten-dot cluster ip.", clientIP)
+-		}
+-
+-		// TODO: We need to attempt to create another service with the previously
+-		// allocated healthcheck nodePort. If the health check nodePort has been
+-		// freed, the new service creation will succeed, upon which we cleanup.
+-		// If the health check nodePort has NOT been freed, the new service
+-		// creation will fail.
+-
+-		ginkgo.By("setting ExternalTraffic field back to OnlyLocal")
+-		svc, err = jig.UpdateService(func(svc *v1.Service) {
+-			svc.Spec.ExternalTrafficPolicy = v1.ServiceExternalTrafficPolicyTypeLocal
+-			// Request the same healthCheckNodePort as before, to test the user-requested allocation path
+-			svc.Spec.HealthCheckNodePort = int32(healthCheckNodePort)
+-		})
+-		framework.ExpectNoError(err)
+-		pollErr = wait.PollImmediate(framework.Poll, e2eservice.KubeProxyLagTimeout, func() (bool, error) {
+-			content := GetHTTPContent(ingressIP, svcTCPPort, e2eservice.KubeProxyLagTimeout, path)
+-			clientIP = content.String()
+-			ginkgo.By(fmt.Sprintf("Endpoint %v:%v%v returned client ip %v", ingressIP, svcTCPPort, path, clientIP))
+-			if !strings.HasPrefix(clientIP, "10.") {
+-				return true, nil
+-			}
+-			return false, nil
+-		})
+-		if pollErr != nil {
+-			framework.Failf("Source IP (%v) is not the client IP even after ESIPP turned on, expected a public IP.", clientIP)
+-		}
+-	})
+-})
+-
+ func execSourceipTest(pausePod v1.Pod, serviceAddress string) (string, string) {
+ 	var err error
+ 	var stdout string
+diff --git a/test/e2e/network/service_providers.go b/test/e2e/network/service_providers.go
+new file mode 100644
+index 00000000000..b7eae6feb2c
+--- /dev/null
++++ b/test/e2e/network/service_providers.go
+@@ -0,0 +1,980 @@
++// +build !providerless
++
++/*
++Copyright 2020 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package network
++
++import (
++	"bytes"
++	"context"
++	"fmt"
++	"net"
++	"strconv"
++	"strings"
++	"time"
++
++	compute "google.golang.org/api/compute/v1"
++	v1 "k8s.io/api/core/v1"
++	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
++	"k8s.io/apimachinery/pkg/util/intstr"
++	"k8s.io/apimachinery/pkg/util/wait"
++	clientset "k8s.io/client-go/kubernetes"
++	cloudprovider "k8s.io/cloud-provider"
++	"k8s.io/kubernetes/test/e2e/framework"
++	e2edeployment "k8s.io/kubernetes/test/e2e/framework/deployment"
++	e2ekubesystem "k8s.io/kubernetes/test/e2e/framework/kubesystem"
++	e2enetwork "k8s.io/kubernetes/test/e2e/framework/network"
++	e2enode "k8s.io/kubernetes/test/e2e/framework/node"
++	"k8s.io/kubernetes/test/e2e/framework/providers/gce"
++	e2erc "k8s.io/kubernetes/test/e2e/framework/rc"
++	e2eservice "k8s.io/kubernetes/test/e2e/framework/service"
++	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
++	gcecloud "k8s.io/legacy-cloud-providers/gce"
++
++	"github.com/onsi/ginkgo"
++	"github.com/onsi/gomega"
++)
++
++var _ = SIGDescribe("Services with Cloud LoadBalancers", func() {
++
++	f := framework.NewDefaultFramework("services")
++
++	var cs clientset.Interface
++	serviceLBNames := []string{}
++
++	ginkgo.BeforeEach(func() {
++		cs = f.ClientSet
++	})
++
++	ginkgo.AfterEach(func() {
++		if ginkgo.CurrentGinkgoTestDescription().Failed {
++			DescribeSvc(f.Namespace.Name)
++		}
++		for _, lb := range serviceLBNames {
++			framework.Logf("cleaning load balancer resource for %s", lb)
++			e2eservice.CleanupServiceResources(cs, lb, framework.TestContext.CloudConfig.Region, framework.TestContext.CloudConfig.Zone)
++		}
++		//reset serviceLBNames
++		serviceLBNames = []string{}
++	})
++
++	// TODO: Get rid of [DisabledForLargeClusters] tag when issue #56138 is fixed
++	ginkgo.It("should be able to change the type and ports of a service [Slow] [DisabledForLargeClusters]", func() {
++		// requires cloud load-balancer support
++		e2eskipper.SkipUnlessProviderIs("gce", "gke", "aws")
++
++		loadBalancerSupportsUDP := !framework.ProviderIs("aws")
++
++		loadBalancerLagTimeout := e2eservice.LoadBalancerLagTimeoutDefault
++		if framework.ProviderIs("aws") {
++			loadBalancerLagTimeout = e2eservice.LoadBalancerLagTimeoutAWS
++		}
++		loadBalancerCreateTimeout := e2eservice.GetServiceLoadBalancerCreationTimeout(cs)
++
++		// This test is more monolithic than we'd like because LB turnup can be
++		// very slow, so we lumped all the tests into one LB lifecycle.
++
++		serviceName := "mutability-test"
++		ns1 := f.Namespace.Name // LB1 in ns1 on TCP
++		framework.Logf("namespace for TCP test: %s", ns1)
++
++		ginkgo.By("creating a second namespace")
++		namespacePtr, err := f.CreateNamespace("services", nil)
++		framework.ExpectNoError(err, "failed to create namespace")
++		ns2 := namespacePtr.Name // LB2 in ns2 on UDP
++		framework.Logf("namespace for UDP test: %s", ns2)
++
++		nodeIP, err := e2enode.PickIP(cs) // for later
++		framework.ExpectNoError(err)
++
++		// Test TCP and UDP Services.  Services with the same name in different
++		// namespaces should get different node ports and load balancers.
++
++		ginkgo.By("creating a TCP service " + serviceName + " with type=ClusterIP in namespace " + ns1)
++		tcpJig := e2eservice.NewTestJig(cs, ns1, serviceName)
++		tcpService, err := tcpJig.CreateTCPService(nil)
++		framework.ExpectNoError(err)
++
++		ginkgo.By("creating a UDP service " + serviceName + " with type=ClusterIP in namespace " + ns2)
++		udpJig := e2eservice.NewTestJig(cs, ns2, serviceName)
++		udpService, err := udpJig.CreateUDPService(nil)
++		framework.ExpectNoError(err)
++
++		ginkgo.By("verifying that TCP and UDP use the same port")
++		if tcpService.Spec.Ports[0].Port != udpService.Spec.Ports[0].Port {
++			framework.Failf("expected to use the same port for TCP and UDP")
++		}
++		svcPort := int(tcpService.Spec.Ports[0].Port)
++		framework.Logf("service port (TCP and UDP): %d", svcPort)
++
++		ginkgo.By("creating a pod to be part of the TCP service " + serviceName)
++		_, err = tcpJig.Run(nil)
++		framework.ExpectNoError(err)
++
++		ginkgo.By("creating a pod to be part of the UDP service " + serviceName)
++		_, err = udpJig.Run(nil)
++		framework.ExpectNoError(err)
++
++		// Change the services to NodePort.
++
++		ginkgo.By("changing the TCP service to type=NodePort")
++		tcpService, err = tcpJig.UpdateService(func(s *v1.Service) {
++			s.Spec.Type = v1.ServiceTypeNodePort
++		})
++		framework.ExpectNoError(err)
++		tcpNodePort := int(tcpService.Spec.Ports[0].NodePort)
++		framework.Logf("TCP node port: %d", tcpNodePort)
++
++		ginkgo.By("changing the UDP service to type=NodePort")
++		udpService, err = udpJig.UpdateService(func(s *v1.Service) {
++			s.Spec.Type = v1.ServiceTypeNodePort
++		})
++		framework.ExpectNoError(err)
++		udpNodePort := int(udpService.Spec.Ports[0].NodePort)
++		framework.Logf("UDP node port: %d", udpNodePort)
++
++		ginkgo.By("hitting the TCP service's NodePort")
++		e2eservice.TestReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("hitting the UDP service's NodePort")
++		testReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		// Change the services to LoadBalancer.
++
++		// Here we test that LoadBalancers can receive static IP addresses.  This isn't
++		// necessary, but is an additional feature this monolithic test checks.
++		requestedIP := ""
++		staticIPName := ""
++		if framework.ProviderIs("gce", "gke") {
++			ginkgo.By("creating a static load balancer IP")
++			staticIPName = fmt.Sprintf("e2e-external-lb-test-%s", framework.RunID)
++			gceCloud, err := gce.GetGCECloud()
++			framework.ExpectNoError(err, "failed to get GCE cloud provider")
++
++			err = gceCloud.ReserveRegionAddress(&compute.Address{Name: staticIPName}, gceCloud.Region())
++			defer func() {
++				if staticIPName != "" {
++					// Release GCE static IP - this is not kube-managed and will not be automatically released.
++					if err := gceCloud.DeleteRegionAddress(staticIPName, gceCloud.Region()); err != nil {
++						framework.Logf("failed to release static IP %s: %v", staticIPName, err)
++					}
++				}
++			}()
++			framework.ExpectNoError(err, "failed to create region address: %s", staticIPName)
++			reservedAddr, err := gceCloud.GetRegionAddress(staticIPName, gceCloud.Region())
++			framework.ExpectNoError(err, "failed to get region address: %s", staticIPName)
++
++			requestedIP = reservedAddr.Address
++			framework.Logf("Allocated static load balancer IP: %s", requestedIP)
++		}
++
++		ginkgo.By("changing the TCP service to type=LoadBalancer")
++		tcpService, err = tcpJig.UpdateService(func(s *v1.Service) {
++			s.Spec.LoadBalancerIP = requestedIP // will be "" if not applicable
++			s.Spec.Type = v1.ServiceTypeLoadBalancer
++		})
++		framework.ExpectNoError(err)
++
++		if loadBalancerSupportsUDP {
++			ginkgo.By("changing the UDP service to type=LoadBalancer")
++			udpService, err = udpJig.UpdateService(func(s *v1.Service) {
++				s.Spec.Type = v1.ServiceTypeLoadBalancer
++			})
++			framework.ExpectNoError(err)
++		}
++		serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(tcpService))
++		if loadBalancerSupportsUDP {
++			serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(udpService))
++		}
++
++		ginkgo.By("waiting for the TCP service to have a load balancer")
++		// Wait for the load balancer to be created asynchronously
++		tcpService, err = tcpJig.WaitForLoadBalancer(loadBalancerCreateTimeout)
++		framework.ExpectNoError(err)
++		if int(tcpService.Spec.Ports[0].NodePort) != tcpNodePort {
++			framework.Failf("TCP Spec.Ports[0].NodePort changed (%d -> %d) when not expected", tcpNodePort, tcpService.Spec.Ports[0].NodePort)
++		}
++		if requestedIP != "" && e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]) != requestedIP {
++			framework.Failf("unexpected TCP Status.LoadBalancer.Ingress (expected %s, got %s)", requestedIP, e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]))
++		}
++		tcpIngressIP := e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0])
++		framework.Logf("TCP load balancer: %s", tcpIngressIP)
++
++		if framework.ProviderIs("gce", "gke") {
++			// Do this as early as possible, which overrides the `defer` above.
++			// This is mostly out of fear of leaking the IP in a timeout case
++			// (as of this writing we're not 100% sure where the leaks are
++			// coming from, so this is first-aid rather than surgery).
++			ginkgo.By("demoting the static IP to ephemeral")
++			if staticIPName != "" {
++				gceCloud, err := gce.GetGCECloud()
++				framework.ExpectNoError(err, "failed to get GCE cloud provider")
++				// Deleting it after it is attached "demotes" it to an
++				// ephemeral IP, which can be auto-released.
++				if err := gceCloud.DeleteRegionAddress(staticIPName, gceCloud.Region()); err != nil {
++					framework.Failf("failed to release static IP %s: %v", staticIPName, err)
++				}
++				staticIPName = ""
++			}
++		}
++
++		var udpIngressIP string
++		if loadBalancerSupportsUDP {
++			ginkgo.By("waiting for the UDP service to have a load balancer")
++			// 2nd one should be faster since they ran in parallel.
++			udpService, err = udpJig.WaitForLoadBalancer(loadBalancerCreateTimeout)
++			framework.ExpectNoError(err)
++			if int(udpService.Spec.Ports[0].NodePort) != udpNodePort {
++				framework.Failf("UDP Spec.Ports[0].NodePort changed (%d -> %d) when not expected", udpNodePort, udpService.Spec.Ports[0].NodePort)
++			}
++			udpIngressIP = e2eservice.GetIngressPoint(&udpService.Status.LoadBalancer.Ingress[0])
++			framework.Logf("UDP load balancer: %s", udpIngressIP)
++
++			ginkgo.By("verifying that TCP and UDP use different load balancers")
++			if tcpIngressIP == udpIngressIP {
++				framework.Failf("Load balancers are not different: %s", e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]))
++			}
++		}
++
++		ginkgo.By("hitting the TCP service's NodePort")
++		e2eservice.TestReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("hitting the UDP service's NodePort")
++		testReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("hitting the TCP service's LoadBalancer")
++		e2eservice.TestReachableHTTP(tcpIngressIP, svcPort, loadBalancerLagTimeout)
++
++		if loadBalancerSupportsUDP {
++			ginkgo.By("hitting the UDP service's LoadBalancer")
++			testReachableUDP(udpIngressIP, svcPort, loadBalancerLagTimeout)
++		}
++
++		// Change the services' node ports.
++
++		ginkgo.By("changing the TCP service's NodePort")
++		tcpService, err = tcpJig.ChangeServiceNodePort(tcpNodePort)
++		framework.ExpectNoError(err)
++		tcpNodePortOld := tcpNodePort
++		tcpNodePort = int(tcpService.Spec.Ports[0].NodePort)
++		if tcpNodePort == tcpNodePortOld {
++			framework.Failf("TCP Spec.Ports[0].NodePort (%d) did not change", tcpNodePort)
++		}
++		if e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]) != tcpIngressIP {
++			framework.Failf("TCP Status.LoadBalancer.Ingress changed (%s -> %s) when not expected", tcpIngressIP, e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]))
++		}
++		framework.Logf("TCP node port: %d", tcpNodePort)
++
++		ginkgo.By("changing the UDP service's NodePort")
++		udpService, err = udpJig.ChangeServiceNodePort(udpNodePort)
++		framework.ExpectNoError(err)
++		udpNodePortOld := udpNodePort
++		udpNodePort = int(udpService.Spec.Ports[0].NodePort)
++		if udpNodePort == udpNodePortOld {
++			framework.Failf("UDP Spec.Ports[0].NodePort (%d) did not change", udpNodePort)
++		}
++		if loadBalancerSupportsUDP && e2eservice.GetIngressPoint(&udpService.Status.LoadBalancer.Ingress[0]) != udpIngressIP {
++			framework.Failf("UDP Status.LoadBalancer.Ingress changed (%s -> %s) when not expected", udpIngressIP, e2eservice.GetIngressPoint(&udpService.Status.LoadBalancer.Ingress[0]))
++		}
++		framework.Logf("UDP node port: %d", udpNodePort)
++
++		ginkgo.By("hitting the TCP service's new NodePort")
++		e2eservice.TestReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("hitting the UDP service's new NodePort")
++		testReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("checking the old TCP NodePort is closed")
++		testNotReachableHTTP(nodeIP, tcpNodePortOld, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("checking the old UDP NodePort is closed")
++		testNotReachableUDP(nodeIP, udpNodePortOld, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("hitting the TCP service's LoadBalancer")
++		e2eservice.TestReachableHTTP(tcpIngressIP, svcPort, loadBalancerLagTimeout)
++
++		if loadBalancerSupportsUDP {
++			ginkgo.By("hitting the UDP service's LoadBalancer")
++			testReachableUDP(udpIngressIP, svcPort, loadBalancerLagTimeout)
++		}
++
++		// Change the services' main ports.
++
++		ginkgo.By("changing the TCP service's port")
++		tcpService, err = tcpJig.UpdateService(func(s *v1.Service) {
++			s.Spec.Ports[0].Port++
++		})
++		framework.ExpectNoError(err)
++		svcPortOld := svcPort
++		svcPort = int(tcpService.Spec.Ports[0].Port)
++		if svcPort == svcPortOld {
++			framework.Failf("TCP Spec.Ports[0].Port (%d) did not change", svcPort)
++		}
++		if int(tcpService.Spec.Ports[0].NodePort) != tcpNodePort {
++			framework.Failf("TCP Spec.Ports[0].NodePort (%d) changed", tcpService.Spec.Ports[0].NodePort)
++		}
++		if e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]) != tcpIngressIP {
++			framework.Failf("TCP Status.LoadBalancer.Ingress changed (%s -> %s) when not expected", tcpIngressIP, e2eservice.GetIngressPoint(&tcpService.Status.LoadBalancer.Ingress[0]))
++		}
++
++		ginkgo.By("changing the UDP service's port")
++		udpService, err = udpJig.UpdateService(func(s *v1.Service) {
++			s.Spec.Ports[0].Port++
++		})
++		framework.ExpectNoError(err)
++		if int(udpService.Spec.Ports[0].Port) != svcPort {
++			framework.Failf("UDP Spec.Ports[0].Port (%d) did not change", udpService.Spec.Ports[0].Port)
++		}
++		if int(udpService.Spec.Ports[0].NodePort) != udpNodePort {
++			framework.Failf("UDP Spec.Ports[0].NodePort (%d) changed", udpService.Spec.Ports[0].NodePort)
++		}
++		if loadBalancerSupportsUDP && e2eservice.GetIngressPoint(&udpService.Status.LoadBalancer.Ingress[0]) != udpIngressIP {
++			framework.Failf("UDP Status.LoadBalancer.Ingress changed (%s -> %s) when not expected", udpIngressIP, e2eservice.GetIngressPoint(&udpService.Status.LoadBalancer.Ingress[0]))
++		}
++
++		framework.Logf("service port (TCP and UDP): %d", svcPort)
++
++		ginkgo.By("hitting the TCP service's NodePort")
++		e2eservice.TestReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("hitting the UDP service's NodePort")
++		testReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("hitting the TCP service's LoadBalancer")
++		e2eservice.TestReachableHTTP(tcpIngressIP, svcPort, loadBalancerCreateTimeout)
++
++		if loadBalancerSupportsUDP {
++			ginkgo.By("hitting the UDP service's LoadBalancer")
++			testReachableUDP(udpIngressIP, svcPort, loadBalancerCreateTimeout)
++		}
++
++		ginkgo.By("Scaling the pods to 0")
++		err = tcpJig.Scale(0)
++		framework.ExpectNoError(err)
++		err = udpJig.Scale(0)
++		framework.ExpectNoError(err)
++
++		ginkgo.By("looking for ICMP REJECT on the TCP service's NodePort")
++		testRejectedHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("looking for ICMP REJECT on the UDP service's NodePort")
++		testRejectedUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("looking for ICMP REJECT on the TCP service's LoadBalancer")
++		testRejectedHTTP(tcpIngressIP, svcPort, loadBalancerCreateTimeout)
++
++		if loadBalancerSupportsUDP {
++			ginkgo.By("looking for ICMP REJECT on the UDP service's LoadBalancer")
++			testRejectedUDP(udpIngressIP, svcPort, loadBalancerCreateTimeout)
++		}
++
++		ginkgo.By("Scaling the pods to 1")
++		err = tcpJig.Scale(1)
++		framework.ExpectNoError(err)
++		err = udpJig.Scale(1)
++		framework.ExpectNoError(err)
++
++		ginkgo.By("hitting the TCP service's NodePort")
++		e2eservice.TestReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("hitting the UDP service's NodePort")
++		testReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("hitting the TCP service's LoadBalancer")
++		e2eservice.TestReachableHTTP(tcpIngressIP, svcPort, loadBalancerCreateTimeout)
++
++		if loadBalancerSupportsUDP {
++			ginkgo.By("hitting the UDP service's LoadBalancer")
++			testReachableUDP(udpIngressIP, svcPort, loadBalancerCreateTimeout)
++		}
++
++		// Change the services back to ClusterIP.
++
++		ginkgo.By("changing TCP service back to type=ClusterIP")
++		_, err = tcpJig.UpdateService(func(s *v1.Service) {
++			s.Spec.Type = v1.ServiceTypeClusterIP
++			s.Spec.Ports[0].NodePort = 0
++		})
++		framework.ExpectNoError(err)
++		// Wait for the load balancer to be destroyed asynchronously
++		_, err = tcpJig.WaitForLoadBalancerDestroy(tcpIngressIP, svcPort, loadBalancerCreateTimeout)
++		framework.ExpectNoError(err)
++
++		ginkgo.By("changing UDP service back to type=ClusterIP")
++		_, err = udpJig.UpdateService(func(s *v1.Service) {
++			s.Spec.Type = v1.ServiceTypeClusterIP
++			s.Spec.Ports[0].NodePort = 0
++		})
++		framework.ExpectNoError(err)
++		if loadBalancerSupportsUDP {
++			// Wait for the load balancer to be destroyed asynchronously
++			_, err = udpJig.WaitForLoadBalancerDestroy(udpIngressIP, svcPort, loadBalancerCreateTimeout)
++			framework.ExpectNoError(err)
++		}
++
++		ginkgo.By("checking the TCP NodePort is closed")
++		testNotReachableHTTP(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("checking the UDP NodePort is closed")
++		testNotReachableUDP(nodeIP, udpNodePort, e2eservice.KubeProxyLagTimeout)
++
++		ginkgo.By("checking the TCP LoadBalancer is closed")
++		testNotReachableHTTP(tcpIngressIP, svcPort, loadBalancerLagTimeout)
++
++		if loadBalancerSupportsUDP {
++			ginkgo.By("checking the UDP LoadBalancer is closed")
++			testNotReachableUDP(udpIngressIP, svcPort, loadBalancerLagTimeout)
++		}
++	})
++
++	ginkgo.It("should be able to create an internal type load balancer [Slow]", func() {
++		e2eskipper.SkipUnlessProviderIs("azure", "gke", "gce")
++
++		createTimeout := e2eservice.GetServiceLoadBalancerCreationTimeout(cs)
++		pollInterval := framework.Poll * 10
++
++		namespace := f.Namespace.Name
++		serviceName := "lb-internal"
++		jig := e2eservice.NewTestJig(cs, namespace, serviceName)
++
++		ginkgo.By("creating pod to be part of service " + serviceName)
++		_, err := jig.Run(nil)
++		framework.ExpectNoError(err)
++
++		enableILB, disableILB := enableAndDisableInternalLB()
++
++		isInternalEndpoint := func(lbIngress *v1.LoadBalancerIngress) bool {
++			ingressEndpoint := e2eservice.GetIngressPoint(lbIngress)
++			// Needs update for providers using hostname as endpoint.
++			return strings.HasPrefix(ingressEndpoint, "10.")
++		}
++
++		ginkgo.By("creating a service with type LoadBalancer and cloud specific Internal-LB annotation enabled")
++		svc, err := jig.CreateTCPService(func(svc *v1.Service) {
++			svc.Spec.Type = v1.ServiceTypeLoadBalancer
++			enableILB(svc)
++		})
++		framework.ExpectNoError(err)
++
++		defer func() {
++			ginkgo.By("Clean up loadbalancer service")
++			e2eservice.WaitForServiceDeletedWithFinalizer(cs, svc.Namespace, svc.Name)
++		}()
++
++		svc, err = jig.WaitForLoadBalancer(createTimeout)
++		framework.ExpectNoError(err)
++		lbIngress := &svc.Status.LoadBalancer.Ingress[0]
++		svcPort := int(svc.Spec.Ports[0].Port)
++		// should have an internal IP.
++		framework.ExpectEqual(isInternalEndpoint(lbIngress), true)
++
++		// ILBs are not accessible from the test orchestrator, so it's necessary to use
++		//  a pod to test the service.
++		ginkgo.By("hitting the internal load balancer from pod")
++		framework.Logf("creating pod with host network")
++		hostExec := launchHostExecPod(f.ClientSet, f.Namespace.Name, "ilb-host-exec")
++
++		framework.Logf("Waiting up to %v for service %q's internal LB to respond to requests", createTimeout, serviceName)
++		tcpIngressIP := e2eservice.GetIngressPoint(lbIngress)
++		if pollErr := wait.PollImmediate(pollInterval, createTimeout, func() (bool, error) {
++			cmd := fmt.Sprintf(`curl -m 5 'http://%v:%v/echo?msg=hello'`, tcpIngressIP, svcPort)
++			stdout, err := framework.RunHostCmd(hostExec.Namespace, hostExec.Name, cmd)
++			if err != nil {
++				framework.Logf("error curling; stdout: %v. err: %v", stdout, err)
++				return false, nil
++			}
++
++			if !strings.Contains(stdout, "hello") {
++				framework.Logf("Expected output to contain 'hello', got %q; retrying...", stdout)
++				return false, nil
++			}
++
++			framework.Logf("Successful curl; stdout: %v", stdout)
++			return true, nil
++		}); pollErr != nil {
++			framework.Failf("ginkgo.Failed to hit ILB IP, err: %v", pollErr)
++		}
++
++		ginkgo.By("switching to external type LoadBalancer")
++		svc, err = jig.UpdateService(func(svc *v1.Service) {
++			disableILB(svc)
++		})
++		framework.ExpectNoError(err)
++		framework.Logf("Waiting up to %v for service %q to have an external LoadBalancer", createTimeout, serviceName)
++		if pollErr := wait.PollImmediate(pollInterval, createTimeout, func() (bool, error) {
++			svc, err := cs.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
++			if err != nil {
++				return false, err
++			}
++			lbIngress = &svc.Status.LoadBalancer.Ingress[0]
++			return !isInternalEndpoint(lbIngress), nil
++		}); pollErr != nil {
++			framework.Failf("Loadbalancer IP not changed to external.")
++		}
++		// should have an external IP.
++		gomega.Expect(isInternalEndpoint(lbIngress)).To(gomega.BeFalse())
++
++		ginkgo.By("hitting the external load balancer")
++		framework.Logf("Waiting up to %v for service %q's external LB to respond to requests", createTimeout, serviceName)
++		tcpIngressIP = e2eservice.GetIngressPoint(lbIngress)
++		e2eservice.TestReachableHTTP(tcpIngressIP, svcPort, e2eservice.LoadBalancerLagTimeoutDefault)
++
++		// GCE cannot test a specific IP because the test may not own it. This cloud specific condition
++		// will be removed when GCP supports similar functionality.
++		if framework.ProviderIs("azure") {
++			ginkgo.By("switching back to interal type LoadBalancer, with static IP specified.")
++			internalStaticIP := "10.240.11.11"
++			svc, err = jig.UpdateService(func(svc *v1.Service) {
++				svc.Spec.LoadBalancerIP = internalStaticIP
++				enableILB(svc)
++			})
++			framework.ExpectNoError(err)
++			framework.Logf("Waiting up to %v for service %q to have an internal LoadBalancer", createTimeout, serviceName)
++			if pollErr := wait.PollImmediate(pollInterval, createTimeout, func() (bool, error) {
++				svc, err := cs.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
++				if err != nil {
++					return false, err
++				}
++				lbIngress = &svc.Status.LoadBalancer.Ingress[0]
++				return isInternalEndpoint(lbIngress), nil
++			}); pollErr != nil {
++				framework.Failf("Loadbalancer IP not changed to internal.")
++			}
++			// should have the given static internal IP.
++			framework.ExpectEqual(e2eservice.GetIngressPoint(lbIngress), internalStaticIP)
++		}
++	})
++
++	// This test creates a load balancer, make sure its health check interval
++	// equals to gceHcCheckIntervalSeconds. Then the interval is manipulated
++	// to be something else, see if the interval will be reconciled.
++	ginkgo.It("should reconcile LB health check interval [Slow][Serial]", func() {
++		const gceHcCheckIntervalSeconds = int64(8)
++		// This test is for clusters on GCE.
++		// (It restarts kube-controller-manager, which we don't support on GKE)
++		e2eskipper.SkipUnlessProviderIs("gce")
++		e2eskipper.SkipUnlessSSHKeyPresent()
++
++		clusterID, err := gce.GetClusterID(cs)
++		if err != nil {
++			framework.Failf("framework.GetClusterID(cs) = _, %v; want nil", err)
++		}
++		gceCloud, err := gce.GetGCECloud()
++		if err != nil {
++			framework.Failf("framework.GetGCECloud() = _, %v; want nil", err)
++		}
++
++		namespace := f.Namespace.Name
++		serviceName := "lb-hc-int"
++		jig := e2eservice.NewTestJig(cs, namespace, serviceName)
++
++		ginkgo.By("create load balancer service")
++		// Create loadbalancer service with source range from node[0] and podAccept
++		svc, err := jig.CreateTCPService(func(svc *v1.Service) {
++			svc.Spec.Type = v1.ServiceTypeLoadBalancer
++		})
++		framework.ExpectNoError(err)
++
++		defer func() {
++			ginkgo.By("Clean up loadbalancer service")
++			e2eservice.WaitForServiceDeletedWithFinalizer(cs, svc.Namespace, svc.Name)
++		}()
++
++		svc, err = jig.WaitForLoadBalancer(e2eservice.GetServiceLoadBalancerCreationTimeout(cs))
++		framework.ExpectNoError(err)
++
++		hcName := gcecloud.MakeNodesHealthCheckName(clusterID)
++		hc, err := gceCloud.GetHTTPHealthCheck(hcName)
++		if err != nil {
++			framework.Failf("gceCloud.GetHttpHealthCheck(%q) = _, %v; want nil", hcName, err)
++		}
++		framework.ExpectEqual(hc.CheckIntervalSec, gceHcCheckIntervalSeconds)
++
++		ginkgo.By("modify the health check interval")
++		hc.CheckIntervalSec = gceHcCheckIntervalSeconds - 1
++		if err = gceCloud.UpdateHTTPHealthCheck(hc); err != nil {
++			framework.Failf("gcecloud.UpdateHttpHealthCheck(%#v) = %v; want nil", hc, err)
++		}
++
++		ginkgo.By("restart kube-controller-manager")
++		if err := e2ekubesystem.RestartControllerManager(); err != nil {
++			framework.Failf("e2ekubesystem.RestartControllerManager() = %v; want nil", err)
++		}
++		if err := e2ekubesystem.WaitForControllerManagerUp(); err != nil {
++			framework.Failf("e2ekubesystem.WaitForControllerManagerUp() = %v; want nil", err)
++		}
++
++		ginkgo.By("health check should be reconciled")
++		pollInterval := framework.Poll * 10
++		loadBalancerPropagationTimeout := e2eservice.GetServiceLoadBalancerPropagationTimeout(cs)
++		if pollErr := wait.PollImmediate(pollInterval, loadBalancerPropagationTimeout, func() (bool, error) {
++			hc, err := gceCloud.GetHTTPHealthCheck(hcName)
++			if err != nil {
++				framework.Logf("ginkgo.Failed to get HttpHealthCheck(%q): %v", hcName, err)
++				return false, err
++			}
++			framework.Logf("hc.CheckIntervalSec = %v", hc.CheckIntervalSec)
++			return hc.CheckIntervalSec == gceHcCheckIntervalSeconds, nil
++		}); pollErr != nil {
++			framework.Failf("Health check %q does not reconcile its check interval to %d.", hcName, gceHcCheckIntervalSeconds)
++		}
++	})
++
++	var _ = SIGDescribe("ESIPP [Slow]", func() {
++		f := framework.NewDefaultFramework("esipp")
++		var loadBalancerCreateTimeout time.Duration
++
++		var cs clientset.Interface
++		serviceLBNames := []string{}
++
++		ginkgo.BeforeEach(func() {
++			// requires cloud load-balancer support - this feature currently supported only on GCE/GKE
++			e2eskipper.SkipUnlessProviderIs("gce", "gke")
++
++			cs = f.ClientSet
++			loadBalancerCreateTimeout = e2eservice.GetServiceLoadBalancerCreationTimeout(cs)
++		})
++
++		ginkgo.AfterEach(func() {
++			if ginkgo.CurrentGinkgoTestDescription().Failed {
++				DescribeSvc(f.Namespace.Name)
++			}
++			for _, lb := range serviceLBNames {
++				framework.Logf("cleaning load balancer resource for %s", lb)
++				e2eservice.CleanupServiceResources(cs, lb, framework.TestContext.CloudConfig.Region, framework.TestContext.CloudConfig.Zone)
++			}
++			//reset serviceLBNames
++			serviceLBNames = []string{}
++		})
++
++		ginkgo.It("should work for type=LoadBalancer", func() {
++			namespace := f.Namespace.Name
++			serviceName := "external-local-lb"
++			jig := e2eservice.NewTestJig(cs, namespace, serviceName)
++
++			svc, err := jig.CreateOnlyLocalLoadBalancerService(loadBalancerCreateTimeout, true, nil)
++			framework.ExpectNoError(err)
++			serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(svc))
++			healthCheckNodePort := int(svc.Spec.HealthCheckNodePort)
++			if healthCheckNodePort == 0 {
++				framework.Failf("Service HealthCheck NodePort was not allocated")
++			}
++			defer func() {
++				err = jig.ChangeServiceType(v1.ServiceTypeClusterIP, loadBalancerCreateTimeout)
++				framework.ExpectNoError(err)
++
++				// Make sure we didn't leak the health check node port.
++				threshold := 2
++				nodes, err := jig.GetEndpointNodes()
++				framework.ExpectNoError(err)
++				for _, ips := range nodes {
++					err := TestHTTPHealthCheckNodePort(ips[0], healthCheckNodePort, "/healthz", e2eservice.KubeProxyEndpointLagTimeout, false, threshold)
++					framework.ExpectNoError(err)
++				}
++				err = cs.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{})
++				framework.ExpectNoError(err)
++			}()
++
++			svcTCPPort := int(svc.Spec.Ports[0].Port)
++			ingressIP := e2eservice.GetIngressPoint(&svc.Status.LoadBalancer.Ingress[0])
++
++			ginkgo.By("reading clientIP using the TCP service's service port via its external VIP")
++			content := GetHTTPContent(ingressIP, svcTCPPort, e2eservice.KubeProxyLagTimeout, "/clientip")
++			clientIP := content.String()
++			framework.Logf("ClientIP detected by target pod using VIP:SvcPort is %s", clientIP)
++
++			ginkgo.By("checking if Source IP is preserved")
++			if strings.HasPrefix(clientIP, "10.") {
++				framework.Failf("Source IP was NOT preserved")
++			}
++		})
++
++		ginkgo.It("should work for type=NodePort", func() {
++			namespace := f.Namespace.Name
++			serviceName := "external-local-nodeport"
++			jig := e2eservice.NewTestJig(cs, namespace, serviceName)
++
++			svc, err := jig.CreateOnlyLocalNodePortService(true)
++			framework.ExpectNoError(err)
++			defer func() {
++				err := cs.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{})
++				framework.ExpectNoError(err)
++			}()
++
++			tcpNodePort := int(svc.Spec.Ports[0].NodePort)
++			endpointsNodeMap, err := jig.GetEndpointNodes()
++			framework.ExpectNoError(err)
++			path := "/clientip"
++
++			for nodeName, nodeIPs := range endpointsNodeMap {
++				nodeIP := nodeIPs[0]
++				ginkgo.By(fmt.Sprintf("reading clientIP using the TCP service's NodePort, on node %v: %v%v%v", nodeName, nodeIP, tcpNodePort, path))
++				content := GetHTTPContent(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout, path)
++				clientIP := content.String()
++				framework.Logf("ClientIP detected by target pod using NodePort is %s", clientIP)
++				if strings.HasPrefix(clientIP, "10.") {
++					framework.Failf("Source IP was NOT preserved")
++				}
++			}
++		})
++
++		ginkgo.It("should only target nodes with endpoints", func() {
++			namespace := f.Namespace.Name
++			serviceName := "external-local-nodes"
++			jig := e2eservice.NewTestJig(cs, namespace, serviceName)
++			nodes, err := e2enode.GetBoundedReadySchedulableNodes(cs, e2eservice.MaxNodesForEndpointsTests)
++			framework.ExpectNoError(err)
++
++			svc, err := jig.CreateOnlyLocalLoadBalancerService(loadBalancerCreateTimeout, false,
++				func(svc *v1.Service) {
++					// Change service port to avoid collision with opened hostPorts
++					// in other tests that run in parallel.
++					if len(svc.Spec.Ports) != 0 {
++						svc.Spec.Ports[0].TargetPort = intstr.FromInt(int(svc.Spec.Ports[0].Port))
++						svc.Spec.Ports[0].Port = 8081
++					}
++
++				})
++			framework.ExpectNoError(err)
++			serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(svc))
++			defer func() {
++				err = jig.ChangeServiceType(v1.ServiceTypeClusterIP, loadBalancerCreateTimeout)
++				framework.ExpectNoError(err)
++				err := cs.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{})
++				framework.ExpectNoError(err)
++			}()
++
++			healthCheckNodePort := int(svc.Spec.HealthCheckNodePort)
++			if healthCheckNodePort == 0 {
++				framework.Failf("Service HealthCheck NodePort was not allocated")
++			}
++
++			ips := e2enode.CollectAddresses(nodes, v1.NodeExternalIP)
++
++			ingressIP := e2eservice.GetIngressPoint(&svc.Status.LoadBalancer.Ingress[0])
++			svcTCPPort := int(svc.Spec.Ports[0].Port)
++
++			threshold := 2
++			path := "/healthz"
++			for i := 0; i < len(nodes.Items); i++ {
++				endpointNodeName := nodes.Items[i].Name
++
++				ginkgo.By("creating a pod to be part of the service " + serviceName + " on node " + endpointNodeName)
++				_, err = jig.Run(func(rc *v1.ReplicationController) {
++					rc.Name = serviceName
++					if endpointNodeName != "" {
++						rc.Spec.Template.Spec.NodeName = endpointNodeName
++					}
++				})
++				framework.ExpectNoError(err)
++
++				ginkgo.By(fmt.Sprintf("waiting for service endpoint on node %v", endpointNodeName))
++				err = jig.WaitForEndpointOnNode(endpointNodeName)
++				framework.ExpectNoError(err)
++
++				// HealthCheck should pass only on the node where num(endpoints) > 0
++				// All other nodes should fail the healthcheck on the service healthCheckNodePort
++				for n, publicIP := range ips {
++					// Make sure the loadbalancer picked up the health check change.
++					// Confirm traffic can reach backend through LB before checking healthcheck nodeport.
++					e2eservice.TestReachableHTTP(ingressIP, svcTCPPort, e2eservice.KubeProxyLagTimeout)
++					expectedSuccess := nodes.Items[n].Name == endpointNodeName
++					port := strconv.Itoa(healthCheckNodePort)
++					ipPort := net.JoinHostPort(publicIP, port)
++					framework.Logf("Health checking %s, http://%s%s, expectedSuccess %v", nodes.Items[n].Name, ipPort, path, expectedSuccess)
++					err := TestHTTPHealthCheckNodePort(publicIP, healthCheckNodePort, path, e2eservice.KubeProxyEndpointLagTimeout, expectedSuccess, threshold)
++					framework.ExpectNoError(err)
++				}
++				framework.ExpectNoError(e2erc.DeleteRCAndWaitForGC(f.ClientSet, namespace, serviceName))
++			}
++		})
++
++		ginkgo.It("should work from pods", func() {
++			var err error
++			namespace := f.Namespace.Name
++			serviceName := "external-local-pods"
++			jig := e2eservice.NewTestJig(cs, namespace, serviceName)
++
++			svc, err := jig.CreateOnlyLocalLoadBalancerService(loadBalancerCreateTimeout, true, nil)
++			framework.ExpectNoError(err)
++			serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(svc))
++			defer func() {
++				err = jig.ChangeServiceType(v1.ServiceTypeClusterIP, loadBalancerCreateTimeout)
++				framework.ExpectNoError(err)
++				err := cs.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{})
++				framework.ExpectNoError(err)
++			}()
++
++			ingressIP := e2eservice.GetIngressPoint(&svc.Status.LoadBalancer.Ingress[0])
++			port := strconv.Itoa(int(svc.Spec.Ports[0].Port))
++			ipPort := net.JoinHostPort(ingressIP, port)
++			path := fmt.Sprintf("%s/clientip", ipPort)
++
++			ginkgo.By("Creating pause pod deployment to make sure, pausePods are in desired state")
++			deployment := createPausePodDeployment(cs, "pause-pod-deployment", namespace, 1)
++			framework.ExpectNoError(e2edeployment.WaitForDeploymentComplete(cs, deployment), "Failed to complete pause pod deployment")
++
++			defer func() {
++				framework.Logf("Deleting deployment")
++				err = cs.AppsV1().Deployments(namespace).Delete(context.TODO(), deployment.Name, metav1.DeleteOptions{})
++				framework.ExpectNoError(err, "Failed to delete deployment %s", deployment.Name)
++			}()
++
++			deployment, err = cs.AppsV1().Deployments(namespace).Get(context.TODO(), deployment.Name, metav1.GetOptions{})
++			framework.ExpectNoError(err, "Error in retrieving pause pod deployment")
++			labelSelector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
++			framework.ExpectNoError(err, "Error in setting LabelSelector as selector from deployment")
++
++			pausePods, err := cs.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector.String()})
++			framework.ExpectNoError(err, "Error in listing pods associated with pause pod deployments")
++
++			pausePod := pausePods.Items[0]
++			framework.Logf("Waiting up to %v curl %v", e2eservice.KubeProxyLagTimeout, path)
++			cmd := fmt.Sprintf(`curl -q -s --connect-timeout 30 %v`, path)
++
++			var srcIP string
++			loadBalancerPropagationTimeout := e2eservice.GetServiceLoadBalancerPropagationTimeout(cs)
++			ginkgo.By(fmt.Sprintf("Hitting external lb %v from pod %v on node %v", ingressIP, pausePod.Name, pausePod.Spec.NodeName))
++			if pollErr := wait.PollImmediate(framework.Poll, loadBalancerPropagationTimeout, func() (bool, error) {
++				stdout, err := framework.RunHostCmd(pausePod.Namespace, pausePod.Name, cmd)
++				if err != nil {
++					framework.Logf("got err: %v, retry until timeout", err)
++					return false, nil
++				}
++				srcIP = strings.TrimSpace(strings.Split(stdout, ":")[0])
++				return srcIP == pausePod.Status.PodIP, nil
++			}); pollErr != nil {
++				framework.Failf("Source IP not preserved from %v, expected '%v' got '%v'", pausePod.Name, pausePod.Status.PodIP, srcIP)
++			}
++		})
++
++		// TODO: Get rid of [DisabledForLargeClusters] tag when issue #90047 is fixed.
++		ginkgo.It("should handle updates to ExternalTrafficPolicy field [DisabledForLargeClusters]", func() {
++			namespace := f.Namespace.Name
++			serviceName := "external-local-update"
++			jig := e2eservice.NewTestJig(cs, namespace, serviceName)
++
++			nodes, err := e2enode.GetBoundedReadySchedulableNodes(cs, e2eservice.MaxNodesForEndpointsTests)
++			framework.ExpectNoError(err)
++			if len(nodes.Items) < 2 {
++				framework.Failf("Need at least 2 nodes to verify source ip from a node without endpoint")
++			}
++
++			svc, err := jig.CreateOnlyLocalLoadBalancerService(loadBalancerCreateTimeout, true, nil)
++			framework.ExpectNoError(err)
++			serviceLBNames = append(serviceLBNames, cloudprovider.DefaultLoadBalancerName(svc))
++			defer func() {
++				err = jig.ChangeServiceType(v1.ServiceTypeClusterIP, loadBalancerCreateTimeout)
++				framework.ExpectNoError(err)
++				err := cs.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{})
++				framework.ExpectNoError(err)
++			}()
++
++			// save the health check node port because it disappears when ESIPP is turned off.
++			healthCheckNodePort := int(svc.Spec.HealthCheckNodePort)
++
++			ginkgo.By("turning ESIPP off")
++			svc, err = jig.UpdateService(func(svc *v1.Service) {
++				svc.Spec.ExternalTrafficPolicy = v1.ServiceExternalTrafficPolicyTypeCluster
++			})
++			framework.ExpectNoError(err)
++			if svc.Spec.HealthCheckNodePort > 0 {
++				framework.Failf("Service HealthCheck NodePort still present")
++			}
++
++			endpointNodeMap, err := jig.GetEndpointNodes()
++			framework.ExpectNoError(err)
++			noEndpointNodeMap := map[string][]string{}
++			for _, n := range nodes.Items {
++				if _, ok := endpointNodeMap[n.Name]; ok {
++					continue
++				}
++				noEndpointNodeMap[n.Name] = e2enode.GetAddresses(&n, v1.NodeExternalIP)
++			}
++
++			svcTCPPort := int(svc.Spec.Ports[0].Port)
++			svcNodePort := int(svc.Spec.Ports[0].NodePort)
++			ingressIP := e2eservice.GetIngressPoint(&svc.Status.LoadBalancer.Ingress[0])
++			path := "/clientip"
++
++			ginkgo.By(fmt.Sprintf("endpoints present on nodes %v, absent on nodes %v", endpointNodeMap, noEndpointNodeMap))
++			for nodeName, nodeIPs := range noEndpointNodeMap {
++				ginkgo.By(fmt.Sprintf("Checking %v (%v:%v%v) proxies to endpoints on another node", nodeName, nodeIPs[0], svcNodePort, path))
++				GetHTTPContent(nodeIPs[0], svcNodePort, e2eservice.KubeProxyLagTimeout, path)
++			}
++
++			for nodeName, nodeIPs := range endpointNodeMap {
++				ginkgo.By(fmt.Sprintf("checking kube-proxy health check fails on node with endpoint (%s), public IP %s", nodeName, nodeIPs[0]))
++				var body bytes.Buffer
++				pollfn := func() (bool, error) {
++					result := e2enetwork.PokeHTTP(nodeIPs[0], healthCheckNodePort, "/healthz", nil)
++					if result.Code == 0 {
++						return true, nil
++					}
++					body.Reset()
++					body.Write(result.Body)
++					return false, nil
++				}
++				if pollErr := wait.PollImmediate(framework.Poll, e2eservice.TestTimeout, pollfn); pollErr != nil {
++					framework.Failf("Kube-proxy still exposing health check on node %v:%v, after ESIPP was turned off. body %s",
++						nodeName, healthCheckNodePort, body.String())
++				}
++			}
++
++			// Poll till kube-proxy re-adds the MASQUERADE rule on the node.
++			ginkgo.By(fmt.Sprintf("checking source ip is NOT preserved through loadbalancer %v", ingressIP))
++			var clientIP string
++			pollErr := wait.PollImmediate(framework.Poll, e2eservice.KubeProxyLagTimeout, func() (bool, error) {
++				content := GetHTTPContent(ingressIP, svcTCPPort, e2eservice.KubeProxyLagTimeout, "/clientip")
++				clientIP = content.String()
++				if strings.HasPrefix(clientIP, "10.") {
++					return true, nil
++				}
++				return false, nil
++			})
++			if pollErr != nil {
++				framework.Failf("Source IP WAS preserved even after ESIPP turned off. Got %v, expected a ten-dot cluster ip.", clientIP)
++			}
++
++			// TODO: We need to attempt to create another service with the previously
++			// allocated healthcheck nodePort. If the health check nodePort has been
++			// freed, the new service creation will succeed, upon which we cleanup.
++			// If the health check nodePort has NOT been freed, the new service
++			// creation will fail.
++
++			ginkgo.By("setting ExternalTraffic field back to OnlyLocal")
++			svc, err = jig.UpdateService(func(svc *v1.Service) {
++				svc.Spec.ExternalTrafficPolicy = v1.ServiceExternalTrafficPolicyTypeLocal
++				// Request the same healthCheckNodePort as before, to test the user-requested allocation path
++				svc.Spec.HealthCheckNodePort = int32(healthCheckNodePort)
++			})
++			framework.ExpectNoError(err)
++			pollErr = wait.PollImmediate(framework.Poll, e2eservice.KubeProxyLagTimeout, func() (bool, error) {
++				content := GetHTTPContent(ingressIP, svcTCPPort, e2eservice.KubeProxyLagTimeout, path)
++				clientIP = content.String()
++				ginkgo.By(fmt.Sprintf("Endpoint %v:%v%v returned client ip %v", ingressIP, svcTCPPort, path, clientIP))
++				if !strings.HasPrefix(clientIP, "10.") {
++					return true, nil
++				}
++				return false, nil
++			})
++			if pollErr != nil {
++				framework.Failf("Source IP (%v) is not the client IP even after ESIPP turned on, expected a public IP.", clientIP)
++			}
++		})
++	})
++})
+diff --git a/test/e2e/node/recreate_node.go b/test/e2e/node/recreate_node.go
+index da3fc974485..b403fa7f737 100644
+--- a/test/e2e/node/recreate_node.go
++++ b/test/e2e/node/recreate_node.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2019 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/scheduling/nvidia-gpus.go b/test/e2e/scheduling/nvidia-gpus.go
+index 334a6f5b9f6..59fbdee014b 100644
+--- a/test/e2e/scheduling/nvidia-gpus.go
++++ b/test/e2e/scheduling/nvidia-gpus.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/scheduling/ubernetes_lite_volumes.go b/test/e2e/scheduling/ubernetes_lite_volumes.go
+index 513ed07543f..78c0f081990 100644
+--- a/test/e2e/scheduling/ubernetes_lite_volumes.go
++++ b/test/e2e/scheduling/ubernetes_lite_volumes.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/storage/drivers/in_tree.go b/test/e2e/storage/drivers/in_tree.go
+index d5183f28081..de25e2cf007 100644
+--- a/test/e2e/storage/drivers/in_tree.go
++++ b/test/e2e/storage/drivers/in_tree.go
+@@ -38,10 +38,8 @@ package drivers
+ import (
+ 	"context"
+ 	"fmt"
+-	"os/exec"
+ 	"strconv"
+ 	"strings"
+-	"time"
+ 
+ 	"github.com/onsi/ginkgo"
+ 	v1 "k8s.io/api/core/v1"
+@@ -57,13 +55,11 @@ import (
+ 	e2eauth "k8s.io/kubernetes/test/e2e/framework/auth"
+ 	e2enode "k8s.io/kubernetes/test/e2e/framework/node"
+ 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
+-	e2epv "k8s.io/kubernetes/test/e2e/framework/pv"
+ 	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
+ 	e2evolume "k8s.io/kubernetes/test/e2e/framework/volume"
+ 	"k8s.io/kubernetes/test/e2e/storage/testpatterns"
+ 	"k8s.io/kubernetes/test/e2e/storage/testsuites"
+ 	"k8s.io/kubernetes/test/e2e/storage/utils"
+-	vspheretest "k8s.io/kubernetes/test/e2e/storage/vsphere"
+ 	imageutils "k8s.io/kubernetes/test/utils/image"
+ )
+ 
+@@ -1032,734 +1028,6 @@ func (e *emptydirDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTes
+ 	}, func() {}
+ }
+ 
+-// Cinder
+-// This driver assumes that OpenStack client tools are installed
+-// (/usr/bin/nova, /usr/bin/cinder and /usr/bin/keystone)
+-// and that the usual OpenStack authentication env. variables are set
+-// (OS_USERNAME, OS_PASSWORD, OS_TENANT_NAME at least).
+-type cinderDriver struct {
+-	driverInfo testsuites.DriverInfo
+-}
+-
+-type cinderVolume struct {
+-	volumeName string
+-	volumeID   string
+-}
+-
+-var _ testsuites.TestDriver = &cinderDriver{}
+-var _ testsuites.PreprovisionedVolumeTestDriver = &cinderDriver{}
+-var _ testsuites.InlineVolumeTestDriver = &cinderDriver{}
+-var _ testsuites.PreprovisionedPVTestDriver = &cinderDriver{}
+-var _ testsuites.DynamicPVTestDriver = &cinderDriver{}
+-
+-// InitCinderDriver returns cinderDriver that implements TestDriver interface
+-func InitCinderDriver() testsuites.TestDriver {
+-	return &cinderDriver{
+-		driverInfo: testsuites.DriverInfo{
+-			Name:             "cinder",
+-			InTreePluginName: "kubernetes.io/cinder",
+-			MaxFileSize:      testpatterns.FileSizeMedium,
+-			SupportedSizeRange: e2evolume.SizeRange{
+-				Min: "5Gi",
+-			},
+-			SupportedFsType: sets.NewString(
+-				"", // Default fsType
+-				"ext3",
+-			),
+-			TopologyKeys: []string{v1.LabelZoneFailureDomain},
+-			Capabilities: map[testsuites.Capability]bool{
+-				testsuites.CapPersistence: true,
+-				testsuites.CapFsGroup:     true,
+-				testsuites.CapExec:        true,
+-				testsuites.CapBlock:       true,
+-				// Cinder supports volume limits, but the test creates large
+-				// number of volumes and times out test suites.
+-				testsuites.CapVolumeLimits: false,
+-				testsuites.CapTopology:     true,
+-			},
+-		},
+-	}
+-}
+-
+-func (c *cinderDriver) GetDriverInfo() *testsuites.DriverInfo {
+-	return &c.driverInfo
+-}
+-
+-func (c *cinderDriver) SkipUnsupportedTest(pattern testpatterns.TestPattern) {
+-	e2eskipper.SkipUnlessProviderIs("openstack")
+-}
+-
+-func (c *cinderDriver) GetVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) *v1.VolumeSource {
+-	cv, ok := e2evolume.(*cinderVolume)
+-	framework.ExpectEqual(ok, true, "Failed to cast test volume to Cinder test volume")
+-
+-	volSource := v1.VolumeSource{
+-		Cinder: &v1.CinderVolumeSource{
+-			VolumeID: cv.volumeID,
+-			ReadOnly: readOnly,
+-		},
+-	}
+-	if fsType != "" {
+-		volSource.Cinder.FSType = fsType
+-	}
+-	return &volSource
+-}
+-
+-func (c *cinderDriver) GetPersistentVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) (*v1.PersistentVolumeSource, *v1.VolumeNodeAffinity) {
+-	cv, ok := e2evolume.(*cinderVolume)
+-	framework.ExpectEqual(ok, true, "Failed to cast test volume to Cinder test volume")
+-
+-	pvSource := v1.PersistentVolumeSource{
+-		Cinder: &v1.CinderPersistentVolumeSource{
+-			VolumeID: cv.volumeID,
+-			ReadOnly: readOnly,
+-		},
+-	}
+-	if fsType != "" {
+-		pvSource.Cinder.FSType = fsType
+-	}
+-	return &pvSource, nil
+-}
+-
+-func (c *cinderDriver) GetDynamicProvisionStorageClass(config *testsuites.PerTestConfig, fsType string) *storagev1.StorageClass {
+-	provisioner := "kubernetes.io/cinder"
+-	parameters := map[string]string{}
+-	if fsType != "" {
+-		parameters["fsType"] = fsType
+-	}
+-	ns := config.Framework.Namespace.Name
+-	suffix := fmt.Sprintf("%s-sc", c.driverInfo.Name)
+-
+-	return testsuites.GetStorageClass(provisioner, parameters, nil, ns, suffix)
+-}
+-
+-func (c *cinderDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTestConfig, func()) {
+-	return &testsuites.PerTestConfig{
+-		Driver:    c,
+-		Prefix:    "cinder",
+-		Framework: f,
+-	}, func() {}
+-}
+-
+-func (c *cinderDriver) CreateVolume(config *testsuites.PerTestConfig, volType testpatterns.TestVolType) testsuites.TestVolume {
+-	f := config.Framework
+-	ns := f.Namespace
+-
+-	// We assume that namespace.Name is a random string
+-	volumeName := ns.Name
+-	ginkgo.By("creating a test Cinder volume")
+-	output, err := exec.Command("cinder", "create", "--display-name="+volumeName, "1").CombinedOutput()
+-	outputString := string(output[:])
+-	framework.Logf("cinder output:\n%s", outputString)
+-	framework.ExpectNoError(err)
+-
+-	// Parse 'id'' from stdout. Expected format:
+-	// |     attachments     |                  []                  |
+-	// |  availability_zone  |                 nova                 |
+-	// ...
+-	// |          id         | 1d6ff08f-5d1c-41a4-ad72-4ef872cae685 |
+-	volumeID := ""
+-	for _, line := range strings.Split(outputString, "\n") {
+-		fields := strings.Fields(line)
+-		if len(fields) != 5 {
+-			continue
+-		}
+-		if fields[1] != "id" {
+-			continue
+-		}
+-		volumeID = fields[3]
+-		break
+-	}
+-	framework.Logf("Volume ID: %s", volumeID)
+-	framework.ExpectNotEqual(volumeID, "")
+-	return &cinderVolume{
+-		volumeName: volumeName,
+-		volumeID:   volumeID,
+-	}
+-}
+-
+-func (v *cinderVolume) DeleteVolume() {
+-	name := v.volumeName
+-
+-	// Try to delete the volume for several seconds - it takes
+-	// a while for the plugin to detach it.
+-	var output []byte
+-	var err error
+-	timeout := time.Second * 120
+-
+-	framework.Logf("Waiting up to %v for removal of cinder volume %s", timeout, name)
+-	for start := time.Now(); time.Since(start) < timeout; time.Sleep(5 * time.Second) {
+-		output, err = exec.Command("cinder", "delete", name).CombinedOutput()
+-		if err == nil {
+-			framework.Logf("Cinder volume %s deleted", name)
+-			return
+-		}
+-		framework.Logf("Failed to delete volume %s: %v", name, err)
+-	}
+-	framework.Logf("Giving up deleting volume %s: %v\n%s", name, err, string(output[:]))
+-}
+-
+-// GCE
+-type gcePdDriver struct {
+-	driverInfo testsuites.DriverInfo
+-}
+-
+-type gcePdVolume struct {
+-	volumeName string
+-}
+-
+-var _ testsuites.TestDriver = &gcePdDriver{}
+-var _ testsuites.PreprovisionedVolumeTestDriver = &gcePdDriver{}
+-var _ testsuites.InlineVolumeTestDriver = &gcePdDriver{}
+-var _ testsuites.PreprovisionedPVTestDriver = &gcePdDriver{}
+-var _ testsuites.DynamicPVTestDriver = &gcePdDriver{}
+-
+-// InitGcePdDriver returns gcePdDriver that implements TestDriver interface
+-func InitGcePdDriver() testsuites.TestDriver {
+-	// In current test structure, it first initialize the driver and then set up
+-	// the new framework, so we cannot get the correct OS here. So here set to
+-	// support all fs types including both linux and windows. We have code to check Node OS later
+-	// during test.
+-	supportedTypes := sets.NewString(
+-		"", // Default fsType
+-		"ext2",
+-		"ext3",
+-		"ext4",
+-		"xfs",
+-		"ntfs",
+-	)
+-	return &gcePdDriver{
+-		driverInfo: testsuites.DriverInfo{
+-			Name:             "gcepd",
+-			InTreePluginName: "kubernetes.io/gce-pd",
+-			MaxFileSize:      testpatterns.FileSizeMedium,
+-			SupportedSizeRange: e2evolume.SizeRange{
+-				Min: "5Gi",
+-			},
+-			SupportedFsType:      supportedTypes,
+-			SupportedMountOption: sets.NewString("debug", "nouid32"),
+-			TopologyKeys:         []string{v1.LabelZoneFailureDomain},
+-			Capabilities: map[testsuites.Capability]bool{
+-				testsuites.CapPersistence:         true,
+-				testsuites.CapFsGroup:             true,
+-				testsuites.CapBlock:               true,
+-				testsuites.CapExec:                true,
+-				testsuites.CapMultiPODs:           true,
+-				testsuites.CapControllerExpansion: true,
+-				testsuites.CapNodeExpansion:       true,
+-				// GCE supports volume limits, but the test creates large
+-				// number of volumes and times out test suites.
+-				testsuites.CapVolumeLimits: false,
+-				testsuites.CapTopology:     true,
+-			},
+-		},
+-	}
+-}
+-
+-func (g *gcePdDriver) GetDriverInfo() *testsuites.DriverInfo {
+-	return &g.driverInfo
+-}
+-
+-func (g *gcePdDriver) SkipUnsupportedTest(pattern testpatterns.TestPattern) {
+-	e2eskipper.SkipUnlessProviderIs("gce", "gke")
+-	if pattern.FeatureTag == "[sig-windows]" {
+-		e2eskipper.SkipUnlessNodeOSDistroIs("windows")
+-	}
+-}
+-
+-func (g *gcePdDriver) GetVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) *v1.VolumeSource {
+-	gv, ok := e2evolume.(*gcePdVolume)
+-	framework.ExpectEqual(ok, true, "Failed to cast test volume to GCE PD test volume")
+-	volSource := v1.VolumeSource{
+-		GCEPersistentDisk: &v1.GCEPersistentDiskVolumeSource{
+-			PDName:   gv.volumeName,
+-			ReadOnly: readOnly,
+-		},
+-	}
+-	if fsType != "" {
+-		volSource.GCEPersistentDisk.FSType = fsType
+-	}
+-	return &volSource
+-}
+-
+-func (g *gcePdDriver) GetPersistentVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) (*v1.PersistentVolumeSource, *v1.VolumeNodeAffinity) {
+-	gv, ok := e2evolume.(*gcePdVolume)
+-	framework.ExpectEqual(ok, true, "Failed to cast test volume to GCE PD test volume")
+-	pvSource := v1.PersistentVolumeSource{
+-		GCEPersistentDisk: &v1.GCEPersistentDiskVolumeSource{
+-			PDName:   gv.volumeName,
+-			ReadOnly: readOnly,
+-		},
+-	}
+-	if fsType != "" {
+-		pvSource.GCEPersistentDisk.FSType = fsType
+-	}
+-	return &pvSource, nil
+-}
+-
+-func (g *gcePdDriver) GetDynamicProvisionStorageClass(config *testsuites.PerTestConfig, fsType string) *storagev1.StorageClass {
+-	provisioner := "kubernetes.io/gce-pd"
+-	parameters := map[string]string{}
+-	if fsType != "" {
+-		parameters["fsType"] = fsType
+-	}
+-	ns := config.Framework.Namespace.Name
+-	suffix := fmt.Sprintf("%s-sc", g.driverInfo.Name)
+-	delayedBinding := storagev1.VolumeBindingWaitForFirstConsumer
+-
+-	return testsuites.GetStorageClass(provisioner, parameters, &delayedBinding, ns, suffix)
+-}
+-
+-func (g *gcePdDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTestConfig, func()) {
+-	config := &testsuites.PerTestConfig{
+-		Driver:    g,
+-		Prefix:    "gcepd",
+-		Framework: f,
+-	}
+-
+-	if framework.NodeOSDistroIs("windows") {
+-		config.ClientNodeSelection = e2epod.NodeSelection{
+-			Selector: map[string]string{
+-				"kubernetes.io/os": "windows",
+-			},
+-		}
+-	}
+-	return config, func() {}
+-
+-}
+-
+-func (g *gcePdDriver) CreateVolume(config *testsuites.PerTestConfig, volType testpatterns.TestVolType) testsuites.TestVolume {
+-	zone := getInlineVolumeZone(config.Framework)
+-	if volType == testpatterns.InlineVolume {
+-		// PD will be created in framework.TestContext.CloudConfig.Zone zone,
+-		// so pods should be also scheduled there.
+-		config.ClientNodeSelection = e2epod.NodeSelection{
+-			Selector: map[string]string{
+-				v1.LabelZoneFailureDomain: zone,
+-			},
+-		}
+-	}
+-	ginkgo.By("creating a test gce pd volume")
+-	vname, err := e2epv.CreatePDWithRetryAndZone(zone)
+-	framework.ExpectNoError(err)
+-	return &gcePdVolume{
+-		volumeName: vname,
+-	}
+-}
+-
+-func (v *gcePdVolume) DeleteVolume() {
+-	e2epv.DeletePDWithRetry(v.volumeName)
+-}
+-
+-// vSphere
+-type vSphereDriver struct {
+-	driverInfo testsuites.DriverInfo
+-}
+-
+-type vSphereVolume struct {
+-	volumePath string
+-	nodeInfo   *vspheretest.NodeInfo
+-}
+-
+-var _ testsuites.TestDriver = &vSphereDriver{}
+-var _ testsuites.PreprovisionedVolumeTestDriver = &vSphereDriver{}
+-var _ testsuites.InlineVolumeTestDriver = &vSphereDriver{}
+-var _ testsuites.PreprovisionedPVTestDriver = &vSphereDriver{}
+-var _ testsuites.DynamicPVTestDriver = &vSphereDriver{}
+-
+-// InitVSphereDriver returns vSphereDriver that implements TestDriver interface
+-func InitVSphereDriver() testsuites.TestDriver {
+-	return &vSphereDriver{
+-		driverInfo: testsuites.DriverInfo{
+-			Name:             "vsphere",
+-			InTreePluginName: "kubernetes.io/vsphere-volume",
+-			MaxFileSize:      testpatterns.FileSizeMedium,
+-			SupportedSizeRange: e2evolume.SizeRange{
+-				Min: "5Gi",
+-			},
+-			SupportedFsType: sets.NewString(
+-				"", // Default fsType
+-				"ext4",
+-			),
+-			TopologyKeys: []string{v1.LabelZoneFailureDomain},
+-			Capabilities: map[testsuites.Capability]bool{
+-				testsuites.CapPersistence: true,
+-				testsuites.CapFsGroup:     true,
+-				testsuites.CapExec:        true,
+-				testsuites.CapMultiPODs:   true,
+-				testsuites.CapTopology:    true,
+-			},
+-		},
+-	}
+-}
+-func (v *vSphereDriver) GetDriverInfo() *testsuites.DriverInfo {
+-	return &v.driverInfo
+-}
+-
+-func (v *vSphereDriver) SkipUnsupportedTest(pattern testpatterns.TestPattern) {
+-	e2eskipper.SkipUnlessProviderIs("vsphere")
+-}
+-
+-func (v *vSphereDriver) GetVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) *v1.VolumeSource {
+-	vsv, ok := e2evolume.(*vSphereVolume)
+-	framework.ExpectEqual(ok, true, "Failed to cast test volume to vSphere test volume")
+-
+-	// vSphere driver doesn't seem to support readOnly volume
+-	// TODO: check if it is correct
+-	if readOnly {
+-		return nil
+-	}
+-	volSource := v1.VolumeSource{
+-		VsphereVolume: &v1.VsphereVirtualDiskVolumeSource{
+-			VolumePath: vsv.volumePath,
+-		},
+-	}
+-	if fsType != "" {
+-		volSource.VsphereVolume.FSType = fsType
+-	}
+-	return &volSource
+-}
+-
+-func (v *vSphereDriver) GetPersistentVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) (*v1.PersistentVolumeSource, *v1.VolumeNodeAffinity) {
+-	vsv, ok := e2evolume.(*vSphereVolume)
+-	framework.ExpectEqual(ok, true, "Failed to cast test volume to vSphere test volume")
+-
+-	// vSphere driver doesn't seem to support readOnly volume
+-	// TODO: check if it is correct
+-	if readOnly {
+-		return nil, nil
+-	}
+-	pvSource := v1.PersistentVolumeSource{
+-		VsphereVolume: &v1.VsphereVirtualDiskVolumeSource{
+-			VolumePath: vsv.volumePath,
+-		},
+-	}
+-	if fsType != "" {
+-		pvSource.VsphereVolume.FSType = fsType
+-	}
+-	return &pvSource, nil
+-}
+-
+-func (v *vSphereDriver) GetDynamicProvisionStorageClass(config *testsuites.PerTestConfig, fsType string) *storagev1.StorageClass {
+-	provisioner := "kubernetes.io/vsphere-volume"
+-	parameters := map[string]string{}
+-	if fsType != "" {
+-		parameters["fsType"] = fsType
+-	}
+-	ns := config.Framework.Namespace.Name
+-	suffix := fmt.Sprintf("%s-sc", v.driverInfo.Name)
+-
+-	return testsuites.GetStorageClass(provisioner, parameters, nil, ns, suffix)
+-}
+-
+-func (v *vSphereDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTestConfig, func()) {
+-	return &testsuites.PerTestConfig{
+-		Driver:    v,
+-		Prefix:    "vsphere",
+-		Framework: f,
+-	}, func() {}
+-}
+-
+-func (v *vSphereDriver) CreateVolume(config *testsuites.PerTestConfig, volType testpatterns.TestVolType) testsuites.TestVolume {
+-	f := config.Framework
+-	vspheretest.Bootstrap(f)
+-	nodeInfo := vspheretest.GetReadySchedulableRandomNodeInfo()
+-	volumePath, err := nodeInfo.VSphere.CreateVolume(&vspheretest.VolumeOptions{}, nodeInfo.DataCenterRef)
+-	framework.ExpectNoError(err)
+-	return &vSphereVolume{
+-		volumePath: volumePath,
+-		nodeInfo:   nodeInfo,
+-	}
+-}
+-
+-func (v *vSphereVolume) DeleteVolume() {
+-	v.nodeInfo.VSphere.DeleteVolume(v.volumePath, v.nodeInfo.DataCenterRef)
+-}
+-
+-// Azure Disk
+-type azureDiskDriver struct {
+-	driverInfo testsuites.DriverInfo
+-}
+-
+-type azureDiskVolume struct {
+-	volumeName string
+-}
+-
+-var _ testsuites.TestDriver = &azureDiskDriver{}
+-var _ testsuites.PreprovisionedVolumeTestDriver = &azureDiskDriver{}
+-var _ testsuites.InlineVolumeTestDriver = &azureDiskDriver{}
+-var _ testsuites.PreprovisionedPVTestDriver = &azureDiskDriver{}
+-var _ testsuites.DynamicPVTestDriver = &azureDiskDriver{}
+-
+-// InitAzureDiskDriver returns azureDiskDriver that implements TestDriver interface
+-func InitAzureDiskDriver() testsuites.TestDriver {
+-	return &azureDiskDriver{
+-		driverInfo: testsuites.DriverInfo{
+-			Name:             "azure-disk",
+-			InTreePluginName: "kubernetes.io/azure-disk",
+-			MaxFileSize:      testpatterns.FileSizeMedium,
+-			SupportedSizeRange: e2evolume.SizeRange{
+-				Min: "5Gi",
+-			},
+-			SupportedFsType: sets.NewString(
+-				"", // Default fsType
+-				"ext3",
+-				"ext4",
+-				"xfs",
+-			),
+-			TopologyKeys: []string{v1.LabelZoneFailureDomain},
+-			Capabilities: map[testsuites.Capability]bool{
+-				testsuites.CapPersistence: true,
+-				testsuites.CapFsGroup:     true,
+-				testsuites.CapBlock:       true,
+-				testsuites.CapExec:        true,
+-				testsuites.CapMultiPODs:   true,
+-				// Azure supports volume limits, but the test creates large
+-				// number of volumes and times out test suites.
+-				testsuites.CapVolumeLimits: false,
+-				testsuites.CapTopology:     true,
+-			},
+-		},
+-	}
+-}
+-
+-func (a *azureDiskDriver) GetDriverInfo() *testsuites.DriverInfo {
+-	return &a.driverInfo
+-}
+-
+-func (a *azureDiskDriver) SkipUnsupportedTest(pattern testpatterns.TestPattern) {
+-	e2eskipper.SkipUnlessProviderIs("azure")
+-}
+-
+-func (a *azureDiskDriver) GetVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) *v1.VolumeSource {
+-	av, ok := e2evolume.(*azureDiskVolume)
+-	framework.ExpectEqual(ok, true, "Failed to cast test volume to Azure test volume")
+-	diskName := av.volumeName[(strings.LastIndex(av.volumeName, "/") + 1):]
+-
+-	kind := v1.AzureManagedDisk
+-	volSource := v1.VolumeSource{
+-		AzureDisk: &v1.AzureDiskVolumeSource{
+-			DiskName:    diskName,
+-			DataDiskURI: av.volumeName,
+-			Kind:        &kind,
+-			ReadOnly:    &readOnly,
+-		},
+-	}
+-	if fsType != "" {
+-		volSource.AzureDisk.FSType = &fsType
+-	}
+-	return &volSource
+-}
+-
+-func (a *azureDiskDriver) GetPersistentVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) (*v1.PersistentVolumeSource, *v1.VolumeNodeAffinity) {
+-	av, ok := e2evolume.(*azureDiskVolume)
+-	framework.ExpectEqual(ok, true, "Failed to cast test volume to Azure test volume")
+-
+-	diskName := av.volumeName[(strings.LastIndex(av.volumeName, "/") + 1):]
+-
+-	kind := v1.AzureManagedDisk
+-	pvSource := v1.PersistentVolumeSource{
+-		AzureDisk: &v1.AzureDiskVolumeSource{
+-			DiskName:    diskName,
+-			DataDiskURI: av.volumeName,
+-			Kind:        &kind,
+-			ReadOnly:    &readOnly,
+-		},
+-	}
+-	if fsType != "" {
+-		pvSource.AzureDisk.FSType = &fsType
+-	}
+-	return &pvSource, nil
+-}
+-
+-func (a *azureDiskDriver) GetDynamicProvisionStorageClass(config *testsuites.PerTestConfig, fsType string) *storagev1.StorageClass {
+-	provisioner := "kubernetes.io/azure-disk"
+-	parameters := map[string]string{}
+-	if fsType != "" {
+-		parameters["fsType"] = fsType
+-	}
+-	ns := config.Framework.Namespace.Name
+-	suffix := fmt.Sprintf("%s-sc", a.driverInfo.Name)
+-	delayedBinding := storagev1.VolumeBindingWaitForFirstConsumer
+-
+-	return testsuites.GetStorageClass(provisioner, parameters, &delayedBinding, ns, suffix)
+-}
+-
+-func (a *azureDiskDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTestConfig, func()) {
+-	return &testsuites.PerTestConfig{
+-		Driver:    a,
+-		Prefix:    "azure",
+-		Framework: f,
+-	}, func() {}
+-}
+-
+-func (a *azureDiskDriver) CreateVolume(config *testsuites.PerTestConfig, volType testpatterns.TestVolType) testsuites.TestVolume {
+-	ginkgo.By("creating a test azure disk volume")
+-	zone := getInlineVolumeZone(config.Framework)
+-	if volType == testpatterns.InlineVolume {
+-		// PD will be created in framework.TestContext.CloudConfig.Zone zone,
+-		// so pods should be also scheduled there.
+-		config.ClientNodeSelection = e2epod.NodeSelection{
+-			Selector: map[string]string{
+-				v1.LabelZoneFailureDomain: zone,
+-			},
+-		}
+-	}
+-	volumeName, err := e2epv.CreatePDWithRetryAndZone(zone)
+-	framework.ExpectNoError(err)
+-	return &azureDiskVolume{
+-		volumeName: volumeName,
+-	}
+-}
+-
+-func (v *azureDiskVolume) DeleteVolume() {
+-	e2epv.DeletePDWithRetry(v.volumeName)
+-}
+-
+-// AWS
+-type awsDriver struct {
+-	driverInfo testsuites.DriverInfo
+-}
+-
+-type awsVolume struct {
+-	volumeName string
+-}
+-
+-var _ testsuites.TestDriver = &awsDriver{}
+-
+-var _ testsuites.PreprovisionedVolumeTestDriver = &awsDriver{}
+-var _ testsuites.InlineVolumeTestDriver = &awsDriver{}
+-var _ testsuites.PreprovisionedPVTestDriver = &awsDriver{}
+-var _ testsuites.DynamicPVTestDriver = &awsDriver{}
+-
+-// InitAwsDriver returns awsDriver that implements TestDriver interface
+-func InitAwsDriver() testsuites.TestDriver {
+-	return &awsDriver{
+-		driverInfo: testsuites.DriverInfo{
+-			Name:             "aws",
+-			InTreePluginName: "kubernetes.io/aws-ebs",
+-			MaxFileSize:      testpatterns.FileSizeMedium,
+-			SupportedSizeRange: e2evolume.SizeRange{
+-				Min: "5Gi",
+-			},
+-			SupportedFsType: sets.NewString(
+-				"", // Default fsType
+-				"ext2",
+-				"ext3",
+-				"ext4",
+-				"xfs",
+-				"ntfs",
+-			),
+-			SupportedMountOption: sets.NewString("debug", "nouid32"),
+-			TopologyKeys:         []string{v1.LabelZoneFailureDomain},
+-			Capabilities: map[testsuites.Capability]bool{
+-				testsuites.CapPersistence:         true,
+-				testsuites.CapFsGroup:             true,
+-				testsuites.CapBlock:               true,
+-				testsuites.CapExec:                true,
+-				testsuites.CapMultiPODs:           true,
+-				testsuites.CapControllerExpansion: true,
+-				testsuites.CapNodeExpansion:       true,
+-				// AWS supports volume limits, but the test creates large
+-				// number of volumes and times out test suites.
+-				testsuites.CapVolumeLimits: false,
+-				testsuites.CapTopology:     true,
+-			},
+-		},
+-	}
+-}
+-
+-func (a *awsDriver) GetDriverInfo() *testsuites.DriverInfo {
+-	return &a.driverInfo
+-}
+-
+-func (a *awsDriver) SkipUnsupportedTest(pattern testpatterns.TestPattern) {
+-	e2eskipper.SkipUnlessProviderIs("aws")
+-}
+-
+-func (a *awsDriver) GetVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) *v1.VolumeSource {
+-	av, ok := e2evolume.(*awsVolume)
+-	framework.ExpectEqual(ok, true, "Failed to cast test volume to AWS test volume")
+-	volSource := v1.VolumeSource{
+-		AWSElasticBlockStore: &v1.AWSElasticBlockStoreVolumeSource{
+-			VolumeID: av.volumeName,
+-			ReadOnly: readOnly,
+-		},
+-	}
+-	if fsType != "" {
+-		volSource.AWSElasticBlockStore.FSType = fsType
+-	}
+-	return &volSource
+-}
+-
+-func (a *awsDriver) GetPersistentVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) (*v1.PersistentVolumeSource, *v1.VolumeNodeAffinity) {
+-	av, ok := e2evolume.(*awsVolume)
+-	framework.ExpectEqual(ok, true, "Failed to cast test volume to AWS test volume")
+-	pvSource := v1.PersistentVolumeSource{
+-		AWSElasticBlockStore: &v1.AWSElasticBlockStoreVolumeSource{
+-			VolumeID: av.volumeName,
+-			ReadOnly: readOnly,
+-		},
+-	}
+-	if fsType != "" {
+-		pvSource.AWSElasticBlockStore.FSType = fsType
+-	}
+-	return &pvSource, nil
+-}
+-
+-func (a *awsDriver) GetDynamicProvisionStorageClass(config *testsuites.PerTestConfig, fsType string) *storagev1.StorageClass {
+-	provisioner := "kubernetes.io/aws-ebs"
+-	parameters := map[string]string{}
+-	if fsType != "" {
+-		parameters["fsType"] = fsType
+-	}
+-	ns := config.Framework.Namespace.Name
+-	suffix := fmt.Sprintf("%s-sc", a.driverInfo.Name)
+-	delayedBinding := storagev1.VolumeBindingWaitForFirstConsumer
+-
+-	return testsuites.GetStorageClass(provisioner, parameters, &delayedBinding, ns, suffix)
+-}
+-
+-func (a *awsDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTestConfig, func()) {
+-	config := &testsuites.PerTestConfig{
+-		Driver:    a,
+-		Prefix:    "aws",
+-		Framework: f,
+-	}
+-
+-	if framework.NodeOSDistroIs("windows") {
+-		config.ClientNodeSelection = e2epod.NodeSelection{
+-			Selector: map[string]string{
+-				"kubernetes.io/os": "windows",
+-			},
+-		}
+-	}
+-	return config, func() {}
+-}
+-
+-func (a *awsDriver) CreateVolume(config *testsuites.PerTestConfig, volType testpatterns.TestVolType) testsuites.TestVolume {
+-	zone := getInlineVolumeZone(config.Framework)
+-	if volType == testpatterns.InlineVolume {
+-		// PD will be created in framework.TestContext.CloudConfig.Zone zone,
+-		// so pods should be also scheduled there.
+-		config.ClientNodeSelection = e2epod.NodeSelection{
+-			Selector: map[string]string{
+-				v1.LabelZoneFailureDomain: zone,
+-			},
+-		}
+-	}
+-	ginkgo.By("creating a test aws volume")
+-	vname, err := e2epv.CreatePDWithRetryAndZone(zone)
+-	framework.ExpectNoError(err)
+-	return &awsVolume{
+-		volumeName: vname,
+-	}
+-}
+-
+-func (v *awsVolume) DeleteVolume() {
+-	e2epv.DeletePDWithRetry(v.volumeName)
+-}
+-
+ // local
+ type localDriver struct {
+ 	driverInfo testsuites.DriverInfo
+diff --git a/test/e2e/storage/drivers/in_tree_providers.go b/test/e2e/storage/drivers/in_tree_providers.go
+new file mode 100644
+index 00000000000..c7f5dd3052e
+--- /dev/null
++++ b/test/e2e/storage/drivers/in_tree_providers.go
+@@ -0,0 +1,751 @@
++// +build !providerless
++
++package drivers
++
++import (
++	"fmt"
++	"os/exec"
++	"strings"
++	"time"
++
++	"github.com/onsi/ginkgo"
++	v1 "k8s.io/api/core/v1"
++	storagev1 "k8s.io/api/storage/v1"
++	"k8s.io/apimachinery/pkg/util/sets"
++	"k8s.io/kubernetes/test/e2e/framework"
++	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
++	e2epv "k8s.io/kubernetes/test/e2e/framework/pv"
++	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
++	e2evolume "k8s.io/kubernetes/test/e2e/framework/volume"
++	"k8s.io/kubernetes/test/e2e/storage/testpatterns"
++	"k8s.io/kubernetes/test/e2e/storage/testsuites"
++	vspheretest "k8s.io/kubernetes/test/e2e/storage/vsphere"
++)
++
++// Cinder
++// This driver assumes that OpenStack client tools are installed
++// (/usr/bin/nova, /usr/bin/cinder and /usr/bin/keystone)
++// and that the usual OpenStack authentication env. variables are set
++// (OS_USERNAME, OS_PASSWORD, OS_TENANT_NAME at least).
++type cinderDriver struct {
++	driverInfo testsuites.DriverInfo
++}
++
++type cinderVolume struct {
++	volumeName string
++	volumeID   string
++}
++
++var _ testsuites.TestDriver = &cinderDriver{}
++var _ testsuites.PreprovisionedVolumeTestDriver = &cinderDriver{}
++var _ testsuites.InlineVolumeTestDriver = &cinderDriver{}
++var _ testsuites.PreprovisionedPVTestDriver = &cinderDriver{}
++var _ testsuites.DynamicPVTestDriver = &cinderDriver{}
++
++// InitCinderDriver returns cinderDriver that implements TestDriver interface
++func InitCinderDriver() testsuites.TestDriver {
++	return &cinderDriver{
++		driverInfo: testsuites.DriverInfo{
++			Name:             "cinder",
++			InTreePluginName: "kubernetes.io/cinder",
++			MaxFileSize:      testpatterns.FileSizeMedium,
++			SupportedSizeRange: e2evolume.SizeRange{
++				Min: "5Gi",
++			},
++			SupportedFsType: sets.NewString(
++				"", // Default fsType
++				"ext3",
++			),
++			TopologyKeys: []string{v1.LabelZoneFailureDomain},
++			Capabilities: map[testsuites.Capability]bool{
++				testsuites.CapPersistence: true,
++				testsuites.CapFsGroup:     true,
++				testsuites.CapExec:        true,
++				testsuites.CapBlock:       true,
++				// Cinder supports volume limits, but the test creates large
++				// number of volumes and times out test suites.
++				testsuites.CapVolumeLimits: false,
++				testsuites.CapTopology:     true,
++			},
++		},
++	}
++}
++
++func (c *cinderDriver) GetDriverInfo() *testsuites.DriverInfo {
++	return &c.driverInfo
++}
++
++func (c *cinderDriver) SkipUnsupportedTest(pattern testpatterns.TestPattern) {
++	e2eskipper.SkipUnlessProviderIs("openstack")
++}
++
++func (c *cinderDriver) GetVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) *v1.VolumeSource {
++	cv, ok := e2evolume.(*cinderVolume)
++	framework.ExpectEqual(ok, true, "Failed to cast test volume to Cinder test volume")
++
++	volSource := v1.VolumeSource{
++		Cinder: &v1.CinderVolumeSource{
++			VolumeID: cv.volumeID,
++			ReadOnly: readOnly,
++		},
++	}
++	if fsType != "" {
++		volSource.Cinder.FSType = fsType
++	}
++	return &volSource
++}
++
++func (c *cinderDriver) GetPersistentVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) (*v1.PersistentVolumeSource, *v1.VolumeNodeAffinity) {
++	cv, ok := e2evolume.(*cinderVolume)
++	framework.ExpectEqual(ok, true, "Failed to cast test volume to Cinder test volume")
++
++	pvSource := v1.PersistentVolumeSource{
++		Cinder: &v1.CinderPersistentVolumeSource{
++			VolumeID: cv.volumeID,
++			ReadOnly: readOnly,
++		},
++	}
++	if fsType != "" {
++		pvSource.Cinder.FSType = fsType
++	}
++	return &pvSource, nil
++}
++
++func (c *cinderDriver) GetDynamicProvisionStorageClass(config *testsuites.PerTestConfig, fsType string) *storagev1.StorageClass {
++	provisioner := "kubernetes.io/cinder"
++	parameters := map[string]string{}
++	if fsType != "" {
++		parameters["fsType"] = fsType
++	}
++	ns := config.Framework.Namespace.Name
++	suffix := fmt.Sprintf("%s-sc", c.driverInfo.Name)
++
++	return testsuites.GetStorageClass(provisioner, parameters, nil, ns, suffix)
++}
++
++func (c *cinderDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTestConfig, func()) {
++	return &testsuites.PerTestConfig{
++		Driver:    c,
++		Prefix:    "cinder",
++		Framework: f,
++	}, func() {}
++}
++
++func (c *cinderDriver) CreateVolume(config *testsuites.PerTestConfig, volType testpatterns.TestVolType) testsuites.TestVolume {
++	f := config.Framework
++	ns := f.Namespace
++
++	// We assume that namespace.Name is a random string
++	volumeName := ns.Name
++	ginkgo.By("creating a test Cinder volume")
++	output, err := exec.Command("cinder", "create", "--display-name="+volumeName, "1").CombinedOutput()
++	outputString := string(output[:])
++	framework.Logf("cinder output:\n%s", outputString)
++	framework.ExpectNoError(err)
++
++	// Parse 'id'' from stdout. Expected format:
++	// |     attachments     |                  []                  |
++	// |  availability_zone  |                 nova                 |
++	// ...
++	// |          id         | 1d6ff08f-5d1c-41a4-ad72-4ef872cae685 |
++	volumeID := ""
++	for _, line := range strings.Split(outputString, "\n") {
++		fields := strings.Fields(line)
++		if len(fields) != 5 {
++			continue
++		}
++		if fields[1] != "id" {
++			continue
++		}
++		volumeID = fields[3]
++		break
++	}
++	framework.Logf("Volume ID: %s", volumeID)
++	framework.ExpectNotEqual(volumeID, "")
++	return &cinderVolume{
++		volumeName: volumeName,
++		volumeID:   volumeID,
++	}
++}
++
++func (v *cinderVolume) DeleteVolume() {
++	name := v.volumeName
++
++	// Try to delete the volume for several seconds - it takes
++	// a while for the plugin to detach it.
++	var output []byte
++	var err error
++	timeout := time.Second * 120
++
++	framework.Logf("Waiting up to %v for removal of cinder volume %s", timeout, name)
++	for start := time.Now(); time.Since(start) < timeout; time.Sleep(5 * time.Second) {
++		output, err = exec.Command("cinder", "delete", name).CombinedOutput()
++		if err == nil {
++			framework.Logf("Cinder volume %s deleted", name)
++			return
++		}
++		framework.Logf("Failed to delete volume %s: %v", name, err)
++	}
++	framework.Logf("Giving up deleting volume %s: %v\n%s", name, err, string(output[:]))
++}
++
++// GCE
++type gcePdDriver struct {
++	driverInfo testsuites.DriverInfo
++}
++
++type gcePdVolume struct {
++	volumeName string
++}
++
++var _ testsuites.TestDriver = &gcePdDriver{}
++var _ testsuites.PreprovisionedVolumeTestDriver = &gcePdDriver{}
++var _ testsuites.InlineVolumeTestDriver = &gcePdDriver{}
++var _ testsuites.PreprovisionedPVTestDriver = &gcePdDriver{}
++var _ testsuites.DynamicPVTestDriver = &gcePdDriver{}
++
++// InitGcePdDriver returns gcePdDriver that implements TestDriver interface
++func InitGcePdDriver() testsuites.TestDriver {
++	// In current test structure, it first initialize the driver and then set up
++	// the new framework, so we cannot get the correct OS here. So here set to
++	// support all fs types including both linux and windows. We have code to check Node OS later
++	// during test.
++	supportedTypes := sets.NewString(
++		"", // Default fsType
++		"ext2",
++		"ext3",
++		"ext4",
++		"xfs",
++		"ntfs",
++	)
++	return &gcePdDriver{
++		driverInfo: testsuites.DriverInfo{
++			Name:             "gcepd",
++			InTreePluginName: "kubernetes.io/gce-pd",
++			MaxFileSize:      testpatterns.FileSizeMedium,
++			SupportedSizeRange: e2evolume.SizeRange{
++				Min: "5Gi",
++			},
++			SupportedFsType:      supportedTypes,
++			SupportedMountOption: sets.NewString("debug", "nouid32"),
++			TopologyKeys:         []string{v1.LabelZoneFailureDomain},
++			Capabilities: map[testsuites.Capability]bool{
++				testsuites.CapPersistence:         true,
++				testsuites.CapFsGroup:             true,
++				testsuites.CapBlock:               true,
++				testsuites.CapExec:                true,
++				testsuites.CapMultiPODs:           true,
++				testsuites.CapControllerExpansion: true,
++				testsuites.CapNodeExpansion:       true,
++				// GCE supports volume limits, but the test creates large
++				// number of volumes and times out test suites.
++				testsuites.CapVolumeLimits: false,
++				testsuites.CapTopology:     true,
++			},
++		},
++	}
++}
++
++func (g *gcePdDriver) GetDriverInfo() *testsuites.DriverInfo {
++	return &g.driverInfo
++}
++
++func (g *gcePdDriver) SkipUnsupportedTest(pattern testpatterns.TestPattern) {
++	e2eskipper.SkipUnlessProviderIs("gce", "gke")
++	if pattern.FeatureTag == "[sig-windows]" {
++		e2eskipper.SkipUnlessNodeOSDistroIs("windows")
++	}
++}
++
++func (g *gcePdDriver) GetVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) *v1.VolumeSource {
++	gv, ok := e2evolume.(*gcePdVolume)
++	framework.ExpectEqual(ok, true, "Failed to cast test volume to GCE PD test volume")
++	volSource := v1.VolumeSource{
++		GCEPersistentDisk: &v1.GCEPersistentDiskVolumeSource{
++			PDName:   gv.volumeName,
++			ReadOnly: readOnly,
++		},
++	}
++	if fsType != "" {
++		volSource.GCEPersistentDisk.FSType = fsType
++	}
++	return &volSource
++}
++
++func (g *gcePdDriver) GetPersistentVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) (*v1.PersistentVolumeSource, *v1.VolumeNodeAffinity) {
++	gv, ok := e2evolume.(*gcePdVolume)
++	framework.ExpectEqual(ok, true, "Failed to cast test volume to GCE PD test volume")
++	pvSource := v1.PersistentVolumeSource{
++		GCEPersistentDisk: &v1.GCEPersistentDiskVolumeSource{
++			PDName:   gv.volumeName,
++			ReadOnly: readOnly,
++		},
++	}
++	if fsType != "" {
++		pvSource.GCEPersistentDisk.FSType = fsType
++	}
++	return &pvSource, nil
++}
++
++func (g *gcePdDriver) GetDynamicProvisionStorageClass(config *testsuites.PerTestConfig, fsType string) *storagev1.StorageClass {
++	provisioner := "kubernetes.io/gce-pd"
++	parameters := map[string]string{}
++	if fsType != "" {
++		parameters["fsType"] = fsType
++	}
++	ns := config.Framework.Namespace.Name
++	suffix := fmt.Sprintf("%s-sc", g.driverInfo.Name)
++	delayedBinding := storagev1.VolumeBindingWaitForFirstConsumer
++
++	return testsuites.GetStorageClass(provisioner, parameters, &delayedBinding, ns, suffix)
++}
++
++func (g *gcePdDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTestConfig, func()) {
++	config := &testsuites.PerTestConfig{
++		Driver:    g,
++		Prefix:    "gcepd",
++		Framework: f,
++	}
++
++	if framework.NodeOSDistroIs("windows") {
++		config.ClientNodeSelection = e2epod.NodeSelection{
++			Selector: map[string]string{
++				"kubernetes.io/os": "windows",
++			},
++		}
++	}
++	return config, func() {}
++
++}
++
++func (g *gcePdDriver) CreateVolume(config *testsuites.PerTestConfig, volType testpatterns.TestVolType) testsuites.TestVolume {
++	zone := getInlineVolumeZone(config.Framework)
++	if volType == testpatterns.InlineVolume {
++		// PD will be created in framework.TestContext.CloudConfig.Zone zone,
++		// so pods should be also scheduled there.
++		config.ClientNodeSelection = e2epod.NodeSelection{
++			Selector: map[string]string{
++				v1.LabelZoneFailureDomain: zone,
++			},
++		}
++	}
++	ginkgo.By("creating a test gce pd volume")
++	vname, err := e2epv.CreatePDWithRetryAndZone(zone)
++	framework.ExpectNoError(err)
++	return &gcePdVolume{
++		volumeName: vname,
++	}
++}
++
++func (v *gcePdVolume) DeleteVolume() {
++	e2epv.DeletePDWithRetry(v.volumeName)
++}
++
++// vSphere
++type vSphereDriver struct {
++	driverInfo testsuites.DriverInfo
++}
++
++type vSphereVolume struct {
++	volumePath string
++	nodeInfo   *vspheretest.NodeInfo
++}
++
++var _ testsuites.TestDriver = &vSphereDriver{}
++var _ testsuites.PreprovisionedVolumeTestDriver = &vSphereDriver{}
++var _ testsuites.InlineVolumeTestDriver = &vSphereDriver{}
++var _ testsuites.PreprovisionedPVTestDriver = &vSphereDriver{}
++var _ testsuites.DynamicPVTestDriver = &vSphereDriver{}
++
++// InitVSphereDriver returns vSphereDriver that implements TestDriver interface
++func InitVSphereDriver() testsuites.TestDriver {
++	return &vSphereDriver{
++		driverInfo: testsuites.DriverInfo{
++			Name:             "vsphere",
++			InTreePluginName: "kubernetes.io/vsphere-volume",
++			MaxFileSize:      testpatterns.FileSizeMedium,
++			SupportedSizeRange: e2evolume.SizeRange{
++				Min: "5Gi",
++			},
++			SupportedFsType: sets.NewString(
++				"", // Default fsType
++				"ext4",
++			),
++			TopologyKeys: []string{v1.LabelZoneFailureDomain},
++			Capabilities: map[testsuites.Capability]bool{
++				testsuites.CapPersistence: true,
++				testsuites.CapFsGroup:     true,
++				testsuites.CapExec:        true,
++				testsuites.CapMultiPODs:   true,
++				testsuites.CapTopology:    true,
++			},
++		},
++	}
++}
++func (v *vSphereDriver) GetDriverInfo() *testsuites.DriverInfo {
++	return &v.driverInfo
++}
++
++func (v *vSphereDriver) SkipUnsupportedTest(pattern testpatterns.TestPattern) {
++	e2eskipper.SkipUnlessProviderIs("vsphere")
++}
++
++func (v *vSphereDriver) GetVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) *v1.VolumeSource {
++	vsv, ok := e2evolume.(*vSphereVolume)
++	framework.ExpectEqual(ok, true, "Failed to cast test volume to vSphere test volume")
++
++	// vSphere driver doesn't seem to support readOnly volume
++	// TODO: check if it is correct
++	if readOnly {
++		return nil
++	}
++	volSource := v1.VolumeSource{
++		VsphereVolume: &v1.VsphereVirtualDiskVolumeSource{
++			VolumePath: vsv.volumePath,
++		},
++	}
++	if fsType != "" {
++		volSource.VsphereVolume.FSType = fsType
++	}
++	return &volSource
++}
++
++func (v *vSphereDriver) GetPersistentVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) (*v1.PersistentVolumeSource, *v1.VolumeNodeAffinity) {
++	vsv, ok := e2evolume.(*vSphereVolume)
++	framework.ExpectEqual(ok, true, "Failed to cast test volume to vSphere test volume")
++
++	// vSphere driver doesn't seem to support readOnly volume
++	// TODO: check if it is correct
++	if readOnly {
++		return nil, nil
++	}
++	pvSource := v1.PersistentVolumeSource{
++		VsphereVolume: &v1.VsphereVirtualDiskVolumeSource{
++			VolumePath: vsv.volumePath,
++		},
++	}
++	if fsType != "" {
++		pvSource.VsphereVolume.FSType = fsType
++	}
++	return &pvSource, nil
++}
++
++func (v *vSphereDriver) GetDynamicProvisionStorageClass(config *testsuites.PerTestConfig, fsType string) *storagev1.StorageClass {
++	provisioner := "kubernetes.io/vsphere-volume"
++	parameters := map[string]string{}
++	if fsType != "" {
++		parameters["fsType"] = fsType
++	}
++	ns := config.Framework.Namespace.Name
++	suffix := fmt.Sprintf("%s-sc", v.driverInfo.Name)
++
++	return testsuites.GetStorageClass(provisioner, parameters, nil, ns, suffix)
++}
++
++func (v *vSphereDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTestConfig, func()) {
++	return &testsuites.PerTestConfig{
++		Driver:    v,
++		Prefix:    "vsphere",
++		Framework: f,
++	}, func() {}
++}
++
++func (v *vSphereDriver) CreateVolume(config *testsuites.PerTestConfig, volType testpatterns.TestVolType) testsuites.TestVolume {
++	f := config.Framework
++	vspheretest.Bootstrap(f)
++	nodeInfo := vspheretest.GetReadySchedulableRandomNodeInfo()
++	volumePath, err := nodeInfo.VSphere.CreateVolume(&vspheretest.VolumeOptions{}, nodeInfo.DataCenterRef)
++	framework.ExpectNoError(err)
++	return &vSphereVolume{
++		volumePath: volumePath,
++		nodeInfo:   nodeInfo,
++	}
++}
++
++func (v *vSphereVolume) DeleteVolume() {
++	v.nodeInfo.VSphere.DeleteVolume(v.volumePath, v.nodeInfo.DataCenterRef)
++}
++
++// Azure Disk
++type azureDiskDriver struct {
++	driverInfo testsuites.DriverInfo
++}
++
++type azureDiskVolume struct {
++	volumeName string
++}
++
++var _ testsuites.TestDriver = &azureDiskDriver{}
++var _ testsuites.PreprovisionedVolumeTestDriver = &azureDiskDriver{}
++var _ testsuites.InlineVolumeTestDriver = &azureDiskDriver{}
++var _ testsuites.PreprovisionedPVTestDriver = &azureDiskDriver{}
++var _ testsuites.DynamicPVTestDriver = &azureDiskDriver{}
++
++// InitAzureDiskDriver returns azureDiskDriver that implements TestDriver interface
++func InitAzureDiskDriver() testsuites.TestDriver {
++	return &azureDiskDriver{
++		driverInfo: testsuites.DriverInfo{
++			Name:             "azure-disk",
++			InTreePluginName: "kubernetes.io/azure-disk",
++			MaxFileSize:      testpatterns.FileSizeMedium,
++			SupportedSizeRange: e2evolume.SizeRange{
++				Min: "5Gi",
++			},
++			SupportedFsType: sets.NewString(
++				"", // Default fsType
++				"ext3",
++				"ext4",
++				"xfs",
++			),
++			TopologyKeys: []string{v1.LabelZoneFailureDomain},
++			Capabilities: map[testsuites.Capability]bool{
++				testsuites.CapPersistence: true,
++				testsuites.CapFsGroup:     true,
++				testsuites.CapBlock:       true,
++				testsuites.CapExec:        true,
++				testsuites.CapMultiPODs:   true,
++				// Azure supports volume limits, but the test creates large
++				// number of volumes and times out test suites.
++				testsuites.CapVolumeLimits: false,
++				testsuites.CapTopology:     true,
++			},
++		},
++	}
++}
++
++func (a *azureDiskDriver) GetDriverInfo() *testsuites.DriverInfo {
++	return &a.driverInfo
++}
++
++func (a *azureDiskDriver) SkipUnsupportedTest(pattern testpatterns.TestPattern) {
++	e2eskipper.SkipUnlessProviderIs("azure")
++}
++
++func (a *azureDiskDriver) GetVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) *v1.VolumeSource {
++	av, ok := e2evolume.(*azureDiskVolume)
++	framework.ExpectEqual(ok, true, "Failed to cast test volume to Azure test volume")
++	diskName := av.volumeName[(strings.LastIndex(av.volumeName, "/") + 1):]
++
++	kind := v1.AzureManagedDisk
++	volSource := v1.VolumeSource{
++		AzureDisk: &v1.AzureDiskVolumeSource{
++			DiskName:    diskName,
++			DataDiskURI: av.volumeName,
++			Kind:        &kind,
++			ReadOnly:    &readOnly,
++		},
++	}
++	if fsType != "" {
++		volSource.AzureDisk.FSType = &fsType
++	}
++	return &volSource
++}
++
++func (a *azureDiskDriver) GetPersistentVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) (*v1.PersistentVolumeSource, *v1.VolumeNodeAffinity) {
++	av, ok := e2evolume.(*azureDiskVolume)
++	framework.ExpectEqual(ok, true, "Failed to cast test volume to Azure test volume")
++
++	diskName := av.volumeName[(strings.LastIndex(av.volumeName, "/") + 1):]
++
++	kind := v1.AzureManagedDisk
++	pvSource := v1.PersistentVolumeSource{
++		AzureDisk: &v1.AzureDiskVolumeSource{
++			DiskName:    diskName,
++			DataDiskURI: av.volumeName,
++			Kind:        &kind,
++			ReadOnly:    &readOnly,
++		},
++	}
++	if fsType != "" {
++		pvSource.AzureDisk.FSType = &fsType
++	}
++	return &pvSource, nil
++}
++
++func (a *azureDiskDriver) GetDynamicProvisionStorageClass(config *testsuites.PerTestConfig, fsType string) *storagev1.StorageClass {
++	provisioner := "kubernetes.io/azure-disk"
++	parameters := map[string]string{}
++	if fsType != "" {
++		parameters["fsType"] = fsType
++	}
++	ns := config.Framework.Namespace.Name
++	suffix := fmt.Sprintf("%s-sc", a.driverInfo.Name)
++	delayedBinding := storagev1.VolumeBindingWaitForFirstConsumer
++
++	return testsuites.GetStorageClass(provisioner, parameters, &delayedBinding, ns, suffix)
++}
++
++func (a *azureDiskDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTestConfig, func()) {
++	return &testsuites.PerTestConfig{
++		Driver:    a,
++		Prefix:    "azure",
++		Framework: f,
++	}, func() {}
++}
++
++func (a *azureDiskDriver) CreateVolume(config *testsuites.PerTestConfig, volType testpatterns.TestVolType) testsuites.TestVolume {
++	ginkgo.By("creating a test azure disk volume")
++	zone := getInlineVolumeZone(config.Framework)
++	if volType == testpatterns.InlineVolume {
++		// PD will be created in framework.TestContext.CloudConfig.Zone zone,
++		// so pods should be also scheduled there.
++		config.ClientNodeSelection = e2epod.NodeSelection{
++			Selector: map[string]string{
++				v1.LabelZoneFailureDomain: zone,
++			},
++		}
++	}
++	volumeName, err := e2epv.CreatePDWithRetryAndZone(zone)
++	framework.ExpectNoError(err)
++	return &azureDiskVolume{
++		volumeName: volumeName,
++	}
++}
++
++func (v *azureDiskVolume) DeleteVolume() {
++	e2epv.DeletePDWithRetry(v.volumeName)
++}
++
++// AWS
++type awsDriver struct {
++	driverInfo testsuites.DriverInfo
++}
++
++type awsVolume struct {
++	volumeName string
++}
++
++var _ testsuites.TestDriver = &awsDriver{}
++
++var _ testsuites.PreprovisionedVolumeTestDriver = &awsDriver{}
++var _ testsuites.InlineVolumeTestDriver = &awsDriver{}
++var _ testsuites.PreprovisionedPVTestDriver = &awsDriver{}
++var _ testsuites.DynamicPVTestDriver = &awsDriver{}
++
++// InitAwsDriver returns awsDriver that implements TestDriver interface
++func InitAwsDriver() testsuites.TestDriver {
++	return &awsDriver{
++		driverInfo: testsuites.DriverInfo{
++			Name:             "aws",
++			InTreePluginName: "kubernetes.io/aws-ebs",
++			MaxFileSize:      testpatterns.FileSizeMedium,
++			SupportedSizeRange: e2evolume.SizeRange{
++				Min: "5Gi",
++			},
++			SupportedFsType: sets.NewString(
++				"", // Default fsType
++				"ext2",
++				"ext3",
++				"ext4",
++				"xfs",
++				"ntfs",
++			),
++			SupportedMountOption: sets.NewString("debug", "nouid32"),
++			TopologyKeys:         []string{v1.LabelZoneFailureDomain},
++			Capabilities: map[testsuites.Capability]bool{
++				testsuites.CapPersistence:         true,
++				testsuites.CapFsGroup:             true,
++				testsuites.CapBlock:               true,
++				testsuites.CapExec:                true,
++				testsuites.CapMultiPODs:           true,
++				testsuites.CapControllerExpansion: true,
++				testsuites.CapNodeExpansion:       true,
++				// AWS supports volume limits, but the test creates large
++				// number of volumes and times out test suites.
++				testsuites.CapVolumeLimits: false,
++				testsuites.CapTopology:     true,
++			},
++		},
++	}
++}
++
++func (a *awsDriver) GetDriverInfo() *testsuites.DriverInfo {
++	return &a.driverInfo
++}
++
++func (a *awsDriver) SkipUnsupportedTest(pattern testpatterns.TestPattern) {
++	e2eskipper.SkipUnlessProviderIs("aws")
++}
++
++func (a *awsDriver) GetVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) *v1.VolumeSource {
++	av, ok := e2evolume.(*awsVolume)
++	framework.ExpectEqual(ok, true, "Failed to cast test volume to AWS test volume")
++	volSource := v1.VolumeSource{
++		AWSElasticBlockStore: &v1.AWSElasticBlockStoreVolumeSource{
++			VolumeID: av.volumeName,
++			ReadOnly: readOnly,
++		},
++	}
++	if fsType != "" {
++		volSource.AWSElasticBlockStore.FSType = fsType
++	}
++	return &volSource
++}
++
++func (a *awsDriver) GetPersistentVolumeSource(readOnly bool, fsType string, e2evolume testsuites.TestVolume) (*v1.PersistentVolumeSource, *v1.VolumeNodeAffinity) {
++	av, ok := e2evolume.(*awsVolume)
++	framework.ExpectEqual(ok, true, "Failed to cast test volume to AWS test volume")
++	pvSource := v1.PersistentVolumeSource{
++		AWSElasticBlockStore: &v1.AWSElasticBlockStoreVolumeSource{
++			VolumeID: av.volumeName,
++			ReadOnly: readOnly,
++		},
++	}
++	if fsType != "" {
++		pvSource.AWSElasticBlockStore.FSType = fsType
++	}
++	return &pvSource, nil
++}
++
++func (a *awsDriver) GetDynamicProvisionStorageClass(config *testsuites.PerTestConfig, fsType string) *storagev1.StorageClass {
++	provisioner := "kubernetes.io/aws-ebs"
++	parameters := map[string]string{}
++	if fsType != "" {
++		parameters["fsType"] = fsType
++	}
++	ns := config.Framework.Namespace.Name
++	suffix := fmt.Sprintf("%s-sc", a.driverInfo.Name)
++	delayedBinding := storagev1.VolumeBindingWaitForFirstConsumer
++
++	return testsuites.GetStorageClass(provisioner, parameters, &delayedBinding, ns, suffix)
++}
++
++func (a *awsDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTestConfig, func()) {
++	config := &testsuites.PerTestConfig{
++		Driver:    a,
++		Prefix:    "aws",
++		Framework: f,
++	}
++
++	if framework.NodeOSDistroIs("windows") {
++		config.ClientNodeSelection = e2epod.NodeSelection{
++			Selector: map[string]string{
++				"kubernetes.io/os": "windows",
++			},
++		}
++	}
++	return config, func() {}
++}
++
++func (a *awsDriver) CreateVolume(config *testsuites.PerTestConfig, volType testpatterns.TestVolType) testsuites.TestVolume {
++	zone := getInlineVolumeZone(config.Framework)
++	if volType == testpatterns.InlineVolume {
++		// PD will be created in framework.TestContext.CloudConfig.Zone zone,
++		// so pods should be also scheduled there.
++		config.ClientNodeSelection = e2epod.NodeSelection{
++			Selector: map[string]string{
++				v1.LabelZoneFailureDomain: zone,
++			},
++		}
++	}
++	ginkgo.By("creating a test aws volume")
++	vname, err := e2epv.CreatePDWithRetryAndZone(zone)
++	framework.ExpectNoError(err)
++	return &awsVolume{
++		volumeName: vname,
++	}
++}
++
++func (v *awsVolume) DeleteVolume() {
++	e2epv.DeletePDWithRetry(v.volumeName)
++}
+diff --git a/test/e2e/storage/in_tree_volumes.go b/test/e2e/storage/in_tree_volumes.go
+index 19372062407..8322db743cd 100644
+--- a/test/e2e/storage/in_tree_volumes.go
++++ b/test/e2e/storage/in_tree_volumes.go
+@@ -33,11 +33,6 @@ var testDrivers = []func() testsuites.TestDriver{
+ 	drivers.InitHostPathDriver,
+ 	drivers.InitHostPathSymlinkDriver,
+ 	drivers.InitEmptydirDriver,
+-	drivers.InitCinderDriver,
+-	drivers.InitGcePdDriver,
+-	drivers.InitVSphereDriver,
+-	drivers.InitAzureDiskDriver,
+-	drivers.InitAwsDriver,
+ 	drivers.InitLocalDriverWithVolumeType(utils.LocalVolumeDirectory),
+ 	drivers.InitLocalDriverWithVolumeType(utils.LocalVolumeDirectoryLink),
+ 	drivers.InitLocalDriverWithVolumeType(utils.LocalVolumeDirectoryBindMounted),
+diff --git a/test/e2e/storage/in_tree_volumes_providers.go b/test/e2e/storage/in_tree_volumes_providers.go
+new file mode 100644
+index 00000000000..d6a5dbca191
+--- /dev/null
++++ b/test/e2e/storage/in_tree_volumes_providers.go
+@@ -0,0 +1,46 @@
++// +build !providerless
++
++/*
++Copyright 2020 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package storage
++
++import (
++	"github.com/onsi/ginkgo"
++	"k8s.io/kubernetes/test/e2e/storage/drivers"
++	"k8s.io/kubernetes/test/e2e/storage/testsuites"
++	"k8s.io/kubernetes/test/e2e/storage/utils"
++)
++
++// List of testDrivers to be executed in below loop
++var testDriversProviders = []func() testsuites.TestDriver{
++	drivers.InitCinderDriver,
++	drivers.InitGcePdDriver,
++	drivers.InitVSphereDriver,
++	drivers.InitAzureDiskDriver,
++	drivers.InitAwsDriver,
++}
++
++// This executes testSuites for in-tree volumes.
++var _ = utils.SIGDescribe("In-tree Volumes for Cloud Providers", func() {
++	for _, initDriver := range testDriversProviders {
++		curDriver := initDriver()
++
++		ginkgo.Context(testsuites.GetDriverNameWithFeatureTags(curDriver), func() {
++			testsuites.DefineTestSuite(curDriver, testsuites.BaseSuites)
++		})
++	}
++})
+diff --git a/test/e2e/storage/nfs_persistent_volume-disruptive.go b/test/e2e/storage/nfs_persistent_volume-disruptive.go
+index 5afebb5e903..b197eee99a6 100644
+--- a/test/e2e/storage/nfs_persistent_volume-disruptive.go
++++ b/test/e2e/storage/nfs_persistent_volume-disruptive.go
+@@ -91,7 +91,7 @@ var _ = utils.SIGDescribe("NFSPersistentVolumes[Disruptive][Flaky]", func() {
+ 
+ 	ginkgo.BeforeEach(func() {
+ 		// To protect the NFS volume pod from the kubelet restart, we isolate it on its own node.
+-		e2eskipper.SkipUnlessNodeCountIsAtLeast(minNodes)
++		e2eskipper.SkipUnlessNodeCountIsAtLeast(2)
+ 		e2eskipper.SkipIfProviderIs("local")
+ 
+ 		c = f.ClientSet
+diff --git a/test/e2e/storage/pd.go b/test/e2e/storage/pd.go
+index b6d720406aa..86fa0cae488 100644
+--- a/test/e2e/storage/pd.go
++++ b/test/e2e/storage/pd.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2015 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/storage/persistent_volumes-gce.go b/test/e2e/storage/persistent_volumes-gce.go
+index 8b0343e4b58..76a80042811 100644
+--- a/test/e2e/storage/persistent_volumes-gce.go
++++ b/test/e2e/storage/persistent_volumes-gce.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+ 
+@@ -18,6 +20,7 @@ package storage
+ 
+ import (
+ 	"context"
++
+ 	"github.com/onsi/ginkgo"
+ 	v1 "k8s.io/api/core/v1"
+ 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+diff --git a/test/e2e/storage/regional_pd.go b/test/e2e/storage/regional_pd.go
+index 7763afaf6b1..a042dcc9d4a 100644
+--- a/test/e2e/storage/regional_pd.go
++++ b/test/e2e/storage/regional_pd.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2016 The Kubernetes Authors.
+ 
+@@ -18,6 +20,7 @@ package storage
+ 
+ import (
+ 	"context"
++
+ 	"github.com/onsi/ginkgo"
+ 	"github.com/onsi/gomega"
+ 
+diff --git a/test/e2e/storage/volume_provisioning.go b/test/e2e/storage/volume_provisioning.go
+index a8b494eb3ac..c070a81283c 100644
+--- a/test/e2e/storage/volume_provisioning.go
++++ b/test/e2e/storage/volume_provisioning.go
+@@ -24,11 +24,6 @@ import (
+ 	"time"
+ 
+ 	"github.com/onsi/ginkgo"
+-	"github.com/onsi/gomega"
+-
+-	"github.com/aws/aws-sdk-go/aws"
+-	"github.com/aws/aws-sdk-go/aws/session"
+-	"github.com/aws/aws-sdk-go/service/ec2"
+ 
+ 	v1 "k8s.io/api/core/v1"
+ 	rbacv1 "k8s.io/api/rbac/v1"
+@@ -37,9 +32,7 @@ import (
+ 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+ 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ 	"k8s.io/apimachinery/pkg/runtime/schema"
+-	"k8s.io/apimachinery/pkg/types"
+ 	"k8s.io/apimachinery/pkg/util/rand"
+-	"k8s.io/apimachinery/pkg/util/sets"
+ 	"k8s.io/apimachinery/pkg/util/wait"
+ 	"k8s.io/apiserver/pkg/authentication/serviceaccount"
+ 	clientset "k8s.io/client-go/kubernetes"
+@@ -48,7 +41,6 @@ import (
+ 	e2eauth "k8s.io/kubernetes/test/e2e/framework/auth"
+ 	e2enode "k8s.io/kubernetes/test/e2e/framework/node"
+ 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
+-	"k8s.io/kubernetes/test/e2e/framework/providers/gce"
+ 	e2epv "k8s.io/kubernetes/test/e2e/framework/pv"
+ 	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
+ 	"k8s.io/kubernetes/test/e2e/storage/testsuites"
+@@ -61,80 +53,6 @@ const (
+ 	externalPluginName = "example.com/nfs"
+ )
+ 
+-// checkAWSEBS checks properties of an AWS EBS. Test framework does not
+-// instantiate full AWS provider, therefore we need use ec2 API directly.
+-func checkAWSEBS(volume *v1.PersistentVolume, volumeType string, encrypted bool) error {
+-	diskName := volume.Spec.AWSElasticBlockStore.VolumeID
+-
+-	var client *ec2.EC2
+-
+-	tokens := strings.Split(diskName, "/")
+-	volumeID := tokens[len(tokens)-1]
+-
+-	zone := framework.TestContext.CloudConfig.Zone
+-
+-	awsSession, err := session.NewSession()
+-	if err != nil {
+-		return fmt.Errorf("error creating session: %v", err)
+-	}
+-
+-	if len(zone) > 0 {
+-		region := zone[:len(zone)-1]
+-		cfg := aws.Config{Region: &region}
+-		framework.Logf("using region %s", region)
+-		client = ec2.New(awsSession, &cfg)
+-	} else {
+-		framework.Logf("no region configured")
+-		client = ec2.New(awsSession)
+-	}
+-
+-	request := &ec2.DescribeVolumesInput{
+-		VolumeIds: []*string{&volumeID},
+-	}
+-	info, err := client.DescribeVolumes(request)
+-	if err != nil {
+-		return fmt.Errorf("error querying ec2 for volume %q: %v", volumeID, err)
+-	}
+-	if len(info.Volumes) == 0 {
+-		return fmt.Errorf("no volumes found for volume %q", volumeID)
+-	}
+-	if len(info.Volumes) > 1 {
+-		return fmt.Errorf("multiple volumes found for volume %q", volumeID)
+-	}
+-
+-	awsVolume := info.Volumes[0]
+-	if awsVolume.VolumeType == nil {
+-		return fmt.Errorf("expected volume type %q, got nil", volumeType)
+-	}
+-	if *awsVolume.VolumeType != volumeType {
+-		return fmt.Errorf("expected volume type %q, got %q", volumeType, *awsVolume.VolumeType)
+-	}
+-	if encrypted && awsVolume.Encrypted == nil {
+-		return fmt.Errorf("expected encrypted volume, got no encryption")
+-	}
+-	if encrypted && !*awsVolume.Encrypted {
+-		return fmt.Errorf("expected encrypted volume, got %v", *awsVolume.Encrypted)
+-	}
+-	return nil
+-}
+-
+-func checkGCEPD(volume *v1.PersistentVolume, volumeType string) error {
+-	cloud, err := gce.GetGCECloud()
+-	if err != nil {
+-		return err
+-	}
+-	diskName := volume.Spec.GCEPersistentDisk.PDName
+-	disk, err := cloud.GetDiskByNameUnknownZone(diskName)
+-	if err != nil {
+-		return err
+-	}
+-
+-	if !strings.HasSuffix(disk.Type, volumeType) {
+-		return fmt.Errorf("unexpected disk type %q, expected suffix %q", disk.Type, volumeType)
+-	}
+-	return nil
+-}
+-
+ var _ = utils.SIGDescribe("Dynamic Provisioning", func() {
+ 	f := framework.NewDefaultFramework("volume-provisioning")
+ 
+@@ -147,451 +65,6 @@ var _ = utils.SIGDescribe("Dynamic Provisioning", func() {
+ 		ns = f.Namespace.Name
+ 	})
+ 
+-	ginkgo.Describe("DynamicProvisioner [Slow]", func() {
+-		ginkgo.It("should provision storage with different parameters", func() {
+-
+-			// This test checks that dynamic provisioning can provision a volume
+-			// that can be used to persist data among pods.
+-			tests := []testsuites.StorageClassTest{
+-				// GCE/GKE
+-				{
+-					Name:           "SSD PD on GCE/GKE",
+-					CloudProviders: []string{"gce", "gke"},
+-					Provisioner:    "kubernetes.io/gce-pd",
+-					Parameters: map[string]string{
+-						"type": "pd-ssd",
+-						"zone": getRandomClusterZone(c),
+-					},
+-					ClaimSize:    "1.5Gi",
+-					ExpectedSize: "2Gi",
+-					PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
+-
+-						err := checkGCEPD(volume, "pd-ssd")
+-						framework.ExpectNoError(err, "checkGCEPD pd-ssd")
+-					},
+-				},
+-				{
+-					Name:           "HDD PD on GCE/GKE",
+-					CloudProviders: []string{"gce", "gke"},
+-					Provisioner:    "kubernetes.io/gce-pd",
+-					Parameters: map[string]string{
+-						"type": "pd-standard",
+-					},
+-					ClaimSize:    "1.5Gi",
+-					ExpectedSize: "2Gi",
+-					PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
+-
+-						err := checkGCEPD(volume, "pd-standard")
+-						framework.ExpectNoError(err, "checkGCEPD pd-standard")
+-					},
+-				},
+-				// AWS
+-				{
+-					Name:           "gp2 EBS on AWS",
+-					CloudProviders: []string{"aws"},
+-					Provisioner:    "kubernetes.io/aws-ebs",
+-					Parameters: map[string]string{
+-						"type": "gp2",
+-						"zone": getRandomClusterZone(c),
+-					},
+-					ClaimSize:    "1.5Gi",
+-					ExpectedSize: "2Gi",
+-					PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
+-
+-						err := checkAWSEBS(volume, "gp2", false)
+-						framework.ExpectNoError(err, "checkAWSEBS gp2")
+-					},
+-				},
+-				{
+-					Name:           "io1 EBS on AWS",
+-					CloudProviders: []string{"aws"},
+-					Provisioner:    "kubernetes.io/aws-ebs",
+-					Parameters: map[string]string{
+-						"type":      "io1",
+-						"iopsPerGB": "50",
+-					},
+-					ClaimSize:    "3.5Gi",
+-					ExpectedSize: "4Gi", // 4 GiB is minimum for io1
+-					PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
+-
+-						err := checkAWSEBS(volume, "io1", false)
+-						framework.ExpectNoError(err, "checkAWSEBS io1")
+-					},
+-				},
+-				{
+-					Name:           "sc1 EBS on AWS",
+-					CloudProviders: []string{"aws"},
+-					Provisioner:    "kubernetes.io/aws-ebs",
+-					Parameters: map[string]string{
+-						"type": "sc1",
+-					},
+-					ClaimSize:    "500Gi", // minimum for sc1
+-					ExpectedSize: "500Gi",
+-					PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
+-
+-						err := checkAWSEBS(volume, "sc1", false)
+-						framework.ExpectNoError(err, "checkAWSEBS sc1")
+-					},
+-				},
+-				{
+-					Name:           "st1 EBS on AWS",
+-					CloudProviders: []string{"aws"},
+-					Provisioner:    "kubernetes.io/aws-ebs",
+-					Parameters: map[string]string{
+-						"type": "st1",
+-					},
+-					ClaimSize:    "500Gi", // minimum for st1
+-					ExpectedSize: "500Gi",
+-					PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
+-
+-						err := checkAWSEBS(volume, "st1", false)
+-						framework.ExpectNoError(err, "checkAWSEBS st1")
+-					},
+-				},
+-				{
+-					Name:           "encrypted EBS on AWS",
+-					CloudProviders: []string{"aws"},
+-					Provisioner:    "kubernetes.io/aws-ebs",
+-					Parameters: map[string]string{
+-						"encrypted": "true",
+-					},
+-					ClaimSize:    "1Gi",
+-					ExpectedSize: "1Gi",
+-					PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
+-
+-						err := checkAWSEBS(volume, "gp2", true)
+-						framework.ExpectNoError(err, "checkAWSEBS gp2 encrypted")
+-					},
+-				},
+-				// OpenStack generic tests (works on all OpenStack deployments)
+-				{
+-					Name:           "generic Cinder volume on OpenStack",
+-					CloudProviders: []string{"openstack"},
+-					Provisioner:    "kubernetes.io/cinder",
+-					Parameters:     map[string]string{},
+-					ClaimSize:      "1.5Gi",
+-					ExpectedSize:   "2Gi",
+-					PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-						testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-					},
+-				},
+-				{
+-					Name:           "Cinder volume with empty volume type and zone on OpenStack",
+-					CloudProviders: []string{"openstack"},
+-					Provisioner:    "kubernetes.io/cinder",
+-					Parameters: map[string]string{
+-						"type":         "",
+-						"availability": "",
+-					},
+-					ClaimSize:    "1.5Gi",
+-					ExpectedSize: "2Gi",
+-					PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-						testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-					},
+-				},
+-				// vSphere generic test
+-				{
+-					Name:           "generic vSphere volume",
+-					CloudProviders: []string{"vsphere"},
+-					Provisioner:    "kubernetes.io/vsphere-volume",
+-					Parameters:     map[string]string{},
+-					ClaimSize:      "1.5Gi",
+-					ExpectedSize:   "1.5Gi",
+-					PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-						testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-					},
+-				},
+-				// Azure
+-				{
+-					Name:           "Azure disk volume with empty sku and location",
+-					CloudProviders: []string{"azure"},
+-					Provisioner:    "kubernetes.io/azure-disk",
+-					Parameters:     map[string]string{},
+-					ClaimSize:      "1Gi",
+-					ExpectedSize:   "1Gi",
+-					PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-						testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-					},
+-				},
+-			}
+-
+-			var betaTest *testsuites.StorageClassTest
+-			for i, t := range tests {
+-				// Beware of clojure, use local variables instead of those from
+-				// outer scope
+-				test := t
+-
+-				if !framework.ProviderIs(test.CloudProviders...) {
+-					framework.Logf("Skipping %q: cloud providers is not %v", test.Name, test.CloudProviders)
+-					continue
+-				}
+-
+-				// Remember the last supported test for subsequent test of beta API
+-				betaTest = &test
+-
+-				ginkgo.By("Testing " + test.Name)
+-				suffix := fmt.Sprintf("%d", i)
+-				test.Client = c
+-				test.Class = newStorageClass(test, ns, suffix)
+-				test.Claim = e2epv.MakePersistentVolumeClaim(e2epv.PersistentVolumeClaimConfig{
+-					ClaimSize:        test.ClaimSize,
+-					StorageClassName: &test.Class.Name,
+-					VolumeMode:       &test.VolumeMode,
+-				}, ns)
+-				test.TestDynamicProvisioning()
+-			}
+-
+-			// Run the last test with storage.k8s.io/v1beta1 on pvc
+-			if betaTest != nil {
+-				ginkgo.By("Testing " + betaTest.Name + " with beta volume provisioning")
+-				class := newBetaStorageClass(*betaTest, "beta")
+-				// we need to create the class manually, testDynamicProvisioning does not accept beta class
+-				class, err := c.StorageV1beta1().StorageClasses().Create(context.TODO(), class, metav1.CreateOptions{})
+-				framework.ExpectNoError(err)
+-				defer deleteStorageClass(c, class.Name)
+-
+-				betaTest.Client = c
+-				betaTest.Class = nil
+-				betaTest.Claim = e2epv.MakePersistentVolumeClaim(e2epv.PersistentVolumeClaimConfig{
+-					ClaimSize:        betaTest.ClaimSize,
+-					StorageClassName: &class.Name,
+-					VolumeMode:       &betaTest.VolumeMode,
+-				}, ns)
+-				betaTest.Claim.Spec.StorageClassName = &(class.Name)
+-				(*betaTest).TestDynamicProvisioning()
+-			}
+-		})
+-
+-		ginkgo.It("should provision storage with non-default reclaim policy Retain", func() {
+-			e2eskipper.SkipUnlessProviderIs("gce", "gke")
+-
+-			test := testsuites.StorageClassTest{
+-				Client:         c,
+-				Name:           "HDD PD on GCE/GKE",
+-				CloudProviders: []string{"gce", "gke"},
+-				Provisioner:    "kubernetes.io/gce-pd",
+-				Parameters: map[string]string{
+-					"type": "pd-standard",
+-				},
+-				ClaimSize:    "1Gi",
+-				ExpectedSize: "1Gi",
+-				PvCheck: func(claim *v1.PersistentVolumeClaim) {
+-					volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
+-					gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
+-
+-					err := checkGCEPD(volume, "pd-standard")
+-					framework.ExpectNoError(err, "checkGCEPD")
+-				},
+-			}
+-			test.Class = newStorageClass(test, ns, "reclaimpolicy")
+-			retain := v1.PersistentVolumeReclaimRetain
+-			test.Class.ReclaimPolicy = &retain
+-			test.Claim = e2epv.MakePersistentVolumeClaim(e2epv.PersistentVolumeClaimConfig{
+-				ClaimSize:        test.ClaimSize,
+-				StorageClassName: &test.Class.Name,
+-				VolumeMode:       &test.VolumeMode,
+-			}, ns)
+-			pv := test.TestDynamicProvisioning()
+-
+-			ginkgo.By(fmt.Sprintf("waiting for the provisioned PV %q to enter phase %s", pv.Name, v1.VolumeReleased))
+-			framework.ExpectNoError(e2epv.WaitForPersistentVolumePhase(v1.VolumeReleased, c, pv.Name, 1*time.Second, 30*time.Second))
+-
+-			ginkgo.By(fmt.Sprintf("deleting the storage asset backing the PV %q", pv.Name))
+-			framework.ExpectNoError(e2epv.DeletePDWithRetry(pv.Spec.GCEPersistentDisk.PDName))
+-
+-			ginkgo.By(fmt.Sprintf("deleting the PV %q", pv.Name))
+-			framework.ExpectNoError(e2epv.DeletePersistentVolume(c, pv.Name), "Failed to delete PV ", pv.Name)
+-			framework.ExpectNoError(e2epv.WaitForPersistentVolumeDeleted(c, pv.Name, 1*time.Second, 30*time.Second))
+-		})
+-
+-		ginkgo.It("should not provision a volume in an unmanaged GCE zone.", func() {
+-			e2eskipper.SkipUnlessProviderIs("gce", "gke")
+-			var suffix string = "unmananged"
+-
+-			ginkgo.By("Discovering an unmanaged zone")
+-			allZones := sets.NewString() // all zones in the project
+-
+-			gceCloud, err := gce.GetGCECloud()
+-			framework.ExpectNoError(err)
+-
+-			// Get all k8s managed zones (same as zones with nodes in them for test)
+-			managedZones, err := gceCloud.GetAllZonesFromCloudProvider()
+-			framework.ExpectNoError(err)
+-
+-			// Get a list of all zones in the project
+-			zones, err := gceCloud.ComputeServices().GA.Zones.List(framework.TestContext.CloudConfig.ProjectID).Do()
+-			framework.ExpectNoError(err)
+-			for _, z := range zones.Items {
+-				allZones.Insert(z.Name)
+-			}
+-
+-			// Get the subset of zones not managed by k8s
+-			var unmanagedZone string
+-			var popped bool
+-			unmanagedZones := allZones.Difference(managedZones)
+-			// And select one of them at random.
+-			if unmanagedZone, popped = unmanagedZones.PopAny(); !popped {
+-				e2eskipper.Skipf("No unmanaged zones found.")
+-			}
+-
+-			ginkgo.By("Creating a StorageClass for the unmanaged zone")
+-			test := testsuites.StorageClassTest{
+-				Name:        "unmanaged_zone",
+-				Provisioner: "kubernetes.io/gce-pd",
+-				Parameters:  map[string]string{"zone": unmanagedZone},
+-				ClaimSize:   "1Gi",
+-			}
+-			sc := newStorageClass(test, ns, suffix)
+-			sc, err = c.StorageV1().StorageClasses().Create(context.TODO(), sc, metav1.CreateOptions{})
+-			framework.ExpectNoError(err)
+-			defer deleteStorageClass(c, sc.Name)
+-
+-			ginkgo.By("Creating a claim and expecting it to timeout")
+-			pvc := e2epv.MakePersistentVolumeClaim(e2epv.PersistentVolumeClaimConfig{
+-				ClaimSize:        test.ClaimSize,
+-				StorageClassName: &sc.Name,
+-				VolumeMode:       &test.VolumeMode,
+-			}, ns)
+-			pvc, err = c.CoreV1().PersistentVolumeClaims(ns).Create(context.TODO(), pvc, metav1.CreateOptions{})
+-			framework.ExpectNoError(err)
+-			defer func() {
+-				framework.ExpectNoError(e2epv.DeletePersistentVolumeClaim(c, pvc.Name, ns), "Failed to delete PVC ", pvc.Name)
+-			}()
+-
+-			// The claim should timeout phase:Pending
+-			err = e2epv.WaitForPersistentVolumeClaimPhase(v1.ClaimBound, c, ns, pvc.Name, 2*time.Second, framework.ClaimProvisionShortTimeout)
+-			framework.ExpectError(err)
+-			framework.Logf(err.Error())
+-		})
+-
+-		ginkgo.It("should test that deleting a claim before the volume is provisioned deletes the volume.", func() {
+-			// This case tests for the regressions of a bug fixed by PR #21268
+-			// REGRESSION: Deleting the PVC before the PV is provisioned can result in the PV
+-			// not being deleted.
+-			// NOTE:  Polls until no PVs are detected, times out at 5 minutes.
+-
+-			e2eskipper.SkipUnlessProviderIs("openstack", "gce", "aws", "gke", "vsphere", "azure")
+-
+-			const raceAttempts int = 100
+-			var residualPVs []*v1.PersistentVolume
+-			ginkgo.By(fmt.Sprintf("Creating and deleting PersistentVolumeClaims %d times", raceAttempts))
+-			test := testsuites.StorageClassTest{
+-				Name:        "deletion race",
+-				Provisioner: "", // Use a native one based on current cloud provider
+-				ClaimSize:   "1Gi",
+-			}
+-
+-			class := newStorageClass(test, ns, "race")
+-			class, err := c.StorageV1().StorageClasses().Create(context.TODO(), class, metav1.CreateOptions{})
+-			framework.ExpectNoError(err)
+-			defer deleteStorageClass(c, class.Name)
+-
+-			// To increase chance of detection, attempt multiple iterations
+-			for i := 0; i < raceAttempts; i++ {
+-				prefix := fmt.Sprintf("race-%d", i)
+-				claim := e2epv.MakePersistentVolumeClaim(e2epv.PersistentVolumeClaimConfig{
+-					NamePrefix:       prefix,
+-					ClaimSize:        test.ClaimSize,
+-					StorageClassName: &class.Name,
+-					VolumeMode:       &test.VolumeMode,
+-				}, ns)
+-				tmpClaim, err := e2epv.CreatePVC(c, ns, claim)
+-				framework.ExpectNoError(err)
+-				framework.ExpectNoError(e2epv.DeletePersistentVolumeClaim(c, tmpClaim.Name, ns))
+-			}
+-
+-			ginkgo.By(fmt.Sprintf("Checking for residual PersistentVolumes associated with StorageClass %s", class.Name))
+-			residualPVs, err = waitForProvisionedVolumesDeleted(c, class.Name)
+-			// Cleanup the test resources before breaking
+-			defer deleteProvisionedVolumesAndDisks(c, residualPVs)
+-			framework.ExpectNoError(err, "PersistentVolumes were not deleted as expected. %d remain", len(residualPVs))
+-
+-			framework.Logf("0 PersistentVolumes remain.")
+-		})
+-
+-		ginkgo.It("deletion should be idempotent", func() {
+-			// This test ensures that deletion of a volume is idempotent.
+-			// It creates a PV with Retain policy, deletes underlying AWS / GCE
+-			// volume and changes the reclaim policy to Delete.
+-			// PV controller should delete the PV even though the underlying volume
+-			// is already deleted.
+-			e2eskipper.SkipUnlessProviderIs("gce", "gke", "aws")
+-			ginkgo.By("creating PD")
+-			diskName, err := e2epv.CreatePDWithRetry()
+-			framework.ExpectNoError(err)
+-
+-			ginkgo.By("creating PV")
+-			pv := e2epv.MakePersistentVolume(e2epv.PersistentVolumeConfig{
+-				NamePrefix: "volume-idempotent-delete-",
+-				// Use Retain to keep the PV, the test will change it to Delete
+-				// when the time comes.
+-				ReclaimPolicy: v1.PersistentVolumeReclaimRetain,
+-				AccessModes: []v1.PersistentVolumeAccessMode{
+-					v1.ReadWriteOnce,
+-				},
+-				Capacity: "1Gi",
+-				// PV is bound to non-existing PVC, so it's reclaim policy is
+-				// executed immediately
+-				Prebind: &v1.PersistentVolumeClaim{
+-					ObjectMeta: metav1.ObjectMeta{
+-						Name:      "dummy-claim-name",
+-						Namespace: ns,
+-						UID:       types.UID("01234567890"),
+-					},
+-				},
+-			})
+-			switch framework.TestContext.Provider {
+-			case "aws":
+-				pv.Spec.PersistentVolumeSource = v1.PersistentVolumeSource{
+-					AWSElasticBlockStore: &v1.AWSElasticBlockStoreVolumeSource{
+-						VolumeID: diskName,
+-					},
+-				}
+-			case "gce", "gke":
+-				pv.Spec.PersistentVolumeSource = v1.PersistentVolumeSource{
+-					GCEPersistentDisk: &v1.GCEPersistentDiskVolumeSource{
+-						PDName: diskName,
+-					},
+-				}
+-			}
+-			pv, err = c.CoreV1().PersistentVolumes().Create(context.TODO(), pv, metav1.CreateOptions{})
+-			framework.ExpectNoError(err)
+-
+-			ginkgo.By("waiting for the PV to get Released")
+-			err = e2epv.WaitForPersistentVolumePhase(v1.VolumeReleased, c, pv.Name, 2*time.Second, e2epv.PVReclaimingTimeout)
+-			framework.ExpectNoError(err)
+-
+-			ginkgo.By("deleting the PD")
+-			err = e2epv.DeletePVSource(&pv.Spec.PersistentVolumeSource)
+-			framework.ExpectNoError(err)
+-
+-			ginkgo.By("changing the PV reclaim policy")
+-			pv, err = c.CoreV1().PersistentVolumes().Get(context.TODO(), pv.Name, metav1.GetOptions{})
+-			framework.ExpectNoError(err)
+-			pv.Spec.PersistentVolumeReclaimPolicy = v1.PersistentVolumeReclaimDelete
+-			pv, err = c.CoreV1().PersistentVolumes().Update(context.TODO(), pv, metav1.UpdateOptions{})
+-			framework.ExpectNoError(err)
+-
+-			ginkgo.By("waiting for the PV to get deleted")
+-			err = e2epv.WaitForPersistentVolumeDeleted(c, pv.Name, 5*time.Second, e2epv.PVDeletingTimeout)
+-			framework.ExpectNoError(err)
+-		})
+-	})
+-
+ 	ginkgo.Describe("DynamicProvisioner External", func() {
+ 		ginkgo.It("should let an external dynamic provisioner create and delete persistent volumes [Slow]", func() {
+ 			// external dynamic provisioner pods need additional permissions provided by the
+diff --git a/test/e2e/storage/volume_provisioning_providers.go b/test/e2e/storage/volume_provisioning_providers.go
+new file mode 100644
+index 00000000000..932c644af7a
+--- /dev/null
++++ b/test/e2e/storage/volume_provisioning_providers.go
+@@ -0,0 +1,577 @@
++// +build !providerless
++
++/*
++Copyright 2016 The Kubernetes Authors.
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++package storage
++
++import (
++	"context"
++	"fmt"
++	"strings"
++	"time"
++
++	"github.com/aws/aws-sdk-go/aws"
++	"github.com/aws/aws-sdk-go/aws/session"
++	"github.com/aws/aws-sdk-go/service/ec2"
++	"github.com/onsi/ginkgo"
++	"github.com/onsi/gomega"
++
++	v1 "k8s.io/api/core/v1"
++	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
++	"k8s.io/apimachinery/pkg/types"
++	"k8s.io/apimachinery/pkg/util/sets"
++	clientset "k8s.io/client-go/kubernetes"
++	"k8s.io/kubernetes/test/e2e/framework"
++	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
++	"k8s.io/kubernetes/test/e2e/framework/providers/gce"
++	e2epv "k8s.io/kubernetes/test/e2e/framework/pv"
++	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
++	"k8s.io/kubernetes/test/e2e/storage/testsuites"
++	"k8s.io/kubernetes/test/e2e/storage/utils"
++)
++
++// checkAWSEBS checks properties of an AWS EBS. Test framework does not
++// instantiate full AWS provider, therefore we need use ec2 API directly.
++func checkAWSEBS(volume *v1.PersistentVolume, volumeType string, encrypted bool) error {
++	diskName := volume.Spec.AWSElasticBlockStore.VolumeID
++
++	var client *ec2.EC2
++
++	tokens := strings.Split(diskName, "/")
++	volumeID := tokens[len(tokens)-1]
++
++	zone := framework.TestContext.CloudConfig.Zone
++
++	awsSession, err := session.NewSession()
++	if err != nil {
++		return fmt.Errorf("error creating session: %v", err)
++	}
++
++	if len(zone) > 0 {
++		region := zone[:len(zone)-1]
++		cfg := aws.Config{Region: &region}
++		framework.Logf("using region %s", region)
++		client = ec2.New(awsSession, &cfg)
++	} else {
++		framework.Logf("no region configured")
++		client = ec2.New(awsSession)
++	}
++
++	request := &ec2.DescribeVolumesInput{
++		VolumeIds: []*string{&volumeID},
++	}
++	info, err := client.DescribeVolumes(request)
++	if err != nil {
++		return fmt.Errorf("error querying ec2 for volume %q: %v", volumeID, err)
++	}
++	if len(info.Volumes) == 0 {
++		return fmt.Errorf("no volumes found for volume %q", volumeID)
++	}
++	if len(info.Volumes) > 1 {
++		return fmt.Errorf("multiple volumes found for volume %q", volumeID)
++	}
++
++	awsVolume := info.Volumes[0]
++	if awsVolume.VolumeType == nil {
++		return fmt.Errorf("expected volume type %q, got nil", volumeType)
++	}
++	if *awsVolume.VolumeType != volumeType {
++		return fmt.Errorf("expected volume type %q, got %q", volumeType, *awsVolume.VolumeType)
++	}
++	if encrypted && awsVolume.Encrypted == nil {
++		return fmt.Errorf("expected encrypted volume, got no encryption")
++	}
++	if encrypted && !*awsVolume.Encrypted {
++		return fmt.Errorf("expected encrypted volume, got %v", *awsVolume.Encrypted)
++	}
++	return nil
++}
++
++func checkGCEPD(volume *v1.PersistentVolume, volumeType string) error {
++	cloud, err := gce.GetGCECloud()
++	if err != nil {
++		return err
++	}
++	diskName := volume.Spec.GCEPersistentDisk.PDName
++	disk, err := cloud.GetDiskByNameUnknownZone(diskName)
++	if err != nil {
++		return err
++	}
++
++	if !strings.HasSuffix(disk.Type, volumeType) {
++		return fmt.Errorf("unexpected disk type %q, expected suffix %q", disk.Type, volumeType)
++	}
++	return nil
++}
++
++var _ = utils.SIGDescribe("Dynamic Provisioning with cloud providers", func() {
++	f := framework.NewDefaultFramework("volume-provisioning")
++
++	// filled in BeforeEach
++	var c clientset.Interface
++	var ns string
++
++	ginkgo.BeforeEach(func() {
++		c = f.ClientSet
++		ns = f.Namespace.Name
++	})
++
++	ginkgo.Describe("DynamicProvisioner [Slow]", func() {
++		ginkgo.It("should provision storage with different parameters", func() {
++
++			// This test checks that dynamic provisioning can provision a volume
++			// that can be used to persist data among pods.
++			tests := []testsuites.StorageClassTest{
++				// GCE/GKE
++				{
++					Name:           "SSD PD on GCE/GKE",
++					CloudProviders: []string{"gce", "gke"},
++					Provisioner:    "kubernetes.io/gce-pd",
++					Parameters: map[string]string{
++						"type": "pd-ssd",
++						"zone": getRandomClusterZone(c),
++					},
++					ClaimSize:    "1.5Gi",
++					ExpectedSize: "2Gi",
++					PvCheck: func(claim *v1.PersistentVolumeClaim) {
++						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
++
++						err := checkGCEPD(volume, "pd-ssd")
++						framework.ExpectNoError(err, "checkGCEPD pd-ssd")
++					},
++				},
++				{
++					Name:           "HDD PD on GCE/GKE",
++					CloudProviders: []string{"gce", "gke"},
++					Provisioner:    "kubernetes.io/gce-pd",
++					Parameters: map[string]string{
++						"type": "pd-standard",
++					},
++					ClaimSize:    "1.5Gi",
++					ExpectedSize: "2Gi",
++					PvCheck: func(claim *v1.PersistentVolumeClaim) {
++						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
++
++						err := checkGCEPD(volume, "pd-standard")
++						framework.ExpectNoError(err, "checkGCEPD pd-standard")
++					},
++				},
++				// AWS
++				{
++					Name:           "gp2 EBS on AWS",
++					CloudProviders: []string{"aws"},
++					Provisioner:    "kubernetes.io/aws-ebs",
++					Parameters: map[string]string{
++						"type": "gp2",
++						"zone": getRandomClusterZone(c),
++					},
++					ClaimSize:    "1.5Gi",
++					ExpectedSize: "2Gi",
++					PvCheck: func(claim *v1.PersistentVolumeClaim) {
++						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
++
++						err := checkAWSEBS(volume, "gp2", false)
++						framework.ExpectNoError(err, "checkAWSEBS gp2")
++					},
++				},
++				{
++					Name:           "io1 EBS on AWS",
++					CloudProviders: []string{"aws"},
++					Provisioner:    "kubernetes.io/aws-ebs",
++					Parameters: map[string]string{
++						"type":      "io1",
++						"iopsPerGB": "50",
++					},
++					ClaimSize:    "3.5Gi",
++					ExpectedSize: "4Gi", // 4 GiB is minimum for io1
++					PvCheck: func(claim *v1.PersistentVolumeClaim) {
++						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
++
++						err := checkAWSEBS(volume, "io1", false)
++						framework.ExpectNoError(err, "checkAWSEBS io1")
++					},
++				},
++				{
++					Name:           "sc1 EBS on AWS",
++					CloudProviders: []string{"aws"},
++					Provisioner:    "kubernetes.io/aws-ebs",
++					Parameters: map[string]string{
++						"type": "sc1",
++					},
++					ClaimSize:    "500Gi", // minimum for sc1
++					ExpectedSize: "500Gi",
++					PvCheck: func(claim *v1.PersistentVolumeClaim) {
++						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
++
++						err := checkAWSEBS(volume, "sc1", false)
++						framework.ExpectNoError(err, "checkAWSEBS sc1")
++					},
++				},
++				{
++					Name:           "st1 EBS on AWS",
++					CloudProviders: []string{"aws"},
++					Provisioner:    "kubernetes.io/aws-ebs",
++					Parameters: map[string]string{
++						"type": "st1",
++					},
++					ClaimSize:    "500Gi", // minimum for st1
++					ExpectedSize: "500Gi",
++					PvCheck: func(claim *v1.PersistentVolumeClaim) {
++						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
++
++						err := checkAWSEBS(volume, "st1", false)
++						framework.ExpectNoError(err, "checkAWSEBS st1")
++					},
++				},
++				{
++					Name:           "encrypted EBS on AWS",
++					CloudProviders: []string{"aws"},
++					Provisioner:    "kubernetes.io/aws-ebs",
++					Parameters: map[string]string{
++						"encrypted": "true",
++					},
++					ClaimSize:    "1Gi",
++					ExpectedSize: "1Gi",
++					PvCheck: func(claim *v1.PersistentVolumeClaim) {
++						volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++						gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
++
++						err := checkAWSEBS(volume, "gp2", true)
++						framework.ExpectNoError(err, "checkAWSEBS gp2 encrypted")
++					},
++				},
++				// OpenStack generic tests (works on all OpenStack deployments)
++				{
++					Name:           "generic Cinder volume on OpenStack",
++					CloudProviders: []string{"openstack"},
++					Provisioner:    "kubernetes.io/cinder",
++					Parameters:     map[string]string{},
++					ClaimSize:      "1.5Gi",
++					ExpectedSize:   "2Gi",
++					PvCheck: func(claim *v1.PersistentVolumeClaim) {
++						testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++					},
++				},
++				{
++					Name:           "Cinder volume with empty volume type and zone on OpenStack",
++					CloudProviders: []string{"openstack"},
++					Provisioner:    "kubernetes.io/cinder",
++					Parameters: map[string]string{
++						"type":         "",
++						"availability": "",
++					},
++					ClaimSize:    "1.5Gi",
++					ExpectedSize: "2Gi",
++					PvCheck: func(claim *v1.PersistentVolumeClaim) {
++						testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++					},
++				},
++				// vSphere generic test
++				{
++					Name:           "generic vSphere volume",
++					CloudProviders: []string{"vsphere"},
++					Provisioner:    "kubernetes.io/vsphere-volume",
++					Parameters:     map[string]string{},
++					ClaimSize:      "1.5Gi",
++					ExpectedSize:   "1.5Gi",
++					PvCheck: func(claim *v1.PersistentVolumeClaim) {
++						testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++					},
++				},
++				// Azure
++				{
++					Name:           "Azure disk volume with empty sku and location",
++					CloudProviders: []string{"azure"},
++					Provisioner:    "kubernetes.io/azure-disk",
++					Parameters:     map[string]string{},
++					ClaimSize:      "1Gi",
++					ExpectedSize:   "1Gi",
++					PvCheck: func(claim *v1.PersistentVolumeClaim) {
++						testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++					},
++				},
++			}
++
++			var betaTest *testsuites.StorageClassTest
++			for i, t := range tests {
++				// Beware of clojure, use local variables instead of those from
++				// outer scope
++				test := t
++
++				if !framework.ProviderIs(test.CloudProviders...) {
++					framework.Logf("Skipping %q: cloud providers is not %v", test.Name, test.CloudProviders)
++					continue
++				}
++
++				// Remember the last supported test for subsequent test of beta API
++				betaTest = &test
++
++				ginkgo.By("Testing " + test.Name)
++				suffix := fmt.Sprintf("%d", i)
++				test.Client = c
++				test.Class = newStorageClass(test, ns, suffix)
++				test.Claim = e2epv.MakePersistentVolumeClaim(e2epv.PersistentVolumeClaimConfig{
++					ClaimSize:        test.ClaimSize,
++					StorageClassName: &test.Class.Name,
++					VolumeMode:       &test.VolumeMode,
++				}, ns)
++				test.TestDynamicProvisioning()
++			}
++
++			// Run the last test with storage.k8s.io/v1beta1 on pvc
++			if betaTest != nil {
++				ginkgo.By("Testing " + betaTest.Name + " with beta volume provisioning")
++				class := newBetaStorageClass(*betaTest, "beta")
++				// we need to create the class manually, testDynamicProvisioning does not accept beta class
++				class, err := c.StorageV1beta1().StorageClasses().Create(context.TODO(), class, metav1.CreateOptions{})
++				framework.ExpectNoError(err)
++				defer deleteStorageClass(c, class.Name)
++
++				betaTest.Client = c
++				betaTest.Class = nil
++				betaTest.Claim = e2epv.MakePersistentVolumeClaim(e2epv.PersistentVolumeClaimConfig{
++					ClaimSize:        betaTest.ClaimSize,
++					StorageClassName: &class.Name,
++					VolumeMode:       &betaTest.VolumeMode,
++				}, ns)
++				betaTest.Claim.Spec.StorageClassName = &(class.Name)
++				(*betaTest).TestDynamicProvisioning()
++			}
++		})
++
++		ginkgo.It("should provision storage with non-default reclaim policy Retain", func() {
++			e2eskipper.SkipUnlessProviderIs("gce", "gke")
++
++			test := testsuites.StorageClassTest{
++				Client:         c,
++				Name:           "HDD PD on GCE/GKE",
++				CloudProviders: []string{"gce", "gke"},
++				Provisioner:    "kubernetes.io/gce-pd",
++				Parameters: map[string]string{
++					"type": "pd-standard",
++				},
++				ClaimSize:    "1Gi",
++				ExpectedSize: "1Gi",
++				PvCheck: func(claim *v1.PersistentVolumeClaim) {
++					volume := testsuites.PVWriteReadSingleNodeCheck(c, claim, e2epod.NodeSelection{})
++					gomega.Expect(volume).NotTo(gomega.BeNil(), "get bound PV")
++
++					err := checkGCEPD(volume, "pd-standard")
++					framework.ExpectNoError(err, "checkGCEPD")
++				},
++			}
++			test.Class = newStorageClass(test, ns, "reclaimpolicy")
++			retain := v1.PersistentVolumeReclaimRetain
++			test.Class.ReclaimPolicy = &retain
++			test.Claim = e2epv.MakePersistentVolumeClaim(e2epv.PersistentVolumeClaimConfig{
++				ClaimSize:        test.ClaimSize,
++				StorageClassName: &test.Class.Name,
++				VolumeMode:       &test.VolumeMode,
++			}, ns)
++			pv := test.TestDynamicProvisioning()
++
++			ginkgo.By(fmt.Sprintf("waiting for the provisioned PV %q to enter phase %s", pv.Name, v1.VolumeReleased))
++			framework.ExpectNoError(e2epv.WaitForPersistentVolumePhase(v1.VolumeReleased, c, pv.Name, 1*time.Second, 30*time.Second))
++
++			ginkgo.By(fmt.Sprintf("deleting the storage asset backing the PV %q", pv.Name))
++			framework.ExpectNoError(e2epv.DeletePDWithRetry(pv.Spec.GCEPersistentDisk.PDName))
++
++			ginkgo.By(fmt.Sprintf("deleting the PV %q", pv.Name))
++			framework.ExpectNoError(e2epv.DeletePersistentVolume(c, pv.Name), "Failed to delete PV ", pv.Name)
++			framework.ExpectNoError(e2epv.WaitForPersistentVolumeDeleted(c, pv.Name, 1*time.Second, 30*time.Second))
++		})
++
++		ginkgo.It("should not provision a volume in an unmanaged GCE zone.", func() {
++			e2eskipper.SkipUnlessProviderIs("gce", "gke")
++			var suffix string = "unmananged"
++
++			ginkgo.By("Discovering an unmanaged zone")
++			allZones := sets.NewString() // all zones in the project
++
++			gceCloud, err := gce.GetGCECloud()
++			framework.ExpectNoError(err)
++
++			// Get all k8s managed zones (same as zones with nodes in them for test)
++			managedZones, err := gceCloud.GetAllZonesFromCloudProvider()
++			framework.ExpectNoError(err)
++
++			// Get a list of all zones in the project
++			zones, err := gceCloud.ComputeServices().GA.Zones.List(framework.TestContext.CloudConfig.ProjectID).Do()
++			framework.ExpectNoError(err)
++			for _, z := range zones.Items {
++				allZones.Insert(z.Name)
++			}
++
++			// Get the subset of zones not managed by k8s
++			var unmanagedZone string
++			var popped bool
++			unmanagedZones := allZones.Difference(managedZones)
++			// And select one of them at random.
++			if unmanagedZone, popped = unmanagedZones.PopAny(); !popped {
++				e2eskipper.Skipf("No unmanaged zones found.")
++			}
++
++			ginkgo.By("Creating a StorageClass for the unmanaged zone")
++			test := testsuites.StorageClassTest{
++				Name:        "unmanaged_zone",
++				Provisioner: "kubernetes.io/gce-pd",
++				Parameters:  map[string]string{"zone": unmanagedZone},
++				ClaimSize:   "1Gi",
++			}
++			sc := newStorageClass(test, ns, suffix)
++			sc, err = c.StorageV1().StorageClasses().Create(context.TODO(), sc, metav1.CreateOptions{})
++			framework.ExpectNoError(err)
++			defer deleteStorageClass(c, sc.Name)
++
++			ginkgo.By("Creating a claim and expecting it to timeout")
++			pvc := e2epv.MakePersistentVolumeClaim(e2epv.PersistentVolumeClaimConfig{
++				ClaimSize:        test.ClaimSize,
++				StorageClassName: &sc.Name,
++				VolumeMode:       &test.VolumeMode,
++			}, ns)
++			pvc, err = c.CoreV1().PersistentVolumeClaims(ns).Create(context.TODO(), pvc, metav1.CreateOptions{})
++			framework.ExpectNoError(err)
++			defer func() {
++				framework.ExpectNoError(e2epv.DeletePersistentVolumeClaim(c, pvc.Name, ns), "Failed to delete PVC ", pvc.Name)
++			}()
++
++			// The claim should timeout phase:Pending
++			err = e2epv.WaitForPersistentVolumeClaimPhase(v1.ClaimBound, c, ns, pvc.Name, 2*time.Second, framework.ClaimProvisionShortTimeout)
++			framework.ExpectError(err)
++			framework.Logf(err.Error())
++		})
++
++		ginkgo.It("should test that deleting a claim before the volume is provisioned deletes the volume.", func() {
++			// This case tests for the regressions of a bug fixed by PR #21268
++			// REGRESSION: Deleting the PVC before the PV is provisioned can result in the PV
++			// not being deleted.
++			// NOTE:  Polls until no PVs are detected, times out at 5 minutes.
++
++			e2eskipper.SkipUnlessProviderIs("openstack", "gce", "aws", "gke", "vsphere", "azure")
++
++			const raceAttempts int = 100
++			var residualPVs []*v1.PersistentVolume
++			ginkgo.By(fmt.Sprintf("Creating and deleting PersistentVolumeClaims %d times", raceAttempts))
++			test := testsuites.StorageClassTest{
++				Name:        "deletion race",
++				Provisioner: "", // Use a native one based on current cloud provider
++				ClaimSize:   "1Gi",
++			}
++
++			class := newStorageClass(test, ns, "race")
++			class, err := c.StorageV1().StorageClasses().Create(context.TODO(), class, metav1.CreateOptions{})
++			framework.ExpectNoError(err)
++			defer deleteStorageClass(c, class.Name)
++
++			// To increase chance of detection, attempt multiple iterations
++			for i := 0; i < raceAttempts; i++ {
++				prefix := fmt.Sprintf("race-%d", i)
++				claim := e2epv.MakePersistentVolumeClaim(e2epv.PersistentVolumeClaimConfig{
++					NamePrefix:       prefix,
++					ClaimSize:        test.ClaimSize,
++					StorageClassName: &class.Name,
++					VolumeMode:       &test.VolumeMode,
++				}, ns)
++				tmpClaim, err := e2epv.CreatePVC(c, ns, claim)
++				framework.ExpectNoError(err)
++				framework.ExpectNoError(e2epv.DeletePersistentVolumeClaim(c, tmpClaim.Name, ns))
++			}
++
++			ginkgo.By(fmt.Sprintf("Checking for residual PersistentVolumes associated with StorageClass %s", class.Name))
++			residualPVs, err = waitForProvisionedVolumesDeleted(c, class.Name)
++			// Cleanup the test resources before breaking
++			defer deleteProvisionedVolumesAndDisks(c, residualPVs)
++			framework.ExpectNoError(err, "PersistentVolumes were not deleted as expected. %d remain", len(residualPVs))
++
++			framework.Logf("0 PersistentVolumes remain.")
++		})
++
++		ginkgo.It("deletion should be idempotent", func() {
++			// This test ensures that deletion of a volume is idempotent.
++			// It creates a PV with Retain policy, deletes underlying AWS / GCE
++			// volume and changes the reclaim policy to Delete.
++			// PV controller should delete the PV even though the underlying volume
++			// is already deleted.
++			e2eskipper.SkipUnlessProviderIs("gce", "gke", "aws")
++			ginkgo.By("creating PD")
++			diskName, err := e2epv.CreatePDWithRetry()
++			framework.ExpectNoError(err)
++
++			ginkgo.By("creating PV")
++			pv := e2epv.MakePersistentVolume(e2epv.PersistentVolumeConfig{
++				NamePrefix: "volume-idempotent-delete-",
++				// Use Retain to keep the PV, the test will change it to Delete
++				// when the time comes.
++				ReclaimPolicy: v1.PersistentVolumeReclaimRetain,
++				AccessModes: []v1.PersistentVolumeAccessMode{
++					v1.ReadWriteOnce,
++				},
++				Capacity: "1Gi",
++				// PV is bound to non-existing PVC, so it's reclaim policy is
++				// executed immediately
++				Prebind: &v1.PersistentVolumeClaim{
++					ObjectMeta: metav1.ObjectMeta{
++						Name:      "dummy-claim-name",
++						Namespace: ns,
++						UID:       types.UID("01234567890"),
++					},
++				},
++			})
++			switch framework.TestContext.Provider {
++			case "aws":
++				pv.Spec.PersistentVolumeSource = v1.PersistentVolumeSource{
++					AWSElasticBlockStore: &v1.AWSElasticBlockStoreVolumeSource{
++						VolumeID: diskName,
++					},
++				}
++			case "gce", "gke":
++				pv.Spec.PersistentVolumeSource = v1.PersistentVolumeSource{
++					GCEPersistentDisk: &v1.GCEPersistentDiskVolumeSource{
++						PDName: diskName,
++					},
++				}
++			}
++			pv, err = c.CoreV1().PersistentVolumes().Create(context.TODO(), pv, metav1.CreateOptions{})
++			framework.ExpectNoError(err)
++
++			ginkgo.By("waiting for the PV to get Released")
++			err = e2epv.WaitForPersistentVolumePhase(v1.VolumeReleased, c, pv.Name, 2*time.Second, e2epv.PVReclaimingTimeout)
++			framework.ExpectNoError(err)
++
++			ginkgo.By("deleting the PD")
++			err = e2epv.DeletePVSource(&pv.Spec.PersistentVolumeSource)
++			framework.ExpectNoError(err)
++
++			ginkgo.By("changing the PV reclaim policy")
++			pv, err = c.CoreV1().PersistentVolumes().Get(context.TODO(), pv.Name, metav1.GetOptions{})
++			framework.ExpectNoError(err)
++			pv.Spec.PersistentVolumeReclaimPolicy = v1.PersistentVolumeReclaimDelete
++			pv, err = c.CoreV1().PersistentVolumes().Update(context.TODO(), pv, metav1.UpdateOptions{})
++			framework.ExpectNoError(err)
++
++			ginkgo.By("waiting for the PV to get deleted")
++			err = e2epv.WaitForPersistentVolumeDeleted(c, pv.Name, 5*time.Second, e2epv.PVDeletingTimeout)
++			framework.ExpectNoError(err)
++		})
++	})
++})
+diff --git a/test/e2e/upgrades/nvidia-gpu.go b/test/e2e/upgrades/nvidia-gpu.go
+index cf3b8c0cda3..30515197ef7 100644
+--- a/test/e2e/upgrades/nvidia-gpu.go
++++ b/test/e2e/upgrades/nvidia-gpu.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2018 The Kubernetes Authors.
+ 
+diff --git a/test/e2e/instrumentation/logging/imports.go b/test/e2e/instrumentation/logging/imports.go
+index 5dd66717db1..fc15c04bfef 100644
+--- a/test/e2e/instrumentation/logging/imports.go
++++ b/test/e2e/instrumentation/logging/imports.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+
+--
+2.25.1
+
