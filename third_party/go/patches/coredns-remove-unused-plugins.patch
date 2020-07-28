@@ -1,0 +1,203 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From b8a216a10775163dac6267127c35c9230ccbc5f7 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@nexantic.com>
+Date: Mon, 27 Jul 2020 14:25:03 +0200
+Subject: [PATCH] Removed unused plugins
+
+---
+ core/dnsserver/zdirectives.go | 27 ---------------------------
+ core/plugin/zplugin.go        | 27 ---------------------------
+ plugin.cfg                    | 27 ---------------------------
+ plugin/kubernetes/setup.go    |  3 ---
+ 4 files changed, 84 deletions(-)
+
+diff --git a/core/dnsserver/zdirectives.go b/core/dnsserver/zdirectives.go
+index 1bf449cb..96306085 100644
+--- a/core/dnsserver/zdirectives.go
++++ b/core/dnsserver/zdirectives.go
+@@ -11,48 +11,21 @@ package dnsserver
+ // care what plugin above them are doing.
+ var Directives = []string{
+ 	"metadata",
+-	"cancel",
+-	"tls",
+ 	"reload",
+ 	"nsid",
+ 	"bufsize",
+-	"root",
+ 	"bind",
+ 	"debug",
+-	"trace",
+-	"ready",
+ 	"health",
+-	"pprof",
+-	"prometheus",
+ 	"errors",
+ 	"log",
+-	"dnstap",
+ 	"dns64",
+ 	"acl",
+ 	"any",
+-	"chaos",
+ 	"loadbalance",
+ 	"cache",
+-	"rewrite",
+-	"dnssec",
+-	"autopath",
+ 	"template",
+-	"transfer",
+-	"hosts",
+-	"route53",
+-	"azure",
+-	"clouddns",
+-	"k8s_external",
+ 	"kubernetes",
+-	"file",
+-	"auto",
+-	"secondary",
+-	"etcd",
+-	"loop",
+ 	"forward",
+-	"grpc",
+-	"erratic",
+ 	"whoami",
+-	"on",
+-	"sign",
+ }
+diff --git a/core/plugin/zplugin.go b/core/plugin/zplugin.go
+index cf83be70..2cbb0672 100644
+--- a/core/plugin/zplugin.go
++++ b/core/plugin/zplugin.go
+@@ -4,49 +4,22 @@ package plugin
+ 
+ import (
+ 	// Include all plugins.
+-	_ "github.com/caddyserver/caddy/onevent"
+ 	_ "github.com/coredns/coredns/plugin/acl"
+ 	_ "github.com/coredns/coredns/plugin/any"
+-	_ "github.com/coredns/coredns/plugin/auto"
+-	_ "github.com/coredns/coredns/plugin/autopath"
+-	_ "github.com/coredns/coredns/plugin/azure"
+ 	_ "github.com/coredns/coredns/plugin/bind"
+ 	_ "github.com/coredns/coredns/plugin/bufsize"
+ 	_ "github.com/coredns/coredns/plugin/cache"
+-	_ "github.com/coredns/coredns/plugin/cancel"
+-	_ "github.com/coredns/coredns/plugin/chaos"
+-	_ "github.com/coredns/coredns/plugin/clouddns"
+ 	_ "github.com/coredns/coredns/plugin/debug"
+ 	_ "github.com/coredns/coredns/plugin/dns64"
+-	_ "github.com/coredns/coredns/plugin/dnssec"
+-	_ "github.com/coredns/coredns/plugin/dnstap"
+-	_ "github.com/coredns/coredns/plugin/erratic"
+ 	_ "github.com/coredns/coredns/plugin/errors"
+-	_ "github.com/coredns/coredns/plugin/etcd"
+-	_ "github.com/coredns/coredns/plugin/file"
+ 	_ "github.com/coredns/coredns/plugin/forward"
+-	_ "github.com/coredns/coredns/plugin/grpc"
+ 	_ "github.com/coredns/coredns/plugin/health"
+-	_ "github.com/coredns/coredns/plugin/hosts"
+-	_ "github.com/coredns/coredns/plugin/k8s_external"
+ 	_ "github.com/coredns/coredns/plugin/kubernetes"
+ 	_ "github.com/coredns/coredns/plugin/loadbalance"
+ 	_ "github.com/coredns/coredns/plugin/log"
+-	_ "github.com/coredns/coredns/plugin/loop"
+ 	_ "github.com/coredns/coredns/plugin/metadata"
+-	_ "github.com/coredns/coredns/plugin/metrics"
+ 	_ "github.com/coredns/coredns/plugin/nsid"
+-	_ "github.com/coredns/coredns/plugin/pprof"
+-	_ "github.com/coredns/coredns/plugin/ready"
+ 	_ "github.com/coredns/coredns/plugin/reload"
+-	_ "github.com/coredns/coredns/plugin/rewrite"
+-	_ "github.com/coredns/coredns/plugin/root"
+-	_ "github.com/coredns/coredns/plugin/route53"
+-	_ "github.com/coredns/coredns/plugin/secondary"
+-	_ "github.com/coredns/coredns/plugin/sign"
+ 	_ "github.com/coredns/coredns/plugin/template"
+-	_ "github.com/coredns/coredns/plugin/tls"
+-	_ "github.com/coredns/coredns/plugin/trace"
+-	_ "github.com/coredns/coredns/plugin/transfer"
+ 	_ "github.com/coredns/coredns/plugin/whoami"
+ )
+diff --git a/plugin.cfg b/plugin.cfg
+index c389d74e..f6182c2a 100644
+--- a/plugin.cfg
++++ b/plugin.cfg
+@@ -20,47 +20,20 @@
+ # log:log
+ 
+ metadata:metadata
+-cancel:cancel
+-tls:tls
+ reload:reload
+ nsid:nsid
+ bufsize:bufsize
+-root:root
+ bind:bind
+ debug:debug
+-trace:trace
+-ready:ready
+ health:health
+-pprof:pprof
+-prometheus:metrics
+ errors:errors
+ log:log
+-dnstap:dnstap
+ dns64:dns64
+ acl:acl
+ any:any
+-chaos:chaos
+ loadbalance:loadbalance
+ cache:cache
+-rewrite:rewrite
+-dnssec:dnssec
+-autopath:autopath
+ template:template
+-transfer:transfer
+-hosts:hosts
+-route53:route53
+-azure:azure
+-clouddns:clouddns
+-k8s_external:k8s_external
+ kubernetes:kubernetes
+-file:file
+-auto:auto
+-secondary:secondary
+-etcd:etcd
+-loop:loop
+ forward:forward
+-grpc:grpc
+-erratic:erratic
+ whoami:whoami
+-on:github.com/caddyserver/caddy/onevent
+-sign:sign
+diff --git a/plugin/kubernetes/setup.go b/plugin/kubernetes/setup.go
+index 0c46a3ab..827fc141 100644
+--- a/plugin/kubernetes/setup.go
++++ b/plugin/kubernetes/setup.go
+@@ -20,9 +20,6 @@ import (
+ 	"github.com/caddyserver/caddy"
+ 	"github.com/miekg/dns"
+ 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"       // pull this in here, because we want it excluded if plugin.cfg doesn't have k8s
+-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"      // pull this in here, because we want it excluded if plugin.cfg doesn't have k8s
+-	_ "k8s.io/client-go/plugin/pkg/client/auth/openstack" // pull this in here, because we want it excluded if plugin.cfg doesn't have k8s
+ 	"k8s.io/client-go/tools/clientcmd"
+ 	"k8s.io/klog"
+ )
+-- 
+2.25.1
+

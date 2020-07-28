@@ -13,7 +13,8 @@
       "external/org_golang_x_tools/": "third_party",
       "external/io_k8s_apiextensions_apiserver/": "third_party",
       "external/org_golang_x_text/": "third_party",
-      "external/io_bazel_rules_docker/": "third_party"
+      "external/io_bazel_rules_docker/": "third_party",
+      "external/com_github_grpc_ecosystem_grpc_opentracing": "third_party"
     }
   },
   "copylocks": {
@@ -44,7 +45,9 @@
       "external/io_k8s_kubectl": "third_party",
       "external/org_golang_google_protobuf/": "third_party",
       "external/com_github_shirou_gopsutil/": "unreachable",
-      "external/io_k8s_apimachinery/": "third_party"
+      "external/io_k8s_apimachinery/": "third_party",
+      "external/com_github_hpcloud_tail": "third_party",
+      "external/com_github_flynn_go_shlex": "third_party"
     }
   },
   "assign": {

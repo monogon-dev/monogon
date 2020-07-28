@@ -167,6 +167,13 @@ entry: <
   semver: "v0.0.0-20190309065803-0b2ad9ac246b"
 >
 entry: <
+  import_path: "github.com/caddyserver/caddy"
+  version: "v1.0.5"
+  bazel_name: "com_github_caddyserver_caddy"
+  sum: "h1:5B1Hs0UF2x2tggr2X9jL2qOZtDXbIWQb9YLbmlxHSuM="
+  semver: "v1.0.5"
+>
+entry: <
   import_path: "github.com/cenkalti/backoff"
   version: "v0.0.0-20190506075156-2146c9339422"
   bazel_name: "com_github_cenkalti_backoff"
@@ -496,6 +503,13 @@ entry: <
   semver: "v1.0.1"
 >
 entry: <
+  import_path: "github.com/coredns/coredns"
+  version: "v1.7.0"
+  bazel_name: "com_github_coredns_coredns"
+  sum: "h1:Tm2ZSdhTk+4okgjUp4K6KYzvBI2u34cdD4fKQRC4Eeo="
+  semver: "v1.7.0"
+>
+entry: <
   import_path: "github.com/coreos/go-iptables"
   version: "v0.4.2"
   bazel_name: "com_github_coreos_go_iptables"
@@ -620,6 +634,13 @@ entry: <
   bazel_name: "com_github_diskfs_go_diskfs"
   sum: "h1:sLQnXItICiYgiHcYNNujKT9kOKnk7diOvZGEKvxrwpc="
   semver: "v1.0.0"
+>
+entry: <
+  import_path: "github.com/dnstap/golang-dnstap"
+  version: "v0.2.0"
+  bazel_name: "com_github_dnstap_golang_dnstap"
+  sum: "h1:+NrmP4mkaTeKYV7xJ5FXpUxRn0RpcgoQcsOCTS8WQPk="
+  semver: "v0.2.0"
 >
 entry: <
   import_path: "github.com/docker/distribution"
@@ -783,6 +804,13 @@ entry: <
   semver: "v0.0.0-20151013193312-d6023ce2651d"
 >
 entry: <
+  import_path: "github.com/farsightsec/golang-framestream"
+  version: "v0.0.0-20190425193708-fa4b164d59b8"
+  bazel_name: "com_github_farsightsec_golang_framestream"
+  sum: "h1:/iPdQppoAsTfML+yqFSq2EBChiEMnRkh5WvhFgtWwcU="
+  semver: "v0.0.0-20190425193708-fa4b164d59b8"
+>
+entry: <
   import_path: "github.com/fatih/camelcase"
   version: "v1.0.0"
   bazel_name: "com_github_fatih_camelcase"
@@ -795,6 +823,13 @@ entry: <
   bazel_name: "com_github_fatih_color"
   sum: "h1:DkWD4oS2D8LGGgTQ6IvwJJXSL5Vp2ffcQg58nFV38Ys="
   semver: "v1.7.0"
+>
+entry: <
+  import_path: "github.com/flynn/go-shlex"
+  version: "v0.0.0-20150515145356-3f9db97f8568"
+  bazel_name: "com_github_flynn_go_shlex"
+  sum: "h1:BHsljHzVlRcyQhjrss6TZTdY2VfCqZPbv5k3iBFa2ZQ="
+  semver: "v0.0.0-20150515145356-3f9db97f8568"
 >
 entry: <
   import_path: "github.com/friendsofgo/errors"
@@ -1182,6 +1217,13 @@ entry: <
   semver: "v1.9.5"
 >
 entry: <
+  import_path: "github.com/grpc-ecosystem/grpc-opentracing"
+  version: "v0.0.0-20180507213350-8e809c8a8645"
+  bazel_name: "com_github_grpc_ecosystem_grpc_opentracing"
+  sum: "h1:MJG/KsmcqMwFAkh8mTnAwhyKoB+sTAnY4CACC110tbU="
+  semver: "v0.0.0-20180507213350-8e809c8a8645"
+>
+entry: <
   import_path: "github.com/grpc/grpc"
   version: "v1.26.0"
   bazel_name: "com_github_grpc_grpc"
@@ -1299,6 +1341,13 @@ entry: <
   bazel_name: "com_github_imdario_mergo"
   sum: "h1:Y+UAYTZ7gDEuOfhxKWy+dvb5dRQ6rJjFSdX2HZY1/gI="
   semver: "v0.3.7"
+>
+entry: <
+  import_path: "github.com/infobloxopen/go-trees"
+  version: "v0.0.0-20190313150506-2af4e13f9062"
+  bazel_name: "com_github_infobloxopen_go_trees"
+  sum: "h1:d3VSuNcgTCn21dNMm8g412Fck/XWFmMj4nJhhHT7ZZ0="
+  semver: "v0.0.0-20190313150506-2af4e13f9062"
 >
 entry: <
   import_path: "github.com/insomniacslk/dhcp"
@@ -1761,6 +1810,13 @@ entry: <
   bazel_name: "com_github_opencontainers_selinux"
   sum: "h1:jskKwSMFYqyTrHEuJgQoUlTcId0av64S6EWObrIfn5Y="
   semver: "v1.5.1"
+>
+entry: <
+  import_path: "github.com/opentracing/opentracing-go"
+  version: "v1.1.0"
+  bazel_name: "com_github_opentracing_opentracing_go"
+  sum: "h1:pWlfV3Bxv7k65HYwkikxat0+s3pV4bsqf19k25Ur8rU="
+  semver: "v1.1.0"
 >
 entry: <
   import_path: "github.com/optiopay/kafka"

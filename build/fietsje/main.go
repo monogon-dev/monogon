@@ -117,6 +117,18 @@ func main() {
 		"github.com/sbezverk/nftableslib",
 	)
 
+	p.collect("github.com/coredns/coredns", "v1.7.0",
+		prePatches("coredns-remove-unused-plugins.patch"),
+	).use(
+		"github.com/caddyserver/caddy",
+		"github.com/dnstap/golang-dnstap",
+		"github.com/farsightsec/golang-framestream",
+		"github.com/infobloxopen/go-trees",
+		"github.com/opentracing/opentracing-go",
+		"github.com/grpc-ecosystem/grpc-opentracing",
+		"github.com/flynn/go-shlex",
+	)
+
 	// First generate the repositories starlark rule into memory. This is because rendering will lock all unlocked
 	// dependencies, which might take a while. If a use were to interrupt it now, they would end up with an incomplete
 	// repositories.bzl and would have to restore from git.

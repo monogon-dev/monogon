@@ -127,6 +127,12 @@ def go_repositories():
         sum = "h1:4yfM1Zm+7U+m0inJ0g6JvdqGePXD8eG4nXUTbcLT6gk=",
     )
     go_repository(
+        name = "com_github_caddyserver_caddy",
+        importpath = "github.com/caddyserver/caddy",
+        version = "v1.0.5",
+        sum = "h1:5B1Hs0UF2x2tggr2X9jL2qOZtDXbIWQb9YLbmlxHSuM=",
+    )
+    go_repository(
         name = "com_github_cenkalti_backoff",
         importpath = "github.com/cenkalti/backoff",
         version = "v0.0.0-20190506075156-2146c9339422",
@@ -311,6 +317,16 @@ def go_repositories():
         sum = "h1:EToign46OSLTFWnb2oNj9RG3XDnkOX8r28ZIXUuk5Pc=",
     )
     go_repository(
+        name = "com_github_coredns_coredns",
+        importpath = "github.com/coredns/coredns",
+        version = "v1.7.0",
+        sum = "h1:Tm2ZSdhTk+4okgjUp4K6KYzvBI2u34cdD4fKQRC4Eeo=",
+        pre_patches = [
+            "//third_party/go/patches:coredns-remove-unused-plugins.patch",
+        ],
+        patch_args = ["-p1"],
+    )
+    go_repository(
         name = "com_github_coreos_go_iptables",
         importpath = "github.com/coreos/go-iptables",
         version = "v0.4.2",
@@ -393,6 +409,12 @@ def go_repositories():
         importpath = "github.com/diskfs/go-diskfs",
         version = "v1.0.0",
         sum = "h1:sLQnXItICiYgiHcYNNujKT9kOKnk7diOvZGEKvxrwpc=",
+    )
+    go_repository(
+        name = "com_github_dnstap_golang_dnstap",
+        importpath = "github.com/dnstap/golang-dnstap",
+        version = "v0.2.0",
+        sum = "h1:+NrmP4mkaTeKYV7xJ5FXpUxRn0RpcgoQcsOCTS8WQPk=",
     )
     go_repository(
         name = "com_github_docker_distribution",
@@ -479,6 +501,12 @@ def go_repositories():
         sum = "h1:105gxyaGwCFad8crR9dcMQWvV9Hvulu6hwUh4tWPJnM=",
     )
     go_repository(
+        name = "com_github_farsightsec_golang_framestream",
+        importpath = "github.com/farsightsec/golang-framestream",
+        version = "v0.0.0-20190425193708-fa4b164d59b8",
+        sum = "h1:/iPdQppoAsTfML+yqFSq2EBChiEMnRkh5WvhFgtWwcU=",
+    )
+    go_repository(
         name = "com_github_fatih_camelcase",
         importpath = "github.com/fatih/camelcase",
         version = "v1.0.0",
@@ -489,6 +517,12 @@ def go_repositories():
         importpath = "github.com/fatih/color",
         version = "v1.7.0",
         sum = "h1:DkWD4oS2D8LGGgTQ6IvwJJXSL5Vp2ffcQg58nFV38Ys=",
+    )
+    go_repository(
+        name = "com_github_flynn_go_shlex",
+        importpath = "github.com/flynn/go-shlex",
+        version = "v0.0.0-20150515145356-3f9db97f8568",
+        sum = "h1:BHsljHzVlRcyQhjrss6TZTdY2VfCqZPbv5k3iBFa2ZQ=",
     )
     go_repository(
         name = "com_github_friendsofgo_errors",
@@ -779,6 +813,12 @@ def go_repositories():
         sum = "h1:UImYN5qQ8tuGpGE16ZmjvcTtTw24zw1QAp/SlnNrZhI=",
     )
     go_repository(
+        name = "com_github_grpc_ecosystem_grpc_opentracing",
+        importpath = "github.com/grpc-ecosystem/grpc-opentracing",
+        version = "v0.0.0-20180507213350-8e809c8a8645",
+        sum = "h1:MJG/KsmcqMwFAkh8mTnAwhyKoB+sTAnY4CACC110tbU=",
+    )
+    go_repository(
         name = "com_github_grpc_grpc",
         importpath = "github.com/grpc/grpc",
         version = "v1.26.0",
@@ -843,6 +883,12 @@ def go_repositories():
         importpath = "github.com/imdario/mergo",
         version = "v0.3.7",
         sum = "h1:Y+UAYTZ7gDEuOfhxKWy+dvb5dRQ6rJjFSdX2HZY1/gI=",
+    )
+    go_repository(
+        name = "com_github_infobloxopen_go_trees",
+        importpath = "github.com/infobloxopen/go-trees",
+        version = "v0.0.0-20190313150506-2af4e13f9062",
+        sum = "h1:d3VSuNcgTCn21dNMm8g412Fck/XWFmMj4nJhhHT7ZZ0=",
     )
     go_repository(
         name = "com_github_insomniacslk_dhcp",
@@ -1141,6 +1187,12 @@ def go_repositories():
         build_tags = [
             "selinux",
         ],
+    )
+    go_repository(
+        name = "com_github_opentracing_opentracing_go",
+        importpath = "github.com/opentracing/opentracing-go",
+        version = "v1.1.0",
+        sum = "h1:pWlfV3Bxv7k65HYwkikxat0+s3pV4bsqf19k25Ur8rU=",
     )
     go_repository(
         name = "com_github_optiopay_kafka",
