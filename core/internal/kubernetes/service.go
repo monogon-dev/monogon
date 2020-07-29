@@ -33,6 +33,7 @@ import (
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/clusternet"
+	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/dns"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/nfproxy"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler"
@@ -55,6 +56,7 @@ type state struct {
 	controllerManagerLogs *logbuffer.LogBuffer
 	schedulerLogs         *logbuffer.LogBuffer
 	kubeletLogs           *logbuffer.LogBuffer
+	corednsLogs           *logbuffer.LogBuffer
 }
 
 type Service struct {
@@ -82,6 +84,7 @@ func (s *Service) Run(ctx context.Context) error {
 		controllerManagerLogs: logbuffer.New(5000, 16384),
 		schedulerLogs:         logbuffer.New(5000, 16384),
 		kubeletLogs:           logbuffer.New(5000, 16384),
+		corednsLogs:           logbuffer.New(5000, 16384),
 	}
 	s.stateMu.Lock()
 	s.state = st
@@ -120,6 +123,8 @@ func (s *Service) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to get hostname: %w", err)
 	}
 
+	dnsHostIP := s.c.AdvertiseAddress // TODO: Which IP to use
+
 	apiserver := &apiserverService{
 		KPKI:                        s.c.KPKI,
 		AdvertiseAddress:            s.c.AdvertiseAddress,
@@ -130,7 +135,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 	kubelet := kubeletService{
 		NodeName:           hostname,
-		ClusterDNS:         nil,
+		ClusterDNS:         []net.IP{dnsHostIP},
 		KubeletDirectory:   &s.c.Root.Data.Kubernetes.Kubelet,
 		EphemeralDirectory: &s.c.Root.Ephemeral,
 		Output:             st.kubeletLogs,
@@ -162,6 +167,12 @@ func (s *Service) Run(ctx context.Context) error {
 		ClientSet:   clientSet,
 	}
 
+	dns := dns.Service{
+		Kubeconfig:    masterKubeconfig,
+		Output:        s.state.corednsLogs,
+		ClusterDomain: "cluster.local", // Hardcode this here until we make this configurable
+	}
+
 	for _, sub := range []struct {
 		name     string
 		runnable supervisor.Runnable
@@ -175,6 +186,7 @@ func (s *Service) Run(ctx context.Context) error {
 		{"csi-provisioner", csiProvisioner.Run},
 		{"clusternet", clusternet.Run},
 		{"nfproxy", nfproxy.Run},
+		{"dns", dns.Run},
 	} {
 		err := supervisor.Run(ctx, sub.name, sub.runnable)
 		if err != nil {
@@ -204,6 +216,8 @@ func (s *Service) GetComponentLogs(component string, n int) ([]string, error) {
 		return s.state.schedulerLogs.ReadLinesTruncated(n, "..."), nil
 	case "kubelet":
 		return s.state.kubeletLogs.ReadLinesTruncated(n, "..."), nil
+	case "coredns":
+		return s.state.corednsLogs.ReadLinesTruncated(n, "..."), nil
 	default:
 		return nil, errors.New("component not available")
 	}

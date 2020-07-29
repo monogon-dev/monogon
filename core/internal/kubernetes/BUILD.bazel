@@ -17,6 +17,7 @@ go_library(
         "//core/internal/common:go_default_library",
         "//core/internal/common/supervisor:go_default_library",
         "//core/internal/kubernetes/clusternet:go_default_library",
+        "//core/internal/kubernetes/dns:go_default_library",
         "//core/internal/kubernetes/nfproxy:go_default_library",
         "//core/internal/kubernetes/pki:go_default_library",
         "//core/internal/kubernetes/reconciler:go_default_library",

@@ -26,6 +26,9 @@ smalltown_initramfs(
         # Hyperkube
         "//core/cmd/kube": "/kubernetes/bin/kube",
 
+        # CoreDNS
+        "@com_github_coredns_coredns//:coredns": "/kubernetes/bin/coredns",
+
         # runsc/gVisor
         "@com_github_google_gvisor//runsc": "/containerd/bin/runsc",
         "@com_github_google_gvisor_containerd_shim//cmd/containerd-shim-runsc-v1": "/containerd/bin/containerd-shim-runsc-v1",
