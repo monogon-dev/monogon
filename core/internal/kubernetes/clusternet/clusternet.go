@@ -202,10 +202,16 @@ func (s *Service) annotateThisNode(ctx context.Context) error {
 // Run runs the ClusterNet service. See package description for what it does.
 func (s *Service) Run(ctx context.Context) error {
 	logger := supervisor.Logger(ctx)
+	s.logger = logger
 
 	wgClient, err := wgctrl.New()
 	if err != nil {
 		return fmt.Errorf("failed to connect to netlink's WireGuard config endpoint: %w", err)
+	}
+	s.wgClient = wgClient
+
+	if err := s.ensureOnDiskKey(); err != nil {
+		return fmt.Errorf("failed to ensure on-disk key: %w", err)
 	}
 
 	wgInterface := &Wireguard{LinkAttrs: netlink.LinkAttrs{Name: clusterNetDeviceName, Flags: net.FlagUp}}

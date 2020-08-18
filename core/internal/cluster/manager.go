@@ -294,6 +294,8 @@ func (m *Manager) stateNew(ctx context.Context) error {
 		return fmt.Errorf("joining a cluster without a golden ticket not yet implemented")
 	}
 
+	m.goldenTicket = enrolmentConfig.GoldenTicket
+
 	// Otherwise, we begin enrolling with the Golden Ticket.
 	m.next(ctx, StateCharlie)
 	return nil

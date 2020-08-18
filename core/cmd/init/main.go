@@ -54,7 +54,7 @@ var (
 	// be configurable by loading it from the EnrolmentConfig. Fow now, it's static and same across all clusters.
 	kubernetesConfig = kubernetes.Config{
 		ServiceIPRange: net.IPNet{ // TODO(q3k): Decide if configurable / final value
-			IP:   net.IP{192, 168, 188, 0},
+			IP:   net.IP{10, 0, 255, 1},
 			Mask: net.IPMask{0xff, 0xff, 0xff, 0x00}, // /24, but Go stores as a literal mask
 		},
 		ClusterNet: net.IPNet{
