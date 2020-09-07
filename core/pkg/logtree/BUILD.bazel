@@ -1,8 +1,28 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "go_default_library",
-    srcs = ["leveled.go"],
+    srcs = [
+        "doc.go",
+        "journal.go",
+        "journal_entry.go",
+        "journal_subscriber.go",
+        "leveled.go",
+        "logtree.go",
+        "logtree_access.go",
+        "logtree_publisher.go",
+        "payload.go",
+    ],
     importpath = "git.monogon.dev/source/nexantic.git/core/pkg/logtree",
     visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "journal_test.go",
+        "logtree_test.go",
+        "payload_test.go",
+    ],
+    embed = [":go_default_library"],
 )

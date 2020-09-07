@@ -76,3 +76,33 @@ type VerboseLeveledLogger interface {
 	// Infof is the equivalent of a LeveledLogger's Infof call, guarded by whether this VerboseLeveledLogger is enabled.
 	Infof(format string, args ...interface{})
 }
+
+// Severity is one of the severities as described in LeveledLogger.
+type Severity string
+
+const (
+	INFO    Severity = "I"
+	WARNING Severity = "W"
+	ERROR   Severity = "E"
+	FATAL   Severity = "F"
+)
+
+var (
+	// SeverityAtLeast maps a given severity to a list of severities that at that severity or higher. In other words,
+	// SeverityAtLeast[X] returns a list of severities that might be seen in a log at severity X.
+	SeverityAtLeast = map[Severity][]Severity{
+		INFO:    {INFO, WARNING, ERROR, FATAL},
+		WARNING: {WARNING, ERROR, FATAL},
+		ERROR:   {ERROR, FATAL},
+		FATAL:   {FATAL},
+	}
+)
+
+func (s Severity) AtLeast(other Severity) bool {
+	for _, el := range SeverityAtLeast[other] {
+		if el == s {
+			return true
+		}
+	}
+	return false
+}
