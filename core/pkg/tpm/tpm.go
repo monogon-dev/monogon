@@ -24,6 +24,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -141,6 +142,7 @@ func Initialize(logger *zap.Logger) error {
 		return ErrNotExists
 	}
 	if len(tpms) > 1 {
+		// If this is changed GetMeasurementLog() needs to be updated too
 		logger.Warn("Found more than one TPM, using the first one")
 	}
 	tpmName := tpms[0]
@@ -545,4 +547,10 @@ readLoop:
 	}
 
 	return pcrs, nil
+}
+
+// GetMeasurmentLog returns the binary log of all data hashed into PCRs. The result can be parsed by eventlog.
+// As this library currently doesn't support extending PCRs it just returns the log as supplied by the EFI interface.
+func GetMeasurementLog() ([]byte, error) {
+	return ioutil.ReadFile("/sys/kernel/security/tpm0/binary_bios_measurements")
 }

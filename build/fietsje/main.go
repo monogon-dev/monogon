@@ -75,6 +75,7 @@ func main() {
 
 	p.collect("github.com/google/go-tpm", "ae6dd98980d4")
 	p.collect("github.com/google/go-tpm-tools", "f8c04ff88181")
+	p.collect("github.com/google/certificate-transparency-go", "v1.1.0")
 	p.collect("github.com/insomniacslk/dhcp", "5dd7202f19711228cb4a51aa8b3415421c2edefe")
 	p.collect("github.com/mdlayher/ethernet", "0394541c37b7f86a10e0b49492f6d4f605c34163").use(
 		"github.com/mdlayher/raw",

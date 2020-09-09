@@ -1077,6 +1077,13 @@ entry: <
   semver: "v0.36.1-0.20200623171404-8450c56c21bc"
 >
 entry: <
+  import_path: "github.com/google/certificate-transparency-go"
+  version: "v1.1.0"
+  bazel_name: "com_github_google_certificate_transparency_go"
+  sum: "h1:10MlrYzh5wfkToxWI4yJzffsxLfxcEDlOATMx/V9Kzw="
+  semver: "v1.1.0"
+>
+entry: <
   import_path: "github.com/google/go-cmp"
   version: "v0.4.0"
   bazel_name: "com_github_google_go_cmp"

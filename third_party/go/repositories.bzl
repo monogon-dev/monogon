@@ -700,6 +700,12 @@ def go_repositories():
         sum = "h1:il4pi2iOP5NRkBgnZH3n0GDqSCNEJ/QIRJrCAfU5h38=",
     )
     go_repository(
+        name = "com_github_google_certificate_transparency_go",
+        importpath = "github.com/google/certificate-transparency-go",
+        version = "v1.1.0",
+        sum = "h1:10MlrYzh5wfkToxWI4yJzffsxLfxcEDlOATMx/V9Kzw=",
+    )
+    go_repository(
         name = "com_github_google_go_cmp",
         importpath = "github.com/google/go-cmp",
         version = "v0.4.0",
