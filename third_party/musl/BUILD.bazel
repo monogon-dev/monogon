@@ -1,0 +1,36 @@
+genrule(
+    name = "musl",
+    srcs = [
+        "@musl//:all",
+    ],
+    outs = [
+        # C Runtimes
+        "crt1.o",
+        "crti.o",
+        "crtn.o",
+        "rcrt1.o",
+        "Scrt1.o",
+
+        # Static musl libc
+        "libc.a",
+
+        # Placeholder archives
+        "libcrypt.a",
+        "libdl.a",
+        "libm.a",
+        "libpthread.a",
+        "libresolv.a",
+        "librt.a",
+        "libutil.a",
+        "libxnet.a",
+    ],
+    cmd = """
+    OUT=$$PWD/$(RULEDIR)
+    (
+        cd external/musl
+        ./configure --prefix=$$OUT --syslibdir=$$OUT --libdir=$$OUT
+        make -j $$(nproc) install-libs
+    ) > /dev/null
+    """,
+    visibility = ["//visibility:public"],
+)

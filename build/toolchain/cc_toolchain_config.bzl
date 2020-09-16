@@ -14,17 +14,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-load("@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl", "tool_path")
+load("@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl", "tool", "tool_path")
 
-# This defines a minimal, non-parametrized toolchain configuration rule that
-# uses the host GCC. For background on why we do this, see
-# //build/toolchain/BUILD.
+# This defines a minimal, barely parametrized toolchain configuration rule that
+# uses the host GCC with some possible overrides.
 
 def _host_cc_toolchain_impl(ctx):
     tool_paths = [
         tool_path(
             name = "gcc",
-            path = "/usr/bin/gcc",
+            path = ctx.attr.gcc,
         ),
         tool_path(
             name = "ld",
@@ -57,10 +56,7 @@ def _host_cc_toolchain_impl(ctx):
     ]
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
-        cxx_builtin_include_directories = [
-          "/usr/lib/gcc/x86_64-redhat-linux/10/include/",
-          "/usr/include",
-        ],
+        cxx_builtin_include_directories = ctx.attr.host_includes,
         toolchain_identifier = "k8-toolchain",
         host_system_name = "local",
         target_system_name = "local",
@@ -70,10 +66,24 @@ def _host_cc_toolchain_impl(ctx):
         abi_version = "unknown",
         abi_libc_version = "unknown",
         tool_paths = tool_paths,
+        builtin_sysroot = ctx.attr.sysroot,
     )
 
 host_cc_toolchain_config = rule(
     implementation = _host_cc_toolchain_impl,
-    attrs = {},
+    attrs = {
+        "gcc": attr.string(
+            default = "/usr/bin/gcc",
+        ),
+        "host_includes": attr.string_list(
+            default = [
+                "/usr/lib/gcc/x86_64-redhat-linux/10/include/",
+                "/usr/include",
+            ],
+        ),
+        "sysroot": attr.string(
+            default = "",
+        ),
+    },
     provides = [CcToolchainConfigInfo],
 )

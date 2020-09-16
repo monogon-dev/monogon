@@ -2,7 +2,17 @@ load(":cc_toolchain_config.bzl", "host_cc_toolchain_config")
 
 # Toolchain definitions.
 #
-# We currently define a single custom toolchain: the host_cc toolchain suite.
+# We currently define two toolchains:
+#
+#  - //build/toolchain:host_cc_suite , which is a fully unhermetic host toolchain,
+#    that can be used to build tools for the host.
+#  - //build/toolchain/musl-host-gcc:musl_host_cc_suite , which combines the host's
+#    gcc compiler with a sysroot tarball that targets Smalltown. This can be used to
+#    build C libraries/tools for Smalltown.
+#
+
+# This file defines //build/toolchain:host_cc_suite.
+#
 # This is a C++ toolchain that uses GCC from the host at hardcoded paths. We
 # can get away with this, as currently the entire build is performed in a known
 # container (see: //scripts:create_container.sh). We define this toolchain so
