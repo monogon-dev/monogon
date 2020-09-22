@@ -33,6 +33,9 @@ smalltown_initramfs(
         "@com_github_google_gvisor//runsc": "/containerd/bin/runsc",
         "@com_github_google_gvisor_containerd_shim//cmd/containerd-shim-runsc-v1": "/containerd/bin/containerd-shim-runsc-v1",
 
+        # runc (runtime in files_cc because of cgo)
+        "@com_github_containerd_containerd//cmd/containerd-shim-runc-v2": "/containerd/bin/containerd-shim-runc-v2",
+
         # Containerd
         "@com_github_containerd_containerd//cmd/containerd": "/containerd/bin/containerd",
 
@@ -52,6 +55,10 @@ smalltown_initramfs(
 
         # Delve
         "@com_github_go_delve_delve//cmd/dlv:dlv": "/dlv",
+    },
+    files_cc = {
+        # runc runtime, with cgo
+        "@com_github_opencontainers_runc//:runc": "/containerd/bin/runc",
     },
 )
 

@@ -7,6 +7,7 @@ go_library(
         "resources_csi.go",
         "resources_podsecuritypolicy.go",
         "resources_rbac.go",
+        "resources_runtimeclass.go",
         "resources_storageclass.go",
     ],
     importpath = "git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler",
@@ -14,6 +15,7 @@ go_library(
     deps = [
         "//core/internal/common/supervisor:go_default_library",
         "@io_k8s_api//core/v1:go_default_library",
+        "@io_k8s_api//node/v1beta1:go_default_library",
         "@io_k8s_api//policy/v1beta1:go_default_library",
         "@io_k8s_api//rbac/v1:go_default_library",
         "@io_k8s_api//storage/v1:go_default_library",
@@ -28,6 +30,7 @@ go_test(
     srcs = ["reconciler_test.go"],
     embed = [":go_default_library"],
     deps = [
+        "@io_k8s_api//node/v1beta1:go_default_library",
         "@io_k8s_api//policy/v1beta1:go_default_library",
         "@io_k8s_api//rbac/v1:go_default_library",
         "@io_k8s_api//storage/v1:go_default_library",

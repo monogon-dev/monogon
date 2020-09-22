@@ -87,7 +87,7 @@ podman run \
     --pod ${POD} \
     --name=${POD}-bazel \
     ${TAG} \
-    bazel test --features=race //...
+    bazel test //...
 
 function conduit() {
   # Get Phabricator host from Git origin

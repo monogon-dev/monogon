@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"testing"
 
+	node "k8s.io/api/node/v1beta1"
 	policy "k8s.io/api/policy/v1beta1"
 	rbac "k8s.io/api/rbac/v1"
 	storage "k8s.io/api/storage/v1"
@@ -41,6 +42,8 @@ func kubernetesMeta(v interface{}) *meta.ObjectMeta {
 	case *storage.StorageClass:
 		return &v2.ObjectMeta
 	case *policy.PodSecurityPolicy:
+		return &v2.ObjectMeta
+	case *node.RuntimeClass:
 		return &v2.ObjectMeta
 	}
 	return nil

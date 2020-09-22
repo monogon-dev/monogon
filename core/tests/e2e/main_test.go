@@ -26,6 +26,7 @@ import (
 	_ "net/http"
 	_ "net/http/pprof"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -146,6 +147,37 @@ func TestE2E(t *testing.T) {
 					return fmt.Errorf("pod is not ready: %v", pod.Status.Phase)
 				} else {
 					return fmt.Errorf("pod is not ready: %v", events.Items[0].Message)
+				}
+			})
+			testEventual(t, "Simple deployment with runc", ctx, largeTestTimeout, func(ctx context.Context) error {
+				deployment := makeTestDeploymentSpec("test-deploy-2")
+				var runcStr = "runc"
+				deployment.Spec.Template.Spec.RuntimeClassName = &runcStr
+				_, err := clientSet.AppsV1().Deployments("default").Create(ctx, deployment, metav1.CreateOptions{})
+				return err
+			})
+			testEventual(t, "Simple deployment is running on runc", ctx, largeTestTimeout, func(ctx context.Context) error {
+				res, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{LabelSelector: "name=test-deploy-2"})
+				if err != nil {
+					return err
+				}
+				if len(res.Items) == 0 {
+					return errors.New("pod didn't get created")
+				}
+				pod := res.Items[0]
+				if podv1.IsPodAvailable(&pod, 1, metav1.NewTime(time.Now())) {
+					return nil
+				}
+				events, err := clientSet.CoreV1().Events("default").List(ctx, metav1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=default", pod.Name)})
+				if err != nil || len(events.Items) == 0 {
+					return fmt.Errorf("pod is not ready: %v", pod.Status.Phase)
+				} else {
+					var errorMsg strings.Builder
+					for _, msg := range events.Items {
+						errorMsg.WriteString(" | ")
+						errorMsg.WriteString(msg.Message)
+					}
+					return fmt.Errorf("pod is not ready: %v", errorMsg.String())
 				}
 			})
 			testEventual(t, "Simple StatefulSet with PVC", ctx, largeTestTimeout, func(ctx context.Context) error {

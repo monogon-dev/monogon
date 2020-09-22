@@ -108,6 +108,7 @@ func allResources(clientSet kubernetes.Interface) map[string]resource {
 		"clusterrolebindings": resourceClusterRoleBindings{clientSet},
 		"storageclasses":      resourceStorageClasses{clientSet},
 		"csidrivers":          resourceCSIDrivers{clientSet},
+		"runtimeclasses":      resourceRuntimeClasses{clientSet},
 	}
 }
 

@@ -32,6 +32,24 @@ build_pure_transition = transition(
     ],
 )
 
+def _build_static_transition_impl(settings, attr):
+    """
+    Transition that enables static builds with CGo and musl for Go binaries.
+    """
+    return {
+        "@io_bazel_rules_go//go/config:static": True,
+        "//command_line_option:crosstool_top": "//build/toolchain/musl-host-gcc:musl_host_cc_suite",
+    }
+
+build_static_transition = transition(
+    implementation = _build_static_transition_impl,
+    inputs = [],
+    outputs = [
+        "@io_bazel_rules_go//go/config:static",
+        "//command_line_option:crosstool_top",
+    ],
+)
+
 def _smalltown_initramfs_impl(ctx):
     """
     Generate an lz4-compressed initramfs based on a label/file list.
@@ -53,6 +71,14 @@ def _smalltown_initramfs_impl(ctx):
     # Find all directories that need to be created.
     directories_needed = []
     for _, p in ctx.attr.files.items():
+        if not p.startswith("/"):
+            fail("file {} invalid: must begin with /".format(p))
+
+        # Get all intermediate directories on path to file
+        parts = p.split("/")[1:-1]
+        directories_needed.append(parts)
+
+    for _, p in ctx.attr.files_cc.items():
         if not p.startswith("/"):
             fail("file {} invalid: must begin with /".format(p))
 
@@ -91,6 +117,31 @@ def _smalltown_initramfs_impl(ctx):
     # Append instructions to add files.
     inputs = []
     for label, p in ctx.attr.files.items():
+        # Figure out if this is an executable.
+        is_executable = True
+
+        di = label[DefaultInfo]
+        if di.files_to_run.executable == None:
+            # Generated non-executable files will have DefaultInfo.files_to_run.executable == None
+            is_executable = False
+        elif di.files_to_run.executable.is_source:
+            # Source files will have executable.is_source == True
+            is_executable = False
+
+        # Ensure only single output is declared.
+        # If you hit this error, figure out a better logic to find what file you need, maybe looking at providers other
+        # than DefaultInfo.
+        files = di.files.to_list()
+        if len(files) > 1:
+            fail("file {} has more than one output: {}", p, files)
+        src = files[0]
+        inputs.append(src)
+
+        mode = "0755" if is_executable else "0444"
+
+        cpio_list_content.append("file {} {} {} 0 0".format(p, src.path, mode))
+
+    for label, p in ctx.attr.files_cc.items():
         # Figure out if this is an executable.
         is_executable = True
 
@@ -163,6 +214,15 @@ smalltown_initramfs = rule(
             """,
             # Attach pure transition to ensure all binaries added to the initramfs are pure/static binaries.
             cfg = build_pure_transition,
+        ),
+        "files_cc": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = """
+                 Special case of 'files' for compilation targets that need to be built with the musl toolchain like
+                 go_binary targets which need cgo or cc_binary targets.
+            """,
+            # Attach static transition to all files_cc inputs to ensure they are built with musl and static.
+            cfg = build_static_transition,
         ),
         "extra_dirs": attr.string_list(
             default = [],

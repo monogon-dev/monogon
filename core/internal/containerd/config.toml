@@ -87,6 +87,12 @@ oom_score = 0
           [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc.options]
             TypeUrl = "io.containerd.runsc.v1.options"
             ConfigPath = "/containerd/conf/runsc.toml"
+        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+          runtime_type = "io.containerd.runc.v2"
+          runtime_engine = ""
+          runtime_root = ""
+          privileged_without_host_devices = false
+          base_runtime_spec = ""
     [plugins."io.containerd.grpc.v1.cri".cni]
       bin_dir = "/containerd/bin/cni"
       conf_dir = "/containerd/conf/cni"
