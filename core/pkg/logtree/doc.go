@@ -28,13 +28,13 @@ event sourcing systems like Kafka.
 
 Tree Structure
 
-As an example, consider application that produces logs with the following DNs:
+As an example, consider an application that produces logs with the following DNs:
 
     listener.http
-	listener.grpc
-	svc
-	svc.cache
-	svc.cache.gc
+    listener.grpc
+    svc
+    svc.cache
+    svc.cache.gc
 
 This would correspond to a tree as follows:
 

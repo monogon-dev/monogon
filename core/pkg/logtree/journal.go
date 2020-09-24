@@ -27,7 +27,7 @@ import (
 // the root node of the tree.
 type DN string
 
-// Parth return the parts of a DN, ie. all the elements of the dot-delimited DN path. For the root node, an empty list
+// Path return the parts of a DN, ie. all the elements of the dot-delimited DN path. For the root node, an empty list
 // will be returned. An error will be returned if the DN is invalid (contains empty parts, eg. `foo..bar`, `.foo` or
 // `foo.`.
 func (d DN) Path() ([]string, error) {
@@ -180,7 +180,7 @@ func (j *journal) scanEntries(filters ...filter) (res []*entry) {
 	}
 }
 
-// getEntries returns all entries at a given DN. This is faster then a scanEntries(filterExact), as it uses the special
+// getEntries returns all entries at a given DN. This is faster than a scanEntries(filterExact), as it uses the special
 // local linked list pointers to traverse the journal. Additional filters can be passed to further limit the entries
 // returned, but a scan through this DN's local linked list will be performed regardless.
 // journal.mu must be taken at R or RW level when calling this function.
