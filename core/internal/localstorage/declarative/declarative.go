@@ -24,7 +24,7 @@ import (
 
 // Directory represents the intent of existence of a directory in a hierarchical filesystem (simplified to a tree).
 // This structure can be embedded and still be interpreted as a Directory for purposes of use within this library. Any
-// inner fields of such an embedding structure that are in turn (embedded) Directories or Files will be treated as
+// inner fields of such an embedding structure that are in turn (embedded) Directories or files will be treated as
 // children in the intent expressed by this Directory. All contained directory fields must have a `dir:"name"` struct
 // tag that names them, and all contained file fields must have a `file:"name"` struct tag.
 //
@@ -35,7 +35,7 @@ type Directory struct {
 	DirectoryPlacement
 }
 
-// File represents the intent of existence of a file. Files are usually child structures in types that embed Directory.
+// File represents the intent of existence of a file. files are usually child structures in types that embed Directory.
 // File can also be embedded in another structure, and this embedding type will still be interpreted as a File for
 // purposes of use within this library.
 //

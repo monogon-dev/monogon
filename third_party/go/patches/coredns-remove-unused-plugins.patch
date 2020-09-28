@@ -19,17 +19,17 @@ Date: Mon, 27 Jul 2020 14:25:03 +0200
 Subject: [PATCH] Removed unused plugins
 
 ---
- core/dnsserver/zdirectives.go | 27 ---------------------------
- core/plugin/zplugin.go        | 27 ---------------------------
- plugin.cfg                    | 27 ---------------------------
+ core/dnsserver/zdirectives.go | 26 --------------------------
+ core/plugin/zplugin.go        | 26 --------------------------
+ plugin.cfg                    | 26 --------------------------
  plugin/kubernetes/setup.go    |  3 ---
- 4 files changed, 84 deletions(-)
+ 4 files changed, 81 deletions(-)
 
 diff --git a/core/dnsserver/zdirectives.go b/core/dnsserver/zdirectives.go
-index 1bf449cb..96306085 100644
+index 1bf449cb..c3619160 100644
 --- a/core/dnsserver/zdirectives.go
 +++ b/core/dnsserver/zdirectives.go
-@@ -11,48 +11,21 @@ package dnsserver
+@@ -11,48 +11,22 @@ package dnsserver
  // care what plugin above them are doing.
  var Directives = []string{
  	"metadata",
@@ -60,7 +60,7 @@ index 1bf449cb..96306085 100644
 -	"autopath",
  	"template",
 -	"transfer",
--	"hosts",
+ 	"hosts",
 -	"route53",
 -	"azure",
 -	"clouddns",
@@ -79,11 +79,11 @@ index 1bf449cb..96306085 100644
 -	"sign",
  }
 diff --git a/core/plugin/zplugin.go b/core/plugin/zplugin.go
-index cf83be70..2cbb0672 100644
+index cf83be70..de026516 100644
 --- a/core/plugin/zplugin.go
 +++ b/core/plugin/zplugin.go
-@@ -4,49 +4,22 @@ package plugin
- 
+@@ -4,49 +4,23 @@ package plugin
+
  import (
  	// Include all plugins.
 -	_ "github.com/caddyserver/caddy/onevent"
@@ -109,7 +109,7 @@ index cf83be70..2cbb0672 100644
  	_ "github.com/coredns/coredns/plugin/forward"
 -	_ "github.com/coredns/coredns/plugin/grpc"
  	_ "github.com/coredns/coredns/plugin/health"
--	_ "github.com/coredns/coredns/plugin/hosts"
+ 	_ "github.com/coredns/coredns/plugin/hosts"
 -	_ "github.com/coredns/coredns/plugin/k8s_external"
  	_ "github.com/coredns/coredns/plugin/kubernetes"
  	_ "github.com/coredns/coredns/plugin/loadbalance"
@@ -133,12 +133,12 @@ index cf83be70..2cbb0672 100644
  	_ "github.com/coredns/coredns/plugin/whoami"
  )
 diff --git a/plugin.cfg b/plugin.cfg
-index c389d74e..f6182c2a 100644
+index c389d74e..80a8bc51 100644
 --- a/plugin.cfg
 +++ b/plugin.cfg
-@@ -20,47 +20,20 @@
+@@ -20,47 +20,21 @@
  # log:log
- 
+
  metadata:metadata
 -cancel:cancel
 -tls:tls
@@ -167,7 +167,7 @@ index c389d74e..f6182c2a 100644
 -autopath:autopath
  template:template
 -transfer:transfer
--hosts:hosts
+ hosts:hosts
 -route53:route53
 -azure:azure
 -clouddns:clouddns
@@ -198,6 +198,5 @@ index 0c46a3ab..827fc141 100644
  	"k8s.io/client-go/tools/clientcmd"
  	"k8s.io/klog"
  )
--- 
+--
 2.25.1
-

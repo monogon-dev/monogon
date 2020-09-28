@@ -2,11 +2,16 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["coredns.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/core/internal/kubernetes/dns",
+    srcs = [
+        "coredns.go",
+        "directives.go",
+    ],
+    importpath = "git.monogon.dev/source/nexantic.git/core/internal/network/dns",
     visibility = ["//core:__subpackages__"],
     deps = [
         "//core/internal/common/supervisor:go_default_library",
         "//core/pkg/fileargs:go_default_library",
+        "//core/pkg/logbuffer:go_default_library",
+        "@org_uber_go_zap//:go_default_library",
     ],
 )

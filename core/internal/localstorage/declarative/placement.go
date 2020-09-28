@@ -26,7 +26,7 @@ import (
 // when placed (ie., implementations like PlaceFS takes a *Directory, but Root as a declarative definition is defined as
 // non-pointer).
 
-// Placement is an interface available on Placed Files and Directories. All *Placement interfaces on Files/Directories
+// Placement is an interface available on Placed files and Directories. All *Placement interfaces on files/Directories
 // are only available on placed trees - eg., after a PlaceFS call. This is unfortunately not typesafe, callers need to
 // either be sure about placement, or check the interface for null.
 type Placement interface {
@@ -34,7 +34,7 @@ type Placement interface {
 	RootRef() interface{}
 }
 
-// FilePlacement is an interface available on Placed Files. It is implemented by different placement backends, and
+// FilePlacement is an interface available on Placed files. It is implemented by different placement backends, and
 // set on all files during placement by a given backend.
 type FilePlacement interface {
 	Placement

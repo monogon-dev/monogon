@@ -25,7 +25,7 @@ package localstorage
 // correspond to locations on a filesystem).
 //
 // Every member of the storage hierarchy must either be, or inherit from Directory or File. In order to be placed
-// correctly, Directory embedding structures must use `dir:` or `file:` tags for child Directories and Files
+// correctly, Directory embedding structures must use `dir:` or `file:` tags for child Directories and files
 // respectively. The content of the tag specifies the path part that this element will be placed at.
 //
 // Full placement path(available via FullPath()) format is placement implementation-specific. However, they're always

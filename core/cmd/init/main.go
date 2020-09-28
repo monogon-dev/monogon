@@ -29,6 +29,8 @@ import (
 	"os/signal"
 	"runtime/debug"
 
+	"git.monogon.dev/source/nexantic.git/core/internal/network/dns"
+
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
@@ -102,7 +104,9 @@ func main() {
 		logger.Panic("Failed to initialize TPM 2.0", zap.Error(err))
 	}
 
-	networkSvc := network.New(network.Config{})
+	corednsRegistrationChan := make(chan *dns.ExtraDirective)
+
+	networkSvc := network.New(network.Config{CorednsRegistrationChan: corednsRegistrationChan})
 
 	// This function initializes a headless Delve if this is a debug build or does nothing if it's not
 	initializeDebugger(networkSvc)
@@ -200,6 +204,7 @@ func main() {
 			kubernetesConfig.KPKI = kpki
 			kubernetesConfig.Root = root
 			kubernetesConfig.AdvertiseAddress = *ip
+			kubernetesConfig.CorednsRegistrationChan = corednsRegistrationChan
 			kubeSvc = kubernetes.New(kubernetesConfig)
 			if err := supervisor.Run(ctx, "kubernetes", kubeSvc.Run); err != nil {
 				return fmt.Errorf("failed to start kubernetes service: %w", err)

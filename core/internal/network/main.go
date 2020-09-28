@@ -32,6 +32,7 @@ import (
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/network/dhcp"
+	"git.monogon.dev/source/nexantic.git/core/internal/network/dns"
 )
 
 const (
@@ -47,6 +48,7 @@ type Service struct {
 }
 
 type Config struct {
+	CorednsRegistrationChan chan *dns.ExtraDirective
 }
 
 func New(config Config) *Service {
@@ -117,9 +119,8 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 		return fmt.Errorf("could not get DHCP Status: %w", err)
 	}
 
-	if err := setResolvconf(status.DNS, []string{}); err != nil {
-		s.logger.Warn("failed to set resolvconf", zap.Error(err))
-	}
+	// We're currently never removing this directive just like we're not removing routes and IPs
+	s.config.CorednsRegistrationChan <- dns.NewUpstreamDirective(status.DNS)
 
 	if err := s.addNetworkRoutes(iface, status.Address, status.Gateway); err != nil {
 		s.logger.Warn("failed to add routes", zap.Error(err))
@@ -172,16 +173,32 @@ func (s *Service) GetIP(ctx context.Context, wait bool) (*net.IP, error) {
 }
 
 func (s *Service) Run(ctx context.Context) error {
+	logger := supervisor.Logger(ctx)
+	dnsSvc := dns.New(s.config.CorednsRegistrationChan)
+	supervisor.Run(ctx, "dns", dnsSvc.Run)
+	supervisor.Run(ctx, "interfaces", s.runInterfaces)
+
+	if err := ioutil.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1\n"), 0644); err != nil {
+		logger.Panic("Failed to enable IPv4 forwarding", zap.Error(err))
+	}
+
+	// We're handling all DNS requests with CoreDNS, including local ones
+	if err := setResolvconf([]net.IP{{127, 0, 0, 1}}, []string{}); err != nil {
+		logger.Warn("failed to set resolvconf", zap.Error(err))
+	}
+
+	supervisor.Signal(ctx, supervisor.SignalHealthy)
+	supervisor.Signal(ctx, supervisor.SignalDone)
+	return nil
+}
+
+func (s *Service) runInterfaces(ctx context.Context) error {
 	s.logger = supervisor.Logger(ctx)
-	s.logger.Info("Starting network service")
+	s.logger.Info("Starting network interface management")
 
 	links, err := netlink.LinkList()
 	if err != nil {
 		s.logger.Fatal("Failed to list network links", zap.Error(err))
-	}
-
-	if err := ioutil.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1\n"), 0644); err != nil {
-		s.logger.Panic("Failed to enable IPv4 forwarding", zap.Error(err))
 	}
 
 	var ethernetLinks []netlink.Link
