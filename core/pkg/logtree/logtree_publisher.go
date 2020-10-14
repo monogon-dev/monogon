@@ -61,7 +61,7 @@ func (n *node) log(depth int, severity Severity, msg string) {
 			file = file[slash+1:]
 		}
 	}
-	p := &Payload{
+	p := &LeveledPayload{
 		timestamp: time.Now(),
 		severity:  severity,
 		message:   msg,
@@ -70,7 +70,7 @@ func (n *node) log(depth int, severity Severity, msg string) {
 	}
 	e := &entry{
 		origin:  n.dn,
-		payload: p,
+		leveled: p,
 	}
 	n.tree.journal.append(e)
 	n.tree.journal.notify(e)

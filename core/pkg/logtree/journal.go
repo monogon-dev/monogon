@@ -168,7 +168,7 @@ func (j *journal) scanEntries(filters ...filter) (res []*entry) {
 
 		passed := true
 		for _, filter := range filters {
-			if !filter(cur.origin, cur.payload.severity) {
+			if !filter(cur.origin, cur.leveled.severity) {
 				passed = false
 				break
 			}
@@ -193,7 +193,7 @@ func (j *journal) getEntries(exact DN, filters ...filter) (res []*entry) {
 
 		passed := true
 		for _, filter := range filters {
-			if !filter(cur.origin, cur.payload.severity) {
+			if !filter(cur.origin, cur.leveled.severity) {
 				passed = false
 				break
 			}

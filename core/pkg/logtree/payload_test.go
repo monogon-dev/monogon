@@ -18,8 +18,8 @@ package logtree
 
 import "time"
 
-func testPayload(msg string) *Payload {
-	return &Payload{
+func testPayload(msg string) *LeveledPayload {
+	return &LeveledPayload{
 		message:   msg,
 		timestamp: time.Now(),
 		severity:  INFO,

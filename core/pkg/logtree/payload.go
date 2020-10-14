@@ -21,9 +21,9 @@ import (
 	"time"
 )
 
-// Payload is a log entry for leveled logs (as per leveled.go). It contains not only the log message itself and its
-// severity, but also additional metadata that would be usually seen in a text representation of a leveled log entry.
-type Payload struct {
+// LeveledPayload is a log entry for leveled logs (as per leveled.go). It contains not only the log message itself and
+// its severity, but also additional metadata that would be usually seen in a text representation of a leveled log entry.
+type LeveledPayload struct {
 	// message is the log message, rendered from a leveled log call like Infof(), Warningf(), ...
 	message string
 	// timestamp is the time at which this message was emitted.
@@ -36,7 +36,7 @@ type Payload struct {
 	line int
 }
 
-func (p *Payload) String() string {
+func (p *LeveledPayload) String() string {
 	// Same format as in glog:
 	// Lmmdd hh:mm:ss.uuuuuu threadid file:line]
 	// Except, threadid is (currently) always zero. In the future this field might be used for something different.
@@ -51,14 +51,14 @@ func (p *Payload) String() string {
 }
 
 // Message returns the inner message of this entry, ie. what was passed to the actual logging method.
-func (p *Payload) Message() string { return p.message }
+func (p *LeveledPayload) Message() string { return p.message }
 
 // Timestamp returns the time at which this entry was logged.
-func (p *Payload) Timestamp() time.Time { return p.timestamp }
+func (p *LeveledPayload) Timestamp() time.Time { return p.timestamp }
 
 // Location returns a string in the form of file_name:line_number that shows the origin of the log entry in the
 // program source.
-func (p *Payload) Location() string { return fmt.Sprintf("%s:%d", p.file, p.line) }
+func (p *LeveledPayload) Location() string { return fmt.Sprintf("%s:%d", p.file, p.line) }
 
 // Severity returns the Severity with which this entry was logged.
-func (p *Payload) Severity() Severity { return p.severity }
+func (p *LeveledPayload) Severity() Severity { return p.severity }

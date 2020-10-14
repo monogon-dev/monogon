@@ -27,7 +27,7 @@ func TestJournalRetention(t *testing.T) {
 	for i := 0; i < 9000; i += 1 {
 		e := &entry{
 			origin:  "main",
-			payload: testPayload(fmt.Sprintf("test %d", i)),
+			leveled: testPayload(fmt.Sprintf("test %d", i)),
 		}
 		j.append(e)
 	}
@@ -38,7 +38,7 @@ func TestJournalRetention(t *testing.T) {
 	}
 	for i, entry := range entries {
 		want := fmt.Sprintf("test %d", (9000-8192)+i)
-		got := entry.payload.message
+		got := entry.leveled.message
 		if want != got {
 			t.Fatalf("wanted entry %q, got %q", want, got)
 		}
@@ -51,12 +51,12 @@ func TestJournalQuota(t *testing.T) {
 	for i := 0; i < 9000; i += 1 {
 		j.append(&entry{
 			origin:  "chatty",
-			payload: testPayload(fmt.Sprintf("chatty %d", i)),
+			leveled: testPayload(fmt.Sprintf("chatty %d", i)),
 		})
 		if i%10 == 0 {
 			j.append(&entry{
 				origin:  "solemn",
-				payload: testPayload(fmt.Sprintf("solemn %d", i)),
+				leveled: testPayload(fmt.Sprintf("solemn %d", i)),
 			})
 		}
 	}
@@ -80,7 +80,7 @@ func TestJournalQuota(t *testing.T) {
 	}
 	setMessages := make(map[string]bool)
 	for _, entry := range entries {
-		setMessages[entry.payload.message] = true
+		setMessages[entry.leveled.message] = true
 	}
 
 	for i := 0; i < 900; i += 1 {
@@ -99,18 +99,18 @@ func TestJournalQuota(t *testing.T) {
 
 func TestJournalSubtree(t *testing.T) {
 	j := newJournal()
-	j.append(&entry{origin: "a", payload: testPayload("a")})
-	j.append(&entry{origin: "a.b", payload: testPayload("a.b")})
-	j.append(&entry{origin: "a.b.c", payload: testPayload("a.b.c")})
-	j.append(&entry{origin: "a.b.d", payload: testPayload("a.b.d")})
-	j.append(&entry{origin: "e.f", payload: testPayload("e.f")})
-	j.append(&entry{origin: "e.g", payload: testPayload("e.g")})
+	j.append(&entry{origin: "a", leveled: testPayload("a")})
+	j.append(&entry{origin: "a.b", leveled: testPayload("a.b")})
+	j.append(&entry{origin: "a.b.c", leveled: testPayload("a.b.c")})
+	j.append(&entry{origin: "a.b.d", leveled: testPayload("a.b.d")})
+	j.append(&entry{origin: "e.f", leveled: testPayload("e.f")})
+	j.append(&entry{origin: "e.g", leveled: testPayload("e.g")})
 
 	expect := func(f filter, msgs ...string) string {
 		res := j.scanEntries(f)
 		set := make(map[string]bool)
 		for _, entry := range res {
-			set[entry.payload.message] = true
+			set[entry.leveled.message] = true
 		}
 
 		for _, want := range msgs {

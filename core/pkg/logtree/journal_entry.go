@@ -24,8 +24,8 @@ type entry struct {
 	// journal is the parent journal of this entry. An entry can belong only to a single journal. This pointer is used
 	// to mutate the journal's head/tail pointers when unlinking an entry.
 	journal *journal
-	// payload is the inner log entry Payload. It contains all data and metadata received from the log producer.
-	payload *Payload
+	// payload is the inner log entry LeveledPayload. It contains all data and metadata received from the log producer.
+	leveled *LeveledPayload
 
 	// prevGlobal is the previous entry in the global linked list, or nil if this entry is the oldest entry in the
 	// global linked list.

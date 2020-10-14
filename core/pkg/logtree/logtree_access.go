@@ -78,7 +78,7 @@ func (l *LogReader) Close() {
 }
 
 type LogEntry struct {
-	*Payload
+	*LeveledPayload
 	DN DN
 }
 
@@ -146,7 +146,7 @@ func (l *LogTree) Read(dn DN, opts ...LogReadOption) *LogReader {
 	lr := &LogReader{}
 	lr.Backlog = make([]*LogEntry, len(entries))
 	for i, entry := range entries {
-		lr.Backlog[i] = &LogEntry{Payload: entry.payload, DN: entry.origin}
+		lr.Backlog[i] = &LogEntry{LeveledPayload: entry.leveled, DN: entry.origin}
 	}
 	if stream {
 		lr.Stream = sub.dataC
