@@ -14,12 +14,13 @@ limitations under the License.
 
 
 # We need to patch the IntelliJ Bazel aspect that is injected via the @intellij_bazel repository
-# to properly resolve go_library rules that have both source files and embeds.
+# to:
+#  - properly resolve go_library rules that have both source files and embeds.
+#  - allow running test/sync against //... which contains cc_toolchain rules
+#    (see https://github.com/bazelbuild/intellij/issues/1344 )
 --- a/intellij_info_impl.bzl.o
 +++ b/intellij_info_impl.bzl
- def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
-     """Updates Go-specific output groups, returns false if not a recognized Go target."""
-@@ -349,6 +349,8 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
+@@ -350,6 +350,8 @@
          "go_appengine_test",
      ]:
          sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files.to_list()]
@@ -28,3 +29,13 @@ limitations under the License.
          generated = [f for f in sources if not f.is_source]
      elif ctx.rule.kind == "go_wrap_cc":
          genfiles = target.files.to_list()
+@@ -457,6 +459,8 @@
+         return False
+     if cc_common.CcToolchainInfo not in target:
+         return False
++    if type(target[cc_common.CcToolchainInfo]) != 'CcToolchainInfo':
++        return False
+ 
+     # cc toolchain to access compiler flags
+     cpp_toolchain = target[cc_common.CcToolchainInfo]
+
