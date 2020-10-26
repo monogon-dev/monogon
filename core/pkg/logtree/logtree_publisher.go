@@ -18,15 +18,26 @@ package logtree
 
 import (
 	"fmt"
+	"io"
 	"runtime"
 	"strings"
 	"time"
+
+	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
 )
 
 // LeveledFor returns a LeveledLogger publishing interface for a given DN. An error may be returned if the DN is
 // malformed.
 func (l *LogTree) LeveledFor(dn DN) (LeveledLogger, error) {
 	return l.nodeByDN(dn)
+}
+
+func (l *LogTree) RawFor(dn DN) (io.Writer, error) {
+	node, err := l.nodeByDN(dn)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve raw logger: %w", err)
+	}
+	return node.rawLineBuffer, nil
 }
 
 // MustLeveledFor returns a LeveledLogger publishing interface for a given DN, or panics if the given DN is invalid.
@@ -36,6 +47,14 @@ func (l *LogTree) MustLeveledFor(dn DN) LeveledLogger {
 		panic(fmt.Errorf("LeveledFor returned: %w", err))
 	}
 	return leveled
+}
+
+func (l *LogTree) MustRawFor(dn DN) io.Writer {
+	raw, err := l.RawFor(dn)
+	if err != nil {
+		panic(fmt.Errorf("RawFor returned: %w", err))
+	}
+	return raw
 }
 
 // SetVerbosity sets the verbosity for a given DN (non-recursively, ie. for that DN only, not its children).
@@ -48,9 +67,20 @@ func (l *LogTree) SetVerbosity(dn DN, level VerbosityLevel) error {
 	return nil
 }
 
-// log builds a Payload and entry for a given message, including all related metadata, and appends it to the journal,
-// notifying all pertinent subscribers.
-func (n *node) log(depth int, severity Severity, msg string) {
+// logRaw is called by this node's LineBuffer any time a raw log line is completed. It will create a new entry, append
+// it to the journal, and notify all pertinent subscribers.
+func (n *node) logRaw(line *logbuffer.Line) {
+	e := &entry{
+		origin: n.dn,
+		raw:    line,
+	}
+	n.tree.journal.append(e)
+	n.tree.journal.notify(e)
+}
+
+// log builds a LeveledPayload and entry for a given message, including all related metadata. It will create a new
+// entry append it to the journal, and notify all pertinent subscribers.
+func (n *node) logLeveled(depth int, severity Severity, msg string) {
 	_, file, line, ok := runtime.Caller(2 + depth)
 	if !ok {
 		file = "???"
@@ -78,42 +108,42 @@ func (n *node) log(depth int, severity Severity, msg string) {
 
 // Info implements the LeveledLogger interface.
 func (n *node) Info(args ...interface{}) {
-	n.log(0, INFO, fmt.Sprint(args...))
+	n.logLeveled(0, INFO, fmt.Sprint(args...))
 }
 
 // Infof implements the LeveledLogger interface.
 func (n *node) Infof(format string, args ...interface{}) {
-	n.log(0, INFO, fmt.Sprintf(format, args...))
+	n.logLeveled(0, INFO, fmt.Sprintf(format, args...))
 }
 
 // Warning implements the LeveledLogger interface.
 func (n *node) Warning(args ...interface{}) {
-	n.log(0, WARNING, fmt.Sprint(args...))
+	n.logLeveled(0, WARNING, fmt.Sprint(args...))
 }
 
 // Warningf implements the LeveledLogger interface.
 func (n *node) Warningf(format string, args ...interface{}) {
-	n.log(0, WARNING, fmt.Sprintf(format, args...))
+	n.logLeveled(0, WARNING, fmt.Sprintf(format, args...))
 }
 
 // Error implements the LeveledLogger interface.
 func (n *node) Error(args ...interface{}) {
-	n.log(0, ERROR, fmt.Sprint(args...))
+	n.logLeveled(0, ERROR, fmt.Sprint(args...))
 }
 
 // Errorf implements the LeveledLogger interface.
 func (n *node) Errorf(format string, args ...interface{}) {
-	n.log(0, ERROR, fmt.Sprintf(format, args...))
+	n.logLeveled(0, ERROR, fmt.Sprintf(format, args...))
 }
 
 // Fatal implements the LeveledLogger interface.
 func (n *node) Fatal(args ...interface{}) {
-	n.log(0, FATAL, fmt.Sprint(args...))
+	n.logLeveled(0, FATAL, fmt.Sprint(args...))
 }
 
 // Fatalf implements the LeveledLogger interface.
 func (n *node) Fatalf(format string, args ...interface{}) {
-	n.log(0, FATAL, fmt.Sprintf(format, args...))
+	n.logLeveled(0, FATAL, fmt.Sprintf(format, args...))
 }
 
 // V implements the LeveledLogger interface.
@@ -140,12 +170,12 @@ func (v *verbose) Info(args ...interface{}) {
 	if !v.enabled {
 		return
 	}
-	v.node.log(0, INFO, fmt.Sprint(args...))
+	v.node.logLeveled(0, INFO, fmt.Sprint(args...))
 }
 
 func (v *verbose) Infof(format string, args ...interface{}) {
 	if !v.enabled {
 		return
 	}
-	v.node.log(0, INFO, fmt.Sprintf(format, args...))
+	v.node.logLeveled(0, INFO, fmt.Sprintf(format, args...))
 }

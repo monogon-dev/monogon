@@ -106,20 +106,19 @@ func newJournal() *journal {
 	}
 }
 
-// filter is a predicate that returns true if a log subscriber or reader is interested in a log entry at a given
-// severity and logged to a given DN.
-type filter func(origin DN, severity Severity) bool
+// filter is a predicate that returns true if a log subscriber or reader is interested in a given log entry.
+type filter func(*entry) bool
 
-// filterALl returns a filter that accepts all log entries.
+// filterAll returns a filter that accepts all log entries.
 func filterAll() filter {
-	return func(origin DN, _ Severity) bool { return true }
+	return func(*entry) bool { return true }
 }
 
 // filterExact returns a filter that accepts only log entries at a given exact DN. This filter should not be used in
 // conjunction with journal.scanEntries - instead, journal.getEntries should be used, as it is much faster.
 func filterExact(dn DN) filter {
-	return func(origin DN, _ Severity) bool {
-		return origin == dn
+	return func(e *entry) bool {
+		return e.origin == dn
 	}
 }
 
@@ -131,8 +130,8 @@ func filterSubtree(root DN) filter {
 	}
 
 	rootParts := strings.Split(string(root), ".")
-	return func(origin DN, _ Severity) bool {
-		parts := strings.Split(string(origin), ".")
+	return func(e *entry) bool {
+		parts := strings.Split(string(e.origin), ".")
 		if len(parts) < len(rootParts) {
 			return false
 		}
@@ -150,9 +149,17 @@ func filterSubtree(root DN) filter {
 // filterSeverity returns a filter that accepts log entries at a given severity level or above. See the Severity type
 // for more information about severity levels.
 func filterSeverity(atLeast Severity) filter {
-	return func(origin DN, s Severity) bool {
-		return s.AtLeast(atLeast)
+	return func(e *entry) bool {
+		return e.leveled != nil && e.leveled.severity.AtLeast(atLeast)
 	}
+}
+
+func filterOnlyRaw(e *entry) bool {
+	return e.raw != nil
+}
+
+func filterOnlyLeveled(e *entry) bool {
+	return e.leveled != nil
 }
 
 // scanEntries does a linear scan through the global entry list and returns all entries that match the given filters. If
@@ -168,7 +175,7 @@ func (j *journal) scanEntries(filters ...filter) (res []*entry) {
 
 		passed := true
 		for _, filter := range filters {
-			if !filter(cur.origin, cur.leveled.severity) {
+			if !filter(cur) {
 				passed = false
 				break
 			}
@@ -193,7 +200,7 @@ func (j *journal) getEntries(exact DN, filters ...filter) (res []*entry) {
 
 		passed := true
 		for _, filter := range filters {
-			if !filter(cur.origin, cur.leveled.severity) {
+			if !filter(cur) {
 				passed = false
 				break
 			}

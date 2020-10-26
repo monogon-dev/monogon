@@ -20,9 +20,11 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+
+	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
 )
 
-// LogTree is a tree-shapped logging system. For more information, see the package-level documentation.
+// LogTree is a tree-shaped logging system. For more information, see the package-level documentation.
 type LogTree struct {
 	// journal is the tree's journal, storing all log data and managing subscribers.
 	journal *journal
@@ -39,7 +41,7 @@ func New() *LogTree {
 	return lt
 }
 
-// node represents a given DN as a discrete 'logger'. It implementes the LeveledLogger interface for log publishing,
+// node represents a given DN as a discrete 'logger'. It implements the LeveledLogger interface for log publishing,
 // entries from which it passes over to the logtree's journal.
 type node struct {
 	// dn is the DN which this node represents (or "" if this is the root node).
@@ -47,7 +49,8 @@ type node struct {
 	// tree is the LogTree to which this node belongs.
 	tree *LogTree
 	// verbosity is the current verbosity level of this DN/node, affecting .V(n) LeveledLogger calls
-	verbosity VerbosityLevel
+	verbosity     VerbosityLevel
+	rawLineBuffer *logbuffer.LineBuffer
 
 	// mu guards children.
 	mu sync.Mutex
@@ -63,6 +66,7 @@ func newNode(tree *LogTree, dn DN) *node {
 		tree:     tree,
 		children: make(map[string]*node),
 	}
+	n.rawLineBuffer = logbuffer.NewLineBuffer(1024, n.logRaw)
 	return n
 }
 

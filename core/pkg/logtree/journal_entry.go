@@ -16,6 +16,8 @@
 
 package logtree
 
+import "git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
+
 // entry is a journal entry, representing a single log event (encompassed in a Payload) at a given DN.
 // See the journal struct for more information about the global/local linked lists.
 type entry struct {
@@ -24,8 +26,11 @@ type entry struct {
 	// journal is the parent journal of this entry. An entry can belong only to a single journal. This pointer is used
 	// to mutate the journal's head/tail pointers when unlinking an entry.
 	journal *journal
-	// payload is the inner log entry LeveledPayload. It contains all data and metadata received from the log producer.
+	// leveled is the leveled log entry for this entry, if this log entry was emitted by leveled logging. Otherwise it
+	// is nil.
 	leveled *LeveledPayload
+	// raw is the raw log entry for this entry, if this log entry was emitted by raw logging. Otherwise it is nil.
+	raw *logbuffer.Line
 
 	// prevGlobal is the previous entry in the global linked list, or nil if this entry is the oldest entry in the
 	// global linked list.
@@ -46,6 +51,16 @@ type entry struct {
 	// O(1) length calculation for local linked lists as long as entries are only unlinked from the head or tail (which
 	// is the case in the current implementation).
 	seqLocal uint64
+}
+
+// external returns a LogEntry object for this entry, ie. the public version of this object, without fields relating to
+// the parent journal, linked lists, sequences, etc. These objects are visible to library consumers.
+func (e *entry) external() *LogEntry {
+	return &LogEntry{
+		DN:      e.origin,
+		Leveled: e.leveled,
+		Raw:     e.raw,
+	}
 }
 
 // unlink removes this entry from both global and local linked lists, updating the journal's head/tail pointers if

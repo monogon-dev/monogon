@@ -18,6 +18,7 @@ package logtree
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"testing"
 	"time"
@@ -29,15 +30,25 @@ func TestBacklog(t *testing.T) {
 	tree.MustLeveledFor("main.foo").Info("hello, main.foo!")
 	tree.MustLeveledFor("main.bar").Info("hello, main.bar!")
 	tree.MustLeveledFor("aux").Info("hello, aux!")
+	// No newline at the last entry - shouldn't get propagated to the backlog.
+	fmt.Fprintf(tree.MustRawFor("aux.process"), "processing foo\nprocessing bar\nbaz")
 
 	expect := func(dn DN, entries ...string) string {
-		res := tree.Read(dn, WithChildren(), WithBacklog(BacklogAllAvailable))
+		res, err := tree.Read(dn, WithChildren(), WithBacklog(BacklogAllAvailable))
+		if err != nil {
+			t.Fatalf("Read: %v", err)
+		}
 		if want, got := len(entries), len(res.Backlog); want != got {
 			t.Fatalf("wanted %d backlog entries, got %d", want, got)
 		}
 		got := make(map[string]bool)
 		for _, entry := range res.Backlog {
-			got[entry.Message()] = true
+			if entry.Leveled != nil {
+				got[entry.Leveled.Message()] = true
+			}
+			if entry.Raw != nil {
+				got[entry.Raw.Data] = true
+			}
 		}
 		for _, entry := range entries {
 			if !got[entry] {
@@ -50,10 +61,10 @@ func TestBacklog(t *testing.T) {
 	if res := expect("main", "hello, main!", "hello, main.foo!", "hello, main.bar!"); res != "" {
 		t.Errorf("retrieval at main failed: %s", res)
 	}
-	if res := expect("", "hello, main!", "hello, main.foo!", "hello, main.bar!", "hello, aux!"); res != "" {
+	if res := expect("", "hello, main!", "hello, main.foo!", "hello, main.bar!", "hello, aux!", "processing foo", "processing bar"); res != "" {
 		t.Errorf("retrieval at root failed: %s", res)
 	}
-	if res := expect("aux", "hello, aux!"); res != "" {
+	if res := expect("aux", "hello, aux!", "processing foo", "processing bar"); res != "" {
 		t.Errorf("retrieval at aux failed: %s", res)
 	}
 }
@@ -61,22 +72,46 @@ func TestBacklog(t *testing.T) {
 func TestStream(t *testing.T) {
 	tree := New()
 	tree.MustLeveledFor("main").Info("hello, backlog")
+	fmt.Fprintf(tree.MustRawFor("main.process"), "hello, raw backlog\n")
 
-	res := tree.Read("", WithBacklog(BacklogAllAvailable), WithChildren(), WithStream())
+	log.Printf("read start")
+	res, err := tree.Read("", WithBacklog(BacklogAllAvailable), WithChildren(), WithStream())
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	log.Printf("read done")
 	defer res.Close()
-	if want, got := 1, len(res.Backlog); want != got {
+	if want, got := 2, len(res.Backlog); want != got {
 		t.Errorf("wanted %d backlog item, got %d", want, got)
 	}
 
 	tree.MustLeveledFor("main").Info("hello, stream")
+	fmt.Fprintf(tree.MustRawFor("main.raw"), "hello, raw stream\n")
 
-	select {
-	case <-time.After(time.Second * 1):
-		t.Fatalf("timeout elapsed")
-	case p := <-res.Stream:
-		if want, got := "hello, stream", p.Message(); want != got {
-			t.Fatalf("stream returned %q, wanted %q", got, want)
+	entries := make(map[string]bool)
+	timeout := time.After(time.Second * 1)
+	for {
+		done := false
+		select {
+		case <-timeout:
+			done = true
+		case p := <-res.Stream:
+			if p.Leveled != nil {
+				entries[p.Leveled.Message()] = true
+			}
+			if p.Raw != nil {
+				entries[p.Raw.Data] = true
+			}
 		}
+		if done {
+			break
+		}
+	}
+	if entry := "hello, stream"; !entries[entry] {
+		t.Errorf("Missing entry %q", entry)
+	}
+	if entry := "hello, raw stream"; !entries[entry] {
+		t.Errorf("Missing entry %q", entry)
 	}
 }
 
@@ -85,7 +120,10 @@ func TestVerbose(t *testing.T) {
 
 	tree.MustLeveledFor("main").V(10).Info("this shouldn't get logged")
 
-	reader := tree.Read("", WithBacklog(BacklogAllAvailable), WithChildren())
+	reader, err := tree.Read("", WithBacklog(BacklogAllAvailable), WithChildren())
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
 	if want, got := 0, len(reader.Backlog); want != got {
 		t.Fatalf("expected nothing to be logged, got %+v", reader.Backlog)
 	}
@@ -93,7 +131,10 @@ func TestVerbose(t *testing.T) {
 	tree.SetVerbosity("main", 10)
 	tree.MustLeveledFor("main").V(10).Info("this should get logged")
 
-	reader = tree.Read("", WithBacklog(BacklogAllAvailable), WithChildren())
+	reader, err = tree.Read("", WithBacklog(BacklogAllAvailable), WithChildren())
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
 	if want, got := 1, len(reader.Backlog); want != got {
 		t.Fatalf("expected %d entries to get logged, got %d", want, got)
 	}
@@ -106,7 +147,10 @@ func TestMetadata(t *testing.T) {
 	tree.MustLeveledFor("main").Info("i am informative")
 	tree.MustLeveledFor("main").V(0).Info("i am a zero-level debug")
 
-	reader := tree.Read("", WithChildren(), WithBacklog(BacklogAllAvailable))
+	reader, err := tree.Read("", WithChildren(), WithBacklog(BacklogAllAvailable))
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
 	if want, got := 4, len(reader.Backlog); want != got {
 		t.Fatalf("expected %d entries, got %d", want, got)
 	}
@@ -122,13 +166,13 @@ func TestMetadata(t *testing.T) {
 		{3, INFO, "i am a zero-level debug"},
 	} {
 		p := reader.Backlog[te.ix]
-		if want, got := te.severity, p.Severity(); want != got {
+		if want, got := te.severity, p.Leveled.Severity(); want != got {
 			t.Errorf("wanted element %d to have severity %s, got %s", te.ix, want, got)
 		}
-		if want, got := te.message, p.Message(); want != got {
+		if want, got := te.message, p.Leveled.Message(); want != got {
 			t.Errorf("wanted element %d to have message %q, got %q", te.ix, want, got)
 		}
-		if want, got := "logtree_test.go", strings.Split(p.Location(), ":")[0]; want != got {
+		if want, got := "logtree_test.go", strings.Split(p.Leveled.Location(), ":")[0]; want != got {
 			t.Errorf("wanted element %d to have file %q, got %q", te.ix, want, got)
 		}
 	}
@@ -141,14 +185,17 @@ func TestSeverity(t *testing.T) {
 	tree.MustLeveledFor("main").Info("i am informative")
 	tree.MustLeveledFor("main").V(0).Info("i am a zero-level debug")
 
-	reader := tree.Read("main", WithBacklog(BacklogAllAvailable), WithMinimumSeverity(WARNING))
+	reader, err := tree.Read("main", WithBacklog(BacklogAllAvailable), LeveledWithMinimumSeverity(WARNING))
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
 	if want, got := 2, len(reader.Backlog); want != got {
 		t.Fatalf("wanted %d entries, got %d", want, got)
 	}
-	if want, got := "i am an error", reader.Backlog[0].Message(); want != got {
+	if want, got := "i am an error", reader.Backlog[0].Leveled.Message(); want != got {
 		t.Fatalf("wanted entry %q, got %q", want, got)
 	}
-	if want, got := "i am a warning", reader.Backlog[1].Message(); want != got {
+	if want, got := "i am a warning", reader.Backlog[1].Leveled.Message(); want != got {
 		t.Fatalf("wanted entry %q, got %q", want, got)
 	}
 }

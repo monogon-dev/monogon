@@ -16,14 +16,22 @@
 
 package logtree
 
-import "sync/atomic"
+import (
+	"fmt"
+	"log"
+	"sync/atomic"
+
+	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
+)
 
 // LogReadOption describes options for the LogTree.Read call.
 type LogReadOption struct {
-	withChildren        bool
-	withStream          bool
-	withBacklog         int
-	withMinimumSeverity Severity
+	withChildren               bool
+	withStream                 bool
+	withBacklog                int
+	onlyLeveled                bool
+	onlyRaw                    bool
+	leveledWithMinimumSeverity Severity
 }
 
 // WithChildren makes Read return/stream data for both a given DN and all its children.
@@ -39,9 +47,14 @@ func WithBacklog(count int) LogReadOption { return LogReadOption{withBacklog: co
 // BacklogAllAvailable makes WithBacklog return all backlogged log data that logtree possesses.
 const BacklogAllAvailable int = -1
 
-// WithMinimumSeverity makes Read return only log entries that are at least at a given Severity.
-func WithMinimumSeverity(s Severity) LogReadOption {
-	return LogReadOption{withMinimumSeverity: s}
+func OnlyRaw() LogReadOption { return LogReadOption{onlyRaw: true} }
+
+func OnlyLeveled() LogReadOption { return LogReadOption{onlyLeveled: true} }
+
+// LeveledWithMinimumSeverity makes Read return only log entries that are at least at a given Severity. If only leveled
+// entries are needed, OnlyLeveled must be used. This is a no-op when OnlyRaw is used.
+func LeveledWithMinimumSeverity(s Severity) LogReadOption {
+	return LogReadOption{leveledWithMinimumSeverity: s}
 }
 
 // LogReader permits reading an already existing backlog of log entries and to stream further ones.
@@ -77,22 +90,29 @@ func (l *LogReader) Close() {
 	}
 }
 
+// LogEntry contains a log entry, combining both leveled and raw logging into a single stream of events. A LogEntry
+// will contain exactly one of either LeveledPayload or RawPayload.
 type LogEntry struct {
-	*LeveledPayload
+	// If non-nil, this is a leveled logging entry.
+	Leveled *LeveledPayload
+	// If non-nil, this is a raw logging entry line.
+	Raw *logbuffer.Line
+	// DN from which this entry was logged.
 	DN DN
 }
 
 // Read and/or stream entries from a LogTree. The returned LogReader is influenced by the LogReadOptions passed, which
 // influence whether the Read will return existing entries, a stream, or both. In addition the options also dictate
 // whether only entries for that particular DN are returned, or for all sub-DNs as well.
-func (l *LogTree) Read(dn DN, opts ...LogReadOption) *LogReader {
+func (l *LogTree) Read(dn DN, opts ...LogReadOption) (*LogReader, error) {
 	l.journal.mu.RLock()
 	defer l.journal.mu.RUnlock()
 
 	var backlog int
 	var stream bool
 	var recursive bool
-	var severity Severity
+	var leveledSeverity Severity
+	var onlyRaw, onlyLeveled bool
 
 	for _, opt := range opts {
 		if opt.withBacklog > 0 || opt.withBacklog == BacklogAllAvailable {
@@ -104,19 +124,35 @@ func (l *LogTree) Read(dn DN, opts ...LogReadOption) *LogReader {
 		if opt.withChildren {
 			recursive = true
 		}
-		if opt.withMinimumSeverity != "" {
-			severity = opt.withMinimumSeverity
+		if opt.leveledWithMinimumSeverity != "" {
+			leveledSeverity = opt.leveledWithMinimumSeverity
+		}
+		if opt.onlyLeveled {
+			onlyLeveled = true
+		}
+		if opt.onlyRaw {
+			onlyRaw = true
 		}
 	}
 
+	if onlyLeveled && onlyRaw {
+		return nil, fmt.Errorf("cannot return logs that are simultaneously OnlyRaw and OnlyLeveled")
+	}
+
 	var filters []filter
+	if onlyLeveled {
+		filters = append(filters, filterOnlyLeveled)
+	}
+	if onlyRaw {
+		filters = append(filters, filterOnlyRaw)
+	}
 	if recursive {
 		filters = append(filters, filterSubtree(dn))
 	} else {
 		filters = append(filters, filterExact(dn))
 	}
-	if severity != "" {
-		filters = append(filters, filterSeverity(severity))
+	if leveledSeverity != "" {
+		filters = append(filters, filterSeverity(leveledSeverity))
 	}
 
 	var entries []*entry
@@ -146,12 +182,13 @@ func (l *LogTree) Read(dn DN, opts ...LogReadOption) *LogReader {
 	lr := &LogReader{}
 	lr.Backlog = make([]*LogEntry, len(entries))
 	for i, entry := range entries {
-		lr.Backlog[i] = &LogEntry{LeveledPayload: entry.leveled, DN: entry.origin}
+		log.Printf("backlog %d %+v %+v", i, entry.raw, entry.leveled)
+		lr.Backlog[i] = entry.external()
 	}
 	if stream {
 		lr.Stream = sub.dataC
 		lr.done = sub.doneC
 		lr.missed = &sub.missed
 	}
-	return lr
+	return lr, nil
 }

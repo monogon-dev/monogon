@@ -55,12 +55,12 @@ func (j *journal) notify(e *entry) {
 		}
 
 		for _, filter := range sub.filters {
-			if !filter(e.origin, e.leveled.severity) {
+			if !filter(e) {
 				continue
 			}
 		}
 		select {
-		case sub.dataC <- &LogEntry{LeveledPayload: e.leveled, DN: e.origin}:
+		case sub.dataC <- e.external():
 		default:
 			atomic.AddUint64(&sub.missed, 1)
 		}
