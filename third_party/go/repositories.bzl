@@ -911,8 +911,8 @@ def go_repositories():
     go_repository(
         name = "com_github_insomniacslk_dhcp",
         importpath = "github.com/insomniacslk/dhcp",
-        version = "v0.0.0-20200402185128-5dd7202f1971",
-        sum = "h1:P1pxzF2xvdnSY12ODSSwjxA4tyEjDEJNn829OXKnqks=",
+        version = "v0.0.0-20200922210017-67c425063dca",
+        sum = "h1:zhwTlFGM8ZkD5J/c43IWkxSJQWzhm20QWou8zajbCck=",
     )
     go_repository(
         name = "com_github_j_keck_arping",
@@ -1079,8 +1079,8 @@ def go_repositories():
     go_repository(
         name = "com_github_mdlayher_raw",
         importpath = "github.com/mdlayher/raw",
-        version = "v0.0.0-20190606142536-fef19f00fc18",
-        sum = "h1:zwOa3e/13D6veNIz6zzuqrd3eZEMF0dzD0AQWKcYSs4=",
+        version = "v0.0.0-20191009151244-50f2db8cc065",
+        sum = "h1:aFkJ6lx4FPip+S+Uw4aTegFMct9shDvP+79PsSxpm3w=",
     )
     go_repository(
         name = "com_github_miekg_dns",
@@ -1460,8 +1460,8 @@ def go_repositories():
     go_repository(
         name = "com_github_u_root_u_root",
         importpath = "github.com/u-root/u-root",
-        version = "v6.0.0+incompatible",
-        sum = "h1:YqPGmRoRyYmeg17KIWFRSyVq6LX5T6GSzawyA6wG6EE=",
+        version = "v7.0.0+incompatible",
+        sum = "h1:u+KSS04pSxJGI5E7WE4Bs9+Zd75QjFv+REkjy/aoAc8=",
     )
     go_repository(
         name = "com_github_urfave_cli",

@@ -1378,6 +1378,13 @@ entry: <
   semver: "v0.0.0-20200402185128-5dd7202f1971"
 >
 entry: <
+  import_path: "github.com/insomniacslk/dhcp"
+  version: "67c425063dcad32c5d14ce9a520c8865240dc945"
+  bazel_name: "com_github_insomniacslk_dhcp"
+  sum: "h1:zhwTlFGM8ZkD5J/c43IWkxSJQWzhm20QWou8zajbCck="
+  semver: "v0.0.0-20200922210017-67c425063dca"
+>
+entry: <
   import_path: "github.com/j-keck/arping"
   version: "v0.0.0-20160618110441-2cf9dc699c56"
   bazel_name: "com_github_j_keck_arping"
@@ -1574,6 +1581,13 @@ entry: <
   semver: "v0.0.0-20190606142754-0394541c37b7"
 >
 entry: <
+  import_path: "github.com/mdlayher/ethernet"
+  version: "v0.0.0-20190606142754-0394541c37b7"
+  bazel_name: "com_github_mdlayher_ethernet"
+  sum: "h1:lez6TS6aAau+8wXUP3G9I3TGlmPFEq2CTxBaRqY6AGE="
+  semver: "v0.0.0-20190606142754-0394541c37b7"
+>
+entry: <
   import_path: "github.com/mdlayher/genetlink"
   version: "v1.0.0"
   bazel_name: "com_github_mdlayher_genetlink"
@@ -1600,6 +1614,13 @@ entry: <
   bazel_name: "com_github_mdlayher_raw"
   sum: "h1:zwOa3e/13D6veNIz6zzuqrd3eZEMF0dzD0AQWKcYSs4="
   semver: "v0.0.0-20190606142536-fef19f00fc18"
+>
+entry: <
+  import_path: "github.com/mdlayher/raw"
+  version: "v0.0.0-20191009151244-50f2db8cc065"
+  bazel_name: "com_github_mdlayher_raw"
+  sum: "h1:aFkJ6lx4FPip+S+Uw4aTegFMct9shDvP+79PsSxpm3w="
+  semver: "v0.0.0-20191009151244-50f2db8cc065"
 >
 entry: <
   import_path: "github.com/miekg/dns"
@@ -2230,6 +2251,13 @@ entry: <
   bazel_name: "com_github_u_root_u_root"
   sum: "h1:YqPGmRoRyYmeg17KIWFRSyVq6LX5T6GSzawyA6wG6EE="
   semver: "v6.0.0+incompatible"
+>
+entry: <
+  import_path: "github.com/u-root/u-root"
+  version: "v7.0.0+incompatible"
+  bazel_name: "com_github_u_root_u_root"
+  sum: "h1:u+KSS04pSxJGI5E7WE4Bs9+Zd75QjFv+REkjy/aoAc8="
+  semver: "v7.0.0+incompatible"
 >
 entry: <
   import_path: "github.com/urfave/cli"

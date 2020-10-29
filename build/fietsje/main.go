@@ -76,15 +76,13 @@ func main() {
 	p.collect("github.com/google/go-tpm", "ae6dd98980d4")
 	p.collect("github.com/google/go-tpm-tools", "f8c04ff88181")
 	p.collect("github.com/google/certificate-transparency-go", "v1.1.0")
-	p.collect("github.com/insomniacslk/dhcp", "5dd7202f19711228cb4a51aa8b3415421c2edefe")
-	p.collect("github.com/mdlayher/ethernet", "0394541c37b7f86a10e0b49492f6d4f605c34163").use(
+	p.collect("github.com/insomniacslk/dhcp", "67c425063dcad32c5d14ce9a520c8865240dc945").use(
+		"github.com/mdlayher/ethernet",
 		"github.com/mdlayher/raw",
+		"github.com/u-root/u-root",
 	)
 	p.collect("github.com/rekby/gpt", "a930afbc6edcc89c83d39b79e52025698156178d")
 	p.collect("github.com/yalue/native_endian", "51013b03be4fd97b0aabf29a6923e60359294186")
-
-	// used by insomniacslk/dhcp for pkg/uio
-	p.collect("github.com/u-root/u-root", "v6.0.0")
 
 	// used by //core/cmd/mkimage
 	p.collect("github.com/diskfs/go-diskfs", "v1.0.0").use(

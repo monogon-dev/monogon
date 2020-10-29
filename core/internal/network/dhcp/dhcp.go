@@ -84,13 +84,13 @@ func (c *Client) Run(iface netlink.Link) supervisor.Runnable {
 
 		err = supervisor.Run(ctx, "client", func(ctx context.Context) error {
 			supervisor.Signal(ctx, supervisor.SignalHealthy)
-			_, ack, err := client.Request(ctx)
+			lease, err := client.Request(ctx)
 			if err != nil {
 				// TODO(q3k): implement retry logic with full state machine
 				logger.Errorf("DHCP lease request failed: %v", err)
 				return err
 			}
-			newC <- parseAck(ack)
+			newC <- parseAck(lease.ACK)
 			supervisor.Signal(ctx, supervisor.SignalDone)
 			return nil
 		})
