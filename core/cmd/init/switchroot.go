@@ -25,14 +25,15 @@ import (
 	"strings"
 	"syscall"
 
-	"go.uber.org/zap"
+	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
+
 	"golang.org/x/sys/unix"
 )
 
 // switchRoot moves the root from initramfs into a tmpfs
 // This is necessary because you cannot pivot_root from a initramfs (and runsc wants to do that).
 // In the future, we should instead use something like squashfs instead of an initramfs and just nuke this.
-func switchRoot(log *zap.Logger) error {
+func switchRoot(log logtree.LeveledLogger) error {
 	// We detect the need to remount to tmpfs over env vars.
 	// The first run of /init (from initramfs) will not have this var, and will be re-exec'd from a new tmpfs root with
 	// that variable set.
@@ -78,7 +79,10 @@ func switchRoot(log *zap.Logger) error {
 		return fmt.Errorf("could not list root files: %w", err)
 	}
 
-	log.Info("Copying to tmpfs", zap.Strings("paths", paths), zap.Strings("dirs", dirs))
+	log.Info("Copying paths to tmpfs:")
+	for _, p := range paths {
+		log.Infof(" - %s", p)
+	}
 
 	// Make new root at /mnt
 	if err := os.Mkdir("/mnt", 0755); err != nil {

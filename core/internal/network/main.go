@@ -27,12 +27,12 @@ import (
 	"github.com/google/nftables/expr"
 
 	"github.com/vishvananda/netlink"
-	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/network/dhcp"
 	"git.monogon.dev/source/nexantic.git/core/internal/network/dns"
+	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
 )
 
 const (
@@ -44,7 +44,7 @@ type Service struct {
 	config Config
 	dhcp   *dhcp.Client
 
-	logger *zap.Logger
+	logger logtree.LeveledLogger
 }
 
 type Config struct {
@@ -87,7 +87,7 @@ func (s *Service) addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP)
 	}
 
 	if gw.IsUnspecified() {
-		s.logger.Info("No default route set, only local network will be reachable", zap.String("local", addr.String()))
+		s.logger.Infof("No default route set, only local network %s will be reachable", addr.String())
 		return nil
 	}
 
@@ -123,7 +123,7 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 	s.config.CorednsRegistrationChan <- dns.NewUpstreamDirective(status.DNS)
 
 	if err := s.addNetworkRoutes(iface, status.Address, status.Gateway); err != nil {
-		s.logger.Warn("failed to add routes", zap.Error(err))
+		s.logger.Warning("Failed to add routes: %v", err)
 	}
 
 	c := nftables.Conn{}
@@ -179,12 +179,12 @@ func (s *Service) Run(ctx context.Context) error {
 	supervisor.Run(ctx, "interfaces", s.runInterfaces)
 
 	if err := ioutil.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1\n"), 0644); err != nil {
-		logger.Panic("Failed to enable IPv4 forwarding", zap.Error(err))
+		logger.Fatalf("Failed to enable IPv4 forwarding: %v", err)
 	}
 
 	// We're handling all DNS requests with CoreDNS, including local ones
 	if err := setResolvconf([]net.IP{{127, 0, 0, 1}}, []string{}); err != nil {
-		logger.Warn("failed to set resolvconf", zap.Error(err))
+		logger.Fatalf("Failed to set resolv.conf: %v", err)
 	}
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
@@ -198,7 +198,7 @@ func (s *Service) runInterfaces(ctx context.Context) error {
 
 	links, err := netlink.LinkList()
 	if err != nil {
-		s.logger.Fatal("Failed to list network links", zap.Error(err))
+		s.logger.Fatalf("Failed to list network links: %s", err)
 	}
 
 	var ethernetLinks []netlink.Link
@@ -211,16 +211,16 @@ func (s *Service) runInterfaces(ctx context.Context) error {
 				}
 				ethernetLinks = append(ethernetLinks, link)
 			} else {
-				s.logger.Info("Ignoring non-Ethernet interface", zap.String("interface", attrs.Name))
+				s.logger.Infof("Ignoring non-Ethernet interface %s", attrs.Name)
 			}
 		} else if link.Attrs().Name == "lo" {
 			if err := netlink.LinkSetUp(link); err != nil {
-				s.logger.Error("Failed to take up loopback interface", zap.Error(err))
+				s.logger.Errorf("Failed to bring up loopback interface: %v", err)
 			}
 		}
 	}
 	if len(ethernetLinks) != 1 {
-		s.logger.Warn("Network service needs exactly one link, bailing")
+		s.logger.Warningf("Network service needs exactly one link, bailing")
 	} else {
 		link := ethernetLinks[0]
 		if err := s.useInterface(ctx, link); err != nil {

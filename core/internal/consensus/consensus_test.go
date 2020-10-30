@@ -26,8 +26,6 @@ import (
 	"testing"
 	"time"
 
-	"go.uber.org/zap"
-
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/localstorage"
 	"git.monogon.dev/source/nexantic.git/core/internal/localstorage/declarative"
@@ -38,7 +36,6 @@ type boilerplate struct {
 	ctx    context.Context
 	ctxC   context.CancelFunc
 	root   *localstorage.Root
-	logger *zap.Logger
 	tmpdir string
 }
 
@@ -56,13 +53,10 @@ func prep(t *testing.T) *boilerplate {
 	os.MkdirAll(root.Data.Etcd.FullPath(), 0700)
 	os.MkdirAll(root.Ephemeral.Consensus.FullPath(), 0700)
 
-	logger, _ := zap.NewDevelopment()
-
 	return &boilerplate{
 		ctx:    ctx,
 		ctxC:   ctxC,
 		root:   root,
-		logger: logger,
 		tmpdir: tmp,
 	}
 }
@@ -99,7 +93,7 @@ func TestBootstrap(t *testing.T) {
 		Port:           common.MustConsume(common.AllocateTCPPort()),
 	})
 
-	supervisor.New(b.ctx, b.logger, etcd.Run)
+	supervisor.New(b.ctx, etcd.Run)
 	waitEtcd(t, etcd)
 
 	kv := etcd.KV("foo", "bar")
@@ -124,7 +118,7 @@ func TestMemberInfo(t *testing.T) {
 		ListenHost:     "127.0.0.1",
 		Port:           common.MustConsume(common.AllocateTCPPort()),
 	})
-	supervisor.New(b.ctx, b.logger, etcd.Run)
+	supervisor.New(b.ctx, etcd.Run)
 	waitEtcd(t, etcd)
 
 	id, name, err := etcd.MemberInfo(b.ctx)
@@ -170,7 +164,7 @@ func TestRestartFromDisk(t *testing.T) {
 			Port:           common.MustConsume(common.AllocateTCPPort()),
 		})
 		ctx, ctxC := context.WithCancel(b.ctx)
-		supervisor.New(ctx, b.logger, etcd.Run)
+		supervisor.New(ctx, etcd.Run)
 		waitEtcd(t, etcd)
 		kv := etcd.KV("foo", "bar")
 		if new {
@@ -215,7 +209,7 @@ func TestCRL(t *testing.T) {
 		ListenHost:     "127.0.0.1",
 		Port:           common.MustConsume(common.AllocateTCPPort()),
 	})
-	supervisor.New(b.ctx, b.logger, etcd.Run)
+	supervisor.New(b.ctx, etcd.Run)
 	waitEtcd(t, etcd)
 
 	etcd.stateMu.Lock()

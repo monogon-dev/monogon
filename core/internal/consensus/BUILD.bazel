@@ -14,8 +14,6 @@ go_library(
         "@io_etcd_go_etcd//clientv3/namespace:go_default_library",
         "@io_etcd_go_etcd//embed:go_default_library",
         "@org_uber_go_atomic//:go_default_library",
-        "@org_uber_go_zap//:go_default_library",
-        "@org_uber_go_zap//zapcore:go_default_library",
     ],
 )
 
@@ -28,6 +26,5 @@ go_test(
         "//core/internal/localstorage:go_default_library",
         "//core/internal/localstorage/declarative:go_default_library",
         "//golibs/common:go_default_library",
-        "@org_uber_go_zap//:go_default_library",
     ],
 )

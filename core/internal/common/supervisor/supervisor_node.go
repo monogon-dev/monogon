@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/cenkalti/backoff/v4"
-	"go.uber.org/zap"
 )
 
 // node is a supervision tree node. It represents the state of a Runnable within this tree, its relation to other tree
@@ -280,9 +279,4 @@ func (n *node) signal(signal SignalType) {
 		n.state = nodeStateDone
 		n.bo.Reset()
 	}
-}
-
-// getLogger creates a new logger for a given supervisor node, to be used by its runnable.
-func (n *node) getLogger() *zap.Logger {
-	return n.sup.logger.Named(n.dn())
 }

@@ -26,7 +26,6 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"github.com/vishvananda/netlink"
-	"go.uber.org/zap"
 )
 
 type Client struct {
@@ -88,7 +87,7 @@ func (c *Client) Run(iface netlink.Link) supervisor.Runnable {
 			_, ack, err := client.Request(ctx)
 			if err != nil {
 				// TODO(q3k): implement retry logic with full state machine
-				logger.Error("DHCP lease request failed", zap.Error(err))
+				logger.Errorf("DHCP lease request failed: %v", err)
 				return err
 			}
 			newC <- parseAck(ack)
@@ -116,7 +115,7 @@ func (c *Client) Run(iface netlink.Link) supervisor.Runnable {
 
 			case cfg := <-newC:
 				current = cfg
-				logger.Info("DHCP client ASSIGNED", zap.String("ip", current.String()))
+				logger.Info("DHCP client ASSIGNED IP %s", current.String())
 				for _, w := range waiters {
 					w.fulfill(current)
 				}

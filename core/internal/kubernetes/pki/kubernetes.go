@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"net"
 
-	"go.uber.org/zap"
+	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
 
 	"go.etcd.io/etcd/clientv3"
 	"k8s.io/client-go/tools/clientcmd"
@@ -77,12 +77,12 @@ const (
 // KubernetesPKI manages all PKI resources required to run Kubernetes on Smalltown. It contains all static certificates,
 // which can be retrieved, or be used to generate Kubeconfigs from.
 type KubernetesPKI struct {
-	logger       *zap.Logger
+	logger       logtree.LeveledLogger
 	KV           clientv3.KV
 	Certificates map[KubeCertificateName]*Certificate
 }
 
-func NewKubernetes(l *zap.Logger, kv clientv3.KV) *KubernetesPKI {
+func NewKubernetes(l logtree.LeveledLogger, kv clientv3.KV) *KubernetesPKI {
 	pki := KubernetesPKI{
 		logger:       l,
 		KV:           kv,
@@ -121,7 +121,7 @@ func NewKubernetes(l *zap.Logger, kv clientv3.KV) *KubernetesPKI {
 // EnsureAll ensures that all static certificates (and the serviceaccount key) are present on etcd.
 func (k *KubernetesPKI) EnsureAll(ctx context.Context) error {
 	for n, v := range k.Certificates {
-		k.logger.Info("ensureing certificate existence", zap.String("name", string(n)))
+		k.logger.Infof("Ensuring %s exists", string(n))
 		_, _, err := v.Ensure(ctx, k.KV)
 		if err != nil {
 			return fmt.Errorf("could not ensure certificate %q exists: %w", n, err)

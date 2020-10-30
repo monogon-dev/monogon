@@ -24,15 +24,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	ctr "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
-	"go.uber.org/zap"
-
-	"git.monogon.dev/source/nexantic.git/core/internal/localstorage"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/core/internal/localstorage"
 	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
 )
 
@@ -75,7 +74,7 @@ func (s *Service) Run(ctx context.Context) error {
 				// debug logs) is not an issue for us.
 				time.Sleep(10 * time.Millisecond)
 			} else if err != nil {
-				logger.Error("gVisor log pump failed, stopping it", zap.Error(err))
+				logger.Errorf("gVisor log pump failed, stopping it: %v", err)
 				return // It's likely that this will busy-loop printing errors if it encounters one, so bail
 			}
 		}
@@ -111,7 +110,7 @@ func (s *Service) runPreseed(ctx context.Context) error {
 	}
 	for _, dir := range preseedNamespaceDirs {
 		if !dir.IsDir() {
-			logger.Warn("Non-Directory found in preseed folder, ignoring", zap.String("name", dir.Name()))
+			logger.Warningf("Non-Directory %q found in preseed folder, ignoring", dir.Name())
 			continue
 		}
 		namespace := dir.Name()
@@ -122,7 +121,7 @@ func (s *Service) runPreseed(ctx context.Context) error {
 		ctxWithNS := namespaces.WithNamespace(ctx, namespace)
 		for _, image := range images {
 			if image.IsDir() {
-				logger.Warn("Directory found in preseed namespaced folder, ignoring", zap.String("name", image.Name()))
+				logger.Warningf("Directory %q found in preseed namespaced folder, ignoring", image.Name())
 				continue
 			}
 			imageFile, err := os.Open(filepath.Join(preseedNamespacesDir, namespace, image.Name()))
@@ -140,8 +139,7 @@ func (s *Service) runPreseed(ctx context.Context) error {
 			for _, img := range importedImages {
 				importedImageNames = append(importedImageNames, img.Name)
 			}
-			logger.Info("Successfully imported preseeded bundle into containerd",
-				zap.String("namespace", namespace), zap.Strings("images", importedImageNames))
+			logger.Infof("Successfully imported preseeded bundle %s/%s into containerd", namespace, strings.Join(importedImageNames, ","))
 		}
 	}
 	supervisor.Signal(ctx, supervisor.SignalHealthy)

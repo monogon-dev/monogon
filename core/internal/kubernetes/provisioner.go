@@ -24,7 +24,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.uber.org/zap"
+	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
+
 	v1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
@@ -64,7 +65,7 @@ type csiProvisionerServer struct {
 	pvcInformer          coreinformers.PersistentVolumeClaimInformer
 	pvInformer           coreinformers.PersistentVolumeInformer
 	storageClassInformer storageinformers.StorageClassInformer
-	logger               *zap.Logger
+	logger               logtree.LeveledLogger
 }
 
 // runCSIProvisioner runs the main provisioning machinery. It consists of a bunch of informers which keep track of
@@ -144,7 +145,7 @@ func (p *csiProvisionerServer) isOurPV(pv *v1.PersistentVolume) bool {
 func (p *csiProvisionerServer) enqueueClaim(obj interface{}) {
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err != nil {
-		p.logger.Error("Not queuing PVC because key could not be derived", zap.Error(err))
+		p.logger.Errorf("Not queuing PVC because key could not be derived: %v", err)
 		return
 	}
 	p.claimQueue.Add(key)
@@ -154,7 +155,7 @@ func (p *csiProvisionerServer) enqueueClaim(obj interface{}) {
 func (p *csiProvisionerServer) enqueuePV(obj interface{}) {
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err != nil {
-		p.logger.Error("Not queuing PV because key could not be derived", zap.Error(err))
+		p.logger.Errorf("Not queuing PV because key could not be derived: %v", err)
 		return
 	}
 	p.pvQueue.Add(key)
@@ -174,13 +175,12 @@ func (p *csiProvisionerServer) processQueueItems(queue workqueue.RateLimitingInt
 			key, ok := obj.(string)
 			if !ok {
 				queue.Forget(obj)
-				p.logger.Error("Expected string in workqueue", zap.Any("actual", obj))
+				p.logger.Errorf("Expected string in workqueue, got %+v", obj)
 				return
 			}
 
 			if err := process(key); err != nil {
-				p.logger.Warn("Failed processing item, requeueing", zap.String("name", key),
-					zap.Int("num_requeues", queue.NumRequeues(obj)), zap.Error(err))
+				p.logger.Warningf("Failed processing item %q, requeueing (numrequeues: %d): %v", key, queue.NumRequeues(obj), err)
 				queue.AddRateLimited(obj)
 			}
 
@@ -263,7 +263,7 @@ func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, stora
 	volumeID := "pvc-" + string(pvc.ObjectMeta.UID)
 	volumePath := p.volumePath(volumeID)
 
-	p.logger.Info("Creating local PV", zap.String("volume-id", volumeID))
+	p.logger.Infof("Creating local PV %s", volumeID)
 	if err := os.Mkdir(volumePath, 0644); err != nil && !os.IsExist(err) {
 		return fmt.Errorf("failed to create volume directory: %w", err)
 	}
@@ -346,7 +346,7 @@ func (p *csiProvisionerServer) processPV(key string) error {
 	volumePath := p.volumePath(pv.Spec.CSI.VolumeHandle)
 
 	// Log deletes for auditing purposes
-	p.logger.Info("Deleting persistent volume", zap.String("name", pv.Spec.CSI.VolumeHandle))
+	p.logger.Infof("Deleting persistent volume %s", pv.Spec.CSI.VolumeHandle)
 	if err := fsquota.SetQuota(volumePath, 0, 0); err != nil {
 		// We record these here manually since a successful deletion removes the PV we'd be attaching them to
 		p.recorder.Eventf(pv, v1.EventTypeWarning, "DeprovisioningFailed", "Failed to remove quota: %v", err)

@@ -11,7 +11,6 @@ go_library(
         "//core/pkg/logbuffer:go_default_library",
         "@com_github_containerd_containerd//:go_default_library",
         "@com_github_containerd_containerd//namespaces:go_default_library",
-        "@org_uber_go_zap//:go_default_library",
     ],
 )
 

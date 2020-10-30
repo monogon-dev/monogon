@@ -28,8 +28,11 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
+
+	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
 
 	"git.monogon.dev/source/nexantic.git/core/pkg/sysfs"
 
@@ -39,7 +42,6 @@ import (
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpmutil"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 )
 
@@ -114,7 +116,7 @@ var lock sync.Mutex
 
 // TPM represents a high-level interface to a connected TPM 2.0
 type TPM struct {
-	logger *zap.Logger
+	logger logtree.LeveledLogger
 	device io.ReadWriteCloser
 
 	// We keep the AK loaded since it's used fairly often and deriving it is expensive
@@ -124,7 +126,7 @@ type TPM struct {
 
 // Initialize finds and opens the TPM (if any). If there is no TPM available it returns
 // ErrNotExists
-func Initialize(logger *zap.Logger) error {
+func Initialize(logger logtree.LeveledLogger) error {
 	lock.Lock()
 	defer lock.Unlock()
 	tpmDir, err := os.Open("/sys/class/tpm")
@@ -143,7 +145,7 @@ func Initialize(logger *zap.Logger) error {
 	}
 	if len(tpms) > 1 {
 		// If this is changed GetMeasurementLog() needs to be updated too
-		logger.Warn("Found more than one TPM, using the first one")
+		logger.Warningf("Found more than one TPM, using the first one")
 	}
 	tpmName := tpms[0]
 	ueventData, err := sysfs.ReadUevents(filepath.Join("/sys/class/tpm", tpmName, "uevent"))
@@ -243,7 +245,11 @@ func Unseal(data []byte) ([]byte, error) {
 		return []byte{}, errors.Wrap(err, "failed to decode sealed data")
 	}
 	// Logging this for auditing purposes
-	tpm.logger.Info("Attempting to unseal data protected with PCRs", zap.Int32s("pcrs", sealedKey.Pcrs))
+	pcrList := []string{}
+	for _, pcr := range sealedKey.Pcrs {
+		pcrList = append(pcrList, string(pcr))
+	}
+	tpm.logger.Infof("Attempting to unseal data protected with PCRs %s", strings.Join(pcrList, ","))
 	unsealedData, err := srk.Unseal(&sealedKey)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "failed to unseal data")

@@ -33,12 +33,13 @@ import (
 	"net"
 	"os"
 
+	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
+
 	"k8s.io/client-go/informers"
 
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/vishvananda/netlink"
-	"go.uber.org/zap"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	corev1 "k8s.io/api/core/v1"
@@ -66,7 +67,7 @@ type Service struct {
 
 	wgClient *wgctrl.Client
 	privKey  wgtypes.Key
-	logger   *zap.Logger
+	logger   logtree.LeveledLogger
 }
 
 // ensureNode creates/updates the corresponding WireGuard peer entry for the given node objet
@@ -87,12 +88,12 @@ func (s *Service) ensureNode(newNode *corev1.Node) error {
 	for _, addr := range newNode.Status.Addresses {
 		if addr.Type == corev1.NodeInternalIP {
 			if internalIP != nil {
-				s.logger.Warn("More than one NodeInternalIP specified, using the first one")
+				s.logger.Warningf("More than one NodeInternalIP specified, using the first one")
 				break
 			}
 			internalIP = net.ParseIP(addr.Address)
 			if internalIP == nil {
-				s.logger.Warn("failed to parse Internal IP")
+				s.logger.Warningf("Failed to parse Internal IP %s", addr.Address)
 			}
 		}
 	}
@@ -103,14 +104,13 @@ func (s *Service) ensureNode(newNode *corev1.Node) error {
 	for _, podNetStr := range newNode.Spec.PodCIDRs {
 		_, podNet, err := net.ParseCIDR(podNetStr)
 		if err != nil {
-			s.logger.Warn("Node PodCIDR failed to parse, ignored", zap.Error(err), zap.String("node", newNode.Name))
+			s.logger.Warningf("Node %s PodCIDR failed to parse, ignored: %v", newNode.Name, err)
 			continue
 		}
 		allowedIPs = append(allowedIPs, *podNet)
 	}
 	allowedIPs = append(allowedIPs, net.IPNet{IP: internalIP, Mask: net.CIDRMask(32, 32)})
-	s.logger.Debug("Adding/Updating WireGuard peer node", zap.String("node", newNode.Name),
-		zap.String("endpointIP", internalIP.String()), zap.Any("allowedIPs", allowedIPs))
+	s.logger.V(1).Infof("Adding/Updating WireGuard peer node %s, endpoint %s, allowedIPs %+v", newNode.Name, internalIP.String(), allowedIPs)
 	// WireGuard's kernel side has create/update semantics on peers by default. So we can just add the peer multiple
 	// times to update it.
 	err = s.wgClient.ConfigureDevice(clusterNetDeviceName, wgtypes.Config{
@@ -244,31 +244,31 @@ func (s *Service) Run(ctx context.Context) error {
 		AddFunc: func(new interface{}) {
 			newNode, ok := new.(*corev1.Node)
 			if !ok {
-				logger.Error("Received non-node item in node event handler", zap.Reflect("item", new))
+				logger.Errorf("Received non-node item %+v in node event handler", new)
 				return
 			}
 			if err := s.ensureNode(newNode); err != nil {
-				logger.Warn("Failed to sync node", zap.Error(err))
+				logger.Warningf("Failed to sync node: %v", err)
 			}
 		},
 		UpdateFunc: func(old, new interface{}) {
 			newNode, ok := new.(*corev1.Node)
 			if !ok {
-				logger.Error("Received non-node item in node event handler", zap.Reflect("item", new))
+				logger.Errorf("Received non-node item %+v in node event handler", new)
 				return
 			}
 			if err := s.ensureNode(newNode); err != nil {
-				logger.Warn("Failed to sync node", zap.Error(err))
+				logger.Warningf("Failed to sync node: %v", err)
 			}
 		},
 		DeleteFunc: func(old interface{}) {
 			oldNode, ok := old.(*corev1.Node)
 			if !ok {
-				logger.Error("Received non-node item in node event handler", zap.Reflect("item", oldNode))
+				logger.Errorf("Received non-node item %+v in node event handler", oldNode)
 				return
 			}
 			if err := s.removeNode(oldNode); err != nil {
-				logger.Warn("Failed to sync node", zap.Error(err))
+				logger.Warningf("Failed to sync node: %v", err)
 			}
 		},
 	})

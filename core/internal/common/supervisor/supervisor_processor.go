@@ -22,8 +22,6 @@ import (
 	"fmt"
 	"runtime/debug"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 // The processor maintains runnable goroutines - ie., when requested will start one, and then once it exists it will
@@ -76,7 +74,7 @@ func (s *supervisor) processor(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			s.ilogger.Info("supervisor processor exiting...", zap.Error(ctx.Err()))
+			s.ilogger.Infof("supervisor processor exiting: %v", ctx.Err())
 			s.processKill()
 			s.ilogger.Info("supervisor exited")
 			return
@@ -213,7 +211,7 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 		err = fmt.Errorf("returned error when %s: %w", n.state, err)
 	}
 
-	s.ilogger.Error("Runnable died", zap.String("dn", n.dn()), zap.Error(err))
+	s.ilogger.Errorf("Runnable %s died: %v", n.dn(), err)
 	// Mark as dead.
 	n.state = nodeStateDead
 
@@ -393,7 +391,7 @@ func (s *supervisor) processGC() {
 
 		// Prepare node for rescheduling - remove its children, reset its state to new.
 		n.reset()
-		s.ilogger.Info("rescheduling supervised node", zap.String("dn", dn), zap.Duration("backoff", bo))
+		s.ilogger.Infof("rescheduling supervised node %s with backoff %s", dn, bo.String())
 
 		// Reschedule node runnable to run after backoff.
 		go func(n *node, bo time.Duration) {

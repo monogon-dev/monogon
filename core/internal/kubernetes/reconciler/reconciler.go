@@ -31,7 +31,6 @@ import (
 
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -120,7 +119,7 @@ func Run(clientSet kubernetes.Interface) supervisor.Runnable {
 		reconcileAll := func() {
 			for name, resource := range resources {
 				if err := reconcile(ctx, resource); err != nil {
-					log.Warn("Failed to reconcile built-in resources", zap.String("kind", name), zap.Error(err))
+					log.Warningf("Failed to reconcile built-in resources %s: %v", name, err)
 				}
 			}
 		}

@@ -24,9 +24,10 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
+
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/protobuf/ptypes/wrappers"
-	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -49,7 +50,7 @@ type csiPluginServer struct {
 	KubeletDirectory *localstorage.DataKubernetesKubeletDirectory
 	VolumesDirectory *localstorage.DataVolumesDirectory
 
-	logger *zap.Logger
+	logger logtree.LeveledLogger
 }
 
 func (s *csiPluginServer) Run(ctx context.Context) error {
@@ -240,7 +241,7 @@ func (s *csiPluginServer) GetInfo(ctx context.Context, req *pluginregistration.I
 
 func (s *csiPluginServer) NotifyRegistrationStatus(ctx context.Context, req *pluginregistration.RegistrationStatus) (*pluginregistration.RegistrationStatusResponse, error) {
 	if req.Error != "" {
-		s.logger.Warn("Kubelet failed registering CSI plugin", zap.String("error", req.Error))
+		s.logger.Warningf("Kubelet failed registering CSI plugin: %v", req.Error)
 	}
 	return &pluginregistration.RegistrationStatusResponse{}, nil
 }

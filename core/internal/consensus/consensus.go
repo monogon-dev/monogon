@@ -43,8 +43,6 @@ import (
 	"go.etcd.io/etcd/clientv3/namespace"
 	"go.etcd.io/etcd/embed"
 	"go.uber.org/atomic"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
@@ -157,13 +155,9 @@ func (s *Service) configure(ctx context.Context) (*embed.Config, error) {
 		cfg.InitialCluster = s.config.InitialCluster
 	}
 
-	logger := supervisor.Logger(ctx)
+	// TODO(q3k): pipe logs from etcd to supervisor.RawLogger via a file.
 	cfg.Logger = DefaultLogger
-	cfg.ZapLoggerBuilder = embed.NewZapCoreLoggerBuilder(
-		logger.With(zap.String("component", "etcd")).WithOptions(zap.IncreaseLevel(zapcore.WarnLevel)),
-		logger.Core(),
-		nil,
-	)
+	cfg.LogOutputs = []string{"stderr"}
 
 	return cfg, nil
 }
@@ -354,9 +348,9 @@ func (s *Service) autopromoter(ctx context.Context) error {
 			// Luckily etcd already does sanity checks internally and will refuse to promote nodes that aren't
 			// connected or are still behind on transactions.
 			if _, err := st.etcd.Server.PromoteMember(ctx, uint64(member.ID)); err != nil {
-				supervisor.Logger(ctx).Info("Failed to promote consensus node", zap.String("node", member.Name), zap.Error(err))
+				supervisor.Logger(ctx).Infof("Failed to promote consensus node %s: %v", member.Name, err)
 			} else {
-				supervisor.Logger(ctx).Info("Promoted new consensus node", zap.String("node", member.Name))
+				supervisor.Logger(ctx).Infof("Promoted new consensus node %s", member.Name)
 			}
 		}
 	}

@@ -22,9 +22,10 @@ package supervisor
 
 import (
 	"context"
+	"io"
 	"sync"
 
-	"go.uber.org/zap"
+	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
 )
 
 // A Runnable is a function that will be run in a goroutine, and supervised throughout its lifetime. It can in turn
@@ -70,14 +71,6 @@ const (
 	SignalDone
 )
 
-// Logger returns a Zap logger that will be named after the Distinguished Name of a the runnable (ie its place in the
-// supervision tree, dot-separated).
-func Logger(ctx context.Context) *zap.Logger {
-	node, unlock := fromContext(ctx)
-	defer unlock()
-	return node.getLogger()
-}
-
 // supervisor represents and instance of the supervision system. It keeps track of a supervision tree and a request
 // channel to its internal processor goroutine.
 type supervisor struct {
@@ -86,10 +79,10 @@ type supervisor struct {
 	// root is the root node of the supervision tree, named 'root'. It represents the Runnable started with the
 	// supervisor.New call.
 	root *node
-	// logger is the Zap logger used to create loggers available to runnables.
-	logger *zap.Logger
-	// ilogger is the Zap logger used for internal logging by the supervisor.
-	ilogger *zap.Logger
+	// logtree is the main logtree exposed to runnables and used internally.
+	logtree *logtree.LogTree
+	// ilogger is the internal logger logging to "supervisor" in the logtree.
+	ilogger logtree.LeveledLogger
 
 	// pReq is an interface channel to the lifecycle processor of the supervisor.
 	pReq chan *processorRequest
@@ -109,12 +102,17 @@ var (
 	}
 )
 
+func WithExistingLogtree(lt *logtree.LogTree) SupervisorOpt {
+	return func(s *supervisor) {
+		s.logtree = lt
+	}
+}
+
 // New creates a new supervisor with its root running the given root runnable.
 // The given context can be used to cancel the entire supervision tree.
-func New(ctx context.Context, logger *zap.Logger, rootRunnable Runnable, opts ...SupervisorOpt) *supervisor {
+func New(ctx context.Context, rootRunnable Runnable, opts ...SupervisorOpt) *supervisor {
 	sup := &supervisor{
-		logger:  logger,
-		ilogger: logger.Named("supervisor"),
+		logtree: logtree.New(),
 		pReq:    make(chan *processorRequest),
 	}
 
@@ -122,6 +120,7 @@ func New(ctx context.Context, logger *zap.Logger, rootRunnable Runnable, opts ..
 		o(sup)
 	}
 
+	sup.ilogger = sup.logtree.MustLeveledFor("supervisor")
 	sup.root = newNode("root", rootRunnable, sup, nil)
 
 	go sup.processor(ctx)
@@ -131,4 +130,16 @@ func New(ctx context.Context, logger *zap.Logger, rootRunnable Runnable, opts ..
 	}
 
 	return sup
+}
+
+func Logger(ctx context.Context) logtree.LeveledLogger {
+	node, unlock := fromContext(ctx)
+	defer unlock()
+	return node.sup.logtree.MustLeveledFor(logtree.DN(node.dn()))
+}
+
+func RawLogger(ctx context.Context) io.Writer {
+	node, unlock := fromContext(ctx)
+	defer unlock()
+	return node.sup.logtree.MustRawFor(logtree.DN(node.dn()))
 }

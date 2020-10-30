@@ -25,13 +25,13 @@ go_library(
         "//core/internal/localstorage/declarative:go_default_library",
         "//core/internal/network:go_default_library",
         "//core/internal/network/dns:go_default_library",
+        "//core/pkg/logtree:go_default_library",
         "//core/pkg/tpm:go_default_library",
         "//core/proto/api:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//codes:go_default_library",
         "@org_golang_google_grpc//status:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
-        "@org_uber_go_zap//:go_default_library",
     ],
 )
 

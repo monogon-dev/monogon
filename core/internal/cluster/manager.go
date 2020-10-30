@@ -32,7 +32,6 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/golang/protobuf/proto"
 	"go.etcd.io/etcd/clientv3"
-	"go.uber.org/zap"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
@@ -150,14 +149,13 @@ func (m *Manager) next(ctx context.Context, n State) {
 	defer m.stateLock.Unlock()
 
 	if !m.allowed(m.state, n) {
-		supervisor.Logger(ctx).Error("Attempted invalid enrolment state transition, failing enrolment",
-			zap.String("from", m.state.String()), zap.String("to", m.state.String()))
+		supervisor.Logger(ctx).Errorf("Attempted invalid enrolment state transition, failing enrolment; from: %s, to: %s",
+			m.state.String(), n.String())
 		m.state = StateFailed
 		return
 	}
 
-	supervisor.Logger(ctx).Info("Enrolment state change",
-		zap.String("from", m.state.String()), zap.String("to", n.String()))
+	supervisor.Logger(ctx).Infof("Enrolment state change; from: %s, to: %s", m.state.String(), n.String())
 
 	m.state = n
 }
@@ -206,7 +204,7 @@ func (m *Manager) wakeWaiters() {
 // Run is the runnable of the Manager, to be started using the Supervisor. It is one-shot, and should not be restarted.
 func (m *Manager) Run(ctx context.Context) error {
 	if state := m.State(); state != StateNew {
-		supervisor.Logger(ctx).Error("Manager started with non-New state, failing", zap.String("state", state.String()))
+		supervisor.Logger(ctx).Errorf("Manager started with non-New state %s, failing", state.String())
 		m.stateLock.Lock()
 		m.state = StateFailed
 		m.wakeWaiters()
@@ -236,7 +234,7 @@ func (m *Manager) Run(ctx context.Context) error {
 		}
 
 		if state == m.State() && !m.allowed(state, m.State()) {
-			supervisor.Logger(ctx).Error("Enrolment got stuck, failing", zap.String("state", m.state.String()))
+			supervisor.Logger(ctx).Errorf("Enrolment got stuck at %s, failing", m.state.String())
 			m.stateLock.Lock()
 			m.state = StateFailed
 			m.stateLock.Unlock()
@@ -248,7 +246,7 @@ func (m *Manager) Run(ctx context.Context) error {
 	m.stateLock.Lock()
 	state := m.state
 	if state != StateRunning {
-		supervisor.Logger(ctx).Error("Enrolment failed", zap.Error(err), zap.String("state", m.state.String()))
+		supervisor.Logger(ctx).Errorf("Enrolment failed at %s: %v", m.state.String(), err)
 	} else {
 		supervisor.Logger(ctx).Info("Enrolment successful!")
 	}
@@ -317,7 +315,7 @@ func (m *Manager) stateCreatingCluster(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("when getting IP address: %w", err)
 	}
-	logger.Info("Creating new cluster: got IP address", zap.String("address", ip.String()))
+	logger.Infof("Creating new cluster: got IP address %s", ip.String())
 
 	logger.Info("Creating new cluster: initializing storage...")
 	cuk, err := m.storageRoot.Data.MountNew(&m.storageRoot.ESP.LocalUnlock)
@@ -411,7 +409,7 @@ func (m *Manager) stateCharlie(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("when getting IP address: %w", err)
 	}
-	supervisor.Logger(ctx).Info("Joining cluster: got IP address", zap.String("address", ip.String()))
+	supervisor.Logger(ctx).Info("Joining cluster: got IP address %s", ip.String())
 
 	supervisor.Logger(ctx).Info("Joining cluster: initializing storage...")
 	cuk, err := m.storageRoot.Data.MountNew(&m.storageRoot.ESP.LocalUnlock)
@@ -448,8 +446,7 @@ func (m *Manager) stateCharlie(ctx context.Context) error {
 	}
 	initialCluster = append(initialCluster, https(t.This))
 
-	supervisor.Logger(ctx).Info("Joining cluster: starting etcd join...",
-		zap.String("initial_cluster", strings.Join(initialCluster, ",")), zap.String("name", node.ID()))
+	supervisor.Logger(ctx).Infof("Joining cluster: starting etcd join, name: %s, initial_cluster: %s", node.ID(), strings.Join(initialCluster, ","))
 	m.consensus = consensus.New(consensus.Config{
 		Data:           &m.storageRoot.Data.Etcd,
 		Ephemeral:      &m.storageRoot.Ephemeral.Consensus,

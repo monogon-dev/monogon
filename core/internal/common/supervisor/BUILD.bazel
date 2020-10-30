@@ -12,9 +12,9 @@ go_library(
     importpath = "git.monogon.dev/source/nexantic.git/core/internal/common/supervisor",
     visibility = ["//core:__subpackages__"],
     deps = [
+        "//core/pkg/logtree:go_default_library",
         "@com_github_cenkalti_backoff_v4//:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
-        "@org_uber_go_zap//:go_default_library",
     ],
 )
 
@@ -22,5 +22,4 @@ go_test(
     name = "go_default_test",
     srcs = ["supervisor_test.go"],
     embed = [":go_default_library"],
-    deps = ["@org_uber_go_zap//:go_default_library"],
 )

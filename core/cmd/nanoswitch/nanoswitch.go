@@ -36,7 +36,6 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/vishvananda/netlink"
-	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
@@ -73,7 +72,7 @@ func runDHCPServer(link netlink.Link) supervisor.Runnable {
 			}
 			reply, err := dhcpv4.NewReplyFromRequest(m)
 			if err != nil {
-				supervisor.Logger(ctx).Warn("Failed to generate DHCP reply", zap.Error(err))
+				supervisor.Logger(ctx).Warningf("Failed to generate DHCP reply: %v", err)
 				return
 			}
 			reply.UpdateOption(dhcpv4.OptServerIdentifier(switchIP))
@@ -85,7 +84,7 @@ func runDHCPServer(link netlink.Link) supervisor.Runnable {
 				defaultLeaseOptions(reply)
 				currentIP[3]++ // Works only because it's a /24
 				reply.YourIPAddr = currentIP
-				supervisor.Logger(ctx).Info("Replying with DHCP IP", zap.String("ip", reply.YourIPAddr.String()))
+				supervisor.Logger(ctx).Infof("Replying with DHCP IP %s", reply.YourIPAddr.String())
 			case dhcpv4.MessageTypeRequest:
 				reply.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
 				defaultLeaseOptions(reply)
@@ -94,7 +93,7 @@ func runDHCPServer(link netlink.Link) supervisor.Runnable {
 				supervisor.Logger(ctx).Info("Ignoring Release/Decline")
 			}
 			if _, err := conn.WriteTo(reply.ToBytes(), peer); err != nil {
-				supervisor.Logger(ctx).Warn("Cannot reply to client", zap.Error(err))
+				supervisor.Logger(ctx).Warningf("Cannot reply to client: %v", err)
 			}
 		})
 		if err != nil {
@@ -134,7 +133,7 @@ func userspaceProxy(targetIP net.IP, port uint16) supervisor.Runnable {
 				defer conn.Close()
 				upstreamConn, err := net.DialTCP("tcp", nil, &net.TCPAddr{IP: targetIP, Port: int(port)})
 				if err != nil {
-					logger.Info("Userspace proxy failed to connect to upstream", zap.Error(err))
+					logger.Infof("Userspace proxy failed to connect to upstream: %v", err)
 					return
 				}
 				defer upstreamConn.Close()
@@ -175,12 +174,7 @@ func nfifname(n string) []byte {
 }
 
 func main() {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-
-	supervisor.New(context.Background(), logger, func(ctx context.Context) error {
+	supervisor.New(context.Background(), func(ctx context.Context) error {
 		logger := supervisor.Logger(ctx)
 		logger.Info("Starting NanoSwitch, a tiny TOR switch emulator")
 
@@ -207,7 +201,7 @@ func main() {
 
 		links, err := netlink.LinkList()
 		if err != nil {
-			logger.Panic("Failed to list links", zap.Error(err))
+			logger.Fatalf("Failed to list links: %v", err)
 		}
 		var externalLink netlink.Link
 		var vmLinks []netlink.Link
@@ -226,16 +220,16 @@ func main() {
 		}
 		vmBridgeLink := &netlink.Bridge{LinkAttrs: netlink.LinkAttrs{Name: "vmbridge", Flags: net.FlagUp}}
 		if err := netlink.LinkAdd(vmBridgeLink); err != nil {
-			logger.Panic("Failed to create vmbridge", zap.Error(err))
+			logger.Fatalf("Failed to create vmbridge: %v", err)
 		}
 		for _, link := range vmLinks {
 			if err := netlink.LinkSetMaster(link, vmBridgeLink); err != nil {
-				logger.Panic("Failed to add VM interface to bridge", zap.Error(err))
+				logger.Fatalf("Failed to add VM interface to bridge: %v", err)
 			}
-			logger.Info("Assigned interface to bridge", zap.String("if", link.Attrs().Name))
+			logger.Infof("Assigned interface %s to bridge", link.Attrs().Name)
 		}
 		if err := netlink.AddrReplace(vmBridgeLink, &netlink.Addr{IPNet: &net.IPNet{IP: switchIP, Mask: switchSubnetMask}}); err != nil {
-			logger.Panic("Failed to assign static IP to vmbridge")
+			logger.Fatalf("Failed to assign static IP to vmbridge: %v", err)
 		}
 		if externalLink != nil {
 			nat := c.AddTable(&nftables.Table{
@@ -273,7 +267,7 @@ func main() {
 			dhcpClient := dhcp.New()
 			supervisor.Run(ctx, "dhcp-client", dhcpClient.Run(externalLink))
 			if err := ioutil.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1\n"), 0644); err != nil {
-				logger.Panic("Failed to write ip forwards", zap.Error(err))
+				logger.Fatalf("Failed to write ip forwards: %v", err)
 			}
 			status, err := dhcpClient.Status(ctx, true)
 			if err != nil {

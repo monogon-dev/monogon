@@ -12,6 +12,5 @@ go_library(
         "//core/internal/common/supervisor:go_default_library",
         "//core/pkg/fileargs:go_default_library",
         "//core/pkg/logbuffer:go_default_library",
-        "@org_uber_go_zap//:go_default_library",
     ],
 )

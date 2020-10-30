@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"testing"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 func runnableBecomesHealthy(healthy, done chan struct{}) Runnable {
@@ -182,10 +180,9 @@ func TestSimple(t *testing.T) {
 	h2 := make(chan struct{})
 	d2 := make(chan struct{})
 
-	log, _ := zap.NewDevelopment()
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
-	s := New(ctx, log, func(ctx context.Context) error {
+	s := New(ctx, func(ctx context.Context) error {
 		err := RunGroup(ctx, map[string]Runnable{
 			"one": runnableBecomesHealthy(h1, d1),
 			"two": runnableBecomesHealthy(h2, d2),
@@ -217,10 +214,9 @@ func TestSimpleFailure(t *testing.T) {
 	d1 := make(chan struct{})
 	two := newRC()
 
-	log, _ := zap.NewDevelopment()
 	ctx, ctxC := context.WithTimeout(context.Background(), 10*time.Second)
 	defer ctxC()
-	s := New(ctx, log, func(ctx context.Context) error {
+	s := New(ctx, func(ctx context.Context) error {
 		err := RunGroup(ctx, map[string]Runnable{
 			"one": runnableBecomesHealthy(h1, d1),
 			"two": two.runnable(),
@@ -266,11 +262,9 @@ func TestDeepFailure(t *testing.T) {
 	d1 := make(chan struct{})
 	two := newRC()
 
-	log, _ := zap.NewDevelopment()
-
 	ctx, ctxC := context.WithTimeout(context.Background(), 10*time.Second)
 	defer ctxC()
-	s := New(ctx, log, func(ctx context.Context) error {
+	s := New(ctx, func(ctx context.Context) error {
 		err := RunGroup(ctx, map[string]Runnable{
 			"one": runnableSpawnsMore(h1, d1, 5),
 			"two": two.runnable(),
@@ -315,10 +309,9 @@ func TestPanic(t *testing.T) {
 	d1 := make(chan struct{})
 	two := newRC()
 
-	log, _ := zap.NewDevelopment()
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
-	s := New(ctx, log, func(ctx context.Context) error {
+	s := New(ctx, func(ctx context.Context) error {
 		err := RunGroup(ctx, map[string]Runnable{
 			"one": runnableBecomesHealthy(h1, d1),
 			"two": two.runnable(),
@@ -359,10 +352,9 @@ func TestPanic(t *testing.T) {
 }
 
 func TestMultipleLevelFailure(t *testing.T) {
-	log, _ := zap.NewDevelopment()
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
-	New(ctx, log, func(ctx context.Context) error {
+	New(ctx, func(ctx context.Context) error {
 		err := RunGroup(ctx, map[string]Runnable{
 			"one": runnableSpawnsMore(nil, nil, 4),
 			"two": runnableSpawnsMore(nil, nil, 4),
@@ -379,11 +371,10 @@ func TestMultipleLevelFailure(t *testing.T) {
 func TestBackoff(t *testing.T) {
 	one := newRC()
 
-	log, _ := zap.NewDevelopment()
 	ctx, ctxC := context.WithTimeout(context.Background(), 20*time.Second)
 	defer ctxC()
 
-	s := New(ctx, log, func(ctx context.Context) error {
+	s := New(ctx, func(ctx context.Context) error {
 		if err := Run(ctx, "one", one.runnable()); err != nil {
 			return err
 		}
@@ -485,10 +476,9 @@ func TestResilience(t *testing.T) {
 		}
 	}
 
-	log, _ := zap.NewDevelopment()
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
-	New(ctx, log, func(ctx context.Context) error {
+	New(ctx, func(ctx context.Context) error {
 		RunGroup(ctx, map[string]Runnable{
 			"one":        one,
 			"oneSibling": oneSibling.runnable(),
@@ -538,12 +528,10 @@ func ExampleNew() {
 		return nil
 	}
 
-	log, _ := zap.NewDevelopment()
-
 	// Start a supervision tree with a root runnable.
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
-	New(ctx, log, func(ctx context.Context) error {
+	New(ctx, func(ctx context.Context) error {
 		err := Run(ctx, "child", child)
 		if err != nil {
 			return fmt.Errorf("could not run 'child': %w", err)

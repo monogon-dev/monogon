@@ -26,8 +26,6 @@ import (
 	"sync"
 	"syscall"
 
-	"go.uber.org/zap"
-
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
 	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
@@ -165,7 +163,7 @@ func (s *Service) processRegistration(ctx context.Context, d *ExtraDirective) {
 	if s.cmd != nil && s.cmd.Process != nil && s.cmd.ProcessState == nil {
 		s.args.ArgPath("Corefile", s.makeCorefile(s.args))
 		if err := s.cmd.Process.Signal(syscall.SIGUSR1); err != nil {
-			supervisor.Logger(ctx).Warn("Failed to send SIGUSR1 to CoreDNS for reload", zap.Error(err))
+			supervisor.Logger(ctx).Warningf("Failed to send SIGUSR1 to CoreDNS for reload: %v", err)
 		}
 	}
 }

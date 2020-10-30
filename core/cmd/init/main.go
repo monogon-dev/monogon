@@ -29,9 +29,10 @@ import (
 	"os/signal"
 	"runtime/debug"
 
+	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
+
 	"git.monogon.dev/source/nexantic.git/core/internal/network/dns"
 
-	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -79,10 +80,32 @@ func main() {
 			panic(fmt.Sprintf("failed to halt node: %v\n", err))
 		}
 	}()
-	logger, err := zap.NewDevelopment()
+
+	// Set up logger for Smalltown. Currently logs everything to stderr.
+	lt := logtree.New()
+	reader, err := lt.Read("", logtree.WithChildren(), logtree.WithStream())
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("could not set up root log reader: %v", err))
 	}
+	go func() {
+		for {
+			p := <-reader.Stream
+			if p.Leveled != nil {
+				// Use glog-like layout, but with supervisor DN instead of filename.
+				timestamp := p.Leveled.Timestamp()
+				_, month, day := timestamp.Date()
+				hour, minute, second := timestamp.Clock()
+				nsec := timestamp.Nanosecond() / 1000
+				fmt.Fprintf(os.Stderr, "%s%02d%02d %02d:%02d:%02d.%06d %s] %s\n", p.Leveled.Severity(), month, day, hour, minute, second, nsec, p.DN, p.Leveled.Message())
+			}
+			if p.Raw != nil {
+				fmt.Fprintf(os.Stderr, "%-32s R %s\n", p.DN, p.Raw)
+			}
+		}
+	}()
+
+	// Initial logger. Used until we get to a supervisor.
+	logger := lt.MustLeveledFor("init")
 
 	// Remount onto a tmpfs and re-exec if needed. Otherwise, keep running.
 	err = switchRoot(logger)
@@ -92,7 +115,7 @@ func main() {
 
 	// Linux kernel default is 4096 which is far too low. Raise it to 1M which is what gVisor suggests.
 	if err := unix.Setrlimit(unix.RLIMIT_NOFILE, &unix.Rlimit{Cur: 1048576, Max: 1048576}); err != nil {
-		logger.Panic("Failed to raise rlimits", zap.Error(err))
+		logger.Fatalf("Failed to raise rlimits: %v", err)
 	}
 
 	logger.Info("Starting Smalltown Init")
@@ -100,8 +123,8 @@ func main() {
 	signalChannel := make(chan os.Signal, 2)
 	signal.Notify(signalChannel)
 
-	if err := tpm.Initialize(logger.With(zap.String("component", "tpm"))); err != nil {
-		logger.Panic("Failed to initialize TPM 2.0", zap.Error(err))
+	if err := tpm.Initialize(logger); err != nil {
+		logger.Fatalf("Failed to initialize TPM 2.0: %v", err)
 	}
 
 	corednsRegistrationChan := make(chan *dns.ExtraDirective)
@@ -127,7 +150,7 @@ func main() {
 	// Start root initialization code as a supervisor one-shot runnable. This means waiting for the network, starting
 	// the cluster manager, and then starting all services related to the node's roles.
 	// TODO(q3k): move this to a separate 'init' service.
-	supervisor.New(ctxS, logger, func(ctx context.Context) error {
+	supervisor.New(ctxS, func(ctx context.Context) error {
 		logger := supervisor.Logger(ctx)
 
 		// Start storage and network - we need this to get anything else done.
@@ -189,7 +212,7 @@ func main() {
 
 			// Ensure Kubernetes PKI objects exist in etcd.
 			kpkiKV := m.ConsensusKV("cluster", "kpki")
-			kpki := pki.NewKubernetes(logger.Named("kpki"), kpkiKV)
+			kpki := pki.NewKubernetes(lt.MustLeveledFor("pki.kubernetes"), kpkiKV)
 			if err := kpki.EnsureAll(ctx); err != nil {
 				return fmt.Errorf("failed to ensure kubernetes PKI present: %w", err)
 			}
@@ -233,7 +256,7 @@ func main() {
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
 		supervisor.Signal(ctx, supervisor.SignalDone)
 		return nil
-	})
+	}, supervisor.WithExistingLogtree(lt))
 
 	// We're PID1, so orphaned processes get reparented to us to clean up
 	for {
@@ -259,7 +282,7 @@ func main() {
 				for {
 					res, err := unix.Wait4(-1, &status, unix.WNOHANG, &rusage)
 					if err != nil && err != unix.ECHILD {
-						logger.Error("Failed to wait on orphaned child", zap.Error(err))
+						logger.Errorf("Failed to wait on orphaned child: %v", err)
 						break
 					}
 					if res <= 0 {
@@ -271,11 +294,11 @@ func main() {
 				// In order not to break backwards compatibility in the unlikely case
 				// of an application actually using SIGURG on its own, they're not filtering them.
 				// (https://github.com/golang/go/issues/37942)
-				logger.Debug("Ignoring SIGURG")
+				logger.V(5).Info("Ignoring SIGURG")
 			// TODO(lorenz): We can probably get more than just SIGCHLD as init, but I can't think
 			// of any others right now, just log them in case we hit any of them.
 			default:
-				logger.Warn("Got unexpected signal", zap.String("signal", sig.String()))
+				logger.Warningf("Got unexpected signal %s", sig.String())
 			}
 		}
 	}
