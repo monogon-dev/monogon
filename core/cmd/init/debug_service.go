@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"math"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/cluster"
 	"git.monogon.dev/source/nexantic.git/core/internal/containerd"
@@ -45,32 +44,5 @@ func (s *debugService) GetDebugKubeconfig(ctx context.Context, req *apb.GetDebug
 // GetComponentLogs gets various logbuffers from binaries we call. This function just deals with the first path component,
 // delegating the rest to the service-specific handlers.
 func (s *debugService) GetComponentLogs(ctx context.Context, req *apb.GetComponentLogsRequest) (*apb.GetComponentLogsResponse, error) {
-	if len(req.ComponentPath) < 1 {
-		return nil, status.Error(codes.InvalidArgument, "component_path needs to contain at least one part")
-	}
-	linesToRead := int(req.TailLines)
-	if linesToRead == 0 {
-		linesToRead = math.MaxInt32
-	}
-	var lines []string
-	var err error
-	switch req.ComponentPath[0] {
-	case "containerd":
-		if len(req.ComponentPath) < 2 {
-			lines = s.containerd.Log.ReadLinesTruncated(linesToRead, "...")
-		} else if req.ComponentPath[1] == "runsc" {
-			lines = s.containerd.RunscLog.ReadLinesTruncated(linesToRead, "...")
-		}
-	case "kube":
-		if len(req.ComponentPath) < 2 {
-			return nil, status.Error(codes.NotFound, "Component not found")
-		}
-		lines, err = s.kubernetes.GetComponentLogs(req.ComponentPath[1], linesToRead)
-		if err != nil {
-			return nil, status.Error(codes.NotFound, "Component not found")
-		}
-	default:
-		return nil, status.Error(codes.NotFound, "component not found")
-	}
-	return &apb.GetComponentLogsResponse{Line: lines}, nil
+	return nil, status.Error(codes.Unimplemented, "unimplemented")
 }

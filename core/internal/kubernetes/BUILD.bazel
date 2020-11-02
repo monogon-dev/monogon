@@ -25,7 +25,6 @@ go_library(
         "//core/internal/network/dns:go_default_library",
         "//core/pkg/fileargs:go_default_library",
         "//core/pkg/fsquota:go_default_library",
-        "//core/pkg/logbuffer:go_default_library",
         "//core/pkg/logtree:go_default_library",
         "//core/proto/api:go_default_library",
         "@com_github_container_storage_interface_spec//lib/go/csi:go_default_library",

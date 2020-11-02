@@ -18,11 +18,9 @@ package kubernetes
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"os"
-	"sync"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -38,7 +36,6 @@ import (
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/reconciler"
 	"git.monogon.dev/source/nexantic.git/core/internal/localstorage"
 	"git.monogon.dev/source/nexantic.git/core/internal/network/dns"
-	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
 	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
 
@@ -52,17 +49,8 @@ type Config struct {
 	CorednsRegistrationChan chan *dns.ExtraDirective
 }
 
-type state struct {
-	apiserverLogs         *logbuffer.LogBuffer
-	controllerManagerLogs *logbuffer.LogBuffer
-	schedulerLogs         *logbuffer.LogBuffer
-	kubeletLogs           *logbuffer.LogBuffer
-}
-
 type Service struct {
-	c       Config
-	stateMu sync.Mutex
-	state   *state
+	c Config
 }
 
 func New(c Config) *Service {
@@ -72,23 +60,7 @@ func New(c Config) *Service {
 	return s
 }
 
-func (s *Service) getState() *state {
-	s.stateMu.Lock()
-	defer s.stateMu.Unlock()
-	return s.state
-}
-
 func (s *Service) Run(ctx context.Context) error {
-	st := &state{
-		apiserverLogs:         logbuffer.New(5000, 16384),
-		controllerManagerLogs: logbuffer.New(5000, 16384),
-		schedulerLogs:         logbuffer.New(5000, 16384),
-		kubeletLogs:           logbuffer.New(5000, 16384),
-	}
-	s.stateMu.Lock()
-	s.state = st
-	s.stateMu.Unlock()
-
 	controllerManagerConfig, err := getPKIControllerManagerConfig(ctx, s.c.KPKI)
 	if err != nil {
 		return fmt.Errorf("could not generate controller manager pki config: %w", err)
@@ -128,7 +100,6 @@ func (s *Service) Run(ctx context.Context) error {
 		KPKI:                        s.c.KPKI,
 		AdvertiseAddress:            s.c.AdvertiseAddress,
 		ServiceIPRange:              s.c.ServiceIPRange,
-		Output:                      st.apiserverLogs,
 		EphemeralConsensusDirectory: &s.c.Root.Ephemeral.Consensus,
 	}
 
@@ -137,7 +108,6 @@ func (s *Service) Run(ctx context.Context) error {
 		ClusterDNS:         []net.IP{dnsHostIP},
 		KubeletDirectory:   &s.c.Root.Data.Kubernetes.Kubelet,
 		EphemeralDirectory: &s.c.Root.Ephemeral,
-		Output:             st.kubeletLogs,
 		KPKI:               s.c.KPKI,
 	}
 
@@ -171,8 +141,8 @@ func (s *Service) Run(ctx context.Context) error {
 		runnable supervisor.Runnable
 	}{
 		{"apiserver", apiserver.Run},
-		{"controller-manager", runControllerManager(*controllerManagerConfig, st.controllerManagerLogs)},
-		{"scheduler", runScheduler(*schedulerConfig, st.schedulerLogs)},
+		{"controller-manager", runControllerManager(*controllerManagerConfig)},
+		{"scheduler", runScheduler(*schedulerConfig)},
 		{"kubelet", kubelet.Run},
 		{"reconciler", reconciler.Run(clientSet)},
 		{"csi-plugin", csiPlugin.Run},
@@ -194,28 +164,6 @@ func (s *Service) Run(ctx context.Context) error {
 	<-ctx.Done()
 	s.c.CorednsRegistrationChan <- dns.CancelDirective(clusterDNSDirective)
 	return nil
-}
-
-// GetComponentLogs grabs logs from various Kubernetes binaries
-func (s *Service) GetComponentLogs(component string, n int) ([]string, error) {
-	s.stateMu.Lock()
-	defer s.stateMu.Unlock()
-	if s.state == nil {
-		return nil, errors.New("kubernetes not started yet")
-	}
-
-	switch component {
-	case "apiserver":
-		return s.state.apiserverLogs.ReadLinesTruncated(n, "..."), nil
-	case "controller-manager":
-		return s.state.controllerManagerLogs.ReadLinesTruncated(n, "..."), nil
-	case "scheduler":
-		return s.state.schedulerLogs.ReadLinesTruncated(n, "..."), nil
-	case "kubelet":
-		return s.state.kubeletLogs.ReadLinesTruncated(n, "..."), nil
-	default:
-		return nil, errors.New("component not available")
-	}
 }
 
 // GetDebugKubeconfig issues a kubeconfig for an arbitrary given identity. Useful for debugging and testing.

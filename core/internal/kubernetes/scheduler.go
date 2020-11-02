@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/pem"
 	"fmt"
-	"io"
 	"os/exec"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
@@ -48,7 +47,7 @@ func getPKISchedulerConfig(ctx context.Context, kpki *pki.KubernetesPKI) (*sched
 	return &config, nil
 }
 
-func runScheduler(config schedulerConfig, output io.Writer) supervisor.Runnable {
+func runScheduler(config schedulerConfig) supervisor.Runnable {
 	return func(ctx context.Context) error {
 		args, err := fileargs.New()
 		if err != nil {
@@ -66,11 +65,6 @@ func runScheduler(config schedulerConfig, output io.Writer) supervisor.Runnable 
 		if args.Error() != nil {
 			return fmt.Errorf("failed to use fileargs: %w", err)
 		}
-		cmd.Stdout = output
-		cmd.Stderr = output
-		supervisor.Signal(ctx, supervisor.SignalHealthy)
-		err = cmd.Run()
-		fmt.Fprintf(output, "scheduler stopped: %v\n", err)
-		return err
+		return supervisor.RunCommand(ctx, cmd)
 	}
 }

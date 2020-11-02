@@ -28,7 +28,6 @@ import (
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/pkg/fileargs"
-	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
 )
 
 const corefileBase = `
@@ -43,7 +42,6 @@ const corefileBase = `
 `
 
 type Service struct {
-	Logs                  *logbuffer.LogBuffer
 	directiveRegistration chan *ExtraDirective
 	directives            map[string]ExtraDirective
 	cmd                   *exec.Cmd
@@ -58,7 +56,6 @@ type Service struct {
 // to create a removal message.
 func New(directiveRegistration chan *ExtraDirective) *Service {
 	return &Service{
-		Logs:                  logbuffer.New(5000, 16384),
 		directives:            map[string]ExtraDirective{},
 		directiveRegistration: directiveRegistration,
 	}
@@ -106,7 +103,7 @@ func (s *Service) runCoreDNS(ctx context.Context) error {
 	defer args.Close()
 	s.args = args
 
-	cmd := exec.CommandContext(ctx, "/kubernetes/bin/coredns",
+	s.cmd = exec.CommandContext(ctx, "/kubernetes/bin/coredns",
 		args.FileOpt("-conf", "Corefile", s.makeCorefile(args)),
 	)
 
@@ -115,26 +112,8 @@ func (s *Service) runCoreDNS(ctx context.Context) error {
 		return fmt.Errorf("failed to use fileargs: %w", err)
 	}
 
-	cmd.Stdout = s.Logs
-	cmd.Stderr = s.Logs
-
-	s.cmd = cmd
-
-	err = cmd.Start()
-
-	// Release stateMu after the process has attempted to start and is either dead or running
 	s.stateMu.Unlock()
-
-	if err != nil {
-		return fmt.Errorf("failed to start CoreDNS: %w", err)
-	}
-
-	supervisor.Signal(ctx, supervisor.SignalHealthy)
-
-	err = cmd.Wait()
-
-	fmt.Fprintf(s.Logs, "coredns stopped: %v\n", err)
-	return err
+	return supervisor.RunCommand(ctx, s.cmd)
 }
 
 // runRegistration runs the background registration runnable which has a different lifecycle from the CoreDNS

@@ -51,12 +51,12 @@ func GRPCServer(srv *grpc.Server, lis net.Listener, graceful bool) Runnable {
 	}
 }
 
-// Command will create a Runnable that starts a long-running command, whose exit is determined to be a failure.
-func Command(name string, arg ...string) Runnable {
-	return func(ctx context.Context) error {
-		Signal(ctx, SignalHealthy)
-
-		cmd := exec.CommandContext(ctx, name, arg...)
-		return cmd.Run()
-	}
+// RunCommand will create a Runnable that starts a long-running command, whose exit is determined to be a failure.
+func RunCommand(ctx context.Context, cmd *exec.Cmd) error {
+	Signal(ctx, SignalHealthy)
+	cmd.Stdout = RawLogger(ctx)
+	cmd.Stderr = RawLogger(ctx)
+	err := cmd.Run()
+	Logger(ctx).Infof("Command returned: %v", err)
+	return err
 }

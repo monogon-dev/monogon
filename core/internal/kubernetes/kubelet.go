@@ -141,11 +141,5 @@ func (s *kubeletService) Run(ctx context.Context) error {
 		fmt.Sprintf("--root-dir=%s", s.KubeletDirectory.FullPath()),
 	)
 	cmd.Env = []string{"PATH=/kubernetes/bin"}
-	cmd.Stdout = s.Output
-	cmd.Stderr = s.Output
-
-	supervisor.Signal(ctx, supervisor.SignalHealthy)
-	err = cmd.Run()
-	fmt.Fprintf(s.Output, "kubelet stopped: %v\n", err)
-	return err
+	return supervisor.RunCommand(ctx, cmd)
 }

@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/pem"
 	"fmt"
-	"io"
 	"net"
 	"os/exec"
 
@@ -61,7 +60,7 @@ func getPKIControllerManagerConfig(ctx context.Context, kpki *pki.KubernetesPKI)
 	return &config, nil
 }
 
-func runControllerManager(config controllerManagerConfig, output io.Writer) supervisor.Runnable {
+func runControllerManager(config controllerManagerConfig) supervisor.Runnable {
 	return func(ctx context.Context) error {
 		args, err := fileargs.New()
 		if err != nil {
@@ -89,11 +88,6 @@ func runControllerManager(config controllerManagerConfig, output io.Writer) supe
 		if args.Error() != nil {
 			return fmt.Errorf("failed to use fileargs: %w", err)
 		}
-		cmd.Stdout = output
-		cmd.Stderr = output
-		supervisor.Signal(ctx, supervisor.SignalHealthy)
-		err = cmd.Run()
-		fmt.Fprintf(output, "controller-manager stopped: %v\n", err)
-		return err
+		return supervisor.RunCommand(ctx, cmd)
 	}
 }

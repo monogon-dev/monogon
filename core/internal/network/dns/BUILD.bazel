@@ -11,6 +11,5 @@ go_library(
     deps = [
         "//core/internal/common/supervisor:go_default_library",
         "//core/pkg/fileargs:go_default_library",
-        "//core/pkg/logbuffer:go_default_library",
     ],
 )

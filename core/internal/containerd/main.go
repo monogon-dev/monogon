@@ -32,7 +32,6 @@ import (
 
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/localstorage"
-	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
 )
 
 const (
@@ -41,32 +40,41 @@ const (
 
 type Service struct {
 	EphemeralVolume *localstorage.EphemeralContainerdDirectory
-	Log             *logbuffer.LogBuffer
-	RunscLog        *logbuffer.LogBuffer
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	if s.Log == nil {
-		s.Log = logbuffer.New(5000, 16384)
-	}
-	if s.RunscLog == nil {
-		s.RunscLog = logbuffer.New(5000, 16384)
-	}
-
-	logger := supervisor.Logger(ctx)
-
 	cmd := exec.CommandContext(ctx, "/containerd/bin/containerd", "--config", "/containerd/conf/config.toml")
-	cmd.Stdout = s.Log
-	cmd.Stderr = s.Log
 	cmd.Env = []string{"PATH=/containerd/bin", "TMPDIR=" + s.EphemeralVolume.Tmp.FullPath()}
 
 	runscFifo, err := os.OpenFile(s.EphemeralVolume.RunSCLogsFIFO.FullPath(), os.O_CREATE|os.O_RDONLY, os.ModeNamedPipe|0777)
 	if err != nil {
 		return err
 	}
-	go func() {
+
+	if err := supervisor.Run(ctx, "runsc", s.logPump(runscFifo)); err != nil {
+		return fmt.Errorf("failed to start runsc log pump: %w", err)
+	}
+
+	if err := supervisor.Run(ctx, "preseed", s.runPreseed); err != nil {
+		return fmt.Errorf("failed to start preseed runnable: %w", err)
+	}
+	return supervisor.RunCommand(ctx, cmd)
+}
+
+// logPump returns a runnable that pipes data from a file/FIFO into its raw logger.
+// TODO(q3k): refactor this out to a generic function in supervisor or logtree.
+func (s *Service) logPump(fifo *os.File) supervisor.Runnable {
+	return func(ctx context.Context) error {
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
 		for {
-			n, err := io.Copy(s.RunscLog, runscFifo)
+			// Quit if requested.
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+
+			n, err := io.Copy(supervisor.RawLogger(ctx), fifo)
 			if n == 0 && err == nil {
 				// Hack because pipes/FIFOs can return zero reads when nobody is writing. To avoid busy-looping,
 				// sleep a bit before retrying. This does not loose data since the FIFO internal buffer will
@@ -74,20 +82,10 @@ func (s *Service) Run(ctx context.Context) error {
 				// debug logs) is not an issue for us.
 				time.Sleep(10 * time.Millisecond)
 			} else if err != nil {
-				logger.Errorf("gVisor log pump failed, stopping it: %v", err)
-				return // It's likely that this will busy-loop printing errors if it encounters one, so bail
+				return fmt.Errorf("log pump failed: %v", err)
 			}
 		}
-	}()
-
-	if err := supervisor.Run(ctx, "preseed", s.runPreseed); err != nil {
-		return fmt.Errorf("failed to start preseed runnable: %w", err)
 	}
-	supervisor.Signal(ctx, supervisor.SignalHealthy)
-
-	err = cmd.Run()
-	fmt.Fprintf(s.Log, "containerd stopped: %v\n", err)
-	return err
 }
 
 // runPreseed loads OCI bundles in tar form from preseedNamespacesDir into containerd at startup.
