@@ -18,7 +18,11 @@ package logtree
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
+
+	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
 
 // LeveledPayload is a log entry for leveled logs (as per leveled.go). It contains not only the log message itself and
@@ -62,3 +66,37 @@ func (p *LeveledPayload) Location() string { return fmt.Sprintf("%s:%d", p.file,
 
 // Severity returns the Severity with which this entry was logged.
 func (p *LeveledPayload) Severity() Severity { return p.severity }
+
+// Proto converts a LeveledPayload to protobuf format.
+func (p *LeveledPayload) Proto() *apb.LogEntry_Leveled {
+	return &apb.LogEntry_Leveled{
+		Message:   p.Message(),
+		Timestamp: p.Timestamp().UnixNano(),
+		Severity:  p.Severity().ToProto(),
+		Location:  p.Location(),
+	}
+}
+
+// LeveledPayloadFromProto parses a protobuf message into the internal format.
+func LeveledPayloadFromProto(p *apb.LogEntry_Leveled) (*LeveledPayload, error) {
+	severity, err := SeverityFromProto(p.Severity)
+	if err != nil {
+		return nil, fmt.Errorf("could not convert severity: %w", err)
+	}
+	parts := strings.Split(p.Location, ":")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid location, must be two :-delimited parts, is %d parts", len(parts))
+	}
+	file := parts[0]
+	line, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("invalid location line number: %w", err)
+	}
+	return &LeveledPayload{
+		message:   p.Message,
+		timestamp: time.Unix(0, p.Timestamp),
+		severity:  severity,
+		file:      file,
+		line:      line,
+	}, nil
+}

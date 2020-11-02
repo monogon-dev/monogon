@@ -66,6 +66,8 @@ func newNode(tree *LogTree, dn DN) *node {
 		tree:     tree,
 		children: make(map[string]*node),
 	}
+	// TODO(q3k): make this limit configurable. If this happens, or the default (1024) gets changes, max chunk size
+	// calculations when serving the logs (eg. in NodeDebugService) must reflect this.
 	n.rawLineBuffer = logbuffer.NewLineBuffer(1024, n.logRaw)
 	return n
 }

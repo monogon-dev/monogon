@@ -91,6 +91,7 @@ func (n *node) logLeveled(depth int, severity Severity, msg string) {
 			file = file[slash+1:]
 		}
 	}
+
 	p := &LeveledPayload{
 		timestamp: time.Now(),
 		severity:  severity,

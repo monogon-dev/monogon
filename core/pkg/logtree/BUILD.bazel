@@ -15,7 +15,10 @@ go_library(
     ],
     importpath = "git.monogon.dev/source/nexantic.git/core/pkg/logtree",
     visibility = ["//visibility:public"],
-    deps = ["//core/pkg/logbuffer:go_default_library"],
+    deps = [
+        "//core/pkg/logbuffer:go_default_library",
+        "//core/proto/api:go_default_library",
+    ],
 )
 
 go_test(

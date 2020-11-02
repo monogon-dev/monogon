@@ -20,11 +20,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"os"
-	"strings"
 	"time"
+
+	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
 
 	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
@@ -51,12 +53,14 @@ func main() {
 	}
 
 	logsCmd := flag.NewFlagSet("logs", flag.ExitOnError)
-	logsTailN := logsCmd.Uint("tail", 0, "Get last n lines (0 = whole buffer)")
+	logsTailN := logsCmd.Int("tail", -1, "Get last n lines (-1 = whole buffer, 0 = disable)")
+	logsStream := logsCmd.Bool("follow", false, "Stream log entries live from the system")
+	logsRecursive := logsCmd.Bool("recursive", false, "Get entries from entire DN subtree")
 	logsCmd.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s %s [options] component_path\n", os.Args[0], os.Args[1])
+		fmt.Fprintf(os.Stderr, "Usage: %s %s [options] dn\n", os.Args[0], os.Args[1])
 		flag.PrintDefaults()
 
-		fmt.Fprintf(os.Stderr, "Example:\n  %s %s --tail 5 kube.apiserver\n", os.Args[0], os.Args[1])
+		fmt.Fprintf(os.Stderr, "Example:\n  %s %s --tail 5 --follow init\n", os.Args[0], os.Args[1])
 	}
 	goldenticketCmd := flag.NewFlagSet("goldenticket", flag.ExitOnError)
 	conditionCmd := flag.NewFlagSet("condition", flag.ExitOnError)
@@ -66,19 +70,60 @@ func main() {
 
 		fmt.Fprintf(os.Stderr, "Example:\n  %s %s IPAssigned\n", os.Args[0], os.Args[1])
 	}
+
 	switch os.Args[1] {
 	case "logs":
 		logsCmd.Parse(os.Args[2:])
-		componentPath := strings.Split(logsCmd.Arg(0), ".")
-		res, err := debugClient.GetComponentLogs(ctx, &apb.GetComponentLogsRequest{ComponentPath: componentPath, TailLines: uint32(*logsTailN)})
+		dn := logsCmd.Arg(0)
+		req := &apb.GetLogsRequest{
+			Dn:          dn,
+			BacklogMode: apb.GetLogsRequest_BACKLOG_DISABLE,
+			StreamMode:  apb.GetLogsRequest_STREAM_DISABLE,
+			Filters:     nil,
+		}
+
+		switch *logsTailN {
+		case 0:
+		case -1:
+			req.BacklogMode = apb.GetLogsRequest_BACKLOG_ALL
+		default:
+			req.BacklogMode = apb.GetLogsRequest_BACKLOG_COUNT
+			req.BacklogCount = int64(*logsTailN)
+		}
+
+		if *logsStream {
+			req.StreamMode = apb.GetLogsRequest_STREAM_UNBUFFERED
+		}
+
+		if *logsRecursive {
+			req.Filters = append(req.Filters, &apb.LogFilter{
+				Filter: &apb.LogFilter_WithChildren_{WithChildren: &apb.LogFilter_WithChildren{}},
+			})
+		}
+
+		stream, err := debugClient.GetLogs(ctx, req)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to get logs: %v\n", err)
 			os.Exit(1)
 		}
-		for _, line := range res.Line {
-			fmt.Println(line)
+		for {
+			res, err := stream.Recv()
+			if err != nil {
+				if err == io.EOF {
+					os.Exit(0)
+				}
+				fmt.Fprintf(os.Stderr, "Failed to stream logs: %v\n", err)
+				os.Exit(1)
+			}
+			for _, entry := range res.BacklogEntries {
+				entry, err := logtree.LogEntryFromProto(entry)
+				if err != nil {
+					fmt.Printf("error decoding entry: %v", err)
+					continue
+				}
+				fmt.Println(entry.String())
+			}
 		}
-		return
 	case "goldenticket":
 		goldenticketCmd.Parse(os.Args[2:])
 		ip := goldenticketCmd.Arg(0)

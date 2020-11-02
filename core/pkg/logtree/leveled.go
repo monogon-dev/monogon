@@ -16,6 +16,12 @@
 
 package logtree
 
+import (
+	"fmt"
+
+	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
+)
+
 // LeveledLogger is a generic interface for glog-style logging. There are four hardcoded log severities, in increasing
 // order: INFO, WARNING, ERROR, FATAL. Logging at a certain severity level logs not only to consumers expecting data
 // at that severity level, but also all lower severity levels. For example, an ERROR log will also be passed to
@@ -105,4 +111,34 @@ func (s Severity) AtLeast(other Severity) bool {
 		}
 	}
 	return false
+}
+
+func SeverityFromProto(s apb.LeveledLogSeverity) (Severity, error) {
+	switch s {
+	case apb.LeveledLogSeverity_INFO:
+		return INFO, nil
+	case apb.LeveledLogSeverity_WARNING:
+		return WARNING, nil
+	case apb.LeveledLogSeverity_ERROR:
+		return ERROR, nil
+	case apb.LeveledLogSeverity_FATAL:
+		return FATAL, nil
+	default:
+		return "", fmt.Errorf("unknown severity value %d", s)
+	}
+}
+
+func (s Severity) ToProto() apb.LeveledLogSeverity {
+	switch s {
+	case INFO:
+		return apb.LeveledLogSeverity_INFO
+	case WARNING:
+		return apb.LeveledLogSeverity_WARNING
+	case ERROR:
+		return apb.LeveledLogSeverity_ERROR
+	case FATAL:
+		return apb.LeveledLogSeverity_FATAL
+	default:
+		return apb.LeveledLogSeverity_INVALID
+	}
 }

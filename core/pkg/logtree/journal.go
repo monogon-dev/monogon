@@ -17,7 +17,7 @@
 package logtree
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 	"sync"
 )
@@ -26,6 +26,10 @@ import (
 // designates the 'bar' logger node under the 'foo' logger node under the root node of the logger. An empty string is
 // the root node of the tree.
 type DN string
+
+var (
+	ErrInvalidDN = errors.New("invalid DN")
+)
 
 // Path return the parts of a DN, ie. all the elements of the dot-delimited DN path. For the root node, an empty list
 // will be returned. An error will be returned if the DN is invalid (contains empty parts, eg. `foo..bar`, `.foo` or
@@ -37,7 +41,7 @@ func (d DN) Path() ([]string, error) {
 	parts := strings.Split(string(d), ".")
 	for _, p := range parts {
 		if p == "" {
-			return nil, fmt.Errorf("invalid DN")
+			return nil, ErrInvalidDN
 		}
 	}
 	return parts, nil

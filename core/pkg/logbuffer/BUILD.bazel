@@ -8,6 +8,7 @@ go_library(
     ],
     importpath = "git.monogon.dev/source/nexantic.git/core/pkg/logbuffer",
     visibility = ["//visibility:public"],
+    deps = ["//core/proto/api:go_default_library"],
 )
 
 go_test(

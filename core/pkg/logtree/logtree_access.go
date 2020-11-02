@@ -17,11 +17,12 @@
 package logtree
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"sync/atomic"
 
 	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
+	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
 
 // LogReadOption describes options for the LogTree.Read call.
@@ -101,6 +102,79 @@ type LogEntry struct {
 	DN DN
 }
 
+// Convert this LogEntry to proto. Returned value may be nil if given LogEntry is invalid, eg. contains neither a Raw
+// nor Leveled entry.
+func (l *LogEntry) Proto() *apb.LogEntry {
+	p := &apb.LogEntry{
+		Dn: string(l.DN),
+	}
+	switch {
+	case l.Leveled != nil:
+		leveled := l.Leveled
+		p.Kind = &apb.LogEntry_Leveled_{
+			Leveled: leveled.Proto(),
+		}
+	case l.Raw != nil:
+		raw := l.Raw
+		p.Kind = &apb.LogEntry_Raw_{
+			Raw: raw.ProtoLog(),
+		}
+	default:
+		return nil
+	}
+	return p
+}
+
+// String returns a standardized human-readable representation of either underlying raw or leveled entry. The returned
+// data is pre-formatted to be displayed in a fixed-width font.
+func (l *LogEntry) String() string {
+	if l.Leveled != nil {
+		// Use glog-like layout, but with supervisor DN instead of filename.
+		timestamp := l.Leveled.Timestamp()
+		_, month, day := timestamp.Date()
+		hour, minute, second := timestamp.Clock()
+		nsec := timestamp.Nanosecond() / 1000
+		return fmt.Sprintf("%s%02d%02d %02d:%02d:%02d.%06d %s] %s", l.Leveled.Severity(), month, day, hour, minute, second, nsec, l.DN, l.Leveled.Message())
+	}
+	if l.Raw != nil {
+		return fmt.Sprintf("%-32s R %s", l.DN, l.Raw)
+	}
+	return "INVALID"
+}
+
+// Parse a proto LogEntry back into internal structure. This can be used in log proto API consumers to easily print
+// received log entries.
+func LogEntryFromProto(l *apb.LogEntry) (*LogEntry, error) {
+	dn := DN(l.Dn)
+	if _, err := dn.Path(); err != nil {
+		return nil, fmt.Errorf("could not convert DN: %w", err)
+	}
+	res := &LogEntry{
+		DN: dn,
+	}
+	switch inner := l.Kind.(type) {
+	case *apb.LogEntry_Leveled_:
+		leveled, err := LeveledPayloadFromProto(inner.Leveled)
+		if err != nil {
+			return nil, fmt.Errorf("could not convert leveled entry: %w", err)
+		}
+		res.Leveled = leveled
+	case *apb.LogEntry_Raw_:
+		line, err := logbuffer.LineFromLogProto(inner.Raw)
+		if err != nil {
+			return nil, fmt.Errorf("could not convert raw entry: %w", err)
+		}
+		res.Raw = line
+	default:
+		return nil, fmt.Errorf("proto has neither Leveled nor Raw set")
+	}
+	return res, nil
+}
+
+var (
+	ErrRawAndLeveled = errors.New("cannot return logs that are simultaneously OnlyRaw and OnlyLeveled")
+)
+
 // Read and/or stream entries from a LogTree. The returned LogReader is influenced by the LogReadOptions passed, which
 // influence whether the Read will return existing entries, a stream, or both. In addition the options also dictate
 // whether only entries for that particular DN are returned, or for all sub-DNs as well.
@@ -136,7 +210,7 @@ func (l *LogTree) Read(dn DN, opts ...LogReadOption) (*LogReader, error) {
 	}
 
 	if onlyLeveled && onlyRaw {
-		return nil, fmt.Errorf("cannot return logs that are simultaneously OnlyRaw and OnlyLeveled")
+		return nil, ErrRawAndLeveled
 	}
 
 	var filters []filter
@@ -182,7 +256,6 @@ func (l *LogTree) Read(dn DN, opts ...LogReadOption) (*LogReader, error) {
 	lr := &LogReader{}
 	lr.Backlog = make([]*LogEntry, len(entries))
 	for i, entry := range entries {
-		log.Printf("backlog %d %+v %+v", i, entry.raw, entry.leveled)
 		lr.Backlog[i] = entry.external()
 	}
 	if stream {

@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+
+	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
 
 // Line is a line stored in the log buffer - a string, that has been perhaps truncated (due to exceeded limits).
@@ -41,6 +43,29 @@ func (l *Line) String() string {
 		return l.Data + "..."
 	}
 	return l.Data
+}
+
+// ProtoLog returns a Logging-specific protobuf structure.
+func (l *Line) ProtoLog() *apb.LogEntry_Raw {
+	return &apb.LogEntry_Raw{
+		Data:           l.Data,
+		OriginalLength: int64(l.OriginalLength),
+	}
+}
+
+// LineFromLogProto converts a Logging-specific protobuf message back into a Line.
+func LineFromLogProto(raw *apb.LogEntry_Raw) (*Line, error) {
+	if raw.OriginalLength < int64(len(raw.Data)) {
+		return nil, fmt.Errorf("original_length smaller than length of data")
+	}
+	originalLength := int(raw.OriginalLength)
+	if int64(originalLength) < raw.OriginalLength {
+		return nil, fmt.Errorf("original_length larger than native int size")
+	}
+	return &Line{
+		Data:           raw.Data,
+		OriginalLength: originalLength,
+	}, nil
 }
 
 // LineBuffer is a io.WriteCloser that will call a given callback every time a line is completed.

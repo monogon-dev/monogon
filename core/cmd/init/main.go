@@ -29,25 +29,20 @@ import (
 	"os/signal"
 	"runtime/debug"
 
-	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
-
-	"git.monogon.dev/source/nexantic.git/core/internal/network/dns"
-
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"git.monogon.dev/source/nexantic.git/core/internal/cluster"
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
-	"git.monogon.dev/source/nexantic.git/core/internal/consensus/ca"
 	"git.monogon.dev/source/nexantic.git/core/internal/containerd"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes"
 	"git.monogon.dev/source/nexantic.git/core/internal/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/core/internal/localstorage"
 	"git.monogon.dev/source/nexantic.git/core/internal/localstorage/declarative"
 	"git.monogon.dev/source/nexantic.git/core/internal/network"
+	"git.monogon.dev/source/nexantic.git/core/internal/network/dns"
+	"git.monogon.dev/source/nexantic.git/core/pkg/logtree"
 	"git.monogon.dev/source/nexantic.git/core/pkg/tpm"
 	apb "git.monogon.dev/source/nexantic.git/core/proto/api"
 )
@@ -90,17 +85,7 @@ func main() {
 	go func() {
 		for {
 			p := <-reader.Stream
-			if p.Leveled != nil {
-				// Use glog-like layout, but with supervisor DN instead of filename.
-				timestamp := p.Leveled.Timestamp()
-				_, month, day := timestamp.Date()
-				hour, minute, second := timestamp.Clock()
-				nsec := timestamp.Nanosecond() / 1000
-				fmt.Fprintf(os.Stderr, "%s%02d%02d %02d:%02d:%02d.%06d %s] %s\n", p.Leveled.Severity(), month, day, hour, minute, second, nsec, p.DN, p.Leveled.Message())
-			}
-			if p.Raw != nil {
-				fmt.Fprintf(os.Stderr, "%-32s R %s\n", p.DN, p.Raw)
-			}
+			fmt.Fprintf(os.Stderr, "%s\n", p.String())
 		}
 	}()
 
@@ -236,11 +221,9 @@ func main() {
 		}
 
 		// Start the node debug service.
-		// TODO(q3k): this needs to be done in a smarter way once LogTree lands, and then a few things can be
-		// refactored to start this earlier, or this can be split up into a multiple gRPC service on a single listener.
 		dbg := &debugService{
 			cluster:    m,
-			containerd: containerdSvc,
+			logtree:    lt,
 			kubernetes: kubeSvc,
 		}
 		dbgSrv := grpc.NewServer()
@@ -335,59 +318,4 @@ func (s *debugService) nodeCertificate() (cert, key []byte, err error) {
 		return
 	}
 	return
-}
-
-func (s *debugService) GetGoldenTicket(ctx context.Context, req *apb.GetGoldenTicketRequest) (*apb.GetGoldenTicketResponse, error) {
-	ip := net.ParseIP(req.ExternalIp)
-	if ip == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "could not parse IP %q", req.ExternalIp)
-	}
-	this := s.cluster.Node()
-
-	certRaw, key, err := s.nodeCertificate()
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "failed to generate node certificate: %v", err)
-	}
-	cert, err := x509.ParseCertificate(certRaw)
-	if err != nil {
-		panic(err)
-	}
-	kv := s.cluster.ConsensusKVRoot()
-	ca, err := ca.Load(ctx, kv)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not load CA: %v", err)
-	}
-	etcdCert, etcdKey, err := ca.Issue(ctx, kv, cert.Subject.CommonName, ip)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not generate etcd peer certificate: %v", err)
-	}
-	etcdCRL, err := ca.GetCurrentCRL(ctx, kv)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not get etcd CRL: %v", err)
-	}
-
-	// Add new etcd member to etcd cluster.
-	etcd := s.cluster.ConsensusCluster()
-	etcdAddr := fmt.Sprintf("https://%s:%d", ip.String(), common.ConsensusPort)
-	_, err = etcd.MemberAddAsLearner(ctx, []string{etcdAddr})
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not add as new etcd consensus member: %v", err)
-	}
-
-	return &apb.GetGoldenTicketResponse{
-		Ticket: &apb.GoldenTicket{
-			EtcdCaCert:     ca.CACertRaw,
-			EtcdClientCert: etcdCert,
-			EtcdClientKey:  etcdKey,
-			EtcdCrl:        etcdCRL,
-			Peers: []*apb.GoldenTicket_EtcdPeer{
-				{Name: this.ID(), Address: this.Address().String()},
-			},
-			This: &apb.GoldenTicket_EtcdPeer{Name: cert.Subject.CommonName, Address: ip.String()},
-
-			NodeId:   cert.Subject.CommonName,
-			NodeCert: certRaw,
-			NodeKey:  key,
-		},
-	}, nil
 }
