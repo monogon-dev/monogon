@@ -115,7 +115,7 @@ func (c *Client) Run(iface netlink.Link) supervisor.Runnable {
 
 			case cfg := <-newC:
 				current = cfg
-				logger.Info("DHCP client ASSIGNED IP %s", current.String())
+				logger.Infof("DHCP client ASSIGNED IP %s", current.String())
 				for _, w := range waiters {
 					w.fulfill(current)
 				}
