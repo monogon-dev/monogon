@@ -18,8 +18,20 @@ package logtree
 
 import (
 	"fmt"
+	"strings"
 	"testing"
+	"time"
 )
+
+func testPayload(msg string) *LeveledPayload {
+	return &LeveledPayload{
+		messages:  []string{msg},
+		timestamp: time.Now(),
+		severity:  INFO,
+		file:      "main.go",
+		line:      1337,
+	}
+}
 
 func TestJournalRetention(t *testing.T) {
 	j := newJournal()
@@ -38,7 +50,7 @@ func TestJournalRetention(t *testing.T) {
 	}
 	for i, entry := range entries {
 		want := fmt.Sprintf("test %d", (9000-8192)+i)
-		got := entry.leveled.message
+		got := strings.Join(entry.leveled.messages, "\n")
 		if want != got {
 			t.Fatalf("wanted entry %q, got %q", want, got)
 		}
@@ -80,7 +92,7 @@ func TestJournalQuota(t *testing.T) {
 	}
 	setMessages := make(map[string]bool)
 	for _, entry := range entries {
-		setMessages[entry.leveled.message] = true
+		setMessages[strings.Join(entry.leveled.messages, "\n")] = true
 	}
 
 	for i := 0; i < 900; i += 1 {
@@ -110,7 +122,7 @@ func TestJournalSubtree(t *testing.T) {
 		res := j.scanEntries(f)
 		set := make(map[string]bool)
 		for _, entry := range res {
-			set[entry.leveled.message] = true
+			set[strings.Join(entry.leveled.messages, "\n")] = true
 		}
 
 		for _, want := range msgs {

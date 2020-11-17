@@ -92,10 +92,13 @@ func (n *node) logLeveled(depth int, severity Severity, msg string) {
 		}
 	}
 
+	// Remove leading/trailing newlines and split.
+	messages := strings.Split(strings.Trim(msg, "\n"), "\n")
+
 	p := &LeveledPayload{
 		timestamp: time.Now(),
 		severity:  severity,
-		message:   msg,
+		messages:  messages,
 		file:      file,
 		line:      line,
 	}

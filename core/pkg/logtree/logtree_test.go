@@ -18,11 +18,48 @@ package logtree
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"testing"
 	"time"
 )
+
+func expect(tree *LogTree, t *testing.T, dn DN, entries ...string) string {
+	t.Helper()
+	res, err := tree.Read(dn, WithChildren(), WithBacklog(BacklogAllAvailable))
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	if want, got := len(entries), len(res.Backlog); want != got {
+		t.Fatalf("wanted %v backlog entries, got %v", want, got)
+	}
+	got := make(map[string]bool)
+	for _, entry := range res.Backlog {
+		if entry.Leveled != nil {
+			got[entry.Leveled.MessagesJoined()] = true
+		}
+		if entry.Raw != nil {
+			got[entry.Raw.Data] = true
+		}
+	}
+	for _, entry := range entries {
+		if !got[entry] {
+			return fmt.Sprintf("missing entry %q", entry)
+		}
+	}
+	return ""
+}
+
+func TestMultiline(t *testing.T) {
+	tree := New()
+	// Two lines in a single message.
+	tree.MustLeveledFor("main").Info("foo\nbar")
+	// Two lines in a single message with a hanging newline that should get stripped.
+	tree.MustLeveledFor("main").Info("one\ntwo\n")
+
+	if res := expect(tree, t, "main", "foo\nbar", "one\ntwo"); res != "" {
+		t.Errorf("retrieval at main failed: %s", res)
+	}
+}
 
 func TestBacklog(t *testing.T) {
 	tree := New()
@@ -33,38 +70,13 @@ func TestBacklog(t *testing.T) {
 	// No newline at the last entry - shouldn't get propagated to the backlog.
 	fmt.Fprintf(tree.MustRawFor("aux.process"), "processing foo\nprocessing bar\nbaz")
 
-	expect := func(dn DN, entries ...string) string {
-		res, err := tree.Read(dn, WithChildren(), WithBacklog(BacklogAllAvailable))
-		if err != nil {
-			t.Fatalf("Read: %v", err)
-		}
-		if want, got := len(entries), len(res.Backlog); want != got {
-			t.Fatalf("wanted %d backlog entries, got %d", want, got)
-		}
-		got := make(map[string]bool)
-		for _, entry := range res.Backlog {
-			if entry.Leveled != nil {
-				got[entry.Leveled.Message()] = true
-			}
-			if entry.Raw != nil {
-				got[entry.Raw.Data] = true
-			}
-		}
-		for _, entry := range entries {
-			if !got[entry] {
-				return fmt.Sprintf("missing entry %q", entry)
-			}
-		}
-		return ""
-	}
-
-	if res := expect("main", "hello, main!", "hello, main.foo!", "hello, main.bar!"); res != "" {
+	if res := expect(tree, t, "main", "hello, main!", "hello, main.foo!", "hello, main.bar!"); res != "" {
 		t.Errorf("retrieval at main failed: %s", res)
 	}
-	if res := expect("", "hello, main!", "hello, main.foo!", "hello, main.bar!", "hello, aux!", "processing foo", "processing bar"); res != "" {
+	if res := expect(tree, t, "", "hello, main!", "hello, main.foo!", "hello, main.bar!", "hello, aux!", "processing foo", "processing bar"); res != "" {
 		t.Errorf("retrieval at root failed: %s", res)
 	}
-	if res := expect("aux", "hello, aux!", "processing foo", "processing bar"); res != "" {
+	if res := expect(tree, t, "aux", "hello, aux!", "processing foo", "processing bar"); res != "" {
 		t.Errorf("retrieval at aux failed: %s", res)
 	}
 }
@@ -74,12 +86,10 @@ func TestStream(t *testing.T) {
 	tree.MustLeveledFor("main").Info("hello, backlog")
 	fmt.Fprintf(tree.MustRawFor("main.process"), "hello, raw backlog\n")
 
-	log.Printf("read start")
 	res, err := tree.Read("", WithBacklog(BacklogAllAvailable), WithChildren(), WithStream())
 	if err != nil {
 		t.Fatalf("Read: %v", err)
 	}
-	log.Printf("read done")
 	defer res.Close()
 	if want, got := 2, len(res.Backlog); want != got {
 		t.Errorf("wanted %d backlog item, got %d", want, got)
@@ -97,7 +107,7 @@ func TestStream(t *testing.T) {
 			done = true
 		case p := <-res.Stream:
 			if p.Leveled != nil {
-				entries[p.Leveled.Message()] = true
+				entries[p.Leveled.MessagesJoined()] = true
 			}
 			if p.Raw != nil {
 				entries[p.Raw.Data] = true
@@ -169,7 +179,7 @@ func TestMetadata(t *testing.T) {
 		if want, got := te.severity, p.Leveled.Severity(); want != got {
 			t.Errorf("wanted element %d to have severity %s, got %s", te.ix, want, got)
 		}
-		if want, got := te.message, p.Leveled.Message(); want != got {
+		if want, got := te.message, p.Leveled.MessagesJoined(); want != got {
 			t.Errorf("wanted element %d to have message %q, got %q", te.ix, want, got)
 		}
 		if want, got := "logtree_test.go", strings.Split(p.Leveled.Location(), ":")[0]; want != got {
@@ -192,10 +202,10 @@ func TestSeverity(t *testing.T) {
 	if want, got := 2, len(reader.Backlog); want != got {
 		t.Fatalf("wanted %d entries, got %d", want, got)
 	}
-	if want, got := "i am an error", reader.Backlog[0].Leveled.Message(); want != got {
+	if want, got := "i am an error", reader.Backlog[0].Leveled.MessagesJoined(); want != got {
 		t.Fatalf("wanted entry %q, got %q", want, got)
 	}
-	if want, got := "i am a warning", reader.Backlog[1].Leveled.Message(); want != got {
+	if want, got := "i am a warning", reader.Backlog[1].Leveled.MessagesJoined(); want != got {
 		t.Fatalf("wanted entry %q, got %q", want, got)
 	}
 }

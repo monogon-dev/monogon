@@ -26,7 +26,6 @@ go_test(
     srcs = [
         "journal_test.go",
         "logtree_test.go",
-        "payload_test.go",
     ],
     embed = [":go_default_library"],
 )

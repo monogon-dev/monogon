@@ -19,6 +19,7 @@ package logtree
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"sync/atomic"
 
 	"git.monogon.dev/source/nexantic.git/core/pkg/logbuffer"
@@ -102,6 +103,59 @@ type LogEntry struct {
 	DN DN
 }
 
+// String returns a canonical representation of this payload as a single string prefixed with metadata. If the entry is
+// a leveled log entry that originally was logged with newlines this representation will also contain newlines, with
+// each original message part prefixed by the metadata.
+// For an alternative call that will instead return a canonical prefix and a list of lines in the message, see Strings().
+func (l *LogEntry) String() string {
+	if l.Leveled != nil {
+		prefix, messages := l.Leveled.Strings()
+		res := make([]string, len(messages))
+		for i, m := range messages {
+			res[i] = fmt.Sprintf("%-32s %s%s", l.DN, prefix, m)
+		}
+		return strings.Join(res, "\n")
+	}
+	if l.Raw != nil {
+		return fmt.Sprintf("%-32s R %s", l.DN, l.Raw)
+	}
+	return "INVALID"
+}
+
+// Strings returns the canonical representation of this payload split into a prefix and all lines that were contained in
+// the original message. This is meant to be displayed to the user by showing the prefix before each line, concatenated
+// together - possibly in a table form with the prefixes all unified with a rowspan-like mechanism.
+//
+// For example, this function can return:
+//   prefix = "root.foo.bar                    I1102 17:20:06.921395     0 foo.go:42] "
+//   lines = []string{"current tags:", " - one", " - two"}
+//
+// With this data, the result should be presented to users this way in text form:
+// root.foo.bar                    I1102 17:20:06.921395 foo.go:42] current tags:
+// root.foo.bar                    I1102 17:20:06.921395 foo.go:42]  - one
+// root.foo.bar                    I1102 17:20:06.921395 foo.go:42]  - two
+//
+// Or, in a table layout:
+// .-------------------------------------------------------------------------------------.
+// | root.foo.bar                    I1102 17:20:06.921395 foo.go:42] : current tags:    |
+// |                                                                  :------------------|
+// |                                                                  :  - one           |
+// |                                                                  :------------------|
+// |                                                                  :  - two           |
+// '-------------------------------------------------------------------------------------'
+//
+func (l *LogEntry) Strings() (prefix string, lines []string) {
+	if l.Leveled != nil {
+		prefix, messages := l.Leveled.Strings()
+		prefix = fmt.Sprintf("%-32s %s", l.DN, prefix)
+		return prefix, messages
+	}
+	if l.Raw != nil {
+		return fmt.Sprintf("%-32s R ", l.DN), []string{l.Raw.Data}
+	}
+	return "INVALID ", []string{"INVALID"}
+}
+
 // Convert this LogEntry to proto. Returned value may be nil if given LogEntry is invalid, eg. contains neither a Raw
 // nor Leveled entry.
 func (l *LogEntry) Proto() *apb.LogEntry {
@@ -123,23 +177,6 @@ func (l *LogEntry) Proto() *apb.LogEntry {
 		return nil
 	}
 	return p
-}
-
-// String returns a standardized human-readable representation of either underlying raw or leveled entry. The returned
-// data is pre-formatted to be displayed in a fixed-width font.
-func (l *LogEntry) String() string {
-	if l.Leveled != nil {
-		// Use glog-like layout, but with supervisor DN instead of filename.
-		timestamp := l.Leveled.Timestamp()
-		_, month, day := timestamp.Date()
-		hour, minute, second := timestamp.Clock()
-		nsec := timestamp.Nanosecond() / 1000
-		return fmt.Sprintf("%s%02d%02d %02d:%02d:%02d.%06d %s] %s", l.Leveled.Severity(), month, day, hour, minute, second, nsec, l.DN, l.Leveled.Message())
-	}
-	if l.Raw != nil {
-		return fmt.Sprintf("%-32s R %s", l.DN, l.Raw)
-	}
-	return "INVALID"
 }
 
 // Parse a proto LogEntry back into internal structure. This can be used in log proto API consumers to easily print

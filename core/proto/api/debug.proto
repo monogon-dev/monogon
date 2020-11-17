@@ -136,7 +136,7 @@ message GetLogsResponse {
 
 message LogEntry {
     message Leveled {
-        string message = 1;
+        repeated string lines = 1;
         int64 timestamp = 2;
         LeveledLogSeverity severity = 3;
         string location = 4;

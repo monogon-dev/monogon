@@ -16,10 +16,11 @@
 
 /*
 Package logtree implements a tree-shaped logger for debug events. It provides log publishers (ie. Go code) with a
-glog-like API, with loggers placed in a hierarchical structure defined by a dot-delimited path (called a DN, short for
-Distinguished Name).
+glog-like API and io.Writer API, with loggers placed in a hierarchical structure defined by a dot-delimited path
+(called a DN, short for Distinguished Name).
 
     tree.MustLeveledFor("foo.bar.baz").Warningf("Houston, we have a problem: %v", err)
+    fmt.Fprintf(tree.MustRawFor("foo.bar.baz"), "some\nunstructured\ndata\n")
 
 Logs in this context are unstructured, operational and developer-centric human readable text messages presented as lines
 of text to consumers, with some attached metadata. Logtree does not deal with 'structured' logs as some parts of the
@@ -69,7 +70,7 @@ other systems) to select subtrees of logs for readout. In the example tree, a co
 logs of the entire tree, just a single DN (like svc), or a subtree (like everything under listener, ie. messages emitted
 to listener.http and listener.grpc).
 
-Log Producer API
+Leveled Log Producer API
 
 As part of the glog-like logging API available to producers, the following metadata is attached to emitted logs in
 addition to the DN of the logger to which the log entry was emitted:
@@ -82,6 +83,18 @@ In addition, the logger mechanism supports a variable verbosity level (so-called
 node of the tree. For more information about the producer-facing logging API, see the documentation of the LeveledLogger
 interface, which is the main interface exposed to log producers.
 
+If the submitted message contains newlines, it will be split accordingly into a single log entry that contains multiple
+string lines. This allows for log producers to submit long, multi-line messages that are guaranteed to be non-interleaved
+with other entries, and allows for access API consumers to maintain semantic linking between multiple lines being emitted
+as a single atomic entry.
+
+Raw Log Producer API
+
+In addition to leveled, glog-like logging, LogTree supports 'raw logging'. This is implemented as an io.Writer that will
+split incoming bytes into newline-delimited lines, and log them into that logtree's DN. This mechanism is primarily
+intended to support storage of unstructured log data from external processes - for example binaries running with redirected
+stdout/stderr.
+
 Log Access API
 
 The Log Access API is mostly exposed via a single function on the LogTree struct: Read. It allows access to log entries
@@ -93,6 +106,11 @@ Due to the current implementation of the logtree, subtree accesses of backlogged
 accessing data of just one DN, or the whole tree (as every subtree backlog access performs a scan on all logged data).
 Thus, log consumers should be aware that it is much better to stream and buffer logs specific to some long-standing
 logging request on their own, rather than repeatedly perform reads of a subtree backlog.
+
+The data returned from the log access API is a LogEntry, which itself can contain either a raw logging entry, or a leveled
+logging entry. Helper functions are available on LogEntry that allow canonical string representations to be returned, for
+easy use in consuming tools/interfaces. Alternatively, the consumer can itself access the internal raw/leveled entries and
+print them according to their own preferred format.
 
 */
 package logtree
