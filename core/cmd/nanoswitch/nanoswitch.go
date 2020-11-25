@@ -52,7 +52,7 @@ func defaultLeaseOptions(reply *dhcpv4.DHCPv4) {
 	reply.GatewayIPAddr = switchIP
 	reply.UpdateOption(dhcpv4.OptDNS(net.IPv4(10, 42, 0, 3))) // SLIRP fake DNS server
 	reply.UpdateOption(dhcpv4.OptRouter(switchIP))
-	reply.IPAddressLeaseTime(12 * time.Hour)
+	reply.UpdateOption(dhcpv4.OptIPAddressLeaseTime(12 * time.Hour))
 	reply.UpdateOption(dhcpv4.OptSubnetMask(switchSubnetMask))
 }
 
