@@ -17,6 +17,7 @@
 package dhcp4c
 
 import (
+	"encoding/binary"
 	"net"
 	"time"
 
@@ -71,4 +72,53 @@ func (l *Lease) Router() net.IP {
 	}
 	// No (valid) router found
 	return nil
+}
+
+// DNSServers represents an ordered collection of DNS servers
+type DNSServers []net.IP
+
+func (a DNSServers) Equal(b DNSServers) bool {
+	if len(a) == len(b) {
+		if len(a) == 0 {
+			return true // both are empty or nil
+		}
+		for i, aVal := range a {
+			if !aVal.Equal(b[i]) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+
+}
+
+func ip4toInt(ip net.IP) uint32 {
+	ip4 := ip.To4()
+	if ip4 == nil {
+		return 0
+	}
+	return binary.BigEndian.Uint32(ip4)
+}
+
+// DNSServers returns all unique valid DNS servers from the DHCP DomainNameServers options.
+// It returns nil if the lease is nil.
+func (l *Lease) DNSServers() DNSServers {
+	if l == nil {
+		return nil
+	}
+	rawServers := dhcpv4.GetIPs(dhcpv4.OptionDomainNameServer, l.Options)
+	var servers DNSServers
+	serversSeenMap := make(map[uint32]struct{})
+	for _, s := range rawServers {
+		ip4Num := ip4toInt(s)
+		if s.IsGlobalUnicast() || s.IsLinkLocalUnicast() || ip4Num != 0 {
+			if _, ok := serversSeenMap[ip4Num]; ok {
+				continue
+			}
+			serversSeenMap[ip4Num] = struct{}{}
+			servers = append(servers, s)
+		}
+	}
+	return servers
 }

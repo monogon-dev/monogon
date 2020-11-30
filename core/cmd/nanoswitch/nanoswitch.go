@@ -41,7 +41,8 @@ import (
 	"git.monogon.dev/source/nexantic.git/core/internal/common"
 	"git.monogon.dev/source/nexantic.git/core/internal/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/core/internal/launch"
-	"git.monogon.dev/source/nexantic.git/core/internal/network/dhcp"
+	"git.monogon.dev/source/nexantic.git/core/pkg/dhcp4c"
+	dhcpcb "git.monogon.dev/source/nexantic.git/core/pkg/dhcp4c/callback"
 )
 
 var switchIP = net.IP{10, 1, 0, 1}
@@ -52,7 +53,7 @@ func defaultLeaseOptions(reply *dhcpv4.DHCPv4) {
 	reply.GatewayIPAddr = switchIP
 	reply.UpdateOption(dhcpv4.OptDNS(net.IPv4(10, 42, 0, 3))) // SLIRP fake DNS server
 	reply.UpdateOption(dhcpv4.OptRouter(switchIP))
-	reply.UpdateOption(dhcpv4.OptIPAddressLeaseTime(12 * time.Hour))
+	reply.UpdateOption(dhcpv4.OptIPAddressLeaseTime(30 * time.Second)) // Make sure we exercise our DHCP client in E2E tests
 	reply.UpdateOption(dhcpv4.OptSubnetMask(switchSubnetMask))
 }
 
@@ -88,7 +89,11 @@ func runDHCPServer(link netlink.Link) supervisor.Runnable {
 			case dhcpv4.MessageTypeRequest:
 				reply.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
 				defaultLeaseOptions(reply)
-				reply.YourIPAddr = m.RequestedIPAddress()
+				if m.RequestedIPAddress() != nil {
+					reply.YourIPAddr = m.RequestedIPAddress()
+				} else {
+					reply.YourIPAddr = m.ClientIPAddr
+				}
 			case dhcpv4.MessageTypeRelease, dhcpv4.MessageTypeDecline:
 				supervisor.Logger(ctx).Info("Ignoring Release/Decline")
 			}
@@ -264,18 +269,22 @@ func main() {
 				panic(err)
 			}
 
-			dhcpClient := dhcp.New()
-			supervisor.Run(ctx, "dhcp-client", dhcpClient.Run(externalLink))
+			netIface := &net.Interface{
+				Name:         externalLink.Attrs().Name,
+				MTU:          externalLink.Attrs().MTU,
+				Index:        externalLink.Attrs().Index,
+				Flags:        externalLink.Attrs().Flags,
+				HardwareAddr: externalLink.Attrs().HardwareAddr,
+			}
+			dhcpClient, err := dhcp4c.NewClient(netIface)
+			if err != nil {
+				logger.Fatalf("Failed to create DHCP client: %v", err)
+			}
+			dhcpClient.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter}
+			dhcpClient.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(externalLink), dhcpcb.ManageDefaultRoute(externalLink))
+			supervisor.Run(ctx, "dhcp-client", dhcpClient.Run)
 			if err := ioutil.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1\n"), 0644); err != nil {
 				logger.Fatalf("Failed to write ip forwards: %v", err)
-			}
-			status, err := dhcpClient.Status(ctx, true)
-			if err != nil {
-				return err
-			}
-
-			if err := addNetworkRoutes(externalLink, status.Address, status.Gateway); err != nil {
-				return err
 			}
 		} else {
 			logger.Info("No upstream interface detected")
