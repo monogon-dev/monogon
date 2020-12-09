@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//core/tools/ktest:ktest.bzl", "ktest")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["callback.go"],
+    importpath = "git.monogon.dev/source/nexantic.git/core/pkg/dhcp4c/callback",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//core/pkg/dhcp4c:go_default_library",
+        "@com_github_insomniacslk_dhcp//dhcpv4:go_default_library",
+        "@com_github_vishvananda_netlink//:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["callback_test.go"],
+    embed = [":go_default_library"],
+    pure = "on",
+    deps = [
+        "//core/pkg/dhcp4c:go_default_library",
+        "@com_github_insomniacslk_dhcp//dhcpv4:go_default_library",
+        "@com_github_stretchr_testify//require:go_default_library",
+        "@com_github_vishvananda_netlink//:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+ktest(
+    cmdline = "",
+    initramfs_extra = "",
+    tester = ":go_default_test",
+    deps = [],
+)
