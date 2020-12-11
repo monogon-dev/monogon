@@ -1,0 +1,34 @@
+directories:
+  # Add the directories you want added as source here
+  # By default, we've added your entire workspace ('.')
+  .
+
+# Automatically includes all relevant targets under the 'directories' above
+derive_targets_from_directories: false
+
+targets:
+  # If source code isn't resolving, add additional targets that compile it here
+  //...
+
+additional_languages:
+  # Uncomment any additional languages you want supported
+  # android
+  # dart
+  go
+  # javascript
+  # kotlin
+  # python
+  # scala
+  # typescript
+
+import_run_configurations:
+  intellij/run/Connect_to_dlv_on__2345.xml
+
+  intellij/run/e2e_test.xml
+  intellij/run/e2e_test_in_dbg_mode.xml
+  intellij/run/e2e_test_in_dbg_mode_with_dlv.xml
+
+  intellij/run/Run_all_tests.xml
+
+  intellij/run/Run_single_node_cluster.xml
+  intellij/run/Run_single_node_cluster_in_dbg_mode.xml
