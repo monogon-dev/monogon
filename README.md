@@ -33,27 +33,18 @@ Run a kubectl command:
 This repository is compatible with the IntelliJ Bazel plugin. All commands run inside the container, and
 necessary paths are mapped into the container.
 
-We check the entire .ijwb project directory into the repository, which requires everyone to use the latest
-version of both IntelliJ and the Bazel plugin, but eliminates manual setup steps.
-
 The following steps are necessary:
 
-- Install Google's official Bazel plugin in IntelliJ.
+- Install Google's [Bazel plugin](https://plugins.jetbrains.com/plugin/8609-bazel) in IntelliJ.
 
-- Add the absolute path to your ~/.cache/bazel-nxt folder to your idea64.vmoptions (Help → Edit Custom VM Options)
+- Add the absolute path to your `~/.cache/bazel-nxt` folder to your `idea64.vmoptions` (Help → Edit Custom VM Options)
   and restart IntelliJ:
 
   `-Dbazel.bep.path=/home/leopold/.cache/bazel-nxt`
   
-- Set "*Bazel Binary Location*" in Other Settings → Bazel Settings to the absolute path of scripts/bin/bazel.
+- Set "*Bazel Binary Location*" in Other Settings → Bazel Settings to the absolute path of `scripts/bin/bazel`.
   This is a wrapper that will execute Bazel inside the container.
-
-- Open the `.ijwb` folder as IntelliJ project.
   
-- Disable Vgo support for the project.
+- Use _File → Import Bazel project_... to create a new project from `.bazelproject`.
 
-- Run a non-incremental sync in IntelliJ 
-
-The plugin will automatically resolve paths for generated files.
-
-If you do not use IntelliJ, you need to use the scripts/bazel_copy_generated_for_ide.sh script to copy files locally.
+After running the first sync, everything should now resolve in the IDE, including generated code.
