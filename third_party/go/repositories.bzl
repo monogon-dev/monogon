@@ -1627,6 +1627,12 @@ def go_repositories():
         sum = "h1:/5xXl8Y5W96D+TtHSlonuFqGHIWVuyCkGJLwGh9JJFs=",
     )
     go_repository(
+        name = "org_golang_x_tools",
+        importpath = "golang.org/x/tools",
+        version = "v0.0.0-20201215171152-6307297f4651",
+        sum = "h1:bdfqbHwYVvhLEIkESR524rqSsmV06Og3Fgz60LE7vZc=",
+    )
+    go_repository(
         name = "org_golang_x_xerrors",
         importpath = "golang.org/x/xerrors",
         version = "v0.0.0-20191204190536-9bdfabe68543",

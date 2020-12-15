@@ -78,6 +78,8 @@ toolchain(
     toolchain_type = "@rules_python//python:toolchain_type",
 )
 
+# Shortcuts for top-level binaries/tools
+
 # Shortcut for kubectl when running through bazel run
 # (don't depend on this, it might turn into an env-based PATH shortcut, use
 # @io_k8s_kubernetes//cmd/kubectl instead)
@@ -102,4 +104,10 @@ alias(
 alias(
     name = "launch-multi2",
     actual = "//core/cmd/launch-multi2",
+)
+
+alias(
+    name = "goimports",
+    actual = "@org_golang_x_tools//cmd/goimports:goimports",
+    visibility = ["//visibility:public"],
 )

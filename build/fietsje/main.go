@@ -128,6 +128,9 @@ func main() {
 		"github.com/flynn/go-shlex",
 	)
 
+	// goimports
+	p.collectOverride("golang.org/x/tools", "v0.0.0-20201215171152-6307297f4651")
+
 	// First generate the repositories starlark rule into memory. This is because rendering will lock all unlocked
 	// dependencies, which might take a while. If a use were to interrupt it now, they would end up with an incomplete
 	// repositories.bzl and would have to restore from git.

@@ -22,7 +22,7 @@
             <envs />
         </TaskOptions>
         <TaskOptions isEnabled="true">
-            <option name="arguments" value="-local git.monogon.dev -w $FilePath$" />
+            <option name="arguments" value="run //:goimports -- -local git.monogon.dev -w $FilePath$" />
             <option name="checkSyntaxErrors" value="true" />
             <option name="description" />
             <option name="exitCodeBehavior" value="ERROR" />
@@ -34,7 +34,7 @@
                 <array />
             </option>
             <option name="outputFromStdout" value="false" />
-            <option name="program" value="$USER_HOME$/.local/bin/goimports" />
+            <option name="program" value="$WorkspaceRoot$/scripts/bin/bazel" />
             <option name="runOnExternalChanges" value="false" />
             <option name="scopeName" value="Project Files" />
             <option name="trackOnlyRoot" value="true" />
