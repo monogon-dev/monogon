@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "compat.go",
+        "eventlog.go",
+        "secureboot.go",
+    ],
+    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/tpm/eventlog",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node/core/tpm/eventlog/internal:go_default_library",
+        "@com_github_google_certificate_transparency_go//x509:go_default_library",
+        "@com_github_google_go_tpm//tpm2:go_default_library",
+    ],
+)

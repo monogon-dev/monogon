@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "declarative.go",
+        "placement.go",
+        "placement_local.go",
+    ],
+    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative",
+    visibility = ["//metropolis/node:__subpackages__"],
+    deps = ["@org_golang_x_sys//unix:go_default_library"],
+)

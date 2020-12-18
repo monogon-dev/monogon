@@ -26,7 +26,7 @@ Launch the node:
     
 Run a kubectl command:
 
-    bazel run //core/cmd/dbg -- kubectl describe
+    bazel run //metropolis/cli/dbg -- kubectl describe
  
 #### IntelliJ
 

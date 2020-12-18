@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "git.monogon.dev/source/nexantic.git/metropolis/cli/dbg",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//metropolis/node/core/logtree:go_default_library",
+        "//metropolis/proto/api:go_default_library",
+        "@com_github_spf13_pflag//:go_default_library",
+        "@io_k8s_component_base//cli/flag:go_default_library",
+        "@io_k8s_kubectl//pkg/cmd/plugin:go_default_library",
+        "@io_k8s_kubectl//pkg/util/logs:go_default_library",
+        "@io_k8s_kubernetes//pkg/kubectl/cmd:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "dbg",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

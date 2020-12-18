@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "coredns.go",
+        "directives.go",
+    ],
+    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dns",
+    visibility = ["//metropolis/node:__subpackages__"],
+    deps = [
+        "//metropolis/node/common/fileargs:go_default_library",
+        "//metropolis/node/common/supervisor:go_default_library",
+    ],
+)

@@ -97,13 +97,13 @@ alias(
 # Shortcut for launching a single Smalltown instance
 alias(
     name = "launch",
-    actual = "//core/cmd/launch",
+    actual = "//metropolis/test/launch/cli/launch",
 )
 
 # Shortcut for launching a virtual network with two Smalltown instances
 alias(
     name = "launch-multi2",
-    actual = "//core/cmd/launch-multi2",
+    actual = "//metropolis/test/launch/cli/launch-multi2",
 )
 
 alias(
