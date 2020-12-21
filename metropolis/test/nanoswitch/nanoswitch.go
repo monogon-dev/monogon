@@ -58,7 +58,7 @@ func defaultLeaseOptions(reply *dhcpv4.DHCPv4) {
 }
 
 // runDHCPServer runs an extremely minimal DHCP server with most options hardcoded, a wrapping bump allocator for the
-// IPs, 12h Lease timeout and no support for DHCP collision detection.
+// IPs, 30 second lease timeout and no support for DHCP collision detection.
 func runDHCPServer(link netlink.Link) supervisor.Runnable {
 	currentIP := net.IP{10, 1, 0, 1}
 
