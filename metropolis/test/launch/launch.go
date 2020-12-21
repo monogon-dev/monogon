@@ -126,10 +126,9 @@ type Options struct {
 	// Intended for networking this instance together with others for running  more complex network configurations.
 	ConnectToSocket *os.File
 
-	// SerialPort is a File(descriptor) over which you can communicate with the serial port of the machine
-	// It can be set to an existing file descriptor (like os.Stdout/os.Stderr) or you can use NewSocketPair() to get one
-	// end to talk to from Go.
-	SerialPort *os.File
+	// SerialPort is a io.ReadWriter over which you can communicate with the serial port of the machine
+	// It can be set to an existing file descriptor (like os.Stdout/os.Stderr) or any Go structure implementing this interface.
+	SerialPort io.ReadWriter
 
 	// EnrolmentConfig is passed into the VM and subsequently used for bootstrapping if no enrolment config is built-in
 	EnrolmentConfig *apb.EnrolmentConfig
