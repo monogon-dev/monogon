@@ -37,7 +37,7 @@ const (
 	logFilterMax = 1000
 )
 
-// debugService implements the Smalltown node debug API.
+// debugService implements the Metropolis node debug API.
 type debugService struct {
 	cluster    *cluster.Manager
 	kubernetes *kubernetes.Service

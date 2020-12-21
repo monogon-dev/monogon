@@ -34,17 +34,17 @@ var (
 	// EFIPartitionType is the standardized partition type value for the EFI ESP partition. The human readable GUID is C12A7328-F81F-11D2-BA4B-00A0C93EC93B.
 	EFIPartitionType = gpt.PartType{0x28, 0x73, 0x2a, 0xc1, 0x1f, 0xf8, 0xd2, 0x11, 0xba, 0x4b, 0x00, 0xa0, 0xc9, 0x3e, 0xc9, 0x3b}
 
-	// SmalltownDataPartitionType is the partition type value for a Smalltown data partition. The human-readable GUID is 9eeec464-6885-414a-b278-4305c51f7966.
-	SmalltownDataPartitionType = gpt.PartType{0x64, 0xc4, 0xee, 0x9e, 0x85, 0x68, 0x4a, 0x41, 0xb2, 0x78, 0x43, 0x05, 0xc5, 0x1f, 0x79, 0x66}
+	// NodeDataPartitionType is the partition type value for a Metropolis Node data partition. The human-readable GUID is 9eeec464-6885-414a-b278-4305c51f7966.
+	NodeDataPartitionType = gpt.PartType{0x64, 0xc4, 0xee, 0x9e, 0x85, 0x68, 0x4a, 0x41, 0xb2, 0x78, 0x43, 0x05, 0xc5, 0x1f, 0x79, 0x66}
 )
 
 const (
-	ESPDevicePath       = "/dev/esp"
-	SmalltownDataCryptPath = "/dev/data-crypt"
+	ESPDevicePath     = "/dev/esp"
+	NodeDataCryptPath = "/dev/data-crypt"
 )
 
-// MakeBlockDevices looks for the ESP and the Smalltown data partition and maps them to ESPDevicePath and
-// SmalltownDataCryptPath respectively. This doesn't fail if it doesn't find the partitions, only if
+// MakeBlockDevices looks for the ESP and the node data partition and maps them to ESPDevicePath and
+// NodeDataCryptPath respectively. This doesn't fail if it doesn't find the partitions, only if
 // something goes catastrophically wrong.
 func MakeBlockDevices(ctx context.Context) error {
 	blockdevNames, err := ioutil.ReadDir("/sys/class/block")
@@ -83,9 +83,9 @@ func MakeBlockDevices(ctx context.Context) error {
 						return fmt.Errorf("failed to create device node for ESP partition: %w", err)
 					}
 				}
-				if part.Type == SmalltownDataPartitionType {
-					if err := unix.Mknod(SmalltownDataCryptPath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1)))); err != nil {
-						return fmt.Errorf("failed to create device node for Smalltown encrypted data partition: %w", err)
+				if part.Type == NodeDataPartitionType {
+					if err := unix.Mknod(NodeDataCryptPath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1)))); err != nil {
+						return fmt.Errorf("failed to create device node for Metropolis node encrypted data partition: %w", err)
 					}
 				}
 			}

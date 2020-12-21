@@ -146,7 +146,7 @@ func (r resourceClusterRoleBindings) Expected() map[string]interface{} {
 					APIGroup: rbac.GroupName,
 					Kind:     "User",
 					// TODO(q3k): describe this name's contract, or unify with whatever creates this.
-					Name: "smalltown:apiserver-kubelet-client",
+					Name: "metropolis:apiserver-kubelet-client",
 				},
 			},
 		},

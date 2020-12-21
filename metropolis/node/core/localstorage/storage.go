@@ -116,12 +116,12 @@ type DataKubernetesKubeletDirectory struct {
 
 	Plugins struct {
 		declarative.Directory
-		VFS declarative.File `file:"com.smalltown.vfs.sock"`
+		VFS declarative.File `file:"dev.monogon.metropolis.vfs.sock"`
 	} `dir:"plugins"`
 
 	PluginsRegistry struct {
 		declarative.Directory
-		VFSReg declarative.File `file:"com.smalltown.vfs-reg.sock"`
+		VFSReg declarative.File `file:"dev.monogon.metropolis.vfs-reg.sock"`
 	} `dir:"plugins_registry"`
 }
 

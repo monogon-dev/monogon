@@ -42,7 +42,7 @@ type boilerplate struct {
 func prep(t *testing.T) *boilerplate {
 	ctx, ctxC := context.WithCancel(context.Background())
 	root := &localstorage.Root{}
-	tmp, err := ioutil.TempDir("", "smalltown-test")
+	tmp, err := ioutil.TempDir("", "metropolis-consensus-test")
 	if err != nil {
 		t.Fatal(err)
 	}

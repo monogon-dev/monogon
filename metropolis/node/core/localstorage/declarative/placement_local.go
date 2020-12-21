@@ -66,7 +66,7 @@ func (f *FSPlacement) Write(d []byte, mode os.FileMode) error {
 	defer f.writeLock.Unlock()
 
 	// TODO(q3k): ensure that these do not collide with an existing sibling file, or generate this suffix randomly.
-	tmp := f.FullPath() + ".__smalltown_tmp"
+	tmp := f.FullPath() + ".__metropolis_tmp"
 	defer os.Remove(tmp)
 	if err := ioutil.WriteFile(tmp, d, mode); err != nil {
 		return fmt.Errorf("temporary file write failed: %w", err)

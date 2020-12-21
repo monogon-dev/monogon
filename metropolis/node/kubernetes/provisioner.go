@@ -46,7 +46,7 @@ import (
 )
 
 // ONCHANGE(//metropolis/node/kubernetes/reconciler:resources_csi.go): needs to match csiProvisionerServerName declared.
-const csiProvisionerServerName = "com.nexantic.smalltown.vfs"
+const csiProvisionerServerName = "dev.monogon.metropolis.vfs"
 
 // csiProvisionerServer is responsible for the provisioning and deprovisioning of CSI-based container volumes. It runs on all
 // nodes and watches PVCs for ones assigned to the node it's running on and fulfills the provisioning request by
@@ -256,7 +256,7 @@ func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, stora
 	}
 
 	if *pvc.Spec.VolumeMode == v1.PersistentVolumeBlock {
-		return fmt.Errorf("Block PVCs are not supported by Smalltown")
+		return fmt.Errorf("Block PVCs are currently not supported by Metropolis")
 	}
 
 	volumeID := "pvc-" + string(pvc.ObjectMeta.UID)

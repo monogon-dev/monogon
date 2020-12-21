@@ -16,7 +16,7 @@
 
 syntax = "proto3";
 option go_package = "git.monogon.dev/source/nexantic.git/metropolis/proto/internal";
-package smalltown.core.proto.internal;
+package metropolis.proto.internal;
 
 // Node describes a single node's state in etcd
 message Node {

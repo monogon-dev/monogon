@@ -108,7 +108,7 @@ func (c *Certificate) etcdPaths() (cert, key string) {
 // in memory (if volatile), loading it from etcd, or creating and saving it on etcd if needed.
 // This function is safe to call in parallel from multiple etcd clients (including across machines), but it will error
 // in case a concurrent certificate generation happens. These errors are, however, safe to retry - as long as all the
-// certificate creators (ie., Smalltown nodes) run the same version of this code.
+// certificate creators (ie., Metropolis nodes) run the same version of this code.
 // TODO(q3k): in the future, this should be handled better - especially as we introduce new certificates, or worse,
 // change the issuance chain. As a stopgap measure, an explicit per-certificate or even global lock can be implemented.
 // And, even before that, we can handle concurrency errors in a smarter way.

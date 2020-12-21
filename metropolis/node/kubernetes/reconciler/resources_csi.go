@@ -27,7 +27,7 @@ import (
 // TODO(q3k): this is duplicated with //metropolis/node/kubernetes:provisioner.go; integrate this once provisioner.go
 // gets moved into a subpackage.
 // ONCHANGE(//metropolis/node/kubernetes:provisioner.go): needs to match csiProvisionerName declared.
-const csiProvisionerName = "com.nexantic.smalltown.vfs"
+const csiProvisionerName = "dev.monogon.metropolis.vfs"
 
 type resourceCSIDrivers struct {
 	kubernetes.Interface

@@ -40,10 +40,10 @@ import (
 	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
 )
 
-// Manager is a finite state machine that joins this node (ie., Smalltown instance running on a virtual/physical machine)
-// into a Smalltown cluster (ie. group of nodes that act as a single control plane for Smalltown services). It does that
-// by bringing up all required operating-system level components, including mounting the local filesystem, bringing up
-// a consensus (etcd) server/client, ...
+// Manager is a finite state machine that joins this node (ie., Metropolis node running on a virtual/physical machine)
+// into a Metropolis cluster (ie. group of nodes that act as a single control plane for Metropolis services). It does
+// this by bringing up all required operating-system level components, including mounting the local filesystem, bringing
+// up a consensus (etcd) server/client, ...
 //
 // The Manager runs as a single-shot Runnable. It will attempt to progress its state from the initial state (New) to
 // either Running (meaning that the node is now part of a cluster), or Failed (meaning that the node couldn't become
@@ -99,7 +99,7 @@ const (
 	// with no EnrolmentConfig.
 	StateCreatingCluster
 	// StateCharlie is when the Manager uses the Golden Ticket debug/stopgap system to join an already
-	// existing cluster. This mechanism will be removed before the first Smalltown release.
+	// existing cluster. This mechanism will be removed before the first Metropolis release.
 	StateCharlie
 	// StateRunning is when the Manager successfully got the node to be part of a cluster. stateRunningNode is valid.
 	StateRunning
@@ -267,7 +267,7 @@ func (m *Manager) stateNew(ctx context.Context) error {
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("could not read local enrolment file: %w", err)
 	} else if err != nil {
-		configRaw, err = ioutil.ReadFile("/sys/firmware/qemu_fw_cfg/by_name/com.nexantic.smalltown/enrolment.pb/raw")
+		configRaw, err = ioutil.ReadFile("/sys/firmware/qemu_fw_cfg/by_name/dev.monogon.metropolis/enrolment.pb/raw")
 		if err != nil && !os.IsNotExist(err) {
 			return fmt.Errorf("could not read firmware enrolment file: %w", err)
 		}
@@ -381,7 +381,7 @@ func (m *Manager) stateCreatingCluster(ctx context.Context) error {
 }
 
 // stateCharlie is used to join an existing cluster via the GoldenTicket mechanism. This mechanism is temporarily
-// implemented in Smalltown in order to allow for testing multi-node clusters without a TPM attestation flow implemented.
+// implemented in Metropolis in order to allow for testing multi-node clusters without a TPM attestation flow implemented.
 // The Golden Ticket contains a pregenerated node certificate, etcd certificate, and other data that any node can
 // use to join the cluster.
 // Since this flow is temporary, it has a slight impedance mismatch with methods exposed by localstorage, node, etc.,
@@ -394,8 +394,8 @@ func (m *Manager) stateCreatingCluster(ctx context.Context) error {
 //    was generated (vs. being created now by an RPC call, via an promote-node-to-etcd-member flow)
 //  - the node is then promoted to a consensus member and kubernetes worker, its clusterunlock key is set, and then it
 //    is saved to etcd.
-// As such, in this flow, we first create an etcd member (on goldenticket generation), and then only create a new Smalltown
-// node (when the goldenticket is used).
+// As such, in this flow, we first create an etcd member (on goldenticket generation), and then only create a new
+// Metropolis node (when the goldenticket is used).
 func (m *Manager) stateCharlie(ctx context.Context) error {
 	t := m.goldenTicket
 	nodeCert, err := x509.ParseCertificate(t.NodeCert)

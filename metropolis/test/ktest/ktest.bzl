@@ -15,7 +15,7 @@
 #  limitations under the License.
 
 """
-Ktest provides a simple macro to run tests inside the normal Smalltown kernel
+Ktest provides a macro to run tests under a normal Metropolis node kernel
 """
 
 def ktest(deps, tester, initramfs_extra, cmdline):

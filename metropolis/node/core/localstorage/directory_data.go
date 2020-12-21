@@ -30,7 +30,7 @@ import (
 
 var keySize uint16 = 256 / 8
 
-// MountData mounts the Smalltown data partition with the given global unlock key. It automatically
+// MountData mounts the node data partition with the given global unlock key. It automatically
 // unseals the local unlock key from the TPM.
 func (d *DataDirectory) MountExisting(unlock *ESPLocalUnlockFile, globalUnlockKey []byte) error {
 	d.flagLock.Lock()
@@ -58,7 +58,7 @@ func (d *DataDirectory) MountExisting(unlock *ESPLocalUnlockFile, globalUnlockKe
 		key[i] = localUnlockKey[i] ^ globalUnlockKey[i]
 	}
 
-	if err := crypt.CryptMap("data", crypt.SmalltownDataCryptPath, key); err != nil {
+	if err := crypt.CryptMap("data", crypt.NodeDataCryptPath, key); err != nil {
 		return err
 	}
 	if err := d.mount(); err != nil {
@@ -67,7 +67,7 @@ func (d *DataDirectory) MountExisting(unlock *ESPLocalUnlockFile, globalUnlockKe
 	return nil
 }
 
-// InitializeData initializes the Smalltown data partition and returns the global unlock key. It seals
+// InitializeData initializes the node data partition and returns the global unlock key. It seals
 // the local portion into the TPM and stores the blob on the ESP. This is a potentially slow
 // operation since it touches the whole partition.
 func (d *DataDirectory) MountNew(unlock *ESPLocalUnlockFile) ([]byte, error) {
@@ -103,7 +103,7 @@ func (d *DataDirectory) MountNew(unlock *ESPLocalUnlockFile) ([]byte, error) {
 		key[i] = localUnlockKey[i] ^ globalUnlockKey[i]
 	}
 
-	if err := crypt.CryptInit("data", crypt.SmalltownDataCryptPath, key); err != nil {
+	if err := crypt.CryptInit("data", crypt.NodeDataCryptPath, key); err != nil {
 		return nil, fmt.Errorf("initializing encrypted block device: %w", err)
 	}
 	mkfsCmd := exec.Command("/bin/mkfs.xfs", "-qf", "/dev/data")

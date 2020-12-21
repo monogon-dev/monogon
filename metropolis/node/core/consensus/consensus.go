@@ -15,7 +15,7 @@
 // limitations under the License.
 
 // Package consensus implements a managed etcd cluster member service, with a self-hosted CA system for issuing peer
-// certificates. Currently each Smalltown node runs an etcd member, and connects to the etcd member locally over a unix
+// certificates. Currently each Metropolis node runs an etcd member, and connects to the etcd member locally over a
 // domain socket.
 //
 // The service supports two modes of startup:
@@ -51,7 +51,7 @@ import (
 )
 
 const (
-	DefaultClusterToken = "SIGNOS"
+	DefaultClusterToken = "METROPOLIS"
 	DefaultLogger       = "zap"
 )
 
@@ -96,7 +96,7 @@ type Config struct {
 	// ListenHost is the IP address or hostname at which this cluster member will listen.
 	ListenHost string
 	// Port is the port at which this cluster member will listen for other members. If zero, defaults to the global
-	// Smalltown setting.
+	// Metropolis setting.
 	Port int
 }
 
@@ -183,7 +183,7 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 
 		// Generate CA, keep in memory, write it down in etcd later.
-		st.ca, err = ca.New("Smalltown etcd peer Root CA")
+		st.ca, err = ca.New("Metropolis etcd peer Root CA")
 		if err != nil {
 			return fmt.Errorf("when creating new cluster's peer CA: %w", err)
 		}

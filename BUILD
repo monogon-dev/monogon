@@ -94,13 +94,13 @@ alias(
     actual = "@com_github_go_delve_delve//cmd/dlv:dlv",
 )
 
-# Shortcut for launching a single Smalltown instance
+# Shortcut for launching a single Metropolis node instance in a VM.
 alias(
     name = "launch",
     actual = "//metropolis/test/launch/cli/launch",
 )
 
-# Shortcut for launching a virtual network with two Smalltown instances
+# Shortcut for launching a virtual network a Metropolis cluster consisting of two nodes.
 alias(
     name = "launch-multi2",
     actual = "//metropolis/test/launch/cli/launch-multi2",

@@ -2,7 +2,7 @@ genrule(
     name = "bzImage",
     srcs = [
         "@linux//:all",
-        "linux-smalltown.config",
+        "linux-metropolis.config",
     ],
     outs = [
         "bzImage",
@@ -12,7 +12,7 @@ genrule(
 
     mkdir $$DIR/.bin
 
-    cp $(location linux-smalltown.config) $$DIR/.config
+    cp $(location linux-metropolis.config) $$DIR/.config
 
     (cd $$DIR && make -j $$(nproc) >/dev/null)
 
@@ -23,6 +23,6 @@ genrule(
 
 filegroup(
     name = "kernel-config",
-    srcs = ["linux-smalltown.config"],
+    srcs = ["linux-metropolis.config"],
     visibility = ["//visibility:public"],
 )

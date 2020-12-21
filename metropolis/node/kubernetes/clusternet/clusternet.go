@@ -52,7 +52,7 @@ import (
 
 const (
 	clusterNetDeviceName = "clusternet"
-	publicKeyAnnotation  = "node.smalltown.nexantic.com/wg-pubkey"
+	publicKeyAnnotation  = "node.metropolis.monogon.dev/wg-pubkey"
 )
 
 type Service struct {

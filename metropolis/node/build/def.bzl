@@ -50,7 +50,7 @@ build_static_transition = transition(
     ],
 )
 
-def _smalltown_initramfs_impl(ctx):
+def _node_initramfs_impl(ctx):
     """
     Generate an lz4-compressed initramfs based on a label/file list.
     """
@@ -197,10 +197,10 @@ def _smalltown_initramfs_impl(ctx):
 
     return [DefaultInfo(files = depset([initramfs]))]
 
-smalltown_initramfs = rule(
-    implementation = _smalltown_initramfs_impl,
+node_initramfs = rule(
+    implementation = _node_initramfs_impl,
     doc = """
-        Build a Smalltown initramfs. The initramfs will contain a basic /dev directory and all the files specified by the
+        Build a node initramfs. The initramfs will contain a basic /dev directory and all the files specified by the
         `files` attribute. Executable files will have their permissions set to 0755, non-executable files will have
         their permissions set to 0444. All parent directories will be created with 0755 permissions.
     """,

@@ -14,12 +14,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The reconciler ensures that a base set of K8s resources is always available in the cluster. These are necessary to
-// ensure correct out-of-the-box functionality. All resources containing the smalltown.com/builtin=true label are assumed
-// to be managed by the reconciler.
-// It currently does not revert modifications made by admins, it is  planned to create an admission plugin prohibiting
-// such modifications to resources with the smalltown.com/builtin label to deal with that problem. This would also solve a
-// potential issue where you could delete resources just by adding the smalltown.com/builtin=true label.
+// The reconciler ensures that a base set of K8s resources is always available
+// in the cluster. These are necessary to ensure correct out-of-the-box
+// functionality. All resources containing the
+// metropolis.monogon.dev/builtin=true label are assumed to be managed by the
+// reconciler.
+// It currently does not revert modifications made by admins, it is  planned to
+// create an admission plugin prohibiting such modifications to resources with
+// the metropolis.monogon.dev/builtin label to deal with that problem. This
+// would also solve a potential issue where you could delete resources just by
+// adding the metropolis.monogon.dev/builtin=true label.
 package reconciler
 
 import (
@@ -45,17 +49,17 @@ func False() *bool {
 
 const (
 	// BuiltinLabelKey is used as a k8s label to mark built-in objects (ie., managed by the reconciler)
-	BuiltinLabelKey = "smalltown.com/builtin"
+	BuiltinLabelKey = "metropolis.monogon.dev/builtin"
 	// BuiltinLabelValue is used as a k8s label value, under the BuiltinLabelKey key.
 	BuiltinLabelValue = "true"
 	// BuiltinRBACPrefix is used to prefix all built-in objects that are part of the rbac/v1 API (eg.
 	// {Cluster,}Role{Binding,} objects). This corresponds to the colon-separated 'namespaces' notation used by
 	// Kubernetes system (system:) objects.
-	BuiltinRBACPrefix = "smalltown:"
+	BuiltinRBACPrefix = "metropolis:"
 )
 
 // builtinLabels makes a kubernetes-compatible label dictionary (key->value) that is used to mark objects that are
-// built-in into Smalltown (ie., managed by the reconciler). These are then subsequently retrieved by listBuiltins.
+// built-in into Metropolis (ie., managed by the reconciler). These are then subsequently retrieved by listBuiltins.
 // The extra argument specifies what other labels are to be merged into the the labels dictionary, for convenience. If
 // nil or empty, no extra labels will be applied.
 func builtinLabels(extra map[string]string) map[string]string {
@@ -71,8 +75,8 @@ func builtinLabels(extra map[string]string) map[string]string {
 }
 
 // listBuiltins returns a k8s client ListOptions structure that allows to retrieve all objects that are built-in into
-// Smalltown currently present in the API server (ie., ones that are to be managed by the reconciler). These are created
-// by applying builtinLabels to their metadata labels.
+// Metropolis currently present in the API server (ie., ones that are to be managed by the reconciler). These are
+// created by applying builtinLabels to their metadata labels.
 var listBuiltins = meta.ListOptions{
 	LabelSelector: fmt.Sprintf("%s=%s", BuiltinLabelKey, BuiltinLabelValue),
 }

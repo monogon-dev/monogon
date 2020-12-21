@@ -390,7 +390,7 @@ func SolveAKChallenge(credBlob, secretChallenge []byte) ([]byte, error) {
 	// store secrets on the OS side pre-global unlock and b) it makes no sense in this security model
 	// since an uncompromised host OS will not let an untrusted entity attest as itself and a
 	// compromised OS can either not pass PCR policy checks or the game's already over (you
-	// successfully runtime-exploited a production Smalltown Core)
+	// successfully runtime-exploited a production Metropolis node)
 	endorsementSession, _, err := tpm2.StartAuthSession(
 		tpm.device,
 		tpm2.HandleNull,

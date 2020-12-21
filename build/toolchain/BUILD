@@ -7,8 +7,9 @@ load(":cc_toolchain_config.bzl", "host_cc_toolchain_config")
 #  - //build/toolchain:host_cc_suite , which is a fully unhermetic host toolchain,
 #    that can be used to build tools for the host.
 #  - //build/toolchain/musl-host-gcc:musl_host_cc_suite , which combines the host's
-#    gcc compiler with a sysroot tarball that targets Smalltown. This can be used to
-#    build C libraries/tools for Smalltown.
+#    gcc compiler with a sysroot tarball that targets the Metropolis node
+#    runtime. This can be used to build C libraries/tools running within the
+#    Metropolis node image.
 #
 
 # This file defines //build/toolchain:host_cc_suite.
@@ -28,8 +29,8 @@ load(":cc_toolchain_config.bzl", "host_cc_toolchain_config")
 # toolchain that's built locally, or downloaded from the Internet - as
 # github.com/bazelbuild/bazel-toolchains does it. As that's being built, we
 # should then also have another toolchain definition for C binaries that
-# target Smalltown static binaries, so that mkfs.xfs can be built using native
-# cc_* rules, too.
+# target static binaries for Metropolis nodes, so that mkfs.xfs can be built
+# using native cc_* rules, too.
 #
 # This, and :cc_toolchain_config.bzl is based on the following tutorial:
 # https://docs.bazel.build/versions/master/tutorial/cc-toolchain-config.html

@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
-load("//metropolis/node/build:def.bzl", "smalltown_initramfs")
+load("//metropolis/node/build:def.bzl", "node_initramfs")
 
 go_library(
     name = "go_default_library",
@@ -17,7 +17,7 @@ config_setting(
     },
 )
 
-smalltown_initramfs(
+node_initramfs(
     name = "initramfs",
     extra_dirs = [
         "/kubernetes/conf/flexvolume-plugins",
@@ -77,7 +77,7 @@ genrule(
         ":initramfs",
     ],
     outs = [
-        "smalltown.img",
+        "node.img",
     ],
     cmd = """
     $(location //metropolis/node/build/mkimage) \
@@ -135,7 +135,7 @@ load("//metropolis/node/build/genosrelease:defs.bzl", "os_release")
 
 os_release(
     name = "os-release-info",
-    os_id = "smalltown",
-    os_name = "Smalltown",
-    stamp_var = "STABLE_SIGNOS_version",
+    os_id = "metropolis-node",
+    os_name = "Metropolis Node",
+    stamp_var = "STABLE_METROPOLIS_version",
 )

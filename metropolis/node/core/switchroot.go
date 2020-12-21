@@ -37,20 +37,20 @@ func switchRoot(log logtree.LeveledLogger) error {
 	// We detect the need to remount to tmpfs over env vars.
 	// The first run of /init (from initramfs) will not have this var, and will be re-exec'd from a new tmpfs root with
 	// that variable set.
-	witness := "SIGNOS_REMOUNTED"
+	witness := "METROPOLIS_REMOUNTED"
 
 	// If the witness env var is found in the environment, it means we are ready to go.
 	environ := os.Environ()
 	for _, env := range environ {
 		if strings.HasPrefix(env, witness+"=") {
-			log.Info("Smalltown running in tmpfs root")
+			log.Info("Metropolis node running in tmpfs root")
 			return nil
 		}
 	}
 
 	// Otherwise, we need to remount to a tmpfs.
 	environ = append(environ, witness+"=yes")
-	log.Info("Smalltown running in initramfs, remounting to tmpfs...")
+	log.Info("Metropolis node running in initramfs, remounting to tmpfs...")
 
 	// Make note of all directories we have to make and files that we have to copy.
 	paths := []string{}

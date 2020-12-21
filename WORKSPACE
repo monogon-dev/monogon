@@ -215,6 +215,6 @@ http_archive(
     urls = ["https://github.com/bonzini/qboot/archive/a5300c4949b8d4de2d34bedfaed66793f48ec948.tar.gz"],
 )
 
-# Load musl toolchain Smalltown sysroot tarball into external repository.
+# Load musl toolchain Metropolis sysroot tarball into external repository.
 load("//build/toolchain/musl-host-gcc:sysroot.bzl", "musl_sysroot_repositories")
 musl_sysroot_repositories()

@@ -205,7 +205,7 @@ func (*csiPluginServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoReq
 // CSI Identity endpoints
 func (*csiPluginServer) GetPluginInfo(ctx context.Context, req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
 	return &csi.GetPluginInfoResponse{
-		Name:          "com.smalltown.vfs",
+		Name:          "dev.monogon.metropolis.vfs",
 		VendorVersion: "0.0.1", // TODO(lorenz): Maybe stamp?
 	}, nil
 }
@@ -232,7 +232,7 @@ func (s *csiPluginServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*cs
 func (s *csiPluginServer) GetInfo(ctx context.Context, req *pluginregistration.InfoRequest) (*pluginregistration.PluginInfo, error) {
 	return &pluginregistration.PluginInfo{
 		Type:              "CSIPlugin",
-		Name:              "com.smalltown.vfs",
+		Name:              "dev.monogon.metropolis.vfs",
 		Endpoint:          s.KubeletDirectory.Plugins.VFS.FullPath(),
 		SupportedVersions: []string{"1.2"}, // Keep in sync with container-storage-interface/spec package version
 	}, nil

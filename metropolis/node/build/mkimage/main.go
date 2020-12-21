@@ -16,8 +16,9 @@
 
 package main
 
-// mkimage is a tool to generate a Smalltown disk image containing the given EFI payload, and optionally, a given external
-// initramfs image and enrolment credentials.
+// mkimage is a tool to generate a Metropolis node disk image containing the
+// given EFI payload, and optionally, a given external initramfs image and
+// enrolment credentials.
 
 import (
 	"flag"
@@ -32,7 +33,7 @@ import (
 	"github.com/diskfs/go-diskfs/partition/gpt"
 )
 
-var SmalltownDataPartition gpt.Type = gpt.Type("9eeec464-6885-414a-b278-4305c51f7966")
+var NodeDataPartition gpt.Type = gpt.Type("9eeec464-6885-414a-b278-4305c51f7966")
 
 var (
 	flagEFI                  string
@@ -79,8 +80,8 @@ func main() {
 				End:   mibToSectors(flagESPPartitionSize) - 1,
 			},
 			{
-				Type:  SmalltownDataPartition,
-				Name:  "SIGNOS-DATA",
+				Type:  NodeDataPartition,
+				Name:  "METROPOLIS-NODE-DATA",
 				Start: mibToSectors(flagESPPartitionSize),
 				End:   mibToSectors(flagESPPartitionSize+flagDataPartitionSize) - 1,
 			},
@@ -96,7 +97,7 @@ func main() {
 	}
 
 	// Create EFI partition structure.
-	for _, dir := range []string{"/EFI", "/EFI/BOOT", "/EFI/smalltown"} {
+	for _, dir := range []string{"/EFI", "/EFI/BOOT", "/EFI/metropolis"} {
 		if err := fs.Mkdir(dir); err != nil {
 			log.Fatalf("Mkdir(%q): %v", dir, err)
 		}
@@ -105,11 +106,11 @@ func main() {
 	put(fs, flagEFI, "/EFI/BOOT/BOOTX64.EFI")
 
 	if flagInitramfs != "" {
-		put(fs, flagInitramfs, "/EFI/smalltown/initramfs.cpio.lz4")
+		put(fs, flagInitramfs, "/EFI/metropolis/initramfs.cpio.lz4")
 	}
 
 	if flagEnrolmentCredentials != "" {
-		put(fs, flagEnrolmentCredentials, "/EFI/smalltown/enrolment.pb")
+		put(fs, flagEnrolmentCredentials, "/EFI/metropolis/enrolment.pb")
 	}
 
 	if err := diskImg.File.Close(); err != nil {

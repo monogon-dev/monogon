@@ -117,11 +117,11 @@ type Options struct {
 	// and ConflictFreePortMap(). Ignored when ConnectToSocket is set.
 	Ports PortMap
 
-	// If set to true, reboots are honored. Otherwise all reboots exit the Launch() command. Smalltown generally restarts
-	// on almost all errors, so unless you want to test reboot behavior this should be false.
+	// If set to true, reboots are honored. Otherwise all reboots exit the Launch() command. Metropolis nodes
+	// generally restarts on almost all errors, so unless you want to test reboot behavior this should be false.
 	AllowReboot bool
 
-	// By default the Smalltown VM is connected to the Host via SLIRP. If ConnectToSocket is set, it is instead connected
+	// By default the VM is connected to the Host via SLIRP. If ConnectToSocket is set, it is instead connected
 	// to the given file descriptor/socket. If this is set, all port maps from the Ports option are ignored.
 	// Intended for networking this instance together with others for running  more complex network configurations.
 	ConnectToSocket *os.File
@@ -134,12 +134,12 @@ type Options struct {
 	EnrolmentConfig *apb.EnrolmentConfig
 }
 
-// NodePorts is the list of ports a fully operational Smalltown node listens on
+// NodePorts is the list of ports a fully operational Metropolis node listens on
 var NodePorts = []uint16{common.ConsensusPort, common.NodeServicePort, common.MasterServicePort,
 	common.ExternalServicePort, common.DebugServicePort, common.KubernetesAPIPort, common.DebuggerPort}
 
 // IdentityPortMap returns a port map where each given port is mapped onto itself on the host. This is mainly useful
-// for development against Smalltown. The dbg command requires this mapping.
+// for development against Metropolis. The dbg command requires this mapping.
 func IdentityPortMap(ports []uint16) PortMap {
 	portMap := make(PortMap)
 	for _, port := range ports {
@@ -149,9 +149,9 @@ func IdentityPortMap(ports []uint16) PortMap {
 }
 
 // ConflictFreePortMap returns a port map where each given port is mapped onto a random free port on the host. This is
-// intended for automated testing where multiple instances of Smalltown might be running. Please call this function for
-// each Launch command separately and as close to it as possible since it cannot guarantee that the ports will remain
-// free.
+// intended for automated testing where multiple instances of Metropolis nodes might be running. Please call this
+// function for each Launch command separately and as close to it as possible since it cannot guarantee that the ports
+// will remain free.
 func ConflictFreePortMap(ports []uint16) (PortMap, error) {
 	portMap := make(PortMap)
 	for _, port := range ports {
@@ -181,9 +181,9 @@ func generateRandomEthernetMAC() (*net.HardwareAddr, error) {
 	return &mac, nil
 }
 
-// Launch launches a Smalltown instance with the given options. The instance runs mostly paravirtualized but with some
-// emulated hardware similar to how a cloud provider might set up its VMs. The disk is fully writable but is run
-// in snapshot mode meaning that changes are not kept beyond a single invocation.
+// Launch launches a Metropolis node instance with the given options. The instance runs mostly paravirtualized but
+// with some emulated hardware similar to how a cloud provider might set up its VMs. The disk is fully writable but
+// is run in snapshot mode meaning that changes are not kept beyond a single invocation.
 func Launch(ctx context.Context, options Options) error {
 	// Pin temp directory to /tmp until we can use abstract socket namespace in QEMU (next release after 5.0,
 	// https://github.com/qemu/qemu/commit/776b97d3605ed0fc94443048fdf988c7725e38a9). swtpm accepts already-open FDs
@@ -241,7 +241,7 @@ func Launch(ctx context.Context, options Options) error {
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
 		"-drive", "if=pflash,format=raw,readonly,file=external/edk2/OVMF_CODE.fd",
 		"-drive", "if=pflash,format=raw,snapshot=on,file=external/edk2/OVMF_VARS.fd",
-		"-drive", "if=virtio,format=raw,snapshot=on,cache=unsafe,file=metropolis/node/smalltown.img",
+		"-drive", "if=virtio,format=raw,snapshot=on,cache=unsafe,file=metropolis/node/node.img",
 		"-netdev", qemuNetConfig.toOption(qemuNetType),
 		"-device", "virtio-net-pci,netdev=net0,mac=" + mac.String(),
 		"-chardev", "socket,id=chrtpm,path=" + tpmSocketPath,
@@ -263,7 +263,7 @@ func Launch(ctx context.Context, options Options) error {
 		if err := ioutil.WriteFile(enrolmentConfigPath, enrolmentConfigRaw, 0644); err != nil {
 			return fmt.Errorf("failed to write enrolment config: %w", err)
 		}
-		qemuArgs = append(qemuArgs, "-fw_cfg", "name=com.nexantic.smalltown/enrolment.pb,file="+enrolmentConfigPath)
+		qemuArgs = append(qemuArgs, "-fw_cfg", "name=dev.monogon.metropolis/enrolment.pb,file="+enrolmentConfigPath)
 	}
 
 	// Start TPM emulator as a subprocess
@@ -470,13 +470,13 @@ var NanoswitchPorts = []uint16{
 	common.KubernetesAPIPort,
 }
 
-// ClusterOptions contains all options for launching a Smalltown cluster
+// ClusterOptions contains all options for launching a Metropolis cluster
 type ClusterOptions struct {
 	// The number of nodes this cluster should be started with initially
 	NumNodes int
 }
 
-// LaunchCluster launches a cluster of Smalltown VMs together with a Nanoswitch instance to network them all together.
+// LaunchCluster launches a cluster of Metropolis node VMs together with a Nanoswitch instance to network them all together.
 func LaunchCluster(ctx context.Context, opts ClusterOptions) (apb.NodeDebugServiceClient, PortMap, error) {
 	var switchPorts []*os.File
 	var vmPorts []*os.File

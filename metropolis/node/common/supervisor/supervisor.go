@@ -16,7 +16,7 @@
 
 package supervisor
 
-// The service supervision library allows for writing of reliable, service-style software within Smalltown.
+// The service supervision library allows for writing of reliable, service-style software within a Metropolis node.
 // It builds upon the Erlang/OTP supervision tree system, adapted to be more Go-ish.
 // For detailed design see go/supervision.
 

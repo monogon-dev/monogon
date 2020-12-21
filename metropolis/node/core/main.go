@@ -76,7 +76,7 @@ func main() {
 		}
 	}()
 
-	// Set up logger for Smalltown. Currently logs everything to stderr.
+	// Set up logger for Metropolis. Currently logs everything to stderr.
 	lt := logtree.New()
 	reader, err := lt.Read("", logtree.WithChildren(), logtree.WithStream())
 	if err != nil {
@@ -103,7 +103,7 @@ func main() {
 		logger.Fatalf("Failed to raise rlimits: %v", err)
 	}
 
-	logger.Info("Starting Smalltown Init")
+	logger.Info("Starting Metropolis node init")
 
 	signalChannel := make(chan os.Signal, 2)
 	signal.Notify(signalChannel)
@@ -252,7 +252,9 @@ func main() {
 			log.Printf("                  # GURU MEDIATION ERROR #")
 			log.Printf("                  ########################")
 			log.Printf("")
-			log.Printf("Smalltown encountered an uncorrectable error and must be restarted.")
+			log.Printf("Metropolis encountered an uncorrectable error and this node must be")
+			log.Printf("restarted.")
+			log.Printf("")
 			log.Printf("(Error condition: init trapdoor closed)")
 			log.Printf("")
 			select {}

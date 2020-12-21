@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This package launches a Smalltown Cluster with two nodes and spawns in the CTS container. Then it streams its output
+// This package launches a Metropolis cluster with two nodes and spawns in the CTS container. Then it streams its output
 // to the console. When the CTS has finished it exits with the appropriate error code.
 package main
 

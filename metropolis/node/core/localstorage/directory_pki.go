@@ -38,7 +38,8 @@ var (
 type CertificateTemplateNamer func(pubkey []byte) x509.Certificate
 
 func CertificateForNode(pubkey []byte) x509.Certificate {
-	name := "smalltown-" + hex.EncodeToString([]byte(pubkey[:16]))
+	// TODO(q3k): this should be unified with metroopolis/node/cluster:node.ID()
+	name := "metropolis-" + hex.EncodeToString([]byte(pubkey[:16]))
 
 	// This has no SANs because it authenticates by public key, not by name
 	return x509.Certificate{

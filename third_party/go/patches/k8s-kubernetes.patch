@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
-This fixes OpenAPI codegen for when included from the Smalltown workspace. It basically undoes vendorification.
+This fixes OpenAPI codegen for when included from the Monogon workspace. It basically undoes vendorification.
 
 diff -ur io_k8s_kubernetes.orig/build/code_generation.bzl io_k8s_kubernetes/build/code_generation.bzl
 --- io_k8s_kubernetes.orig/build/code_generation.bzl	2020-04-15 13:43:57.785669620 +0200

@@ -15,12 +15,12 @@
 // limitations under the License.
 
 syntax = "proto3";
-package smalltown.core.proto.api;
+package metropolis.proto.api;
 option go_package = "git.monogon.dev/source/nexantic.git/metropolis/proto/api";
 
 import "metropolis/proto/api/enrolment.proto";
 
-// NodeDebugService exposes debug and testing endpoints that allow introspection into a running Smalltown instance.
+// NodeDebugService exposes debug and testing endpoints that allow introspection into a running Metropolis node.
 // It is not authenticated and will be disabled in production. It is currently consumed by metropolis/cli/dbg and
 // by tests.
 service NodeDebugService {
@@ -33,11 +33,11 @@ service NodeDebugService {
     // For more information about this API, see //metropolis/node/core/logtree. But, in summary:
     //   - All logging is performed to a DN (distinguished name), which is a dot-delimited string like foo.bar.baz.
     //   - Log entries can be either raw (coming from unstructured logging from an external service, like a running
-    //     process) or leveled (emitted by Smalltown code with a source line, timestamp, and severity).
+    //     process) or leveled (emitted by Metropolis code with a source line, timestamp, and severity).
     //   - The DNs form a tree of logging nodes - and when requesting logs, a given subtree of DNs can be requested,
     //     instead of just a given DN.
     //   - All supervised processes live at `root.<supervisor DN>`. For more example paths, see the console logs of
-    //     a running Smalltown instance, or request all logs (at DN "").
+    //     a running Metropolis node, or request all logs (at DN "").
     //
     // TODO(q3k): move method and its related messages to the non-debug node endpoint once we have one.
     rpc GetLogs(GetLogsRequest) returns (stream GetLogsResponse);

@@ -15,11 +15,12 @@
 // limitations under the License.
 
 syntax = "proto3";
-package smalltown.core.proto.api;
+package metropolis.proto.api;
 option go_package = "git.monogon.dev/source/nexantic.git/metropolis/proto/api";
 
-// EnrolmentConfig is the single boot configuration file contained in the Smalltown ESP. It configures
-// the way the node will start up (what cluster it will join/enroll into/create).
+// EnrolmentConfig is the single Metropolis node boot configuration file
+// contained in the ESP. It configures the way the node will start up (what
+// cluster it will join/enroll into/create).
 message EnrolmentConfig {
     // Debug/temporary cluster enrolment method. If set, the node will attempt to enroll into the
     // cluster that this ticket was generated for. Otherwise, a new cluster will be created.

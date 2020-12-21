@@ -57,7 +57,7 @@ const (
 	// Kubernetes scheduler server certificate, used to run its HTTP server.
 	Scheduler KubeCertificateName = "scheduler"
 
-	// Root-on-kube (system:masters) client certificate. Used to control the apiserver (and resources) by Smalltown
+	// Root-on-kube (system:masters) client certificate. Used to control the apiserver (and resources) by Metropolis
 	// internally.
 	Master KubeCertificateName = "master"
 
@@ -73,7 +73,7 @@ const (
 	serviceAccountKeyName = "service-account-privkey"
 )
 
-// KubernetesPKI manages all PKI resources required to run Kubernetes on Smalltown. It contains all static certificates,
+// KubernetesPKI manages all PKI resources required to run Kubernetes on Metropolis. It contains all static certificates,
 // which can be retrieved, or be used to generate Kubeconfigs from.
 type KubernetesPKI struct {
 	logger       logtree.LeveledLogger
@@ -92,7 +92,7 @@ func NewKubernetes(l logtree.LeveledLogger, kv clientv3.KV) *KubernetesPKI {
 		pki.Certificates[name] = New(pki.Certificates[i], string(name), template)
 	}
 
-	pki.Certificates[IdCA] = New(SelfSigned, string(IdCA), CA("Smalltown Kubernetes ID CA"))
+	pki.Certificates[IdCA] = New(SelfSigned, string(IdCA), CA("Metropolis Kubernetes ID CA"))
 	make(IdCA, APIServer, Server(
 		[]string{
 			"kubernetes",
@@ -104,14 +104,14 @@ func NewKubernetes(l logtree.LeveledLogger, kv clientv3.KV) *KubernetesPKI {
 		},
 		[]net.IP{{10, 0, 255, 1}, {127, 0, 0, 1}}, // TODO(q3k): add service network internal apiserver address
 	))
-	make(IdCA, KubeletClient, Client("smalltown:apiserver-kubelet-client", nil))
+	make(IdCA, KubeletClient, Client("metropolis:apiserver-kubelet-client", nil))
 	make(IdCA, ControllerManagerClient, Client("system:kube-controller-manager", nil))
 	make(IdCA, ControllerManager, Server([]string{"kube-controller-manager.local"}, nil))
 	make(IdCA, SchedulerClient, Client("system:kube-scheduler", nil))
 	make(IdCA, Scheduler, Server([]string{"kube-scheduler.local"}, nil))
-	make(IdCA, Master, Client("smalltown:master", []string{"system:masters"}))
+	make(IdCA, Master, Client("metropolis:master", []string{"system:masters"}))
 
-	pki.Certificates[AggregationCA] = New(SelfSigned, string(AggregationCA), CA("Smalltown OpenAPI Aggregation CA"))
+	pki.Certificates[AggregationCA] = New(SelfSigned, string(AggregationCA), CA("Metropolis OpenAPI Aggregation CA"))
 	make(AggregationCA, FrontProxyClient, Client("front-proxy-client", nil))
 
 	return &pki

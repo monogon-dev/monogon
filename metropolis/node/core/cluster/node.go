@@ -32,9 +32,9 @@ import (
 	ipb "git.monogon.dev/source/nexantic.git/metropolis/proto/internal"
 )
 
-// Node is a Smalltown cluster member. A node is a virtual or physical machine running Smalltown. This object represents a
-// node only as part of a Cluster - ie., this object will never be available outside of //metropolis/node/core/cluster
-// if the Node is not part of a Cluster.
+// Node is a Metropolis cluster member. A node is a virtual or physical machine running Metropolis. This object
+// represents a node only as part of a cluster - ie., this object will never be available outside of
+// //metropolis/node/core/cluster if the Node is not part of a Cluster.
 // Nodes are inherently tied to their long term storage, which is etcd. As such, methods on this object relate heavily
 // to the Node's expected lifecycle on etcd.
 type Node struct {
@@ -43,7 +43,7 @@ type Node struct {
 	// the Node was just created (as the key is generated locally by localstorage on first format/mount).
 	// The other part of the unlock key is the LocalUnlockKey that's present on the node's ESP partition.
 	clusterUnlockKey []byte
-	// certificate is the node's TLS certificate, used to authenticate Smalltown gRPC calls/services (but not
+	// certificate is the node's TLS certificate, used to authenticate Metropolis gRPC calls/services (but not
 	// consensus/etcd). The certificate for a node is permanent (and never expires). It's self-signed by the node on
 	// startup, and contains the node's IP address in its SAN. Callers/services should check directly against the
 	// expected certificate, and not against a CA.
@@ -83,10 +83,10 @@ type NodeRoleKubernetesWorker struct {
 	nodeName string
 }
 
-// ID returns the name of this node, which is `smalltown-{pubkeyHash}`. This name should be the primary way to refer to
-// Smalltown nodes within a cluster, and is guaranteed to be unique by relying on cryptographic randomness.
+// ID returns the name of this node, which is `metropolis-{pubkeyHash}`. This name should be the primary way to refer to
+// Metropoils nodes within a cluster, and is guaranteed to be unique by relying on cryptographic randomness.
 func (n *Node) ID() string {
-	return fmt.Sprintf("smalltown-%s", n.IDBare())
+	return fmt.Sprintf("metropolis-%s", n.IDBare())
 }
 
 // IDBare returns the `{pubkeyHash}` part of the node ID.

@@ -5,8 +5,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# TODO: Figure out how to version Smalltown
-SIGNOS_VERSION=1.0.0-dev
+# TODO: Figure out how to version Metropolis
+METROPOLIS_VERSION=1.0.0-dev
 
 KUBERNETES_gitTreeState="clean"
 if [ ! -z "$(git status --porcelain)" ]; then
@@ -27,5 +27,5 @@ STABLE_KUBERNETES_gitMinor $KUBERNETES_gitMinor
 KUBERNETES_buildDate $(date \
   ${SOURCE_DATE_EPOCH:+"--date=@${SOURCE_DATE_EPOCH}"} \
  -u +'%Y-%m-%dT%H:%M:%SZ')
-STABLE_SIGNOS_version $SIGNOS_VERSION
+STABLE_METROPOLIS_version $METROPOLIS_VERSION
 EOF

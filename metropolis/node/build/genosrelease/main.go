@@ -53,7 +53,7 @@ func main() {
 		statusVars[parts[0]] = parts[1]
 	}
 
-	smalltownVersion, ok := statusVars[*flagStampVar]
+	version, ok := statusVars[*flagStampVar]
 	if !ok {
 		fmt.Printf("%v key not set in bazel workspace status file\n", *flagStampVar)
 		os.Exit(1)
@@ -62,9 +62,9 @@ func main() {
 	osReleaseVars := map[string]string{
 		"NAME":        *flagName,
 		"ID":          *flagID,
-		"VERSION":     smalltownVersion,
-		"VERSION_ID":  smalltownVersion,
-		"PRETTY_NAME": *flagName + " " + smalltownVersion,
+		"VERSION":     version,
+		"VERSION_ID":  version,
+		"PRETTY_NAME": *flagName + " " + version,
 	}
 	osReleaseContent, err := godotenv.Marshal(osReleaseVars)
 	if err != nil {

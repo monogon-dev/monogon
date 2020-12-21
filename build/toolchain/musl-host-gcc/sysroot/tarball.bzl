@@ -22,7 +22,7 @@ load(
 """
 Build a sysroot-style tarball containing musl/linux headers and libraries.
 
-This can then be used to build a C toolchain that builds for Smalltown.
+This can then be used to build a C toolchain that builds C/C++ binaries for Metropolis nodes.
 """
 
 def _musl_gcc_tarball(ctx):

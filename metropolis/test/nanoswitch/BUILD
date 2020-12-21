@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("//metropolis/node/build:def.bzl", "smalltown_initramfs")
+load("//metropolis/node/build:def.bzl", "node_initramfs")
 
 go_library(
     name = "go_default_library",
@@ -28,7 +28,7 @@ go_binary(
     visibility = ["//visibility:public"],
 )
 
-smalltown_initramfs(
+node_initramfs(
     name = "initramfs",
     files = {
         ":nanoswitch": "/init",

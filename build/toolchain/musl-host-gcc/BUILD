@@ -3,8 +3,8 @@ load("//build/toolchain:cc_toolchain_config.bzl", "host_cc_toolchain_config")
 # This file defines //build/toolchain/musl-host-gcc:musl_host_cc_suite.
 #
 # This is a C++ toolchain that uses GCC from the host at hardcoded paths, with
-# a pre-built sysroot tarball that targets Smalltown with musl and Linux headers.
-# It's a superset of //build/toolchain:host_cc_suite.
+# a pre-built sysroot tarball that targets Metropolis nodes with musl and Linux
+# headers.  It's a superset of //build/toolchain:host_cc_suite.
 # For more information, see README.md.
 
 cc_toolchain_suite(

@@ -52,7 +52,7 @@ const (
 	largeTestTimeout = 120 * time.Second
 )
 
-// TestE2E is the main E2E test entrypoint for single-node freshly-bootstrapped E2E tests. It starts a full Smalltown node
+// TestE2E is the main E2E test entrypoint for single-node freshly-bootstrapped E2E tests. It starts a full Metropolis node
 // in bootstrap mode and then runs tests against it. The actual tests it performs are located in the RunGroup subtest.
 func TestE2E(t *testing.T) {
 	// Run pprof server for debugging
