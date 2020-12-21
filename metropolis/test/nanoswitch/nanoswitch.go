@@ -40,6 +40,7 @@ import (
 
 	common "git.monogon.dev/source/nexantic.git/metropolis/node"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/metropolis/node/core/logtree"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c"
 	dhcpcb "git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c/callback"
 	"git.monogon.dev/source/nexantic.git/metropolis/test/launch"
@@ -179,6 +180,16 @@ func nfifname(n string) []byte {
 }
 
 func main() {
+	lt := logtree.New()
+	reader, err := lt.Read("", logtree.WithChildren(), logtree.WithStream())
+	if err != nil {
+		panic(fmt.Errorf("could not set up root log reader: %v", err))
+	}
+	go func() {
+		for p := range reader.Stream {
+			fmt.Fprintf(os.Stderr, "%s\n", p.String())
+		}
+	}()
 	supervisor.New(context.Background(), func(ctx context.Context) error {
 		logger := supervisor.Logger(ctx)
 		logger.Info("Starting NanoSwitch, a tiny TOR switch emulator")
@@ -296,6 +307,6 @@ func main() {
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
 		supervisor.Signal(ctx, supervisor.SignalDone)
 		return nil
-	})
+	}, supervisor.WithExistingLogtree(lt))
 	select {}
 }

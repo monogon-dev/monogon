@@ -9,6 +9,7 @@ go_library(
     deps = [
         "//metropolis/node:go_default_library",
         "//metropolis/node/common/supervisor:go_default_library",
+        "//metropolis/node/core/logtree:go_default_library",
         "//metropolis/node/core/network/dhcp4c:go_default_library",
         "//metropolis/node/core/network/dhcp4c/callback:go_default_library",
         "//metropolis/test/launch:go_default_library",
