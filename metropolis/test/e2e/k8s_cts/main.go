@@ -88,7 +88,8 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		<-sigs
+		sig := <-sigs
+		log.Printf("Got signal %s, aborting test", sig)
 		cancel()
 	}()
 
@@ -97,7 +98,6 @@ func main() {
 		log.Fatalf("Failed to launch cluster: %v", err)
 	}
 	log.Println("Cluster initialized")
-
 	clientSet, err := e2e.GetKubeClientSet(ctx, debugClient, portMap[common.KubernetesAPIPort])
 	if err != nil {
 		log.Fatalf("Failed to get clientSet: %v", err)
@@ -152,6 +152,8 @@ func main() {
 					log.Printf("Log pump error: %v", err)
 				}
 				logs.Close()
+			} else if err == ctx.Err() {
+				return // Exit if the context has been cancelled
 			} else {
 				log.Printf("Pod logs not ready yet: %v", err)
 			}
@@ -161,7 +163,9 @@ func main() {
 	for {
 		time.Sleep(1 * time.Second)
 		pod, err := clientSet.CoreV1().Pods("default").Get(ctx, podName, metav1.GetOptions{})
-		if err != nil {
+		if err != nil && err == ctx.Err() {
+			return // Exit if the context has been cancelled
+		} else if err != nil {
 			log.Printf("Failed to get CTS pod: %v", err)
 			continue
 		}
