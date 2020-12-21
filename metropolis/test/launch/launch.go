@@ -529,7 +529,6 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (apb.NodeDebugServi
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to dial debug service: %w", err)
 	}
-	defer conn.Close()
 	debug := apb.NewNodeDebugServiceClient(conn)
 
 	if opts.NumNodes == 2 {
