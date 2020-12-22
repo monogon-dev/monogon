@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/pem"
 	"fmt"
-	"io"
 	"net"
 	"os/exec"
 
@@ -35,7 +34,6 @@ type apiserverService struct {
 	KPKI                        *pki.KubernetesPKI
 	AdvertiseAddress            net.IP
 	ServiceIPRange              net.IPNet
-	Output                      io.Writer
 	EphemeralConsensusDirectory *localstorage.EphemeralConsensusDirectory
 
 	// All PKI-related things are in DER
@@ -128,10 +126,5 @@ func (s *apiserverService) Run(ctx context.Context) error {
 	if args.Error() != nil {
 		return err
 	}
-	cmd.Stdout = s.Output
-	cmd.Stderr = s.Output
-	supervisor.Signal(ctx, supervisor.SignalHealthy)
-	err = cmd.Run()
-	fmt.Fprintf(s.Output, "apiserver stopped: %v\n", err)
-	return err
+	return supervisor.RunCommand(ctx, cmd)
 }
