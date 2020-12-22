@@ -72,12 +72,6 @@ if [[ ! -z "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
-podman run -d \
-    --pod ${POD} \
-    --ulimit nofile=262144:262144 \
-    --name=${POD}-cockroach \
-    cockroachdb/cockroach:v19.1.5 start --insecure --advertise-addr localhost
-
 podman run \
     -v $(pwd):/work \
     -v ${CACHE_VOLUME}:/user/.cache/bazel/_bazel_root \

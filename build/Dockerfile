@@ -29,7 +29,6 @@ RUN dnf -y upgrade && \
 	swtpm-tools \
 	rsync \
 	qemu-system-x86-core \
-	postgresql \
 	expect \
 	grpc-cli \
 	nc \
