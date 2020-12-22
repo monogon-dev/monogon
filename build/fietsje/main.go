@@ -66,7 +66,6 @@ func main() {
 	depsContainerd(p)
 	depsGVisor(p)
 	depsCilium(p)
-	depsSQLBoiler(p)
 
 	// our own deps, common
 	p.collectOverride("go.uber.org/zap", "v1.15.0")

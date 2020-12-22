@@ -9,7 +9,6 @@ go_library(
         "deps_delve.go",
         "deps_gvisor.go",
         "deps_kubernetes.go",
-        "deps_sqlboiler.go",
         "main.go",
         "planner.go",
         "render.go",

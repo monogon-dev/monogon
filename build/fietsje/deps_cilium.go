@@ -52,6 +52,7 @@ func depsCilium(p *planner) {
 		"github.com/kr/text",
 		"github.com/hashicorp/go-cleanhttp",
 		"github.com/hashicorp/serf",
+		"github.com/joho/godotenv",
 		"github.com/envoyproxy/protoc-gen-validate",
 		"github.com/hashicorp/go-rootcerts",
 		"github.com/armon/go-metrics",
