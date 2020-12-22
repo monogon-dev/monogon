@@ -8,8 +8,7 @@ go_library(
     visibility = ["//metropolis:__subpackages__"],
 )
 
-# debug_build checks if we're building in debug mode and enables various debug features for the image. Currently this
-# is only used for attaching a Delve debugger to init when it's enabled.
+# debug_build checks if we're building in debug mode and enables various debug features for the image.
 config_setting(
     name = "debug_build",
     values = {

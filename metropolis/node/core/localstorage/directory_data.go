@@ -106,7 +106,7 @@ func (d *DataDirectory) MountNew(unlock *ESPLocalUnlockFile) ([]byte, error) {
 	if err := crypt.CryptInit("data", crypt.NodeDataCryptPath, key); err != nil {
 		return nil, fmt.Errorf("initializing encrypted block device: %w", err)
 	}
-	mkfsCmd := exec.Command("/bin/mkfs.xfs", "-qf", "/dev/data")
+	mkfsCmd := exec.Command("/bin/mkfs.xfs", "-qKf", "/dev/data")
 	if _, err := mkfsCmd.Output(); err != nil {
 		return nil, fmt.Errorf("formatting encrypted block device: %w", err)
 	}

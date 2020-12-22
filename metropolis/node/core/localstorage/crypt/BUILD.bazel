@@ -2,10 +2,13 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
+    # keep
     srcs = [
         "blockdev.go",
-        "crypt.go",
-    ],
+    ] + select({
+        "//metropolis/node:debug_build": ["crypt_debug.go"],
+        "//conditions:default": ["crypt.go"],
+    }),
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/crypt",
     visibility = ["//metropolis/node/core/localstorage:__subpackages__"],
     deps = [

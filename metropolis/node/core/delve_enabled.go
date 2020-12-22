@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os/exec"
 
+	"git.monogon.dev/source/nexantic.git/metropolis/node"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network"
 )
 
@@ -32,7 +33,7 @@ func initializeDebugger(networkSvc *network.Service) {
 		// and in early-boot no network interface is available to do that through. Also external access isn't possible
 		// early on anyways.
 		networkSvc.GetIP(context.Background(), true)
-		dlvCmd := exec.Command("/dlv", "--headless=true", fmt.Sprintf("--listen=:%v", common.DebuggerPort),
+		dlvCmd := exec.Command("/dlv", "--headless=true", fmt.Sprintf("--listen=:%v", node.DebuggerPort),
 			"--accept-multiclient", "--only-same-user=false", "attach", "--continue", "1", "/init")
 		if err := dlvCmd.Start(); err != nil {
 			panic(err)
