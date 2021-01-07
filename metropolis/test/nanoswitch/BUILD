@@ -26,7 +26,7 @@ go_binary(
     name = "nanoswitch",
     embed = [":go_default_library"],
     pure = "on",
-    visibility = ["//visibility:public"],
+    visibility = ["//visibility:private"],
 )
 
 node_initramfs(
@@ -37,5 +37,5 @@ node_initramfs(
         # CA Certificate bundle
         "@cacerts//file": "/etc/ssl/cert.pem",
     },
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis/test:__subpackages__"],
 )

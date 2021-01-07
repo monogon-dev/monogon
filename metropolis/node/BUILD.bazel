@@ -5,7 +5,7 @@ go_library(
     name = "go_default_library",
     srcs = ["ports.go"],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/node",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
 )
 
 # debug_build checks if we're building in debug mode and enables various debug features for the image. Currently this
@@ -88,7 +88,10 @@ genrule(
     tools = [
         "//metropolis/node/build/mkimage",
     ],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//metropolis/test/launch:__subpackages__",
+        "//metropolis/test/e2e:__subpackages__",
+    ],
 )
 
 genrule(
@@ -128,7 +131,10 @@ EOF
     cp tpm/ca/issuercert.pem $(location tpm/issuercert.pem)
     cp tpm/ca/signkey.pem $(location tpm/signkey.pem)
     """,
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//metropolis/test/launch:__subpackages__",
+        "//metropolis/test/e2e:__subpackages__",
+    ],
 )
 
 load("//metropolis/node/build/genosrelease:defs.bzl", "os_release")

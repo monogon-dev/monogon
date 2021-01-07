@@ -16,5 +16,5 @@ go_library(
 go_binary(
     name = "mkimage",
     embed = [":go_default_library"],
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis/node:__pkg__"],
 )

@@ -39,5 +39,5 @@ go_binary(
     name = "core",
     embed = [":go_default_library"],
     pure = "on",  # keep
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis/node:__pkg__"],
 )

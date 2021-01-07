@@ -16,5 +16,5 @@ go_binary(
         "//third_party/edk2:firmware",
     ],
     embed = [":go_default_library"],
-    visibility = ["//visibility:public"],
+    visibility = ["//:__pkg__"],
 )

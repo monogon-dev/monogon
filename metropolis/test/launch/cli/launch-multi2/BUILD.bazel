@@ -26,5 +26,5 @@ go_binary(
         "@com_github_bonzini_qboot//:qboot-bin",
     ],
     embed = [":go_default_library"],
-    visibility = ["//visibility:public"],
+    visibility = ["//:__pkg__"],
 )

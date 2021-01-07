@@ -8,7 +8,7 @@ go_library(
         "transport_unicast.go",
     ],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c/transport",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis/node/core/network/dhcp4c:__subpackages__"],
     deps = [
         "@com_github_google_gopacket//:go_default_library",
         "@com_github_google_gopacket//layers:go_default_library",

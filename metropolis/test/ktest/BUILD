@@ -13,7 +13,7 @@ go_binary(
     name = "ktest",
     embed = [":go_default_library"],
     pure = "on",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
 )
 
 kconfig_patch(
@@ -53,11 +53,11 @@ genrule(
 
     cp $$DIR/vmlinux $@
     """,
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
 )
 
 filegroup(
     name = "test-script",
     srcs = ["run_ktest.sh"],
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
 )

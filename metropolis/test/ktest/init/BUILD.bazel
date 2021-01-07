@@ -12,5 +12,5 @@ go_binary(
     name = "init",
     embed = [":go_default_library"],
     pure = "on",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
 )

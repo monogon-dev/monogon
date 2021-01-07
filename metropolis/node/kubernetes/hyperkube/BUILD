@@ -24,6 +24,6 @@ go_binary(
     name = "hyperkube",
     embed = [":go_default_library"],
     pure = "on",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis/node:__pkg__"],
     x_defs = version_x_defs(),
 )

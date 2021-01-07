@@ -5,7 +5,11 @@ go_library(
     name = "go_default_library",
     srcs = ["callback.go"],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c/callback",
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//metropolis/node:__subpackages__",
+        # Exception for this package: the DHCP client is also used by nanoswitch.
+        "//metropolis/test/nanoswitch:__subpackages__",
+    ],
     deps = [
         "//metropolis/node/core/network/dhcp4c:go_default_library",
         "@com_github_insomniacslk_dhcp//dhcpv4:go_default_library",

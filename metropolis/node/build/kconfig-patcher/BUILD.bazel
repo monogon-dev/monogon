@@ -10,7 +10,10 @@ go_library(
 go_binary(
     name = "kconfig-patcher",
     embed = [":go_default_library"],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//metropolis/node:__pkg__",
+        "//metropolis/test/ktest:__pkg__",
+    ],
 )
 
 go_test(

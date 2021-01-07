@@ -4,6 +4,6 @@ go_library(
     name = "go_default_library",
     srcs = ["fileargs.go"],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/fileargs",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
     deps = ["@org_golang_x_sys//unix:go_default_library"],
 )

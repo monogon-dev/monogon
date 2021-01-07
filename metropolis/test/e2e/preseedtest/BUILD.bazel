@@ -12,5 +12,5 @@ go_image(
     name = "preseedtest",
     embed = [":go_default_library"],
     pure = "on",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis/node:__pkg__"],
 )

@@ -4,5 +4,5 @@ go_library(
     name = "go_default_library",
     srcs = ["freeport.go"],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/freeport",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
 )

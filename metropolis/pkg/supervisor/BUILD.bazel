@@ -10,10 +10,7 @@ go_library(
         "supervisor_testhelpers.go",
     ],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor",
-    visibility = [
-        "//metropolis/node:__subpackages__",
-        "//metropolis/test:__subpackages__",
-    ],
+    visibility = ["//metropolis:__subpackages__"],
     deps = [
         "//metropolis/pkg/logtree:go_default_library",
         "@com_github_cenkalti_backoff_v4//:go_default_library",

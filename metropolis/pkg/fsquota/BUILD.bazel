@@ -8,7 +8,7 @@ go_library(
         "fsquota.go",
     ],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/fsquota",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
     deps = [
         "//metropolis/pkg/fsquota/fsxattrs:go_default_library",
         "//metropolis/pkg/fsquota/quotactl:go_default_library",

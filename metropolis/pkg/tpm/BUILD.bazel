@@ -7,7 +7,7 @@ go_library(
         "tpm.go",
     ],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/tpm",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
     deps = [
         "//metropolis/pkg/logtree:go_default_library",
         "//metropolis/pkg/sysfs:go_default_library",

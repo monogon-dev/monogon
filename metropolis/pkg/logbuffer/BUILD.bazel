@@ -7,7 +7,7 @@ go_library(
         "logbuffer.go",
     ],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/logbuffer",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
     deps = ["//metropolis/proto/api:go_default_library"],
 )
 

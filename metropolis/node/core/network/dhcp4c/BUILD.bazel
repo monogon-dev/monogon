@@ -8,7 +8,11 @@ go_library(
         "lease.go",
     ],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c",
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//metropolis/node:__subpackages__",
+        # Exception for this package: the DHCP client is also used by nanoswitch.
+        "//metropolis/test/nanoswitch:__subpackages__",
+    ],
     deps = [
         "//metropolis/node/core/network/dhcp4c/transport:go_default_library",
         "//metropolis/pkg/supervisor:go_default_library",

@@ -4,7 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = ["jsonpatch.go.go"],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/jsonpatch",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
 )
 
 go_test(

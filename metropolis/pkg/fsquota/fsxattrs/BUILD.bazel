@@ -4,6 +4,6 @@ go_library(
     name = "go_default_library",
     srcs = ["fsxattrs.go"],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/fsquota/fsxattrs",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
     deps = ["@org_golang_x_sys//unix:go_default_library"],
 )

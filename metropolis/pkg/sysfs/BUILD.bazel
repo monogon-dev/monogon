@@ -4,5 +4,5 @@ go_library(
     name = "go_default_library",
     srcs = ["uevents.go"],
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/sysfs",
-    visibility = ["//visibility:public"],
+    visibility = ["//metropolis:__subpackages__"],
 )
