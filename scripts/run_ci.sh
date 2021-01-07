@@ -9,8 +9,8 @@ BUILD_ID=$1;
 BUILD_PHID=$2;
 shift; shift;
 
-TAG=nexantic-version-${DOCKERFILE_HASH}
-POD=nexantic-build-${BUILD_ID}
+TAG=monogon-version-${DOCKERFILE_HASH}
+POD=monogon-build-${BUILD_ID}
 
 # We keep one Bazel build cache per working copy to avoid concurrency issues
 # (we cannot run multiple Bazel servers on a given _bazel_root)

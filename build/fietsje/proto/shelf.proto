@@ -15,7 +15,7 @@
 // limitations under the License.
 
 syntax = "proto3";
-package nexantic.build.fietsje;
+package build.fietsje;
 option go_package = "source.monogon.dev/build/fietsje/proto";
 
 // The Shelf is a cache/lockfile of Fietsje dependencies. See //build/fietsje/shelf.go for more information.

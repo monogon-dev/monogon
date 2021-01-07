@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+# TODO(by 2021/02/01): remove this (backward compatibility for dev envs)
+! podman pod stop nexantic
+! podman pod rm nexantic --force
+
 # Our local user needs write access to /dev/kvm (best accomplished by
 # adding your user to the kvm group).
 if ! touch /dev/kvm; then
@@ -16,7 +20,7 @@ if ! [[ -d /sys/module/kvm ]]; then
 fi
 
 # Rebuild base image
-podman build -t nexantic-builder build
+podman build -t monogon-builder build
 
 # Set up SELinux contexts to prevent the container from writing to
 # files that would allow for easy breakouts via tools ran on the host.
@@ -28,7 +32,7 @@ chcon -Rh system_u:object_r:container_file_t:s0 .
 
 # Keep this in sync with ci.sh:
 
-podman pod create --name nexantic
+podman pod create --name monogon
 
 # Mount bazel root to identical paths inside and outside the container.
 # This caches build state even if the container is destroyed, and
@@ -51,7 +55,7 @@ podman run -it -d \
     --volume=${BAZEL_ROOT}:${BAZEL_ROOT} \
     --device /dev/kvm \
     --privileged \
-    --pod nexantic \
-    --name=nexantic-dev \
+    --pod monogon \
+    --name=monogon-dev \
     --net=host \
-    nexantic-builder
+    monogon-builder

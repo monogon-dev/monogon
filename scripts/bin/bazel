@@ -8,4 +8,4 @@ set -euo pipefail
 #
 ARGS=$(echo $@ | sed "s%--override_repository=intellij_aspect=[^ ]*%--override_repository=intellij_aspect=${HOME}/.cache/bazel-nxt/ijwb_aspect%")
 
-exec podman exec -it nexantic-dev bazel --output_user_root ${HOME}/.cache/bazel-nxt $ARGS
+exec podman exec -it monogon-dev bazel --output_user_root ${HOME}/.cache/bazel-nxt $ARGS

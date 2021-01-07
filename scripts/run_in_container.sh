@@ -1,4 +1,4 @@
 #!/bin/bash
 set -euo pipefail
 
-podman exec -it nexantic-dev $@
+podman exec -it monogon-dev $@
