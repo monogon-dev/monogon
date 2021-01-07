@@ -19,7 +19,7 @@ package localstorage
 import (
 	"testing"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative"
+	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 )
 
 func TestValidateAll(t *testing.T) {

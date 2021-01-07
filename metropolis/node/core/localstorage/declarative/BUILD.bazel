@@ -7,7 +7,7 @@ go_library(
         "placement.go",
         "placement_local.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative",
+    importpath = "source.monogon.dev/metropolis/node/core/localstorage/declarative",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = ["@org_golang_x_sys//unix:go_default_library"],
 )

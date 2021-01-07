@@ -10,7 +10,7 @@ go_library(
         "resources_runtimeclass.go",
         "resources_storageclass.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/reconciler",
+    importpath = "source.monogon.dev/metropolis/node/kubernetes/reconciler",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = [
         "//metropolis/pkg/supervisor:go_default_library",

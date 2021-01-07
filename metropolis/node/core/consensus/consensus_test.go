@@ -26,10 +26,10 @@ import (
 	"testing"
 	"time"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/freeport"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
+	"source.monogon.dev/metropolis/pkg/freeport"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 type boilerplate struct {

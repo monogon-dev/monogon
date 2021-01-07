@@ -23,8 +23,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/crypt"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative"
+	"source.monogon.dev/metropolis/node/core/localstorage/crypt"
+	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 )
 
 func (r *Root) Start(ctx context.Context) error {

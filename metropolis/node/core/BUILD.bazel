@@ -11,7 +11,7 @@ go_library(
         "//metropolis/node:debug_build": ["delve_enabled.go"],
         "//conditions:default": ["delve_disabled.go"],
     }),
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core",
+    importpath = "source.monogon.dev/metropolis/node/core",
     visibility = ["//visibility:private"],
     deps = [
         "//metropolis/node:go_default_library",

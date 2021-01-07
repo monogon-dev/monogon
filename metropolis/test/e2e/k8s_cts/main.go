@@ -32,9 +32,9 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/test/e2e"
-	"git.monogon.dev/source/nexantic.git/metropolis/test/launch"
+	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/test/e2e"
+	"source.monogon.dev/metropolis/test/launch"
 )
 
 // makeCTSPodSpec generates a spec for a standalone pod running the Kubernetes CTS. It also sets the test configuration

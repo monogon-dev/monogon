@@ -16,7 +16,7 @@
 
 syntax = "proto3";
 package metropolis.proto.api;
-option go_package = "git.monogon.dev/source/nexantic.git/metropolis/proto/api";
+option go_package = "source.monogon.dev/metropolis/proto/api";
 
 import "metropolis/proto/api/enrolment.proto";
 

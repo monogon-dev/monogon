@@ -4,7 +4,7 @@ load("//metropolis/node/build:def.bzl", "node_initramfs")
 go_library(
     name = "go_default_library",
     srcs = ["ports.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node",
+    importpath = "source.monogon.dev/metropolis/node",
     visibility = ["//metropolis:__subpackages__"],
 )
 

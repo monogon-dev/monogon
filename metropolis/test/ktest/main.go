@@ -26,7 +26,7 @@ import (
 	"os"
 	"time"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/test/launch"
+	"source.monogon.dev/metropolis/test/launch"
 )
 
 var (

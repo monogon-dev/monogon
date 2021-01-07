@@ -44,10 +44,10 @@ import (
 	"go.etcd.io/etcd/embed"
 	"go.uber.org/atomic"
 
-	node "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/consensus/ca"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
+	node "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/consensus/ca"
+	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 const (

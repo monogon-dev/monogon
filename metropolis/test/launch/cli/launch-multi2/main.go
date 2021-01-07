@@ -29,10 +29,10 @@ import (
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"google.golang.org/grpc"
 
-	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logbuffer"
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
-	"git.monogon.dev/source/nexantic.git/metropolis/test/launch"
+	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/pkg/logbuffer"
+	apb "source.monogon.dev/metropolis/proto/api"
+	"source.monogon.dev/metropolis/test/launch"
 )
 
 // prefixedStdout is a os.Stdout proxy that prefixes every line with a constant

@@ -34,7 +34,7 @@ import (
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 // Sad workaround for all the pointer booleans in K8s specs

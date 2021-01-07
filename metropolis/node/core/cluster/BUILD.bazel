@@ -6,7 +6,7 @@ go_library(
         "manager.go",
         "node.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/cluster",
+    importpath = "source.monogon.dev/metropolis/node/core/cluster",
     visibility = ["//metropolis/node/core:__subpackages__"],
     deps = [
         "//metropolis/node:go_default_library",

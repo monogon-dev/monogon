@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logbuffer"
+	"source.monogon.dev/metropolis/pkg/logbuffer"
 )
 
 // LeveledFor returns a LeveledLogger publishing interface for a given DN. An error may be returned if the DN is

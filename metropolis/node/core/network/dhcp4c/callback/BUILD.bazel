@@ -4,7 +4,7 @@ load("//metropolis/test/ktest:ktest.bzl", "ktest")
 go_library(
     name = "go_default_library",
     srcs = ["callback.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c/callback",
+    importpath = "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback",
     visibility = [
         "//metropolis/node:__subpackages__",
         # Exception for this package: the DHCP client is also used by nanoswitch.

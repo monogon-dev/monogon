@@ -14,7 +14,7 @@ go_library(
         "shelf.go",
         "transitive.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/build/fietsje",
+    importpath = "source.monogon.dev/build/fietsje",
     visibility = ["//visibility:private"],
     deps = [
         "//build/fietsje/proto:go_default_library",

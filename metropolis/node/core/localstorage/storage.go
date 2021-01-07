@@ -34,7 +34,7 @@ package localstorage
 import (
 	"sync"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative"
+	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 )
 
 type Root struct {

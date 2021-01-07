@@ -43,11 +43,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 
-	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/jsonpatch"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
+	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/metropolis/pkg/jsonpatch"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 const (

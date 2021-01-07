@@ -3,6 +3,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["freeport.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/freeport",
+    importpath = "source.monogon.dev/metropolis/pkg/freeport",
     visibility = ["//metropolis:__subpackages__"],
 )

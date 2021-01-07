@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/test/launch/cli/launch",
+    importpath = "source.monogon.dev/metropolis/test/launch/cli/launch",
     visibility = ["//visibility:private"],
     deps = ["//metropolis/test/launch:go_default_library"],
 )

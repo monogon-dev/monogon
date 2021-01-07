@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"strings"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logbuffer"
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
+	"source.monogon.dev/metropolis/pkg/logbuffer"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 // LogEntry contains a log entry, combining both leveled and raw logging into a single stream of events. A LogEntry

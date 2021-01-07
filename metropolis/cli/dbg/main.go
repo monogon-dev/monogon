@@ -33,8 +33,8 @@ import (
 	"k8s.io/kubectl/pkg/util/logs"
 	"k8s.io/kubernetes/pkg/kubectl/cmd"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
+	"source.monogon.dev/metropolis/pkg/logtree"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 func main() {

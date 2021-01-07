@@ -28,8 +28,8 @@ import (
 	"go.etcd.io/etcd/clientv3"
 	"golang.org/x/sys/unix"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
-	ipb "git.monogon.dev/source/nexantic.git/metropolis/proto/internal"
+	"source.monogon.dev/metropolis/node/core/localstorage"
+	ipb "source.monogon.dev/metropolis/proto/internal"
 )
 
 // Node is a Metropolis cluster member. A node is a virtual or physical machine running Metropolis. This object

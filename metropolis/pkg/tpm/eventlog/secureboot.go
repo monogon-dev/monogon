@@ -24,7 +24,7 @@ import (
 
 	"github.com/google/certificate-transparency-go/x509"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/tpm/eventlog/internal"
+	"source.monogon.dev/metropolis/pkg/tpm/eventlog/internal"
 )
 
 // SecurebootState describes the secure boot status of a machine, as determined

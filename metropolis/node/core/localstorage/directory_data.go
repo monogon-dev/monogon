@@ -23,9 +23,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/crypt"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/tpm"
+	"source.monogon.dev/metropolis/node/core/localstorage/crypt"
+	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
+	"source.monogon.dev/metropolis/pkg/tpm"
 )
 
 var keySize uint16 = 256 / 8

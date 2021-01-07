@@ -23,9 +23,9 @@ import (
 	"net"
 	"os/exec"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/pki"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/fileargs"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/node/kubernetes/pki"
+	"source.monogon.dev/metropolis/pkg/fileargs"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 type controllerManagerConfig struct {

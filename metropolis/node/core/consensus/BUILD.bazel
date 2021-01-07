@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = ["consensus.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/consensus",
+    importpath = "source.monogon.dev/metropolis/node/core/consensus",
     visibility = ["//:__subpackages__"],
     deps = [
         "//metropolis/node:go_default_library",

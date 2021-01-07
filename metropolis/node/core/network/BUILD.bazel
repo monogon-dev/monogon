@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/network",
+    importpath = "source.monogon.dev/metropolis/node/core/network",
     visibility = ["//:__subpackages__"],
     deps = [
         "//metropolis/node/core/network/dhcp4c:go_default_library",

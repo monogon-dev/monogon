@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"os/exec"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network"
+	"source.monogon.dev/metropolis/node/"
+	"source.monogon.dev/metropolis/node/core/network"
 )
 
 // initializeDebugger attaches Delve to ourselves and exposes it on common.DebuggerPort

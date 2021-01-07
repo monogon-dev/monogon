@@ -11,7 +11,7 @@ go_library(
         "scheduler.go",
         "service.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes",
+    importpath = "source.monogon.dev/metropolis/node/kubernetes",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = [
         "//metropolis/node:go_default_library",

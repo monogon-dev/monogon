@@ -32,10 +32,10 @@ import (
 	"google.golang.org/grpc/status"
 	pluginregistration "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/fsquota"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/metropolis/pkg/fsquota"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 // Derived from K8s spec for acceptable names, but shortened to 130 characters to avoid issues with

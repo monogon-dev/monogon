@@ -29,14 +29,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dns"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/clusternet"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/nfproxy"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/pki"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/reconciler"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
+	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/node/core/network/dns"
+	"source.monogon.dev/metropolis/node/kubernetes/clusternet"
+	"source.monogon.dev/metropolis/node/kubernetes/nfproxy"
+	"source.monogon.dev/metropolis/node/kubernetes/pki"
+	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
+	"source.monogon.dev/metropolis/pkg/supervisor"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 type Config struct {

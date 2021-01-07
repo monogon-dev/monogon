@@ -4,7 +4,7 @@ load("@//third_party/go:kubernetes_version_def.bzl", "version_x_defs")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/hyperkube",
+    importpath = "source.monogon.dev/metropolis/node/kubernetes/hyperkube",
     visibility = ["//visibility:private"],
     deps = [
         "@com_github_spf13_cobra//:go_default_library",

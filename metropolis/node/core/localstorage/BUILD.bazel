@@ -8,7 +8,7 @@ go_library(
         "directory_root.go",
         "storage.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage",
+    importpath = "source.monogon.dev/metropolis/node/core/localstorage",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = [
         "//metropolis/node/core/localstorage/crypt:go_default_library",

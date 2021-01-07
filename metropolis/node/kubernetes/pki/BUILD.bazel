@@ -7,7 +7,7 @@ go_library(
         "certificate.go",
         "kubernetes.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/pki",
+    importpath = "source.monogon.dev/metropolis/node/kubernetes/pki",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = [
         "//metropolis/node:go_default_library",

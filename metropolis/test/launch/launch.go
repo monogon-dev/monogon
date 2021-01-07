@@ -39,9 +39,9 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/freeport"
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
+	"source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/pkg/freeport"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 type qemuValue map[string][]string

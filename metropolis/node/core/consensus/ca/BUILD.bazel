@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["ca.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/consensus/ca",
+    importpath = "source.monogon.dev/metropolis/node/core/consensus/ca",
     visibility = ["//:__subpackages__"],
     deps = ["@io_etcd_go_etcd//clientv3:go_default_library"],
 )

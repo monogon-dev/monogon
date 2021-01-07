@@ -4,7 +4,7 @@ load("//metropolis/node/build:def.bzl", "node_initramfs")
 go_library(
     name = "go_default_library",
     srcs = ["nanoswitch.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/test/nanoswitch",
+    importpath = "source.monogon.dev/metropolis/test/nanoswitch",
     visibility = ["//visibility:private"],
     deps = [
         "//metropolis/node:go_default_library",

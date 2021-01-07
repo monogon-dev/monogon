@@ -1,6 +1,6 @@
-# Nexantic monorepo
+# Monogon Source Monorepo
 
-This is the monorepo storing all of nexantic's internal projects and libraries.
+This is the main repository containing Monogon's public source code, including Metropolis.
 
 ## Environment
 
@@ -18,16 +18,6 @@ Running commands: `scripts/run_in_container.sh <...>`
 
 Using bazel using a wrapper script: `scripts/bin/bazel <...>` (add to your local $PATH for convenience)
 
-#### Run a single node cluster
-
-Launch the node:
-
-    bazel run //:launch
-    
-Run a kubectl command:
-
-    bazel run //metropolis/cli/dbg -- kubectl describe
- 
 #### IntelliJ
 
 This repository is compatible with the IntelliJ Bazel plugin. All commands run inside the container, and
@@ -53,3 +43,16 @@ It's strongly recommend to use our project presets for file watchers and other I
 re-open the project in order to install them:
 
     bazel run intellij/localconfig $(pwd)
+
+## Metropolis
+
+### Run a single node cluster
+
+Launch the node:
+
+    bazel run //:launch
+    
+Run a kubectl command:
+
+    bazel run //metropolis/cli/dbg -- kubectl describe
+ 

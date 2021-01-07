@@ -16,7 +16,7 @@
 
 syntax = "proto3";
 package nexantic.build.fietsje;
-option go_package = "git.monogon.dev/source/nexantic.git/build/fietsje/proto";
+option go_package = "source.monogon.dev/build/fietsje/proto";
 
 // The Shelf is a cache/lockfile of Fietsje dependencies. See //build/fietsje/shelf.go for more information.
 // This proto definition is used to generate text proto files. As such, repeated fields have singular names.

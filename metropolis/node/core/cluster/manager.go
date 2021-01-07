@@ -31,13 +31,13 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.etcd.io/etcd/clientv3"
 
-	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/consensus"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
+	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/consensus"
+	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
+	"source.monogon.dev/metropolis/node/core/network"
+	"source.monogon.dev/metropolis/pkg/supervisor"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 // Manager is a finite state machine that joins this node (ie., Metropolis node running on a virtual/physical machine)

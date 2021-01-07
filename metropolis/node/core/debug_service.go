@@ -25,12 +25,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/cluster"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/consensus/ca"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
+	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/cluster"
+	"source.monogon.dev/metropolis/node/core/consensus/ca"
+	"source.monogon.dev/metropolis/node/kubernetes"
+	"source.monogon.dev/metropolis/pkg/logtree"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 const (

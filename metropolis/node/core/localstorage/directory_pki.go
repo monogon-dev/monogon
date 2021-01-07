@@ -27,7 +27,7 @@ import (
 	"math/big"
 	"time"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative"
+	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 )
 
 var (

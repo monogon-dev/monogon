@@ -9,7 +9,7 @@ go_library(
         "//metropolis/node:debug_build": ["crypt_debug.go"],
         "//conditions:default": ["crypt.go"],
     }),
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/crypt",
+    importpath = "source.monogon.dev/metropolis/node/core/localstorage/crypt",
     visibility = ["//metropolis/node/core/localstorage:__subpackages__"],
     deps = [
         "//metropolis/pkg/devicemapper:go_default_library",

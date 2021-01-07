@@ -6,7 +6,7 @@ go_library(
         "linebuffer.go",
         "logbuffer.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/logbuffer",
+    importpath = "source.monogon.dev/metropolis/pkg/logbuffer",
     visibility = ["//metropolis:__subpackages__"],
     deps = ["//metropolis/proto/api:go_default_library"],
 )

@@ -25,7 +25,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/devicemapper"
+	"source.monogon.dev/metropolis/pkg/devicemapper"
 )
 
 func readDataSectors(path string) (uint64, error) {

@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/build/genosrelease",
+    importpath = "source.monogon.dev/metropolis/node/build/genosrelease",
     visibility = ["//visibility:private"],
     deps = ["@com_github_joho_godotenv//:go_default_library"],
 )

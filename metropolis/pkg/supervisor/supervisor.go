@@ -25,7 +25,7 @@ import (
 	"io"
 	"sync"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
+	"source.monogon.dev/metropolis/pkg/logtree"
 )
 
 // A Runnable is a function that will be run in a goroutine, and supervised throughout its lifetime. It can in turn

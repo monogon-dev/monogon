@@ -10,7 +10,7 @@ proto_library(
 
 go_proto_library(
     name = "internal_go_proto",
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/proto/internal",
+    importpath = "source.monogon.dev/metropolis/proto/internal",
     proto = ":internal_proto",
     visibility = ["//metropolis:__subpackages__"],
 )
@@ -18,6 +18,6 @@ go_proto_library(
 go_library(
     name = "go_default_library",
     embed = [":internal_go_proto"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/proto/internal",
+    importpath = "source.monogon.dev/metropolis/proto/internal",
     visibility = ["//metropolis:__subpackages__"],
 )

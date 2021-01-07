@@ -16,7 +16,7 @@
 
 package logtree
 
-import "git.monogon.dev/source/nexantic.git/metropolis/pkg/logbuffer"
+import "source.monogon.dev/metropolis/pkg/logbuffer"
 
 // entry is a journal entry, representing a single log event (encompassed in a Payload) at a given DN.
 // See the journal struct for more information about the global/local linked lists.

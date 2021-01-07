@@ -14,7 +14,7 @@ go_library(
         "logtree_entry.go",
         "logtree_publisher.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree",
+    importpath = "source.monogon.dev/metropolis/pkg/logtree",
     visibility = ["//metropolis:__subpackages__"],
     deps = [
         "//metropolis/pkg/logbuffer:go_default_library",

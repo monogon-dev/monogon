@@ -23,7 +23,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/test/launch"
+	"source.monogon.dev/metropolis/test/launch"
 )
 
 func main() {

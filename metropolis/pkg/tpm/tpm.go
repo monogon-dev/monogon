@@ -40,8 +40,8 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/sysfs"
+	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/metropolis/pkg/sysfs"
 )
 
 var (

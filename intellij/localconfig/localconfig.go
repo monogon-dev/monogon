@@ -31,7 +31,7 @@ import (
 	"os"
 	"path"
 
-	"git.monogon.dev/source/nexantic.git/intellij/localconfig/watchers"
+	"source.monogon.dev/intellij/localconfig/watchers"
 )
 
 func main() {

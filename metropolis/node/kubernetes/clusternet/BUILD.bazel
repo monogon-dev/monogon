@@ -6,7 +6,7 @@ go_library(
         "clusternet.go",
         "netlink_compat.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/clusternet",
+    importpath = "source.monogon.dev/metropolis/node/kubernetes/clusternet",
     visibility = ["//metropolis/node/kubernetes:__subpackages__"],
     deps = [
         "//metropolis/node:go_default_library",

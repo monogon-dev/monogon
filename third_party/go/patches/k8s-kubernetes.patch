@@ -368,7 +368,7 @@ diff -ur io_k8s_kubernetes.orig/pkg/kubelet/cadvisor/cadvisor_linux.go io_k8s_ku
      "go_library",
  )
 -load("//build:bindata.bzl", "go_bindata")
-+load("@nexantic//build/bindata:bindata.bzl", "bindata")
++load("@dev_source_monogon//build/bindata:bindata.bzl", "bindata")
 
  go_library(
      name = "go_default_library",

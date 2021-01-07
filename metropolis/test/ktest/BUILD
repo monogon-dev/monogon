@@ -4,7 +4,7 @@ load("//metropolis/node/build/kconfig-patcher:kconfig-patcher.bzl", "kconfig_pat
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/test/ktest",
+    importpath = "source.monogon.dev/metropolis/test/ktest",
     visibility = ["//visibility:private"],
     deps = ["//metropolis/test/launch:go_default_library"],
 )

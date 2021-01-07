@@ -28,8 +28,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/fsquota/fsxattrs"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/fsquota/quotactl"
+	"source.monogon.dev/metropolis/pkg/fsquota/fsxattrs"
+	"source.monogon.dev/metropolis/pkg/fsquota/quotactl"
 )
 
 // SetQuota sets the quota of bytes and/or inodes in a given path. To not set a limit, set the

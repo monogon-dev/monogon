@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c"
+	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/stretchr/testify/require"

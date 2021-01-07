@@ -21,7 +21,7 @@ go_library(
     embed = [
         ":migrations_pack",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/golibs/minijob/generated/sql",
+    importpath = "source.monogon.dev/golibs/minijob/generated/sql",
     visibility = ["//visibility:public"],
 )
 

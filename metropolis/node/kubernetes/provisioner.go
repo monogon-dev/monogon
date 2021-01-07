@@ -39,10 +39,10 @@ import (
 	ref "k8s.io/client-go/tools/reference"
 	"k8s.io/client-go/util/workqueue"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/fsquota"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/metropolis/pkg/fsquota"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 // ONCHANGE(//metropolis/node/kubernetes/reconciler:resources_csi.go): needs to match csiProvisionerServerName declared.

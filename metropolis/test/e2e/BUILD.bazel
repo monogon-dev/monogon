@@ -6,7 +6,7 @@ go_library(
         "kubernetes_helpers.go",
         "utils.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/test/e2e",
+    importpath = "source.monogon.dev/metropolis/test/e2e",
     visibility = ["//metropolis/test:__subpackages__"],
     deps = [
         "//metropolis/proto/api:go_default_library",

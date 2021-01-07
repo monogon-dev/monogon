@@ -10,7 +10,7 @@ proto_library(
 
 go_proto_library(
     name = "proto_go_proto",
-    importpath = "git.monogon.dev/source/nexantic.git/build/fietsje/proto",
+    importpath = "source.monogon.dev/build/fietsje/proto",
     proto = ":proto_proto",
     visibility = ["//visibility:public"],
 )
@@ -18,6 +18,6 @@ go_proto_library(
 go_library(
     name = "go_default_library",
     embed = [":proto_go_proto"],
-    importpath = "git.monogon.dev/source/nexantic.git/build/fietsje/proto",
+    importpath = "source.monogon.dev/build/fietsje/proto",
     visibility = ["//visibility:public"],
 )

@@ -22,7 +22,7 @@ import (
 	"strings"
 	"sync"
 
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 // Line is a line stored in the log buffer - a string, that has been perhaps truncated (due to exceeded limits).

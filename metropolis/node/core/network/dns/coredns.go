@@ -26,8 +26,8 @@ import (
 	"sync"
 	"syscall"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/fileargs"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/pkg/fileargs"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 const corefileBase = `

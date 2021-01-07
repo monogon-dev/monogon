@@ -16,7 +16,7 @@
 
 package main
 
-import "git.monogon.dev/source/nexantic.git/metropolis/node/core/network"
+import "source.monogon.dev/metropolis/node/core/network"
 
 // initializeDebugger does nothing in a non-debug build
 func initializeDebugger(*network.Service) {

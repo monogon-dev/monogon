@@ -34,8 +34,8 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/iana"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c/transport"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/node/core/network/dhcp4c/transport"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 type state int

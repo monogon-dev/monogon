@@ -6,7 +6,7 @@ go_library(
         "coredns.go",
         "directives.go",
     ],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dns",
+    importpath = "source.monogon.dev/metropolis/node/core/network/dns",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = [
         "//metropolis/pkg/fileargs:go_default_library",

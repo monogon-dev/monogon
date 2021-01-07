@@ -23,11 +23,11 @@ import (
 	"net"
 	"os/exec"
 
-	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/pki"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/fileargs"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
+	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/node/kubernetes/pki"
+	"source.monogon.dev/metropolis/pkg/fileargs"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 type apiserverService struct {

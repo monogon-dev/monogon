@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 // LeveledPayload is a log entry for leveled logs (as per leveled.go). It contains the input to these calls (severity and

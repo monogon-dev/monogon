@@ -19,7 +19,7 @@ package logtree
 import (
 	"fmt"
 
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 // LeveledLogger is a generic interface for glog-style logging. There are four hardcoded log severities, in increasing

@@ -32,11 +32,11 @@ import (
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c"
-	dhcpcb "git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c/callback"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dns"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
+	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
+	"source.monogon.dev/metropolis/node/core/network/dns"
+	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 const (

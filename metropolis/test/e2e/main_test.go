@@ -35,9 +35,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 
-	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
-	"git.monogon.dev/source/nexantic.git/metropolis/test/launch"
+	common "source.monogon.dev/metropolis/node"
+	apb "source.monogon.dev/metropolis/proto/api"
+	"source.monogon.dev/metropolis/test/launch"
 )
 
 const (

@@ -26,7 +26,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	pb "git.monogon.dev/source/nexantic.git/build/fietsje/proto"
+	pb "source.monogon.dev/build/fietsje/proto"
 )
 
 // The Shelf is a combined cache and dependency lockfile, not unlike go.sum. It's implemented as a text proto file on

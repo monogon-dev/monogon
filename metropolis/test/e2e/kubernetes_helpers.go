@@ -30,7 +30,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 // GetKubeClientSet gets a Kubeconfig from the debug API and creates a K8s ClientSet using it. The identity used has

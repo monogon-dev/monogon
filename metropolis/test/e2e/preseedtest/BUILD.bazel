@@ -4,7 +4,7 @@ load("@io_bazel_rules_docker//go:image.bzl", "go_image")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/test/e2e/preseedtest",
+    importpath = "source.monogon.dev/metropolis/test/e2e/preseedtest",
     visibility = ["//visibility:private"],
 )
 

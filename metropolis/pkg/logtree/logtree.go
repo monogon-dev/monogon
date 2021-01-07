@@ -21,7 +21,7 @@ import (
 	"strings"
 	"sync"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logbuffer"
+	"source.monogon.dev/metropolis/pkg/logbuffer"
 )
 
 // LogTree is a tree-shaped logging system. For more information, see the package-level documentation.

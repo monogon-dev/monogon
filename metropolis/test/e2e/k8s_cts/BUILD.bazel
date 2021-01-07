@@ -28,7 +28,7 @@ go_image(
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "git.monogon.dev/source/nexantic.git/metropolis/test/e2e/k8s_cts",
+    importpath = "source.monogon.dev/metropolis/test/e2e/k8s_cts",
     visibility = ["//visibility:private"],
     deps = [
         "//metropolis/node:go_default_library",
