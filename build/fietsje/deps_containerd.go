@@ -73,6 +73,7 @@ func depsContainerd(p *planner) {
 		"github.com/prometheus/procfs",
 		"github.com/russross/blackfriday/v2",
 		"github.com/seccomp/libseccomp-golang",
+		"github.com/shurcooL/sanitized_anchor_name",
 		"github.com/sirupsen/logrus",
 		"github.com/syndtr/gocapability",
 		"github.com/tchap/go-patricia",

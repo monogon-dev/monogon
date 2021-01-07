@@ -4,7 +4,6 @@ go_library(
     name = "go_default_library",
     srcs = [
         "dependency.go",
-        "deps_cilium.go",
         "deps_containerd.go",
         "deps_delve.go",
         "deps_gvisor.go",

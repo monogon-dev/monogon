@@ -65,7 +65,6 @@ func main() {
 	depsKubernetes(p)
 	depsContainerd(p)
 	depsGVisor(p)
-	depsCilium(p)
 
 	// our own deps, common
 	p.collectOverride("go.uber.org/zap", "v1.15.0")
@@ -83,24 +82,27 @@ func main() {
 	p.collect("github.com/rekby/gpt", "a930afbc6edcc89c83d39b79e52025698156178d")
 	p.collect("github.com/yalue/native_endian", "51013b03be4fd97b0aabf29a6923e60359294186")
 
-	// used by //core/cmd/mkimage
+	// Used by //metropolis/build/mkimage
 	p.collect("github.com/diskfs/go-diskfs", "v1.0.0").use(
 		"gopkg.in/djherbis/times.v1",
 	)
 
+	// Used by //metropolis/build/genosrelease
+	p.collect("github.com/joho/godotenv", "v1.3.0")
+
 	// used by //build/bindata
 	p.collect("github.com/kevinburke/go-bindata", "v3.16.0")
-
-	// used by deltagen
-	p.collectOverride("github.com/lyft/protoc-gen-star", "v0.4.14")
 
 	// for interactive debugging during development (//:dlv alias)
 	depsDelve(p)
 
-	// Used by //core/cmd/nanoswitch
+	// Used by //metropolis/test/nanoswitch
 	p.collect("github.com/google/nftables", "7127d9d22474b437f0e8136ddb21855df29790bf").use(
 		"github.com/koneu/natend",
 	)
+
+	// Used by //metropolis/node/core/network/dhcp4c
+	p.collect("github.com/google/gopacket", "v1.1.17")
 
 	// used by //core//kubernetes/clusternet
 	p.collect("golang.zx2c4.com/wireguard/wgctrl", "ec7f26be9d9e47a32a2789f8c346031978485cbf").use(
@@ -121,10 +123,11 @@ func main() {
 		"github.com/caddyserver/caddy",
 		"github.com/dnstap/golang-dnstap",
 		"github.com/farsightsec/golang-framestream",
-		"github.com/infobloxopen/go-trees",
-		"github.com/opentracing/opentracing-go",
-		"github.com/grpc-ecosystem/grpc-opentracing",
 		"github.com/flynn/go-shlex",
+		"github.com/grpc-ecosystem/grpc-opentracing",
+		"github.com/infobloxopen/go-trees",
+		"github.com/miekg/dns",
+		"github.com/opentracing/opentracing-go",
 	)
 
 	// goimports
