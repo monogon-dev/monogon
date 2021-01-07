@@ -30,7 +30,7 @@ import (
 	configapi "k8s.io/client-go/tools/clientcmd/api"
 
 	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/logtree"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
 )
 
 // KubeCertificateName is an enum-like unique name of a static Kubernetes certificate. The value of the name is used

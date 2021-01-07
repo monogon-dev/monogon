@@ -44,10 +44,10 @@ import (
 	"go.etcd.io/etcd/embed"
 	"go.uber.org/atomic"
 
-	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/supervisor"
+	node "git.monogon.dev/source/nexantic.git/metropolis/node"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/consensus/ca"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
 )
 
 const (
@@ -118,7 +118,7 @@ func (s *Service) configure(ctx context.Context) (*embed.Config, error) {
 
 	port := s.config.Port
 	if port == 0 {
-		port = common.ConsensusPort
+		port = node.ConsensusPort
 	}
 
 	cfg := embed.NewConfig()

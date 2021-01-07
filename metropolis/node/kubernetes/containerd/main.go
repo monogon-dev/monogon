@@ -30,8 +30,8 @@ import (
 	ctr "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
 )
 
 const (

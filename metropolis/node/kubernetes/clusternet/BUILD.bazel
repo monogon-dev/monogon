@@ -10,10 +10,10 @@ go_library(
     visibility = ["//metropolis/node/kubernetes:__subpackages__"],
     deps = [
         "//metropolis/node:go_default_library",
-        "//metropolis/node/common/jsonpatch:go_default_library",
-        "//metropolis/node/common/supervisor:go_default_library",
         "//metropolis/node/core/localstorage:go_default_library",
-        "//metropolis/node/core/logtree:go_default_library",
+        "//metropolis/pkg/jsonpatch:go_default_library",
+        "//metropolis/pkg/logtree:go_default_library",
+        "//metropolis/pkg/supervisor:go_default_library",
         "@com_github_vishvananda_netlink//:go_default_library",
         "@com_zx2c4_golang_wireguard_wgctrl//:go_default_library",
         "@com_zx2c4_golang_wireguard_wgctrl//wgtypes:go_default_library",

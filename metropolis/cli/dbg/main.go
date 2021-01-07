@@ -33,7 +33,7 @@ import (
 	"k8s.io/kubectl/pkg/util/logs"
 	"k8s.io/kubernetes/pkg/kubectl/cmd"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/logtree"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
 	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
 )
 

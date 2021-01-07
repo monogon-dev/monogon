@@ -32,11 +32,11 @@ import (
 	"go.etcd.io/etcd/clientv3"
 
 	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/consensus"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
 	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
 )
 

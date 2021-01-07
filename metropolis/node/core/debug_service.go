@@ -28,8 +28,8 @@ import (
 	common "git.monogon.dev/source/nexantic.git/metropolis/node"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/cluster"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/consensus/ca"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/logtree"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
 	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
 )
 

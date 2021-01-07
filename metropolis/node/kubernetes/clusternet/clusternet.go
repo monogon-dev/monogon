@@ -44,10 +44,10 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/jsonpatch"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/logtree"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/jsonpatch"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
 )
 
 const (

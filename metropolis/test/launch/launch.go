@@ -39,8 +39,8 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	freeport "git.monogon.dev/source/nexantic.git/golibs/common"
-	common "git.monogon.dev/source/nexantic.git/metropolis/node"
+	"git.monogon.dev/source/nexantic.git/metropolis/node"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/freeport"
 	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
 )
 
@@ -135,8 +135,8 @@ type Options struct {
 }
 
 // NodePorts is the list of ports a fully operational Metropolis node listens on
-var NodePorts = []uint16{common.ConsensusPort, common.NodeServicePort, common.MasterServicePort,
-	common.ExternalServicePort, common.DebugServicePort, common.KubernetesAPIPort, common.DebuggerPort}
+var NodePorts = []uint16{node.ConsensusPort, node.NodeServicePort, node.MasterServicePort,
+	node.ExternalServicePort, node.DebugServicePort, node.KubernetesAPIPort, node.DebuggerPort}
 
 // IdentityPortMap returns a port map where each given port is mapped onto itself on the host. This is mainly useful
 // for development against Metropolis. The dbg command requires this mapping.
@@ -465,9 +465,9 @@ func (e *QEMUError) Error() string {
 
 // NanoswitchPorts contains all ports forwarded by Nanoswitch to the first VM
 var NanoswitchPorts = []uint16{
-	common.ExternalServicePort,
-	common.DebugServicePort,
-	common.KubernetesAPIPort,
+	node.ExternalServicePort,
+	node.DebugServicePort,
+	node.KubernetesAPIPort,
 }
 
 // ClusterOptions contains all options for launching a Metropolis cluster
@@ -524,7 +524,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (apb.NodeDebugServi
 	copts := []grpcretry.CallOption{
 		grpcretry.WithBackoff(grpcretry.BackoffExponential(100 * time.Millisecond)),
 	}
-	conn, err := portMap.DialGRPC(common.DebugServicePort, grpc.WithInsecure(),
+	conn, err := portMap.DialGRPC(node.DebugServicePort, grpc.WithInsecure(),
 		grpc.WithUnaryInterceptor(grpcretry.UnaryClientInterceptor(copts...)))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to dial debug service: %w", err)

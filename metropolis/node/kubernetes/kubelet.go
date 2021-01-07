@@ -28,12 +28,12 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/fileargs"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/reconciler"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/fileargs"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
 )
 
 type kubeletService struct {

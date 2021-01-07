@@ -25,7 +25,7 @@ import (
 
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/crypt"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/tpm"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/tpm"
 )
 
 var keySize uint16 = 256 / 8

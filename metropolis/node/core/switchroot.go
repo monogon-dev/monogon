@@ -27,7 +27,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/logtree"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
 )
 
 // switchRoot moves the root from initramfs into a tmpfs

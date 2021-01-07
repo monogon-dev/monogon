@@ -30,7 +30,7 @@ service NodeDebugService {
     // GetLogs Returns historical and/or streaming logs for a given DN with given filters from the system global
     // LogTree.
     //
-    // For more information about this API, see //metropolis/node/core/logtree. But, in summary:
+    // For more information about this API, see //metropolis/pkg/logtree. But, in summary:
     //   - All logging is performed to a DN (distinguished name), which is a dot-delimited string like foo.bar.baz.
     //   - Log entries can be either raw (coming from unstructured logging from an external service, like a running
     //     process) or leveled (emitted by Metropolis code with a source line, timestamp, and severity).
@@ -57,7 +57,7 @@ message GetDebugKubeconfigResponse {
     string debug_kubeconfig = 1;
 }
 
-// Severity level corresponding to //metropolis/node/core/logtree.Severity.
+// Severity level corresponding to //metropolis/pkg/logtree.Severity.
 enum LeveledLogSeverity {
     INVALID = 0;
     INFO = 1;

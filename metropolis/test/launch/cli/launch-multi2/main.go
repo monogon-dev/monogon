@@ -30,7 +30,7 @@ import (
 	"google.golang.org/grpc"
 
 	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/logbuffer"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logbuffer"
 	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
 	"git.monogon.dev/source/nexantic.git/metropolis/test/launch"
 )

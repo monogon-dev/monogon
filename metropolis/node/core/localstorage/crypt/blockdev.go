@@ -27,7 +27,7 @@ import (
 	"github.com/rekby/gpt"
 	"golang.org/x/sys/unix"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/sysfs"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/sysfs"
 )
 
 var (

@@ -39,10 +39,10 @@ import (
 	"golang.org/x/sys/unix"
 
 	common "git.monogon.dev/source/nexantic.git/metropolis/node"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/supervisor"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/core/logtree"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c"
 	dhcpcb "git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dhcp4c/callback"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/logtree"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
 	"git.monogon.dev/source/nexantic.git/metropolis/test/launch"
 )
 

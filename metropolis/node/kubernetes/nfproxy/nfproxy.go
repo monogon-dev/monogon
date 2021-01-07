@@ -38,7 +38,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/supervisor"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
 )
 
 type Service struct {

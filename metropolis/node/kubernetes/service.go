@@ -29,13 +29,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dns"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/clusternet"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/nfproxy"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/pki"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/reconciler"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
 	apb "git.monogon.dev/source/nexantic.git/metropolis/proto/api"
 )
 

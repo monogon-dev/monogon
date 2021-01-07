@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//metropolis/node:go_default_library",
-        "//metropolis/node/common/logbuffer:go_default_library",
+        "//metropolis/pkg/logbuffer:go_default_library",
         "//metropolis/proto/api:go_default_library",
         "//metropolis/test/launch:go_default_library",
         "@com_github_grpc_ecosystem_go_grpc_middleware//retry:go_default_library",

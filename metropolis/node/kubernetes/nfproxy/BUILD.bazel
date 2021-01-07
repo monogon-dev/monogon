@@ -6,7 +6,7 @@ go_library(
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/nfproxy",
     visibility = ["//metropolis/node/kubernetes:__subpackages__"],
     deps = [
-        "//metropolis/node/common/supervisor:go_default_library",
+        "//metropolis/pkg/supervisor:go_default_library",
         "@com_github_sbezverk_nfproxy//pkg/controller:go_default_library",
         "@com_github_sbezverk_nfproxy//pkg/nftables:go_default_library",
         "@com_github_sbezverk_nfproxy//pkg/proxy:go_default_library",

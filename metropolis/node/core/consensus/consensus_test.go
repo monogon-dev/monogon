@@ -26,10 +26,10 @@ import (
 	"testing"
 	"time"
 
-	"git.monogon.dev/source/nexantic.git/golibs/common"
-	"git.monogon.dev/source/nexantic.git/metropolis/node/common/supervisor"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage"
 	"git.monogon.dev/source/nexantic.git/metropolis/node/core/localstorage/declarative"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/freeport"
+	"git.monogon.dev/source/nexantic.git/metropolis/pkg/supervisor"
 )
 
 type boilerplate struct {
@@ -90,7 +90,7 @@ func TestBootstrap(t *testing.T) {
 		InitialCluster: "127.0.0.1",
 		ExternalHost:   "127.0.0.1",
 		ListenHost:     "127.0.0.1",
-		Port:           common.MustConsume(common.AllocateTCPPort()),
+		Port:           freeport.MustConsume(freeport.AllocateTCPPort()),
 	})
 
 	supervisor.New(b.ctx, etcd.Run)
@@ -116,7 +116,7 @@ func TestMemberInfo(t *testing.T) {
 		InitialCluster: "127.0.0.1",
 		ExternalHost:   "127.0.0.1",
 		ListenHost:     "127.0.0.1",
-		Port:           common.MustConsume(common.AllocateTCPPort()),
+		Port:           freeport.MustConsume(freeport.AllocateTCPPort()),
 	})
 	supervisor.New(b.ctx, etcd.Run)
 	waitEtcd(t, etcd)
@@ -161,7 +161,7 @@ func TestRestartFromDisk(t *testing.T) {
 			InitialCluster: "127.0.0.1",
 			ExternalHost:   "127.0.0.1",
 			ListenHost:     "127.0.0.1",
-			Port:           common.MustConsume(common.AllocateTCPPort()),
+			Port:           freeport.MustConsume(freeport.AllocateTCPPort()),
 		})
 		ctx, ctxC := context.WithCancel(b.ctx)
 		supervisor.New(ctx, etcd.Run)
@@ -207,7 +207,7 @@ func TestCRL(t *testing.T) {
 		InitialCluster: "127.0.0.1",
 		ExternalHost:   "127.0.0.1",
 		ListenHost:     "127.0.0.1",
-		Port:           common.MustConsume(common.AllocateTCPPort()),
+		Port:           freeport.MustConsume(freeport.AllocateTCPPort()),
 	})
 	supervisor.New(b.ctx, etcd.Run)
 	waitEtcd(t, etcd)

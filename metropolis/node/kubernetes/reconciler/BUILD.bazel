@@ -13,7 +13,7 @@ go_library(
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/kubernetes/reconciler",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = [
-        "//metropolis/node/common/supervisor:go_default_library",
+        "//metropolis/pkg/supervisor:go_default_library",
         "@io_k8s_api//core/v1:go_default_library",
         "@io_k8s_api//node/v1beta1:go_default_library",
         "@io_k8s_api//policy/v1beta1:go_default_library",

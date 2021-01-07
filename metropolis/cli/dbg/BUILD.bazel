@@ -6,7 +6,7 @@ go_library(
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/cli/dbg",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/node/core/logtree:go_default_library",
+        "//metropolis/pkg/logtree:go_default_library",
         "//metropolis/proto/api:go_default_library",
         "@com_github_spf13_pflag//:go_default_library",
         "@io_k8s_component_base//cli/flag:go_default_library",

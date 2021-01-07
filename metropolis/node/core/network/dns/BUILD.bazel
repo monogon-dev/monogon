@@ -9,7 +9,7 @@ go_library(
     importpath = "git.monogon.dev/source/nexantic.git/metropolis/node/core/network/dns",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = [
-        "//metropolis/node/common/fileargs:go_default_library",
-        "//metropolis/node/common/supervisor:go_default_library",
+        "//metropolis/pkg/fileargs:go_default_library",
+        "//metropolis/pkg/supervisor:go_default_library",
     ],
 )
