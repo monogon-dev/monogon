@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"source.monogon.dev/metropolis/node/"
+	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/network"
 )
 

@@ -10,20 +10,32 @@ BUILD_PHID=$2;
 shift; shift;
 
 TAG=monogon-version-${DOCKERFILE_HASH}
-POD=monogon-build-${BUILD_ID}
+CONTAINER=monogon-build-${BUILD_ID}
 
-# We keep one Bazel build cache per working copy to avoid concurrency issues
-# (we cannot run multiple Bazel servers on a given _bazel_root)
+# We keep one set of Bazel build caches per working copy to avoid concurrency
+# issues (we cannot run multiple Bazel servers on a given _bazel_root).
 function getWorkingCopyID {
   local pattern='/var/drydock/workingcopy-([0-9]+)/'
   [[ "$(pwd)" =~ $pattern ]]
   echo ${BASH_REMATCH[1]}
 }
 
+# Main Bazel cache, used as Bazel outputRoot/outputBase.
 CACHE_VOLUME=bazel-cache-$(getWorkingCopyID)
+# Secondary disk cache for Bazel, used to keep build data between configuration
+# switches (saving from spurious rebuilds when switchint from debug to
+# non-debug builds).
+SECONDARY_CACHE_VOLUME=bazel-secondary-cache-$(getWorkingCopyID)
+SECONDARY_CACHE_LOCATION="/user/.cache/bazel-secondary"
+# TODO(q3k): Neither the main nor secondary caches are garbage collected and
+# they will slowly fill up the disk of the CI builder.
 
 # The Go pkg cache is safe to use concurrently.
 GOPKG_VOLUME=gopkg-cache
+
+cat > ci.bazelrc <<EOF
+build --disk_cache=${SECONDARY_CACHE_LOCATION}
+EOF
 
 # We do our own image caching since the podman build step cache does
 # not work across different repository checkouts and is also easily
@@ -33,55 +45,54 @@ if ! podman image inspect "$TAG" >/dev/null; then
   podman build -t ${TAG} build
 fi
 
-# Keep this in sync with create_container.sh:
-
 function cleanup {
   rc=$?
-  ! podman pod rm $POD --force
+  ! podman kill $CONTAINER
+  ! podman rm $CONTAINER --force
   exit $rc
 }
 
 trap cleanup EXIT
 
+! podman kill $CONTAINER
+! podman rm $CONTAINER --force
+
 ! podman volume create --opt o=nodev,exec ${CACHE_VOLUME}
+! podman volume create --opt o=nodev ${SECONDARY_CACHE_VOLUME}
 ! podman volume create --opt o=nodev ${GOPKG_VOLUME}
 
-podman pod create --name ${POD}
+function bazel() {
+    podman run \
+        --rm \
+        --name $CONTAINER \
+        -v $(pwd):/work \
+        -v ${CACHE_VOLUME}:/user/.cache/bazel/_bazel_root \
+        -v ${SECONDARY_CACHE_VOLUME}:${SECONDARY_CACHE_LOCATION} \
+        -v ${GOPKG_VOLUME}:/user/go/pkg \
+        --privileged \
+        ${TAG} \
+        bazel "$@"
+}
 
-podman run \
-    --rm \
-    -v $(pwd):/work \
-    -v ${CACHE_VOLUME}:/user/.cache/bazel/_bazel_root \
-    -v ${GOPKG_VOLUME}:/user/go/pkg \
-    --privileged \
-    ${TAG} \
-    bazel run //:fietsje
-
-podman run \
-    --rm \
-    -v $(pwd):/work \
-    -v ${CACHE_VOLUME}:/user/.cache/bazel/_bazel_root \
-    -v ${GOPKG_VOLUME}:/user/go/pkg \
-    --privileged \
-    ${TAG} \
-    scripts/gazelle.sh
+bazel run //:fietsje
+bazel run //:gazelle -- update
 
 if [[ ! -z "$(git status --porcelain)" ]]; then
-  echo "Unclean working directory after running scripts/gazelle.sh and fietsje:"
+  echo "Unclean working directory after running gazelle and fietsje:"
   git diff HEAD
+  cat <<EOF
+Please run:
+
+  $ bazel run //:fietsje
+  $ bazel run //:gazelle -- update
+
+in your local branch and add the resulting changes to this diff.
+EOF
   exit 1
 fi
 
-podman run \
-    -v $(pwd):/work \
-    -v ${CACHE_VOLUME}:/user/.cache/bazel/_bazel_root \
-    -v ${GOPKG_VOLUME}:/user/go/pkg \
-    --device /dev/kvm \
-    --privileged \
-    --pod ${POD} \
-    --name=${POD}-bazel \
-    ${TAG} \
-    bazel test //...
+bazel test //...
+bazel test //... -c dbg
 
 function conduit() {
   # Get Phabricator host from Git origin

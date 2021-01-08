@@ -18,3 +18,6 @@ build --cpu=k8
 # Use the default Bazel C++ toolchain to build the tools used during the
 # build.
 build --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
+
+# Load CI bazelrc if present.
+try-import %workspace%/ci.bazelrc
