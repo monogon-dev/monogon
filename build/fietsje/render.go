@@ -80,14 +80,13 @@ func (p *planner) render(w io.Writer) error {
 		if d.patches != nil || d.prePatches != nil {
 			fmt.Fprintf(w, "        patch_args = [%q],\n", "-p1")
 		}
-		if d.buildExtraArgs != nil {
-			fmt.Fprintf(w, "        build_extra_args = [\n")
-			for _, arg := range d.buildExtraArgs {
-				fmt.Fprintf(w, "            %q,\n", arg)
-			}
-			fmt.Fprintf(w, "        ],\n")
+		fmt.Fprintf(w, "        build_extra_args = [\n")
+		fmt.Fprintf(w, "            %q,\n", "-go_naming_convention=go_default_library")
+		fmt.Fprintf(w, "            %q,\n", "-go_naming_convention_external=go_default_library")
+		for _, arg := range d.buildExtraArgs {
+			fmt.Fprintf(w, "            %q,\n", arg)
 		}
-
+		fmt.Fprintf(w, "        ],\n")
 		fmt.Fprintf(w, "    )\n")
 	}
 	return nil

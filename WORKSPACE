@@ -29,54 +29,38 @@ versions.check(minimum_bazel_version = "2.2.0")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
-    # Pin slightly above 0.23.0 (and 0.23.1 prerelease at time of writing) to pull in this commit.
-    # This fixes https://github.com/bazelbuild/rules_go/issues/2499, which started manifesting at 0.22.4.
     name = "io_bazel_rules_go",
-    sha256 = "89501e6e6ae6308e82239f0c8e53dceaa428ad8de471a7f8be8b99a1717bb7d8",
-    strip_prefix = "rules_go-c07100d793fc0cdb20bc4f0361c1d53987ba259b",
+    sha256 = "7904dbecbaffd068651916dce77ff3437679f9d20e1a7956bff43826e7645fcc",
     urls = [
-        "https://github.com/bazelbuild/rules_go/archive/c07100d793fc0cdb20bc4f0361c1d53987ba259b.zip",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.25.1/rules_go-v0.25.1.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.25.1/rules_go-v0.25.1.tar.gz",
     ],
 )
 
 http_archive(
     name = "bazel_gazelle",
-    patch_args = ["-p1"],
+    sha256 = "222e49f034ca7a1d1231422cdb67066b885819885c356673cb1f72f748a3c9d4",
     patches = [
         "//third_party/gazelle:add-prepatching.patch",
     ],
-    sha256 = "bfd86b3cbe855d6c16c6fce60d76bd51f5c8dbc9cfcaef7a2bb5c1aafd0710e8",
+    patch_args = ["-p1"],
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.21.0/bazel-gazelle-v0.21.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.21.0/bazel-gazellev0.21.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.3/bazel-gazelle-v0.22.3.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.3/bazel-gazelle-v0.22.3.tar.gz",
     ],
 )
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 
-# golang.org/x/sys is overridden by the go_rules protobuf dependency -> declare it first, since
-# we need a newer version of it for the netlink package which would fail to compile otherwise.
 load("@bazel_gazelle//:deps.bzl", "go_repository")
 
+# golang.org/x/sys is overridden by the go_rules protobuf dependency -> declare it first, since
+# we need a newer version of it for the netlink package which would fail to compile otherwise.
 go_repository(
     name = "org_golang_x_sys",
     importpath = "golang.org/x/sys",
     sum = "h1:q9u40nxWT5zRClI/uU9dHCiYGottAg6Nzz4YUQyHxdA=",
     version = "v0.0.0-20190927073244-c990c680b611",
-)
-
-# we also pin github.com/golang/protobuf to 1.3.2, because we use gRPC 1.26 (can bump to 1.27
-# once https://github.com/etcd-io/etcd/issues/11563 is resolved and merged.
-
-go_repository(
-    name = "com_github_golang_protobuf",
-    build_file_proto_mode = "disable_global",
-    commit = "6c65a5562fc06764971b7c5d05c76c75e84bdbf7",
-    importpath = "github.com/golang/protobuf",
-    patch_args = ["-p1"],
-    patches = [
-        "@io_bazel_rules_go//third_party:com_github_golang_protobuf-extras.patch",
-    ],
 )
 
 go_rules_dependencies()
@@ -170,9 +154,9 @@ pip_install()
 
 http_archive(
     name = "io_bazel_rules_docker",
-    sha256 = "14ac30773fdb393ddec90e158c9ec7ebb3f8a4fd533ec2abbfd8789ad81a284b",
-    strip_prefix = "rules_docker-0.12.1",
-    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.12.1/rules_docker-v0.12.1.tar.gz"],
+    sha256 = "1698624e878b0607052ae6131aa216d45ebb63871ec497f26c67455b34119c80",
+    strip_prefix = "rules_docker-0.15.0",
+    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.15.0/rules_docker-v0.15.0.tar.gz"],
 )
 
 load(

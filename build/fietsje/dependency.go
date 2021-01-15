@@ -117,13 +117,6 @@ func (d *dependency) lock() error {
 	// And resolve its bazelName.
 	name := label.ImportPathToBazelRepoName(d.importpath)
 
-	// Hack for github.com/google/gvisor: it requests @com_github_opencontainers_runtime-spec.
-	// We fix the generated name for this repo so it conforms to what gvisor expects.
-	// TODO(q3k): instead of this, patch gvisor?
-	if name == "com_github_opencontainers_runtime_spec" {
-		name = "com_github_opencontainers_runtime-spec"
-	}
-
 	d.locked = &locked{
 		bazelName: name,
 		sum:       sum,

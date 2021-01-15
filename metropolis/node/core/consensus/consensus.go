@@ -198,7 +198,7 @@ func (s *Service) Run(ctx context.Context) error {
 			return fmt.Errorf("when issuing new cluster's first certificate: %w", err)
 		}
 
-		if err := s.config.Data.PeerPKI.MkdirAll(0600); err != nil {
+		if err := s.config.Data.PeerPKI.MkdirAll(0700); err != nil {
 			return fmt.Errorf("when creating PKI directory: %w", err)
 		}
 		if err := s.config.Data.PeerPKI.CACertificate.Write(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: st.ca.CACertRaw}), 0600); err != nil {
@@ -221,7 +221,7 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 	}
 
-	if err := s.config.Data.MkdirAll(0600); err != nil {
+	if err := s.config.Data.MkdirAll(0700); err != nil {
 		return fmt.Errorf("failed to create data directory; %w", err)
 	}
 

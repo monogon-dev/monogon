@@ -3,6 +3,8 @@ load("//build/fietsje:def.bzl", "fietsje")
 load("@io_bazel_rules_go//go:def.bzl", "go_path", "nogo")
 
 # gazelle:prefix source.monogon.dev
+# gazelle:go_naming_convention go_default_library
+# gazelle:go_naming_convention_external go_default_library
 gazelle(name = "gazelle")
 
 fietsje(name = "fietsje")

@@ -42,7 +42,10 @@ type boilerplate struct {
 func prep(t *testing.T) *boilerplate {
 	ctx, ctxC := context.WithCancel(context.Background())
 	root := &localstorage.Root{}
-	tmp, err := ioutil.TempDir("", "metropolis-consensus-test")
+	// Force usage of /tmp as temp directory root, otherwsie TMPDIR from Bazel
+	// returns a path long enough that socket binds in the localstorage fail
+	// (as socket names are limited to 108 characters).
+	tmp, err := ioutil.TempDir("/tmp", "metropolis-consensus-test")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -53,10 +53,10 @@ func main() {
 		shelf: shelf,
 	}
 
-	// gRPC/proto deps (https://github.com/bazelbuild/rules_go/blob/master/go/workspace.rst#id8)
-	// bump down from 1.28.1 to 1.26.0 because https://github.com/etcd-io/etcd/issues/11563
+	// Currently can't bump past v1.30.0, as that removes the old balancer.Picker API that
+	// go-etcd depends upon. See https://github.com/etcd-io/etcd/pull/12398 .
 	p.collect(
-		"google.golang.org/grpc", "v1.26.0",
+		"google.golang.org/grpc", "v1.29.1",
 	).use(
 		"golang.org/x/net",
 		"golang.org/x/text",

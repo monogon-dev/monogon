@@ -16,10 +16,6 @@
 
 load("@bazel_gazelle//:deps.bzl", "go_repository")
 load(
-    "@io_bazel_rules_go//go/private:rules/rule.bzl",
-    "go_rule",
-)
-load(
     "@io_bazel_rules_go//go:def.bzl",
     "GoLibrary",
     "go_context",
@@ -63,11 +59,23 @@ def _bindata_impl(ctx):
 
     return providers + [OutputGroupInfo(**output_groups)]
 
-bindata = go_rule(
-    _bindata_impl,
+bindata = rule(
+    implementation = _bindata_impl,
     attrs = {
-        "srcs": attr.label_list(mandatory = True, allow_files = True),
-        "package": attr.string(mandatory = True),
-        "bindata": attr.label(allow_single_file = True, default = Label("@com_github_kevinburke_go_bindata//go-bindata")),
+        "srcs": attr.label_list(
+            mandatory = True,
+            allow_files = True,
+         ),
+        "package": attr.string(
+            mandatory = True,
+         ),
+        "bindata": attr.label(
+            allow_single_file = True,
+            default = Label("@com_github_kevinburke_go_bindata//go-bindata"),
+        ),
+        "_go_context_data": attr.label(
+            default = "@io_bazel_rules_go//:go_context_data",
+        ),
     },
+    toolchains = ["@io_bazel_rules_go//go:toolchain"],
 )

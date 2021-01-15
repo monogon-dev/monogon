@@ -18,7 +18,7 @@ musl_headers(
 
 musl_gcc_tarball(
     name = "sysroot",
+    linux_headers = ":linux_headers",
     musl = "//third_party/musl",
     musl_headers = ":musl_headers",
-    linux_headers = ":linux_headers",
 )

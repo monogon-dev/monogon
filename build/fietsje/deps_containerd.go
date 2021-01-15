@@ -18,7 +18,7 @@ package main
 
 func depsContainerd(p *planner) {
 	p.collectOverride(
-		"github.com/containerd/containerd", "v1.4.0-beta.2",
+		"github.com/containerd/containerd", "v1.4.3",
 		buildTags("no_zfs", "no_aufs", "no_devicemapper", "no_btrfs"),
 		disabledProtoBuild,
 	).use(
@@ -35,7 +35,6 @@ func depsContainerd(p *planner) {
 		"github.com/containerd/go-runc",
 		"github.com/containerd/imgcrypt",
 		"github.com/containers/ocicrypt",
-		"github.com/containerd/ttrpc",
 		"github.com/containerd/typeurl",
 		"github.com/containernetworking/cni",
 		"github.com/coreos/go-systemd/v22",
@@ -72,7 +71,6 @@ func depsContainerd(p *planner) {
 		"github.com/prometheus/common",
 		"github.com/prometheus/procfs",
 		"github.com/russross/blackfriday/v2",
-		"github.com/seccomp/libseccomp-golang",
 		"github.com/shurcooL/sanitized_anchor_name",
 		"github.com/sirupsen/logrus",
 		"github.com/syndtr/gocapability",
@@ -83,7 +81,6 @@ func depsContainerd(p *planner) {
 		"golang.org/x/crypto",
 		"golang.org/x/oauth2",
 		"golang.org/x/sync",
-		"golang.org/x/sys",
 		"google.golang.org/genproto",
 		"gopkg.in/inf.v0",
 		"gopkg.in/yaml.v2",
@@ -96,6 +93,37 @@ func depsContainerd(p *planner) {
 		"github.com/gogo/googleapis",
 	).with(buildTags("selinux")).use(
 		"github.com/opencontainers/selinux",
+		"github.com/willf/bitset",
+	).with(patches(
+		"ttrpc-hacks.patch",
+	)).use(
+		"github.com/containerd/ttrpc",
+	).replace(
+		// ttrpc is broken by go protobuf v2, this is a tentative PR that's
+		// not yet merged by upstream.
+		// See: https://github.com/containerd/ttrpc/pull/67
+		//
+		// It also contains our own fix that builds up on the above and allows
+		// services to return the original status error library values. This is
+		// required for ttrpc to actually work from runsc and for results to be
+		// correctly interpreted by containerd.
+		// See: https://github.com/monogon-dev/ttrpc/commit/222b428f008e3ecb11cfff12e3fd92e3143a2f01
+		//
+		// Note: this is not a good fix, and has known issues, like not being
+		// able to return Details in gRPC status errors. However, with the
+		// limited usage within gvisor/containerd it works. In the future
+		// upstream will have to resolve this properly, eg. port ttrpc away
+		// from gogo, or fix gogo to work with the new protobuf APU.
+		"github.com/containerd/ttrpc",
+		"github.com/monogon-dev/ttrpc", "222b428f008e3ecb11cfff12e3fd92e3143a2f01",
+	)
+
+	// This is depended on by github.com/containerd/containerd, but not mentioned in their
+	// vendor.conf. They seem to be moving off of vendoring to gomod, so this should be
+	// reverted on the next containerd bump (when fietsje will panic about vendor.conf
+	// missing).
+	p.collectOverride(
+		"github.com/checkpoint-restore/go-criu/v4", "v4.1.0",
 	)
 
 	// containernetworking/plugins

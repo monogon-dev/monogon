@@ -33,7 +33,7 @@ func depsKubernetes(p *planner) {
 		),
 	).inject(
 		// repo infra, not requested by k8s, but used with bazel
-		"k8s.io/repo-infra", "df02ded38f9506e5bbcbf21702034b4fef815f2f",
+		"k8s.io/repo-infra", "a3483874bd37251c629c92df6d82a226b0e6ad92",
 	).with(prePatches("k8s-client-go.patch")).use(
 		"k8s.io/client-go",
 	).with(patches("k8s-native-mounter.patch")).use(
@@ -72,7 +72,6 @@ func depsKubernetes(p *planner) {
 		"github.com/bgentry/speakeasy",
 		"github.com/blang/semver",
 		"github.com/chai2010/gettext-go",
-		"github.com/checkpoint-restore/go-criu/v4",
 		"github.com/container-storage-interface/spec",
 		"github.com/coreos/go-oidc",
 		"github.com/coreos/go-semver",

@@ -20,8 +20,8 @@ go_binary(
     data = [
         "//metropolis/node:image",
         "//metropolis/node:swtpm_data",
-        "//metropolis/test/nanoswitch:initramfs",
         "//metropolis/test/ktest:linux-testing",
+        "//metropolis/test/nanoswitch:initramfs",
         "//third_party/edk2:firmware",
         "@com_github_bonzini_qboot//:qboot-bin",
     ],

@@ -37,8 +37,8 @@ RUN dnf -y upgrade && \
 
 # Install Bazel binary
 RUN curl -o /usr/local/bin/bazel \
-	https://releases.bazel.build/2.2.0/release/bazel-2.2.0-linux-x86_64 && \
-	echo 'b2f002ea0e6194a181af6ac84cd94bd8dc797722eb2354690bebac92dda233ff  /usr/local/bin/bazel' | sha256sum --check && \
+	https://releases.bazel.build/3.7.2/release/bazel-3.7.2-linux-x86_64 && \
+	echo '70dc0bee198a4c3d332925a32d464d9036a831977501f66d4996854ad4e4fc0d  /usr/local/bin/bazel' | sha256sum --check && \
 	chmod +x /usr/local/bin/bazel
 
 # Use a shared Go module cache for gazelle

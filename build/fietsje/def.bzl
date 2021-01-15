@@ -17,7 +17,6 @@
 load(
     "@io_bazel_rules_go//go:def.bzl",
     _go_context = "go_context",
-    _go_rule = "go_rule",
 )
 load(
     "@bazel_skylib//lib:shell.bzl",
@@ -47,7 +46,7 @@ def _fietsje_runner_impl(ctx):
         executable = out_file,
     )]
 
-_fietsje_runner = _go_rule(
+_fietsje_runner = rule(
     implementation = _fietsje_runner_impl,
     attrs = {
         "fietsje": attr.label(
@@ -59,7 +58,11 @@ _fietsje_runner = _go_rule(
             default = "//build/fietsje:fietsje.bash.in",
             allow_single_file = True,
         ),
+        "_go_context_data": attr.label(
+            default = "@io_bazel_rules_go//:go_context_data",
+        ),
     },
+    toolchains = ["@io_bazel_rules_go//go:toolchain"],
 )
 
 def fietsje(name):

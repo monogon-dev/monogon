@@ -38,7 +38,7 @@ node_initramfs(
 
         # runsc/gVisor
         "@com_github_google_gvisor//runsc": "/containerd/bin/runsc",
-        "@com_github_google_gvisor_containerd_shim//cmd/containerd-shim-runsc-v1": "/containerd/bin/containerd-shim-runsc-v1",
+        "@com_github_google_gvisor//shim/v2:containerd-shim-runsc-v1": "/containerd/bin/containerd-shim-runsc-v1",
 
         # runc (runtime in files_cc because of cgo)
         "@com_github_containerd_containerd//cmd/containerd-shim-runc-v2": "/containerd/bin/containerd-shim-runc-v2",
@@ -88,8 +88,8 @@ genrule(
         "//metropolis/node/build/mkimage",
     ],
     visibility = [
-        "//metropolis/test/launch:__subpackages__",
         "//metropolis/test/e2e:__subpackages__",
+        "//metropolis/test/launch:__subpackages__",
     ],
 )
 
@@ -131,8 +131,8 @@ EOF
     cp tpm/ca/signkey.pem $(location tpm/signkey.pem)
     """,
     visibility = [
-        "//metropolis/test/launch:__subpackages__",
         "//metropolis/test/e2e:__subpackages__",
+        "//metropolis/test/launch:__subpackages__",
     ],
 )
 

@@ -48,8 +48,6 @@ cc_toolchain_suite(
 
 cc_toolchain(
     name = "host_cc_k8_toolchain",
-    toolchain_identifier = "host-k8-toolchain",
-    toolchain_config = ":host_cc_k8_toolchain_config",
     all_files = ":empty",
     compiler_files = ":empty",
     dwp_files = ":empty",
@@ -57,6 +55,8 @@ cc_toolchain(
     objcopy_files = ":empty",
     strip_files = ":empty",
     supports_param_files = 0,
+    toolchain_config = ":host_cc_k8_toolchain_config",
+    toolchain_identifier = "host-k8-toolchain",
 )
 
 host_cc_toolchain_config(name = "host_cc_k8_toolchain_config")

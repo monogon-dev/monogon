@@ -26,7 +26,8 @@
       "external/io_k8s_apiserver/": "third_party",
       "external/org_golang_google_protobuf/": "third_party",
       "external/com_github_armon_go_metrics/": "third_party",
-      "external/com_github_elazarl_goproxy/": "third_party"
+      "external/com_github_elazarl_goproxy/": "third_party",
+      "external/com_github_googleapis_gnostic/": "third_party"
     }
   },
   "lostcancel": {
@@ -62,7 +63,9 @@
       "sqlite3.*go": "third_party",
       "external/com_github_google_gvisor/": "third_party",
       "external/io_k8s_sigs_structured_merge_diff/": "third_party",
-      "external/com_github_go_delve_delve/": "third_party"
+      "external/com_github_go_delve_delve/": "third_party",
+      "external/com_github_mailru_easyjson/jlexer/": "third_party",
+      "external/com_github_cilium_ebpf/": "third_party"
     }
   },
   "unusedresult": {

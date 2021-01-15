@@ -18,24 +18,20 @@ package main
 
 func depsGVisor(p *planner) {
 	p.collect(
-		"github.com/google/gvisor", "release-20200511.0",
-		patches("gvisor.patch"),
+		"github.com/google/gvisor", "release-20201216.0",
+		patches(
+			"gvisor.patch",
+			"gvisor-build-against-newer-runtime-specs.patch",
+		),
 	).use(
 		"github.com/cenkalti/backoff",
 		"github.com/gofrs/flock",
 		"github.com/google/subcommands",
 		"github.com/kr/pretty",
 		"github.com/kr/pty",
+		"github.com/mohae/deepcopy",
 		"golang.org/x/time",
 	)
 	// gRPC is used by gvisor's bazel machinery, but not present in go.sum. Include it manually.
-	p.collect("github.com/grpc/grpc", "v1.26.0")
-
-	p.collect(
-		"github.com/google/gvisor-containerd-shim", "v0.0.4",
-		patches(
-			"gvisor-containerd-shim.patch", "gvisor-containerd-shim-build.patch",
-			"gvisor-containerd-shim-nogo.patch", "gvisor-shim-root.patch",
-		),
-	)
+	p.collect("github.com/grpc/grpc", "v1.29.1")
 }
