@@ -16,8 +16,8 @@ limitations under the License.
 This fixes OpenAPI codegen for when included from the Monogon workspace. It basically undoes vendorification.
 
 diff -ur io_k8s_kubernetes.orig/build/code_generation.bzl io_k8s_kubernetes/build/code_generation.bzl
---- io_k8s_kubernetes.orig/build/code_generation.bzl	2020-04-15 13:43:57.785669620 +0200
-+++ io_k8s_kubernetes/build/code_generation.bzl	2020-04-16 18:19:44.297531873 +0200
+--- io_k8s_kubernetes.orig/build/code_generation.bzl	2021-01-26 12:10:52.593725692 +0100
++++ io_k8s_kubernetes/build/code_generation.bzl	2021-01-26 12:11:04.571786562 +0100
 @@ -27,6 +27,12 @@
          ...
      )
@@ -29,7 +29,7 @@ diff -ur io_k8s_kubernetes.orig/build/code_generation.bzl io_k8s_kubernetes/buil
 +        path = parts[4]
 +        return "@io_k8s_%s//%s:go_default_library" % (project, path)
      return "//%s:go_default_library" % pkg
-
+ 
  def go_pkg(pkg):
 @@ -42,6 +48,8 @@
          ...
@@ -41,7 +41,7 @@ diff -ur io_k8s_kubernetes.orig/build/code_generation.bzl io_k8s_kubernetes/buil
          if pkg.startswith(prefix):
              return paths.relativize(pkg, prefix)
 @@ -49,8 +57,8 @@
-
+ 
  def openapi_deps():
      deps = [
 -        "//vendor/github.com/go-openapi/spec:go_default_library",
@@ -68,12 +68,9 @@ diff -ur io_k8s_kubernetes.orig/build/code_generation.bzl io_k8s_kubernetes/buil
 +        tools = ["@io_k8s_kube_openapi//cmd/openapi-gen"],
          message = "GenOpenAPI",
      )
-
-The rest rips out a bunch of volume providers. We're only interested in CSI and hostpath/local.
-
 diff -ur io_k8s_kubernetes.orig/cmd/kube-apiserver/app/options/globalflags.go io_k8s_kubernetes/cmd/kube-apiserver/app/options/globalflags.go
---- io_k8s_kubernetes.orig/cmd/kube-apiserver/app/options/globalflags.go	2020-04-15 13:43:57.811669689 +0200
-+++ io_k8s_kubernetes/cmd/kube-apiserver/app/options/globalflags.go	2020-04-17 13:29:41.578264893 +0200
+--- io_k8s_kubernetes.orig/cmd/kube-apiserver/app/options/globalflags.go	2021-01-26 12:10:52.605725751 +0100
++++ io_k8s_kubernetes/cmd/kube-apiserver/app/options/globalflags.go	2021-01-26 12:11:04.572786567 +0100
 @@ -32,9 +32,6 @@
  func AddCustomGlobalFlags(fs *pflag.FlagSet) {
  	// Lookup flags in global flag set and re-register the values with our flagset.
@@ -85,9 +82,9 @@ diff -ur io_k8s_kubernetes.orig/cmd/kube-apiserver/app/options/globalflags.go io
  	globalflag.Register(fs, "default-not-ready-toleration-seconds")
  	globalflag.Register(fs, "default-unreachable-toleration-seconds")
 diff -ur io_k8s_kubernetes.orig/cmd/kube-controller-manager/app/controllermanager.go io_k8s_kubernetes/cmd/kube-controller-manager/app/controllermanager.go
---- io_k8s_kubernetes.orig/cmd/kube-controller-manager/app/controllermanager.go	2020-04-15 13:43:57.812669692 +0200
-+++ io_k8s_kubernetes/cmd/kube-controller-manager/app/controllermanager.go	2020-04-17 13:30:39.975397151 +0200
-@@ -126,7 +126,6 @@
+--- io_k8s_kubernetes.orig/cmd/kube-controller-manager/app/controllermanager.go	2021-01-26 12:10:52.605725751 +0100
++++ io_k8s_kubernetes/cmd/kube-controller-manager/app/controllermanager.go	2021-01-26 12:11:04.572786567 +0100
+@@ -140,7 +140,6 @@
  	namedFlagSets := s.Flags(KnownControllers(), ControllersDisabledByDefault.List())
  	verflag.AddFlags(namedFlagSets.FlagSet("global"))
  	globalflag.AddGlobalFlags(namedFlagSets.FlagSet("global"), cmd.Name())
@@ -95,9 +92,10 @@ diff -ur io_k8s_kubernetes.orig/cmd/kube-controller-manager/app/controllermanage
  	for _, f := range namedFlagSets.FlagSets {
  		fs.AddFlagSet(f)
  	}
+Only in io_k8s_kubernetes/cmd/kube-controller-manager/app: controllermanager.go.orig
 diff -ur io_k8s_kubernetes.orig/cmd/kube-controller-manager/app/plugins.go io_k8s_kubernetes/cmd/kube-controller-manager/app/plugins.go
---- io_k8s_kubernetes.orig/cmd/kube-controller-manager/app/plugins.go	2020-04-15 13:43:57.813669694 +0200
-+++ io_k8s_kubernetes/cmd/kube-controller-manager/app/plugins.go	2020-04-17 13:34:19.393894095 +0200
+--- io_k8s_kubernetes.orig/cmd/kube-controller-manager/app/plugins.go	2021-01-26 12:10:52.606725757 +0100
++++ io_k8s_kubernetes/cmd/kube-controller-manager/app/plugins.go	2021-01-26 12:11:04.572786567 +0100
 @@ -32,19 +32,9 @@
  	// Volume plugins
  	"k8s.io/kubernetes/pkg/volume"
@@ -188,8 +186,8 @@ diff -ur io_k8s_kubernetes.orig/cmd/kube-controller-manager/app/plugins.go io_k8
  	if utilfeature.DefaultFeatureGate.Enabled(features.CSIInlineVolume) {
  		allPlugins = append(allPlugins, csi.ProbeVolumePlugins()...)
 diff -ur io_k8s_kubernetes.orig/cmd/kubectl/BUILD io_k8s_kubernetes/cmd/kubectl/BUILD
---- io_k8s_kubernetes.orig/cmd/kubectl/BUILD	2020-04-20 14:58:52.573455879 +0200
-+++ io_k8s_kubernetes/cmd/kubectl/BUILD	2020-04-20 14:56:41.199032687 +0200
+--- io_k8s_kubernetes.orig/cmd/kubectl/BUILD	2021-01-26 12:10:52.616725807 +0100
++++ io_k8s_kubernetes/cmd/kubectl/BUILD	2021-01-26 12:11:04.572786567 +0100
 @@ -3,7 +3,7 @@
      "go_binary",
      "go_library",
@@ -199,13 +197,9 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubectl/BUILD io_k8s_kubernetes/cmd/kubectl/
  
  go_binary(
      name = "kubectl",
-
-
-We also take the opportunity to remove azure/gcp auth.
-
 diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/options/globalflags.go io_k8s_kubernetes/cmd/kubelet/app/options/globalflags.go
---- io_k8s_kubernetes.orig/cmd/kubelet/app/options/globalflags.go	2020-04-15 13:43:57.827669732 +0200
-+++ io_k8s_kubernetes/cmd/kubelet/app/options/globalflags.go	2020-04-16 15:58:30.964945445 +0200
+--- io_k8s_kubernetes.orig/cmd/kubelet/app/options/globalflags.go	2021-01-26 12:10:52.617725812 +0100
++++ io_k8s_kubernetes/cmd/kubelet/app/options/globalflags.go	2021-01-26 12:12:03.724087183 +0100
 @@ -28,10 +28,6 @@
  	"k8s.io/component-base/logs"
  	"k8s.io/component-base/version/verflag"
@@ -217,7 +211,7 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/options/globalflags.go io_k8s_ku
  )
  
  // AddGlobalFlags explicitly registers flags that libraries (glog, verflag, etc.) register
-@@ -80,14 +76,8 @@
+@@ -80,12 +76,8 @@
  
  // addCredentialProviderFlags adds flags from k8s.io/kubernetes/pkg/credentialprovider
  func addCredentialProviderFlags(fs *pflag.FlagSet) {
@@ -225,16 +219,14 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/options/globalflags.go io_k8s_ku
 -	global := pflag.CommandLine
  	local := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
  
--	// TODO(#58034): This is not a static file, so it's not quite as straightforward as --google-json-key.
--	// We need to figure out how ACR users can dynamically provide pull credentials before we can deprecate this.
--	pflagRegister(global, local, "azure-container-registry-config")
+-	addLegacyCloudProviderCredentialProviderFlags(global, local)
 -
  	fs.AddFlagSet(local)
  }
  
 diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/plugins.go io_k8s_kubernetes/cmd/kubelet/app/plugins.go
---- io_k8s_kubernetes.orig/cmd/kubelet/app/plugins.go	2020-04-15 13:43:57.827669732 +0200
-+++ io_k8s_kubernetes/cmd/kubelet/app/plugins.go	2020-04-16 16:10:13.366081373 +0200
+--- io_k8s_kubernetes.orig/cmd/kubelet/app/plugins.go	2021-01-26 12:10:52.617725812 +0100
++++ io_k8s_kubernetes/cmd/kubelet/app/plugins.go	2021-01-26 12:11:04.573786572 +0100
 @@ -19,8 +19,6 @@
  // This file exists to force the desired plugin implementations to be linked.
  import (
@@ -272,7 +264,7 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/plugins.go io_k8s_kubernetes/cmd
  
  	// Cloud providers
  	_ "k8s.io/kubernetes/pkg/cloudprovider/providers"
-@@ -64,30 +48,13 @@
+@@ -64,30 +50,13 @@
  	//
  	// Kubelet does not currently need to configure volume plugins.
  	// If/when it does, see kube-controller-manager/app/plugins.go for example of using volume.VolumeConfig
@@ -304,8 +296,8 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubelet/app/plugins.go io_k8s_kubernetes/cmd
  	return allPlugins, nil
  }
 diff -ur io_k8s_kubernetes.orig/cmd/kubelet/BUILD io_k8s_kubernetes/cmd/kubelet/BUILD
---- io_k8s_kubernetes.orig/cmd/kubelet/BUILD	2020-04-15 13:43:57.827669732 +0200
-+++ io_k8s_kubernetes/cmd/kubelet/BUILD	2020-04-20 14:56:20.446965836 +0200
+--- io_k8s_kubernetes.orig/cmd/kubelet/BUILD	2021-01-26 12:10:52.616725807 +0100
++++ io_k8s_kubernetes/cmd/kubelet/BUILD	2021-01-26 12:11:04.573786572 +0100
 @@ -5,7 +5,7 @@
      go_binary = "go_binary_conditional_pure",
  )
@@ -316,9 +308,9 @@ diff -ur io_k8s_kubernetes.orig/cmd/kubelet/BUILD io_k8s_kubernetes/cmd/kubelet/
  go_binary(
      name = "kubelet",
 diff -ur io_k8s_kubernetes.orig/pkg/controller/nodeipam/ipam/cidr_allocator.go io_k8s_kubernetes/pkg/controller/nodeipam/ipam/cidr_allocator.go
---- io_k8s_kubernetes.orig/pkg/controller/nodeipam/ipam/cidr_allocator.go	2020-04-15 13:43:57.860669820 +0200
-+++ io_k8s_kubernetes/pkg/controller/nodeipam/ipam/cidr_allocator.go	2020-04-17 13:18:36.157842990 +0200
-@@ -111,8 +111,6 @@
+--- io_k8s_kubernetes.orig/pkg/controller/nodeipam/ipam/cidr_allocator.go	2021-01-26 12:10:52.664726051 +0100
++++ io_k8s_kubernetes/pkg/controller/nodeipam/ipam/cidr_allocator.go	2021-01-26 12:11:04.573786572 +0100
+@@ -112,8 +112,6 @@
  	switch allocatorType {
  	case RangeAllocatorType:
  		return NewCIDRRangeAllocator(kubeClient, nodeInformer, allocatorParams, nodeList)
@@ -327,9 +319,10 @@ diff -ur io_k8s_kubernetes.orig/pkg/controller/nodeipam/ipam/cidr_allocator.go i
  	default:
  		return nil, fmt.Errorf("invalid CIDR allocator type: %v", allocatorType)
  	}
+Only in io_k8s_kubernetes/pkg/controller/nodeipam/ipam: cidr_allocator.go.orig
 diff -ur io_k8s_kubernetes.orig/pkg/controller/nodeipam/nolegacyprovider.go io_k8s_kubernetes/pkg/controller/nodeipam/nolegacyprovider.go
---- io_k8s_kubernetes.orig/pkg/controller/nodeipam/nolegacyprovider.go	2020-04-15 13:43:57.860669820 +0200
-+++ io_k8s_kubernetes/pkg/controller/nodeipam/nolegacyprovider.go	2020-04-17 13:27:12.440927122 +0200
+--- io_k8s_kubernetes.orig/pkg/controller/nodeipam/nolegacyprovider.go	2021-01-26 12:10:52.665726056 +0100
++++ io_k8s_kubernetes/pkg/controller/nodeipam/nolegacyprovider.go	2021-01-26 12:11:04.573786572 +0100
 @@ -1,5 +1,3 @@
 -// +build providerless
 -
@@ -337,39 +330,40 @@ diff -ur io_k8s_kubernetes.orig/pkg/controller/nodeipam/nolegacyprovider.go io_k
  Copyright 2019 The Kubernetes Authors.
  
 diff -ur io_k8s_kubernetes.orig/pkg/kubelet/cadvisor/cadvisor_linux.go io_k8s_kubernetes/pkg/kubelet/cadvisor/cadvisor_linux.go
---- io_k8s_kubernetes.orig/pkg/kubelet/cadvisor/cadvisor_linux.go	2020-04-15 13:43:57.875669859 +0200
-+++ io_k8s_kubernetes/pkg/kubelet/cadvisor/cadvisor_linux.go	2020-04-15 18:24:28.683551309 +0200
-@@ -34,8 +34,6 @@
-
+--- io_k8s_kubernetes.orig/pkg/kubelet/cadvisor/cadvisor_linux.go	2021-01-26 12:10:52.676726112 +0100
++++ io_k8s_kubernetes/pkg/kubelet/cadvisor/cadvisor_linux.go	2021-01-26 12:11:04.573786572 +0100
+@@ -33,8 +33,6 @@
+ 
  	// Register cloud info providers.
  	// TODO(#68522): Remove this in 1.20+ once the cAdvisor endpoints are removed.
 -	_ "github.com/google/cadvisor/utils/cloudinfo/aws"
 -	_ "github.com/google/cadvisor/utils/cloudinfo/azure"
  	_ "github.com/google/cadvisor/utils/cloudinfo/gce"
-
+ 
  	"github.com/google/cadvisor/cache/memory"
-
---- io_k8s_kubernetes.orig/test/e2e/BUILD 2020-07-22 10:51:20.277358305 +0200
-+++ io_k8s_kubernetes/test/e2e/BUILD   2020-07-22 10:56:43.451577495 +0200
+Only in io_k8s_kubernetes/pkg/kubelet/cadvisor: cadvisor_linux.go.orig
+diff -ur io_k8s_kubernetes.orig/test/e2e/BUILD io_k8s_kubernetes/test/e2e/BUILD
+--- io_k8s_kubernetes.orig/test/e2e/BUILD	2021-01-26 12:10:52.736726417 +0100
++++ io_k8s_kubernetes/test/e2e/BUILD	2021-01-26 12:11:04.573786572 +0100
 @@ -5,7 +5,7 @@
      go_test = "go_test_conditional_pure",
  )
  load("@io_bazel_rules_go//go:def.bzl", "go_library")
 -load("//staging/src/k8s.io/component-base/version:def.bzl", "version_x_defs")
 +load("@//third_party/go:kubernetes_version_def.bzl", "version_x_defs")
-
+ 
  go_test(
      name = "go_default_test",
-
---- io_k8s_kubernetes.orig/test/e2e/generated/BUILD
-+++ io_k8s_kubernetes/test/e2e/generated/BUILD
-@@ -4,23 +4,24 @@ load(
+diff -ur io_k8s_kubernetes.orig/test/e2e/generated/BUILD io_k8s_kubernetes/test/e2e/generated/BUILD
+--- io_k8s_kubernetes.orig/test/e2e/generated/BUILD	2021-01-26 12:10:52.743726453 +0100
++++ io_k8s_kubernetes/test/e2e/generated/BUILD	2021-01-26 12:11:04.573786572 +0100
+@@ -4,23 +4,24 @@
      "@io_bazel_rules_go//go:def.bzl",
      "go_library",
  )
 -load("//build:bindata.bzl", "go_bindata")
 +load("@dev_source_monogon//build/bindata:bindata.bzl", "bindata")
-
+ 
  go_library(
      name = "go_default_library",
      srcs = [
@@ -385,14 +379,14 @@ diff -ur io_k8s_kubernetes.orig/pkg/kubelet/cadvisor/cadvisor_linux.go io_k8s_ku
          "@io_k8s_klog_v2//:go_default_library",
      ],
  )
-
+ 
 -# IMPORTANT: if you make any changes here, you must also update hack/generate-bindata.sh.
 -go_bindata(
 +bindata(
      name = "bindata",
      srcs = [
          "//test/conformance/testdata:all-srcs",
-@@ -29,9 +30,7 @@ go_bindata(
+@@ -29,9 +30,7 @@
          "//test/fixtures:all-srcs",
          "//test/images:all-srcs",
      ],
@@ -401,5 +395,5 @@ diff -ur io_k8s_kubernetes.orig/pkg/kubelet/cadvisor/cadvisor_linux.go io_k8s_ku
 -    include_metadata = False,
 +    package = "generated",
  )
-
+ 
  filegroup(

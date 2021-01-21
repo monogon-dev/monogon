@@ -853,6 +853,13 @@ entry: <
   semver: "v4.2.0+incompatible"
 >
 entry: <
+  import_path: "github.com/evanphx/json-patch"
+  version: "v4.9.0+incompatible"
+  bazel_name: "com_github_evanphx_json_patch"
+  sum: "h1:kLcOMZeuLAJvL2BPWLMIj5oaZQobrkAqrL+WFZwQses="
+  semver: "v4.9.0+incompatible"
+>
+entry: <
   import_path: "github.com/exponent-io/jsonpath"
   version: "v0.0.0-20151013193312-d6023ce2651d"
   bazel_name: "com_github_exponent_io_jsonpath"
@@ -1096,6 +1103,20 @@ entry: <
   bazel_name: "com_github_google_cadvisor"
   sum: "h1:il4pi2iOP5NRkBgnZH3n0GDqSCNEJ/QIRJrCAfU5h38="
   semver: "v0.36.1-0.20200623171404-8450c56c21bc"
+>
+entry: <
+  import_path: "github.com/google/cadvisor"
+  version: "v0.37.0"
+  bazel_name: "com_github_google_cadvisor"
+  sum: "h1:t3txV4zNZZGTuwuA/Onm3HToPhg16GjigAHZHEVIz+c="
+  semver: "v0.37.0"
+>
+entry: <
+  import_path: "github.com/google/cadvisor"
+  version: "v0.37.3"
+  bazel_name: "com_github_google_cadvisor"
+  sum: "h1:qsH/np74sg1/tEe+bn+e2JIPFxrw6En3gCVuQdolc74="
+  semver: "v0.37.3"
 >
 entry: <
   import_path: "github.com/google/certificate-transparency-go"
@@ -2414,6 +2435,20 @@ entry: <
   semver: "v0.5.0-alpha.5.0.20200520232829-54ba9589114f"
 >
 entry: <
+  import_path: "go.etcd.io/etcd"
+  version: "v0.5.0-alpha.5.0.20200716221620-18dfb9cca345"
+  bazel_name: "io_etcd_go_etcd"
+  sum: "h1:2gOG36vt1BhUqpzxwZLZJxUim2dHB05vw+RAn4Q6YOU="
+  semver: "v0.5.0-alpha.5.0.20200716221620-18dfb9cca345"
+>
+entry: <
+  import_path: "go.etcd.io/etcd"
+  version: "v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5"
+  bazel_name: "io_etcd_go_etcd"
+  sum: "h1:Gqga3zA9tdAcfqobUGjSoCob5L3f8Dt5EuOp3ihNZko="
+  semver: "v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5"
+>
+entry: <
   import_path: "go.mongodb.org/mongo-driver"
   version: "v1.1.2"
   bazel_name: "org_mongodb_go_mongo_driver"
@@ -2524,6 +2559,13 @@ entry: <
   bazel_name: "org_golang_x_net"
   sum: "h1:oWX7TPOiFAMXLq8o0ikBYfCJVlRHBcsciT5bXOrH628="
   semver: "v0.0.0-20190311183353-d8887717615a"
+>
+entry: <
+  import_path: "golang.org/x/net"
+  version: "v0.0.0-20201110031124-69a78807bb2b"
+  bazel_name: "org_golang_x_net"
+  sum: "h1:uwuIcX0g4Yl1NC5XAz37xsr2lTtcqevgzYNVt49waME="
+  semver: "v0.0.0-20201110031124-69a78807bb2b"
 >
 entry: <
   import_path: "golang.org/x/oauth2"
@@ -2736,6 +2778,27 @@ entry: <
   semver: "v0.19.0-rc.0"
 >
 entry: <
+  import_path: "k8s.io/api"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_api"
+  sum: "h1:aZ3pinA/83K1i80AH+cbrHUi/HkZ1AaToKB3q6ROZtc="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/api"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_api"
+  sum: "h1:Lq0owhvgpWXmMtz+t2AT/JJpIAPX9X8lK3oE2qslYCU="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/api"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_api"
+  sum: "h1:MpHhls03C2pyzoYcpbe4QqYiiZjdvW+tuWq6TbjV14Y="
+  semver: "v0.19.7"
+>
+entry: <
   import_path: "k8s.io/apiextensions-apiserver"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_apiextensions_apiserver"
@@ -2748,6 +2811,27 @@ entry: <
   bazel_name: "io_k8s_apiextensions_apiserver"
   sum: "h1:XGNmUwNvh5gt6sYwCzaxLU6Dr461DVKWlGiaCSKZzyw="
   semver: "v0.19.0-rc.0"
+>
+entry: <
+  import_path: "k8s.io/apiextensions-apiserver"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_apiextensions_apiserver"
+  sum: "h1:FyzZGZok+v8PPs6oOF5wJj6u8zKH1VTlNNtWeAgkUMc="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/apiextensions-apiserver"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_apiextensions_apiserver"
+  sum: "h1:K57jvXQhrmyr58vEBWlO2eaTpDdtTOOnSIL2cnDc9Oc="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/apiextensions-apiserver"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_apiextensions_apiserver"
+  sum: "h1:aV9DANMSCCYBEMbtoT/5oesrtcciQrjy9yqWVtZZL5A="
+  semver: "v0.19.7"
 >
 entry: <
   import_path: "k8s.io/apimachinery"
@@ -2764,6 +2848,27 @@ entry: <
   semver: "v0.20.0-alpha.0"
 >
 entry: <
+  import_path: "k8s.io/apimachinery"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_apimachinery"
+  sum: "h1:JScnJRuwKHT8RmdrsFMkE4Oi+SVI/QIWFGOOhNZJe/M="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/apimachinery"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_apimachinery"
+  sum: "h1:JScnJRuwKHT8RmdrsFMkE4Oi+SVI/QIWFGOOhNZJe/M="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/apimachinery"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_apimachinery"
+  sum: "h1:/vt04+wL+Y79Qsu8hAo2K4QJA+AKGkJCYmoTTVrUiPQ="
+  semver: "v0.19.8-rc.0"
+>
+entry: <
   import_path: "k8s.io/apiserver"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_apiserver"
@@ -2776,6 +2881,27 @@ entry: <
   bazel_name: "io_k8s_apiserver"
   sum: "h1:SaF/gMgUeDPbQDKHTMvB2yynBUZpp6s4HYQIOx/LdDQ="
   semver: "v0.19.0-rc.0"
+>
+entry: <
+  import_path: "k8s.io/apiserver"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_apiserver"
+  sum: "h1:DVZoL0PHSuU5W74vXlzC/QRHQf3Cm4jzCCi7nH+6vEg="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/apiserver"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_apiserver"
+  sum: "h1:ZTpOyPbd0wNC4DQDRyEtLRiWxjVnrSFfO7FdQBuEhe0="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/apiserver"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_apiserver"
+  sum: "h1:fOOELJ9TNC6DgKL3GUkQLE/EBMLjwBseTstx2eRP61o="
+  semver: "v0.19.7"
 >
 entry: <
   import_path: "k8s.io/cli-runtime"
@@ -2792,6 +2918,27 @@ entry: <
   semver: "v0.19.0-rc.0"
 >
 entry: <
+  import_path: "k8s.io/cli-runtime"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_cli_runtime"
+  sum: "h1:864MEeG6kED29lCbCjaG6xcw1ehTG8X7LMP/HZ4V8mc="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/cli-runtime"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_cli_runtime"
+  sum: "h1:ZDOPbruwfBYGnXcYpxVKqpU1LTLM/A4GdSGS0HpNgD0="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/cli-runtime"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_cli_runtime"
+  sum: "h1:VkHsqrQYCD6+yBm2k9lOxLJtfo1tmb/TdYIHQ2RSCsY="
+  semver: "v0.19.7"
+>
+entry: <
   import_path: "k8s.io/client-go"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_client_go"
@@ -2804,6 +2951,27 @@ entry: <
   bazel_name: "io_k8s_client_go"
   sum: "h1:6WW8MElhoLeYcLiN4ky1159XG5E39KYdmLCrV/6lNiE="
   semver: "v0.19.0-rc.0"
+>
+entry: <
+  import_path: "k8s.io/client-go"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_client_go"
+  sum: "h1:QLpp+y4c9MG34l9CC2rS81rn0zZu1CAovFtLUauBLZk="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/client-go"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_client_go"
+  sum: "h1:ttUSnt95lsdRvw1MIIMppozF7BA4KMVzIxduU973h3M="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/client-go"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_client_go"
+  sum: "h1:SoJ4mzZ9LyXBGDe8MmpMznw0CwQ1ITWgsmG7GixvhUU="
+  semver: "v0.19.7"
 >
 entry: <
   import_path: "k8s.io/cloud-provider"
@@ -2820,6 +2988,27 @@ entry: <
   semver: "v0.19.0-rc.0"
 >
 entry: <
+  import_path: "k8s.io/cloud-provider"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_cloud_provider"
+  sum: "h1:MxRGwiHl4yGyDEKmn2FNXouENA/A6RkeI95rFT/5WSY="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/cloud-provider"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_cloud_provider"
+  sum: "h1:Y0ErTXKY/Ia1o3yukW6RRci4BR2VW7haWro7XA2+AK8="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/cloud-provider"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_cloud_provider"
+  sum: "h1:01fiPTLkTU/MNKZBcMmeYQ5DWqRS4d3GhYGGGlkjgOw="
+  semver: "v0.19.7"
+>
+entry: <
   import_path: "k8s.io/cluster-bootstrap"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_cluster_bootstrap"
@@ -2832,6 +3021,27 @@ entry: <
   bazel_name: "io_k8s_cluster_bootstrap"
   sum: "h1:2OCD/1YLoWlBisd7MPfPM35ZXFct/eA94TkRs/uAuhg="
   semver: "v0.19.0-rc.0"
+>
+entry: <
+  import_path: "k8s.io/cluster-bootstrap"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_cluster_bootstrap"
+  sum: "h1:N3a0r4ozsPfm9Q7pjDQnyQVd4lAn2RWhZ3uPt2X7dak="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/cluster-bootstrap"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_cluster_bootstrap"
+  sum: "h1:xE7k984EcuimERJQWUSnojf/WzK5X2ZLmtf8+staa/k="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/cluster-bootstrap"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_cluster_bootstrap"
+  sum: "h1:xlI+YfeS5gOVa33WVh1viiPZMDN9j7BAiY0iJkg2LwI="
+  semver: "v0.19.7"
 >
 entry: <
   import_path: "k8s.io/component-base"
@@ -2848,6 +3058,27 @@ entry: <
   semver: "v0.19.0-rc.0"
 >
 entry: <
+  import_path: "k8s.io/component-base"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_component_base"
+  sum: "h1:OjW3b9Az+hX6B/5+Htu/UWKR0xRpZc77OujYiH5eUOc="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/component-base"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_component_base"
+  sum: "h1:pJponI+sSso1sx+frQqJYWn/QhxoqpufVbQp+SOazRg="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/component-base"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_component_base"
+  sum: "h1:ZXS2VRWOWBOc2fTd1zjzhi/b/mkqFT9FDqiNsn1cH30="
+  semver: "v0.19.7"
+>
+entry: <
   import_path: "k8s.io/cri-api"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_cri_api"
@@ -2862,6 +3093,27 @@ entry: <
   semver: "v0.19.0-rc.0"
 >
 entry: <
+  import_path: "k8s.io/cri-api"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_cri_api"
+  sum: "h1:PissGgjQNgEN34/PTwzfjej40ugly6Xto83nua48fQI="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/cri-api"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_cri_api"
+  sum: "h1:PissGgjQNgEN34/PTwzfjej40ugly6Xto83nua48fQI="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/cri-api"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_cri_api"
+  sum: "h1:aXNNIIoVcmIB/mlz/otcULQOgnErxnLB4uaWENHKblA="
+  semver: "v0.19.8-rc.0"
+>
+entry: <
   import_path: "k8s.io/csi-translation-lib"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_csi_translation_lib"
@@ -2874,6 +3126,27 @@ entry: <
   bazel_name: "io_k8s_csi_translation_lib"
   sum: "h1:2xvrVxnNKtbhilsj/gcD60P9r2PGT+zAEhBWNynySgk="
   semver: "v0.19.0-rc.0"
+>
+entry: <
+  import_path: "k8s.io/csi-translation-lib"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_csi_translation_lib"
+  sum: "h1:pfArnZDYBLj6clbUrnr4/Nxr4kYbril6YfgnpWSa4Ro="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/csi-translation-lib"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_csi_translation_lib"
+  sum: "h1:bQQGrBWdA6m1E2jC+N7H74/EPEedfCrzpMPV6NZLPn4="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/csi-translation-lib"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_csi_translation_lib"
+  sum: "h1:Spr0XWqXufEUQA47axmPTm1xOabdMYG9MUbJVaRRb0g="
+  semver: "v0.19.7"
 >
 entry: <
   import_path: "k8s.io/gengo"
@@ -2932,6 +3205,27 @@ entry: <
   semver: "v0.19.0-rc.0"
 >
 entry: <
+  import_path: "k8s.io/kube-aggregator"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_kube_aggregator"
+  sum: "h1:4cUxyctDROvPdzIh7Rf1I6raxVo8UvgG8cT1MaKRu9M="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/kube-aggregator"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_kube_aggregator"
+  sum: "h1:vio1J9d+UHUA/ChBeYgBKVlvzOlG4Jztz1Qw+EIGtFg="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/kube-aggregator"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_kube_aggregator"
+  sum: "h1:Eol5vPNFKaDScdVuTh0AofhuSr4cJxP5Vfv8JXW8OAQ="
+  semver: "v0.19.7"
+>
+entry: <
   import_path: "k8s.io/kube-controller-manager"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_kube_controller_manager"
@@ -2944,6 +3238,27 @@ entry: <
   bazel_name: "io_k8s_kube_controller_manager"
   sum: "h1:b78T0fHLtRqOEe/70UzdTI0mN2hOph/krz9B5yI/DN4="
   semver: "v0.19.0-rc.0"
+>
+entry: <
+  import_path: "k8s.io/kube-controller-manager"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_kube_controller_manager"
+  sum: "h1:0WY5AmdHZ+yUjpqVd1c0gdBGbNq27YAFz5gVbghTLCI="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/kube-controller-manager"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_kube_controller_manager"
+  sum: "h1:InTHaA8D5Uh98PEw+Uu4J42c+MXLv12EDUxy5VhRkNQ="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/kube-controller-manager"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_kube_controller_manager"
+  sum: "h1:3rNXjHM5LHcv2HiO2JjdV4yW3EN+2tCPaKXWL/Cl8TM="
+  semver: "v0.19.7"
 >
 entry: <
   import_path: "k8s.io/kube-openapi"
@@ -2960,6 +3275,13 @@ entry: <
   semver: "v0.0.0-20200427153329-656914f816f9"
 >
 entry: <
+  import_path: "k8s.io/kube-openapi"
+  version: "v0.0.0-20200805222855-6aeccd4b50c6"
+  bazel_name: "io_k8s_kube_openapi"
+  sum: "h1:+WnxoVtG8TMiudHBSEtrVL1egv36TkkJm+bA8AxicmQ="
+  semver: "v0.0.0-20200805222855-6aeccd4b50c6"
+>
+entry: <
   import_path: "k8s.io/kube-proxy"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_kube_proxy"
@@ -2972,6 +3294,27 @@ entry: <
   bazel_name: "io_k8s_kube_proxy"
   sum: "h1:eYzuS4rtUGH8Nglk40WIWSNQyMSTj8pKcGB14BKVhHg="
   semver: "v0.19.0-rc.0"
+>
+entry: <
+  import_path: "k8s.io/kube-proxy"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_kube_proxy"
+  sum: "h1:mZrjpm2A+dSqfFaD1B4J/UAKqRcOkJXkCAFJk2VR/eI="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/kube-proxy"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_kube_proxy"
+  sum: "h1:LUbz06HRHVbwDdfF1U1GfiUUvI8kcnI1rDCwPd8DWYo="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/kube-proxy"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_kube_proxy"
+  sum: "h1:QQUwEnHA1jawodclndlmK/6Ifc9XVNlUaQ4Vq5RVbI8="
+  semver: "v0.19.7"
 >
 entry: <
   import_path: "k8s.io/kube-scheduler"
@@ -2988,6 +3331,27 @@ entry: <
   semver: "v0.19.0-rc.0"
 >
 entry: <
+  import_path: "k8s.io/kube-scheduler"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_kube_scheduler"
+  sum: "h1:VRWuwvXy3Jiu77g/jbjDLhSZbBnsAHQDT1Z+zPb3yK8="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/kube-scheduler"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_kube_scheduler"
+  sum: "h1:G7ngD0v3MwjnMMqSwO952y1CmaMepGQZ+L2dCJxAdZY="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/kube-scheduler"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_kube_scheduler"
+  sum: "h1:TlQFoH7rATVqU7myNZ4FBgnXdGIwR7iBBNk3ir8Y9WM="
+  semver: "v0.19.7"
+>
+entry: <
   import_path: "k8s.io/kubectl"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_kubectl"
@@ -3000,6 +3364,27 @@ entry: <
   bazel_name: "io_k8s_kubectl"
   sum: "h1:JcCGByIwsglw1eQKUpTfYuxSjvQ5NUQTyxoGp1P/Bx4="
   semver: "v0.19.0-rc.0"
+>
+entry: <
+  import_path: "k8s.io/kubectl"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_kubectl"
+  sum: "h1:bFQBga+JazXR7mHtvReQBdNr+HukIhl8chbFX1uJGOc="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/kubectl"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_kubectl"
+  sum: "h1:8T613eeOp+iYMVSUtIDd9whgtmbBbXi5ypWwHNPeyxA="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/kubectl"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_kubectl"
+  sum: "h1:pSsha+MBr9KLhn0IKrRikeAZ7g2oeShIGHLgqAzE3Ak="
+  semver: "v0.19.7"
 >
 entry: <
   import_path: "k8s.io/kubelet"
@@ -3016,6 +3401,27 @@ entry: <
   semver: "v0.19.0-rc.0"
 >
 entry: <
+  import_path: "k8s.io/kubelet"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_kubelet"
+  sum: "h1:/5FBG/mD+cJJLVcO8d62UGHi9vQN/XwcJxCGX/CyymE="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/kubelet"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_kubelet"
+  sum: "h1:FI1PqAwIL5Z3IxG6cN/EAZ+PsPQNYKfRAALJUuW5Vxc="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/kubelet"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_kubelet"
+  sum: "h1:cPp0fXN99cxyXeoI3nG2ZBORUvR0liT+bg6ofCybJzw="
+  semver: "v0.19.7"
+>
+entry: <
   import_path: "k8s.io/kubernetes"
   version: "v1.19.0-alpha.2"
   bazel_name: "io_k8s_kubernetes"
@@ -3028,6 +3434,27 @@ entry: <
   bazel_name: "io_k8s_kubernetes"
   sum: "h1:vKA6/0biZ/LJUPuWWzn1lfqIQrjfuJBVAtHn7AYScTs="
   semver: "v1.19.0-rc.0"
+>
+entry: <
+  import_path: "k8s.io/kubernetes"
+  version: "v1.19.0-rc.1"
+  bazel_name: "io_k8s_kubernetes"
+  sum: "h1:U4Q6mYCq/fRvRGJGUXSYpJPmN/3xiwe/fgSEHQIFLn4="
+  semver: "v1.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/kubernetes"
+  version: "v1.19.0-rc.2"
+  bazel_name: "io_k8s_kubernetes"
+  sum: "h1:DfihKjoW5xkyvu8zkve5HqzDpocBGlU27qJASEefaqs="
+  semver: "v1.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/kubernetes"
+  version: "v1.19.7"
+  bazel_name: "io_k8s_kubernetes"
+  sum: "h1:Yk9W5SL1KR2mwy0nNZwjFXNImfK7ihrbKhXttidNTiE="
+  semver: "v1.19.7"
 >
 entry: <
   import_path: "k8s.io/legacy-cloud-providers"
@@ -3044,6 +3471,27 @@ entry: <
   semver: "v0.19.0-rc.0"
 >
 entry: <
+  import_path: "k8s.io/legacy-cloud-providers"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_legacy_cloud_providers"
+  sum: "h1:cwwvtZzO/7NpVyssIF1aYZfsePs2Gw30RcZNZS8V8/I="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/legacy-cloud-providers"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_legacy_cloud_providers"
+  sum: "h1:b5JtSiH6nHQFdiDcyxMZtnEVGaigU2TVKUt5Dm2sqTs="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/legacy-cloud-providers"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_legacy_cloud_providers"
+  sum: "h1:YJ/l/8/Hn56I9m1cudK8aNypRA/NvI/hYhg8fo/CTus="
+  semver: "v0.19.7"
+>
+entry: <
   import_path: "k8s.io/metrics"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_metrics"
@@ -3056,6 +3504,27 @@ entry: <
   bazel_name: "io_k8s_metrics"
   sum: "h1:hPBuMVgXakpnLBLe0K9SZxF8T7mH9VaNTY/pKsU/958="
   semver: "v0.19.0-rc.0"
+>
+entry: <
+  import_path: "k8s.io/metrics"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_metrics"
+  sum: "h1:nezt6kfjpukkUKtCpjEGiRCQDfb43GWSeEwSh8GrFig="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/metrics"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_metrics"
+  sum: "h1:GOBf/09ako/0jS7GO3OdCRp0VZ7hpCxMGLOrDnV3C1s="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/metrics"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_metrics"
+  sum: "h1:fpTtFhNtS0DwJiYGGsL4YoSjHlLw8qugkgw3EXSWaUA="
+  semver: "v0.19.7"
 >
 entry: <
   import_path: "k8s.io/repo-infra"
@@ -3086,6 +3555,27 @@ entry: <
   semver: "v0.19.0-rc.0"
 >
 entry: <
+  import_path: "k8s.io/sample-apiserver"
+  version: "kubernetes-1.19.0-rc.1"
+  bazel_name: "io_k8s_sample_apiserver"
+  sum: "h1:qLx5iy1os8gWxv7V0tBJkM6Iw4UsEDBvMVy0KsMF/YI="
+  semver: "v0.19.0-rc.1"
+>
+entry: <
+  import_path: "k8s.io/sample-apiserver"
+  version: "kubernetes-1.19.0-rc.2"
+  bazel_name: "io_k8s_sample_apiserver"
+  sum: "h1:FXQ7X5gGhAHOFbRqVqnZyiqa9Tm1RKCspLa9VARU3ng="
+  semver: "v0.19.0-rc.2"
+>
+entry: <
+  import_path: "k8s.io/sample-apiserver"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_sample_apiserver"
+  sum: "h1:ZWD6dsvqpqhWj3jKRb19/m/bo/0r+TRgjkX+h5m7f4g="
+  semver: "v0.19.7"
+>
+entry: <
   import_path: "k8s.io/utils"
   version: "v0.0.0-20200324210504-a9aa75ae1b89"
   bazel_name: "io_k8s_utils"
@@ -3098,6 +3588,20 @@ entry: <
   bazel_name: "io_k8s_utils"
   sum: "h1:7Nu2dTj82c6IaWvL7hImJzcXoTPz1MsSCH7r+0m6rfo="
   semver: "v0.0.0-20200619165400-6e3d28b6ed19"
+>
+entry: <
+  import_path: "k8s.io/utils"
+  version: "v0.0.0-20200720150651-0bdb4ca86cbc"
+  bazel_name: "io_k8s_utils"
+  sum: "h1:GiXZzevctVRRBh56shqcqB9s9ReWMU6GTsFyE2RCFJQ="
+  semver: "v0.0.0-20200720150651-0bdb4ca86cbc"
+>
+entry: <
+  import_path: "k8s.io/utils"
+  version: "v0.0.0-20200729134348-d5654de09c73"
+  bazel_name: "io_k8s_utils"
+  sum: "h1:uJmqzgNWG7XyClnU/mLPBWwfKKF1K8Hf8whTseBgJcg="
+  semver: "v0.0.0-20200729134348-d5654de09c73"
 >
 entry: <
   import_path: "sigs.k8s.io/apiserver-network-proxy/konnectivity-client"
@@ -3126,6 +3630,20 @@ entry: <
   bazel_name: "io_k8s_sigs_structured_merge_diff_v3"
   sum: "h1:dOmIZBMfhcHS09XZkMyUgkq5trg3/jRyJYFZUiaOp8E="
   semver: "v3.0.0"
+>
+entry: <
+  import_path: "sigs.k8s.io/structured-merge-diff/v3"
+  version: "v3.0.1-0.20200706213357-43c19bbb7fba"
+  bazel_name: "io_k8s_sigs_structured_merge_diff_v3"
+  sum: "h1:AAbnc5KQuTWKuh2QSnyghKIOTFzB0Jayv7/OFDn3Cy4="
+  semver: "v3.0.1-0.20200706213357-43c19bbb7fba"
+>
+entry: <
+  import_path: "sigs.k8s.io/structured-merge-diff/v4"
+  version: "v4.0.1"
+  bazel_name: "io_k8s_sigs_structured_merge_diff_v4"
+  sum: "h1:YXTMot5Qz/X1iBRJhAt+vI+HVttY0WkSqqhKxQ0xVbA="
+  semver: "v4.0.1"
 >
 entry: <
   import_path: "sigs.k8s.io/yaml"

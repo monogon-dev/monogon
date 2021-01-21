@@ -19,7 +19,7 @@ package main
 func depsKubernetes(p *planner) {
 	// containerd and its deps
 	p.collect(
-		"k8s.io/kubernetes", "v1.19.0-rc.0",
+		"k8s.io/kubernetes", "v1.19.7",
 		buildTags("providerless"),
 		disabledProtoBuild,
 		patches(
@@ -27,6 +27,7 @@ func depsKubernetes(p *planner) {
 			"k8s-kubernetes-build.patch",
 			"k8s-native-metrics.patch",
 			"k8s-use-native.patch",
+			"k8s-revert-seccomp-runtime-default.patch",
 		),
 		prePatches(
 			"k8s-e2e-tests-providerless.patch",
@@ -156,6 +157,7 @@ func depsKubernetes(p *planner) {
 		"go.uber.org/atomic",
 		"go.uber.org/multierr",
 		"go.uber.org/zap",
+		"golang.org/x/net",
 		"golang.org/x/xerrors",
 		"gonum.org/v1/gonum",
 		"gopkg.in/fsnotify.v1",
@@ -167,7 +169,7 @@ func depsKubernetes(p *planner) {
 		"k8s.io/kube-openapi",
 		"sigs.k8s.io/apiserver-network-proxy/konnectivity-client",
 		"sigs.k8s.io/kustomize",
-		"sigs.k8s.io/structured-merge-diff/v3",
+		"sigs.k8s.io/structured-merge-diff/v4",
 		"vbom.ml/util",
 	).use(
 		"github.com/google/cadvisor",

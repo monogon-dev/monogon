@@ -58,7 +58,6 @@ func main() {
 	p.collect(
 		"google.golang.org/grpc", "v1.29.1",
 	).use(
-		"golang.org/x/net",
 		"golang.org/x/text",
 	)
 

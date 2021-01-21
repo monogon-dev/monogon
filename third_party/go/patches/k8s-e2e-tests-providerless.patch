@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
-From 43752b6c34f49080de3a66b79cbcd92b214c1f01 Mon Sep 17 00:00:00 2001
+From 65e40a970e3f33f44423653767c9ca8ff792bf70 Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@nexantic.com>
 Date: Mon, 20 Jul 2020 16:50:56 +0200
 Subject: [PATCH] POC Make e2e test suite support providerless
@@ -24,6 +24,7 @@ Subject: [PATCH] POC Make e2e test suite support providerless
  test/e2e/e2e.go                               |  10 -
  test/e2e/e2e_providers.go                     |  32 +
  .../framework/providers/gce/firewall_test.go  |   2 +
+ test/e2e/instrumentation/logging/imports.go   |   2 +
  .../instrumentation/monitoring/accelerator.go |   2 +
  .../monitoring/custom_metrics_deployments.go  |   2 +
  .../monitoring/custom_metrics_stackdriver.go  |   4 +-
@@ -35,7 +36,7 @@ Subject: [PATCH] POC Make e2e test suite support providerless
  test/e2e/network/network_tiers.go             |   2 +
  test/e2e/network/scale/ingress.go             |   2 +
  .../network/scale/localrun/ingress_scale.go   |   2 +-
- test/e2e/network/service.go                   | 912 ----------------
+ test/e2e/network/service.go                   | 955 -----------------
  test/e2e/network/service_providers.go         | 980 ++++++++++++++++++
  test/e2e/node/recreate_node.go                |   2 +
  test/e2e/scheduling/nvidia-gpus.go            |   2 +
@@ -46,12 +47,14 @@ Subject: [PATCH] POC Make e2e test suite support providerless
  test/e2e/storage/in_tree_volumes_providers.go |  46 +
  .../nfs_persistent_volume-disruptive.go       |   2 +-
  test/e2e/storage/pd.go                        |   2 +
- test/e2e/storage/persistent_volumes-gce.go    |   3 +
+ test/e2e/storage/persistent_volumes-gce.go    |   2 +
  test/e2e/storage/regional_pd.go               |   3 +
+ test/e2e/storage/utils/BUILD                  |   3 -
+ test/e2e/storage/utils/ebs.go                 |   2 +
  test/e2e/storage/volume_provisioning.go       | 527 ----------
  .../storage/volume_provisioning_providers.go  | 577 +++++++++++
  test/e2e/upgrades/nvidia-gpu.go               |   2 +
- 32 files changed, 2432 insertions(+), 2190 deletions(-)
+ 35 files changed, 2435 insertions(+), 2236 deletions(-)
  create mode 100644 test/e2e/e2e_providers.go
  create mode 100644 test/e2e/network/service_providers.go
  create mode 100644 test/e2e/storage/drivers/in_tree_providers.go
@@ -147,6 +150,16 @@ index 647441dc962..2a92543a5a7 100644
  /*
  Copyright 2018 The Kubernetes Authors.
  
+diff --git a/test/e2e/instrumentation/logging/imports.go b/test/e2e/instrumentation/logging/imports.go
+index 5dd66717db1..fc15c04bfef 100644
+--- a/test/e2e/instrumentation/logging/imports.go
++++ b/test/e2e/instrumentation/logging/imports.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2017 The Kubernetes Authors.
+ 
 diff --git a/test/e2e/instrumentation/monitoring/accelerator.go b/test/e2e/instrumentation/monitoring/accelerator.go
 index 90047e46ea1..6fa094e6a18 100644
 --- a/test/e2e/instrumentation/monitoring/accelerator.go
@@ -226,7 +239,7 @@ index f4200f5a30c..f8612ed75a9 100644
  Copyright 2016 The Kubernetes Authors.
  
 diff --git a/test/e2e/network/ingress.go b/test/e2e/network/ingress.go
-index f1bce918e8f..1a37badbd7b 100644
+index 6c3b09e41f2..8485f8ce50e 100644
 --- a/test/e2e/network/ingress.go
 +++ b/test/e2e/network/ingress.go
 @@ -1,3 +1,5 @@
@@ -279,30 +292,22 @@ index 2e2c39884da..5a27f5f4cb2 100644
  	clientset "k8s.io/client-go/kubernetes"
  	"k8s.io/client-go/tools/clientcmd"
 diff --git a/test/e2e/network/service.go b/test/e2e/network/service.go
-index cce449b5e8e..db7328efbe8 100644
+index 35ac43001d2..b458347a9f9 100644
 --- a/test/e2e/network/service.go
 +++ b/test/e2e/network/service.go
-@@ -17,7 +17,6 @@ limitations under the License.
- package network
- 
- import (
--	"bytes"
- 	"context"
- 	"encoding/json"
- 	"errors"
-@@ -32,8 +31,6 @@ import (
+@@ -31,8 +31,6 @@ import (
  
  	utilnet "k8s.io/apimachinery/pkg/util/net"
  
 -	compute "google.golang.org/api/compute/v1"
 -
+ 	"k8s.io/client-go/tools/cache"
+ 
  	appsv1 "k8s.io/api/apps/v1"
- 	v1 "k8s.io/api/core/v1"
- 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-@@ -47,11 +44,9 @@ import (
- 	"k8s.io/kubernetes/test/e2e/framework"
+@@ -52,11 +50,9 @@ import (
  	e2edeployment "k8s.io/kubernetes/test/e2e/framework/deployment"
  	e2eendpoints "k8s.io/kubernetes/test/e2e/framework/endpoints"
+ 	e2eendpointslice "k8s.io/kubernetes/test/e2e/framework/endpointslice"
 -	e2ekubesystem "k8s.io/kubernetes/test/e2e/framework/kubesystem"
  	e2enetwork "k8s.io/kubernetes/test/e2e/framework/network"
  	e2enode "k8s.io/kubernetes/test/e2e/framework/node"
@@ -311,7 +316,7 @@ index cce449b5e8e..db7328efbe8 100644
  	e2erc "k8s.io/kubernetes/test/e2e/framework/rc"
  	e2eservice "k8s.io/kubernetes/test/e2e/framework/service"
  	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
-@@ -59,7 +54,6 @@ import (
+@@ -64,7 +60,6 @@ import (
  	"k8s.io/kubernetes/test/e2e/storage/utils"
  	testutils "k8s.io/kubernetes/test/utils"
  	imageutils "k8s.io/kubernetes/test/utils/image"
@@ -319,7 +324,7 @@ index cce449b5e8e..db7328efbe8 100644
  
  	"github.com/onsi/ginkgo"
  	"github.com/onsi/gomega"
-@@ -1191,375 +1185,6 @@ var _ = SIGDescribe("Services", func() {
+@@ -1242,375 +1237,6 @@ var _ = SIGDescribe("Services", func() {
  		framework.ExpectNoError(err)
  	})
  
@@ -695,7 +700,7 @@ index cce449b5e8e..db7328efbe8 100644
  	/*
  		Testname: Service, update NodePort, same port different protocol
  		Description: Create a service to accept TCP requests. By default, created service MUST be of type ClusterIP and an ClusterIP MUST be assigned to the service.
-@@ -2202,199 +1827,6 @@ var _ = SIGDescribe("Services", func() {
+@@ -2253,199 +1879,6 @@ var _ = SIGDescribe("Services", func() {
  		checkReachabilityFromPod(true, normalReachabilityTimeout, namespace, dropPod.Name, svcIP)
  	})
  
@@ -895,7 +900,7 @@ index cce449b5e8e..db7328efbe8 100644
  	/*
  		Release: v1.19
  		Testname: Service, ClusterIP type, session affinity to ClientIP
-@@ -2880,350 +2312,6 @@ var _ = SIGDescribe("Services", func() {
+@@ -2999,394 +2432,6 @@ var _ = SIGDescribe("Services", func() {
  	})
  })
  
@@ -943,11 +948,18 @@ index cce449b5e8e..db7328efbe8 100644
 -			framework.ExpectNoError(err)
 -
 -			// Make sure we didn't leak the health check node port.
--			threshold := 2
--			nodes, err := jig.GetEndpointNodes()
+-			const threshold = 2
+-			nodes, err := getEndpointNodesWithInternalIP(jig)
 -			framework.ExpectNoError(err)
--			for _, ips := range nodes {
--				err := TestHTTPHealthCheckNodePort(ips[0], healthCheckNodePort, "/healthz", e2eservice.KubeProxyEndpointLagTimeout, false, threshold)
+-			config := e2enetwork.NewNetworkingTestConfig(f, false, false)
+-			for _, internalIP := range nodes {
+-				err := testHTTPHealthCheckNodePortFromTestContainer(
+-					config,
+-					internalIP,
+-					healthCheckNodePort,
+-					e2eservice.KubeProxyLagTimeout,
+-					false,
+-					threshold)
 -				framework.ExpectNoError(err)
 -			}
 -			err = cs.CoreV1().Services(svc.Namespace).Delete(context.TODO(), svc.Name, metav1.DeleteOptions{})
@@ -981,17 +993,20 @@ index cce449b5e8e..db7328efbe8 100644
 -		}()
 -
 -		tcpNodePort := int(svc.Spec.Ports[0].NodePort)
--		endpointsNodeMap, err := jig.GetEndpointNodes()
--		framework.ExpectNoError(err)
--		path := "/clientip"
 -
--		for nodeName, nodeIPs := range endpointsNodeMap {
--			nodeIP := nodeIPs[0]
--			ginkgo.By(fmt.Sprintf("reading clientIP using the TCP service's NodePort, on node %v: %v%v%v", nodeName, nodeIP, tcpNodePort, path))
--			content := GetHTTPContent(nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout, path)
--			clientIP := content.String()
--			framework.Logf("ClientIP detected by target pod using NodePort is %s", clientIP)
--			if strings.HasPrefix(clientIP, "10.") {
+-		endpointsNodeMap, err := getEndpointNodesWithInternalIP(jig)
+-		framework.ExpectNoError(err)
+-
+-		dialCmd := "clientip"
+-		config := e2enetwork.NewNetworkingTestConfig(f, false, false)
+-
+-		for nodeName, nodeIP := range endpointsNodeMap {
+-			ginkgo.By(fmt.Sprintf("reading clientIP using the TCP service's NodePort, on node %v: %v:%v/%v", nodeName, nodeIP, tcpNodePort, dialCmd))
+-			clientIP, err := GetHTTPContentFromTestContainer(config, nodeIP, tcpNodePort, e2eservice.KubeProxyLagTimeout, dialCmd)
+-			framework.ExpectNoError(err)
+-			framework.Logf("ClientIP detected by target pod using NodePort is %s, the ip of test container is %s", clientIP, config.TestContainerPod.Status.PodIP)
+-			// the clientIP returned by agnhost contains port
+-			if !strings.HasPrefix(clientIP, config.TestContainerPod.Status.PodIP) {
 -				framework.Failf("Source IP was NOT preserved")
 -			}
 -		}
@@ -1028,13 +1043,13 @@ index cce449b5e8e..db7328efbe8 100644
 -			framework.Failf("Service HealthCheck NodePort was not allocated")
 -		}
 -
--		ips := e2enode.CollectAddresses(nodes, v1.NodeExternalIP)
+-		ips := e2enode.CollectAddresses(nodes, v1.NodeInternalIP)
 -
 -		ingressIP := e2eservice.GetIngressPoint(&svc.Status.LoadBalancer.Ingress[0])
 -		svcTCPPort := int(svc.Spec.Ports[0].Port)
 -
--		threshold := 2
--		path := "/healthz"
+-		const threshold = 2
+-		config := e2enetwork.NewNetworkingTestConfig(f, false, false)
 -		for i := 0; i < len(nodes.Items); i++ {
 -			endpointNodeName := nodes.Items[i].Name
 -
@@ -1053,15 +1068,21 @@ index cce449b5e8e..db7328efbe8 100644
 -
 -			// HealthCheck should pass only on the node where num(endpoints) > 0
 -			// All other nodes should fail the healthcheck on the service healthCheckNodePort
--			for n, publicIP := range ips {
+-			for n, internalIP := range ips {
 -				// Make sure the loadbalancer picked up the health check change.
 -				// Confirm traffic can reach backend through LB before checking healthcheck nodeport.
 -				e2eservice.TestReachableHTTP(ingressIP, svcTCPPort, e2eservice.KubeProxyLagTimeout)
 -				expectedSuccess := nodes.Items[n].Name == endpointNodeName
 -				port := strconv.Itoa(healthCheckNodePort)
--				ipPort := net.JoinHostPort(publicIP, port)
--				framework.Logf("Health checking %s, http://%s%s, expectedSuccess %v", nodes.Items[n].Name, ipPort, path, expectedSuccess)
--				err := TestHTTPHealthCheckNodePort(publicIP, healthCheckNodePort, path, e2eservice.KubeProxyEndpointLagTimeout, expectedSuccess, threshold)
+-				ipPort := net.JoinHostPort(internalIP, port)
+-				framework.Logf("Health checking %s, http://%s/healthz, expectedSuccess %v", nodes.Items[n].Name, ipPort, expectedSuccess)
+-				err := testHTTPHealthCheckNodePortFromTestContainer(
+-					config,
+-					internalIP,
+-					healthCheckNodePort,
+-					e2eservice.KubeProxyEndpointLagTimeout,
+-					expectedSuccess,
+-					threshold)
 -				framework.ExpectNoError(err)
 -			}
 -			framework.ExpectNoError(e2erc.DeleteRCAndWaitForGC(f.ClientSet, namespace, serviceName))
@@ -1127,8 +1148,7 @@ index cce449b5e8e..db7328efbe8 100644
 -		}
 -	})
 -
--	// TODO: Get rid of [DisabledForLargeClusters] tag when issue #90047 is fixed.
--	ginkgo.It("should handle updates to ExternalTrafficPolicy field [DisabledForLargeClusters]", func() {
+-	ginkgo.It("should handle updates to ExternalTrafficPolicy field", func() {
 -		namespace := f.Namespace.Name
 -		serviceName := "external-local-update"
 -		jig := e2eservice.NewTestJig(cs, namespace, serviceName)
@@ -1161,42 +1181,71 @@ index cce449b5e8e..db7328efbe8 100644
 -			framework.Failf("Service HealthCheck NodePort still present")
 -		}
 -
--		endpointNodeMap, err := jig.GetEndpointNodes()
+-		epNodes, err := jig.ListNodesWithEndpoint()
 -		framework.ExpectNoError(err)
--		noEndpointNodeMap := map[string][]string{}
--		for _, n := range nodes.Items {
--			if _, ok := endpointNodeMap[n.Name]; ok {
--				continue
+-		// map from name of nodes with endpoint to internal ip
+-		// it is assumed that there is only a single node with the endpoint
+-		endpointNodeMap := make(map[string]string)
+-		// map from name of nodes without endpoint to internal ip
+-		noEndpointNodeMap := make(map[string]string)
+-		for _, node := range epNodes {
+-			ips := e2enode.GetAddresses(&node, v1.NodeInternalIP)
+-			if len(ips) < 1 {
+-				framework.Failf("No internal ip found for node %s", node.Name)
 -			}
--			noEndpointNodeMap[n.Name] = e2enode.GetAddresses(&n, v1.NodeExternalIP)
+-			endpointNodeMap[node.Name] = ips[0]
 -		}
+-		for _, n := range nodes.Items {
+-			ips := e2enode.GetAddresses(&n, v1.NodeInternalIP)
+-			if len(ips) < 1 {
+-				framework.Failf("No internal ip found for node %s", n.Name)
+-			}
+-			if _, ok := endpointNodeMap[n.Name]; !ok {
+-				noEndpointNodeMap[n.Name] = ips[0]
+-			}
+-		}
+-		framework.ExpectNotEqual(len(endpointNodeMap), 0)
+-		framework.ExpectNotEqual(len(noEndpointNodeMap), 0)
 -
 -		svcTCPPort := int(svc.Spec.Ports[0].Port)
 -		svcNodePort := int(svc.Spec.Ports[0].NodePort)
 -		ingressIP := e2eservice.GetIngressPoint(&svc.Status.LoadBalancer.Ingress[0])
 -		path := "/clientip"
+-		dialCmd := "clientip"
+-
+-		config := e2enetwork.NewNetworkingTestConfig(f, false, false)
 -
 -		ginkgo.By(fmt.Sprintf("endpoints present on nodes %v, absent on nodes %v", endpointNodeMap, noEndpointNodeMap))
--		for nodeName, nodeIPs := range noEndpointNodeMap {
--			ginkgo.By(fmt.Sprintf("Checking %v (%v:%v%v) proxies to endpoints on another node", nodeName, nodeIPs[0], svcNodePort, path))
--			GetHTTPContent(nodeIPs[0], svcNodePort, e2eservice.KubeProxyLagTimeout, path)
+-		for nodeName, nodeIP := range noEndpointNodeMap {
+-			ginkgo.By(fmt.Sprintf("Checking %v (%v:%v/%v) proxies to endpoints on another node", nodeName, nodeIP[0], svcNodePort, dialCmd))
+-			_, err := GetHTTPContentFromTestContainer(config, nodeIP, svcNodePort, e2eservice.KubeProxyLagTimeout, dialCmd)
+-			framework.ExpectNoError(err, "Could not reach HTTP service through %v:%v/%v after %v", nodeIP, svcNodePort, dialCmd, e2eservice.KubeProxyLagTimeout)
 -		}
 -
--		for nodeName, nodeIPs := range endpointNodeMap {
--			ginkgo.By(fmt.Sprintf("checking kube-proxy health check fails on node with endpoint (%s), public IP %s", nodeName, nodeIPs[0]))
--			var body bytes.Buffer
--			pollfn := func() (bool, error) {
--				result := e2enetwork.PokeHTTP(nodeIPs[0], healthCheckNodePort, "/healthz", nil)
--				if result.Code == 0 {
+-		for nodeName, nodeIP := range endpointNodeMap {
+-			ginkgo.By(fmt.Sprintf("checking kube-proxy health check fails on node with endpoint (%s), public IP %s", nodeName, nodeIP))
+-			var body string
+-			pollFn := func() (bool, error) {
+-				// we expect connection failure here, but not other errors
+-				resp, err := config.GetResponseFromTestContainer(
+-					"http",
+-					"healthz",
+-					nodeIP,
+-					healthCheckNodePort)
+-				if err != nil {
+-					return false, nil
+-				}
+-				if len(resp.Errors) > 0 {
 -					return true, nil
 -				}
--				body.Reset()
--				body.Write(result.Body)
+-				if len(resp.Responses) > 0 {
+-					body = resp.Responses[0]
+-				}
 -				return false, nil
 -			}
--			if pollErr := wait.PollImmediate(framework.Poll, e2eservice.TestTimeout, pollfn); pollErr != nil {
+-			if pollErr := wait.PollImmediate(framework.Poll, e2eservice.TestTimeout, pollFn); pollErr != nil {
 -				framework.Failf("Kube-proxy still exposing health check on node %v:%v, after ESIPP was turned off. body %s",
--					nodeName, healthCheckNodePort, body.String())
+-					nodeName, healthCheckNodePort, body)
 -			}
 -		}
 -
@@ -1243,9 +1292,9 @@ index cce449b5e8e..db7328efbe8 100644
 -	})
 -})
 -
- func execSourceipTest(pausePod v1.Pod, serviceAddress string) (string, string) {
- 	var err error
- 	var stdout string
+ // execAffinityTestForSessionAffinityTimeout is a helper function that wrap the logic of
+ // affinity test for non-load-balancer services. Session afinity will be
+ // enabled when the service is created and a short timeout will be configured so
 diff --git a/test/e2e/network/service_providers.go b/test/e2e/network/service_providers.go
 new file mode 100644
 index 00000000000..b7eae6feb2c
@@ -2243,7 +2292,7 @@ index da3fc974485..b403fa7f737 100644
  Copyright 2019 The Kubernetes Authors.
  
 diff --git a/test/e2e/scheduling/nvidia-gpus.go b/test/e2e/scheduling/nvidia-gpus.go
-index 334a6f5b9f6..59fbdee014b 100644
+index 313e773b8e2..bbf66b59aac 100644
 --- a/test/e2e/scheduling/nvidia-gpus.go
 +++ b/test/e2e/scheduling/nvidia-gpus.go
 @@ -1,3 +1,5 @@
@@ -2263,7 +2312,7 @@ index 513ed07543f..78c0f081990 100644
  Copyright 2017 The Kubernetes Authors.
  
 diff --git a/test/e2e/storage/drivers/in_tree.go b/test/e2e/storage/drivers/in_tree.go
-index d5183f28081..de25e2cf007 100644
+index a866266c1f1..28e26a10c35 100644
 --- a/test/e2e/storage/drivers/in_tree.go
 +++ b/test/e2e/storage/drivers/in_tree.go
 @@ -38,10 +38,8 @@ package drivers
@@ -2291,7 +2340,7 @@ index d5183f28081..de25e2cf007 100644
  	imageutils "k8s.io/kubernetes/test/utils/image"
  )
  
-@@ -1032,734 +1028,6 @@ func (e *emptydirDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTes
+@@ -1044,734 +1040,6 @@ func (e *emptydirDriver) PrepareTest(f *framework.Framework) (*testsuites.PerTes
  	}, func() {}
  }
  
@@ -3865,7 +3914,7 @@ index 5afebb5e903..b197eee99a6 100644
  
  		c = f.ClientSet
 diff --git a/test/e2e/storage/pd.go b/test/e2e/storage/pd.go
-index b6d720406aa..86fa0cae488 100644
+index f5b6060a834..addd304147c 100644
 --- a/test/e2e/storage/pd.go
 +++ b/test/e2e/storage/pd.go
 @@ -1,3 +1,5 @@
@@ -3875,7 +3924,7 @@ index b6d720406aa..86fa0cae488 100644
  Copyright 2015 The Kubernetes Authors.
  
 diff --git a/test/e2e/storage/persistent_volumes-gce.go b/test/e2e/storage/persistent_volumes-gce.go
-index 8b0343e4b58..76a80042811 100644
+index b8bc887384e..f572754c5e8 100644
 --- a/test/e2e/storage/persistent_volumes-gce.go
 +++ b/test/e2e/storage/persistent_volumes-gce.go
 @@ -1,3 +1,5 @@
@@ -3884,14 +3933,6 @@ index 8b0343e4b58..76a80042811 100644
  /*
  Copyright 2017 The Kubernetes Authors.
  
-@@ -18,6 +20,7 @@ package storage
- 
- import (
- 	"context"
-+
- 	"github.com/onsi/ginkgo"
- 	v1 "k8s.io/api/core/v1"
- 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 diff --git a/test/e2e/storage/regional_pd.go b/test/e2e/storage/regional_pd.go
 index 7763afaf6b1..a042dcc9d4a 100644
 --- a/test/e2e/storage/regional_pd.go
@@ -3909,6 +3950,37 @@ index 7763afaf6b1..a042dcc9d4a 100644
 +
  	"github.com/onsi/ginkgo"
  	"github.com/onsi/gomega"
+ 
+diff --git a/test/e2e/storage/utils/BUILD b/test/e2e/storage/utils/BUILD
+index bdc78982dcb..c57ff325f76 100644
+--- a/test/e2e/storage/utils/BUILD
++++ b/test/e2e/storage/utils/BUILD
+@@ -7,7 +7,6 @@ go_library(
+     srcs = [
+         "create.go",
+         "deployment.go",
+-        "ebs.go",
+         "framework.go",
+         "host_exec.go",
+         "local.go",
+@@ -37,8 +36,6 @@ go_library(
+         "//test/e2e/framework/ssh:go_default_library",
+         "//test/e2e/framework/testfiles:go_default_library",
+         "//test/utils/image:go_default_library",
+-        "//vendor/github.com/aws/aws-sdk-go/aws:go_default_library",
+-        "//vendor/github.com/aws/aws-sdk-go/service/ec2:go_default_library",
+         "//vendor/github.com/onsi/ginkgo:go_default_library",
+         "//vendor/github.com/onsi/gomega:go_default_library",
+         "//vendor/github.com/pkg/errors:go_default_library",
+diff --git a/test/e2e/storage/utils/ebs.go b/test/e2e/storage/utils/ebs.go
+index 39e223f36aa..55065ea07b7 100644
+--- a/test/e2e/storage/utils/ebs.go
++++ b/test/e2e/storage/utils/ebs.go
+@@ -1,3 +1,5 @@
++// +build !providerless
++
+ /*
+ Copyright 2020 The Kubernetes Authors.
  
 diff --git a/test/e2e/storage/volume_provisioning.go b/test/e2e/storage/volume_provisioning.go
 index a8b494eb3ac..c070a81283c 100644
@@ -5070,16 +5142,6 @@ index cf3b8c0cda3..30515197ef7 100644
  /*
  Copyright 2018 The Kubernetes Authors.
  
-diff --git a/test/e2e/instrumentation/logging/imports.go b/test/e2e/instrumentation/logging/imports.go
-index 5dd66717db1..fc15c04bfef 100644
---- a/test/e2e/instrumentation/logging/imports.go
-+++ b/test/e2e/instrumentation/logging/imports.go
-@@ -1,3 +1,5 @@
-+// +build !providerless
-+
- /*
- Copyright 2017 The Kubernetes Authors.
-
---
-2.25.1
+-- 
+2.26.2
 

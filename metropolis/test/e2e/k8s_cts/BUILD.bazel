@@ -20,7 +20,7 @@ container_image(
 go_image(
     name = "k8s_cts_image",
     base = ":kubectl_in_path",
-    binary = "@io_k8s_kubernetes//test/e2e:_go_default_test-pure",
+    binary = "@io_k8s_kubernetes//test/e2e:e2e.test",
     pure = "on",
     visibility = ["//metropolis/node:__pkg__"],
 )

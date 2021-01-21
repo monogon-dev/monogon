@@ -675,8 +675,8 @@ def go_repositories():
     go_repository(
         name = "com_github_evanphx_json_patch",
         importpath = "github.com/evanphx/json-patch",
-        version = "v0.0.0-20190815234213-e83c0a1c26c8",
-        sum = "h1:DM7gHzQfHwIj+St8zaPOI6iQEPAxOwIkskvw6s9rDaM=",
+        version = "v4.9.0+incompatible",
+        sum = "h1:kLcOMZeuLAJvL2BPWLMIj5oaZQobrkAqrL+WFZwQses=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -946,8 +946,8 @@ def go_repositories():
     go_repository(
         name = "com_github_google_cadvisor",
         importpath = "github.com/google/cadvisor",
-        version = "v0.36.1-0.20200623171404-8450c56c21bc",
-        sum = "h1:il4pi2iOP5NRkBgnZH3n0GDqSCNEJ/QIRJrCAfU5h38=",
+        version = "v0.37.3",
+        sum = "h1:qsH/np74sg1/tEe+bn+e2JIPFxrw6En3gCVuQdolc74=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2051,8 +2051,8 @@ def go_repositories():
     go_repository(
         name = "io_etcd_go_etcd",
         importpath = "go.etcd.io/etcd",
-        version = "v0.5.0-alpha.5.0.20200520232829-54ba9589114f",
-        sum = "h1:pBCD+Z7cy5WPTq+R6MmJJvDRpn88cp7bmTypBsn91g4=",
+        version = "v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5",
+        sum = "h1:Gqga3zA9tdAcfqobUGjSoCob5L3f8Dt5EuOp3ihNZko=",
         build_file_proto_mode = "disable",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
@@ -2152,8 +2152,8 @@ def go_repositories():
     go_repository(
         name = "org_golang_x_net",
         importpath = "golang.org/x/net",
-        version = "v0.0.0-20190311183353-d8887717615a",
-        sum = "h1:oWX7TPOiFAMXLq8o0ikBYfCJVlRHBcsciT5bXOrH628=",
+        version = "v0.0.0-20201110031124-69a78807bb2b",
+        sum = "h1:uwuIcX0g4Yl1NC5XAz37xsr2lTtcqevgzYNVt49waME=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2332,8 +2332,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_api",
         importpath = "k8s.io/api",
-        version = "v0.19.0-rc.0",
-        sum = "h1:K+xi+F3RNAxpFyS1f7uHekMNprjFX7WVZDx2lJE+A3A=",
+        version = "v0.19.7",
+        sum = "h1:MpHhls03C2pyzoYcpbe4QqYiiZjdvW+tuWq6TbjV14Y=",
         build_file_proto_mode = "disable",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
@@ -2343,8 +2343,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_apiextensions_apiserver",
         importpath = "k8s.io/apiextensions-apiserver",
-        version = "v0.19.0-rc.0",
-        sum = "h1:XGNmUwNvh5gt6sYwCzaxLU6Dr461DVKWlGiaCSKZzyw=",
+        version = "v0.19.7",
+        sum = "h1:aV9DANMSCCYBEMbtoT/5oesrtcciQrjy9yqWVtZZL5A=",
         build_file_proto_mode = "disable",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
@@ -2354,8 +2354,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_apimachinery",
         importpath = "k8s.io/apimachinery",
-        version = "v0.20.0-alpha.0",
-        sum = "h1:XCZhrYfFYSC8GBpI4OUJFTH1s5euLMYdoIDQ7u2aDPM=",
+        version = "v0.19.8-rc.0",
+        sum = "h1:/vt04+wL+Y79Qsu8hAo2K4QJA+AKGkJCYmoTTVrUiPQ=",
         build_file_proto_mode = "disable",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
@@ -2365,8 +2365,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_apiserver",
         importpath = "k8s.io/apiserver",
-        version = "v0.19.0-rc.0",
-        sum = "h1:SaF/gMgUeDPbQDKHTMvB2yynBUZpp6s4HYQIOx/LdDQ=",
+        version = "v0.19.7",
+        sum = "h1:fOOELJ9TNC6DgKL3GUkQLE/EBMLjwBseTstx2eRP61o=",
         build_file_proto_mode = "disable",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
@@ -2376,8 +2376,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_cli_runtime",
         importpath = "k8s.io/cli-runtime",
-        version = "v0.19.0-rc.0",
-        sum = "h1:amuzfqubksp5ooo99cpiu6hYe6ua1bGEqw59vZKyRqA=",
+        version = "v0.19.7",
+        sum = "h1:VkHsqrQYCD6+yBm2k9lOxLJtfo1tmb/TdYIHQ2RSCsY=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2386,8 +2386,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_client_go",
         importpath = "k8s.io/client-go",
-        version = "v0.19.0-rc.0",
-        sum = "h1:6WW8MElhoLeYcLiN4ky1159XG5E39KYdmLCrV/6lNiE=",
+        version = "v0.19.7",
+        sum = "h1:SoJ4mzZ9LyXBGDe8MmpMznw0CwQ1ITWgsmG7GixvhUU=",
         pre_patches = [
             "//third_party/go/patches:k8s-client-go.patch",
         ],
@@ -2400,8 +2400,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_cloud_provider",
         importpath = "k8s.io/cloud-provider",
-        version = "v0.19.0-rc.0",
-        sum = "h1:W1YV1XhdklzoGFZcYmzJnm3D4O6uWaoEAFRF1X4h7uw=",
+        version = "v0.19.7",
+        sum = "h1:01fiPTLkTU/MNKZBcMmeYQ5DWqRS4d3GhYGGGlkjgOw=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2410,8 +2410,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_cluster_bootstrap",
         importpath = "k8s.io/cluster-bootstrap",
-        version = "v0.19.0-rc.0",
-        sum = "h1:2OCD/1YLoWlBisd7MPfPM35ZXFct/eA94TkRs/uAuhg=",
+        version = "v0.19.7",
+        sum = "h1:xlI+YfeS5gOVa33WVh1viiPZMDN9j7BAiY0iJkg2LwI=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2420,8 +2420,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_component_base",
         importpath = "k8s.io/component-base",
-        version = "v0.19.0-rc.0",
-        sum = "h1:S/jt6xey1Wg5i5A9/BCkPYekpjJ5zlfuSCCVlNSJ/Yc=",
+        version = "v0.19.7",
+        sum = "h1:ZXS2VRWOWBOc2fTd1zjzhi/b/mkqFT9FDqiNsn1cH30=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2430,8 +2430,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_cri_api",
         importpath = "k8s.io/cri-api",
-        version = "v0.19.0-rc.0",
-        sum = "h1:vXd1YUBZcQkkDb2jYdtaCm+XFA2euMVGVU08EKsN40k=",
+        version = "v0.19.8-rc.0",
+        sum = "h1:aXNNIIoVcmIB/mlz/otcULQOgnErxnLB4uaWENHKblA=",
         build_file_proto_mode = "disable",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
@@ -2441,8 +2441,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_csi_translation_lib",
         importpath = "k8s.io/csi-translation-lib",
-        version = "v0.19.0-rc.0",
-        sum = "h1:2xvrVxnNKtbhilsj/gcD60P9r2PGT+zAEhBWNynySgk=",
+        version = "v0.19.7",
+        sum = "h1:Spr0XWqXufEUQA47axmPTm1xOabdMYG9MUbJVaRRb0g=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2481,8 +2481,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_kube_aggregator",
         importpath = "k8s.io/kube-aggregator",
-        version = "v0.19.0-rc.0",
-        sum = "h1:+u9y1c0R2GF8fuaEnlJrdUtxoEmQOON98oatycSquOA=",
+        version = "v0.19.7",
+        sum = "h1:Eol5vPNFKaDScdVuTh0AofhuSr4cJxP5Vfv8JXW8OAQ=",
         build_file_proto_mode = "disable",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
@@ -2492,8 +2492,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_kube_controller_manager",
         importpath = "k8s.io/kube-controller-manager",
-        version = "v0.19.0-rc.0",
-        sum = "h1:b78T0fHLtRqOEe/70UzdTI0mN2hOph/krz9B5yI/DN4=",
+        version = "v0.19.7",
+        sum = "h1:3rNXjHM5LHcv2HiO2JjdV4yW3EN+2tCPaKXWL/Cl8TM=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2502,8 +2502,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_kube_openapi",
         importpath = "k8s.io/kube-openapi",
-        version = "v0.0.0-20200427153329-656914f816f9",
-        sum = "h1:5NC2ITmvg8RoxoH0wgmL4zn4VZqXGsKbxrikjaQx6s4=",
+        version = "v0.0.0-20200805222855-6aeccd4b50c6",
+        sum = "h1:+WnxoVtG8TMiudHBSEtrVL1egv36TkkJm+bA8AxicmQ=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2512,8 +2512,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_kube_proxy",
         importpath = "k8s.io/kube-proxy",
-        version = "v0.19.0-rc.0",
-        sum = "h1:eYzuS4rtUGH8Nglk40WIWSNQyMSTj8pKcGB14BKVhHg=",
+        version = "v0.19.7",
+        sum = "h1:QQUwEnHA1jawodclndlmK/6Ifc9XVNlUaQ4Vq5RVbI8=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2522,8 +2522,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_kube_scheduler",
         importpath = "k8s.io/kube-scheduler",
-        version = "v0.19.0-rc.0",
-        sum = "h1:KiKDepusDaex8fJj2R0F1y2zNj/oPaCzziC7JiuU09o=",
+        version = "v0.19.7",
+        sum = "h1:TlQFoH7rATVqU7myNZ4FBgnXdGIwR7iBBNk3ir8Y9WM=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2532,8 +2532,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_kubectl",
         importpath = "k8s.io/kubectl",
-        version = "v0.19.0-rc.0",
-        sum = "h1:JcCGByIwsglw1eQKUpTfYuxSjvQ5NUQTyxoGp1P/Bx4=",
+        version = "v0.19.7",
+        sum = "h1:pSsha+MBr9KLhn0IKrRikeAZ7g2oeShIGHLgqAzE3Ak=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2542,8 +2542,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_kubelet",
         importpath = "k8s.io/kubelet",
-        version = "v0.19.0-rc.0",
-        sum = "h1:Eii9aWFKr4MtrRSlhxnaLkGZ0WkSb2p6sPyDuMul/Tc=",
+        version = "v0.19.7",
+        sum = "h1:cPp0fXN99cxyXeoI3nG2ZBORUvR0liT+bg6ofCybJzw=",
         build_file_proto_mode = "disable",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
@@ -2553,8 +2553,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_kubernetes",
         importpath = "k8s.io/kubernetes",
-        version = "v1.19.0-rc.0",
-        sum = "h1:vKA6/0biZ/LJUPuWWzn1lfqIQrjfuJBVAtHn7AYScTs=",
+        version = "v1.19.7",
+        sum = "h1:Yk9W5SL1KR2mwy0nNZwjFXNImfK7ihrbKhXttidNTiE=",
         build_file_proto_mode = "disable",
         build_tags = [
             "providerless",
@@ -2564,6 +2564,7 @@ def go_repositories():
             "//third_party/go/patches:k8s-kubernetes-build.patch",
             "//third_party/go/patches:k8s-native-metrics.patch",
             "//third_party/go/patches:k8s-use-native.patch",
+            "//third_party/go/patches:k8s-revert-seccomp-runtime-default.patch",
         ],
         pre_patches = [
             "//third_party/go/patches:k8s-e2e-tests-providerless.patch",
@@ -2579,8 +2580,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_legacy_cloud_providers",
         importpath = "k8s.io/legacy-cloud-providers",
-        version = "v0.19.0-rc.0",
-        sum = "h1:cyf6e9AnQL/ATzZHXDqdwlD+lmRhtKCYPcfeFqb8wn0=",
+        version = "v0.19.7",
+        sum = "h1:YJ/l/8/Hn56I9m1cudK8aNypRA/NvI/hYhg8fo/CTus=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2589,8 +2590,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_metrics",
         importpath = "k8s.io/metrics",
-        version = "v0.19.0-rc.0",
-        sum = "h1:hPBuMVgXakpnLBLe0K9SZxF8T7mH9VaNTY/pKsU/958=",
+        version = "v0.19.7",
+        sum = "h1:fpTtFhNtS0DwJiYGGsL4YoSjHlLw8qugkgw3EXSWaUA=",
         build_file_proto_mode = "disable",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
@@ -2610,8 +2611,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_sample_apiserver",
         importpath = "k8s.io/sample-apiserver",
-        version = "v0.19.0-rc.0",
-        sum = "h1:ZsO1AWW9k79zA+tU1nu7nGMGT7XidiA1jDrfBvMZmzg=",
+        version = "v0.19.7",
+        sum = "h1:ZWD6dsvqpqhWj3jKRb19/m/bo/0r+TRgjkX+h5m7f4g=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2620,8 +2621,8 @@ def go_repositories():
     go_repository(
         name = "io_k8s_utils",
         importpath = "k8s.io/utils",
-        version = "v0.0.0-20200619165400-6e3d28b6ed19",
-        sum = "h1:7Nu2dTj82c6IaWvL7hImJzcXoTPz1MsSCH7r+0m6rfo=",
+        version = "v0.0.0-20200729134348-d5654de09c73",
+        sum = "h1:uJmqzgNWG7XyClnU/mLPBWwfKKF1K8Hf8whTseBgJcg=",
         patches = [
             "//third_party/go/patches:k8s-native-mounter.patch",
         ],
@@ -2652,10 +2653,10 @@ def go_repositories():
         ],
     )
     go_repository(
-        name = "io_k8s_sigs_structured_merge_diff_v3",
-        importpath = "sigs.k8s.io/structured-merge-diff/v3",
-        version = "v3.0.0",
-        sum = "h1:dOmIZBMfhcHS09XZkMyUgkq5trg3/jRyJYFZUiaOp8E=",
+        name = "io_k8s_sigs_structured_merge_diff_v4",
+        importpath = "sigs.k8s.io/structured-merge-diff/v4",
+        version = "v4.0.1",
+        sum = "h1:YXTMot5Qz/X1iBRJhAt+vI+HVttY0WkSqqhKxQ0xVbA=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
