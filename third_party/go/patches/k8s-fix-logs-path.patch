@@ -1,0 +1,40 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From 9b6bdecfd07d026eae2c1b62cc8b7b06d14292ee Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@brun.one>
+Date: Mon, 25 Jan 2021 17:20:51 +0100
+Subject: [PATCH] Change hardcoded pod logs root dir
+
+---
+ pkg/kubelet/kuberuntime/kuberuntime_manager.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pkg/kubelet/kuberuntime/kuberuntime_manager.go b/pkg/kubelet/kuberuntime/kuberuntime_manager.go
+index eebba49bbbe..c24b3133bcc 100644
+--- a/pkg/kubelet/kuberuntime/kuberuntime_manager.go
++++ b/pkg/kubelet/kuberuntime/kuberuntime_manager.go
+@@ -57,7 +57,7 @@ const (
+ 	// The api version of kubelet runtime api
+ 	kubeRuntimeAPIVersion = "0.1.0"
+ 	// The root directory for pod logs
+-	podLogsRootDirectory = "/var/log/pods"
++	podLogsRootDirectory = "/data/kubelet/logs"
+ 	// A minimal shutdown window for avoiding unnecessary SIGKILLs
+ 	minimumGracePeriodInSeconds = 2
+ 
+-- 
+2.25.1
+

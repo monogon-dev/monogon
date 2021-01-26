@@ -1,0 +1,56 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From db9ab831cd17f9be540917a77bbb3e0551f4fb4f Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@brun.one>
+Date: Mon, 25 Jan 2021 15:08:20 +0100
+Subject: [PATCH] Make DeviceManager socket relative to RootDir
+
+---
+ pkg/kubelet/cm/container_manager_linux.go | 2 +-
+ pkg/kubelet/cm/devicemanager/manager.go   | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/pkg/kubelet/cm/container_manager_linux.go b/pkg/kubelet/cm/container_manager_linux.go
+index 57110ed7745..15cf010074e 100644
+--- a/pkg/kubelet/cm/container_manager_linux.go
++++ b/pkg/kubelet/cm/container_manager_linux.go
+@@ -315,7 +315,7 @@ func NewContainerManager(mountUtil mount.Interface, cadvisorInterface cadvisor.I
+ 
+ 	klog.Infof("Creating device plugin manager: %t", devicePluginEnabled)
+ 	if devicePluginEnabled {
+-		cm.deviceManager, err = devicemanager.NewManagerImpl(numaNodeInfo, cm.topologyManager)
++		cm.deviceManager, err = devicemanager.NewManagerImpl(numaNodeInfo, cm.topologyManager, nodeConfig.KubeletRootDir)
+ 		cm.topologyManager.AddHintProvider(cm.deviceManager)
+ 	} else {
+ 		cm.deviceManager, err = devicemanager.NewManagerStub()
+diff --git a/pkg/kubelet/cm/devicemanager/manager.go b/pkg/kubelet/cm/devicemanager/manager.go
+index 5d1925f9458..bfff3c50fcc 100644
+--- a/pkg/kubelet/cm/devicemanager/manager.go
++++ b/pkg/kubelet/cm/devicemanager/manager.go
+@@ -124,8 +124,8 @@ func (s *sourcesReadyStub) AddSource(source string) {}
+ func (s *sourcesReadyStub) AllReady() bool          { return true }
+ 
+ // NewManagerImpl creates a new manager.
+-func NewManagerImpl(numaNodeInfo cputopology.NUMANodeInfo, topologyAffinityStore topologymanager.Store) (*ManagerImpl, error) {
+-	return newManagerImpl(pluginapi.KubeletSocket, numaNodeInfo, topologyAffinityStore)
++func NewManagerImpl(numaNodeInfo cputopology.NUMANodeInfo, topologyAffinityStore topologymanager.Store, kubeletRootDir string) (*ManagerImpl, error) {
++	return newManagerImpl(filepath.Join(kubeletRootDir, "device-plugins/kubelet.sock"), numaNodeInfo, topologyAffinityStore)
+ }
+ 
+ func newManagerImpl(socketPath string, numaNodeInfo cputopology.NUMANodeInfo, topologyAffinityStore topologymanager.Store) (*ManagerImpl, error) {
+-- 
+2.25.1
+

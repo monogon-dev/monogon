@@ -114,6 +114,15 @@ type DataKubernetesKubeletDirectory struct {
 	Kubeconfig declarative.File `file:"kubeconfig"`
 	PKI        PKIDirectory     `dir:"pki"`
 
+	DevicePlugins struct {
+		declarative.Directory
+		// Used by Kubelet, hardcoded relative to DataKubernetesKubeletDirectory
+		Kubelet declarative.File `file:"kubelet.sock"`
+	} `dir:"device-plugins"`
+
+	// Pod logs, hardcoded to /data/kubelet/logs in @com_github_kubernetes//pkg/kubelet/kuberuntime:kuberuntime_manager.go
+	Logs declarative.Directory `dir:"logs"`
+
 	Plugins struct {
 		declarative.Directory
 		VFS declarative.File `file:"dev.monogon.metropolis.vfs.sock"`
