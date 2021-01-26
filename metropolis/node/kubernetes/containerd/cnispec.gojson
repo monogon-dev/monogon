@@ -8,7 +8,7 @@
             "mtu": 1420,
             "ipam": {
                 "type": "host-local",
-                "dataDir": "/containerd/run/ipam",
+                "dataDir": "/ephemeral/containerd/ipam",
                 "ranges": [
                     {{range $i, $range := .PodCIDRRanges}}{{if $i}},
             {{end}}[

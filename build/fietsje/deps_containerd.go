@@ -36,7 +36,6 @@ func depsContainerd(p *planner) {
 		"github.com/containerd/imgcrypt",
 		"github.com/containers/ocicrypt",
 		"github.com/containerd/typeurl",
-		"github.com/containernetworking/cni",
 		"github.com/coreos/go-systemd/v22",
 		"github.com/cpuguy83/go-md2man/v2",
 		"github.com/davecgh/go-spew",
@@ -86,10 +85,12 @@ func depsContainerd(p *planner) {
 		"gopkg.in/yaml.v2",
 		"k8s.io/klog/v2",
 		"sigs.k8s.io/yaml",
+	).with(disabledProtoBuild, patches("containerd-netns-statedir.patch")).use(
+		"github.com/containerd/cri",
 	).with(disabledProtoBuild).use(
 		"github.com/Microsoft/hcsshim",
 		"github.com/containerd/cgroups",
-		"github.com/containerd/cri",
+
 		"github.com/gogo/googleapis",
 	).with(buildTags("selinux")).use(
 		"github.com/opencontainers/selinux",
@@ -98,7 +99,9 @@ func depsContainerd(p *planner) {
 		"ttrpc-hacks.patch",
 	)).use(
 		"github.com/containerd/ttrpc",
-	).replace(
+	).with(patches(
+		"cni-fix-cachepath.patch",
+	)).use("github.com/containernetworking/cni").replace(
 		// ttrpc is broken by go protobuf v2, this is a tentative PR that's
 		// not yet merged by upstream.
 		// See: https://github.com/containerd/ttrpc/pull/67

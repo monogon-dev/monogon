@@ -20,7 +20,7 @@ node_initramfs(
     name = "initramfs",
     extra_dirs = [
         "/kubernetes/conf/flexvolume-plugins",
-        "/containerd/run",
+        "/containerd/plugins",
     ],
     files = {
         "//metropolis/node/core": "/init",

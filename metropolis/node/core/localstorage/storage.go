@@ -49,6 +49,8 @@ type Root struct {
 	Ephemeral EphemeralDirectory `dir:"ephemeral"`
 	// FHS-standard /tmp directory, used by ioutil.TempFile.
 	Tmp TmpDirectory `dir:"tmp"`
+	// FHS-standard /run directory. Used by various services.
+	Run RunDirectory `dir:"run"`
 }
 
 type PKIDirectory struct {
@@ -163,8 +165,17 @@ type EphemeralContainerdDirectory struct {
 	Tmp           declarative.Directory `dir:"tmp"`
 	RunSC         declarative.Directory `dir:"runsc"`
 	IPAM          declarative.Directory `dir:"ipam"`
+	CNI           declarative.Directory `dir:"cni"`
+	CNICache      declarative.Directory `dir:"cni-cache"` // Hardcoded @com_github_containernetworking_cni via patch
 }
 
 type TmpDirectory struct {
 	declarative.Directory
+}
+
+type RunDirectory struct {
+	declarative.Directory
+	// Hardcoded in @com_github_containerd_containerd//pkg/process:utils.go and
+	// @com_github_containerd_containerd//runtime/v2/shim:util_unix.go
+	Containerd declarative.Directory `dir:"containerd"`
 }

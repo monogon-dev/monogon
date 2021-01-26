@@ -1,0 +1,44 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From 0b2583e76ac9f9675bbd539485918c96da830d21 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@brun.one>
+Date: Mon, 25 Jan 2021 18:20:01 +0100
+Subject: [PATCH] Point CacheDir to the correct location for Metropolis
+
+This is arguably an ugly hack, but they hardcoded it and the fastest way to
+access anything resembling a config is through three different repos:
+containernetworking/cni -> containerd/go-cni -> containerd/cri ->
+containerd/containerd.
+---
+ libcni/api.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libcni/api.go b/libcni/api.go
+index 7e52bd8..7f3dfe6 100644
+--- a/libcni/api.go
++++ b/libcni/api.go
+@@ -30,7 +30,7 @@ import (
+ )
+ 
+ var (
+-	CacheDir = "/var/lib/cni"
++	CacheDir = "/ephemeral/containerd/cni-cache"
+ )
+ 
+ const (
+-- 
+2.25.1
+

@@ -3,7 +3,7 @@ root = "/data/containerd"
 state = "/ephemeral/containerd"
 plugin_dir = ""
 disabled_plugins = []
-required_plugins = []
+required_plugins = ["io.containerd.grpc.v1.cri"]
 oom_score = 0
 
 [grpc]
@@ -95,7 +95,7 @@ oom_score = 0
           base_runtime_spec = ""
     [plugins."io.containerd.grpc.v1.cri".cni]
       bin_dir = "/containerd/bin/cni"
-      conf_dir = "/containerd/conf/cni"
+      conf_dir = "/ephemeral/containerd/cni"
       max_conf_num = 0
       conf_template = "/containerd/conf/cnispec.gojson"
     [plugins."io.containerd.grpc.v1.cri".registry]

@@ -312,6 +312,10 @@ def go_repositories():
         version = "v1.19.1-0.20201126003523-adc0b6a578ed",
         sum = "h1:M2yIwrNSafh4rW/yXAiAlSqpydW7vjvDjZ0ClMb+EMQ=",
         build_file_proto_mode = "disable",
+        patches = [
+            "//third_party/go/patches:containerd-netns-statedir.patch",
+        ],
+        patch_args = ["-p1"],
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -383,6 +387,10 @@ def go_repositories():
         importpath = "github.com/containernetworking/cni",
         version = "v0.8.0",
         sum = "h1:BT9lpgGoH4jw3lFC7Odz2prU5ruiYKcgAjMCbgybcKI=",
+        patches = [
+            "//third_party/go/patches:cni-fix-cachepath.patch",
+        ],
+        patch_args = ["-p1"],
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
