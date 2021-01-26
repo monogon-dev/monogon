@@ -255,3 +255,124 @@ node_initramfs = rule(
         ),
     },
 )
+
+def _erofs_image_impl(ctx):
+    """
+    Generate an EROFS filesystem based on a label/file list.
+    """
+
+    # Generate config file for gen_init_cpio that describes the initramfs to build.
+    fs_spec_name = ctx.label.name + ".prototxt"
+    fs_spec = ctx.actions.declare_file(fs_spec_name)
+
+    fs_files = []
+    inputs = []
+    for label, p in ctx.attr.files.items() + ctx.attr.files_cc.items():
+        if not p.startswith("/"):
+            fail("file {} invalid: must begin with /".format(p))
+
+        # Figure out if this is an executable.
+        is_executable = True
+
+        di = label[DefaultInfo]
+        if di.files_to_run.executable == None:
+            # Generated non-executable files will have DefaultInfo.files_to_run.executable == None
+            is_executable = False
+        elif di.files_to_run.executable.is_source:
+            # Source files will have executable.is_source == True
+            is_executable = False
+
+        # Ensure only single output is declared.
+        # If you hit this error, figure out a better logic to find what file you need, maybe looking at providers other
+        # than DefaultInfo.
+        files = di.files.to_list()
+        if len(files) > 1:
+            fail("file {} has more than one output: {}", p, files)
+        src = files[0]
+        inputs.append(src)
+
+        mode = 0o555 if is_executable else 0o444
+        fs_files.append(struct(path = p, source_path = src.path, mode = mode, uid = 0, gid = 0))
+
+    fs_dirs = []
+    for p in ctx.attr.extra_dirs:
+        if not p.startswith("/"):
+            fail("directory {} invalid: must begin with /".format(p))
+
+        fs_dirs.append(struct(path = p, mode = 0o555, uid = 0, gid = 0))
+
+    fs_symlinks = []
+    for target, p in ctx.attr.symlinks.items():
+        fs_symlinks.append(struct(path = p, target_path = target))
+
+    fs_spec_content = struct(file = fs_files, directory = fs_dirs, symbolic_link = fs_symlinks)
+    ctx.actions.write(fs_spec, fs_spec_content.to_proto())
+
+    fs_name = ctx.label.name + ".img"
+    fs_out = ctx.actions.declare_file(fs_name)
+    ctx.actions.run(
+        outputs = [fs_out],
+        inputs = [fs_spec] + inputs,
+        tools = [ctx.executable._mkerofs],
+        executable = ctx.executable._mkerofs,
+        arguments = ["-out", fs_out.path, "-spec", fs_spec.path],
+    )
+
+    return [DefaultInfo(files = depset([fs_out]))]
+
+erofs_image = rule(
+    implementation = _erofs_image_impl,
+    doc = """
+        Build an EROFS. All files specified in files, files_cc and all specified symlinks will be contained.
+        Executable files will have their permissions set to 0555, non-executable files will have
+        their permissions set to 0444. All parent directories will be created with 0555 permissions.
+    """,
+    attrs = {
+        "files": attr.label_keyed_string_dict(
+            mandatory = True,
+            allow_files = True,
+            doc = """
+                Dictionary of Labels to String, placing a given Label's output file in the EROFS at the location
+                specified by the String value. The specified labels must only have a single output.
+            """,
+            # Attach pure transition to ensure all binaries added to the initramfs are pure/static binaries.
+            cfg = build_pure_transition,
+        ),
+        "files_cc": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = """
+                 Special case of 'files' for compilation targets that need to be built with the musl toolchain like
+                 go_binary targets which need cgo or cc_binary targets.
+            """,
+            # Attach static transition to all files_cc inputs to ensure they are built with musl and static.
+            cfg = build_static_transition,
+        ),
+        "extra_dirs": attr.string_list(
+            default = [],
+            doc = """
+                Extra directories to create. These will be created in addition to all the directories required to
+                contain the files specified in the `files` attribute.
+            """,
+        ),
+        "symlinks": attr.string_dict(
+            default = {},
+            doc = """
+                Symbolic links to create. Similar format as in files and files_cc, so the target of the symlink is the
+                key and the value of it is the location of the symlink itself. Only raw strings are allowed as targets,
+                labels are not permitted. Include the file using files or files_cc, then symlink to its location.
+          """,
+        ),
+
+        # Tools, implicit dependencies.
+        "_mkerofs": attr.label(
+            default = Label("//metropolis/node/build/mkerofs"),
+            executable = True,
+            cfg = "host",
+        ),
+
+        # Allow for transitions to be attached to this rule.
+        "_whitelist_function_transition": attr.label(
+            default = "@bazel_tools//tools/whitelists/function_transition_whitelist",
+        ),
+    },
+)

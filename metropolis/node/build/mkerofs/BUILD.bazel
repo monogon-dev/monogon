@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/metropolis/node/build/mkerofs",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node/build/mkerofs/fsspec:go_default_library",
+        "//metropolis/pkg/erofs:go_default_library",
+        "@com_github_golang_protobuf//proto:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "mkerofs",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
