@@ -142,8 +142,8 @@ type DataVolumesDirectory struct {
 
 type EtcDirectory struct {
 	declarative.Directory
-	Hosts     declarative.File `file:"hosts"`
-	MachineID declarative.File `file:"machine-id"`
+	Hosts     declarative.File `file:"hosts"`      // Symlinked to /ephemeral/hosts, baked into the erofs system image
+	MachineID declarative.File `file:"machine-id"` // Symlinked to /ephemeral/machine-id, baked into the erofs system image
 }
 
 type EphemeralDirectory struct {
@@ -151,6 +151,8 @@ type EphemeralDirectory struct {
 	Consensus         EphemeralConsensusDirectory  `dir:"consensus"`
 	Containerd        EphemeralContainerdDirectory `dir:"containerd"`
 	FlexvolumePlugins declarative.Directory        `dir:"flexvolume_plugins"`
+	Hosts             declarative.File             `file:"hosts"`
+	MachineID         declarative.File             `file:"machine-id"`
 }
 
 type EphemeralConsensusDirectory struct {

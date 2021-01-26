@@ -13,3 +13,5 @@ go_library(
         "//metropolis/pkg/supervisor:go_default_library",
     ],
 )
+
+exports_files(["resolv.conf"])

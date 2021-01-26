@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
-	"os"
 	"sync"
 	"time"
 
@@ -30,7 +29,6 @@ import (
 	"github.com/google/nftables/expr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/vishvananda/netlink"
-	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
@@ -68,29 +66,6 @@ func New(config Config) *Service {
 	return &Service{
 		config: config,
 	}
-}
-
-func setResolvconf(nameservers []net.IP, searchDomains []string) error {
-	_ = os.Mkdir("/etc", 0755)
-	newResolvConf, err := os.Create(resolvConfSwapPath)
-	if err != nil {
-		return err
-	}
-	defer newResolvConf.Close()
-	defer os.Remove(resolvConfSwapPath)
-	for _, ns := range nameservers {
-		if _, err := newResolvConf.WriteString(fmt.Sprintf("nameserver %v\n", ns)); err != nil {
-			return err
-		}
-	}
-	for _, searchDomain := range searchDomains {
-		if _, err := newResolvConf.WriteString(fmt.Sprintf("search %v", searchDomain)); err != nil {
-			return err
-		}
-	}
-	newResolvConf.Close()
-	// Atomically swap in new config
-	return unix.Rename(resolvConfSwapPath, resolvConfPath)
 }
 
 // nfifname converts an interface name into 16 bytes padded with zeroes (for nftables)
@@ -206,11 +181,6 @@ func (s *Service) Run(ctx context.Context) error {
 
 	if err := ioutil.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1\n"), 0644); err != nil {
 		logger.Fatalf("Failed to enable IPv4 forwarding: %v", err)
-	}
-
-	// We're handling all DNS requests with CoreDNS, including local ones
-	if err := setResolvconf([]net.IP{{127, 0, 0, 1}}, []string{}); err != nil {
-		logger.Fatalf("Failed to set resolv.conf: %v", err)
 	}
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)

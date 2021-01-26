@@ -39,28 +39,26 @@ func (r *Root) Start(ctx context.Context) error {
 		return fmt.Errorf("MakeBlockDevices: %w", err)
 	}
 
-	if err := os.Mkdir(r.ESP.FullPath(), 0755); err != nil {
-		return fmt.Errorf("making ESP directory: %w", err)
-	}
-
 	if err := unix.Mount(crypt.ESPDevicePath, r.ESP.FullPath(), "vfat", unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_SYNC, ""); err != nil {
 		return fmt.Errorf("mounting ESP partition: %w", err)
 	}
 
 	r.Data.canMount = true
 
-	if err := os.Mkdir(r.Tmp.FullPath(), 0777); err != nil {
-		return fmt.Errorf("making /tmp directory: %w", err)
-	}
-
 	if err := unix.Mount("tmpfs", r.Tmp.FullPath(), "tmpfs", unix.MS_NOEXEC|unix.MS_NODEV, ""); err != nil {
 		return fmt.Errorf("mounting /tmp: %w", err)
 	}
 
+	if err := unix.Mount("tmpfs", r.Ephemeral.FullPath(), "tmpfs", unix.MS_NODEV, ""); err != nil {
+		return fmt.Errorf("mounting /ephemeral: %v", err)
+	}
+
+	if err := unix.Mount("tmpfs", r.Run.FullPath(), "tmpfs", unix.MS_NOEXEC|unix.MS_NODEV, ""); err != nil {
+		return fmt.Errorf("mounting /run: %w", err)
+	}
+
 	// TODO(q3k): do this automatically?
 	for _, d := range []declarative.DirectoryPlacement{
-		r.Etc,
-		r.Ephemeral,
 		r.Ephemeral.Consensus,
 		r.Ephemeral.Containerd, r.Ephemeral.Containerd.Tmp, r.Ephemeral.Containerd.RunSC, r.Ephemeral.Containerd.IPAM,
 		r.Ephemeral.FlexvolumePlugins,

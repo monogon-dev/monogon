@@ -79,12 +79,14 @@ func MakeBlockDevices(ctx context.Context) error {
 			}
 			for partNumber, part := range table.Partitions {
 				if part.Type == EFIPartitionType {
-					if err := unix.Mknod(ESPDevicePath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1)))); err != nil {
+					err := unix.Mknod(ESPDevicePath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1))))
+					if err != nil && !os.IsExist(err) {
 						return fmt.Errorf("failed to create device node for ESP partition: %w", err)
 					}
 				}
 				if part.Type == NodeDataPartitionType {
-					if err := unix.Mknod(NodeDataCryptPath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1)))); err != nil {
+					err := unix.Mknod(NodeDataCryptPath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1))))
+					if err != nil && !os.IsExist(err) {
 						return fmt.Errorf("failed to create device node for Metropolis node encrypted data partition: %w", err)
 					}
 				}

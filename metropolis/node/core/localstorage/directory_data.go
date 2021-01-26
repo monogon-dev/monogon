@@ -18,7 +18,6 @@ package localstorage
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 
 	"golang.org/x/sys/unix"
@@ -139,10 +138,6 @@ func (d *DataDirectory) MountNew(unlock *ESPLocalUnlockFile) ([]byte, error) {
 }
 
 func (d *DataDirectory) mount() error {
-	if err := os.Mkdir(d.FullPath(), 0755); err != nil {
-		return fmt.Errorf("making data directory: %w", err)
-	}
-
 	if err := unix.Mount("/dev/data", d.FullPath(), "xfs", unix.MS_NOEXEC|unix.MS_NODEV, "pquota"); err != nil {
 		return fmt.Errorf("mounting data directory: %w", err)
 	}

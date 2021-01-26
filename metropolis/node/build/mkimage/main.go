@@ -23,6 +23,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -34,27 +35,42 @@ import (
 )
 
 var NodeDataPartition gpt.Type = gpt.Type("9eeec464-6885-414a-b278-4305c51f7966")
+var NodeSystemPartition gpt.Type = gpt.Type("ee96055b-f6d0-4267-8bbb-724b2afea74c")
 
 var (
 	flagEFI                  string
 	flagOut                  string
-	flagInitramfs            string
+	flagSystemPath           string
 	flagEnrolmentCredentials string
 	flagDataPartitionSize    uint64
 	flagESPPartitionSize     uint64
+	flagSystemPartitionSize  uint64
 )
 
 func mibToSectors(size uint64) uint64 {
 	return (size * 1024 * 1024) / 512
 }
 
+type devZeroReader struct{}
+
+func (_ devZeroReader) Read(b []byte) (n int, err error) {
+	for i := range b {
+		b[i] = 0
+	}
+	return len(b), nil
+}
+
+// devZero is a /dev/zero-like reader which reads an infinite number of zeroes
+var devZero = devZeroReader{}
+
 func main() {
 	flag.StringVar(&flagEFI, "efi", "", "UEFI payload")
 	flag.StringVar(&flagOut, "out", "", "Output disk image")
-	flag.StringVar(&flagInitramfs, "initramfs", "", "External initramfs [optional]")
+	flag.StringVar(&flagSystemPath, "system", "", "System partition [optional]")
 	flag.StringVar(&flagEnrolmentCredentials, "enrolment_credentials", "", "Enrolment credentials [optional]")
 	flag.Uint64Var(&flagDataPartitionSize, "data_partition_size", 2048, "Override the data partition size (default 2048 MiB)")
-	flag.Uint64Var(&flagESPPartitionSize, "esp_partition_size", 512, "Override the ESP partition size (default: 512MiB)")
+	flag.Uint64Var(&flagESPPartitionSize, "esp_partition_size", 128, "Override the ESP partition size (default: 128MiB)")
+	flag.Uint64Var(&flagSystemPartitionSize, "system_partition_size", 1024, "Override the System partition size (default: 1024MiB)")
 	flag.Parse()
 
 	if flagEFI == "" || flagOut == "" {
@@ -62,7 +78,7 @@ func main() {
 	}
 
 	_ = os.Remove(flagOut)
-	diskImg, err := diskfs.Create(flagOut, 3*1024*1024*1024, diskfs.Raw)
+	diskImg, err := diskfs.Create(flagOut, 4*1024*1024*1024, diskfs.Raw)
 	if err != nil {
 		log.Fatalf("diskfs.Create(%q): %v", flagOut, err)
 	}
@@ -80,15 +96,38 @@ func main() {
 				End:   mibToSectors(flagESPPartitionSize) - 1,
 			},
 			{
+				Type:  NodeSystemPartition,
+				Name:  "METROPOLIS-SYSTEM",
+				Start: mibToSectors(flagESPPartitionSize),
+				End:   mibToSectors(flagESPPartitionSize+flagSystemPartitionSize) - 1,
+			},
+			{
 				Type:  NodeDataPartition,
 				Name:  "METROPOLIS-NODE-DATA",
-				Start: mibToSectors(flagESPPartitionSize),
-				End:   mibToSectors(flagESPPartitionSize+flagDataPartitionSize) - 1,
+				Start: mibToSectors(flagESPPartitionSize + flagSystemPartitionSize),
+				End:   mibToSectors(flagESPPartitionSize+flagSystemPartitionSize+flagDataPartitionSize) - 1,
 			},
 		},
 	}
 	if err := diskImg.Partition(table); err != nil {
 		log.Fatalf("Failed to apply partition table: %v", err)
+	}
+
+	if flagSystemPath != "" {
+		systemPart, err := os.Open(flagSystemPath)
+		if err != nil {
+			log.Fatalf("Failed to open system partition: %v", err)
+		}
+		defer systemPart.Close()
+		systemPartMeta, err := systemPart.Stat()
+		if err != nil {
+			log.Fatalf("Failed to stat system partition: %v", err)
+		}
+		padding := int64(flagSystemPartitionSize*1024*1024) - systemPartMeta.Size()
+		systemPartMulti := io.MultiReader(systemPart, io.LimitReader(devZero, padding))
+		if _, err := diskImg.WritePartitionContents(2, systemPartMulti); err != nil {
+			log.Fatalf("Failed to write system partition: %v", err)
+		}
 	}
 
 	fs, err := diskImg.CreateFilesystem(disk.FilesystemSpec{Partition: 1, FSType: filesystem.TypeFat32, VolumeLabel: "ESP"})
@@ -104,10 +143,6 @@ func main() {
 	}
 
 	put(fs, flagEFI, "/EFI/BOOT/BOOTX64.EFI")
-
-	if flagInitramfs != "" {
-		put(fs, flagInitramfs, "/EFI/metropolis/initramfs.cpio.lz4")
-	}
 
 	if flagEnrolmentCredentials != "" {
 		put(fs, flagEnrolmentCredentials, "/EFI/metropolis/enrolment.pb")

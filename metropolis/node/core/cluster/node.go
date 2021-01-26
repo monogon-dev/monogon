@@ -205,7 +205,7 @@ func (n *Node) Address() net.IP {
 
 // ConfigureLocalHostname uses the node's ID as a hostname, and sets the current hostname, and local files like hosts
 // and machine-id accordingly.
-func (n *Node) ConfigureLocalHostname(etc *localstorage.EtcDirectory) error {
+func (n *Node) ConfigureLocalHostname(etc *localstorage.EphemeralDirectory) error {
 	if err := unix.Sethostname([]byte(n.ID())); err != nil {
 		return fmt.Errorf("failed to set runtime hostname: %w", err)
 	}

@@ -92,10 +92,10 @@ func main() {
 	// Initial logger. Used until we get to a supervisor.
 	logger := lt.MustLeveledFor("init")
 
-	// Remount onto a tmpfs and re-exec if needed. Otherwise, keep running.
-	err = switchRoot(logger)
+	// Set up basic mounts
+	err = setupMounts(logger)
 	if err != nil {
-		panic(fmt.Errorf("could not remount root: %w", err))
+		panic(fmt.Errorf("could not set up basic mounts: %w", err))
 	}
 
 	// Linux kernel default is 4096 which is far too low. Raise it to 1M which is what gVisor suggests.
@@ -170,7 +170,7 @@ func main() {
 		// we should be running.
 
 		node := m.Node()
-		if err := node.ConfigureLocalHostname(&root.Etc); err != nil {
+		if err := node.ConfigureLocalHostname(&root.Ephemeral); err != nil {
 			close(trapdoor)
 			return fmt.Errorf("failed to set local hostname: %w", err)
 		}

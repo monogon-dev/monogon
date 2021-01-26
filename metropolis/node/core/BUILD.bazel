@@ -6,7 +6,7 @@ go_library(
     srcs = [
         "debug_service.go",
         "main.go",
-        "switchroot.go",
+        "mounts.go",
     ] + select({
         "//metropolis/node:debug_build": ["delve_enabled.go"],
         "//conditions:default": ["delve_disabled.go"],
