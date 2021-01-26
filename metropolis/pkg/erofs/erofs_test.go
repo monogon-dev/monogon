@@ -1,0 +1,250 @@
+// Copyright 2020 The Monogon Project Authors.
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package erofs
+
+import (
+	"io"
+	"io/ioutil"
+	"log"
+	"math/rand"
+	"os"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/sys/unix"
+)
+
+func TestKernelInterop(t *testing.T) {
+	if os.Getenv("IN_KTEST") != "true" {
+		t.Skip("Not in ktest")
+	}
+
+	type testCase struct {
+		name     string
+		setup    func(w *Writer) error
+		validate func(t *testing.T) error
+	}
+
+	tests := []testCase{
+		{
+			name: "SimpleFolder",
+			setup: func(w *Writer) error {
+				return w.Create(".", &Directory{
+					Base:     Base{GID: 123, UID: 124, Permissions: 0753},
+					Children: []string{},
+				})
+			},
+			validate: func(t *testing.T) error {
+				var stat unix.Stat_t
+				if err := unix.Stat("/test", &stat); err != nil {
+					t.Errorf("failed to stat output: %v", err)
+				}
+				require.EqualValues(t, 124, stat.Uid, "wrong Uid")
+				require.EqualValues(t, 123, stat.Gid, "wrong Gid")
+				require.EqualValues(t, 0753, stat.Mode&^unix.S_IFMT, "wrong mode")
+				return nil
+			},
+		},
+		{
+			name: "FolderHierarchy",
+			setup: func(w *Writer) error {
+				if err := w.Create(".", &Directory{
+					Base:     Base{GID: 123, UID: 124, Permissions: 0753},
+					Children: []string{"subdir"},
+				}); err != nil {
+					return err
+				}
+				if err := w.Create("subdir", &Directory{
+					Base:     Base{GID: 123, UID: 124, Permissions: 0753},
+					Children: []string{},
+				}); err != nil {
+					return err
+				}
+				return nil
+			},
+			validate: func(t *testing.T) error {
+				dirInfo, err := ioutil.ReadDir("/test")
+				if err != nil {
+					t.Fatalf("Failed to read top-level directory: %v", err)
+				}
+				require.Len(t, dirInfo, 1, "more subdirs than expected")
+				require.Equal(t, "subdir", dirInfo[0].Name(), "unexpected subdir")
+				require.True(t, dirInfo[0].IsDir(), "subdir not a directory")
+				subdirInfo, err := ioutil.ReadDir("/test/subdir")
+				assert.NoError(t, err, "cannot read empty subdir")
+				require.Len(t, subdirInfo, 0, "unexpected subdirs in empty directory")
+				return nil
+			},
+		},
+		{
+			name: "SmallFile",
+			setup: func(w *Writer) error {
+				if err := w.Create(".", &Directory{
+					Base:     Base{GID: 123, UID: 123, Permissions: 0755},
+					Children: []string{"test.bin"},
+				}); err != nil {
+					return err
+				}
+				writer := w.CreateFile("test.bin", &FileMeta{
+					Base: Base{GID: 123, UID: 124, Permissions: 0644},
+				})
+				r := rand.New(rand.NewSource(0)) // Random but deterministic data
+				if _, err := io.CopyN(writer, r, 128); err != nil {
+					return err
+				}
+				if err := writer.Close(); err != nil {
+					return err
+				}
+				return nil
+			},
+			validate: func(t *testing.T) error {
+				var stat unix.Stat_t
+				err := unix.Stat("/test/test.bin", &stat)
+				assert.NoError(t, err, "failed to stat file")
+				require.EqualValues(t, 124, stat.Uid, "wrong Uid")
+				require.EqualValues(t, 123, stat.Gid, "wrong Gid")
+				require.EqualValues(t, 0644, stat.Mode&^unix.S_IFMT, "wrong mode")
+				file, err := os.Open("/test/test.bin")
+				assert.NoError(t, err, "failed to open test file")
+				defer file.Close()
+				r := io.LimitReader(rand.New(rand.NewSource(0)), 128) // Random but deterministic data
+				expected, _ := ioutil.ReadAll(r)
+				actual, err := ioutil.ReadAll(file)
+				assert.NoError(t, err, "failed to read test file")
+				assert.Equal(t, expected, actual, "content not identical")
+				return nil
+			},
+		},
+		{
+			name: "LargeFile",
+			setup: func(w *Writer) error {
+				if err := w.Create(".", &Directory{
+					Base:     Base{GID: 123, UID: 123, Permissions: 0755},
+					Children: []string{"test.bin"},
+				}); err != nil {
+					return err
+				}
+				writer := w.CreateFile("test.bin", &FileMeta{
+					Base: Base{GID: 123, UID: 124, Permissions: 0644},
+				})
+				r := rand.New(rand.NewSource(1)) // Random but deterministic data
+				if _, err := io.CopyN(writer, r, 6500); err != nil {
+					return err
+				}
+				if err := writer.Close(); err != nil {
+					return err
+				}
+				return nil
+			},
+			validate: func(t *testing.T) error {
+				var stat unix.Stat_t
+				rawContents, err := ioutil.ReadFile("/dev/ram0")
+				assert.NoError(t, err, "failed to read test data")
+				log.Printf("%x", rawContents)
+				err = unix.Stat("/test/test.bin", &stat)
+				assert.NoError(t, err, "failed to stat file")
+				require.EqualValues(t, 124, stat.Uid, "wrong Uid")
+				require.EqualValues(t, 123, stat.Gid, "wrong Gid")
+				require.EqualValues(t, 0644, stat.Mode&^unix.S_IFMT, "wrong mode")
+				require.EqualValues(t, 6500, stat.Size, "wrong size")
+				file, err := os.Open("/test/test.bin")
+				assert.NoError(t, err, "failed to open test file")
+				defer file.Close()
+				r := io.LimitReader(rand.New(rand.NewSource(1)), 6500) // Random but deterministic data
+				expected, _ := ioutil.ReadAll(r)
+				actual, err := ioutil.ReadAll(file)
+				assert.NoError(t, err, "failed to read test file")
+				assert.Equal(t, expected, actual, "content not identical")
+				return nil
+			},
+		},
+		{
+			name: "MultipleMetaBlocks",
+			setup: func(w *Writer) error {
+				testFileNames := []string{"test1.bin", "test2.bin", "test3.bin"}
+				if err := w.Create(".", &Directory{
+					Base:     Base{GID: 123, UID: 123, Permissions: 0755},
+					Children: testFileNames,
+				}); err != nil {
+					return err
+				}
+				for i, fileName := range testFileNames {
+					writer := w.CreateFile(fileName, &FileMeta{
+						Base: Base{GID: 123, UID: 124, Permissions: 0644},
+					})
+					r := rand.New(rand.NewSource(int64(i))) // Random but deterministic data
+					if _, err := io.CopyN(writer, r, 2053); err != nil {
+						return err
+					}
+					if err := writer.Close(); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			validate: func(t *testing.T) error {
+				testFileNames := []string{"test1.bin", "test2.bin", "test3.bin"}
+				for i, fileName := range testFileNames {
+					file, err := os.Open("/test/" + fileName)
+					assert.NoError(t, err, "failed to open test file")
+					defer file.Close()
+					r := io.LimitReader(rand.New(rand.NewSource(int64(i))), 2053) // Random but deterministic data
+					expected, _ := ioutil.ReadAll(r)
+					actual, err := ioutil.ReadAll(file)
+					assert.NoError(t, err, "failed to read test file")
+					require.Equal(t, expected, actual, "content not identical")
+				}
+				return nil
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			file, err := os.OpenFile("/dev/ram0", os.O_WRONLY, 0644)
+			if err != nil {
+				t.Fatalf("failed to create test image: %v", err)
+			}
+			defer file.Close()
+			w, err := NewWriter(file)
+			if err != nil {
+				t.Fatalf("failed to initialize EROFS writer: %v", err)
+			}
+			if err := test.setup(w); err != nil {
+				t.Fatalf("setup failed: %v", err)
+			}
+			if err := w.Close(); err != nil {
+				t.Errorf("failed close: %v", err)
+			}
+			_ = file.Close()
+			if err := os.MkdirAll("/test", 0755); err != nil {
+				t.Error(err)
+			}
+			if err := unix.Mount("/dev/ram0", "/test", "erofs", unix.MS_NOEXEC|unix.MS_NODEV, ""); err != nil {
+				t.Fatal(err)
+			}
+			if err := test.validate(t); err != nil {
+				t.Errorf("validation failure: %v", err)
+			}
+			if err := unix.Unmount("/test", 0); err != nil {
+				t.Fatalf("failed to unmount: %v", err)
+			}
+		})
+
+	}
+}
