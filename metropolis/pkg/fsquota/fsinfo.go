@@ -51,9 +51,9 @@ func fsinfoGetSource(dir *os.File) (string, error) {
 		flags:   fsinfo_flags_query_fd,
 		request: fsinfo_attr_source,
 	}
-	n, _, err := unix.Syscall6(sys_fsinfo, dir.Fd(), 0, uintptr(unsafe.Pointer(&params)), unsafe.Sizeof(params), uintptr(unsafe.Pointer(&buf[0])), 128)
+	n, _, err := unix.Syscall6(sys_fsinfo, dir.Fd(), 0, uintptr(unsafe.Pointer(&params)), unsafe.Sizeof(params), uintptr(unsafe.Pointer(&buf[0])), 256)
 	if err != unix.Errno(0) {
 		return "", fmt.Errorf("failed to call fsinfo: %w", err)
 	}
-	return string(buf[:n]), nil
+	return string(buf[:n-1]), nil
 }

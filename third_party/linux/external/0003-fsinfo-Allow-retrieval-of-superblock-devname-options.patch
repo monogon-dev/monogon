@@ -1,7 +1,7 @@
-From fa2ff1a0da263362a2c98c8cfe68bcac3a323ac4 Mon Sep 17 00:00:00 2001
+From 69b33d464bcadd6c60018f5d0bde8ad3e7530dc7 Mon Sep 17 00:00:00 2001
 From: David Howells <dhowells@redhat.com>
 Date: Tue, 3 Mar 2020 14:29:27 +0000
-Subject: [PATCH 4/4] fsinfo: Allow retrieval of superblock devname, options
+Subject: [PATCH 3/3] fsinfo: Allow retrieval of superblock devname, options
  and stats
 
 Provide fsinfo() attributes to retrieve superblock device name, options,
@@ -16,37 +16,39 @@ case where there is more than one source (e.g. the bcachefs filesystem).
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
- fs/fsinfo.c                 | 41 +++++++++++++++++++++++++++++++++++++
+ fs/fsinfo.c                 | 39 +++++++++++++++++++++++++++++++++++
  fs/internal.h               |  2 ++
- fs/namespace.c              | 39 +++++++++++++++++++++++++++++++++++
+ fs/namespace.c              | 41 +++++++++++++++++++++++++++++++++++++
  include/uapi/linux/fsinfo.h |  3 +++
  samples/vfs/test-fsinfo.c   |  4 ++++
  5 files changed, 89 insertions(+)
 
 diff --git a/fs/fsinfo.c b/fs/fsinfo.c
-index 1830c73f37a7..3ed43c5a10e8 100644
+index 7d9c73e9cbdef..7e2d871eb5dfe 100644
 --- a/fs/fsinfo.c
 +++ b/fs/fsinfo.c
-@@ -188,6 +188,44 @@ static int fsinfo_generic_volume_id(struct path *path, struct fsinfo_context *ct
+@@ -198,6 +198,42 @@ static int fsinfo_generic_volume_id(struct path *path, struct fsinfo_context *ct
  	return fsinfo_string(path->dentry->d_sb->s_id, ctx);
  }
  
 +/*
 + * Retrieve the superblock configuration (mount options) as a comma-separated
-+ * string.  The initial comma is stripped off.
++ * string.  The initial comma is stripped off and NUL termination is added.
 + */
 +static int fsinfo_generic_seq_read(struct path *path, struct fsinfo_context *ctx)
 +{
 +	struct super_block *sb = path->dentry->d_sb;
 +	struct seq_file m = {
 +		.buf	= ctx->buffer,
-+		.size	= ctx->buf_size,
++		.size	= ctx->buf_size - 1,
 +	};
 +	int ret = 0;
 +
 +	switch (ctx->requested_attr) {
 +	case FSINFO_ATTR_CONFIGURATION:
-+		if (sb->s_op->show_options)
++		seq_puts(&m, sb_rdonly(sb) ? "ro" : "rw");
++		ret = security_sb_show_options(&m, sb);
++		if (!ret && sb->s_op->show_options)
 +			ret = sb->s_op->show_options(&m, path->mnt->mnt_root);
 +		break;
 +
@@ -60,19 +62,15 @@ index 1830c73f37a7..3ed43c5a10e8 100644
 +		return ret;
 +	if (seq_has_overflowed(&m))
 +		return ctx->buf_size + PAGE_SIZE;
-+	if (ctx->requested_attr == FSINFO_ATTR_CONFIGURATION) {
-+		if (m.count > 0 && ((char *)ctx->buffer)[0] == ',') {
-+			m.count--;
-+			ctx->skip = 1;
-+		}
-+	}
-+	return m.count;
++
++	((char *)ctx->buffer)[ctx->skip + m.count] = 0;
++	return m.count + 1;
 +}
 +
  static const struct fsinfo_attribute fsinfo_common_attributes[] = {
  	FSINFO_VSTRUCT	(FSINFO_ATTR_STATFS,		fsinfo_generic_statfs),
  	FSINFO_VSTRUCT	(FSINFO_ATTR_IDS,		fsinfo_generic_ids),
-@@ -196,6 +234,9 @@ static const struct fsinfo_attribute fsinfo_common_attributes[] = {
+@@ -206,6 +242,9 @@ static const struct fsinfo_attribute fsinfo_common_attributes[] = {
  	FSINFO_VSTRUCT	(FSINFO_ATTR_TIMESTAMP_INFO,	fsinfo_generic_timestamp_info),
  	FSINFO_STRING	(FSINFO_ATTR_VOLUME_ID,		fsinfo_generic_volume_id),
  	FSINFO_VSTRUCT	(FSINFO_ATTR_VOLUME_UUID,	fsinfo_generic_volume_uuid),
@@ -83,20 +81,20 @@ index 1830c73f37a7..3ed43c5a10e8 100644
  	FSINFO_LIST	(FSINFO_ATTR_FSINFO_ATTRIBUTES,	(void *)123UL),
  	FSINFO_VSTRUCT_N(FSINFO_ATTR_FSINFO_ATTRIBUTE_INFO, (void *)123UL),
 diff --git a/fs/internal.h b/fs/internal.h
-index a0d90f23593c..6f2cc77bf38d 100644
+index 1b7460f055a3b..a2a529da7e673 100644
 --- a/fs/internal.h
 +++ b/fs/internal.h
-@@ -91,6 +91,8 @@ extern int __mnt_want_write_file(struct file *);
- extern void __mnt_drop_write_file(struct file *);
+@@ -98,6 +98,8 @@ int path_mount(const char *dev_name, struct path *path,
+ 		const char *type_page, unsigned long flags, void *data_page);
+ int path_umount(struct path *path, int flags);
  
- extern void dissolve_on_fput(struct vfsmount *);
 +extern int fsinfo_generic_mount_source(struct path *, struct fsinfo_context *);
 +
  /*
   * fs_struct.c
   */
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 85b5f7bea82e..b4951e2afae1 100644
+index cebaa3e817940..33218f67ad5b1 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -30,6 +30,7 @@
@@ -107,7 +105,7 @@ index 85b5f7bea82e..b4951e2afae1 100644
  
  #include "pnode.h"
  #include "internal.h"
-@@ -3975,3 +3976,41 @@ const struct proc_ns_operations mntns_operations = {
+@@ -4105,3 +4106,43 @@ const struct proc_ns_operations mntns_operations = {
  	.install	= mntns_install,
  	.owner		= mntns_owner,
  };
@@ -129,7 +127,7 @@ index 85b5f7bea82e..b4951e2afae1 100644
 +	struct mount *mnt = real_mount(path->mnt);
 +	struct seq_file m = {
 +		.buf	= ctx->buffer,
-+		.size	= ctx->buf_size,
++		.size	= ctx->buf_size - 1,
 +	};
 +	int ret;
 +
@@ -145,12 +143,14 @@ index 85b5f7bea82e..b4951e2afae1 100644
 +
 +	if (seq_has_overflowed(&m))
 +		return ctx->buf_size + PAGE_SIZE;
-+	return m.count;
++
++	((char *)ctx->buffer)[m.count] = 0;
++	return m.count + 1;
 +}
 +
 +#endif /* CONFIG_FSINFO */
 diff --git a/include/uapi/linux/fsinfo.h b/include/uapi/linux/fsinfo.h
-index e9b35b9b7629..d3722c7142a6 100644
+index 65892239ba86c..45d9f4b758787 100644
 --- a/include/uapi/linux/fsinfo.h
 +++ b/include/uapi/linux/fsinfo.h
 @@ -23,6 +23,9 @@
@@ -164,10 +164,10 @@ index e9b35b9b7629..d3722c7142a6 100644
  #define FSINFO_ATTR_FSINFO_ATTRIBUTE_INFO 0x100	/* Information about attr N (for path) */
  #define FSINFO_ATTR_FSINFO_ATTRIBUTES	0x101	/* List of supported attrs (for path) */
 diff --git a/samples/vfs/test-fsinfo.c b/samples/vfs/test-fsinfo.c
-index 2b53c735d330..1797f7b8d08a 100644
+index 934b25399ffed..cf849c9778f71 100644
 --- a/samples/vfs/test-fsinfo.c
 +++ b/samples/vfs/test-fsinfo.c
-@@ -289,6 +289,10 @@ static const struct fsinfo_attribute fsinfo_attributes[] = {
+@@ -294,6 +294,10 @@ static const struct fsinfo_attribute fsinfo_attributes[] = {
  	FSINFO_STRING	(FSINFO_ATTR_VOLUME_ID,		string),
  	FSINFO_VSTRUCT	(FSINFO_ATTR_VOLUME_UUID,	fsinfo_generic_volume_uuid),
  	FSINFO_STRING	(FSINFO_ATTR_VOLUME_NAME,	string),
@@ -179,5 +179,5 @@ index 2b53c735d330..1797f7b8d08a 100644
  	FSINFO_LIST	(FSINFO_ATTR_FSINFO_ATTRIBUTES,	fsinfo_meta_attributes),
  	{}
 -- 
-2.20.1
+2.25.1
 

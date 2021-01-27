@@ -20,21 +20,19 @@ def linux_external(name, version):
     sums = {
         "5.4.7": "abc9b21d9146d95853dac35f4c4489a0199aff53ee6eee4b0563d1b37079fcc9",
         "5.6": "e342b04a2aa63808ea0ef1baab28fc520bd031ef8cf93d9ee4a31d4058fcb622",
+        "5.10.4": "904e396c26e9992a16cd1cc989460171536bed7739bf36049f6eb020ee5d56ec",
     }
     http_archive(
         name = name,
         build_file = "//third_party/linux/external:BUILD.repo",
         patch_args = ["-p1"],
         patches = [
-            # Enable built-in cmdline for efistub
-            "//third_party/linux/external:0001-x86-Allow-built-in-command-line-to-work-in-early-ker.patch",
             # Add fsinfo() syscall
-            "//third_party/linux/external:0002-watch_queue-Introduce-a-non-repeating-system-unique-.patch",
-            "//third_party/linux/external:0003-fsinfo-Add-fsinfo-syscall-to-query-filesystem-inform.patch",
-            "//third_party/linux/external:0004-fsinfo-Allow-retrieval-of-superblock-devname-options.patch",
+            "//third_party/linux/external:0001-fsinfo-Introduce-a-non-repeating-system-unique-super.patch",
+            "//third_party/linux/external:0002-fsinfo-Add-fsinfo-syscall-to-query-filesystem-inform.patch",
+            "//third_party/linux/external:0003-fsinfo-Allow-retrieval-of-superblock-devname-options.patch",
         ],
         sha256 = sums[version],
         strip_prefix = "linux-" + version,
         urls = ["https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-%s.tar.xz" % version],
     )
-

@@ -131,7 +131,7 @@ func QuotaOff(device string, qtype QuotaType) error {
 }
 
 // GetFmt gets the quota format used on given filesystem
-func GetFmt(device string, qtype QuotaType) (uint32, error) {
+func GetFmt(device string, qtype QuotaType) (QuotaFormat, error) {
 	var fmt uint32
 	devArg, err := unix.BytePtrFromString(device)
 	if err != nil {
@@ -141,7 +141,7 @@ func GetFmt(device string, qtype QuotaType) (uint32, error) {
 	if err != unix.Errno(0) {
 		return 0, err
 	}
-	return fmt, nil
+	return QuotaFormat(fmt), nil
 }
 
 // GetInfo gets information about quota files

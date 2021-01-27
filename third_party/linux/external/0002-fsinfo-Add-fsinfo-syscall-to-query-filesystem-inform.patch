@@ -1,7 +1,7 @@
-From c91b96ad3f53de22e11d6692d2d8a80ed611a5a5 Mon Sep 17 00:00:00 2001
+From 5837a1c690d51c270c8f04029530f2ce6856739a Mon Sep 17 00:00:00 2001
 From: David Howells <dhowells@redhat.com>
 Date: Fri, 6 Mar 2020 14:59:51 +0000
-Subject: [PATCH 3/4] fsinfo: Add fsinfo() syscall to query filesystem
+Subject: [PATCH 2/3] fsinfo: Add fsinfo() syscall to query filesystem
  information
 
 Add a system call to allow filesystem information to be queried.  A request
@@ -93,7 +93,7 @@ tacked on to the end of the reply, but anyone not expecting them will only
 get the subset they're expecting.  If either buffer of result_buf_size are
 0, no copy will take place and the data size will be returned.
 
-Backported for Linux 5.6 by Lorenz Brun <lorenz@nexantic.com>
+Ported to 5.10 by Lorenz Brun <lorenz@nexantic.com>
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 cc: linux-api@vger.kernel.org
@@ -118,196 +118,196 @@ cc: linux-api@vger.kernel.org
  arch/xtensa/kernel/syscalls/syscall.tbl     |   1 +
  fs/Kconfig                                  |   7 +
  fs/Makefile                                 |   1 +
- fs/fsinfo.c                                 | 586 ++++++++++++++++++
+ fs/fsinfo.c                                 | 596 ++++++++++++++++++
  include/linux/fs.h                          |   4 +
- include/linux/fsinfo.h                      |  73 +++
+ include/linux/fsinfo.h                      |  74 +++
  include/linux/syscalls.h                    |   4 +
  include/uapi/asm-generic/unistd.h           |   4 +-
- include/uapi/linux/fsinfo.h                 | 187 ++++++
+ include/uapi/linux/fsinfo.h                 | 189 ++++++
  kernel/sys_ni.c                             |   1 +
- samples/vfs/Makefile                        |   5 +
- samples/vfs/test-fsinfo.c                   | 633 ++++++++++++++++++++
- 29 files changed, 1523 insertions(+), 2 deletions(-)
+ samples/vfs/Makefile                        |   2 +-
+ samples/vfs/test-fsinfo.c                   | 646 ++++++++++++++++++++
+ 29 files changed, 1545 insertions(+), 3 deletions(-)
  create mode 100644 fs/fsinfo.c
  create mode 100644 include/linux/fsinfo.h
  create mode 100644 include/uapi/linux/fsinfo.h
  create mode 100644 samples/vfs/test-fsinfo.c
 
 diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index 36d42da7466a..59388edc444a 100644
+index ee7b01bb7346c..c955e31d57289 100644
 --- a/arch/alpha/kernel/syscalls/syscall.tbl
 +++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -477,3 +477,4 @@
- # 545 reserved for clone3
- 547	common	openat2				sys_openat2
+@@ -480,3 +480,4 @@
  548	common	pidfd_getfd			sys_pidfd_getfd
+ 549	common	faccessat2			sys_faccessat2
+ 550	common	process_madvise			sys_process_madvise
 +551	common	fsinfo				sys_fsinfo
 diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index 4d1cf74a2caa..a670f6add5ab 100644
+index d056a548358ea..308dfe68d892c 100644
 --- a/arch/arm/tools/syscall.tbl
 +++ b/arch/arm/tools/syscall.tbl
-@@ -451,3 +451,4 @@
- 435	common	clone3				sys_clone3
- 437	common	openat2				sys_openat2
+@@ -454,3 +454,4 @@
  438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
 +441	common	fsinfo				sys_fsinfo
 diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
-index 803039d504de..86a9d7b3eabe 100644
+index b3b2019f8d16b..86a9d7b3eabe9 100644
 --- a/arch/arm64/include/asm/unistd.h
 +++ b/arch/arm64/include/asm/unistd.h
 @@ -38,7 +38,7 @@
  #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
  #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
  
--#define __NR_compat_syscalls		439
+-#define __NR_compat_syscalls		441
 +#define __NR_compat_syscalls		442
  #endif
  
  #define __ARCH_WANT_SYS_CLONE
 diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
-index c1c61635f89c..1f7d2c8d481a 100644
+index 107f08e03b9fd..20650e0edacb2 100644
 --- a/arch/arm64/include/asm/unistd32.h
 +++ b/arch/arm64/include/asm/unistd32.h
-@@ -883,6 +883,8 @@ __SYSCALL(__NR_clone3, sys_clone3)
- __SYSCALL(__NR_openat2, sys_openat2)
- #define __NR_pidfd_getfd 438
- __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+@@ -889,6 +889,8 @@ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+ __SYSCALL(__NR_faccessat2, sys_faccessat2)
+ #define __NR_process_madvise 440
+ __SYSCALL(__NR_process_madvise, sys_process_madvise)
 +#define __NR_fsinfo 441
 +__SYSCALL(__NR_fsinfo, sys_fsinfo)
  
  /*
   * Please add new compat syscalls above this comment and update
 diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
-index 042911e670b8..2a4aea2f1050 100644
+index b96ed8b8a5089..548428f7b76c7 100644
 --- a/arch/ia64/kernel/syscalls/syscall.tbl
 +++ b/arch/ia64/kernel/syscalls/syscall.tbl
-@@ -358,3 +358,4 @@
- # 435 reserved for clone3
- 437	common	openat2				sys_openat2
+@@ -361,3 +361,4 @@
  438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
 +441	common	fsinfo				sys_fsinfo
 diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index f4f49fcb76d0..9e254f0ef8ea 100644
+index 625fb6d328424..3dd9c1f0815ce 100644
 --- a/arch/m68k/kernel/syscalls/syscall.tbl
 +++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -437,3 +437,4 @@
- 435	common	clone3				__sys_clone3
- 437	common	openat2				sys_openat2
+@@ -440,3 +440,4 @@
  438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
 +441	common	fsinfo				sys_fsinfo
 diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index 4c67b11f9c9e..75924284ee3b 100644
+index aae729c95cf99..420a6d0b01004 100644
 --- a/arch/microblaze/kernel/syscalls/syscall.tbl
 +++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -443,3 +443,4 @@
- 435	common	clone3				sys_clone3
- 437	common	openat2				sys_openat2
+@@ -446,3 +446,4 @@
  438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
 +441	common	fsinfo				sys_fsinfo
 diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index 1f9e8ad636cc..4e03df1d67d0 100644
+index 32817c954435d..01420fe120bab 100644
 --- a/arch/mips/kernel/syscalls/syscall_n32.tbl
 +++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -376,3 +376,4 @@
- 435	n32	clone3				__sys_clone3
- 437	n32	openat2				sys_openat2
+@@ -379,3 +379,4 @@
  438	n32	pidfd_getfd			sys_pidfd_getfd
+ 439	n32	faccessat2			sys_faccessat2
+ 440	n32	process_madvise			sys_process_madvise
 +441	n32	fsinfo				sys_fsinfo
 diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index c0b9d802dbf6..fdcc5ca0a776 100644
+index 9e4ea3c31b1ce..6c319c38779e9 100644
 --- a/arch/mips/kernel/syscalls/syscall_n64.tbl
 +++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -352,3 +352,4 @@
- 435	n64	clone3				__sys_clone3
- 437	n64	openat2				sys_openat2
+@@ -355,3 +355,4 @@
  438	n64	pidfd_getfd			sys_pidfd_getfd
+ 439	n64	faccessat2			sys_faccessat2
+ 440	n64	process_madvise			sys_process_madvise
 +441	n64	fsinfo				sys_fsinfo
 diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
-index ac586774c980..17fb101db45c 100644
+index 29f5f28cf5cea..46d4aa7ecb306 100644
 --- a/arch/mips/kernel/syscalls/syscall_o32.tbl
 +++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
-@@ -425,3 +425,4 @@
- 435	o32	clone3				__sys_clone3
- 437	o32	openat2				sys_openat2
+@@ -428,3 +428,4 @@
  438	o32	pidfd_getfd			sys_pidfd_getfd
+ 439	o32	faccessat2			sys_faccessat2
+ 440	o32	process_madvise			sys_process_madvise
 +441	o32	fsinfo				sys_fsinfo
 diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index 52a15f5cd130..daa7f0c22da0 100644
+index f375ea528e59c..008282637f6af 100644
 --- a/arch/parisc/kernel/syscalls/syscall.tbl
 +++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -435,3 +435,4 @@
- 435	common	clone3				sys_clone3_wrapper
- 437	common	openat2				sys_openat2
+@@ -438,3 +438,4 @@
  438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
 +441	common	fsinfo				sys_fsinfo
 diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index 35b61bfc1b1a..ad1de6e3e866 100644
+index 1275daec7fec3..85da23afb3535 100644
 --- a/arch/powerpc/kernel/syscalls/syscall.tbl
 +++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -519,3 +519,4 @@
- 435	nospu	clone3				ppc_clone3
- 437	common	openat2				sys_openat2
+@@ -530,3 +530,4 @@
  438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
 +441	common	fsinfo				sys_fsinfo
 diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index bd7bd3581a0f..915ee9824956 100644
+index 28c1680004834..83fdaebbf0b08 100644
 --- a/arch/s390/kernel/syscalls/syscall.tbl
 +++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -440,3 +440,4 @@
- 435  common	clone3			sys_clone3			sys_clone3
- 437  common	openat2			sys_openat2			sys_openat2
+@@ -443,3 +443,4 @@
  438  common	pidfd_getfd		sys_pidfd_getfd			sys_pidfd_getfd
-+441  common	fsinfo			sys_fsinfo			sys_fsinfo
+ 439  common	faccessat2		sys_faccessat2			sys_faccessat2
+ 440  common	process_madvise		sys_process_madvise		sys_process_madvise
++441	common	fsinfo			sys_fsinfo			sys_fsinfo
 diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index c7a30fcd135f..35facfae37c9 100644
+index 783738448ff55..e1f52ffa86bb8 100644
 --- a/arch/sh/kernel/syscalls/syscall.tbl
 +++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -440,3 +440,4 @@
- # 435 reserved for clone3
- 437	common	openat2				sys_openat2
+@@ -443,3 +443,4 @@
  438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
 +441	common	fsinfo				sys_fsinfo
 diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index f13615ecdecc..45adfd34b654 100644
+index 78160260991be..1f42dc9965c23 100644
 --- a/arch/sparc/kernel/syscalls/syscall.tbl
 +++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -483,3 +483,4 @@
- # 435 reserved for clone3
- 437	common	openat2			sys_openat2
+@@ -486,3 +486,4 @@
  438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
 +441	common	fsinfo				sys_fsinfo
 diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index c17cb77eb150..37aa4ed3dbef 100644
+index 0d0667a9fbd70..70da9bad3f79d 100644
 --- a/arch/x86/entry/syscalls/syscall_32.tbl
 +++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -442,3 +442,4 @@
- 435	i386	clone3			sys_clone3			__ia32_sys_clone3
- 437	i386	openat2			sys_openat2			__ia32_sys_openat2
- 438	i386	pidfd_getfd		sys_pidfd_getfd			__ia32_sys_pidfd_getfd
-+441	i386	fsinfo			sys_fsinfo			__ia32_sys_fsinfo
+@@ -445,3 +445,4 @@
+ 438	i386	pidfd_getfd		sys_pidfd_getfd
+ 439	i386	faccessat2		sys_faccessat2
+ 440	i386	process_madvise		sys_process_madvise
++441	i386	fsinfo			sys_fsinfo
 diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 44d510bc9b78..eacf0b7c5c3d 100644
+index 379819244b91d..94a51b78e85ed 100644
 --- a/arch/x86/entry/syscalls/syscall_64.tbl
 +++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -359,6 +359,7 @@
- 435	common	clone3			__x64_sys_clone3/ptregs
- 437	common	openat2			__x64_sys_openat2
- 438	common	pidfd_getfd		__x64_sys_pidfd_getfd
-+441	common	fsinfo			__x64_sys_fsinfo
+@@ -362,6 +362,7 @@
+ 438	common	pidfd_getfd		sys_pidfd_getfd
+ 439	common	faccessat2		sys_faccessat2
+ 440	common	process_madvise		sys_process_madvise
++441	common	fsinfo			sys_fsinfo
  
  #
- # x32-specific system call numbers start at 512 to avoid cache impact
+ # Due to a historical design error, certain syscalls are numbered differently
 diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
-index 85a9ab1bc04d..4d7803550754 100644
+index b070f272995d6..2723c2f43c59a 100644
 --- a/arch/xtensa/kernel/syscalls/syscall.tbl
 +++ b/arch/xtensa/kernel/syscalls/syscall.tbl
-@@ -408,3 +408,4 @@
- 435	common	clone3				sys_clone3
- 437	common	openat2				sys_openat2
+@@ -411,3 +411,4 @@
  438	common	pidfd_getfd			sys_pidfd_getfd
+ 439	common	faccessat2			sys_faccessat2
+ 440	common	process_madvise			sys_process_madvise
 +441	common	fsinfo				sys_fsinfo
 diff --git a/fs/Kconfig b/fs/Kconfig
-index 708ba336e689..1d1b48059ec9 100644
+index aa4c122823018..b84156272983b 100644
 --- a/fs/Kconfig
 +++ b/fs/Kconfig
 @@ -15,6 +15,13 @@ config VALIDATE_FS_PARSER
@@ -325,7 +325,7 @@ index 708ba336e689..1d1b48059ec9 100644
  
  config FS_IOMAP
 diff --git a/fs/Makefile b/fs/Makefile
-index 505e51166973..b5cc9bcd17a4 100644
+index 999d1a23f036c..02da949de3b42 100644
 --- a/fs/Makefile
 +++ b/fs/Makefile
 @@ -54,6 +54,7 @@ obj-$(CONFIG_COREDUMP)		+= coredump.o
@@ -338,10 +338,10 @@ index 505e51166973..b5cc9bcd17a4 100644
  obj-y				+= quota/
 diff --git a/fs/fsinfo.c b/fs/fsinfo.c
 new file mode 100644
-index 000000000000..1830c73f37a7
+index 0000000000000..7d9c73e9cbdef
 --- /dev/null
 +++ b/fs/fsinfo.c
-@@ -0,0 +1,586 @@
+@@ -0,0 +1,596 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Filesystem information query.
 + *
@@ -361,26 +361,36 @@ index 000000000000..1830c73f37a7
 +#include "internal.h"
 +
 +/**
++ * fsinfo_opaque - Store opaque blob as an fsinfo attribute value.
++ * @s: The blob to store (may be NULL)
++ * @ctx: The parameter context
++ * @len: The length of the blob
++ */
++int fsinfo_opaque(const void *s, struct fsinfo_context *ctx, unsigned int len)
++{
++	void *p = ctx->buffer;
++	int ret = 0;
++
++	if (s) {
++		if (!ctx->want_size_only)
++			memcpy(p, s, len);
++		ret = len;
++	}
++
++	return ret;
++}
++EXPORT_SYMBOL(fsinfo_opaque);
++
++/**
 + * fsinfo_string - Store a NUL-terminated string as an fsinfo attribute value.
 + * @s: The string to store (may be NULL)
 + * @ctx: The parameter context
 + */
 +int fsinfo_string(const char *s, struct fsinfo_context *ctx)
 +{
-+	unsigned int len;
-+	char *p = ctx->buffer;
-+	int ret = 0;
-+
-+	if (s) {
-+		len = min_t(size_t, strlen(s), ctx->buf_size - 1);
-+		if (!ctx->want_size_only) {
-+			memcpy(p, s, len);
-+			p[len] = 0;
-+		}
-+		ret = len;
-+	}
-+
-+	return ret;
++	if (!s)
++		return 1;
++	return fsinfo_opaque(s, ctx, min_t(size_t, strlen(s) + 1, ctx->buf_size));
 +}
 +EXPORT_SYMBOL(fsinfo_string);
 +
@@ -929,7 +939,7 @@ index 000000000000..1830c73f37a7
 +	return ret;
 +}
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index fb0db8474141..13270f1a8663 100644
+index e1325dec4fa86..2d5a2f709f322 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
 @@ -68,6 +68,7 @@ struct fsverity_info;
@@ -940,7 +950,7 @@ index fb0db8474141..13270f1a8663 100644
  
  extern void __init inode_init(void);
  extern void __init inode_init_early(void);
-@@ -1958,6 +1959,9 @@ struct super_operations {
+@@ -1951,6 +1952,9 @@ struct super_operations {
  	int (*thaw_super) (struct super_block *);
  	int (*unfreeze_fs) (struct super_block *);
  	int (*statfs) (struct dentry *, struct kstatfs *);
@@ -952,10 +962,10 @@ index fb0db8474141..13270f1a8663 100644
  
 diff --git a/include/linux/fsinfo.h b/include/linux/fsinfo.h
 new file mode 100644
-index 000000000000..bf806669b4fb
+index 0000000000000..a811d69b02ff0
 --- /dev/null
 +++ b/include/linux/fsinfo.h
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,74 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/* Filesystem information query
 + *
@@ -1019,6 +1029,7 @@ index 000000000000..bf806669b4fb
 +#define FSINFO_LIST(A,G)	_FSINFO   (A, FSINFO_TYPE_LIST, sizeof(A##__STRUCT), G)
 +#define FSINFO_LIST_N(A,G)	_FSINFO_N (A, FSINFO_TYPE_LIST, sizeof(A##__STRUCT), G)
 +
++extern int fsinfo_opaque(const void *, struct fsinfo_context *, unsigned int);
 +extern int fsinfo_string(const char *, struct fsinfo_context *);
 +extern int fsinfo_generic_timestamp_info(struct path *, struct fsinfo_context *);
 +extern int fsinfo_generic_supports(struct path *, struct fsinfo_context *);
@@ -1030,7 +1041,7 @@ index 000000000000..bf806669b4fb
 +
 +#endif /* _LINUX_FSINFO_H */
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 1815065d52f3..623f61dcdb9b 100644
+index 37bea07c12f21..e315f719899a1 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
 @@ -47,6 +47,7 @@ struct stat64;
@@ -1038,42 +1049,42 @@ index 1815065d52f3..623f61dcdb9b 100644
  struct statfs64;
  struct statx;
 +struct fsinfo_params;
- struct __sysctl_args;
  struct sysinfo;
  struct timespec;
-@@ -1003,6 +1004,9 @@ asmlinkage long sys_pidfd_send_signal(int pidfd, int sig,
+ struct __kernel_old_timeval;
+@@ -1008,6 +1009,9 @@ asmlinkage long sys_pidfd_send_signal(int pidfd, int sig,
  				       siginfo_t __user *info,
  				       unsigned int flags);
  asmlinkage long sys_pidfd_getfd(int pidfd, int fd, unsigned int flags);
 +asmlinkage long sys_fsinfo(int dfd, const char __user *pathname,
-+			   struct fsinfo_params __user *params, size_t params_size,
++			   const struct fsinfo_params __user *params, size_t params_size,
 +			   void __user *result_buffer, size_t result_buf_size);
  
  /*
   * Architecture-specific system calls
 diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 3a3201e4618e..1708d24cf98d 100644
+index 2056318988f77..3a2e44f770f8e 100644
 --- a/include/uapi/asm-generic/unistd.h
 +++ b/include/uapi/asm-generic/unistd.h
-@@ -855,9 +855,11 @@ __SYSCALL(__NR_clone3, sys_clone3)
- __SYSCALL(__NR_openat2, sys_openat2)
- #define __NR_pidfd_getfd 438
- __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+@@ -859,9 +859,11 @@ __SYSCALL(__NR_pidfd_getfd, sys_pidfd_getfd)
+ __SYSCALL(__NR_faccessat2, sys_faccessat2)
+ #define __NR_process_madvise 440
+ __SYSCALL(__NR_process_madvise, sys_process_madvise)
 +#define __NR_fsinfo 441
 +__SYSCALL(__NR_fsinfo, sys_fsinfo)
  
  #undef __NR_syscalls
--#define __NR_syscalls 439
-+#define __NR_syscalls 442
+-#define __NR_syscalls 441
++#define __NR_syscalls 443
  
  /*
   * 32 bit systems traditionally used different
 diff --git a/include/uapi/linux/fsinfo.h b/include/uapi/linux/fsinfo.h
 new file mode 100644
-index 000000000000..e9b35b9b7629
+index 0000000000000..65892239ba86c
 --- /dev/null
 +++ b/include/uapi/linux/fsinfo.h
-@@ -0,0 +1,187 @@
+@@ -0,0 +1,189 @@
 +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 +/* fsinfo() definitions.
 + *
@@ -1225,8 +1236,10 @@ index 000000000000..e9b35b9b7629
 +	__u32	fs_ioc_getflags;	/* What FS_IOC_GETFLAGS may return */
 +	__u32	fs_ioc_setflags_set;	/* What FS_IOC_SETFLAGS may set */
 +	__u32	fs_ioc_setflags_clear;	/* What FS_IOC_SETFLAGS may clear */
++	__u32	fs_ioc_fsgetxattr_xflags; /* What FS_IOC_FSGETXATTR[A] may return in fsx_xflags */
++	__u32	fs_ioc_fssetxattr_xflags_set; /* What FS_IOC_FSSETXATTR may set in fsx_xflags */
++	__u32	fs_ioc_fssetxattr_xflags_clear; /* What FS_IOC_FSSETXATTR may set in fsx_xflags */
 +	__u32	win_file_attrs;		/* What DOS/Windows FILE_* attributes are supported */
-+	__u32	__padding[1];
 +};
 +
 +#define FSINFO_ATTR_SUPPORTS__STRUCT struct fsinfo_supports
@@ -1262,7 +1275,7 @@ index 000000000000..e9b35b9b7629
 +
 +#endif /* _UAPI_LINUX_FSINFO_H */
 diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 3b69a560a7ac..58246e6b5603 100644
+index f27ac94d5fa72..3cf167e82606f 100644
 --- a/kernel/sys_ni.c
 +++ b/kernel/sys_ni.c
 @@ -51,6 +51,7 @@ COND_SYSCALL_COMPAT(io_pgetevents);
@@ -1274,31 +1287,21 @@ index 3b69a560a7ac..58246e6b5603 100644
  /* fs/xattr.c */
  
 diff --git a/samples/vfs/Makefile b/samples/vfs/Makefile
-index 65acdde5c117..9159ad1d7fc5 100644
+index 6377a678134ac..8efb67c45ceaa 100644
 --- a/samples/vfs/Makefile
 +++ b/samples/vfs/Makefile
-@@ -1,10 +1,15 @@
+@@ -1,4 +1,4 @@
  # SPDX-License-Identifier: GPL-2.0-only
- # List of programs to build
-+
- hostprogs := \
-+	test-fsinfo \
- 	test-fsmount \
- 	test-statx
+-userprogs-always-y += test-fsmount test-statx
++userprogs-always-y += test-fsinfo test-fsmount test-statx
  
- always-y := $(hostprogs)
- 
-+HOSTCFLAGS_test-fsinfo.o += -I$(objtree)/usr/include
-+HOSTLDLIBS_test-fsinfo += -static -lm
-+
- HOSTCFLAGS_test-fsmount.o += -I$(objtree)/usr/include
- HOSTCFLAGS_test-statx.o += -I$(objtree)/usr/include
+ userccflags += -I usr/include
 diff --git a/samples/vfs/test-fsinfo.c b/samples/vfs/test-fsinfo.c
 new file mode 100644
-index 000000000000..2b53c735d330
+index 0000000000000..934b25399ffed
 --- /dev/null
 +++ b/samples/vfs/test-fsinfo.c
-@@ -0,0 +1,633 @@
+@@ -0,0 +1,646 @@
 +// SPDX-License-Identifier: GPL-2.0-or-later
 +/* Test the fsinfo() system call
 + *
@@ -1354,30 +1357,30 @@ index 000000000000..2b53c735d330
 +
 +static ssize_t get_fsinfo(const char *, const char *, struct fsinfo_params *, void **);
 +
-+static void dump_hex(unsigned int *data, int from, int to)
++static void dump_hex(FILE *f, unsigned char *data, int from, int to)
 +{
-+	unsigned offset, print_offset = 1, col = 0;
-+
-+	from /= 4;
-+	to = (to + 3) / 4;
++	unsigned offset, col = 0;
++	bool print_offset = true;
 +
 +	for (offset = from; offset < to; offset++) {
 +		if (print_offset) {
-+			printf("%04x: ", offset * 8);
++			fprintf(f, "%04x: ", offset);
 +			print_offset = 0;
 +		}
-+		printf("%08x", data[offset]);
++		fprintf(f, "%02x", data[offset]);
 +		col++;
 +		if ((col & 3) == 0) {
-+			printf("\n");
-+			print_offset = 1;
-+		} else {
-+			printf(" ");
++			if ((col & 15) == 0) {
++				fprintf(f, "\n");
++				print_offset = 1;
++			} else {
++				fprintf(f, " ");
++			}
 +		}
 +	}
 +
 +	if (!print_offset)
-+		printf("\n");
++		fprintf(f, "\n");
 +}
 +
 +static void dump_attribute_info(void *reply, unsigned int size)
@@ -1432,8 +1435,10 @@ index 000000000000..2b53c735d330
 +	       (unsigned long long)f->f_files.lo,
 +	       (unsigned long long)f->f_ffree.lo,
 +	       (unsigned long long)f->f_favail.lo);
-+	printf("\tbsize        : %llu\n", f->f_bsize);
-+	printf("\tfrsize       : %llu\n", f->f_frsize);
++	printf("\tbsize        : %llu\n",
++	       (unsigned long long)f->f_bsize);
++	printf("\tfrsize       : %llu\n",
++	       (unsigned long long)f->f_frsize);
 +}
 +
 +static void dump_fsinfo_generic_ids(void *reply, unsigned int size)
@@ -1482,16 +1487,19 @@ index 000000000000..2b53c735d330
 +	printf("\tstx_mask     : %x\n", f->stx_mask);
 +	printf("\tfs_ioc_*flags: get=%x set=%x clr=%x\n",
 +	       f->fs_ioc_getflags, f->fs_ioc_setflags_set, f->fs_ioc_setflags_clear);
++	printf("\tfs_ioc_*xattr: fsx_xflags: get=%x set=%x clr=%x\n",
++	       f->fs_ioc_fsgetxattr_xflags,
++	       f->fs_ioc_fssetxattr_xflags_set,
++	       f->fs_ioc_fssetxattr_xflags_clear);
 +	printf("\twin_fattrs   : %x\n", f->win_file_attrs);
 +}
 +
 +static void print_time(struct fsinfo_timestamp_one *t, char stamp)
 +{
-+	printf("\t%ctime       : gran=%gs range=%llx-%llx\n",
++	printf("\t%ctime       : gran=%uE%d range=%llx-%llx\n",
 +	       stamp,
-+	       t->gran_mantissa * pow(10., t->gran_exponent),
-+	       (long long)t->minimum,
-+	       (long long)t->maximum);
++	       t->gran_mantissa, t->gran_exponent,
++	       (long long)t->minimum, (long long)t->maximum);
 +}
 +
 +static void dump_fsinfo_generic_timestamp_info(void *reply, unsigned int size)
@@ -1594,6 +1602,22 @@ index 000000000000..2b53c735d330
 +	FSINFO_LIST	(FSINFO_ATTR_FSINFO_ATTRIBUTES,	fsinfo_meta_attributes),
 +	{}
 +};
++
++static __attribute__((noreturn))
++void bad_value(const char *what,
++	       struct fsinfo_params *params,
++	       const struct fsinfo_attribute *attr,
++	       const struct fsinfo_attribute_info *attr_info,
++	       void *reply, unsigned int size)
++{
++	printf("\n");
++	fprintf(stderr, "%s %s{%u}{%u} t=%x f=%x s=%x\n",
++		what, attr->name, params->Nth, params->Mth,
++		attr_info->type, attr_info->flags, attr_info->size);
++	fprintf(stderr, "size=%u\n", size);
++	dump_hex(stderr, reply, 0, size);
++	exit(1);
++}
 +
 +static void dump_value(unsigned int attr_id,
 +		       const struct fsinfo_attribute *attr,
@@ -1720,22 +1744,16 @@ index 000000000000..2b53c735d330
 +	if (size == -1) {
 +		if (errno == ENODATA) {
 +			if (!(attr_info->flags & (FSINFO_FLAGS_N | FSINFO_FLAGS_NM)) &&
-+			    params->Nth == 0 && params->Mth == 0) {
-+				fprintf(stderr,
-+					"Unexpected ENODATA (0x%x{%u}{%u})\n",
-+					params->request, params->Nth, params->Mth);
-+				exit(1);
-+			}
++			    params->Nth == 0 && params->Mth == 0)
++				bad_value("Unexpected ENODATA",
++					  params, attr, attr_info, r, size);
 +			free(r);
 +			return (params->Mth == 0) ? 2 : 1;
 +		}
 +		if (errno == EOPNOTSUPP) {
-+			if (params->Nth > 0 || params->Mth > 0) {
-+				fprintf(stderr,
-+					"Should return -ENODATA (0x%x{%u}{%u})\n",
-+					params->request, params->Nth, params->Mth);
-+				exit(1);
-+			}
++			if (params->Nth > 0 || params->Mth > 0)
++				bad_value("Should return ENODATA",
++					  params, attr, attr_info, r, size);
 +			//printf("\e[33m%s\e[m: <not supported>\n",
 +			//       fsinfo_attr_names[attr]);
 +			free(r);
@@ -1748,7 +1766,7 @@ index 000000000000..2b53c735d330
 +	if (raw) {
 +		if (size > 4096)
 +			size = 4096;
-+		dump_hex(r, 0, size);
++		dump_hex(stdout, r, 0, size);
 +		free(r);
 +		return 0;
 +	}
@@ -1766,8 +1784,12 @@ index 000000000000..2b53c735d330
 +	}
 +
 +	switch (attr_info->type) {
-+	case FSINFO_TYPE_VSTRUCT:
 +	case FSINFO_TYPE_STRING:
++		if (size == 0 || ((char *)r)[size - 1] != 0)
++			bad_value("Unterminated string",
++				  params, attr, attr_info, r, size);
++	case FSINFO_TYPE_VSTRUCT:
++	case FSINFO_TYPE_OPAQUE:
 +		dump_value(params->request, attr, attr_info, r, size);
 +		free(r);
 +		return 0;
@@ -1777,14 +1799,8 @@ index 000000000000..2b53c735d330
 +		free(r);
 +		return 0;
 +
-+	case FSINFO_TYPE_OPAQUE:
-+		free(r);
-+		return 0;
-+
 +	default:
-+		fprintf(stderr, "Fishy about %u 0x%x,%x,%x\n",
-+			params->request, attr_info->type, attr_info->flags, attr_info->size);
-+		exit(1);
++		bad_value("Fishy type", params, attr, attr_info, r, size);
 +	}
 +}
 +
@@ -1933,5 +1949,5 @@ index 000000000000..2b53c735d330
 +	return 0;
 +}
 -- 
-2.20.1
+2.25.1
 
