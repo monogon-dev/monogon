@@ -18,7 +18,3 @@ syntax = "proto3";
 package metropolis.proto.common;
 option go_package = "source.monogon.dev/metropolis/proto/common";
 
-enum TrustBackend {
-    DUMMY = 0;
-    TPM = 1;
-}

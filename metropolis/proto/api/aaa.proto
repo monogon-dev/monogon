@@ -1,0 +1,289 @@
+// Copyright 2020 The Monogon Project Authors.
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package metropolis.proto.api;
+option go_package = "source.monogon.dev/metropolis/proto/api";
+
+// Authentication, authorization and accounting.
+service AAA {
+    // Escrow is an endpoint used to retrieve short-lived access credentials to
+    // the cluster. These short-lived access credentials are x509 certificates
+    // that can then be used to directly authenticate to other RPC methods
+    // exposed by Metropolis. This short-lived certificate may or may not be
+    // fully self-standing cryptographically - this depends on the policy and
+    // other configuration of the system. The returned short-lived certificate
+    // may even be used as proofs within next Escrow calls in the case of more
+    // complex flows.
+    //
+    // The client in this RPC is an end-user of the cluster, be it a human or
+    // automated process that runs outside of a Metropolis cluster.
+    //
+    // To retrieve this short-lived certificate, the client must provide
+    // different kind of proofs to the server. Upon connecting and receiving
+    // the initial message from the client, the server will send a list of
+    // proof requests, detailing proofs that the client must need to fulfill to
+    // retrieve the requested credentials. Which proofs are requested depends
+    // on the configuration of the client. The way to fulfill these proofs
+    // depend on their kind, with some being provided in-band (eg.  access
+    // credentials, U2F codes), some being provided out of band (eg. an RPC
+    // channel opened from a given IP address or with a given existing TLS
+    // certificate), and some dependent on external systems (eg. SSO).
+    //
+    // If the requested identity within the first EscrowFromClient is not
+    // defined, the server may:
+    //
+    //  - Abort the connection immediately with an error about an unknown
+    //    identity being requested.
+    //  - Continue processing the Escrow RPC as if the identity existed, and
+    //    either gather enough other proofs to be able to trust the client
+    //    enough to abort it saying that the identity is unknown; or continue
+    //    and pretend that the other proofs submitted by the client are
+    //    invalid.
+    //
+    // Once the proofs are fulfilled by the client, the server will send an
+    // x509 PEM-encoded certificate that the client can use in subsequent
+    // calls to other Metropolis services.
+    //
+    // TODO(q3k): SPIFFE compatibility for short-lived certificates?
+    //
+    // This escrow flow can thus be used to implement several typical flows
+    // used for 'logging in' cluster users:
+    //
+    // Example: Username and password login
+    //
+    // This shows the simplest possible message flow for a simple interactive
+    // password authentication.
+    //
+    //   Client                                             Server
+    //     |                                                  |
+    //     |          .---------------------------.           |
+    //     |----------| parameters <              |-------->>>|
+    //     |          |  requested_identity_name: |           |
+    //     |          |    "janedoe"              |           |
+    //     |          |  public_key:              |           |
+    //     |          |    "DEADBEEF..."          |           |
+    //     |          | >                         |           |
+    //     |          '---------------------------'           |
+    //     |                                                  |
+    //     |          .---------------------------.           |
+    //     |<<<-------| needed <                  |-----------|
+    //     |          |  kind: PLAINTEXT_PASSWORD |           |
+    //     |          | >                         |           |
+    //     |          '---------------------------'           |
+    //     |                                                  |
+    //     |          .---------------------------.           |
+    //     |----------| proofs <                  |-------->>>|
+    //     |          |  plaintext_password: ".." |           |
+    //     |          | >                         |           |
+    //     |          '---------------------------'           |
+    //     |                                                  |
+    //     |          .---------------------------.           |
+    //     |<<<-------| fulfilled <               |-----------|
+    //     |          |  kind: PLAINTEXT_PASSWORD |           |
+    //     |          | >                         |           |
+    //     |          | emitted_certificate:      |           |
+    //     |          |   "DEADFOOD..."           |           |
+    //     |          '---------------------------'           |
+    //     |                                                  |
+    //     |<<<---------------- close ----------------------- |
+    //     |                                                  |
+    //
+    // Example: multi-phase OIDC with hardware assessment (simplified):
+    //
+    // This first requests a certificate that's valid for one day, and requires
+    // the interactive use of a browser. Then, shorter-term certificates
+    // (actually used to perform RPCs) are requested on demand, their lifetime
+    // corresponding to the access tokens emitted by the IdP, but requiring
+    // no interactive browser access or reconfirmations by the user.
+    //
+    //   Client                                             Server
+    //     |                                                  |
+    //     |     .--------------------------------------.     |
+    //     |<<<--| Exchange OIDC login proof and TPM    |-->>>|
+    //     |     | assessment for week-long certificate,|     |<--> IdP
+    //     |     | retrieve 1-day long certificate      |     |<--> User
+    //     |     | binding user to a refresh token on   |     |     Browser
+    //     |     | the server.                          |     |
+    //     |     '--------------------------------------'     |
+    //     |                                                  |
+    //     |     .--------------------------------------.     | -.
+    //     |<<<--| Exchange earlier certificate and TPM |-->>>|<--> IdP
+    //     |     | hardware assessment for 10-minute    |     | |
+    //     |     | long self-standing cryptographic     |     |  > Repeats as
+    //     |     | certificate used to access other     |     | |  long as
+    //     |     | services                             |     | \  possible.
+    //     |     '--------------------------------------'     | -'
+    //
+    // FAQ: How does this relate to access via web browsers?
+    //
+    // This flow is explicitly designed to be non dependent on web browers for
+    // security reasons. Due to these requirements, we cannot port this flow to
+    // always also work on browsers. Instead, we focus on the best that a
+    // standalone application on the client side can give us, eg. being able to
+    // use TLS client certificates, perform hardware attestation, and even talk
+    // to HSMs.
+    //
+    // In addition to this gRPC Escrow flow, an alternative flow geared
+    // especially towards web browser access (and eg. bearer token
+    // authentication and OAuth/OpenIDC integration) will be developed for
+    // users whose cluster policy allows for browser access. Both, however,
+    // will lead to retrieving identities from with the same namespace of
+    // entities.
+    //
+    rpc Escrow(stream EscrowFromClient) returns (stream EscrowFromServer);
+}
+
+message EscrowFromClient {
+    // Parameters used for the entirety of the escrow flow. These must be set
+    // only during the first EscrowFromClient message, and are ignored in
+    // further messages.
+    message Parameters {
+        // The requested identity name. This is currently opaque and not defined,
+        // but corresponds to the future 'Entity' system that Metropolis will
+        // implement. Required.
+        string requested_identity_name = 1;
+
+        // Public key for which the short-lived certificate will be issued.
+        // Currently, this must be an ed25519 public key's raw bytes (32
+        // bytes). In the future, other x509 signature algorithms might be
+        // supported.
+        // This key does not have to be the same key as the one that is part of
+        // the presented certificate during the Escrow RPC (if any). However,
+        // some proofs might have stricter requirements.
+        bytes public_key = 2;
+    }
+    Parameters parameters = 1;
+
+    // Proofs. These should only be submitted by the client after the server
+    // requests them, but if they are submitted within the first
+    // EscrowFromClientMessage they will be interpreted too. The problem with
+    // ahead of time proofs is that different a proof request from the server
+    // might parametrize the request in a way that would elicit a different
+    // answer from the client, so care must be taken to ensure that the
+    // requests from the server are verified against the assumption that the
+    // client makes (if any). Ideally, the client should be fully reactive to
+    // requested proofs, and not hardcode any behaviour.
+    message Proofs {
+        // Plaintext password in response to KIND_PLAINTEXT_PASSWORD proof
+        // request.
+        string plaintext_password = 1;
+    }
+    Proofs proofs = 2;
+}
+
+message EscrowFromServer {
+    // A proof requested from the server. Within an Escrow RPC, proofs can be
+    // either 'needed' or 'fulfilled'. Each proof has a kind, and kinds within
+    // all proof requests (either needed or fulfilled) are unique.
+    message ProofRequest {
+        enum Kind {
+            KIND_INVALID = 0;
+            // The client needs to present a long-lived 'refresh' certificate.
+            // If this is in `needed`, it means the client did not present a
+            // certificate and will need to abort this RPC and connect with one
+            // presented.
+            // If the client presents an invalid certificate, the Escrow RPC
+            // will fail.
+            KIND_REFRESH_CERTIFICATE = 1;
+            // The client needs to present a static, plaintext password/token.
+            // This can be fulfilled by setting
+            // EscrowFromClient.proofs.plaintext_password.
+            // If the client presents an invalid password, the Escrow RPC will
+            // fail.
+            KIND_PLAINTEXT_PASSWORD = 2;
+
+            // Future possibilities:
+            // // One-or-two-sided hardware assessment via TPM.
+            // KIND_HARDWARE_ASSESMENT_EXCHANGE = ...
+            // // Making the client proove that the certificate is stored on
+            // // some secure element.
+            // KIND_PRIVATE_KEY_IN_SECURE_ELEMENT = ...
+            // // Making the client go through an OIDC login flow, with the
+            // // server possibly storing the resulting refresh/access tokens.
+            // KIND_OIDC_FLOW_COMPLETION = ...
+        };
+        Kind kind = 1;
+    }
+    // Proofs that the server requests from the client which the client has not
+    // yet fulfilled. Within the lifecycle of the Escrow RPC, the needed proofs
+    // will only move from needed to fulfilled as the client submits more
+    // proofs.
+    repeated ProofRequest needed = 1;
+    // Proofs that the server accepted from the client.
+    repeated ProofRequest fulfilled = 2;
+
+    // If all proof requests are fulfilled, the bytes of the emitted PEM
+    // certificate.
+    bytes emitted_certificate = 3;
+}
+
+// Protobuf-encoded data that is part of certificates emitted by the
+// Metropolis CA. Encoded as protobuf and inserted into a Subject Alternative
+// Name of type otherName with type-id:
+//
+//     2.25.205720787499610521842135044124912906832.1.1
+//
+// TODO(q3k): register something under 1.3.6.1.4.1 and alloacte some OID within
+// that instead of relying on UUIDs within 2.25?
+message CertificateSAN {
+    // Validity descrises how consumers of this certificate should treat the
+    // information contained within it. Currently there's two kinds of
+    // validities, the difference between them being whether or not the
+    // certificate needs to actively be checked for revocation or not.
+    enum Validity {
+        VALIDITY_INVALID = 0;
+        // Certificate must only be used by components that can verify with
+        // Metropolis that it hasn't been revoked. The method (OCSP, CRL)
+        // intentionally left blank for now.
+        VALIDITY_ONLINE = 1;
+        // Certificate can be trusted on cryptographic basis alone as long as
+        // it hasn't expired, without consulting revocation system.
+        VALIDITY_OFFLINE = 2;
+    }
+    Validity validity = 1;
+
+    // Assertions are facts stated about the bearer of this certificate by the
+    // CA that emitted it - in this case, the Metropolis cluster that emitted
+    // it. Each assertion details exactly one fact of one kind, and there can
+    // be multiple assertions of any given kind.
+    message Assertion {
+        // IdentityConfirmed asserts that the emitter of this certificate has
+        // received all the required proofs at the time of issuance to confirm
+        // that the bearer of this certificate is the entity described by the
+        // identity name.
+        message IdentityConfirmed {
+            string name = 1;
+        };
+        // MetropolisRPCAllowed means that that connections established to
+        // Metropolis RPC endpoints will proceed. If given, IdentityConfirmed
+        // must also be given.
+        message MetropolisRPCAllowed {
+            // Future possibilities: scoping to only some (low privilege) RPC
+            // methods, ...
+        };
+        oneof kind {
+            IdentityConfirmed identity_confirmed = 1;
+            MetropolisRPCAllowed metropolis_rpc_allowed = 2;
+            // Future possibilties:
+            // OIDCIdentityConfirmed ...
+            // TPMColocationConfirmed ...
+            // SourceAddressConfirmed ...
+            // ReportedClientConfiguration ...
+        };
+    }
+    repeated Assertion assertions = 2;
+}
