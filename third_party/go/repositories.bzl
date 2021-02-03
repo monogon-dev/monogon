@@ -2578,6 +2578,7 @@ def go_repositories():
             "//third_party/go/patches:k8s-e2e-tests-providerless.patch",
             "//third_party/go/patches:k8s-fix-paths.patch",
             "//third_party/go/patches:k8s-fix-logs-path.patch",
+            "//third_party/go/patches:k8s-drop-legacy-log-path.patch",
         ],
         patch_args = ["-p1"],
         build_extra_args = [

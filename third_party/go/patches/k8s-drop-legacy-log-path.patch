@@ -1,0 +1,222 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From 227ccd88e378a002b7c23703eec96aa1d25949eb Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@brun.one>
+Date: Wed, 3 Feb 2021 16:47:38 +0100
+Subject: [PATCH] Drop legacy log path
+
+---
+ pkg/kubelet/kubelet.go                        |  7 ----
+ .../kuberuntime/kuberuntime_container.go      | 32 ---------------
+ pkg/kubelet/kuberuntime/kuberuntime_gc.go     | 39 -------------------
+ pkg/kubelet/runonce.go                        |  8 ----
+ test/e2e_node/log_path_test.go                | 19 +--------
+ 5 files changed, 1 insertion(+), 104 deletions(-)
+
+diff --git a/pkg/kubelet/kubelet.go b/pkg/kubelet/kubelet.go
+index 902dc7532e1..2d582f65b19 100644
+--- a/pkg/kubelet/kubelet.go
++++ b/pkg/kubelet/kubelet.go
+@@ -1250,13 +1250,6 @@ func (kl *Kubelet) initializeModules() error {
+ 		return err
+ 	}
+ 
+-	// If the container logs directory does not exist, create it.
+-	if _, err := os.Stat(ContainerLogsDir); err != nil {
+-		if err := kl.os.MkdirAll(ContainerLogsDir, 0755); err != nil {
+-			return fmt.Errorf("failed to create directory %q: %v", ContainerLogsDir, err)
+-		}
+-	}
+-
+ 	// Start the image manager.
+ 	kl.imageManager.Start()
+ 
+diff --git a/pkg/kubelet/kuberuntime/kuberuntime_container.go b/pkg/kubelet/kuberuntime/kuberuntime_container.go
+index af361122c35..d5b2d245219 100644
+--- a/pkg/kubelet/kuberuntime/kuberuntime_container.go
++++ b/pkg/kubelet/kuberuntime/kuberuntime_container.go
+@@ -190,25 +190,6 @@ func (m *kubeGenericRuntimeManager) startContainer(podSandboxID string, podSandb
+ 	}
+ 	m.recordContainerEvent(pod, container, containerID, v1.EventTypeNormal, events.StartedContainer, fmt.Sprintf("Started container %s", container.Name))
+ 
+-	// Symlink container logs to the legacy container log location for cluster logging
+-	// support.
+-	// TODO(random-liu): Remove this after cluster logging supports CRI container log path.
+-	containerMeta := containerConfig.GetMetadata()
+-	sandboxMeta := podSandboxConfig.GetMetadata()
+-	legacySymlink := legacyLogSymlink(containerID, containerMeta.Name, sandboxMeta.Name,
+-		sandboxMeta.Namespace)
+-	containerLog := filepath.Join(podSandboxConfig.LogDirectory, containerConfig.LogPath)
+-	// only create legacy symlink if containerLog path exists (or the error is not IsNotExist).
+-	// Because if containerLog path does not exist, only dangling legacySymlink is created.
+-	// This dangling legacySymlink is later removed by container gc, so it does not make sense
+-	// to create it in the first place. it happens when journald logging driver is used with docker.
+-	if _, err := m.osInterface.Stat(containerLog); !os.IsNotExist(err) {
+-		if err := m.osInterface.Symlink(containerLog, legacySymlink); err != nil {
+-			klog.Errorf("Failed to create legacy symbolic link %q to container %q log %q: %v",
+-				legacySymlink, containerID, containerLog, err)
+-		}
+-	}
+-
+ 	// Step 4: execute the post start hook.
+ 	if container.Lifecycle != nil && container.Lifecycle.PostStart != nil {
+ 		kubeContainerID := kubecontainer.ContainerID{
+@@ -861,19 +842,6 @@ func (m *kubeGenericRuntimeManager) removeContainerLog(containerID string) error
+ 		return err
+ 	}
+ 
+-	status, err := m.runtimeService.ContainerStatus(containerID)
+-	if err != nil {
+-		return fmt.Errorf("failed to get container status %q: %v", containerID, err)
+-	}
+-	// Remove the legacy container log symlink.
+-	// TODO(random-liu): Remove this after cluster logging supports CRI container log path.
+-	labeledInfo := getContainerInfoFromLabels(status.Labels)
+-	legacySymlink := legacyLogSymlink(containerID, labeledInfo.ContainerName, labeledInfo.PodName,
+-		labeledInfo.PodNamespace)
+-	if err := m.osInterface.Remove(legacySymlink); err != nil && !os.IsNotExist(err) {
+-		return fmt.Errorf("failed to remove container %q log legacy symbolic link %q: %v",
+-			containerID, legacySymlink, err)
+-	}
+ 	return nil
+ }
+ 
+diff --git a/pkg/kubelet/kuberuntime/kuberuntime_gc.go b/pkg/kubelet/kuberuntime/kuberuntime_gc.go
+index 8c4f786db9b..b5b104ee6a6 100644
+--- a/pkg/kubelet/kuberuntime/kuberuntime_gc.go
++++ b/pkg/kubelet/kuberuntime/kuberuntime_gc.go
+@@ -18,7 +18,6 @@ package kuberuntime
+ 
+ import (
+ 	"fmt"
+-	"os"
+ 	"path/filepath"
+ 	"sort"
+ 	"time"
+@@ -346,44 +345,6 @@ func (cgc *containerGC) evictPodLogsDirectories(allSourcesReady bool) error {
+ 			}
+ 		}
+ 	}
+-
+-	// Remove dead container log symlinks.
+-	// TODO(random-liu): Remove this after cluster logging supports CRI container log path.
+-	logSymlinks, _ := osInterface.Glob(filepath.Join(legacyContainerLogsDir, fmt.Sprintf("*.%s", legacyLogSuffix)))
+-	for _, logSymlink := range logSymlinks {
+-		if _, err := osInterface.Stat(logSymlink); os.IsNotExist(err) {
+-			if containerID, err := getContainerIDFromLegacyLogSymlink(logSymlink); err == nil {
+-				status, err := cgc.manager.runtimeService.ContainerStatus(containerID)
+-				if err != nil {
+-					// TODO: we should handle container not found (i.e. container was deleted) case differently
+-					// once https://github.com/kubernetes/kubernetes/issues/63336 is resolved
+-					klog.Infof("Error getting ContainerStatus for containerID %q: %v", containerID, err)
+-				} else if status.State != runtimeapi.ContainerState_CONTAINER_EXITED {
+-					// Here is how container log rotation works (see containerLogManager#rotateLatestLog):
+-					//
+-					// 1. rename current log to rotated log file whose filename contains current timestamp (fmt.Sprintf("%s.%s", log, timestamp))
+-					// 2. reopen the container log
+-					// 3. if #2 fails, rename rotated log file back to container log
+-					//
+-					// There is small but indeterministic amount of time during which log file doesn't exist (between steps #1 and #2, between #1 and #3).
+-					// Hence the symlink may be deemed unhealthy during that period.
+-					// See https://github.com/kubernetes/kubernetes/issues/52172
+-					//
+-					// We only remove unhealthy symlink for dead containers
+-					klog.V(5).Infof("Container %q is still running, not removing symlink %q.", containerID, logSymlink)
+-					continue
+-				}
+-			} else {
+-				klog.V(4).Infof("unable to obtain container Id: %v", err)
+-			}
+-			err := osInterface.Remove(logSymlink)
+-			if err != nil {
+-				klog.Errorf("Failed to remove container log dead symlink %q: %v", logSymlink, err)
+-			} else {
+-				klog.V(4).Infof("removed symlink %s", logSymlink)
+-			}
+-		}
+-	}
+ 	return nil
+ }
+ 
+diff --git a/pkg/kubelet/runonce.go b/pkg/kubelet/runonce.go
+index 1da9c225186..d6a5a63e92d 100644
+--- a/pkg/kubelet/runonce.go
++++ b/pkg/kubelet/runonce.go
+@@ -18,7 +18,6 @@ package kubelet
+ 
+ import (
+ 	"fmt"
+-	"os"
+ 	"time"
+ 
+ 	"k8s.io/api/core/v1"
+@@ -48,13 +47,6 @@ func (kl *Kubelet) RunOnce(updates <-chan kubetypes.PodUpdate) ([]RunPodResult,
+ 		return nil, err
+ 	}
+ 
+-	// If the container logs directory does not exist, create it.
+-	if _, err := os.Stat(ContainerLogsDir); err != nil {
+-		if err := kl.os.MkdirAll(ContainerLogsDir, 0755); err != nil {
+-			klog.Errorf("Failed to create directory %q: %v", ContainerLogsDir, err)
+-		}
+-	}
+-
+ 	select {
+ 	case u := <-updates:
+ 		klog.Infof("processing manifest with %d pods", len(u.Pods))
+diff --git a/test/e2e_node/log_path_test.go b/test/e2e_node/log_path_test.go
+index 41646f326a5..6568d31e242 100644
+--- a/test/e2e_node/log_path_test.go
++++ b/test/e2e_node/log_path_test.go
+@@ -18,11 +18,10 @@ package e2enode
+ 
+ import (
+ 	"context"
++
+ 	v1 "k8s.io/api/core/v1"
+ 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ 	"k8s.io/apimachinery/pkg/util/uuid"
+-	"k8s.io/kubernetes/pkg/kubelet"
+-	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+ 	"k8s.io/kubernetes/test/e2e/framework"
+ 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
+ 	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
+@@ -138,22 +137,6 @@ var _ = framework.KubeDescribe("ContainerLogPath [NodeConformance]", func() {
+ 				err := createAndWaitPod(makeLogPod(logPodName, logString))
+ 				framework.ExpectNoError(err, "Failed waiting for pod: %s to enter success state", logPodName)
+ 			})
+-			ginkgo.It("should print log to correct log path", func() {
+-
+-				logDir := kubelet.ContainerLogsDir
+-
+-				// get containerID from created Pod
+-				createdLogPod, err := podClient.Get(context.TODO(), logPodName, metav1.GetOptions{})
+-				logContainerID := kubecontainer.ParseContainerID(createdLogPod.Status.ContainerStatuses[0].ContainerID)
+-				framework.ExpectNoError(err, "Failed to get pod: %s", logPodName)
+-
+-				// build log file path
+-				expectedlogFile := logDir + "/" + logPodName + "_" + f.Namespace.Name + "_" + logContainerName + "-" + logContainerID.ID + ".log"
+-
+-				logCheckPodName := "log-check-" + string(uuid.NewUUID())
+-				err = createAndWaitPod(makeLogCheckPod(logCheckPodName, logString, expectedlogFile))
+-				framework.ExpectNoError(err, "Failed waiting for pod: %s to enter success state", logCheckPodName)
+-			})
+ 
+ 			ginkgo.It("should print log to correct cri log path", func() {
+ 
+-- 
+2.25.1
+

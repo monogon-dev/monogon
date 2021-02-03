@@ -33,6 +33,7 @@ func depsKubernetes(p *planner) {
 			"k8s-e2e-tests-providerless.patch",
 			"k8s-fix-paths.patch",
 			"k8s-fix-logs-path.patch",
+			"k8s-drop-legacy-log-path.patch",
 		),
 	).inject(
 		// repo infra, not requested by k8s, but used with bazel
