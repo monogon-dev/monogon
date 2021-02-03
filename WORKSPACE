@@ -39,11 +39,11 @@ http_archive(
 
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "222e49f034ca7a1d1231422cdb67066b885819885c356673cb1f72f748a3c9d4",
+    patch_args = ["-p1"],
     patches = [
         "//third_party/gazelle:add-prepatching.patch",
     ],
-    patch_args = ["-p1"],
+    sha256 = "222e49f034ca7a1d1231422cdb67066b885819885c356673cb1f72f748a3c9d4",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.3/bazel-gazelle-v0.22.3.tar.gz",
         "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.3/bazel-gazelle-v0.22.3.tar.gz",
@@ -51,7 +51,6 @@ http_archive(
 )
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
-
 load("@bazel_gazelle//:deps.bzl", "go_repository")
 
 # golang.org/x/sys is overridden by the go_rules protobuf dependency -> declare it first, since
@@ -154,9 +153,10 @@ pip_install()
 
 http_archive(
     name = "io_bazel_rules_docker",
-    sha256 = "1698624e878b0607052ae6131aa216d45ebb63871ec497f26c67455b34119c80",
-    strip_prefix = "rules_docker-0.15.0",
-    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.15.0/rules_docker-v0.15.0.tar.gz"],
+    sha256 = "336f711f646974ce51cbd10f0cbaaeac17364d92a9ebbcb88b168088b0df2d58",
+    strip_prefix = "rules_docker-622f9383d2a306840814c2aba8af0e5dae63c44e",
+    # Pinned to a specific commit because of #1675 and #1676 (Bazel 4 compatibility)
+    urls = ["https://github.com/bazelbuild/rules_docker/archive/622f9383d2a306840814c2aba8af0e5dae63c44e.tar.gz"],
 )
 
 load(
@@ -201,4 +201,5 @@ http_archive(
 
 # Load musl toolchain Metropolis sysroot tarball into external repository.
 load("//build/toolchain/musl-host-gcc:sysroot.bzl", "musl_sysroot_repositories")
+
 musl_sysroot_repositories()

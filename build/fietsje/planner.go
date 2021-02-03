@@ -142,11 +142,14 @@ func (c *collection) replace(oldpath, newpath, version string) *collection {
 // inject adds a dependency to a collection as if requested by the high-level dependency of the collection. This should
 // be used sparingly, for instance when high-level dependencies contain bazel code that uses some external workspaces
 // from Go modules, and those workspaces are not defined in parsed transitive dependency definitions like go.mod/sum.
-func (c *collection) inject(importpath, version string) *collection {
+func (c *collection) inject(importpath, version string, opts ...buildOpt) *collection {
 	d := c.highlevel.child(importpath, version)
 	c.transitive[importpath] = d
 	c.p.available[importpath] = d
 	c.p.enabled[importpath] = true
+	for _, o := range opts {
+		o(c.transitive[importpath])
+	}
 
 	return c
 }

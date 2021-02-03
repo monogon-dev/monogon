@@ -2612,6 +2612,10 @@ def go_repositories():
         importpath = "k8s.io/repo-infra",
         version = "v0.1.4-0.20210105022653-a3483874bd37",
         sum = "h1:0GPavEcPKBA0rYl7f6dO0mXYmx7t9RaXD3be2g23Ps4=",
+        pre_patches = [
+            "//third_party/go/patches:k8s-infra-bzl4-compat.patch",
+        ],
+        patch_args = ["-p1"],
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
