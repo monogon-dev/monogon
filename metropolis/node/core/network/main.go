@@ -20,8 +20,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
+	"os"
+	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -157,6 +159,26 @@ func (s *Service) GetIP(ctx context.Context, wait bool) (*net.IP, error) {
 	}
 }
 
+// sysctlOptions contains sysctl options to apply
+type sysctlOptions map[string]string
+
+// apply attempts to apply all options in sysctlOptions. It aborts on the first one which returns an error when applying.
+func (o sysctlOptions) apply() error {
+	for name, value := range o {
+		filePath := path.Join("/proc/sys/", strings.ReplaceAll(name, ".", "/"))
+		optionFile, err := os.OpenFile(filePath, os.O_WRONLY, 0)
+		if err != nil {
+			return fmt.Errorf("failed to set option %v: %w", name, err)
+		}
+		if _, err := optionFile.WriteString(value + "\n"); err != nil {
+			optionFile.Close()
+			return fmt.Errorf("failed to set option %v: %w", name, err)
+		}
+		optionFile.Close() // In a loop, defer'ing could open a lot of FDs
+	}
+	return nil
+}
+
 func (s *Service) Run(ctx context.Context) error {
 	logger := supervisor.Logger(ctx)
 	dnsSvc := dns.New(s.config.CorednsRegistrationChan)
@@ -179,8 +201,25 @@ func (s *Service) Run(ctx context.Context) error {
 		logger.Fatalf("Failed to set up nftables base chains: %v", err)
 	}
 
-	if err := ioutil.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1\n"), 0644); err != nil {
-		logger.Fatalf("Failed to enable IPv4 forwarding: %v", err)
+	sysctlOpts := sysctlOptions{
+		// Enable IP forwarding for our pods
+		"net.ipv4.ip_forward": "1",
+		// Enable strict reverse path filtering on all interfaces (important for spoofing prevention from Pods with CAP_NET_ADMIN)
+		"net.ipv4.conf.all.rp_filter": "1",
+		// Disable source routing
+		"net.ipv4.conf.all.accept_source_route": "0",
+
+		// Set congestion control to Google BBR
+		"net.ipv4.tcp_congestion_control": "bbr",
+
+		// Increase Linux socket kernel buffer sizes to 16MiB (needed for fast datacenter networks)
+		"net.core.rmem_max": "16777216",
+		"net.core.wmem_max": "16777216",
+		"net.ipv4.tcp_rmem": "4096 87380 16777216",
+		"net.ipv4.tcp_wmem": "4096 87380 16777216",
+	}
+	if err := sysctlOpts.apply(); err != nil {
+		logger.Fatalf("Failed to set up kernel network config: %v", err)
 	}
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
