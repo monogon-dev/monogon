@@ -59,11 +59,15 @@ func (d *Directory) inode() *inodeCompact {
 }
 
 func (d *Directory) writeTo(w *uncompressedInodeWriter) error {
-	d.Children = append(d.Children, ".", "..")
-	sort.Strings(d.Children)
-	var nameStartOffset = binary.Size(directoryEntryRaw{}) * len(d.Children)
+	// children is d.Children with appended backrefs (. and ..), copied to not pollute source
+	children := make([]string, len(d.Children))
+	copy(children, d.Children)
+	children = append(children, ".", "..")
+	sort.Strings(children)
+
+	nameStartOffset := binary.Size(directoryEntryRaw{}) * len(children)
 	var rawEntries []directoryEntryRaw
-	for _, ent := range d.Children {
+	for _, ent := range children {
 		if nameStartOffset > math.MaxUint16 {
 			return errors.New("directory name offset out of range, too many or too big entries")
 		}
@@ -73,7 +77,7 @@ func (d *Directory) writeTo(w *uncompressedInodeWriter) error {
 		nameStartOffset += len(ent)
 	}
 	for i, ent := range rawEntries {
-		targetPath := path.Join(w.pathname, d.Children[i])
+		targetPath := path.Join(w.pathname, children[i])
 		if targetPath == ".." {
 			targetPath = "."
 		}
@@ -85,7 +89,7 @@ func (d *Directory) writeTo(w *uncompressedInodeWriter) error {
 			return fmt.Errorf("failed to write dirent: %w", err)
 		}
 	}
-	for _, childName := range d.Children {
+	for _, childName := range children {
 		if _, err := w.Write([]byte(childName)); err != nil {
 			return fmt.Errorf("failed to write dirent name: %w", err)
 		}
