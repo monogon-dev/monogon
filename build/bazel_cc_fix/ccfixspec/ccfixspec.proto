@@ -1,0 +1,56 @@
+// Copyright 2020 The Monogon Project Authors.
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package ccfixspec;
+
+// CCFixSpec is the root configuration message for bazel_cc_fix
+message CCFixSpec {
+  // replace contains replace directives which modify normal include file resolution. They can be used to for example
+  // redirect system includes to third-party library to the correct inter-workspace path or to change the location
+  // of certain generated files.
+  repeated Replace replace = 1;
+
+  // See GeneratedFile
+  repeated GeneratedFile generated_file = 2;
+
+  // If set, all files in this directory are treated as generated files. Useful for out-of-tree build systems like
+  // meson and cmake. Shouldn't be set on build systems which build in-tree.
+  string build_dir = 3;
+}
+
+message Replace {
+  enum Type {
+    UNKNOWN = 0;
+    // SYSTEM replaces included system headers (within < >) with the given
+    // workspace or inter-workspace (external/<otherworkspace>) paths. It
+    // matches literally as these files are generally not resolvable.
+    SYSTEM = 1;
+    // WORKSPACE replaces included workspace-relative headers (after resolving)
+    // with the given workspace or inter-workspace paths. It matches
+    // pre-resolved workspace-relative paths.
+    WORKSPACE = 2;
+  }
+  Type type = 1;
+  string from = 2;
+  string to = 3;
+}
+
+// GeneratedFile represents a generated file which is not present in the
+// workspace as it has not been generated yet. Specifying it explicitly allows
+// the resolver to know about it an resolve it properly.
+message GeneratedFile { string path = 1; }

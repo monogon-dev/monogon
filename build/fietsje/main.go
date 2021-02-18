@@ -81,6 +81,9 @@ func main() {
 	p.collect("github.com/rekby/gpt", "a930afbc6edcc89c83d39b79e52025698156178d")
 	p.collect("github.com/yalue/native_endian", "51013b03be4fd97b0aabf29a6923e60359294186")
 
+	// Used by //build/bazel_cc_fix, override to make sure we use the latest version
+	p.collectOverride("github.com/mattn/go-shellwords", "v1.0.11")
+
 	// Used by //metropolis/build/mkimage
 	p.collect("github.com/diskfs/go-diskfs", "v1.0.0").use(
 		"gopkg.in/djherbis/times.v1",

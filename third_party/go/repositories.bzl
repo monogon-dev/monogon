@@ -1407,6 +1407,16 @@ def go_repositories():
         ],
     )
     go_repository(
+        name = "com_github_mattn_go_shellwords",
+        importpath = "github.com/mattn/go-shellwords",
+        version = "v1.0.11",
+        sum = "h1:vCoR9VPpsk/TZFW2JwK5I9S0xdrtUq2bph6/YjEPnaw=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
         name = "com_github_matttproud_golang_protobuf_extensions",
         importpath = "github.com/matttproud/golang_protobuf_extensions",
         version = "v1.0.1",

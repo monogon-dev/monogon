@@ -1624,6 +1624,13 @@ entry: <
 >
 entry: <
   import_path: "github.com/mattn/go-shellwords"
+  version: "v1.0.11"
+  bazel_name: "com_github_mattn_go_shellwords"
+  sum: "h1:vCoR9VPpsk/TZFW2JwK5I9S0xdrtUq2bph6/YjEPnaw="
+  semver: "v1.0.11"
+>
+entry: <
+  import_path: "github.com/mattn/go-shellwords"
   version: "v1.0.5"
   bazel_name: "com_github_mattn_go_shellwords"
   sum: "h1:JhhFTIOslh5ZsPrpa3Wdg8bF0WI3b44EMblmU9wIsXc="

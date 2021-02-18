@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/build/bazel_cc_fix",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/bazel_cc_fix/ccfixspec:go_default_library",
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@com_github_mattn_go_shellwords//:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "bazel_cc_fix",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

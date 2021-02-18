@@ -1,0 +1,23 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+proto_library(
+    name = "build_bazel_cc_fix_ccfixspec_proto",
+    srcs = ["ccfixspec.proto"],
+    visibility = ["//visibility:public"],
+)
+
+go_proto_library(
+    name = "build_bazel_cc_fix_ccfixspec_go_proto",
+    importpath = "source.monogon.dev/build/bazel_cc_fix/ccfixspec",
+    proto = ":build_bazel_cc_fix_ccfixspec_proto",
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "go_default_library",
+    embed = [":build_bazel_cc_fix_ccfixspec_go_proto"],
+    importpath = "source.monogon.dev/build/bazel_cc_fix/ccfixspec",
+    visibility = ["//visibility:public"],
+)
