@@ -18,29 +18,23 @@
 Ktest provides a macro to run tests under a normal Metropolis node kernel
 """
 
-def ktest(deps, tester, initramfs_extra, cmdline):
-    native.genrule(
+load("//metropolis/node/build:def.bzl", "node_initramfs")
+
+def _dict_union(x, y):
+    z = {}
+    z.update(x)
+    z.update(y)
+    return z
+
+def ktest(tester, cmdline = "", files = {}, files_cc = {}):
+    node_initramfs(
         name = "test_initramfs",
-        srcs = [
-            "//metropolis/test/ktest/init",
-        ] + deps + [tester],
-        outs = [
-            "initramfs.cpio.lz4",
-        ],
+        files = _dict_union({
+            "//metropolis/test/ktest/init": "/init",
+            tester: "/tester",
+        }, files),
+        files_cc = files_cc,
         testonly = True,
-        cmd = """
-        $(location @linux//:gen_init_cpio) - <<- 'EOF' | lz4 -l > \"$@\" 
-dir /dev 0755 0 0
-nod /dev/console 0600 0 0 c 5 1
-nod /dev/null 0644 0 0 c 1 3
-file /init $(location //metropolis/test/ktest/init) 0755 0 0
-file /tester $(location """ + tester + """) 0755 0 0
-""" + initramfs_extra + """
-EOF
-        """,
-        tools = [
-            "@linux//:gen_init_cpio",
-        ],
     )
 
     native.sh_test(

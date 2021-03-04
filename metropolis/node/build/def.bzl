@@ -195,7 +195,8 @@ def _node_initramfs_impl(ctx):
         arguments = ["-l", initramfs_raw.path, initramfs.path],
     )
 
-    return [DefaultInfo(files = depset([initramfs]))]
+    # TODO(q3k): Document why this is needed
+    return [DefaultInfo(runfiles = ctx.runfiles(files = [initramfs]), files = depset([initramfs]))]
 
 node_initramfs = rule(
     implementation = _node_initramfs_impl,

@@ -33,7 +33,5 @@ go_test(
 
 ktest(
     cmdline = "ramdisk_size=128",
-    initramfs_extra = "",
     tester = ":go_default_test",
-    deps = [],
 )

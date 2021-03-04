@@ -1,0 +1,1146 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From 0f851156fc72247f8a6ad27dc5d98c1f18a11390 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@nexantic.com>
+Date: Thu, 4 Mar 2021 14:42:52 +0100
+Subject: [PATCH] bazel_cc_fix patch
+
+---
+ lib/blkdev.c                           | 10 +++++-----
+ lib/canonicalize.c                     |  6 +++---
+ lib/color-names.c                      |  4 ++--
+ lib/cpuset.c                           |  4 ++--
+ lib/crc32.c                            |  2 +-
+ lib/crc32c.c                           |  2 +-
+ lib/encode.c                           |  4 ++--
+ lib/env.c                              |  2 +-
+ lib/fileutils.c                        |  6 +++---
+ lib/idcache.c                          |  4 ++--
+ lib/ismounted.c                        | 10 +++++-----
+ lib/linux_version.c                    |  4 ++--
+ lib/loopdev.c                          | 20 ++++++++++----------
+ lib/mangle.c                           |  4 ++--
+ lib/match.c                            |  2 +-
+ lib/mbsalign.c                         |  8 ++++----
+ lib/mbsedit.c                          |  4 ++--
+ lib/md5.c                              |  2 +-
+ lib/pager.c                            | 10 +++++-----
+ lib/path.c                             | 14 +++++++-------
+ lib/procutils.c                        | 10 +++++-----
+ lib/pwdutils.c                         |  6 +++---
+ lib/randutils.c                        |  6 +++---
+ lib/setproctitle.c                     |  2 +-
+ lib/sha1.c                             |  2 +-
+ lib/signames.c                         |  6 +++---
+ lib/strutils.c                         | 10 +++++-----
+ lib/strv.c                             |  4 ++--
+ lib/sysfs.c                            | 16 ++++++++--------
+ lib/timeutils.c                        |  8 ++++----
+ lib/ttyutils.c                         |  4 ++--
+ libblkid/src/blkidP.h                  | 14 +++++++-------
+ libblkid/src/cache.c                   |  2 +-
+ libblkid/src/config.c                  |  2 +-
+ libblkid/src/devname.c                 |  6 +++---
+ libblkid/src/devno.c                   |  4 ++--
+ libblkid/src/evaluate.c                |  6 +++---
+ libblkid/src/partitions/bsd.c          |  2 +-
+ libblkid/src/partitions/dos.c          |  2 +-
+ libblkid/src/partitions/gpt.c          |  2 +-
+ libblkid/src/partitions/minix.c        |  2 +-
+ libblkid/src/partitions/partitions.c   |  4 ++--
+ libblkid/src/partitions/partitions.h   |  4 ++--
+ libblkid/src/partitions/sgi.c          |  2 +-
+ libblkid/src/partitions/sun.c          |  2 +-
+ libblkid/src/probe.c                   |  8 ++++----
+ libblkid/src/save.c                    |  4 ++--
+ libblkid/src/superblocks/bluestore.c   |  2 +-
+ libblkid/src/superblocks/drbdmanage.c  |  2 +-
+ libblkid/src/superblocks/hfs.c         |  2 +-
+ libblkid/src/superblocks/minix.c       |  2 +-
+ libblkid/src/superblocks/mpool.c       |  2 +-
+ libblkid/src/superblocks/nilfs.c       |  2 +-
+ libblkid/src/superblocks/squashfs.c    |  2 +-
+ libblkid/src/superblocks/stratis.c     |  2 +-
+ libblkid/src/superblocks/superblocks.h |  2 +-
+ libblkid/src/superblocks/vfat.c        |  2 +-
+ libblkid/src/topology/sysfs.c          |  2 +-
+ libblkid/src/topology/topology.h       |  2 +-
+ libblkid/src/verify.c                  |  2 +-
+ libuuid/src/gen_uuid.c                 | 12 ++++++------
+ misc-utils/blkid.c                     | 16 ++++++++--------
+ misc-utils/uuidgen.c                   |  8 ++++----
+ 63 files changed, 162 insertions(+), 162 deletions(-)
+
+diff --git a/lib/blkdev.c b/lib/blkdev.c
+index c22853ddc..852c3bcfb 100644
+--- a/lib/blkdev.c
++++ b/lib/blkdev.c
+@@ -27,11 +27,11 @@
+ # define EBADFD 77		/* File descriptor in bad state */
+ #endif
+ 
+-#include "blkdev.h"
+-#include "c.h"
+-#include "linux_version.h"
+-#include "fileutils.h"
+-#include "nls.h"
++#include "include/blkdev.h"
++#include "include/c.h"
++#include "include/linux_version.h"
++#include "include/fileutils.h"
++#include "include/nls.h"
+ 
+ static long
+ blkdev_valid_offset (int fd, off_t offset) {
+diff --git a/lib/canonicalize.c b/lib/canonicalize.c
+index e101c5b7a..05ad92660 100644
+--- a/lib/canonicalize.c
++++ b/lib/canonicalize.c
+@@ -16,9 +16,9 @@
+ #include <sys/stat.h>
+ #include <sys/wait.h>
+ 
+-#include "canonicalize.h"
+-#include "pathnames.h"
+-#include "all-io.h"
++#include "include/canonicalize.h"
++#include "include/pathnames.h"
++#include "include/all-io.h"
+ 
+ /*
+  * Converts private "dm-N" names to "/dev/mapper/<name>"
+diff --git a/lib/color-names.c b/lib/color-names.c
+index 9b1505e4b..3e956312e 100644
+--- a/lib/color-names.c
++++ b/lib/color-names.c
+@@ -4,8 +4,8 @@
+  *
+  * Written by Karel Zak <kzak@redhat.com>
+  */
+-#include "c.h"
+-#include "color-names.h"
++#include "include/c.h"
++#include "include/color-names.h"
+ 
+ struct ul_color_name {
+ 	const char *name;
+diff --git a/lib/cpuset.c b/lib/cpuset.c
+index 2847db853..e8fd4a6d4 100644
+--- a/lib/cpuset.c
++++ b/lib/cpuset.c
+@@ -22,8 +22,8 @@
+ #include <ctype.h>
+ #include <sys/syscall.h>
+ 
+-#include "cpuset.h"
+-#include "c.h"
++#include "include/cpuset.h"
++#include "include/c.h"
+ 
+ static inline int val_to_char(int v)
+ {
+diff --git a/lib/crc32.c b/lib/crc32.c
+index 824693d01..2a213c431 100644
+--- a/lib/crc32.c
++++ b/lib/crc32.c
+@@ -40,7 +40,7 @@
+ 
+ #include <stdio.h>
+ 
+-#include "crc32.h"
++#include "include/crc32.h"
+ 
+ 
+ static const uint32_t crc32_tab[] = {
+diff --git a/lib/crc32c.c b/lib/crc32c.c
+index 49e7543f6..afcd4321b 100644
+--- a/lib/crc32c.c
++++ b/lib/crc32c.c
+@@ -10,7 +10,7 @@
+  *  code or tables extracted from it, as desired without restriction.
+  */
+ 
+-#include "crc32c.h"
++#include "include/crc32c.h"
+ 
+ static const uint32_t crc32Table[256] = {
+ 	0x00000000L, 0xF26B8303L, 0xE13B70F7L, 0x1350F3F4L,
+diff --git a/lib/encode.c b/lib/encode.c
+index 10b5971c5..2367dab40 100644
+--- a/lib/encode.c
++++ b/lib/encode.c
+@@ -8,8 +8,8 @@
+  * This file may be redistributed under the terms of the
+  * GNU Lesser General Public License.
+  */
+-#include "c.h"
+-#include "encode.h"
++#include "include/c.h"
++#include "include/encode.h"
+ 
+ size_t ul_encode_to_utf8(int enc, unsigned char *dest, size_t len,
+ 			const unsigned char *src, size_t count)
+diff --git a/lib/env.c b/lib/env.c
+index 91c935cf6..02a1b6f0d 100644
+--- a/lib/env.c
++++ b/lib/env.c
+@@ -18,7 +18,7 @@
+ #include <unistd.h>
+ #include <sys/types.h>
+ 
+-#include "env.h"
++#include "include/env.h"
+ 
+ #ifndef HAVE_ENVIRON_DECL
+ extern char **environ;
+diff --git a/lib/fileutils.c b/lib/fileutils.c
+index 003f890f9..511a849e0 100644
+--- a/lib/fileutils.c
++++ b/lib/fileutils.c
+@@ -11,9 +11,9 @@
+ #include <sys/time.h>
+ #include <sys/resource.h>
+ 
+-#include "c.h"
+-#include "fileutils.h"
+-#include "pathnames.h"
++#include "include/c.h"
++#include "include/fileutils.h"
++#include "include/pathnames.h"
+ 
+ int mkstemp_cloexec(char *template)
+ {
+diff --git a/lib/idcache.c b/lib/idcache.c
+index 55502238d..625121178 100644
+--- a/lib/idcache.c
++++ b/lib/idcache.c
+@@ -9,8 +9,8 @@
+ #include <grp.h>
+ #include <sys/types.h>
+ 
+-#include "c.h"
+-#include "idcache.h"
++#include "include/c.h"
++#include "include/idcache.h"
+ 
+ struct identry *get_id(struct idcache *ic, unsigned long int id)
+ {
+diff --git a/lib/ismounted.c b/lib/ismounted.c
+index 9a20b2367..ec29d64f5 100644
+--- a/lib/ismounted.c
++++ b/lib/ismounted.c
+@@ -28,12 +28,12 @@
+ # endif
+ #endif
+ 
+-#include "pathnames.h"
+-#include "strutils.h"
+-#include "ismounted.h"
+-#include "c.h"
++#include "include/pathnames.h"
++#include "include/strutils.h"
++#include "include/ismounted.h"
++#include "include/c.h"
+ #ifdef __linux__
+-# include "loopdev.h"
++#include "include/loopdev.h"
+ #endif
+ 
+ 
+diff --git a/lib/linux_version.c b/lib/linux_version.c
+index 119869e5e..bea8bcf86 100644
+--- a/lib/linux_version.c
++++ b/lib/linux_version.c
+@@ -5,8 +5,8 @@
+ #include <stdio.h>
+ #include <sys/utsname.h>
+ 
+-#include "c.h"
+-#include "linux_version.h"
++#include "include/c.h"
++#include "include/linux_version.h"
+ 
+ int get_linux_version (void)
+ {
+diff --git a/lib/loopdev.c b/lib/loopdev.c
+index 7f299ebf3..ca2e35014 100644
+--- a/lib/loopdev.c
++++ b/lib/loopdev.c
+@@ -33,15 +33,15 @@
+ #include <inttypes.h>
+ #include <dirent.h>
+ 
+-#include "linux_version.h"
+-#include "c.h"
+-#include "sysfs.h"
+-#include "pathnames.h"
+-#include "loopdev.h"
+-#include "canonicalize.h"
+-#include "blkdev.h"
+-#include "debug.h"
+-#include "fileutils.h"
++#include "include/linux_version.h"
++#include "include/c.h"
++#include "include/sysfs.h"
++#include "include/pathnames.h"
++#include "include/loopdev.h"
++#include "include/canonicalize.h"
++#include "include/blkdev.h"
++#include "include/debug.h"
++#include "include/fileutils.h"
+ 
+ /*
+  * Debug stuff (based on include/debug.h)
+@@ -58,7 +58,7 @@ UL_DEBUG_DEFINE_MASKNAMES(loopdev) = UL_DEBUG_EMPTY_MASKNAMES;
+ #define ON_DBG(m, x)    __UL_DBG_CALL(loopdev, LOOPDEV_DEBUG_, m, x)
+ 
+ #define UL_DEBUG_CURRENT_MASK	UL_DEBUG_MASK(loopdev)
+-#include "debugobj.h"
++#include "include/debugobj.h"
+ 
+ static void loopdev_init_debug(void)
+ {
+diff --git a/lib/mangle.c b/lib/mangle.c
+index 1a3b89ae4..ebd9af5ac 100644
+--- a/lib/mangle.c
++++ b/lib/mangle.c
+@@ -11,8 +11,8 @@
+ #include <string.h>
+ #include <ctype.h>
+ 
+-#include "mangle.h"
+-#include "c.h"
++#include "include/mangle.h"
++#include "include/c.h"
+ 
+ #define isoctal(a)		(((a) & ~7) == '0')
+ 
+diff --git a/lib/match.c b/lib/match.c
+index a286a190c..b35302df2 100644
+--- a/lib/match.c
++++ b/lib/match.c
+@@ -7,7 +7,7 @@
+ 
+ #include <string.h>
+ 
+-#include "match.h"
++#include "include/match.h"
+ 
+ /*
+  * match_fstype:
+diff --git a/lib/mbsalign.c b/lib/mbsalign.c
+index e251202af..305bf8f83 100644
+--- a/lib/mbsalign.c
++++ b/lib/mbsalign.c
+@@ -23,10 +23,10 @@
+ #include <limits.h>
+ #include <ctype.h>
+ 
+-#include "c.h"
+-#include "mbsalign.h"
+-#include "strutils.h"
+-#include "widechar.h"
++#include "include/c.h"
++#include "include/mbsalign.h"
++#include "include/strutils.h"
++#include "include/widechar.h"
+ 
+ /*
+  * Counts number of cells in multibyte string. All control and
+diff --git a/lib/mbsedit.c b/lib/mbsedit.c
+index 8ce59016f..9d69e0820 100644
+--- a/lib/mbsedit.c
++++ b/lib/mbsedit.c
+@@ -12,8 +12,8 @@
+ #include <errno.h>
+ #include <stdio.h>
+ 
+-#include "mbsalign.h"
+-#include "mbsedit.h"
++#include "include/mbsalign.h"
++#include "include/mbsedit.h"
+ 
+ struct mbs_editor *mbs_new_edit(char *buf, size_t bufsz, size_t ncells)
+ {
+diff --git a/lib/md5.c b/lib/md5.c
+index 3765ab93e..5b1b3ccbb 100644
+--- a/lib/md5.c
++++ b/lib/md5.c
+@@ -16,7 +16,7 @@
+  */
+ #include <string.h>		/* for memcpy() */
+ 
+-#include "md5.h"
++#include "include/md5.h"
+ 
+ #if !defined(WORDS_BIGENDIAN)
+ # define byteReverse(buf, len)	/* Nothing */
+diff --git a/lib/pager.c b/lib/pager.c
+index 747521e13..3a3a9411c 100644
+--- a/lib/pager.c
++++ b/lib/pager.c
+@@ -14,11 +14,11 @@
+ #include <sys/wait.h>
+ #include <signal.h>
+ 
+-#include "c.h"
+-#include "xalloc.h"
+-#include "nls.h"
+-#include "ttyutils.h"
+-#include "pager.h"
++#include "include/c.h"
++#include "include/xalloc.h"
++#include "include/nls.h"
++#include "include/ttyutils.h"
++#include "include/pager.h"
+ 
+ #define NULL_DEVICE	"/dev/null"
+ 
+diff --git a/lib/path.c b/lib/path.c
+index 75fa85305..7b60be431 100644
+--- a/lib/path.c
++++ b/lib/path.c
+@@ -20,12 +20,12 @@
+ #include <inttypes.h>
+ #include <errno.h>
+ 
+-#include "c.h"
+-#include "fileutils.h"
+-#include "all-io.h"
+-#include "path.h"
+-#include "debug.h"
+-#include "strutils.h"
++#include "include/c.h"
++#include "include/fileutils.h"
++#include "include/all-io.h"
++#include "include/path.h"
++#include "include/debug.h"
++#include "include/strutils.h"
+ 
+ /*
+  * Debug stuff (based on include/debug.h)
+@@ -40,7 +40,7 @@ UL_DEBUG_DEFINE_MASKNAMES(ulpath) = UL_DEBUG_EMPTY_MASKNAMES;
+ #define ON_DBG(m, x)    __UL_DBG_CALL(ulpath, ULPATH_DEBUG_, m, x)
+ 
+ #define UL_DEBUG_CURRENT_MASK	UL_DEBUG_MASK(ulpath)
+-#include "debugobj.h"
++#include "include/debugobj.h"
+ 
+ void ul_path_init_debug(void)
+ {
+diff --git a/lib/procutils.c b/lib/procutils.c
+index bf689ab63..e97de926f 100644
+--- a/lib/procutils.c
++++ b/lib/procutils.c
+@@ -18,11 +18,11 @@
+ #include <dirent.h>
+ #include <ctype.h>
+ 
+-#include "procutils.h"
+-#include "statfs_magic.h"
+-#include "fileutils.h"
+-#include "all-io.h"
+-#include "c.h"
++#include "include/procutils.h"
++#include "include/statfs_magic.h"
++#include "include/fileutils.h"
++#include "include/all-io.h"
++#include "include/c.h"
+ 
+ /*
+  * @pid: process ID for which we want to obtain the threads group
+diff --git a/lib/pwdutils.c b/lib/pwdutils.c
+index d97020cb9..20750acc7 100644
+--- a/lib/pwdutils.c
++++ b/lib/pwdutils.c
+@@ -4,9 +4,9 @@
+  */
+ #include <stdlib.h>
+ 
+-#include "c.h"
+-#include "pwdutils.h"
+-#include "xalloc.h"
++#include "include/c.h"
++#include "include/pwdutils.h"
++#include "include/xalloc.h"
+ 
+ /* Returns allocated passwd and allocated pwdbuf to store passwd strings
+  * fields. In case of error returns NULL and set errno, for unknown user set
+diff --git a/lib/randutils.c b/lib/randutils.c
+index bf8193338..2f262b480 100644
+--- a/lib/randutils.c
++++ b/lib/randutils.c
+@@ -16,9 +16,9 @@
+ #ifdef __linux__
+ #include <sys/syscall.h>
+ #endif
+-#include "c.h"
+-#include "randutils.h"
+-#include "nls.h"
++#include "include/c.h"
++#include "include/randutils.h"
++#include "include/nls.h"
+ 
+ #ifdef HAVE_TLS
+ #define THREAD_LOCAL static __thread
+diff --git a/lib/setproctitle.c b/lib/setproctitle.c
+index 7168e4658..464c0ebde 100644
+--- a/lib/setproctitle.c
++++ b/lib/setproctitle.c
+@@ -8,7 +8,7 @@
+ #include <string.h>
+ #include <stdarg.h>
+ 
+-#include "setproctitle.h"
++#include "include/setproctitle.h"
+ 
+ #ifndef SPT_BUFSIZE
+ # define SPT_BUFSIZE     2048
+diff --git a/lib/sha1.c b/lib/sha1.c
+index 22d33b315..9abcb3c64 100644
+--- a/lib/sha1.c
++++ b/lib/sha1.c
+@@ -14,7 +14,7 @@
+ #include <string.h>
+ #include <stdint.h>
+ 
+-#include "sha1.h"
++#include "include/sha1.h"
+ 
+ #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
+ 
+diff --git a/lib/signames.c b/lib/signames.c
+index 064776a44..c47cdb8ea 100644
+--- a/lib/signames.c
++++ b/lib/signames.c
+@@ -14,9 +14,9 @@
+ #include <string.h>
+ #include <errno.h>
+ 
+-#include "c.h"
+-#include "strutils.h"
+-#include "signames.h"
++#include "include/c.h"
++#include "include/strutils.h"
++#include "include/signames.h"
+ 
+ static const struct ul_signal_name {
+ 	const char *name;
+diff --git a/lib/strutils.c b/lib/strutils.c
+index 304f31407..9761b5b7b 100644
+--- a/lib/strutils.c
++++ b/lib/strutils.c
+@@ -14,11 +14,11 @@
+ #include <string.h>
+ #include <assert.h>
+ 
+-#include "c.h"
+-#include "nls.h"
+-#include "strutils.h"
+-#include "bitops.h"
+-#include "pathnames.h"
++#include "include/c.h"
++#include "include/nls.h"
++#include "include/strutils.h"
++#include "include/bitops.h"
++#include "include/pathnames.h"
+ 
+ static int STRTOXX_EXIT_CODE = EXIT_FAILURE;
+ 
+diff --git a/lib/strv.c b/lib/strv.c
+index ddc2a0c5d..13b2e7875 100644
+--- a/lib/strv.c
++++ b/lib/strv.c
+@@ -19,8 +19,8 @@
+ #include <stdbool.h>
+ #include <assert.h>
+ 
+-#include "strutils.h"
+-#include "strv.h"
++#include "include/strutils.h"
++#include "include/strv.h"
+ 
+ void strv_clear(char **l) {
+         char **k;
+diff --git a/lib/sysfs.c b/lib/sysfs.c
+index 221b49083..ef19baf06 100644
+--- a/lib/sysfs.c
++++ b/lib/sysfs.c
+@@ -10,13 +10,13 @@
+ #include <sys/stat.h>
+ #include <unistd.h>
+ 
+-#include "c.h"
+-#include "pathnames.h"
+-#include "sysfs.h"
+-#include "fileutils.h"
+-#include "all-io.h"
+-#include "debug.h"
+-#include "strutils.h"
++#include "include/c.h"
++#include "include/pathnames.h"
++#include "include/sysfs.h"
++#include "include/fileutils.h"
++#include "include/all-io.h"
++#include "include/debug.h"
++#include "include/strutils.h"
+ 
+ static void sysfs_blkdev_deinit_path(struct path_cxt *pc);
+ static int  sysfs_blkdev_enoent_redirect(struct path_cxt *pc, const char *path, int *dirfd);
+@@ -34,7 +34,7 @@ UL_DEBUG_DEFINE_MASKNAMES(ulsysfs) = UL_DEBUG_EMPTY_MASKNAMES;
+ #define ON_DBG(m, x)    __UL_DBG_CALL(ulsysfs, ULSYSFS_DEBUG_, m, x)
+ 
+ #define UL_DEBUG_CURRENT_MASK	UL_DEBUG_MASK(ulsysfs)
+-#include "debugobj.h"
++#include "include/debugobj.h"
+ 
+ void ul_sysfs_init_debug(void)
+ {
+diff --git a/lib/timeutils.c b/lib/timeutils.c
+index 8b443cdfb..94d9f7070 100644
+--- a/lib/timeutils.c
++++ b/lib/timeutils.c
+@@ -25,10 +25,10 @@
+ #include <time.h>
+ #include <sys/time.h>
+ 
+-#include "c.h"
+-#include "nls.h"
+-#include "strutils.h"
+-#include "timeutils.h"
++#include "include/c.h"
++#include "include/nls.h"
++#include "include/strutils.h"
++#include "include/timeutils.h"
+ 
+ #define WHITESPACE " \t\n\r"
+ 
+diff --git a/lib/ttyutils.c b/lib/ttyutils.c
+index 706456503..8f39a54d0 100644
+--- a/lib/ttyutils.c
++++ b/lib/ttyutils.c
+@@ -7,8 +7,8 @@
+ #include <ctype.h>
+ #include <unistd.h>
+ 
+-#include "c.h"
+-#include "ttyutils.h"
++#include "include/c.h"
++#include "include/ttyutils.h"
+ 
+ 
+ static int get_env_int(const char *name)
+diff --git a/libblkid/src/blkidP.h b/libblkid/src/blkidP.h
+index 802a1b3a6..3ae4bd1dc 100644
+--- a/libblkid/src/blkidP.h
++++ b/libblkid/src/blkidP.h
+@@ -27,14 +27,14 @@
+ # define UUID_STR_LEN   37
+ #endif
+ 
+-#include "c.h"
+-#include "bitops.h"	/* $(top_srcdir)/include/ */
+-#include "blkdev.h"
++#include "include/c.h"
++#include "include/bitops.h"	/* $(top_srcdir)/include/ */
++#include "include/blkdev.h"
+ 
+-#include "debug.h"
++#include "include/debug.h"
+ #include "blkid.h"
+-#include "list.h"
+-#include "encode.h"
++#include "include/list.h"
++#include "include/encode.h"
+ 
+ /*
+  * This describes the attributes of a specific device.
+@@ -338,7 +338,7 @@ UL_DEBUG_DECLARE_MASK(libblkid);
+ #define ON_DBG(m, x)    __UL_DBG_CALL(libblkid, BLKID_DEBUG_, m, x)
+ 
+ #define UL_DEBUG_CURRENT_MASK	UL_DEBUG_MASK(libblkid)
+-#include "debugobj.h"
++#include "include/debugobj.h"
+ 
+ extern void blkid_debug_dump_dev(blkid_dev dev);
+ 
+diff --git a/libblkid/src/cache.c b/libblkid/src/cache.c
+index c199b919e..85d08a5be 100644
+--- a/libblkid/src/cache.c
++++ b/libblkid/src/cache.c
+@@ -22,7 +22,7 @@
+ #include <sys/stat.h>
+ #endif
+ #include "blkidP.h"
+-#include "env.h"
++#include "include/env.h"
+ 
+ /**
+  * SECTION:cache
+diff --git a/libblkid/src/config.c b/libblkid/src/config.c
+index f229b3e63..985f6bdec 100644
+--- a/libblkid/src/config.c
++++ b/libblkid/src/config.c
+@@ -24,7 +24,7 @@
+ #include <stdarg.h>
+ 
+ #include "blkidP.h"
+-#include "env.h"
++#include "include/env.h"
+ 
+ static int parse_evaluate(struct blkid_config *conf, char *s)
+ {
+diff --git a/libblkid/src/devname.c b/libblkid/src/devname.c
+index c58b784cc..42b34dca7 100644
+--- a/libblkid/src/devname.c
++++ b/libblkid/src/devname.c
+@@ -36,9 +36,9 @@
+ 
+ #include "blkidP.h"
+ 
+-#include "canonicalize.h"		/* $(top_srcdir)/include */
+-#include "pathnames.h"
+-#include "sysfs.h"
++#include "include/canonicalize.h"		/* $(top_srcdir)/include */
++#include "include/pathnames.h"
++#include "include/sysfs.h"
+ 
+ /*
+  * Find a dev struct in the cache by device name, if available.
+diff --git a/libblkid/src/devno.c b/libblkid/src/devno.c
+index 74a0d982e..53e54a34f 100644
+--- a/libblkid/src/devno.c
++++ b/libblkid/src/devno.c
+@@ -33,8 +33,8 @@
+ #include <inttypes.h>
+ 
+ #include "blkidP.h"
+-#include "pathnames.h"
+-#include "sysfs.h"
++#include "include/pathnames.h"
++#include "include/sysfs.h"
+ 
+ static char *blkid_strconcat(const char *a, const char *b, const char *c)
+ {
+diff --git a/libblkid/src/evaluate.c b/libblkid/src/evaluate.c
+index 710eac956..08a5f8b0b 100644
+--- a/libblkid/src/evaluate.c
++++ b/libblkid/src/evaluate.c
+@@ -22,9 +22,9 @@
+ #include <stdint.h>
+ #include <stdarg.h>
+ 
+-#include "pathnames.h"
+-#include "canonicalize.h"
+-#include "closestream.h"
++#include "include/pathnames.h"
++#include "include/canonicalize.h"
++#include "include/closestream.h"
+ 
+ #include "blkidP.h"
+ 
+diff --git a/libblkid/src/partitions/bsd.c b/libblkid/src/partitions/bsd.c
+index c74517334..73fe3a8bf 100644
+--- a/libblkid/src/partitions/bsd.c
++++ b/libblkid/src/partitions/bsd.c
+@@ -14,7 +14,7 @@
+ #include <stdint.h>
+ 
+ #include "partitions.h"
+-#include "pt-bsd.h"
++#include "include/pt-bsd.h"
+ 
+ /* Returns 'blkid_idmag' in 512-sectors */
+ #define BLKID_MAG_SECTOR(_mag)  (((_mag)->kboff / 2)  + ((_mag)->sboff >> 9))
+diff --git a/libblkid/src/partitions/dos.c b/libblkid/src/partitions/dos.c
+index 6e758ecaa..1c48cf6be 100644
+--- a/libblkid/src/partitions/dos.c
++++ b/libblkid/src/partitions/dos.c
+@@ -14,7 +14,7 @@
+ #include <stdint.h>
+ 
+ #include "partitions.h"
+-#include "superblocks/superblocks.h"
++#include "libblkid/src/superblocks/superblocks.h"
+ #include "aix.h"
+ 
+ /* see superblocks/vfat.c */
+diff --git a/libblkid/src/partitions/gpt.c b/libblkid/src/partitions/gpt.c
+index 889ff772c..a792e1d1b 100644
+--- a/libblkid/src/partitions/gpt.c
++++ b/libblkid/src/partitions/gpt.c
+@@ -21,7 +21,7 @@
+ #include <inttypes.h>
+ 
+ #include "partitions.h"
+-#include "crc32.h"
++#include "include/crc32.h"
+ 
+ #define GPT_PRIMARY_LBA	1
+ 
+diff --git a/libblkid/src/partitions/minix.c b/libblkid/src/partitions/minix.c
+index 43c9d9af1..c5f37011f 100644
+--- a/libblkid/src/partitions/minix.c
++++ b/libblkid/src/partitions/minix.c
+@@ -12,7 +12,7 @@
+ #include <stdint.h>
+ 
+ #include "partitions.h"
+-#include "minix.h"
++#include "include/minix.h"
+ 
+ static int probe_minix_pt(blkid_probe pr,
+ 		const struct blkid_idmag *mag __attribute__((__unused__)))
+diff --git a/libblkid/src/partitions/partitions.c b/libblkid/src/partitions/partitions.c
+index e0a1ee170..4aa51164a 100644
+--- a/libblkid/src/partitions/partitions.c
++++ b/libblkid/src/partitions/partitions.c
+@@ -21,8 +21,8 @@
+ #include <stdarg.h>
+ 
+ #include "partitions.h"
+-#include "sysfs.h"
+-#include "strutils.h"
++#include "include/sysfs.h"
++#include "include/strutils.h"
+ 
+ /**
+  * SECTION: partitions
+diff --git a/libblkid/src/partitions/partitions.h b/libblkid/src/partitions/partitions.h
+index 4a718f4ea..6b8ec40cb 100644
+--- a/libblkid/src/partitions/partitions.h
++++ b/libblkid/src/partitions/partitions.h
+@@ -1,8 +1,8 @@
+ #ifndef BLKID_PARTITIONS_H
+ #define BLKID_PARTITIONS_H
+ 
+-#include "blkidP.h"
+-#include "pt-mbr.h"
++#include "libblkid/src/blkidP.h"
++#include "include/pt-mbr.h"
+ 
+ extern int blkid_partitions_get_flags(blkid_probe pr);
+ 
+diff --git a/libblkid/src/partitions/sgi.c b/libblkid/src/partitions/sgi.c
+index 99c0bf1c7..801ff368a 100644
+--- a/libblkid/src/partitions/sgi.c
++++ b/libblkid/src/partitions/sgi.c
+@@ -13,7 +13,7 @@
+ #include <stdint.h>
+ 
+ #include "partitions.h"
+-#include "pt-sgi.h"
++#include "include/pt-sgi.h"
+ 
+ static int probe_sgi_pt(blkid_probe pr,
+ 		const struct blkid_idmag *mag __attribute__((__unused__)))
+diff --git a/libblkid/src/partitions/sun.c b/libblkid/src/partitions/sun.c
+index 058a66372..24e6df011 100644
+--- a/libblkid/src/partitions/sun.c
++++ b/libblkid/src/partitions/sun.c
+@@ -12,7 +12,7 @@
+ #include <stdint.h>
+ #include <stddef.h>
+ 
+-#include "pt-sun.h"
++#include "include/pt-sun.h"
+ #include "partitions.h"
+ 
+ static int probe_sun_pt(blkid_probe pr,
+diff --git a/libblkid/src/probe.c b/libblkid/src/probe.c
+index 8f5f59da3..3d63c6e79 100644
+--- a/libblkid/src/probe.c
++++ b/libblkid/src/probe.c
+@@ -106,10 +106,10 @@
+ #include <limits.h>
+ 
+ #include "blkidP.h"
+-#include "all-io.h"
+-#include "sysfs.h"
+-#include "strutils.h"
+-#include "list.h"
++#include "include/all-io.h"
++#include "include/sysfs.h"
++#include "include/strutils.h"
++#include "include/list.h"
+ 
+ /*
+  * All supported chains
+diff --git a/libblkid/src/save.c b/libblkid/src/save.c
+index bceaa1139..cae87bf21 100644
+--- a/libblkid/src/save.c
++++ b/libblkid/src/save.c
+@@ -22,8 +22,8 @@
+ #include <errno.h>
+ #endif
+ 
+-#include "closestream.h"
+-#include "fileutils.h"
++#include "include/closestream.h"
++#include "include/fileutils.h"
+ 
+ #include "blkidP.h"
+ 
+diff --git a/libblkid/src/superblocks/bluestore.c b/libblkid/src/superblocks/bluestore.c
+index 2ff1f3518..a516ba8d0 100644
+--- a/libblkid/src/superblocks/bluestore.c
++++ b/libblkid/src/superblocks/bluestore.c
+@@ -20,7 +20,7 @@
+ #include <inttypes.h>
+ #include <stddef.h>
+ 
+-#include "bitops.h"
++#include "include/bitops.h"
+ #include "superblocks.h"
+ 
+ #define BLUESTORE_MAGIC_L		22
+diff --git a/libblkid/src/superblocks/drbdmanage.c b/libblkid/src/superblocks/drbdmanage.c
+index d56c414c9..43537920e 100644
+--- a/libblkid/src/superblocks/drbdmanage.c
++++ b/libblkid/src/superblocks/drbdmanage.c
+@@ -20,7 +20,7 @@
+ #include <inttypes.h>
+ #include <stddef.h>
+ 
+-#include "bitops.h"
++#include "include/bitops.h"
+ #include "superblocks.h"
+ 
+ struct drbdmanage_hdr {
+diff --git a/libblkid/src/superblocks/hfs.c b/libblkid/src/superblocks/hfs.c
+index ebf90e49e..c507c7c02 100644
+--- a/libblkid/src/superblocks/hfs.c
++++ b/libblkid/src/superblocks/hfs.c
+@@ -12,7 +12,7 @@
+ #include <inttypes.h>
+ 
+ #include "superblocks.h"
+-#include "md5.h"
++#include "include/md5.h"
+ 
+ /* HFS / HFS+ */
+ struct hfs_finder_info {
+diff --git a/libblkid/src/superblocks/minix.c b/libblkid/src/superblocks/minix.c
+index b521efb2b..d1fb293cb 100644
+--- a/libblkid/src/superblocks/minix.c
++++ b/libblkid/src/superblocks/minix.c
+@@ -11,7 +11,7 @@
+ 
+ #include <string.h>
+ #include "superblocks.h"
+-#include "minix.h"
++#include "include/minix.h"
+ 
+ #define minix_swab16(doit, num)	((uint16_t) (doit ? swab16(num) : num))
+ #define minix_swab32(doit, num)	((uint32_t) (doit ? swab32(num) : num))
+diff --git a/libblkid/src/superblocks/mpool.c b/libblkid/src/superblocks/mpool.c
+index b27569ef3..702d86897 100644
+--- a/libblkid/src/superblocks/mpool.c
++++ b/libblkid/src/superblocks/mpool.c
+@@ -10,7 +10,7 @@
+ #include <unistd.h>
+ #include <string.h>
+ #include <stdint.h>
+-#include "crc32c.h"
++#include "include/crc32c.h"
+ #include "superblocks.h"
+ 
+ #define MAX_MPOOL_NAME_LEN 32
+diff --git a/libblkid/src/superblocks/nilfs.c b/libblkid/src/superblocks/nilfs.c
+index 423bd1ac4..8fa7200fa 100644
+--- a/libblkid/src/superblocks/nilfs.c
++++ b/libblkid/src/superblocks/nilfs.c
+@@ -8,7 +8,7 @@
+ #include <string.h>
+ 
+ #include "superblocks.h"
+-#include "crc32.h"
++#include "include/crc32.h"
+ 
+ struct nilfs_super_block {
+ 	uint32_t	s_rev_level;
+diff --git a/libblkid/src/superblocks/squashfs.c b/libblkid/src/superblocks/squashfs.c
+index 4db842493..b3171b45f 100644
+--- a/libblkid/src/superblocks/squashfs.c
++++ b/libblkid/src/superblocks/squashfs.c
+@@ -13,7 +13,7 @@
+ #include <string.h>
+ #include <stdint.h>
+ 
+-#include "bitops.h"	/* swab16() */
++#include "include/bitops.h"	/* swab16() */
+ #include "superblocks.h"
+ 
+ struct sqsh_super_block {
+diff --git a/libblkid/src/superblocks/stratis.c b/libblkid/src/superblocks/stratis.c
+index 7a889b2d4..b7b13817d 100644
+--- a/libblkid/src/superblocks/stratis.c
++++ b/libblkid/src/superblocks/stratis.c
+@@ -17,7 +17,7 @@
+ #include <inttypes.h>
+ 
+ #include "superblocks.h"
+-#include "crc32c.h"
++#include "include/crc32c.h"
+ 
+ struct stratis_sb {
+ 	uint32_t crc32;
+diff --git a/libblkid/src/superblocks/superblocks.h b/libblkid/src/superblocks/superblocks.h
+index 5ebe6bc43..867ede21f 100644
+--- a/libblkid/src/superblocks/superblocks.h
++++ b/libblkid/src/superblocks/superblocks.h
+@@ -7,7 +7,7 @@
+ #ifndef _BLKID_SUPERBLOCKS_H
+ #define _BLKID_SUPERBLOCKS_H
+ 
+-#include "blkidP.h"
++#include "libblkid/src/blkidP.h"
+ 
+ extern const struct blkid_idinfo cramfs_idinfo;
+ extern const struct blkid_idinfo swap_idinfo;
+diff --git a/libblkid/src/superblocks/vfat.c b/libblkid/src/superblocks/vfat.c
+index c7a3d080c..ffde68492 100644
+--- a/libblkid/src/superblocks/vfat.c
++++ b/libblkid/src/superblocks/vfat.c
+@@ -17,7 +17,7 @@
+ #include <stdint.h>
+ #include <inttypes.h>
+ 
+-#include "pt-mbr.h"
++#include "include/pt-mbr.h"
+ #include "superblocks.h"
+ 
+ /* Yucky misaligned values */
+diff --git a/libblkid/src/topology/sysfs.c b/libblkid/src/topology/sysfs.c
+index 745cd115a..ac02389c2 100644
+--- a/libblkid/src/topology/sysfs.c
++++ b/libblkid/src/topology/sysfs.c
+@@ -17,7 +17,7 @@
+ #include <unistd.h>
+ #include <errno.h>
+ 
+-#include "sysfs.h"
++#include "include/sysfs.h"
+ #include "topology.h"
+ 
+ /*
+diff --git a/libblkid/src/topology/topology.h b/libblkid/src/topology/topology.h
+index 3e46af9ac..cf0231119 100644
+--- a/libblkid/src/topology/topology.h
++++ b/libblkid/src/topology/topology.h
+@@ -1,7 +1,7 @@
+ #ifndef BLKID_TOPOLOGY_H
+ #define BLKID_TOPOLOGY_H
+ 
+-#include "blkidP.h"
++#include "libblkid/src/blkidP.h"
+ 
+ extern int blkid_topology_set_alignment_offset(blkid_probe pr, int val);
+ extern int blkid_topology_set_minimum_io_size(blkid_probe pr, unsigned long val);
+diff --git a/libblkid/src/verify.c b/libblkid/src/verify.c
+index 4bda3fd40..9f2e0ac8a 100644
+--- a/libblkid/src/verify.c
++++ b/libblkid/src/verify.c
+@@ -21,7 +21,7 @@
+ #endif
+ 
+ #include "blkidP.h"
+-#include "sysfs.h"
++#include "include/sysfs.h"
+ 
+ static void blkid_probe_to_tags(blkid_probe pr, blkid_dev dev)
+ {
+diff --git a/libuuid/src/gen_uuid.c b/libuuid/src/gen_uuid.c
+index 50039fc2e..7225c8ec5 100644
+--- a/libuuid/src/gen_uuid.c
++++ b/libuuid/src/gen_uuid.c
+@@ -81,14 +81,14 @@
+ #include <sys/syscall.h>
+ #endif
+ 
+-#include "all-io.h"
++#include "include/all-io.h"
+ #include "uuidP.h"
+ #include "uuidd.h"
+-#include "randutils.h"
+-#include "strutils.h"
+-#include "c.h"
+-#include "md5.h"
+-#include "sha1.h"
++#include "include/randutils.h"
++#include "include/strutils.h"
++#include "include/c.h"
++#include "include/md5.h"
++#include "include/sha1.h"
+ 
+ #ifdef HAVE_TLS
+ #define THREAD_LOCAL static __thread
+diff --git a/misc-utils/blkid.c b/misc-utils/blkid.c
+index dba3bb7d7..c57800b9d 100644
+--- a/misc-utils/blkid.c
++++ b/misc-utils/blkid.c
+@@ -30,21 +30,21 @@
+ #define BLKID_EXIT_OTHER	4	/* bad usage or other error */
+ #define BLKID_EXIT_AMBIVAL	8	/* ambivalent low-level probing detected */
+ 
+-#include <blkid.h>
++#include "blkid.h"
+ 
+-#include "ismounted.h"
++#include "include/ismounted.h"
+ 
+-#include "strutils.h"
++#include "include/strutils.h"
+ #define OPTUTILS_EXIT_CODE	BLKID_EXIT_OTHER	/* exclusive_option() */
+-#include "optutils.h"
++#include "include/optutils.h"
+ #define CLOSE_EXIT_CODE		BLKID_EXIT_OTHER	/* close_stdout() */
+-#include "closestream.h"
++#include "include/closestream.h"
+ 
+-#include "nls.h"
+-#include "ttyutils.h"
++#include "include/nls.h"
++#include "include/ttyutils.h"
+ 
+ #define XALLOC_EXIT_CODE    BLKID_EXIT_OTHER    /* x.*alloc(), xstrndup() */
+-#include "xalloc.h"
++#include "include/xalloc.h"
+ 
+ struct blkid_control {
+ 	int output;
+diff --git a/misc-utils/uuidgen.c b/misc-utils/uuidgen.c
+index fa148abae..09b267978 100644
+--- a/misc-utils/uuidgen.c
++++ b/misc-utils/uuidgen.c
+@@ -13,10 +13,10 @@
+ #include <stdlib.h>
+ #include <getopt.h>
+ 
+-#include "uuid.h"
+-#include "nls.h"
+-#include "c.h"
+-#include "closestream.h"
++#include "libuuid/src/uuid.h"
++#include "include/nls.h"
++#include "include/c.h"
++#include "include/closestream.h"
+ 
+ static void __attribute__((__noreturn__)) usage(void)
+ {
+-- 
+2.25.1
+

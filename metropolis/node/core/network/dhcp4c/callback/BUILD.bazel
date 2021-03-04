@@ -33,8 +33,5 @@ go_test(
 )
 
 ktest(
-    cmdline = "",
-    initramfs_extra = "",
     tester = ":go_default_test",
-    deps = [],
 )

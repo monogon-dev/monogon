@@ -19,17 +19,15 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 def xfsprogs_external(name, version):
     sums = {
         "5.2.1": "6187f25f1744d1ecbb028b0ea210ad586d0f2dae24e258e4688c67740cc861ef",
+        "5.10.0": "e807ca9fd8f01e45c9ec8ffb3c123bdb7dfcfd8e05340520d2ff1ddbc3bd7c88",
     }
-    all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 
     http_archive(
         name = name,
-        build_file_content = all_content,
         patch_args = ["-p1"],
-        patches = [
-            "//third_party/xfsprogs/external:0001-Fixes-for-static-compilation.patch",
-        ],
+        patches = ["//third_party/xfsprogs/patches:bazel_cc_fix.patch"],
         sha256 = sums[version],
+        build_file = "@//third_party/xfsprogs:xfsprogs.bzl",
         strip_prefix = "xfsprogs-dev-" + version,
         urls = ["https://git.kernel.org/pub/scm/fs/xfs/xfsprogs-dev.git/snapshot/xfsprogs-dev-%s.tar.gz" % version],
     )

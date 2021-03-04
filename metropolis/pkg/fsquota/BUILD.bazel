@@ -29,11 +29,8 @@ go_test(
 
 ktest(
     cmdline = "ramdisk_size=51200",
-    initramfs_extra = """
-file /mkfs.xfs $(location //third_party/xfsprogs:mkfs.xfs) 0755 0 0
-    """,
+    files_cc = {
+        "@xfsprogs//:mkfs": "/mkfs.xfs",
+    },
     tester = ":go_default_test",
-    deps = [
-        "//third_party/xfsprogs:mkfs.xfs",
-    ],
 )

@@ -1,0 +1,80 @@
+# proto-file: build/bazel_cc_fix/ccfixspec/ccfixspec.proto
+# proto-message: CCFixSpec
+
+# Note: As of 5.10 upstream doesn't build on any Linux distro I tried. You have to patch xfs.h to include its own headers
+# and not the system ones to get it to build. Revert this patch before running bazel_cc_fix as it interferes with the
+# auto-rewriting.
+
+# To regenerate the patch, run the following in the checked-out xfsprogs repo
+# make configure
+# ./configure
+# nice intercept-build make -j$(nproc) mkfs
+
+# And the following in the monorepo root
+# bazel run //build/bazel_cc_fix -- -workspace $path_to_repo -compilation_db $path_to_repo/compile_commands.json -spec third_party/xfsprogs/cc_fix_spec.prototxt
+
+# Resolve libuuid to our util_linux workspace
+replace {
+  type: SYSTEM
+  from: "uuid/uuid.h"
+  to: "libuuid/src/uuid.h"
+}
+
+# Resolve libblkid to our util_linux workspace
+replace {
+  type: SYSTEM
+  from: "blkid/blkid.h"
+  to: "blkid.h"
+}
+
+# Resolve libinih to our inih workspace
+replace {
+  type: SYSTEM
+  from: "ini.h"
+  to: "ini.h"
+}
+
+replace {
+  type: SYSTEM
+  from: "xfs/handle.h",
+  to: "include/handle.h",
+}
+
+# Force xfsprogs to use their own headers instead of the ones of the installed (!!) xfsprogs
+replace {
+  type: SYSTEM,
+  from: "xfs/xfs_fs.h",
+  to: "libxfs/xfs_fs.h"
+}
+replace {
+  type: SYSTEM,
+  from: "xfs/xfs_types.h",
+  to: "libxfs/xfs_types.h"
+}
+replace {
+  type: SYSTEM
+  from: "xfs/"
+  to: "include/"
+}
+
+# platform_defs.h is generated and cannot be placed in include/ as targets depend on random
+# things in there. Fix up all includes to instead point to the workspace root where it will be
+# generated.
+generated_file {
+  path: "include/platform_defs.h"
+}
+replace {
+  type: WORKSPACE
+  from: "include/platform_defs.h"
+  to: "platform_defs.h"
+}
+
+# Properly include CRC32 generated file which is also generated in the wrong place
+generated_file {
+  path: "libfrog/crc32table.h"
+}
+replace {
+  type: WORKSPACE
+  from: "libfrog/crc32table.h"
+  to: "crc32table.h"
+}

@@ -123,14 +123,14 @@ load("//third_party/util-linux:external.bzl", "util_linux_external")
 
 util_linux_external(
     name = "util_linux",
-    version = "2.34",
+    version = "2.36.2",
 )
 
 load("//third_party/xfsprogs:external.bzl", "xfsprogs_external")
 
 xfsprogs_external(
     name = "xfsprogs",
-    version = "5.2.1",
+    version = "5.10.0",
 )
 
 register_toolchains("//:host_python")
@@ -188,6 +188,15 @@ http_archive(
     sha256 = "658ba6191fa44c92280d4aa2c271b0f4fbc0e34d249578dd05e50e76d0e5efcc",
     strip_prefix = "lz4-1.9.2",
     urls = ["https://github.com/lz4/lz4/archive/v1.9.2.tar.gz"],
+)
+
+# ini.h, a tiny ini parser library
+http_archive(
+    name = "inih",
+    build_file = "@//third_party/inih:inih.bzl",
+    sha256 = "01b0366fdfdf6363efc070c2f856f1afa33e7a6546548bada5456ad94a516241",
+    strip_prefix = "inih-r53",
+    urls = ["https://github.com/benhoyt/inih/archive/r53.tar.gz"],
 )
 
 # qboot bootloader for MicroVMs

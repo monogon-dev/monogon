@@ -1,0 +1,22 @@
+# proto-file: build/bazel_cc_fix/ccfixspec/ccfixspec.proto
+# proto-message: CCFixSpec
+
+# To regenerate the patch, run the following in the checked-out util-linux repo
+# ./autogen.sh
+# ./configure --without-util --without-udev --without-ncursesw --without-tinfo --without-readline --without-cap-ng --without-libz --without-libmagic --without-user --without-btrfs --without-systemd --without-python
+# intercept-build make -j24 uuidgen blkid
+
+# And the following in the monorepo root
+# bazel run //build/bazel_cc_fix -- -workspace $path_to_repo -compilation_db $path_to_repo/compile_commands.json -spec third_party/util-linux/cc_fix_spec.prototxt
+
+# Templated file (original path, later rewritten)
+generated_file {
+  path: "libblkid/src/blkid.h",
+}
+
+# Rewrite blkid.h to root for ease of use and easier codegen
+replace {
+  type: WORKSPACE,
+  from: "libblkid/src/blkid.h",
+  to: "blkid.h",
+}

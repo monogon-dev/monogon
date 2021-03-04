@@ -32,7 +32,6 @@ erofs_image(
     ],
     files = {
         "//metropolis/node/core": "/init",
-        "//third_party/xfsprogs:mkfs.xfs": "/bin/mkfs.xfs",
 
         # CA Certificate bundle & os-release & resolv.conf
         # These should not be explicitly used by Metropolis code and are only here for compatibility with
@@ -77,6 +76,7 @@ erofs_image(
     files_cc = {
         # runc runtime, with cgo
         "@com_github_opencontainers_runc//:runc": "/containerd/bin/runc",
+        "@xfsprogs//:mkfs": "/bin/mkfs.xfs",
     },
     symlinks = {
         "/ephemeral/machine-id": "/etc/machine-id",
