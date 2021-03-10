@@ -31,7 +31,9 @@ cc_toolchain(
 host_cc_toolchain_config(
     name = "musl_host_cc_k8_toolchain_config",
     gcc = "gcc-wrapper.sh",
+    has_cpp = False,
     host_includes = [],
+    is_glibc = False,
     sysroot = "external/musl_sysroot",
 )
 

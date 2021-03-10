@@ -45,6 +45,7 @@ cc_binary(
         "-minline-all-stringops",
         "-fno-pic",
     ],
+    features = ["-link_full_libc", "-cpp"],
     includes = [
         "include",
     ],
