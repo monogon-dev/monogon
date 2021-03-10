@@ -31,7 +31,7 @@ import (
 )
 
 type apiserverService struct {
-	KPKI                        *pki.KubernetesPKI
+	KPKI                        *pki.PKI
 	AdvertiseAddress            net.IP
 	ServiceIPRange              net.IPNet
 	EphemeralConsensusDirectory *localstorage.EphemeralConsensusDirectory
@@ -55,7 +55,7 @@ func (s *apiserverService) loadPKI(ctx context.Context) error {
 		name       pki.KubeCertificateName
 	}{
 		{&s.idCA, nil, pki.IdCA},
-		{&s.kubeletClientCert, &s.kubeletClientKey, pki.KubeletClient},
+		{&s.kubeletClientCert, &s.kubeletClientKey, pki.APIServerKubeletClient},
 		{&s.aggregationCA, nil, pki.AggregationCA},
 		{&s.aggregationClientCert, &s.aggregationClientKey, pki.FrontProxyClient},
 		{&s.serverCert, &s.serverKey, pki.APIServer},

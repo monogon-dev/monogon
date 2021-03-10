@@ -33,7 +33,7 @@ type schedulerConfig struct {
 	serverKey  []byte
 }
 
-func getPKISchedulerConfig(ctx context.Context, kpki *pki.KubernetesPKI) (*schedulerConfig, error) {
+func getPKISchedulerConfig(ctx context.Context, kpki *pki.PKI) (*schedulerConfig, error) {
 	var config schedulerConfig
 	var err error
 	config.serverCert, config.serverKey, err = kpki.Certificate(ctx, pki.Scheduler)

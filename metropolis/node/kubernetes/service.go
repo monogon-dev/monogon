@@ -44,7 +44,7 @@ type Config struct {
 	ServiceIPRange   net.IPNet
 	ClusterNet       net.IPNet
 
-	KPKI                    *pki.KubernetesPKI
+	KPKI                    *pki.PKI
 	Root                    *localstorage.Root
 	CorednsRegistrationChan chan *dns.ExtraDirective
 }
@@ -168,10 +168,13 @@ func (s *Service) Run(ctx context.Context) error {
 
 // GetDebugKubeconfig issues a kubeconfig for an arbitrary given identity. Useful for debugging and testing.
 func (s *Service) GetDebugKubeconfig(ctx context.Context, request *apb.GetDebugKubeconfigRequest) (*apb.GetDebugKubeconfigResponse, error) {
-	ca := s.c.KPKI.Certificates[pki.IdCA]
-	debugKubeconfig, err := pki.New(ca, "", pki.Client(request.Id, request.Groups)).Kubeconfig(ctx, s.c.KPKI.KV)
+	client, err := s.c.KPKI.VolatileClient(ctx, request.Id, request.Groups)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "Failed to get volatile client certificate: %v", err)
+	}
+	kubeconfig, err := pki.Kubeconfig(ctx, s.c.KPKI.KV, client)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "Failed to generate kubeconfig: %v", err)
 	}
-	return &apb.GetDebugKubeconfigResponse{DebugKubeconfig: string(debugKubeconfig)}, nil
+	return &apb.GetDebugKubeconfigResponse{DebugKubeconfig: string(kubeconfig)}, nil
 }

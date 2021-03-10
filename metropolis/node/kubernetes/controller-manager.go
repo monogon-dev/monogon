@@ -38,7 +38,7 @@ type controllerManagerConfig struct {
 	serverKey             []byte
 }
 
-func getPKIControllerManagerConfig(ctx context.Context, kpki *pki.KubernetesPKI) (*controllerManagerConfig, error) {
+func getPKIControllerManagerConfig(ctx context.Context, kpki *pki.PKI) (*controllerManagerConfig, error) {
 	var config controllerManagerConfig
 	var err error
 	config.rootCA, _, err = kpki.Certificate(ctx, pki.IdCA)

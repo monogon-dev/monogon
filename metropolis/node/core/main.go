@@ -197,7 +197,7 @@ func main() {
 
 			// Ensure Kubernetes PKI objects exist in etcd.
 			kpkiKV := m.ConsensusKV("cluster", "kpki")
-			kpki := pki.NewKubernetes(lt.MustLeveledFor("pki.kubernetes"), kpkiKV)
+			kpki := pki.New(lt.MustLeveledFor("pki.kubernetes"), kpkiKV)
 			if err := kpki.EnsureAll(ctx); err != nil {
 				return fmt.Errorf("failed to ensure kubernetes PKI present: %w", err)
 			}

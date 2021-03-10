@@ -14,6 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// package pki builds upon metropolis/pkg/pki/ to provide an
+// etcd-backed implementation of all x509 PKI Certificates/CAs required to run
+// Kubernetes.
+// Most elements of the PKI are 'static' long-standing certificates/credentials
+// stored within etcd. However, this package also provides a method to generate
+// 'volatile' (in-memory) certificates/credentials for per-node Kubelets and
+// any client certificates.
 package pki
 
 import (
@@ -31,10 +38,12 @@ import (
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/pkg/logtree"
+	opki "source.monogon.dev/metropolis/pkg/pki"
 )
 
-// KubeCertificateName is an enum-like unique name of a static Kubernetes certificate. The value of the name is used
-// as the unique part of an etcd path where the certificate and key are stored.
+// KubeCertificateName is an enum-like unique name of a static Kubernetes
+// certificate. The value of the name is used as the unique part of an etcd
+// path where the certificate and key are stored.
 type KubeCertificateName string
 
 const (
@@ -44,8 +53,8 @@ const (
 	// Kubernetes apiserver server certificate.
 	APIServer KubeCertificateName = "apiserver"
 
-	// Kubelet client certificate, used to authenticate to the apiserver.
-	KubeletClient KubeCertificateName = "kubelet-client"
+	// APIServer client certificate used to authenticate to kubelets.
+	APIServerKubeletClient KubeCertificateName = "apiserver-kubelet-client"
 
 	// Kubernetes Controller manager client certificate, used to authenticate to the apiserver.
 	ControllerManagerClient KubeCertificateName = "controller-manager-client"
@@ -68,32 +77,37 @@ const (
 )
 
 const (
+	// etcdPrefix is where all the PKI data is stored in etcd.
+	etcdPrefix = "/kube-pki/"
 	// serviceAccountKeyName is the etcd path part that is used to store the ServiceAccount authentication secret.
 	// This is not a certificate, just an RSA key.
 	serviceAccountKeyName = "service-account-privkey"
 )
 
-// KubernetesPKI manages all PKI resources required to run Kubernetes on Metropolis. It contains all static certificates,
-// which can be retrieved, or be used to generate Kubeconfigs from.
-type KubernetesPKI struct {
+// PKI manages all PKI resources required to run Kubernetes on Metropolis. It
+// contains all static certificates, which can be retrieved, or be used to
+// generate Kubeconfigs from.
+type PKI struct {
+	namespace    opki.Namespace
 	logger       logtree.LeveledLogger
 	KV           clientv3.KV
-	Certificates map[KubeCertificateName]*Certificate
+	Certificates map[KubeCertificateName]*opki.Certificate
 }
 
-func NewKubernetes(l logtree.LeveledLogger, kv clientv3.KV) *KubernetesPKI {
-	pki := KubernetesPKI{
+func New(l logtree.LeveledLogger, kv clientv3.KV) *PKI {
+	pki := PKI{
+		namespace:    opki.Namespaced(etcdPrefix),
 		logger:       l,
 		KV:           kv,
-		Certificates: make(map[KubeCertificateName]*Certificate),
+		Certificates: make(map[KubeCertificateName]*opki.Certificate),
 	}
 
 	make := func(i, name KubeCertificateName, template x509.Certificate) {
-		pki.Certificates[name] = New(pki.Certificates[i], string(name), template)
+		pki.Certificates[name] = pki.namespace.New(pki.Certificates[i], string(name), template)
 	}
 
-	pki.Certificates[IdCA] = New(SelfSigned, string(IdCA), CA("Metropolis Kubernetes ID CA"))
-	make(IdCA, APIServer, Server(
+	pki.Certificates[IdCA] = pki.namespace.New(opki.SelfSigned, string(IdCA), opki.CA("Metropolis Kubernetes ID CA"))
+	make(IdCA, APIServer, opki.Server(
 		[]string{
 			"kubernetes",
 			"kubernetes.default",
@@ -104,21 +118,21 @@ func NewKubernetes(l logtree.LeveledLogger, kv clientv3.KV) *KubernetesPKI {
 		},
 		[]net.IP{{10, 0, 255, 1}, {127, 0, 0, 1}}, // TODO(q3k): add service network internal apiserver address
 	))
-	make(IdCA, KubeletClient, Client("metropolis:apiserver-kubelet-client", nil))
-	make(IdCA, ControllerManagerClient, Client("system:kube-controller-manager", nil))
-	make(IdCA, ControllerManager, Server([]string{"kube-controller-manager.local"}, nil))
-	make(IdCA, SchedulerClient, Client("system:kube-scheduler", nil))
-	make(IdCA, Scheduler, Server([]string{"kube-scheduler.local"}, nil))
-	make(IdCA, Master, Client("metropolis:master", []string{"system:masters"}))
+	make(IdCA, APIServerKubeletClient, opki.Client("metropolis:apiserver-kubelet-client", nil))
+	make(IdCA, ControllerManagerClient, opki.Client("system:kube-controller-manager", nil))
+	make(IdCA, ControllerManager, opki.Server([]string{"kube-controller-manager.local"}, nil))
+	make(IdCA, SchedulerClient, opki.Client("system:kube-scheduler", nil))
+	make(IdCA, Scheduler, opki.Server([]string{"kube-scheduler.local"}, nil))
+	make(IdCA, Master, opki.Client("metropolis:master", []string{"system:masters"}))
 
-	pki.Certificates[AggregationCA] = New(SelfSigned, string(AggregationCA), CA("Metropolis OpenAPI Aggregation CA"))
-	make(AggregationCA, FrontProxyClient, Client("front-proxy-client", nil))
+	pki.Certificates[AggregationCA] = pki.namespace.New(opki.SelfSigned, string(AggregationCA), opki.CA("Metropolis OpenAPI Aggregation CA"))
+	make(AggregationCA, FrontProxyClient, opki.Client("front-proxy-client", nil))
 
 	return &pki
 }
 
 // EnsureAll ensures that all static certificates (and the serviceaccount key) are present on etcd.
-func (k *KubernetesPKI) EnsureAll(ctx context.Context) error {
+func (k *PKI) EnsureAll(ctx context.Context) error {
 	for n, v := range k.Certificates {
 		k.logger.Infof("Ensuring %s exists", string(n))
 		_, _, err := v.Ensure(ctx, k.KV)
@@ -135,18 +149,18 @@ func (k *KubernetesPKI) EnsureAll(ctx context.Context) error {
 
 // Kubeconfig generates a kubeconfig blob for a given certificate name. The same lifetime semantics as in .Certificate
 // apply.
-func (k *KubernetesPKI) Kubeconfig(ctx context.Context, name KubeCertificateName) ([]byte, error) {
+func (k *PKI) Kubeconfig(ctx context.Context, name KubeCertificateName) ([]byte, error) {
 	c, ok := k.Certificates[name]
 	if !ok {
 		return nil, fmt.Errorf("no certificate %q", name)
 	}
-	return c.Kubeconfig(ctx, k.KV)
+	return Kubeconfig(ctx, k.KV, c)
 }
 
 // Certificate retrieves an x509 DER-encoded (but not PEM-wrapped) key and certificate for a given certificate name.
 // If the requested certificate is volatile, it will be created on demand. Otherwise it will be created on etcd (if not
 // present), and retrieved from there.
-func (k *KubernetesPKI) Certificate(ctx context.Context, name KubeCertificateName) (cert, key []byte, err error) {
+func (k *PKI) Certificate(ctx context.Context, name KubeCertificateName) (cert, key []byte, err error) {
 	c, ok := k.Certificates[name]
 	if !ok {
 		return nil, nil, fmt.Errorf("no certificate %q", name)
@@ -155,7 +169,7 @@ func (k *KubernetesPKI) Certificate(ctx context.Context, name KubeCertificateNam
 }
 
 // Kubeconfig generates a kubeconfig blob for this certificate. The same lifetime semantics as in .Ensure apply.
-func (c *Certificate) Kubeconfig(ctx context.Context, kv clientv3.KV) ([]byte, error) {
+func Kubeconfig(ctx context.Context, kv clientv3.KV, c *opki.Certificate) ([]byte, error) {
 
 	cert, key, err := c.Ensure(ctx, kv)
 	if err != nil {
@@ -167,7 +181,7 @@ func (c *Certificate) Kubeconfig(ctx context.Context, kv clientv3.KV) ([]byte, e
 	cluster := configapi.NewCluster()
 	cluster.Server = fmt.Sprintf("https://127.0.0.1:%v", common.KubernetesAPIPort)
 
-	ca, err := c.issuer.CACertificate(ctx, kv)
+	ca, err := c.Issuer.CACertificate(ctx, kv)
 	if err != nil {
 		return nil, fmt.Errorf("could not get CA certificate: %w", err)
 	}
@@ -190,13 +204,12 @@ func (c *Certificate) Kubeconfig(ctx context.Context, kv clientv3.KV) ([]byte, e
 	return clientcmd.Write(*kubeconfig)
 }
 
-// ServiceAccountKey retrieves (and possible generates and stores on etcd) the Kubernetes service account key. The
+// ServiceAccountKey retrieves (and possibly generates and stores on etcd) the Kubernetes service account key. The
 // returned data is ready to be used by Kubernetes components (in PKIX form).
-func (k *KubernetesPKI) ServiceAccountKey(ctx context.Context) ([]byte, error) {
+func (k *PKI) ServiceAccountKey(ctx context.Context) ([]byte, error) {
 	// TODO(q3k): this should be abstracted away once we abstract away etcd access into a library with try-or-create
 	// semantics.
-
-	path := etcdPath("%s.der", serviceAccountKeyName)
+	path := fmt.Sprintf("%s%s.der", etcdPrefix, serviceAccountKeyName)
 
 	// Try loading  key from etcd.
 	keyRes, err := k.KV.Get(ctx, path)
@@ -225,4 +238,30 @@ func (k *KubernetesPKI) ServiceAccountKey(ctx context.Context) ([]byte, error) {
 		err = fmt.Errorf("failed to write newly generated key: %w", err)
 	}
 	return key, nil
+}
+
+// VolatileKubelet returns a pair of server/client ceritficates for the Kubelet
+// to use. The certificates are volatile, meaning they are not stored in etcd,
+// and instead are regenerated any time this function is called.
+func (k *PKI) VolatileKubelet(ctx context.Context, name string) (server *opki.Certificate, client *opki.Certificate, err error) {
+	name = fmt.Sprintf("system:node:%s", name)
+	err = k.EnsureAll(ctx)
+	if err != nil {
+		err = fmt.Errorf("could not ensure certificates exist: %w", err)
+	}
+	kubeCA := k.Certificates[IdCA]
+	server = k.namespace.New(kubeCA, "", opki.Server([]string{name}, nil))
+	client = k.namespace.New(kubeCA, "", opki.Client(name, []string{"system:nodes"}))
+	return
+}
+
+// VolatileClient returns a client certificate for Kubernetes clients to use.
+// The generated certificate will place the user in the given groups, and with
+// a given identiy as the certificate's CN.
+func (k *PKI) VolatileClient(ctx context.Context, identity string, groups []string) (*opki.Certificate, error) {
+	if err := k.EnsureAll(ctx); err != nil {
+		return nil, fmt.Errorf("could not ensure certificates exist: %w", err)
+	}
+	kubeCA := k.Certificates[IdCA]
+	return k.namespace.New(kubeCA, "", opki.Client(identity, groups)), nil
 }

@@ -19,7 +19,6 @@ package kubernetes
 import (
 	"context"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"io"
 	"net"
@@ -29,10 +28,10 @@ import (
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
 	"source.monogon.dev/metropolis/pkg/fileargs"
+	opki "source.monogon.dev/metropolis/pkg/pki"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
@@ -42,42 +41,32 @@ type kubeletService struct {
 	KubeletDirectory   *localstorage.DataKubernetesKubeletDirectory
 	EphemeralDirectory *localstorage.EphemeralDirectory
 	Output             io.Writer
-	KPKI               *pki.KubernetesPKI
+	KPKI               *pki.PKI
+
+	mount               *opki.FilesystemCertificate
+	mountKubeconfigPath string
 }
 
 func (s *kubeletService) createCertificates(ctx context.Context) error {
-	identity := fmt.Sprintf("system:node:%s", s.NodeName)
-
-	ca := s.KPKI.Certificates[pki.IdCA]
-	cacert, _, err := ca.Ensure(ctx, s.KPKI.KV)
+	server, client, err := s.KPKI.VolatileKubelet(ctx, s.NodeName)
 	if err != nil {
-		return fmt.Errorf("could not ensure ca certificate: %w", err)
+		return fmt.Errorf("when generating local kubelet credentials: %w", err)
 	}
 
-	kubeconfig, err := pki.New(ca, "", pki.Client(identity, []string{"system:nodes"})).Kubeconfig(ctx, s.KPKI.KV)
+	clientKubeconfig, err := pki.Kubeconfig(ctx, s.KPKI.KV, client)
 	if err != nil {
-		return fmt.Errorf("could not create volatile kubelet client cert: %w", err)
+		return fmt.Errorf("when generating kubeconfig: %w", err)
 	}
 
-	cert, key, err := pki.New(ca, "", pki.Server([]string{s.NodeName}, nil)).Ensure(ctx, s.KPKI.KV)
+	// Use a single fileargs mount for server certificate and client kubeconfig.
+	mounted, err := server.Mount(ctx, s.KPKI.KV)
 	if err != nil {
-		return fmt.Errorf("could not create volatile kubelet server cert: %w", err)
+		return fmt.Errorf("could not mount kubelet cert dir: %w", err)
 	}
+	// mounted is closed by Run() on process exit.
 
-	// TODO(q3k): this should probably become its own function //metropolis/node/kubernetes/pki.
-	for _, el := range []struct {
-		target declarative.FilePlacement
-		data   []byte
-	}{
-		{s.KubeletDirectory.Kubeconfig, kubeconfig},
-		{s.KubeletDirectory.PKI.CACertificate, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cacert})},
-		{s.KubeletDirectory.PKI.Certificate, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert})},
-		{s.KubeletDirectory.PKI.Key, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key})},
-	} {
-		if err := el.target.Write(el.data, 0400); err != nil {
-			return fmt.Errorf("could not write %v: %w", el.target, err)
-		}
-	}
+	s.mount = mounted
+	s.mountKubeconfigPath = mounted.ArgPath("kubeconfig", clientKubeconfig)
 
 	return nil
 }
@@ -93,13 +82,13 @@ func (s *kubeletService) configure() *kubeletconfig.KubeletConfiguration {
 			Kind:       "KubeletConfiguration",
 			APIVersion: kubeletconfig.GroupName + "/v1beta1",
 		},
-		TLSCertFile:       s.KubeletDirectory.PKI.Certificate.FullPath(),
-		TLSPrivateKeyFile: s.KubeletDirectory.PKI.Key.FullPath(),
+		TLSCertFile:       s.mount.CertPath,
+		TLSPrivateKeyFile: s.mount.KeyPath,
 		TLSMinVersion:     "VersionTLS13",
 		ClusterDNS:        clusterDNS,
 		Authentication: kubeletconfig.KubeletAuthentication{
 			X509: kubeletconfig.KubeletX509Authentication{
-				ClientCAFile: s.KubeletDirectory.PKI.CACertificate.FullPath(),
+				ClientCAFile: s.mount.CACertPath,
 			},
 		},
 		// TODO(q3k): move reconciler.False to a generic package, fix the following references.
@@ -123,6 +112,7 @@ func (s *kubeletService) Run(ctx context.Context) error {
 	if err := s.createCertificates(ctx); err != nil {
 		return fmt.Errorf("when creating certificates: %w", err)
 	}
+	defer s.mount.Close()
 
 	configRaw, err := json.Marshal(s.configure())
 	if err != nil {
@@ -137,7 +127,7 @@ func (s *kubeletService) Run(ctx context.Context) error {
 		fargs.FileOpt("--config", "config.json", configRaw),
 		"--container-runtime=remote",
 		fmt.Sprintf("--container-runtime-endpoint=unix://%s", s.EphemeralDirectory.Containerd.ClientSocket.FullPath()),
-		fmt.Sprintf("--kubeconfig=%s", s.KubeletDirectory.Kubeconfig.FullPath()),
+		fmt.Sprintf("--kubeconfig=%s", s.mountKubeconfigPath),
 		fmt.Sprintf("--root-dir=%s", s.KubeletDirectory.FullPath()),
 	)
 	cmd.Env = []string{"PATH=/kubernetes/bin"}

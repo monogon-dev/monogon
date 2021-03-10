@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "ca.go",
+        "certificate.go",
+        "doc.go",
+        "x509.go",
+    ],
+    importpath = "source.monogon.dev/metropolis/pkg/pki",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/pkg/fileargs:go_default_library",
+        "@io_etcd_go_etcd//clientv3:go_default_library",
+    ],
+)

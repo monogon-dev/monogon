@@ -2,16 +2,13 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = [
-        "ca.go",
-        "certificate.go",
-        "kubernetes.go",
-    ],
+    srcs = ["kubernetes.go"],
     importpath = "source.monogon.dev/metropolis/node/kubernetes/pki",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = [
         "//metropolis/node:go_default_library",
         "//metropolis/pkg/logtree:go_default_library",
+        "//metropolis/pkg/pki:go_default_library",
         "@io_etcd_go_etcd//clientv3:go_default_library",
         "@io_k8s_client_go//tools/clientcmd:go_default_library",
         "@io_k8s_client_go//tools/clientcmd/api:go_default_library",
