@@ -1,0 +1,55 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From 931f89680cd6714a4eca13c8ae11cd733c1b4609 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@brun.one>
+Date: Wed, 10 Mar 2021 17:55:55 +0100
+Subject: [PATCH 2/6] Fix QEMU code issues
+
+---
+ qom/object.c      | 2 +-
+ softmmu/physmem.c | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/qom/object.c b/qom/object.c
+index 1065355233..f3aa56cc52 100644
+--- a/qom/object.c
++++ b/qom/object.c
+@@ -692,7 +692,7 @@ static void object_finalize(void *data)
+ 
+ /* Find the minimum alignment guaranteed by the system malloc. */
+ #if __STDC_VERSION__ >= 201112L
+-typddef max_align_t qemu_max_align_t;
++typedef max_align_t qemu_max_align_t;
+ #else
+ typedef union {
+     long l;
+diff --git a/softmmu/physmem.c b/softmmu/physmem.c
+index 3027747c03..2eb31592f4 100644
+--- a/softmmu/physmem.c
++++ b/softmmu/physmem.c
+@@ -2675,7 +2675,8 @@ static void invalidate_and_set_dirty(MemoryRegion *mr, hwaddr addr,
+     }
+     if (dirty_log_mask & (1 << DIRTY_MEMORY_CODE)) {
+         assert(tcg_enabled());
+-        tb_invalidate_phys_range(addr, addr + length);
++        // If this symbol is not elided by the compiler it cannot be found.
++        // tb_invalidate_phys_range(addr, addr + length);
+         dirty_log_mask &= ~(1 << DIRTY_MEMORY_CODE);
+     }
+     cpu_physical_memory_set_dirty_range(addr, length, dirty_log_mask);
+-- 
+2.25.1
+

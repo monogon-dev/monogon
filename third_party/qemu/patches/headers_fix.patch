@@ -1,0 +1,1179 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+diff --git a/block/cloop.c b/block/cloop.c
+index c99192a57f..fa8bc497a4 100644
+--- a/block/cloop.c
++++ b/block/cloop.c
+@@ -27,7 +27,7 @@
+ #include "block/block_int.h"
+ #include "qemu/module.h"
+ #include "qemu/bswap.h"
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ /* Maximum compressed block size */
+ #define MAX_BLOCK_SIZE (64 * 1024 * 1024)
+diff --git a/block/dmg.h b/block/dmg.h
+index e488601b62..fc3ac8116a 100644
+--- a/block/dmg.h
++++ b/block/dmg.h
+@@ -27,7 +27,7 @@
+ #define BLOCK_DMG_H
+ 
+ #include "block/block_int.h"
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ typedef struct BDRVDMGState {
+     CoMutex lock;
+diff --git a/block/io_uring.c b/block/io_uring.c
+index 00a3ee9fb8..f3644dbc75 100644
+--- a/block/io_uring.c
++++ b/block/io_uring.c
+@@ -9,7 +9,7 @@
+  * See the COPYING file in the top-level directory.
+  */
+ #include "qemu/osdep.h"
+-#include <liburing.h>
++#include "src/include/liburing.h"
+ #include "qemu-common.h"
+ #include "block/aio.h"
+ #include "qemu/queue.h"
+diff --git a/block/qcow.c b/block/qcow.c
+index f8919a44d1..1229c120d8 100644
+--- a/block/qcow.c
++++ b/block/qcow.c
+@@ -32,7 +32,7 @@
+ #include "qemu/option.h"
+ #include "qemu/bswap.h"
+ #include "qemu/cutils.h"
+-#include <zlib.h>
++#include "zlib.h"
+ #include "qapi/qmp/qdict.h"
+ #include "qapi/qmp/qstring.h"
+ #include "qapi/qobject-input-visitor.h"
+diff --git a/block/qcow2-cluster.c b/block/qcow2-cluster.c
+index bd0597842f..8049db50a4 100644
+--- a/block/qcow2-cluster.c
++++ b/block/qcow2-cluster.c
+@@ -23,7 +23,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ #include "qapi/error.h"
+ #include "qcow2.h"
+diff --git a/block/qcow2-threads.c b/block/qcow2-threads.c
+index 1914baf456..2370faf16a 100644
+--- a/block/qcow2-threads.c
++++ b/block/qcow2-threads.c
+@@ -26,7 +26,7 @@
+ #include "qemu/osdep.h"
+ 
+ #define ZLIB_CONST
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ #ifdef CONFIG_ZSTD
+ #include <zstd.h>
+diff --git a/block/vmdk.c b/block/vmdk.c
+index a00dc00eb4..6a77fe375f 100644
+--- a/block/vmdk.c
++++ b/block/vmdk.c
+@@ -35,7 +35,7 @@
+ #include "qemu/bswap.h"
+ #include "migration/blocker.h"
+ #include "qemu/cutils.h"
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ #define VMDK3_MAGIC (('C' << 24) | ('O' << 16) | ('W' << 8) | 'D')
+ #define VMDK4_MAGIC (('K' << 24) | ('D' << 16) | ('M' << 8) | 'V')
+diff --git a/contrib/libvhost-user/libvhost-user-glib.h b/contrib/libvhost-user/libvhost-user-glib.h
+index 1a79a4916e..d0c76e83ec 100644
+--- a/contrib/libvhost-user/libvhost-user-glib.h
++++ b/contrib/libvhost-user/libvhost-user-glib.h
+@@ -15,7 +15,7 @@
+ #ifndef LIBVHOST_USER_GLIB_H
+ #define LIBVHOST_USER_GLIB_H
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ #include "libvhost-user.h"
+ 
+ typedef struct VugDev {
+diff --git a/contrib/plugins/hotblocks.c b/contrib/plugins/hotblocks.c
+index 37435a3fc7..df38b5adf3 100644
+--- a/contrib/plugins/hotblocks.c
++++ b/contrib/plugins/hotblocks.c
+@@ -11,7 +11,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ #include <stdio.h>
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include <qemu-plugin.h>
+ 
+diff --git a/contrib/plugins/hotpages.c b/contrib/plugins/hotpages.c
+index ecd6c18732..3d41d80d78 100644
+--- a/contrib/plugins/hotpages.c
++++ b/contrib/plugins/hotpages.c
+@@ -14,7 +14,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ #include <stdio.h>
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include <qemu-plugin.h>
+ 
+diff --git a/contrib/plugins/howvec.c b/contrib/plugins/howvec.c
+index 3b9a6939f2..2c85253ba4 100644
+--- a/contrib/plugins/howvec.c
++++ b/contrib/plugins/howvec.c
+@@ -16,7 +16,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ #include <stdio.h>
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include <qemu-plugin.h>
+ 
+diff --git a/contrib/plugins/lockstep.c b/contrib/plugins/lockstep.c
+index 5aad50869d..0e5d489beb 100644
+--- a/contrib/plugins/lockstep.c
++++ b/contrib/plugins/lockstep.c
+@@ -23,7 +23,7 @@
+  * SPDX-License-Identifier: GPL-2.0-or-later
+  */
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ #include <inttypes.h>
+ #include <unistd.h>
+ #include <sys/socket.h>
+diff --git a/contrib/vhost-user-gpu/vhost-user-gpu.c b/contrib/vhost-user-gpu/vhost-user-gpu.c
+index a019d0a9ac..23ac689e11 100644
+--- a/contrib/vhost-user-gpu/vhost-user-gpu.c
++++ b/contrib/vhost-user-gpu/vhost-user-gpu.c
+@@ -16,8 +16,8 @@
+ #include "qapi/error.h"
+ #include "qemu/sockets.h"
+ 
+-#include <pixman.h>
+-#include <glib-unix.h>
++#include "pixman.h"
++#include "glib/glib-unix.h"
+ 
+ #include "vugpu.h"
+ #include "hw/virtio/virtio-gpu-bswap.h"
+diff --git a/contrib/vhost-user-input/main.c b/contrib/vhost-user-input/main.c
+index 6020c6f33a..3254be9e65 100644
+--- a/contrib/vhost-user-input/main.c
++++ b/contrib/vhost-user-input/main.c
+@@ -6,7 +6,7 @@
+ 
+ #include "qemu/osdep.h"
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ #include <linux/input.h>
+ 
+ #include "qemu/iov.h"
+diff --git a/dump/dump.c b/dump/dump.c
+index dec32468d9..cfda910798 100644
+--- a/dump/dump.c
++++ b/dump/dump.c
+@@ -35,7 +35,7 @@
+ #include "win_dump.h"
+ #endif
+ 
+-#include <zlib.h>
++#include "zlib.h"
+ #ifdef CONFIG_LZO
+ #include <lzo/lzo1x.h>
+ #endif
+diff --git a/fsdev/9p-iov-marshal.c b/fsdev/9p-iov-marshal.c
+index a1c9beddd2..003bb87175 100644
+--- a/fsdev/9p-iov-marshal.c
++++ b/fsdev/9p-iov-marshal.c
+@@ -12,7 +12,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gprintf.h>
++#include "glib/gprintf.h"
+ #include <utime.h>
+ 
+ #include "9p-iov-marshal.h"
+diff --git a/fsdev/9p-marshal.c b/fsdev/9p-marshal.c
+index a01bba6908..af93f824ac 100644
+--- a/fsdev/9p-marshal.c
++++ b/fsdev/9p-marshal.c
+@@ -12,7 +12,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gprintf.h>
++#include "glib/gprintf.h"
+ #include <dirent.h>
+ #include <utime.h>
+ 
+diff --git a/hw/9pfs/9p.c b/hw/9pfs/9p.c
+index 94df440fc7..4db4f2f548 100644
+--- a/hw/9pfs/9p.c
++++ b/hw/9pfs/9p.c
+@@ -12,7 +12,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gprintf.h>
++#include "glib/gprintf.h"
+ #include "hw/virtio/virtio.h"
+ #include "qapi/error.h"
+ #include "qemu/error-report.h"
+diff --git a/hw/acpi/aml-build.c b/hw/acpi/aml-build.c
+index 3792ba96ce..6ae8fbeb42 100644
+--- a/hw/acpi/aml-build.c
++++ b/hw/acpi/aml-build.c
+@@ -20,7 +20,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gprintf.h>
++#include "glib/gprintf.h"
+ #include "hw/acpi/aml-build.h"
+ #include "qemu/bswap.h"
+ #include "qemu/bitops.h"
+diff --git a/hw/core/loader-fit.c b/hw/core/loader-fit.c
+index b7c7b3ba94..83ecffe630 100644
+--- a/hw/core/loader-fit.c
++++ b/hw/core/loader-fit.c
+@@ -28,7 +28,7 @@
+ #include "sysemu/device_tree.h"
+ 
+ #include <libfdt.h>
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ #define FIT_LOADER_MAX_PATH (128)
+ 
+diff --git a/hw/core/loader.c b/hw/core/loader.c
+index 8bbb1797a4..eb29421324 100644
+--- a/hw/core/loader.c
++++ b/hw/core/loader.c
+@@ -61,7 +61,7 @@
+ #include "qemu/cutils.h"
+ #include "sysemu/runstate.h"
+ 
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ static int roms_loaded;
+ 
+diff --git a/hw/display/qxl.c b/hw/display/qxl.c
+index 431c107096..f3ab3cc302 100644
+--- a/hw/display/qxl.c
++++ b/hw/display/qxl.c
+@@ -20,7 +20,7 @@
+ 
+ #include "qemu/osdep.h"
+ #include "qemu/units.h"
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ #include "qapi/error.h"
+ #include "qemu/timer.h"
+diff --git a/hw/net/allwinner_emac.c b/hw/net/allwinner_emac.c
+index ddddf35c45..5c166d50d9 100644
+--- a/hw/net/allwinner_emac.c
++++ b/hw/net/allwinner_emac.c
+@@ -27,7 +27,7 @@
+ #include "hw/qdev-properties.h"
+ #include "qemu/log.h"
+ #include "qemu/module.h"
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ static uint8_t padding[60];
+ 
+diff --git a/hw/net/cadence_gem.c b/hw/net/cadence_gem.c
+index 7a534691f1..e653285d62 100644
+--- a/hw/net/cadence_gem.c
++++ b/hw/net/cadence_gem.c
+@@ -23,7 +23,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <zlib.h> /* For crc32 */
++#include "zlib.h" /* For crc32 */
+ 
+ #include "hw/irq.h"
+ #include "hw/net/cadence_gem.h"
+diff --git a/hw/net/dp8393x.c b/hw/net/dp8393x.c
+index 205c0decc5..f01361734f 100644
+--- a/hw/net/dp8393x.c
++++ b/hw/net/dp8393x.c
+@@ -26,7 +26,7 @@
+ #include "qapi/error.h"
+ #include "qemu/module.h"
+ #include "qemu/timer.h"
+-#include <zlib.h>
++#include "zlib.h"
+ #include "qom/object.h"
+ 
+ //#define DEBUG_SONIC
+diff --git a/hw/net/ftgmac100.c b/hw/net/ftgmac100.c
+index 782ff192ce..d7ff65ced7 100644
+--- a/hw/net/ftgmac100.c
++++ b/hw/net/ftgmac100.c
+@@ -25,7 +25,7 @@
+ #include "migration/vmstate.h"
+ 
+ /* For crc32 */
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ /*
+  * FTGMAC100 registers
+diff --git a/hw/net/i82596.c b/hw/net/i82596.c
+index 055c3a1470..ca38538111 100644
+--- a/hw/net/i82596.c
++++ b/hw/net/i82596.c
+@@ -19,7 +19,7 @@
+ #include "qemu/module.h"
+ #include "trace.h"
+ #include "i82596.h"
+-#include <zlib.h>       /* For crc32 */
++#include "zlib.h"       /* For crc32 */
+ 
+ #if defined(ENABLE_DEBUG)
+ #define DBG(x)          x
+diff --git a/hw/net/imx_fec.c b/hw/net/imx_fec.c
+index 2c14804041..c73b837fc4 100644
+--- a/hw/net/imx_fec.c
++++ b/hw/net/imx_fec.c
+@@ -34,7 +34,7 @@
+ #include "trace.h"
+ 
+ /* For crc32 */
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ #define IMX_MAX_DESC    1024
+ 
+diff --git a/hw/net/lan9118.c b/hw/net/lan9118.c
+index ab57c02c8e..3e00aa801a 100644
+--- a/hw/net/lan9118.c
++++ b/hw/net/lan9118.c
+@@ -24,7 +24,7 @@
+ #include "qemu/log.h"
+ #include "qemu/module.h"
+ /* For crc32 */
+-#include <zlib.h>
++#include "zlib.h"
+ #include "qom/object.h"
+ 
+ //#define DEBUG_LAN9118
+diff --git a/hw/net/mcf_fec.c b/hw/net/mcf_fec.c
+index 25e3e453ab..a8fa8d037d 100644
+--- a/hw/net/mcf_fec.c
++++ b/hw/net/mcf_fec.c
+@@ -17,7 +17,7 @@
+ #include "hw/qdev-properties.h"
+ #include "hw/sysbus.h"
+ /* For crc32 */
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ //#define DEBUG_FEC 1
+ 
+diff --git a/hw/net/milkymist-minimac2.c b/hw/net/milkymist-minimac2.c
+index 5826944fd5..f6602cc5a2 100644
+--- a/hw/net/milkymist-minimac2.c
++++ b/hw/net/milkymist-minimac2.c
+@@ -36,7 +36,7 @@
+ #include "qemu/module.h"
+ #include "qemu/error-report.h"
+ 
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ enum {
+     R_SETUP = 0,
+diff --git a/hw/net/rtl8139.c b/hw/net/rtl8139.c
+index ba5ace1ab7..aaafb07a5f 100644
+--- a/hw/net/rtl8139.c
++++ b/hw/net/rtl8139.c
+@@ -51,7 +51,7 @@
+ /* For crc32 */
+ 
+ #include "qemu/osdep.h"
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ #include "hw/pci/pci.h"
+ #include "hw/qdev-properties.h"
+diff --git a/hw/net/smc91c111.c b/hw/net/smc91c111.c
+index ad778cd8fc..4bea869eb9 100644
+--- a/hw/net/smc91c111.c
++++ b/hw/net/smc91c111.c
+@@ -18,7 +18,7 @@
+ #include "qemu/log.h"
+ #include "qemu/module.h"
+ /* For crc32 */
+-#include <zlib.h>
++#include "zlib.h"
+ #include "qom/object.h"
+ 
+ /* Number of 2k memory pages available.  */
+diff --git a/hw/net/stellaris_enet.c b/hw/net/stellaris_enet.c
+index 8dd60783d8..e2d1065394 100644
+--- a/hw/net/stellaris_enet.c
++++ b/hw/net/stellaris_enet.c
+@@ -15,7 +15,7 @@
+ #include "net/net.h"
+ #include "qemu/log.h"
+ #include "qemu/module.h"
+-#include <zlib.h>
++#include "zlib.h"
+ #include "qom/object.h"
+ 
+ //#define DEBUG_STELLARIS_ENET 1
+diff --git a/hw/nvram/mac_nvram.c b/hw/nvram/mac_nvram.c
+index 11f2d31cdb..f8db0afd00 100644
+--- a/hw/nvram/mac_nvram.c
++++ b/hw/nvram/mac_nvram.c
+@@ -31,7 +31,7 @@
+ #include "qemu/cutils.h"
+ #include "qemu/module.h"
+ #include "trace.h"
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ #define DEF_SYSTEM_SIZE 0xc10
+ 
+diff --git a/hw/xen/xen-bus-helper.c b/hw/xen/xen-bus-helper.c
+index b459bb9396..ff159b0bfb 100644
+--- a/hw/xen/xen-bus-helper.c
++++ b/hw/xen/xen-bus-helper.c
+@@ -12,7 +12,7 @@
+ #include "hw/xen/xen-bus-helper.h"
+ #include "qapi/error.h"
+ 
+-#include <glib/gprintf.h>
++#include "glib/gprintf.h"
+ 
+ struct xs_state {
+     enum xenbus_state statenum;
+diff --git a/include/block/aio.h b/include/block/aio.h
+index 5f342267d5..00300a7fa4 100644
+--- a/include/block/aio.h
++++ b/include/block/aio.h
+@@ -15,7 +15,7 @@
+ #define QEMU_AIO_H
+ 
+ #ifdef CONFIG_LINUX_IO_URING
+-#include <liburing.h>
++#include "src/include/liburing.h"
+ #endif
+ #include "qemu/coroutine.h"
+ #include "qemu/queue.h"
+diff --git a/include/glib-compat.h b/include/glib-compat.h
+index 695a96f7ea..246a1982d1 100644
+--- a/include/glib-compat.h
++++ b/include/glib-compat.h
+@@ -29,9 +29,9 @@
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ #if defined(G_OS_UNIX)
+-#include <glib-unix.h>
++#include "glib/glib-unix.h"
+ #include <sys/types.h>
+ #include <pwd.h>
+ #endif
+diff --git a/include/ui/qemu-pixman.h b/include/ui/qemu-pixman.h
+index 87737a6f16..b443f4415a 100644
+--- a/include/ui/qemu-pixman.h
++++ b/include/ui/qemu-pixman.h
+@@ -9,7 +9,7 @@
+ /* pixman-0.16.0 headers have a redundant declaration */
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wredundant-decls"
+-#include <pixman.h>
++#include "pixman.h"
+ #pragma GCC diagnostic pop
+ 
+ /*
+diff --git a/migration/dirtyrate.c b/migration/dirtyrate.c
+index ccb98147e8..73b6a4f31b 100644
+--- a/migration/dirtyrate.c
++++ b/migration/dirtyrate.c
+@@ -11,7 +11,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <zlib.h>
++#include "zlib.h"
+ #include "qapi/error.h"
+ #include "cpu.h"
+ #include "exec/ramblock.h"
+diff --git a/migration/multifd-zlib.c b/migration/multifd-zlib.c
+index ab4ba75d75..fde4ff6647 100644
+--- a/migration/multifd-zlib.c
++++ b/migration/multifd-zlib.c
+@@ -11,7 +11,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <zlib.h>
++#include "zlib.h"
+ #include "qemu/rcu.h"
+ #include "exec/target_page.h"
+ #include "qapi/error.h"
+diff --git a/migration/qemu-file.c b/migration/qemu-file.c
+index be21518c57..8e36d701ca 100644
+--- a/migration/qemu-file.c
++++ b/migration/qemu-file.c
+@@ -22,7 +22,7 @@
+  * THE SOFTWARE.
+  */
+ #include "qemu/osdep.h"
+-#include <zlib.h>
++#include "zlib.h"
+ #include "qemu/error-report.h"
+ #include "qemu/iov.h"
+ #include "migration.h"
+diff --git a/migration/qemu-file.h b/migration/qemu-file.h
+index a9b6d6ccb7..1d76e0b405 100644
+--- a/migration/qemu-file.h
++++ b/migration/qemu-file.h
+@@ -25,7 +25,7 @@
+ #ifndef MIGRATION_QEMU_FILE_H
+ #define MIGRATION_QEMU_FILE_H
+ 
+-#include <zlib.h>
++#include "zlib.h"
+ #include "exec/cpu-common.h"
+ 
+ /* Read a chunk of data from a file at the given position.  The pos argument
+diff --git a/qemu-options-wrapper.h b/qemu-options-wrapper.h
+index 6f548e3922..3d5a9321cc 100644
+--- a/qemu-options-wrapper.h
++++ b/qemu-options-wrapper.h
+@@ -29,7 +29,7 @@
+ #error "qemu-options-wrapper.h included with no option defined"
+ #endif
+ 
+-#include "qemu-options.def"
++#include "qemu-options-gen.h"
+ 
+ #undef DEF
+ #undef DEFHEADING
+diff --git a/qga/commands-posix-ssh.c b/qga/commands-posix-ssh.c
+index 749167e82d..a614c105d0 100644
+--- a/qga/commands-posix-ssh.c
++++ b/qga/commands-posix-ssh.c
+@@ -4,8 +4,8 @@
+   */
+ #include "qemu/osdep.h"
+ 
+-#include <glib-unix.h>
+-#include <glib/gstdio.h>
++#include "glib/glib-unix.h"
++#include "glib/gstdio.h"
+ #include <locale.h>
+ #include <pwd.h>
+ 
+diff --git a/qga/main.c b/qga/main.c
+index dea6a3aa64..4733ed8f55 100644
+--- a/qga/main.c
++++ b/qga/main.c
+@@ -13,7 +13,7 @@
+ 
+ #include "qemu/osdep.h"
+ #include <getopt.h>
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ #ifndef _WIN32
+ #include <syslog.h>
+ #include <sys/wait.h>
+Submodule slirp contains modified content
+diff --git a/slirp/src/ip.h b/slirp/src/ip.h
+index e5d4aa8..d433cf3 100644
+--- a/slirp/src/ip.h
++++ b/slirp/src/ip.h
+@@ -34,7 +34,7 @@
+ #ifndef IP_H
+ #define IP_H
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #if G_BYTE_ORDER == G_BIG_ENDIAN
+ #undef NTOHL
+diff --git a/slirp/src/ip6.h b/slirp/src/ip6.h
+index 0630309..d5b6ae7 100644
+--- a/slirp/src/ip6.h
++++ b/slirp/src/ip6.h
+@@ -7,7 +7,7 @@
+ #ifndef SLIRP_IP6_H
+ #define SLIRP_IP6_H
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ #include <string.h>
+ 
+ #define ALLNODES_MULTICAST \
+diff --git a/slirp/src/stream.c b/slirp/src/stream.c
+index 6cf326f..7992ee2 100644
+--- a/slirp/src/stream.c
++++ b/slirp/src/stream.c
+@@ -23,7 +23,7 @@
+  * THE SOFTWARE.
+  */
+ #include "stream.h"
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ bool slirp_istream_read(SlirpIStream *f, void *buf, size_t size)
+ {
+diff --git a/slirp/src/tcp.h b/slirp/src/tcp.h
+index 70a9760..7cbd4d6 100644
+--- a/slirp/src/tcp.h
++++ b/slirp/src/tcp.h
+@@ -34,7 +34,7 @@
+ #ifndef TCP_H
+ #define TCP_H
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ typedef uint32_t tcp_seq;
+ 
+diff --git a/slirp/src/util.c b/slirp/src/util.c
+index d3ed5fa..f53bd03 100644
+--- a/slirp/src/util.c
++++ b/slirp/src/util.c
+@@ -28,7 +28,7 @@
+  */
+ #include "util.h"
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ #include <fcntl.h>
+ #include <stdint.h>
+ 
+diff --git a/slirp/src/util.h b/slirp/src/util.h
+index d67b3d0..eec4a66 100644
+--- a/slirp/src/util.h
++++ b/slirp/src/util.h
+@@ -24,7 +24,7 @@
+ #ifndef UTIL_H_
+ #define UTIL_H_
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include <stdlib.h>
+ #include <stdio.h>
+diff --git a/slirp/src/vmstate.c b/slirp/src/vmstate.c
+index 68cc172..66840df 100644
+--- a/slirp/src/vmstate.c
++++ b/slirp/src/vmstate.c
+@@ -40,7 +40,7 @@
+ #include <assert.h>
+ #include <errno.h>
+ #include <string.h>
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include "stream.h"
+ #include "vmstate.h"
+diff --git a/softmmu/qemu-seccomp.c b/softmmu/qemu-seccomp.c
+index 8325ecb766..1290657103 100644
+--- a/softmmu/qemu-seccomp.c
++++ b/softmmu/qemu-seccomp.c
+@@ -19,7 +19,7 @@
+ #include "qemu/option.h"
+ #include "qemu/module.h"
+ #include <sys/prctl.h>
+-#include <seccomp.h>
++#include "seccomp.h"
+ #include "sysemu/seccomp.h"
+ #include <linux/seccomp.h>
+ 
+diff --git a/target/arm/helper-a64.c b/target/arm/helper-a64.c
+index 30b2ad119f..4d982f6db0 100644
+--- a/target/arm/helper-a64.c
++++ b/target/arm/helper-a64.c
+@@ -34,7 +34,7 @@
+ #include "qemu/atomic128.h"
+ #include "tcg/tcg.h"
+ #include "fpu/softfloat.h"
+-#include <zlib.h> /* For crc32 */
++#include "zlib.h" /* For crc32 */
+ 
+ /* C2.4.7 Multiply and divide */
+ /* special cases for 0 and LLONG_MIN are mandated by the standard */
+diff --git a/target/arm/helper.c b/target/arm/helper.c
+index 38cd35c049..4b09cba889 100644
+--- a/target/arm/helper.c
++++ b/target/arm/helper.c
+@@ -20,7 +20,7 @@
+ #include "qemu/crc32c.h"
+ #include "qemu/qemu-print.h"
+ #include "exec/exec-all.h"
+-#include <zlib.h> /* For crc32 */
++#include "zlib.h" /* For crc32 */
+ #include "hw/irq.h"
+ #include "hw/semihosting/semihost.h"
+ #include "sysemu/cpus.h"
+diff --git a/target/arm/m_helper.c b/target/arm/m_helper.c
+index aad01ea012..e95f7a8d88 100644
+--- a/target/arm/m_helper.c
++++ b/target/arm/m_helper.c
+@@ -20,7 +20,7 @@
+ #include "qemu/crc32c.h"
+ #include "qemu/qemu-print.h"
+ #include "exec/exec-all.h"
+-#include <zlib.h> /* For crc32 */
++#include "zlib.h" /* For crc32 */
+ #include "hw/semihosting/semihost.h"
+ #include "sysemu/cpus.h"
+ #include "sysemu/kvm.h"
+diff --git a/target/tilegx/helper.c b/target/tilegx/helper.c
+index c006bf7454..873f42a817 100644
+--- a/target/tilegx/helper.c
++++ b/target/tilegx/helper.c
+@@ -22,7 +22,7 @@
+ #include "cpu.h"
+ #include "exec/exec-all.h"
+ #include "exec/helper-proto.h"
+-#include <zlib.h> /* For crc32 */
++#include "zlib.h" /* For crc32 */
+ #include "syscall_defs.h"
+ 
+ void helper_exception(CPUTLGState *env, uint32_t excp)
+diff --git a/target/tricore/op_helper.c b/target/tricore/op_helper.c
+index 32c2bc1699..27dc193796 100644
+--- a/target/tricore/op_helper.c
++++ b/target/tricore/op_helper.c
+@@ -20,7 +20,7 @@
+ #include "exec/helper-proto.h"
+ #include "exec/exec-all.h"
+ #include "exec/cpu_ldst.h"
+-#include <zlib.h> /* for crc32 */
++#include "zlib.h" /* for crc32 */
+ 
+ 
+ /* Exception helpers */
+diff --git a/tests/plugin/bb.c b/tests/plugin/bb.c
+index de09bdde4e..bc04d295e4 100644
+--- a/tests/plugin/bb.c
++++ b/tests/plugin/bb.c
+@@ -10,7 +10,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ #include <stdio.h>
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include <qemu-plugin.h>
+ 
+diff --git a/tests/plugin/insn.c b/tests/plugin/insn.c
+index a9a6e41237..75b1bd7b86 100644
+--- a/tests/plugin/insn.c
++++ b/tests/plugin/insn.c
+@@ -10,7 +10,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ #include <stdio.h>
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include <qemu-plugin.h>
+ 
+diff --git a/tests/plugin/mem.c b/tests/plugin/mem.c
+index 4725bd851d..8d587f460a 100644
+--- a/tests/plugin/mem.c
++++ b/tests/plugin/mem.c
+@@ -10,7 +10,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ #include <stdio.h>
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include <qemu-plugin.h>
+ 
+diff --git a/tests/ptimer-test.c b/tests/ptimer-test.c
+index 9176b96c1c..462468a78f 100644
+--- a/tests/ptimer-test.c
++++ b/tests/ptimer-test.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gprintf.h>
++#include "glib/gprintf.h"
+ 
+ #include "qemu/main-loop.h"
+ #include "hw/ptimer.h"
+diff --git a/tests/qtest/acpi-utils.c b/tests/qtest/acpi-utils.c
+index d2a202efca..bccb0434fa 100644
+--- a/tests/qtest/acpi-utils.c
++++ b/tests/qtest/acpi-utils.c
+@@ -13,7 +13,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ #include "qemu-common.h"
+ #include "qemu/bitmap.h"
+ #include "acpi-utils.h"
+diff --git a/tests/qtest/bios-tables-test.c b/tests/qtest/bios-tables-test.c
+index f23a5335a8..76e67c888d 100644
+--- a/tests/qtest/bios-tables-test.c
++++ b/tests/qtest/bios-tables-test.c
+@@ -56,7 +56,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ #include "qemu-common.h"
+ #include "hw/firmware/smbios.h"
+ #include "qemu/bitmap.h"
+diff --git a/tests/qtest/dbus-vmstate-test.c b/tests/qtest/dbus-vmstate-test.c
+index aca9b98b7a..a4835fc7d2 100644
+--- a/tests/qtest/dbus-vmstate-test.c
++++ b/tests/qtest/dbus-vmstate-test.c
+@@ -1,5 +1,5 @@
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ #include <gio/gio.h>
+ #include "libqos/libqtest.h"
+ #include "qemu-common.h"
+diff --git a/tests/qtest/ivshmem-test.c b/tests/qtest/ivshmem-test.c
+index dfa69424ed..6b27e4a82e 100644
+--- a/tests/qtest/ivshmem-test.c
++++ b/tests/qtest/ivshmem-test.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ #include "contrib/ivshmem-server/ivshmem-server.h"
+ #include "libqos/libqos-pc.h"
+ #include "libqos/libqos-spapr.h"
+diff --git a/tests/qtest/pxe-test.c b/tests/qtest/pxe-test.c
+index 32bbae33c5..e2d750e984 100644
+--- a/tests/qtest/pxe-test.c
++++ b/tests/qtest/pxe-test.c
+@@ -13,7 +13,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ #include "qemu-common.h"
+ #include "libqos/libqtest.h"
+ #include "boot-sector.h"
+diff --git a/tests/qtest/tpm-crb-swtpm-test.c b/tests/qtest/tpm-crb-swtpm-test.c
+index 1d82a48c04..634e872e9b 100644
+--- a/tests/qtest/tpm-crb-swtpm-test.c
++++ b/tests/qtest/tpm-crb-swtpm-test.c
+@@ -13,7 +13,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include "libqos/libqtest.h"
+ #include "qemu/module.h"
+diff --git a/tests/qtest/tpm-crb-test.c b/tests/qtest/tpm-crb-test.c
+index ed533900d1..5fcc7740b4 100644
+--- a/tests/qtest/tpm-crb-test.c
++++ b/tests/qtest/tpm-crb-test.c
+@@ -11,7 +11,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include "hw/acpi/tpm.h"
+ #include "io/channel-socket.h"
+diff --git a/tests/qtest/tpm-emu.c b/tests/qtest/tpm-emu.c
+index 2e8eb7b94f..ee8605754b 100644
+--- a/tests/qtest/tpm-emu.c
++++ b/tests/qtest/tpm-emu.c
+@@ -11,7 +11,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include "backends/tpm/tpm_ioctl.h"
+ #include "io/channel-socket.h"
+diff --git a/tests/qtest/tpm-tests.c b/tests/qtest/tpm-tests.c
+index 0da3a8a4df..2672509f57 100644
+--- a/tests/qtest/tpm-tests.c
++++ b/tests/qtest/tpm-tests.c
+@@ -13,7 +13,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include "libqtest-single.h"
+ #include "tpm-tests.h"
+diff --git a/tests/qtest/tpm-tis-device-swtpm-test.c b/tests/qtest/tpm-tis-device-swtpm-test.c
+index f7126eff9e..f1ab3b8e8e 100644
+--- a/tests/qtest/tpm-tis-device-swtpm-test.c
++++ b/tests/qtest/tpm-tis-device-swtpm-test.c
+@@ -14,7 +14,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include "libqos/libqtest.h"
+ #include "qemu/module.h"
+diff --git a/tests/qtest/tpm-tis-device-test.c b/tests/qtest/tpm-tis-device-test.c
+index 63ed36440f..671b8f9a46 100644
+--- a/tests/qtest/tpm-tis-device-test.c
++++ b/tests/qtest/tpm-tis-device-test.c
+@@ -13,7 +13,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include "io/channel-socket.h"
+ #include "libqtest-single.h"
+diff --git a/tests/qtest/tpm-tis-swtpm-test.c b/tests/qtest/tpm-tis-swtpm-test.c
+index fa590e68f1..59d5bff7e8 100644
+--- a/tests/qtest/tpm-tis-swtpm-test.c
++++ b/tests/qtest/tpm-tis-swtpm-test.c
+@@ -13,7 +13,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include "libqos/libqtest.h"
+ #include "qemu/module.h"
+diff --git a/tests/qtest/tpm-tis-test.c b/tests/qtest/tpm-tis-test.c
+index 79ffbc943e..353365e5a1 100644
+--- a/tests/qtest/tpm-tis-test.c
++++ b/tests/qtest/tpm-tis-test.c
+@@ -13,7 +13,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include "hw/acpi/tpm.h"
+ #include "io/channel-socket.h"
+diff --git a/tests/qtest/tpm-tis-util.c b/tests/qtest/tpm-tis-util.c
+index 9aff503fd8..77a2e6f7cd 100644
+--- a/tests/qtest/tpm-tis-util.c
++++ b/tests/qtest/tpm-tis-util.c
+@@ -14,7 +14,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include "hw/acpi/tpm.h"
+ #include "io/channel-socket.h"
+diff --git a/tests/test-char.c b/tests/test-char.c
+index 9196e566e9..aefa73fd4e 100644
+--- a/tests/test-char.c
++++ b/tests/test-char.c
+@@ -1,5 +1,5 @@
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include "qemu/config-file.h"
+ #include "qemu/module.h"
+diff --git a/tests/test-logging.c b/tests/test-logging.c
+index ccb819f193..b710310aaa 100644
+--- a/tests/test-logging.c
++++ b/tests/test-logging.c
+@@ -25,7 +25,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include "qemu-common.h"
+ #include "qapi/error.h"
+diff --git a/tests/test-qga.c b/tests/test-qga.c
+index c1b173b3cb..2a2607c9e1 100644
+--- a/tests/test-qga.c
++++ b/tests/test-qga.c
+@@ -1,6 +1,6 @@
+ #include "qemu/osdep.h"
+ #include <locale.h>
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ #include <sys/socket.h>
+ #include <sys/un.h>
+ 
+diff --git a/tests/test-util-filemonitor.c b/tests/test-util-filemonitor.c
+index b629e10857..32efe8256d 100644
+--- a/tests/test-util-filemonitor.c
++++ b/tests/test-util-filemonitor.c
+@@ -23,7 +23,7 @@
+ #include "qapi/error.h"
+ #include "qemu/filemonitor.h"
+ 
+-#include <glib/gstdio.h>
++#include "glib/gstdio.h"
+ 
+ #include <utime.h>
+ 
+diff --git a/tools/virtiofsd/fuse_lowlevel.c b/tools/virtiofsd/fuse_lowlevel.c
+index c70fb16a9a..9be0d4ec75 100644
+--- a/tools/virtiofsd/fuse_lowlevel.c
++++ b/tools/virtiofsd/fuse_lowlevel.c
+@@ -18,7 +18,7 @@
+ 
+ #include <assert.h>
+ #include <errno.h>
+-#include <glib.h>
++#include "glib/glib.h"
+ #include <limits.h>
+ #include <stdbool.h>
+ #include <stddef.h>
+diff --git a/tools/virtiofsd/fuse_virtio.c b/tools/virtiofsd/fuse_virtio.c
+index 83ba07c6cd..273d66704c 100644
+--- a/tools/virtiofsd/fuse_virtio.c
++++ b/tools/virtiofsd/fuse_virtio.c
+@@ -22,7 +22,7 @@
+ 
+ #include <assert.h>
+ #include <errno.h>
+-#include <glib.h>
++#include "glib/glib.h"
+ #include <stdint.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+diff --git a/tools/virtiofsd/passthrough_ll.c b/tools/virtiofsd/passthrough_ll.c
+index 97485b22b4..cac5970790 100644
+--- a/tools/virtiofsd/passthrough_ll.c
++++ b/tools/virtiofsd/passthrough_ll.c
+@@ -45,7 +45,7 @@
+ #include <cap-ng.h>
+ #include <dirent.h>
+ #include <errno.h>
+-#include <glib.h>
++#include "glib/glib.h"
+ #include <inttypes.h>
+ #include <limits.h>
+ #include <pthread.h>
+diff --git a/tools/virtiofsd/passthrough_seccomp.c b/tools/virtiofsd/passthrough_seccomp.c
+index 11623f56f2..779d1d3249 100644
+--- a/tools/virtiofsd/passthrough_seccomp.c
++++ b/tools/virtiofsd/passthrough_seccomp.c
+@@ -11,8 +11,8 @@
+ #include "fuse_i.h"
+ #include "fuse_log.h"
+ #include <errno.h>
+-#include <glib.h>
+-#include <seccomp.h>
++#include "glib/glib.h"
++#include "seccomp.h"
+ #include <stdlib.h>
+ 
+ /* Bodge for libseccomp 2.4.2 which broke ppoll */
+diff --git a/ui/cursor.c b/ui/cursor.c
+index 1d62ddd4d0..2fec816a6a 100644
+--- a/ui/cursor.c
++++ b/ui/cursor.c
+@@ -1,8 +1,8 @@
+ #include "qemu/osdep.h"
+ #include "ui/console.h"
+ 
+-#include "cursor_hidden.xpm"
+-#include "cursor_left_ptr.xpm"
++#include "ui/cursor_hidden.h"
++#include "ui/cursor_left_ptr.h"
+ 
+ /* for creating built-in cursors */
+ static QEMUCursor *cursor_parse_xpm(const char *xpm[])
+diff --git a/ui/gtk.c b/ui/gtk.c
+index a752aa22be..6ba66c0341 100644
+--- a/ui/gtk.c
++++ b/ui/gtk.c
+@@ -44,7 +44,7 @@
+ #endif
+ #include "ui/win32-kbd-hook.h"
+ 
+-#include <glib/gi18n.h>
++#include "glib/gi18n.h"
+ #include <locale.h>
+ #if defined(CONFIG_VTE)
+ #include <vte/vte.h>
+diff --git a/ui/vnc.h b/ui/vnc.h
+index 4e2637ce6c..0da79ae261 100644
+--- a/ui/vnc.h
++++ b/ui/vnc.h
+@@ -38,7 +38,7 @@
+ #include "io/channel-tls.h"
+ #include "io/net-listener.h"
+ #include "authz/base.h"
+-#include <zlib.h>
++#include "zlib.h"
+ 
+ #include "keymaps.h"
+ #include "vnc-palette.h"
+diff --git a/util/oslib-posix.c b/util/oslib-posix.c
+index f15234b5c0..2cb8411ddb 100644
+--- a/util/oslib-posix.c
++++ b/util/oslib-posix.c
+@@ -29,7 +29,7 @@
+ #include "qemu/osdep.h"
+ #include <termios.h>
+ 
+-#include <glib/gprintf.h>
++#include "glib/gprintf.h"
+ 
+ #include "qemu-common.h"
+ #include "sysemu/sysemu.h"

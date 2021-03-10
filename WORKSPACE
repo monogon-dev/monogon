@@ -133,6 +133,50 @@ xfsprogs_external(
     version = "5.10.0",
 )
 
+load("//third_party/pixman:external.bzl", "pixman_external")
+
+pixman_external(
+    name = "pixman",
+    version = "0.40.0",
+)
+
+load("//third_party/uring:external.bzl", "uring_external")
+
+uring_external(
+    name = "uring",
+    version = "2.0",
+)
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "gperf",
+    commit = "de9373c2d48a3edf29862eb8be44764a7f7d24c6",
+    remote = "https://github.com/nexantic/gperf.git",
+    shallow_since = "1615306886 +0100",
+)
+
+load("//third_party/seccomp:external.bzl", "seccomp_external")
+
+seccomp_external(
+    name = "seccomp",
+    version = "2.5.1",
+)
+
+load("//third_party/glib:external.bzl", "glib_external")
+
+glib_external(
+    name = "glib",
+    version = "2.67.5",
+)
+
+load("//third_party/qemu:external.bzl", "qemu_external")
+
+qemu_external(
+    name = "qemu",
+    version = "5.2.0",
+)
+
 register_toolchains("//:host_python")
 
 # python dependencies. Currently we don't use Python, but some of our deps (ie. gvisor) do expect @pydeps// to exist, even

@@ -1,0 +1,166 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From f8ee9738c83ccca8f83b70605e8e7dda382f4fb7 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@nexantic.com>
+Date: Tue, 9 Mar 2021 17:08:46 +0100
+Subject: [PATCH 1/2] bazel_cc_fix patch
+
+---
+ src/api.c               | 2 +-
+ src/arch-syscall-dump.c | 2 +-
+ src/arch.c              | 2 +-
+ src/arch.h              | 2 +-
+ src/db.c                | 2 +-
+ src/db.h                | 2 +-
+ src/gen_bpf.c           | 2 +-
+ src/gen_pfc.c           | 2 +-
+ src/syscalls.c          | 2 +-
+ src/system.c            | 2 +-
+ 10 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/src/api.c b/src/api.c
+index 5cec088..b3f3b33 100644
+--- a/src/api.c
++++ b/src/api.c
+@@ -29,7 +29,7 @@
+ #include <stdbool.h>
+ #include <sys/ioctl.h>
+ 
+-#include <seccomp.h>
++#include "seccomp.h"
+ 
+ #include "arch.h"
+ #include "db.h"
+diff --git a/src/arch-syscall-dump.c b/src/arch-syscall-dump.c
+index 2055d34..59881a6 100644
+--- a/src/arch-syscall-dump.c
++++ b/src/arch-syscall-dump.c
+@@ -27,7 +27,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ 
+-#include <seccomp.h>
++#include "seccomp.h"
+ 
+ #include "arch.h"
+ #include "arch-x86.h"
+diff --git a/src/arch.c b/src/arch.c
+index 73bf710..0184ed8 100644
+--- a/src/arch.c
++++ b/src/arch.c
+@@ -27,7 +27,7 @@
+ #include <linux/audit.h>
+ #include <stdbool.h>
+ 
+-#include <seccomp.h>
++#include "seccomp.h"
+ 
+ #include "arch.h"
+ #include "arch-x86.h"
+diff --git a/src/arch.h b/src/arch.h
+index 38c3a9c..33f46a5 100644
+--- a/src/arch.h
++++ b/src/arch.h
+@@ -26,7 +26,7 @@
+ #include <stddef.h>
+ #include <stdbool.h>
+ 
+-#include <seccomp.h>
++#include "seccomp.h"
+ 
+ #include "system.h"
+ 
+diff --git a/src/db.c b/src/db.c
+index 2dc9733..678890d 100644
+--- a/src/db.c
++++ b/src/db.c
+@@ -27,7 +27,7 @@
+ #include <string.h>
+ #include <stdarg.h>
+ 
+-#include <seccomp.h>
++#include "seccomp.h"
+ 
+ #include "arch.h"
+ #include "db.h"
+diff --git a/src/db.h b/src/db.h
+index 765c607..ffeaeaa 100644
+--- a/src/db.h
++++ b/src/db.h
+@@ -25,7 +25,7 @@
+ #include <inttypes.h>
+ #include <stdbool.h>
+ 
+-#include <seccomp.h>
++#include "seccomp.h"
+ 
+ #include "arch.h"
+ 
+diff --git a/src/gen_bpf.c b/src/gen_bpf.c
+index 6961d09..c0b60e4 100644
+--- a/src/gen_bpf.c
++++ b/src/gen_bpf.c
+@@ -32,7 +32,7 @@
+ #endif
+ #include <endian.h>
+ 
+-#include <seccomp.h>
++#include "seccomp.h"
+ 
+ #include "arch.h"
+ #include "arch-x32.h"
+diff --git a/src/gen_pfc.c b/src/gen_pfc.c
+index 405f080..fd2e187 100644
+--- a/src/gen_pfc.c
++++ b/src/gen_pfc.c
+@@ -29,7 +29,7 @@
+ /* NOTE: needed for the arch->token decoding in _pfc_arch() */
+ #include <linux/audit.h>
+ 
+-#include <seccomp.h>
++#include "seccomp.h"
+ 
+ #include "arch.h"
+ #include "db.h"
+diff --git a/src/syscalls.c b/src/syscalls.c
+index 9091fa9..72e26ab 100644
+--- a/src/syscalls.c
++++ b/src/syscalls.c
+@@ -19,7 +19,7 @@
+  * You should have received a copy of the GNU Lesser General Public License
+  * along with this library; if not, see <http://www.gnu.org/licenses>.
+  */
+-#include <seccomp.h>
++#include "seccomp.h"
+ #include <string.h>
+ 
+ #include "arch.h"
+diff --git a/src/system.c b/src/system.c
+index ae445bf..44f5b5c 100644
+--- a/src/system.c
++++ b/src/system.c
+@@ -28,7 +28,7 @@
+ 
+ #include "system.h"
+ 
+-#include <seccomp.h>
++#include "seccomp.h"
+ 
+ #include "arch.h"
+ #include "db.h"
+-- 
+2.25.1
+

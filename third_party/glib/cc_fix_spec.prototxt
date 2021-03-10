@@ -1,0 +1,17 @@
+replace {
+    type: SYSTEM
+    from: "glibconfig.h"
+    to: "glib/glibconfig.h"
+}
+
+replace {
+    type: WORKSPACE
+    from: "build/config.h"
+    to: "glib/config.h"
+}
+
+replace {
+    type: SYSTEM
+    from: "glib.h"
+    to: "glib/glib.h"
+}

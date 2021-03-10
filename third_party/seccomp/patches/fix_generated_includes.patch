@@ -1,0 +1,57 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From ac0286c4e85bef34485ad3cd1161da5c379af316 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@nexantic.com>
+Date: Tue, 9 Mar 2021 17:18:30 +0100
+Subject: [PATCH 2/2] Fix generated includes
+
+---
+ include/seccomp.h.in       | 2 +-
+ src/syscalls.perf.template | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/include/seccomp.h.in b/include/seccomp.h.in
+index 1e47de9..444ca93 100644
+--- a/include/seccomp.h.in
++++ b/include/seccomp.h.in
+@@ -818,7 +818,7 @@ int seccomp_export_bpf(const scmp_filter_ctx ctx, int fd);
+ #define __NR_SCMP_ERROR		-1
+ #define __NR_SCMP_UNDEF		-2
+ 
+-#include <seccomp-syscalls.h>
++#include "include/seccomp-syscalls.h"
+ 
+ #ifdef __cplusplus
+ }
+diff --git a/src/syscalls.perf.template b/src/syscalls.perf.template
+index f1fd3db..9540ad0 100644
+--- a/src/syscalls.perf.template
++++ b/src/syscalls.perf.template
+@@ -20,9 +20,9 @@
+  * along with this library; if not, see <http://www.gnu.org/licenses>.
+  */
+ 
+-#include <seccomp.h>
++#include "seccomp.h"
+ #include <string.h>
+-#include "syscalls.h"
++#include "src/syscalls.h"
+ 
+ %}
+ struct arch_syscall_table;
+-- 
+2.25.1
+
