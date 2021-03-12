@@ -131,5 +131,5 @@ func (s *kubeletService) Run(ctx context.Context) error {
 		fmt.Sprintf("--root-dir=%s", s.KubeletDirectory.FullPath()),
 	)
 	cmd.Env = []string{"PATH=/kubernetes/bin"}
-	return supervisor.RunCommand(ctx, cmd)
+	return supervisor.RunCommand(ctx, cmd, supervisor.ParseKLog())
 }

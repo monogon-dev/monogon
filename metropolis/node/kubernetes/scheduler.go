@@ -65,6 +65,6 @@ func runScheduler(config schedulerConfig) supervisor.Runnable {
 		if args.Error() != nil {
 			return fmt.Errorf("failed to use fileargs: %w", err)
 		}
-		return supervisor.RunCommand(ctx, cmd)
+		return supervisor.RunCommand(ctx, cmd, supervisor.ParseKLog())
 	}
 }

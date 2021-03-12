@@ -22,6 +22,7 @@ import (
 	"context"
 	"net"
 	"os/exec"
+	"source.monogon.dev/metropolis/pkg/logtree"
 
 	"google.golang.org/grpc"
 )
@@ -52,11 +53,44 @@ func GRPCServer(srv *grpc.Server, lis net.Listener, graceful bool) Runnable {
 }
 
 // RunCommand will create a Runnable that starts a long-running command, whose exit is determined to be a failure.
-func RunCommand(ctx context.Context, cmd *exec.Cmd) error {
+func RunCommand(ctx context.Context, cmd *exec.Cmd, opts ...RunCommandOption) error {
 	Signal(ctx, SignalHealthy)
-	cmd.Stdout = RawLogger(ctx)
-	cmd.Stderr = RawLogger(ctx)
+
+	var parseKLog bool
+	for _, opt := range opts {
+		if opt.parseKlog {
+			parseKLog = true
+		}
+	}
+
+	if parseKLog {
+		// We make two klogs, one for each of stdout/stderr. This is to prevent
+		// accidental interleaving of both.
+		klogStdout := logtree.KLogParser(Logger(ctx))
+		defer klogStdout.Close()
+		klogStderr := logtree.KLogParser(Logger(ctx))
+		defer klogStderr.Close()
+
+		cmd.Stdout = klogStdout
+		cmd.Stderr = klogStderr
+	} else {
+		cmd.Stdout = RawLogger(ctx)
+		cmd.Stderr = RawLogger(ctx)
+	}
 	err := cmd.Run()
 	Logger(ctx).Infof("Command returned: %v", err)
 	return err
+}
+
+type RunCommandOption struct {
+	parseKlog bool
+}
+
+// ParseKLog signals that the command being run will return klog-compatible logs
+// to stdout and/or stderr, and these will be re-interpreted as structured
+// logging and emitted to the supervisor's logger.
+func ParseKLog() RunCommandOption {
+	return RunCommandOption{
+		parseKlog: true,
+	}
 }

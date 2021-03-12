@@ -126,5 +126,5 @@ func (s *apiserverService) Run(ctx context.Context) error {
 	if args.Error() != nil {
 		return err
 	}
-	return supervisor.RunCommand(ctx, cmd)
+	return supervisor.RunCommand(ctx, cmd, supervisor.ParseKLog())
 }
