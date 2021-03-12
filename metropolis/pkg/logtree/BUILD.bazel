@@ -7,6 +7,7 @@ go_library(
         "journal.go",
         "journal_entry.go",
         "journal_subscriber.go",
+        "klog.go",
         "leveled.go",
         "leveled_payload.go",
         "logtree.go",
@@ -26,7 +27,9 @@ go_test(
     name = "go_default_test",
     srcs = [
         "journal_test.go",
+        "klog_test.go",
         "logtree_test.go",
     ],
     embed = [":go_default_library"],
+    deps = ["@com_github_google_go_cmp//cmp:go_default_library"],
 )
