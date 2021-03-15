@@ -130,8 +130,8 @@ type Options struct {
 	// It can be set to an existing file descriptor (like os.Stdout/os.Stderr) or any Go structure implementing this interface.
 	SerialPort io.ReadWriter
 
-	// EnrolmentConfig is passed into the VM and subsequently used for bootstrapping if no enrolment config is built-in
-	EnrolmentConfig *apb.EnrolmentConfig
+	// NodeParameters is passed into the VM and subsequently used for bootstrapping or registering into a cluster.
+	NodeParameters *apb.NodeParameters
 }
 
 // NodePorts is the list of ports a fully operational Metropolis node listens on
@@ -254,16 +254,16 @@ func Launch(ctx context.Context, options Options) error {
 		qemuArgs = append(qemuArgs, "-no-reboot")
 	}
 
-	if options.EnrolmentConfig != nil {
-		enrolmentConfigPath := filepath.Join(tempDir, "enrolment.pb")
-		enrolmentConfigRaw, err := proto.Marshal(options.EnrolmentConfig)
+	if options.NodeParameters != nil {
+		parametersPath := filepath.Join(tempDir, "parameters.pb")
+		parametersRaw, err := proto.Marshal(options.NodeParameters)
 		if err != nil {
-			return fmt.Errorf("failed to encode enrolment config: %w", err)
+			return fmt.Errorf("failed to encode node paraeters: %w", err)
 		}
-		if err := ioutil.WriteFile(enrolmentConfigPath, enrolmentConfigRaw, 0644); err != nil {
-			return fmt.Errorf("failed to write enrolment config: %w", err)
+		if err := ioutil.WriteFile(parametersPath, parametersRaw, 0644); err != nil {
+			return fmt.Errorf("failed to write node parameters: %w", err)
 		}
-		qemuArgs = append(qemuArgs, "-fw_cfg", "name=dev.monogon.metropolis/enrolment.pb,file="+enrolmentConfigPath)
+		qemuArgs = append(qemuArgs, "-fw_cfg", "name=dev.monogon.metropolis/parameters.pb,file="+parametersPath)
 	}
 
 	// Start TPM emulator as a subprocess
@@ -498,7 +498,15 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (apb.NodeDebugServi
 	}
 
 	go func() {
-		if err := Launch(ctx, Options{ConnectToSocket: vmPorts[0]}); err != nil {
+		if err := Launch(ctx, Options{
+			ConnectToSocket: vmPorts[0],
+			NodeParameters: &apb.NodeParameters{
+				Cluster: &apb.NodeParameters_ClusterBootstrap_{
+					ClusterBootstrap: &apb.NodeParameters_ClusterBootstrap{},
+				},
+			},
+		}); err != nil {
+
 			// Launch() only terminates when QEMU has terminated. At that point our function probably doesn't run anymore
 			// so we have no way of communicating the error back up, so let's just log it. Also a failure in launching
 			// VMs should be very visible by the unavailability of the clients we return.
@@ -532,23 +540,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (apb.NodeDebugServi
 	debug := apb.NewNodeDebugServiceClient(conn)
 
 	if opts.NumNodes == 2 {
-		res, err := debug.GetGoldenTicket(ctx, &apb.GetGoldenTicketRequest{
-			// HACK: this is assigned by DHCP, and we assume that everything goes well.
-			ExternalIp: "10.1.0.3",
-		}, grpcretry.WithMax(10))
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get golden ticket: %w", err)
-		}
-
-		ec := &apb.EnrolmentConfig{
-			GoldenTicket: res.Ticket,
-		}
-
-		go func() {
-			if err := Launch(ctx, Options{ConnectToSocket: vmPorts[1], EnrolmentConfig: ec}); err != nil {
-				log.Printf("Failed to launch vm1: %v", err)
-			}
-		}()
+		return nil, nil, fmt.Errorf("multinode unimplemented")
 	}
 
 	return debug, portMap, nil

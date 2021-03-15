@@ -5,7 +5,10 @@ go_library(
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/test/launch/cli/launch",
     visibility = ["//visibility:private"],
-    deps = ["//metropolis/test/launch:go_default_library"],
+    deps = [
+        "//metropolis/proto/api:go_default_library",
+        "//metropolis/test/launch:go_default_library",
+    ],
 )
 
 go_binary(

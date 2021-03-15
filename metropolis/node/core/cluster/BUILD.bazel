@@ -9,10 +9,8 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/cluster",
     visibility = ["//metropolis/node/core:__subpackages__"],
     deps = [
-        "//metropolis/node:go_default_library",
         "//metropolis/node/core/consensus:go_default_library",
         "//metropolis/node/core/localstorage:go_default_library",
-        "//metropolis/node/core/localstorage/declarative:go_default_library",
         "//metropolis/node/core/network:go_default_library",
         "//metropolis/pkg/supervisor:go_default_library",
         "//metropolis/proto/api:go_default_library",
@@ -20,6 +18,7 @@ go_library(
         "@com_github_cenkalti_backoff_v4//:go_default_library",
         "@com_github_golang_protobuf//proto:go_default_library",
         "@io_etcd_go_etcd//clientv3:go_default_library",
+        "@org_golang_google_protobuf//proto:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )

@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/metropolis/test/launch"
 )
 
@@ -34,7 +35,15 @@ func main() {
 		<-sigs
 		cancel()
 	}()
-	if err := launch.Launch(ctx, launch.Options{Ports: launch.IdentityPortMap(launch.NodePorts), SerialPort: os.Stdout}); err != nil {
+	if err := launch.Launch(ctx, launch.Options{
+		Ports:      launch.IdentityPortMap(launch.NodePorts),
+		SerialPort: os.Stdout,
+		NodeParameters: &apb.NodeParameters{
+			Cluster: &apb.NodeParameters_ClusterBootstrap_{
+				ClusterBootstrap: &apb.NodeParameters_ClusterBootstrap{},
+			},
+		},
+	}); err != nil {
 		if err == ctx.Err() {
 			return
 		}

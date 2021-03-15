@@ -61,7 +61,6 @@ func main() {
 
 		fmt.Fprintf(os.Stderr, "Example:\n  %s %s --tail 5 --follow init\n", os.Args[0], os.Args[1])
 	}
-	goldenticketCmd := flag.NewFlagSet("goldenticket", flag.ExitOnError)
 	conditionCmd := flag.NewFlagSet("condition", flag.ExitOnError)
 	conditionCmd.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s %s [options] component_path\n", os.Args[0], os.Args[1])
@@ -123,15 +122,6 @@ func main() {
 				fmt.Println(entry.String())
 			}
 		}
-	case "goldenticket":
-		goldenticketCmd.Parse(os.Args[2:])
-		ip := goldenticketCmd.Arg(0)
-		res, err := debugClient.GetGoldenTicket(ctx, &apb.GetGoldenTicketRequest{ExternalIp: ip})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to get golden ticket: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Println(res.Ticket)
 	case "kubectl":
 		// Always get a kubeconfig with cluster-admin (group system:masters), kubectl itself can impersonate
 		kubeconfigFile, err := ioutil.TempFile("", "dbg_kubeconfig")

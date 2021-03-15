@@ -18,16 +18,11 @@ package main
 
 import (
 	"context"
-	"crypto/x509"
-	"fmt"
-	"net"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/cluster"
-	"source.monogon.dev/metropolis/node/core/consensus/ca"
 	"source.monogon.dev/metropolis/node/kubernetes"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -42,61 +37,6 @@ type debugService struct {
 	cluster    *cluster.Manager
 	kubernetes *kubernetes.Service
 	logtree    *logtree.LogTree
-}
-
-func (s *debugService) GetGoldenTicket(ctx context.Context, req *apb.GetGoldenTicketRequest) (*apb.GetGoldenTicketResponse, error) {
-	ip := net.ParseIP(req.ExternalIp)
-	if ip == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "could not parse IP %q", req.ExternalIp)
-	}
-	this := s.cluster.Node()
-
-	certRaw, key, err := s.nodeCertificate()
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "failed to generate node certificate: %v", err)
-	}
-	cert, err := x509.ParseCertificate(certRaw)
-	if err != nil {
-		panic(err)
-	}
-	kv := s.cluster.ConsensusKVRoot()
-	ca, err := ca.Load(ctx, kv)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not load CA: %v", err)
-	}
-	etcdCert, etcdKey, err := ca.Issue(ctx, kv, cert.Subject.CommonName, ip)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not generate etcd peer certificate: %v", err)
-	}
-	etcdCRL, err := ca.GetCurrentCRL(ctx, kv)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not get etcd CRL: %v", err)
-	}
-
-	// Add new etcd member to etcd cluster.
-	etcd := s.cluster.ConsensusCluster()
-	etcdAddr := fmt.Sprintf("https://%s:%d", ip.String(), common.ConsensusPort)
-	_, err = etcd.MemberAddAsLearner(ctx, []string{etcdAddr})
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not add as new etcd consensus member: %v", err)
-	}
-
-	return &apb.GetGoldenTicketResponse{
-		Ticket: &apb.GoldenTicket{
-			EtcdCaCert:     ca.CACertRaw,
-			EtcdClientCert: etcdCert,
-			EtcdClientKey:  etcdKey,
-			EtcdCrl:        etcdCRL,
-			Peers: []*apb.GoldenTicket_EtcdPeer{
-				{Name: this.ID(), Address: this.Address().String()},
-			},
-			This: &apb.GoldenTicket_EtcdPeer{Name: cert.Subject.CommonName, Address: ip.String()},
-
-			NodeId:   cert.Subject.CommonName,
-			NodeCert: certRaw,
-			NodeKey:  key,
-		},
-	}, nil
 }
 
 func (s *debugService) GetDebugKubeconfig(ctx context.Context, req *apb.GetDebugKubeconfigRequest) (*apb.GetDebugKubeconfigResponse, error) {

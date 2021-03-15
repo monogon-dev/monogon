@@ -82,7 +82,15 @@ func TestE2E(t *testing.T) {
 	procExit := make(chan struct{})
 
 	go func() {
-		if err := launch.Launch(ctx, launch.Options{Ports: portMap, SerialPort: os.Stdout}); err != nil {
+		if err := launch.Launch(ctx, launch.Options{
+			Ports:      portMap,
+			SerialPort: os.Stdout,
+			NodeParameters: &apb.NodeParameters{
+				Cluster: &apb.NodeParameters_ClusterBootstrap_{
+					ClusterBootstrap: &apb.NodeParameters_ClusterBootstrap{},
+				},
+			},
+		}); err != nil {
 			panic(err)
 		}
 		close(procExit)

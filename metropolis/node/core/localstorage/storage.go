@@ -63,15 +63,20 @@ type PKIDirectory struct {
 // ESPDirectory is the EFI System Partition.
 type ESPDirectory struct {
 	declarative.Directory
-	LocalUnlock ESPLocalUnlockFile `file:"local_unlock.bin"`
-	// Enrolment is the configuration/provisioning file for this node, containing information required to begin
-	// joining the cluster.
-	Enrolment declarative.File `file:"enrolment.pb"`
+	LocalUnlock    ESPLocalUnlockFile `file:"local_unlock.bin"`
+	NodeParameters ESPNodeParameters  `file:"parameters.pb"`
 }
 
 // ESPLocalUnlockFile is the localUnlock file, encrypted by the TPM of this node. After decrypting by the TPM it is used
 // in conjunction with the globalUnlock key (retrieved from the existing cluster) to decrypt the local data partition.
 type ESPLocalUnlockFile struct {
+	declarative.File
+}
+
+// ESPNodeParameters is the configuration for this node when first
+// bootstrapping a cluster or registering into an existing one. It's a
+// api.NodeParameters protobuf message.
+type ESPNodeParameters struct {
 	declarative.File
 }
 

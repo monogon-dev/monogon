@@ -18,7 +18,7 @@ package main
 
 // mkimage is a tool to generate a Metropolis node disk image containing the
 // given EFI payload, and optionally, a given external initramfs image and
-// enrolment credentials.
+// node parameters
 
 import (
 	"flag"
@@ -38,13 +38,13 @@ var NodeDataPartition gpt.Type = gpt.Type("9eeec464-6885-414a-b278-4305c51f7966"
 var NodeSystemPartition gpt.Type = gpt.Type("ee96055b-f6d0-4267-8bbb-724b2afea74c")
 
 var (
-	flagEFI                  string
-	flagOut                  string
-	flagSystemPath           string
-	flagEnrolmentCredentials string
-	flagDataPartitionSize    uint64
-	flagESPPartitionSize     uint64
-	flagSystemPartitionSize  uint64
+	flagEFI                 string
+	flagOut                 string
+	flagSystemPath          string
+	flagNodeParameters      string
+	flagDataPartitionSize   uint64
+	flagESPPartitionSize    uint64
+	flagSystemPartitionSize uint64
 )
 
 func mibToSectors(size uint64) uint64 {
@@ -67,7 +67,7 @@ func main() {
 	flag.StringVar(&flagEFI, "efi", "", "UEFI payload")
 	flag.StringVar(&flagOut, "out", "", "Output disk image")
 	flag.StringVar(&flagSystemPath, "system", "", "System partition [optional]")
-	flag.StringVar(&flagEnrolmentCredentials, "enrolment_credentials", "", "Enrolment credentials [optional]")
+	flag.StringVar(&flagNodeParameters, "node_parameters", "", "Node parameters [optional]")
 	flag.Uint64Var(&flagDataPartitionSize, "data_partition_size", 2048, "Override the data partition size (default 2048 MiB)")
 	flag.Uint64Var(&flagESPPartitionSize, "esp_partition_size", 128, "Override the ESP partition size (default: 128MiB)")
 	flag.Uint64Var(&flagSystemPartitionSize, "system_partition_size", 1024, "Override the System partition size (default: 1024MiB)")
@@ -144,8 +144,8 @@ func main() {
 
 	put(fs, flagEFI, "/EFI/BOOT/BOOTX64.EFI")
 
-	if flagEnrolmentCredentials != "" {
-		put(fs, flagEnrolmentCredentials, "/EFI/metropolis/enrolment.pb")
+	if flagNodeParameters != "" {
+		put(fs, flagNodeParameters, "/EFI/metropolis/parameters.pb")
 	}
 
 	if err := diskImg.File.Close(); err != nil {

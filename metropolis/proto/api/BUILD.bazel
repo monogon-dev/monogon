@@ -6,8 +6,8 @@ proto_library(
     name = "api_proto",
     srcs = [
         "aaa.proto",
+        "configuration.proto",
         "debug.proto",
-        "enrolment.proto",
     ],
     visibility = ["//visibility:public"],
 )
