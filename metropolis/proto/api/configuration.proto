@@ -26,6 +26,7 @@ option go_package = "source.monogon.dev/metropolis/proto/api";
 // fw_cfg).
 message NodeParameters {
     message ClusterBootstrap {
+        bytes owner_public_key = 1;
     }
     message ClusterRegister {
     }
