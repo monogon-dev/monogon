@@ -173,56 +173,54 @@ func (s *Service) Run(ctx context.Context) error {
 	s.stateMu.Unlock()
 
 	if s.config.NewCluster {
-		// Expect certificate to be absent from disk.
+		// Create certificate if absent. It can only be present if we attempt
+		// to re-start the service in NewCluster after a failure. This can
+		// happen if etcd crashed or failed to start up before (eg. because of
+		// networking not having settled yet).
 		absent, err := s.config.Data.PeerPKI.AllAbsent()
 		if err != nil {
 			return fmt.Errorf("checking certificate existence: %w", err)
 		}
-		if !absent {
-			return fmt.Errorf("want new cluster, but certificates already exist on disk")
-		}
 
-		// Generate CA, keep in memory, write it down in etcd later.
-		st.ca, err = ca.New("Metropolis etcd peer Root CA")
-		if err != nil {
-			return fmt.Errorf("when creating new cluster's peer CA: %w", err)
-		}
+		if absent {
+			// Generate CA, keep in memory, write it down in etcd later.
+			st.ca, err = ca.New("Metropolis etcd peer Root CA")
+			if err != nil {
+				return fmt.Errorf("when creating new cluster's peer CA: %w", err)
+			}
 
-		ip := net.ParseIP(s.config.ExternalHost)
-		if ip == nil {
-			return fmt.Errorf("configued external host is not an IP address (got %q)", s.config.ExternalHost)
-		}
+			ip := net.ParseIP(s.config.ExternalHost)
+			if ip == nil {
+				return fmt.Errorf("configued external host is not an IP address (got %q)", s.config.ExternalHost)
+			}
 
-		cert, key, err := st.ca.Issue(ctx, nil, s.config.Name, ip)
-		if err != nil {
-			return fmt.Errorf("when issuing new cluster's first certificate: %w", err)
-		}
+			cert, key, err := st.ca.Issue(ctx, nil, s.config.Name, ip)
+			if err != nil {
+				return fmt.Errorf("when issuing new cluster's first certificate: %w", err)
+			}
 
-		if err := s.config.Data.PeerPKI.MkdirAll(0700); err != nil {
-			return fmt.Errorf("when creating PKI directory: %w", err)
-		}
-		if err := s.config.Data.PeerPKI.CACertificate.Write(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: st.ca.CACertRaw}), 0600); err != nil {
-			return fmt.Errorf("when writing CA certificate to disk: %w", err)
-		}
-		if err := s.config.Data.PeerPKI.Certificate.Write(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert}), 0600); err != nil {
-			return fmt.Errorf("when writing certificate to disk: %w", err)
-		}
-		if err := s.config.Data.PeerPKI.Key.Write(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}), 0600); err != nil {
-			return fmt.Errorf("when writing certificate to disk: %w", err)
-		}
-	} else {
-		// Expect certificate to be present on disk.
-		present, err := s.config.Data.PeerPKI.AllExist()
-		if err != nil {
-			return fmt.Errorf("checking certificate existence: %w", err)
-		}
-		if !present {
-			return fmt.Errorf("want existing cluster, but certificate is missing from disk")
+			if err := s.config.Data.PeerPKI.MkdirAll(0700); err != nil {
+				return fmt.Errorf("when creating PKI directory: %w", err)
+			}
+			if err := s.config.Data.PeerPKI.CACertificate.Write(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: st.ca.CACertRaw}), 0600); err != nil {
+				return fmt.Errorf("when writing CA certificate to disk: %w", err)
+			}
+			if err := s.config.Data.PeerPKI.Certificate.Write(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert}), 0600); err != nil {
+				return fmt.Errorf("when writing certificate to disk: %w", err)
+			}
+			if err := s.config.Data.PeerPKI.Key.Write(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}), 0600); err != nil {
+				return fmt.Errorf("when writing certificate to disk: %w", err)
+			}
 		}
 	}
 
-	if err := s.config.Data.MkdirAll(0700); err != nil {
-		return fmt.Errorf("failed to create data directory; %w", err)
+	// Expect certificate to be present on disk.
+	present, err := s.config.Data.PeerPKI.AllExist()
+	if err != nil {
+		return fmt.Errorf("checking certificate existence: %w", err)
+	}
+	if !present {
+		return fmt.Errorf("etcd starting without fully ready certificates - aborted NewCluster or corrupted local storage?")
 	}
 
 	cfg, err := s.configure(ctx)
