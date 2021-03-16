@@ -853,7 +853,7 @@ index 0000000000..436f8c5cf3
 +        "util/bufferiszero.c",
 +        "util/cacheinfo.c",
 +        "util/compatfd.c",
-+        "util/coroutine-ucontext.c",
++        "util/coroutine-sigaltstack.c",
 +        "util/crc32c.c",
 +        "util/cutils.c",
 +        "util/drm.c",

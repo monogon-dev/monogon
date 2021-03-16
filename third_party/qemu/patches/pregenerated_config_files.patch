@@ -74,7 +74,7 @@ index 0000000000..843e9c8116
 +
 +#undef CONFIG_COCOA
 +
-+#define CONFIG_COROUTINE_BACKEND ucontext
++#define CONFIG_COROUTINE_BACKEND sigaltstack
 +
 +#define CONFIG_COROUTINE_POOL 0
 +
@@ -160,7 +160,7 @@ index 0000000000..843e9c8116
 +
 +#define CONFIG_MADVISE 1
 +
-+#define CONFIG_MALLOC_TRIM
++#undef CONFIG_MALLOC_TRIM
 +
 +#define CONFIG_MEMBARRIER 1
 +
