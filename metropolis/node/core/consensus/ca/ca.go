@@ -17,8 +17,13 @@
 // package ca implements a simple standards-compliant certificate authority.
 // It only supports ed25519 keys, and does not maintain any persistent state.
 //
-// The CA is backed by etcd storage, and can also bootstrap itself without a yet running etcd storage (and commit
-// in-memory secrets to etcd at a later date).
+// The CA is backed by etcd storage, and can also bootstrap itself without a
+// yet running etcd storage (and commit in-memory secrets to etcd at a later
+// date).
+//
+// This is different from //metropolis/pkg/pki in that it has to solve the
+// certs-for-etcd-on-etcd bootstrap problem. Perhaps it should be rewritten to
+// implement the Issuer/Ceritifcate interface available there.
 //
 // CA and certificates successfully pass https://github.com/zmap/zlint
 // (minus the CA/B rules that a public CA would adhere to, which requires
@@ -40,7 +45,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"net"
 	"time"
 
 	"go.etcd.io/etcd/clientv3"
@@ -232,7 +236,7 @@ func (c *CA) Save(ctx context.Context, kv clientv3.KV) error {
 // Issue issues a certificate. If kv is non-nil, the newly issued certificate will be immediately stored to etcd,
 // otherwise it will be kept in memory (until .Save is called). Certificates can only be issued to memory on
 // newly-created CAs that have not been saved to etcd yet.
-func (c *CA) Issue(ctx context.Context, kv clientv3.KV, commonName string, externalAddress net.IP) (cert []byte, privkey []byte, err error) {
+func (c *CA) Issue(ctx context.Context, kv clientv3.KV, commonName string) (cert []byte, privkey []byte, err error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 127)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
@@ -261,7 +265,6 @@ func (c *CA) Issue(ctx context.Context, kv clientv3.KV, commonName string, exter
 		NotAfter:              unknownNotAfter,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		DNSNames:              []string{commonName},
-		IPAddresses:           []net.IP{externalAddress},
 	}
 	cert, err = x509.CreateCertificate(rand.Reader, etcdCert, c.CACert, pubKey, c.privateKey)
 	if err != nil {

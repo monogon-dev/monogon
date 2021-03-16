@@ -21,7 +21,6 @@ import (
 	"context"
 	"crypto/x509"
 	"io/ioutil"
-	"net"
 	"os"
 	"testing"
 	"time"
@@ -86,14 +85,12 @@ func TestBootstrap(t *testing.T) {
 	b := prep(t)
 	defer b.close()
 	etcd := New(Config{
-		Data:           &b.root.Data.Etcd,
-		Ephemeral:      &b.root.Ephemeral.Consensus,
-		Name:           "test",
-		NewCluster:     true,
-		InitialCluster: "127.0.0.1",
-		ExternalHost:   "127.0.0.1",
-		ListenHost:     "127.0.0.1",
-		Port:           freeport.MustConsume(freeport.AllocateTCPPort()),
+		Data:         &b.root.Data.Etcd,
+		Ephemeral:    &b.root.Ephemeral.Consensus,
+		Name:         "test",
+		NewCluster:   true,
+		Port:         freeport.MustConsume(freeport.AllocateTCPPort()),
+		ExternalHost: "127.0.0.1",
 	})
 
 	supervisor.New(b.ctx, etcd.Run)
@@ -112,14 +109,12 @@ func TestMemberInfo(t *testing.T) {
 	b := prep(t)
 	defer b.close()
 	etcd := New(Config{
-		Data:           &b.root.Data.Etcd,
-		Ephemeral:      &b.root.Ephemeral.Consensus,
-		Name:           "test",
-		NewCluster:     true,
-		InitialCluster: "127.0.0.1",
-		ExternalHost:   "127.0.0.1",
-		ListenHost:     "127.0.0.1",
-		Port:           freeport.MustConsume(freeport.AllocateTCPPort()),
+		Data:         &b.root.Data.Etcd,
+		Ephemeral:    &b.root.Ephemeral.Consensus,
+		Name:         "test",
+		NewCluster:   true,
+		Port:         freeport.MustConsume(freeport.AllocateTCPPort()),
+		ExternalHost: "127.0.0.1",
 	})
 	supervisor.New(b.ctx, etcd.Run)
 	waitEtcd(t, etcd)
@@ -157,14 +152,12 @@ func TestRestartFromDisk(t *testing.T) {
 
 	startEtcd := func(new bool) (*Service, context.CancelFunc) {
 		etcd := New(Config{
-			Data:           &b.root.Data.Etcd,
-			Ephemeral:      &b.root.Ephemeral.Consensus,
-			Name:           "test",
-			NewCluster:     new,
-			InitialCluster: "127.0.0.1",
-			ExternalHost:   "127.0.0.1",
-			ListenHost:     "127.0.0.1",
-			Port:           freeport.MustConsume(freeport.AllocateTCPPort()),
+			Data:         &b.root.Data.Etcd,
+			Ephemeral:    &b.root.Ephemeral.Consensus,
+			Name:         "test",
+			NewCluster:   new,
+			Port:         freeport.MustConsume(freeport.AllocateTCPPort()),
+			ExternalHost: "127.0.0.1",
 		})
 		ctx, ctxC := context.WithCancel(b.ctx)
 		supervisor.New(ctx, etcd.Run)
@@ -203,14 +196,12 @@ func TestCRL(t *testing.T) {
 	b := prep(t)
 	defer b.close()
 	etcd := New(Config{
-		Data:           &b.root.Data.Etcd,
-		Ephemeral:      &b.root.Ephemeral.Consensus,
-		Name:           "test",
-		NewCluster:     true,
-		InitialCluster: "127.0.0.1",
-		ExternalHost:   "127.0.0.1",
-		ListenHost:     "127.0.0.1",
-		Port:           freeport.MustConsume(freeport.AllocateTCPPort()),
+		Data:         &b.root.Data.Etcd,
+		Ephemeral:    &b.root.Ephemeral.Consensus,
+		Name:         "test",
+		NewCluster:   true,
+		Port:         freeport.MustConsume(freeport.AllocateTCPPort()),
+		ExternalHost: "127.0.0.1",
 	})
 	supervisor.New(b.ctx, etcd.Run)
 	waitEtcd(t, etcd)
@@ -220,7 +211,7 @@ func TestCRL(t *testing.T) {
 	kv := etcd.state.cl.KV
 	etcd.stateMu.Unlock()
 
-	certRaw, _, err := ca.Issue(b.ctx, kv, "revoketest", net.ParseIP("1.2.3.4"))
+	certRaw, _, err := ca.Issue(b.ctx, kv, "revoketest")
 	if err != nil {
 		t.Fatalf("cert issue failed: %v", err)
 	}

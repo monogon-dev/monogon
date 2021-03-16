@@ -318,13 +318,12 @@ func (m *Manager) stateCreatingCluster(ctx context.Context) error {
 	node := NewNode(cuk, ip, *cert.Leaf)
 
 	m.consensus = consensus.New(consensus.Config{
-		Data:           &m.storageRoot.Data.Etcd,
-		Ephemeral:      &m.storageRoot.Ephemeral.Consensus,
-		NewCluster:     true,
-		Name:           node.ID(),
-		InitialCluster: ip.String(),
-		ExternalHost:   ip.String(),
-		ListenHost:     ip.String(),
+		Data:       &m.storageRoot.Data.Etcd,
+		Ephemeral:  &m.storageRoot.Ephemeral.Consensus,
+		NewCluster: true,
+		Name:       node.ID(),
+		// STOPGAP: this will not be used after the manager rewrite.
+		ExternalHost: ip.String(),
 	})
 	if err := supervisor.Run(ctx, "consensus", m.consensus.Run); err != nil {
 		return fmt.Errorf("when starting consensus: %w", err)

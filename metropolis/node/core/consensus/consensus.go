@@ -34,7 +34,6 @@ import (
 	"context"
 	"encoding/pem"
 	"fmt"
-	"net"
 	"net/url"
 	"sync"
 	"time"
@@ -88,16 +87,13 @@ type Config struct {
 	// NewCluster selects whether the etcd member will start a new cluster and bootstrap a CA and the first member
 	// certificate, or load existing PKI certificates from disk.
 	NewCluster bool
-	// InitialCluster sets the initial cluster peer URLs when NewCluster is set, and is ignored otherwise. Usually this
-	// will be just the new, single server, and more members will be added later.
-	InitialCluster string
-	// ExternalHost is the IP address or hostname at which this cluster member is reachable to other cluster members.
-	ExternalHost string
-	// ListenHost is the IP address or hostname at which this cluster member will listen.
-	ListenHost string
 	// Port is the port at which this cluster member will listen for other members. If zero, defaults to the global
 	// Metropolis setting.
 	Port int
+
+	// ExternalHost is used by tests to override the address at which etcd should listen for peer connections.
+	// TODO(q3k): make this unexported once the new cluster manager logic lands.
+	ExternalHost string
 }
 
 func New(config Config) *Service {
@@ -116,6 +112,9 @@ func (s *Service) configure(ctx context.Context) (*embed.Config, error) {
 		return nil, fmt.Errorf("failed to create data directory: %w", err)
 	}
 
+	if s.config.Name == "" {
+		return nil, fmt.Errorf("Name not set")
+	}
 	port := s.config.Port
 	if port == 0 {
 		port = node.ConsensusPort
@@ -140,19 +139,25 @@ func (s *Service) configure(ctx context.Context) (*embed.Config, error) {
 	cfg.ACUrls = []url.URL{}
 	cfg.LPUrls = []url.URL{{
 		Scheme: "https",
-		Host:   fmt.Sprintf("%s:%d", s.config.ListenHost, port),
+		Host:   fmt.Sprintf("[::]:%d", port),
 	}}
+
+	// Always listen on the address pointed to by our name - unless running in
+	// tests, where we can't control our hostname easily.
+	ExternalHost := fmt.Sprintf("%s:%d", s.config.Name, port)
+	if s.config.ExternalHost != "" {
+		ExternalHost = fmt.Sprintf("%s:%d", s.config.ExternalHost, port)
+	}
 	cfg.APUrls = []url.URL{{
 		Scheme: "https",
-		Host:   fmt.Sprintf("%s:%d", s.config.ExternalHost, port),
+		Host:   ExternalHost,
 	}}
 
 	if s.config.NewCluster {
 		cfg.ClusterState = "new"
 		cfg.InitialCluster = cfg.InitialClusterFromName(cfg.Name)
-	} else if s.config.InitialCluster != "" {
+	} else {
 		cfg.ClusterState = "existing"
-		cfg.InitialCluster = s.config.InitialCluster
 	}
 
 	// TODO(q3k): pipe logs from etcd to supervisor.RawLogger via a file.
@@ -189,12 +194,7 @@ func (s *Service) Run(ctx context.Context) error {
 				return fmt.Errorf("when creating new cluster's peer CA: %w", err)
 			}
 
-			ip := net.ParseIP(s.config.ExternalHost)
-			if ip == nil {
-				return fmt.Errorf("configued external host is not an IP address (got %q)", s.config.ExternalHost)
-			}
-
-			cert, key, err := st.ca.Issue(ctx, nil, s.config.Name, ip)
+			cert, key, err := st.ca.Issue(ctx, nil, s.config.Name)
 			if err != nil {
 				return fmt.Errorf("when issuing new cluster's first certificate: %w", err)
 			}
@@ -239,8 +239,6 @@ func (s *Service) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to start etcd: %w", err)
 	}
 	st.etcd = server
-
-	supervisor.Logger(ctx).Info("waiting for etcd...")
 
 	okay := true
 	select {
