@@ -18,14 +18,11 @@ package network
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"os"
 	"path"
 	"strings"
-	"sync"
-	"time"
 
 	"github.com/google/nftables"
 	"github.com/google/nftables/expr"
@@ -35,39 +32,83 @@ import (
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
 	"source.monogon.dev/metropolis/node/core/network/dns"
-	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
-const (
-	resolvConfPath     = "/etc/resolv.conf"
-	resolvConfSwapPath = "/etc/resolv.conf.new"
-)
-
+// Service is the network service for this node. It maintains all
+// networking-related functionality, but is generally not aware of the inner
+// workings of Metropolis, instead functioning in a generic manner. Once created
+// via New, it can be started and restarted arbitrarily, but the service object
+// itself must be long-lived.
 type Service struct {
-	config Config
-	dhcp   *dhcp4c.Client
+	dnsReg chan *dns.ExtraDirective
+	dnsSvc *dns.Service
+
+	// dhcp client for the 'main' interface of the node.
+	dhcp *dhcp4c.Client
 
 	// nftConn is a shared file descriptor handle to nftables, automatically initialized on first use.
 	nftConn             nftables.Conn
 	natTable            *nftables.Table
 	natPostroutingChain *nftables.Chain
 
-	// These are a temporary hack pending the removal of the GetIP interface
-	ipLock       sync.Mutex
-	currentIPTmp net.IP
-
-	logger logtree.LeveledLogger
+	status event.MemoryValue
 }
 
-type Config struct {
-	CorednsRegistrationChan chan *dns.ExtraDirective
-}
-
-func New(config Config) *Service {
+func New() *Service {
+	dnsReg := make(chan *dns.ExtraDirective)
+	dnsSvc := dns.New(dnsReg)
 	return &Service{
-		config: config,
+		dnsReg: dnsReg,
+		dnsSvc: dnsSvc,
 	}
+}
+
+// Status is the current network status of the host. It will be updated by the
+// network Service whenever the node's network configuration changes. Spurious
+// changes might occur, consumers should ensure that the change that occured is
+// meaningful to them.
+type Status struct {
+	ExternalAddress net.IP
+	DNSServers      dhcp4c.DNSServers
+}
+
+// Watcher allows network Service consumers to watch for updates of the current Status.
+type Watcher struct {
+	watcher event.Watcher
+}
+
+// Get returns the newest network Status from a Watcher. It will block until a
+// new Status is available.
+func (w *Watcher) Get(ctx context.Context) (*Status, error) {
+	val, err := w.watcher.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	status := val.(Status)
+	return &status, err
+}
+
+func (w *Watcher) Close() error {
+	return w.watcher.Close()
+}
+
+// Watch returns a Watcher, which can be used by consumers of the network
+// Service to retrieve the current network status.
+// Close must be called on the Watcher when it is not used anymore in order to
+// prevent goroutine leaks.
+func (s *Service) Watch() Watcher {
+	return Watcher{
+		watcher: s.status.Watch(),
+	}
+}
+
+// ConfigureDNS sets a DNS ExtraDirective on the built-in DNS server of the
+// network Service. See //metropolis/node/core/network/dns for more
+// information.
+func (s *Service) ConfigureDNS(d *dns.ExtraDirective) {
+	s.dnsReg <- d
 }
 
 // nfifname converts an interface name into 16 bytes padded with zeroes (for nftables)
@@ -77,24 +118,22 @@ func nfifname(n string) []byte {
 	return b
 }
 
-func (s *Service) dhcpDNSCallback(old, new *dhcp4c.Lease) error {
+// statusCallback is the main DHCP client callback connecting updates to the
+// current lease to the rest of Metropolis. It updates the DNS service's
+// configuration to use the received upstream servers, and notifies the rest of
+// Metropolis via en event value that the network configuration has changed.
+func (s *Service) statusCallback(old, new *dhcp4c.Lease) error {
+	// Reconfigure DNS if needed.
 	oldServers := old.DNSServers()
 	newServers := new.DNSServers()
-	if newServers.Equal(oldServers) {
-		return nil // nothing to do
+	if !newServers.Equal(oldServers) {
+		s.ConfigureDNS(dns.NewUpstreamDirective(newServers))
 	}
-	s.logger.Infof("Setting upstream DNS servers to %v", newServers)
-	s.config.CorednsRegistrationChan <- dns.NewUpstreamDirective(newServers)
-	return nil
-}
-
-// TODO(lorenz): Get rid of this once we have robust node resolution
-func (s *Service) getIPCallbackHack(old, new *dhcp4c.Lease) error {
-	if old == nil && new != nil {
-		s.ipLock.Lock()
-		s.currentIPTmp = new.AssignedIP
-		s.ipLock.Unlock()
-	}
+	// Notify status waiters.
+	s.status.Set(Status{
+		ExternalAddress: new.AssignedIP,
+		DNSServers:      new.DNSServers(),
+	})
 	return nil
 }
 
@@ -109,7 +148,7 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 	}
 	s.dhcp.VendorClassIdentifier = "dev.monogon.metropolis.node.v1"
 	s.dhcp.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter, dhcpv4.OptionNameServer}
-	s.dhcp.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(iface), dhcpcb.ManageDefaultRoute(iface), s.dhcpDNSCallback, s.getIPCallbackHack)
+	s.dhcp.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(iface), dhcpcb.ManageDefaultRoute(iface), s.statusCallback)
 	err = supervisor.Run(ctx, "dhcp", s.dhcp.Run)
 	if err != nil {
 		return err
@@ -137,28 +176,6 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 	return nil
 }
 
-// GetIP returns the current IP (and optionally waits for one to be assigned)
-func (s *Service) GetIP(ctx context.Context, wait bool) (*net.IP, error) {
-	for {
-		var currentIP net.IP
-		s.ipLock.Lock()
-		currentIP = s.currentIPTmp
-		s.ipLock.Unlock()
-		if currentIP == nil {
-			if !wait {
-				return nil, errors.New("no IP available")
-			}
-			select {
-			case <-ctx.Done():
-				return nil, ctx.Err()
-			case <-time.After(1 * time.Second):
-				continue
-			}
-		}
-		return &currentIP, nil
-	}
-}
-
 // sysctlOptions contains sysctl options to apply
 type sysctlOptions map[string]string
 
@@ -181,8 +198,7 @@ func (o sysctlOptions) apply() error {
 
 func (s *Service) Run(ctx context.Context) error {
 	logger := supervisor.Logger(ctx)
-	dnsSvc := dns.New(s.config.CorednsRegistrationChan)
-	supervisor.Run(ctx, "dns", dnsSvc.Run)
+	supervisor.Run(ctx, "dns", s.dnsSvc.Run)
 	supervisor.Run(ctx, "interfaces", s.runInterfaces)
 
 	s.natTable = s.nftConn.AddTable(&nftables.Table{
@@ -228,12 +244,12 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func (s *Service) runInterfaces(ctx context.Context) error {
-	s.logger = supervisor.Logger(ctx)
-	s.logger.Info("Starting network interface management")
+	logger := supervisor.Logger(ctx)
+	logger.Info("Starting network interface management")
 
 	links, err := netlink.LinkList()
 	if err != nil {
-		s.logger.Fatalf("Failed to list network links: %s", err)
+		logger.Fatalf("Failed to list network links: %s", err)
 	}
 
 	var ethernetLinks []netlink.Link
@@ -246,16 +262,16 @@ func (s *Service) runInterfaces(ctx context.Context) error {
 				}
 				ethernetLinks = append(ethernetLinks, link)
 			} else {
-				s.logger.Infof("Ignoring non-Ethernet interface %s", attrs.Name)
+				logger.Infof("Ignoring non-Ethernet interface %s", attrs.Name)
 			}
 		} else if link.Attrs().Name == "lo" {
 			if err := netlink.LinkSetUp(link); err != nil {
-				s.logger.Errorf("Failed to bring up loopback interface: %v", err)
+				logger.Errorf("Failed to bring up loopback interface: %v", err)
 			}
 		}
 	}
 	if len(ethernetLinks) != 1 {
-		s.logger.Warningf("Network service needs exactly one link, bailing")
+		logger.Warningf("Network service needs exactly one link, bailing")
 	} else {
 		link := ethernetLinks[0]
 		if err := s.useInterface(ctx, link); err != nil {

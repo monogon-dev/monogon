@@ -16,6 +16,7 @@ go_library(
     deps = [
         "//metropolis/node:go_default_library",
         "//metropolis/node/core/localstorage:go_default_library",
+        "//metropolis/node/core/network:go_default_library",
         "//metropolis/node/core/network/dns:go_default_library",
         "//metropolis/node/kubernetes/clusternet:go_default_library",
         "//metropolis/node/kubernetes/nfproxy:go_default_library",

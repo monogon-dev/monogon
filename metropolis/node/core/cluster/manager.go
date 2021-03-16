@@ -291,10 +291,15 @@ func (m *Manager) stateNew(ctx context.Context) error {
 func (m *Manager) stateCreatingCluster(ctx context.Context) error {
 	logger := supervisor.Logger(ctx)
 	logger.Info("Creating new cluster: waiting for IP address...")
-	ip, err := m.networkService.GetIP(ctx, true)
+
+	// STOPGAP: bad use of watcher (should be long-term)
+	watcher := m.networkService.Watch()
+	defer watcher.Close()
+	data, err := watcher.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("when getting IP address: %w", err)
 	}
+	ip := data.ExternalAddress
 	logger.Infof("Creating new cluster: got IP address %s", ip.String())
 
 	logger.Info("Creating new cluster: initializing storage...")
@@ -310,7 +315,7 @@ func (m *Manager) stateCreatingCluster(ctx context.Context) error {
 		return fmt.Errorf("failed to create new node certificate: %w", err)
 	}
 
-	node := NewNode(cuk, *ip, *cert.Leaf)
+	node := NewNode(cuk, ip, *cert.Leaf)
 
 	m.consensus = consensus.New(consensus.Config{
 		Data:           &m.storageRoot.Data.Etcd,

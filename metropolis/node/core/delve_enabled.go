@@ -32,7 +32,11 @@ func initializeDebugger(networkSvc *network.Service) {
 		// This is intentionally delayed until network becomes available since Delve for some reason connects to itself
 		// and in early-boot no network interface is available to do that through. Also external access isn't possible
 		// early on anyways.
-		networkSvc.GetIP(context.Background(), true)
+		watcher := networkSvc.Watch()
+		_, err := watcher.Get(context.Background())
+		if err != nil {
+			panic(err)
+		}
 		dlvCmd := exec.Command("/dlv", "--headless=true", fmt.Sprintf("--listen=:%v", node.DebuggerPort),
 			"--accept-multiclient", "--only-same-user=false", "attach", "--continue", "1", "/init")
 		if err := dlvCmd.Start(); err != nil {

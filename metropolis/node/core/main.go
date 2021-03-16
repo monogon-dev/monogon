@@ -37,7 +37,6 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/node/core/network"
-	"source.monogon.dev/metropolis/node/core/network/dns"
 	"source.monogon.dev/metropolis/node/kubernetes"
 	"source.monogon.dev/metropolis/node/kubernetes/containerd"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
@@ -112,9 +111,7 @@ func main() {
 		logger.Fatalf("Failed to initialize TPM 2.0: %v", err)
 	}
 
-	corednsRegistrationChan := make(chan *dns.ExtraDirective)
-
-	networkSvc := network.New(network.Config{CorednsRegistrationChan: corednsRegistrationChan})
+	networkSvc := network.New()
 
 	// This function initializes a headless Delve if this is a debug build or does nothing if it's not
 	initializeDebugger(networkSvc)
@@ -144,12 +141,6 @@ func main() {
 		}
 		if err := supervisor.Run(ctx, "network", networkSvc.Run); err != nil {
 			return fmt.Errorf("when starting network: %w", err)
-		}
-
-		// Wait for IP address from network.
-		ip, err := networkSvc.GetIP(ctx, true)
-		if err != nil {
-			return fmt.Errorf("when waiting for IP address: %w", err)
 		}
 
 		// Start cluster manager. This kicks off cluster membership machinery, which will either start
@@ -211,8 +202,7 @@ func main() {
 
 			kubernetesConfig.KPKI = kpki
 			kubernetesConfig.Root = root
-			kubernetesConfig.AdvertiseAddress = *ip
-			kubernetesConfig.CorednsRegistrationChan = corednsRegistrationChan
+			kubernetesConfig.Network = networkSvc
 			kubeSvc = kubernetes.New(kubernetesConfig)
 			if err := supervisor.Run(ctx, "kubernetes", kubeSvc.Run); err != nil {
 				return fmt.Errorf("failed to start kubernetes service: %w", err)
