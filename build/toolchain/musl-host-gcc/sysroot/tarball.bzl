@@ -34,6 +34,8 @@ def _musl_gcc_tarball(ctx):
     linux_headers = ctx.file.linux_headers
     linux_headers_path = linux_headers.path
 
+    compiler_headers_path = "lib/gcc/x86_64-redhat-linux/10/include"
+
     musl_root = detect_root(ctx.attr.musl)
     musl_files = ctx.files.musl
 
@@ -46,14 +48,19 @@ def _musl_gcc_tarball(ctx):
     arguments = [tarball.path]
     command = "tar -chJf $1"
 
-    arguments += [musl_headers_path]
-    command += " --transform 's|^'$2'|include|' $2"
+    # Order is important here as this is a terrible hack producing a tar file with duplicate files. The decompressor
+    # will then overwrite the wrong one with the correct one for us.
+    arguments += [compiler_headers_path]
+    command += " --transform 's|^'$2'|include|' /$2"
 
-    arguments += [linux_headers_path]
+    arguments += [musl_headers_path]
     command += " --transform 's|^'$3'|include|' $3"
 
+    arguments += [linux_headers_path]
+    command += " --transform 's|^'$4'|include|' $4"
+
     arguments += [musl_root]
-    command += " --transform 's|^'$4'|lib|' $4"
+    command += " --transform 's|^'$5'|lib|' $5"
 
     ctx.actions.run_shell(
         inputs = [musl_headers, linux_headers] + ctx.files.musl,
@@ -64,7 +71,7 @@ def _musl_gcc_tarball(ctx):
         use_default_shell_env = True,
         command = command,
     )
-    return [DefaultInfo(files=depset([tarball]))]
+    return [DefaultInfo(files = depset([tarball]))]
 
 musl_gcc_tarball = rule(
     implementation = _musl_gcc_tarball,

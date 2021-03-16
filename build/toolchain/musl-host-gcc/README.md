@@ -26,6 +26,8 @@ To build this tarball, run the following commands:
     bazel build //build/toolchain/musl-host-gcc/sysroot
     cp -f bazel-bin/build/toolchain/musl-host-gcc/sysroot/sysroot.tar.xz build/toolchain/musl-host-gcc/sysroot.tar.xz
 
+As a temporary hack the compiler-specific headers of our current development container have been manually merged in. This is expected to be replaced by a proper LLVM-based toolchain.
+
 Internals
 ---------
 
