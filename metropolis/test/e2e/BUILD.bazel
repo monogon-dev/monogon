@@ -36,6 +36,7 @@ go_test(
         "//metropolis/proto/api:go_default_library",
         "//metropolis/test/launch:go_default_library",
         "@io_k8s_api//core/v1:go_default_library",
+        "@io_k8s_apimachinery//pkg/api/resource:go_default_library",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
         "@io_k8s_kubernetes//pkg/api/v1/pod:go_default_library",
         "@org_golang_google_grpc//:go_default_library",

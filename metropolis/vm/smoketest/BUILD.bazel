@@ -1,0 +1,43 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("//metropolis/node/build:def.bzl", "node_initramfs")
+load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/metropolis/vm/smoketest",
+    visibility = ["//visibility:private"],
+)
+
+node_initramfs(
+    name = "initramfs",
+    files = {
+        "//metropolis/vm/smoketest/payload": "/init",
+    },
+)
+
+go_binary(
+    name = "smoketest",
+    data = [
+        ":initramfs",
+        "//metropolis/test/ktest:linux-testing",
+        "@qemu//:qemu-x86_64-softmmu",
+    ],
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
+
+static_binary_tarball(
+    name = "smoketest_layer",
+    executable = ":smoketest",
+)
+
+container_image(
+    name = "smoketest_container",
+    base = "@go_image_base//image",
+    entrypoint = ["/app/metropolis/vm/smoketest/smoketest_/smoketest"],
+    tars = [":smoketest_layer"],
+    visibility = ["//visibility:public"],
+    workdir = "/app",
+)

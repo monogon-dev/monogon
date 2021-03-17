@@ -32,6 +32,7 @@ import (
 
 	"google.golang.org/grpc"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 
@@ -242,6 +243,46 @@ func TestE2E(t *testing.T) {
 					return fmt.Errorf("pod is not ready: %v", events.Items[len(events.Items)-1].Message)
 				}
 			})
+			if os.Getenv("HAVE_NESTED_KVM") != "" {
+				testEventual(t, "Pod for KVM/QEMU smoke test", ctx, smallTestTimeout, func(ctx context.Context) error {
+					runcRuntimeClass := "runc"
+					_, err := clientSet.CoreV1().Pods("default").Create(ctx, &corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "vm-smoketest",
+						},
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{{
+								Name:            "vm-smoketest",
+								ImagePullPolicy: corev1.PullNever,
+								Image:           "bazel/metropolis/vm/smoketest:smoketest_container",
+								Resources: corev1.ResourceRequirements{
+									Limits: corev1.ResourceList{
+										"devices.monogon.dev/kvm": *resource.NewQuantity(1, ""),
+									},
+								},
+							}},
+							RuntimeClassName: &runcRuntimeClass,
+							RestartPolicy:    corev1.RestartPolicyNever,
+						},
+					}, metav1.CreateOptions{})
+					return err
+				})
+				testEventual(t, "KVM/QEMU smoke test completion", ctx, smallTestTimeout, func(ctx context.Context) error {
+					pod, err := clientSet.CoreV1().Pods("default").Get(ctx, "vm-smoketest", metav1.GetOptions{})
+					if err != nil {
+						return fmt.Errorf("failed to get pod: %w", err)
+					}
+					if pod.Status.Phase == corev1.PodSucceeded {
+						return nil
+					}
+					events, err := clientSet.CoreV1().Events("default").List(ctx, metav1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=default", pod.Name)})
+					if err != nil || len(events.Items) == 0 {
+						return fmt.Errorf("pod is not ready: %v", pod.Status.Phase)
+					} else {
+						return fmt.Errorf("pod is not ready: %v", events.Items[len(events.Items)-1].Message)
+					}
+				})
+			}
 		})
 	})
 

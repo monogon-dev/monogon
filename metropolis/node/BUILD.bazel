@@ -64,6 +64,7 @@ erofs_image(
         # Containerd preseed bundles
         "//metropolis/test/e2e/preseedtest:preseedtest.tar": "/containerd/preseed/k8s.io/preseedtest.tar",
         "//metropolis/test/e2e/k8s_cts:k8s_cts_image.tar": "/containerd/preseed/k8s.io/k8s_cts.tar",
+        "//metropolis/vm/smoketest:smoketest_container.tar": "/containerd/preseed/k8s.io/smoketest.tar",
 
         # CNI Plugins
         "@com_github_containernetworking_plugins//plugins/main/loopback": "/containerd/bin/cni/loopback",
