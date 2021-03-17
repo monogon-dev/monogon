@@ -133,11 +133,13 @@ type DataKubernetesKubeletDirectory struct {
 	Plugins struct {
 		declarative.Directory
 		VFS declarative.File `file:"dev.monogon.metropolis.vfs.sock"`
+		KVM declarative.File `file:"devices.monogon.dev_kvm.sock"`
 	} `dir:"plugins"`
 
 	PluginsRegistry struct {
 		declarative.Directory
 		VFSReg declarative.File `file:"dev.monogon.metropolis.vfs-reg.sock"`
+		KVMReg declarative.File `file:"devices.monogon.dev_kvm-reg.sock"`
 	} `dir:"plugins_registry"`
 }
 

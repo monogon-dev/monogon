@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["kvmdevice.go"],
+    importpath = "source.monogon.dev/metropolis/node/kubernetes/plugins/kvmdevice",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node/core/localstorage:go_default_library",
+        "//metropolis/pkg/logtree:go_default_library",
+        "//metropolis/pkg/supervisor:go_default_library",
+        "@io_k8s_kubelet//pkg/apis/deviceplugin/v1beta1:go_default_library",
+        "@io_k8s_kubelet//pkg/apis/pluginregistration/v1:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)

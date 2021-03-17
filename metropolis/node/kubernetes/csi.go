@@ -33,8 +33,8 @@ import (
 	pluginregistration "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/fsquota"
+	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
@@ -231,7 +231,7 @@ func (s *csiPluginServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*cs
 // Registration endpoints
 func (s *csiPluginServer) GetInfo(ctx context.Context, req *pluginregistration.InfoRequest) (*pluginregistration.PluginInfo, error) {
 	return &pluginregistration.PluginInfo{
-		Type:              "CSIPlugin",
+		Type:              pluginregistration.CSIPlugin,
 		Name:              "dev.monogon.metropolis.vfs",
 		Endpoint:          s.KubeletDirectory.Plugins.VFS.FullPath(),
 		SupportedVersions: []string{"1.2"}, // Keep in sync with container-storage-interface/spec package version

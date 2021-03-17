@@ -20,6 +20,7 @@ go_library(
         "//metropolis/node/kubernetes/clusternet:go_default_library",
         "//metropolis/node/kubernetes/nfproxy:go_default_library",
         "//metropolis/node/kubernetes/pki:go_default_library",
+        "//metropolis/node/kubernetes/plugins/kvmdevice:go_default_library",
         "//metropolis/node/kubernetes/reconciler:go_default_library",
         "//metropolis/pkg/fileargs:go_default_library",
         "//metropolis/pkg/fsquota:go_default_library",

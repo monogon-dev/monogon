@@ -34,6 +34,7 @@ import (
 	"source.monogon.dev/metropolis/node/kubernetes/clusternet"
 	"source.monogon.dev/metropolis/node/kubernetes/nfproxy"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
+	"source.monogon.dev/metropolis/node/kubernetes/plugins/kvmdevice"
 	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -136,6 +137,10 @@ func (s *Service) Run(ctx context.Context) error {
 		ClientSet:   clientSet,
 	}
 
+	kvmDevicePlugin := kvmdevice.Plugin{
+		KubeletDirectory: &s.c.Root.Data.Kubernetes.Kubelet,
+	}
+
 	for _, sub := range []struct {
 		name     string
 		runnable supervisor.Runnable
@@ -149,6 +154,7 @@ func (s *Service) Run(ctx context.Context) error {
 		{"csi-provisioner", csiProvisioner.Run},
 		{"clusternet", clusternet.Run},
 		{"nfproxy", nfproxy.Run},
+		{"kvmdeviceplugin", kvmDevicePlugin.Run},
 	} {
 		err := supervisor.Run(ctx, sub.name, sub.runnable)
 		if err != nil {
