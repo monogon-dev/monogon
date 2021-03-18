@@ -49,7 +49,7 @@ func TestPlaceFS(t *testing.T) {
 	}{
 		{rr.ESP, "/esp"},
 		{rr.Data.Etcd, "/data/etcd"},
-		{rr.Data.Node.Certificate, "/data/node_pki/cert.pem"},
+		{rr.Data.Node.Credentials.Certificate, "/data/node/credentials/cert.pem"},
 	} {
 		if got, want := te.pl.FullPath(), te.want; got != want {
 			t.Errorf("test %d: wanted path %q, got %q", i, want, got)

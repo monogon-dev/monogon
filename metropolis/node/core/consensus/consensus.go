@@ -91,9 +91,8 @@ type Config struct {
 	// Metropolis setting.
 	Port int
 
-	// ExternalHost is used by tests to override the address at which etcd should listen for peer connections.
-	// TODO(q3k): make this unexported once the new cluster manager logic lands.
-	ExternalHost string
+	// externalHost is used by tests to override the address at which etcd should listen for peer connections.
+	externalHost string
 }
 
 func New(config Config) *Service {
@@ -144,13 +143,13 @@ func (s *Service) configure(ctx context.Context) (*embed.Config, error) {
 
 	// Always listen on the address pointed to by our name - unless running in
 	// tests, where we can't control our hostname easily.
-	ExternalHost := fmt.Sprintf("%s:%d", s.config.Name, port)
-	if s.config.ExternalHost != "" {
-		ExternalHost = fmt.Sprintf("%s:%d", s.config.ExternalHost, port)
+	externalHost := fmt.Sprintf("%s:%d", s.config.Name, port)
+	if s.config.externalHost != "" {
+		externalHost = fmt.Sprintf("%s:%d", s.config.externalHost, port)
 	}
 	cfg.APUrls = []url.URL{{
 		Scheme: "https",
-		Host:   ExternalHost,
+		Host:   externalHost,
 	}}
 
 	if s.config.NewCluster {

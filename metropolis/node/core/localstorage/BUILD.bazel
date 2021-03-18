@@ -7,6 +7,7 @@ go_library(
         "directory_pki.go",
         "directory_root.go",
         "storage.go",
+        "storage_esp.go",
     ],
     importpath = "source.monogon.dev/metropolis/node/core/localstorage",
     visibility = ["//metropolis/node:__subpackages__"],
@@ -14,6 +15,9 @@ go_library(
         "//metropolis/node/core/localstorage/crypt:go_default_library",
         "//metropolis/node/core/localstorage/declarative:go_default_library",
         "//metropolis/pkg/tpm:go_default_library",
+        "//metropolis/proto/api:go_default_library",
+        "//metropolis/proto/private:go_default_library",
+        "@org_golang_google_protobuf//proto:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )

@@ -3,6 +3,8 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
+        "cluster.go",
+        "configuration.go",
         "manager.go",
         "node.go",
     ],
@@ -12,11 +14,10 @@ go_library(
         "//metropolis/node/core/consensus:go_default_library",
         "//metropolis/node/core/localstorage:go_default_library",
         "//metropolis/node/core/network:go_default_library",
+        "//metropolis/pkg/pki:go_default_library",
         "//metropolis/pkg/supervisor:go_default_library",
         "//metropolis/proto/api:go_default_library",
-        "//metropolis/proto/internal:go_default_library",
-        "@com_github_cenkalti_backoff_v4//:go_default_library",
-        "@com_github_golang_protobuf//proto:go_default_library",
+        "//metropolis/proto/private:go_default_library",
         "@io_etcd_go_etcd//clientv3:go_default_library",
         "@org_golang_google_protobuf//proto:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",

@@ -60,26 +60,6 @@ type PKIDirectory struct {
 	Key           declarative.File `file:"cert-key.pem"`
 }
 
-// ESPDirectory is the EFI System Partition.
-type ESPDirectory struct {
-	declarative.Directory
-	LocalUnlock    ESPLocalUnlockFile `file:"local_unlock.bin"`
-	NodeParameters ESPNodeParameters  `file:"parameters.pb"`
-}
-
-// ESPLocalUnlockFile is the localUnlock file, encrypted by the TPM of this node. After decrypting by the TPM it is used
-// in conjunction with the globalUnlock key (retrieved from the existing cluster) to decrypt the local data partition.
-type ESPLocalUnlockFile struct {
-	declarative.File
-}
-
-// ESPNodeParameters is the configuration for this node when first
-// bootstrapping a cluster or registering into an existing one. It's a
-// api.NodeParameters protobuf message.
-type ESPNodeParameters struct {
-	declarative.File
-}
-
 // DataDirectory is an xfs partition mounted via cryptsetup/LUKS, with a key derived from {global,local}Unlock keys.
 type DataDirectory struct {
 	declarative.Directory
@@ -94,8 +74,13 @@ type DataDirectory struct {
 	Containerd declarative.Directory   `dir:"containerd"`
 	Etcd       DataEtcdDirectory       `dir:"etcd"`
 	Kubernetes DataKubernetesDirectory `dir:"kubernetes"`
-	Node       PKIDirectory            `dir:"node_pki"`
+	Node       DataNodeDirectory       `dir:"node"`
 	Volumes    DataVolumesDirectory    `dir:"volumes"`
+}
+
+type DataNodeDirectory struct {
+	declarative.Directory
+	Credentials PKIDirectory `dir:"credentials"`
 }
 
 type DataEtcdDirectory struct {

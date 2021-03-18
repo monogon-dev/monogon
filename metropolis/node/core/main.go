@@ -151,20 +151,14 @@ func main() {
 		}
 
 		// Wait until the cluster manager settles.
-		success := m.WaitFinished()
-		if !success {
+		node, err := m.Wait()
+		if err != nil {
 			close(trapdoor)
-			return fmt.Errorf("enrolment failed, aborting")
+			return fmt.Errorf("enrolment failed, aborting: %w", err)
 		}
 
 		// We are now in a cluster. We can thus access our 'node' object and start all services that
 		// we should be running.
-
-		node := m.Node()
-		if err := node.ConfigureLocalHostname(&root.Ephemeral); err != nil {
-			close(trapdoor)
-			return fmt.Errorf("failed to set local hostname: %w", err)
-		}
 
 		logger.Info("Enrolment success, continuing startup.")
 		logger.Info(fmt.Sprintf("This node (%s) has roles:", node.String()))
@@ -187,8 +181,7 @@ func main() {
 			logger.Info("Starting Kubernetes worker services...")
 
 			// Ensure Kubernetes PKI objects exist in etcd.
-			kpkiKV := m.ConsensusKV("cluster", "kpki")
-			kpki := pki.New(lt.MustLeveledFor("pki.kubernetes"), kpkiKV)
+			kpki := pki.New(lt.MustLeveledFor("pki.kubernetes"), node.KV)
 			if err := kpki.EnsureAll(ctx); err != nil {
 				return fmt.Errorf("failed to ensure kubernetes PKI present: %w", err)
 			}

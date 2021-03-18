@@ -90,7 +90,7 @@ func TestBootstrap(t *testing.T) {
 		Name:         "test",
 		NewCluster:   true,
 		Port:         freeport.MustConsume(freeport.AllocateTCPPort()),
-		ExternalHost: "127.0.0.1",
+		externalHost: "127.0.0.1",
 	})
 
 	supervisor.New(b.ctx, etcd.Run)
@@ -114,7 +114,7 @@ func TestMemberInfo(t *testing.T) {
 		Name:         "test",
 		NewCluster:   true,
 		Port:         freeport.MustConsume(freeport.AllocateTCPPort()),
-		ExternalHost: "127.0.0.1",
+		externalHost: "127.0.0.1",
 	})
 	supervisor.New(b.ctx, etcd.Run)
 	waitEtcd(t, etcd)
@@ -157,7 +157,7 @@ func TestRestartFromDisk(t *testing.T) {
 			Name:         "test",
 			NewCluster:   new,
 			Port:         freeport.MustConsume(freeport.AllocateTCPPort()),
-			ExternalHost: "127.0.0.1",
+			externalHost: "127.0.0.1",
 		})
 		ctx, ctxC := context.WithCancel(b.ctx)
 		supervisor.New(ctx, etcd.Run)
@@ -201,7 +201,7 @@ func TestCRL(t *testing.T) {
 		Name:         "test",
 		NewCluster:   true,
 		Port:         freeport.MustConsume(freeport.AllocateTCPPort()),
-		ExternalHost: "127.0.0.1",
+		externalHost: "127.0.0.1",
 	})
 	supervisor.New(b.ctx, etcd.Run)
 	waitEtcd(t, etcd)
