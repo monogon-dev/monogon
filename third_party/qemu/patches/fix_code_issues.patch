@@ -13,15 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
-From 931f89680cd6714a4eca13c8ae11cd733c1b4609 Mon Sep 17 00:00:00 2001
+From 402ac3cc59ef115c41eee0f1dca3b1c4b30d6baa Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@brun.one>
 Date: Wed, 10 Mar 2021 17:55:55 +0100
-Subject: [PATCH 2/6] Fix QEMU code issues
+Subject: [PATCH] Fix QEMU code issues
+Company: nexantic GmbH
 
 ---
- qom/object.c      | 2 +-
- softmmu/physmem.c | 3 ++-
- 2 files changed, 3 insertions(+), 2 deletions(-)
+ qom/object.c      |  2 +-
+ softmmu/physmem.c | 15 ++++++++++++++-
+ 2 files changed, 15 insertions(+), 2 deletions(-)
 
 diff --git a/qom/object.c b/qom/object.c
 index 1065355233..f3aa56cc52 100644
@@ -37,19 +38,31 @@ index 1065355233..f3aa56cc52 100644
  typedef union {
      long l;
 diff --git a/softmmu/physmem.c b/softmmu/physmem.c
-index 3027747c03..2eb31592f4 100644
+index 3027747c03..f5bbdd7e2d 100644
 --- a/softmmu/physmem.c
 +++ b/softmmu/physmem.c
-@@ -2675,7 +2675,8 @@ static void invalidate_and_set_dirty(MemoryRegion *mr, hwaddr addr,
+@@ -2675,7 +2675,20 @@ static void invalidate_and_set_dirty(MemoryRegion *mr, hwaddr addr,
      }
      if (dirty_log_mask & (1 << DIRTY_MEMORY_CODE)) {
          assert(tcg_enabled());
 -        tb_invalidate_phys_range(addr, addr + length);
-+        // If this symbol is not elided by the compiler it cannot be found.
++        // Metropolis does not link against TCG (Tiny Code Generator, qemu's
++        // software recompilation backend), where tb_invalidate_phys_range is
++        // implemented. Because we do not enable TCG at all, this branch should
++        // never be taken, and even if it is taken, the assert above should
++        // file aborting execution. 
++        // Ideally, all compilers would use the above data to elide the call to
++        // tb_invalidate_phys_range and everything would be fine, but that's
++        // unfortunately not the case, at least within Metropolis' build. Thus,
++        // in order to prevent the compiler from spuriously linking against a
++        // symbol that we do not compile, we comment the call out, and add
++        // another assert that will always fire, to truly make sure that this
++        // branch never gets taken in practice.
++        assert(0);
 +        // tb_invalidate_phys_range(addr, addr + length);
          dirty_log_mask &= ~(1 << DIRTY_MEMORY_CODE);
      }
      cpu_physical_memory_set_dirty_range(addr, length, dirty_log_mask);
 -- 
-2.25.1
+2.26.3
 
