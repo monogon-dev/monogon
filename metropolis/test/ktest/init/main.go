@@ -39,6 +39,7 @@ func mountInit() error {
 		{"/proc", "proc", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
 		{"/dev", "devtmpfs", unix.MS_NOEXEC | unix.MS_NOSUID},
 		{"/dev/pts", "devpts", unix.MS_NOEXEC | unix.MS_NOSUID},
+		{"/tmp", "tmpfs", 0},
 	} {
 		if err := os.Mkdir(el.dir, 0755); err != nil && !os.IsExist(err) {
 			return fmt.Errorf("could not make %s: %w", el.dir, err)
