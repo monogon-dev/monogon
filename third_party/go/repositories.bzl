@@ -2593,6 +2593,7 @@ def go_repositories():
             "//third_party/go/patches:k8s-native-metrics.patch",
             "//third_party/go/patches:k8s-use-native.patch",
             "//third_party/go/patches:k8s-revert-seccomp-runtime-default.patch",
+            "//third_party/go/patches:k8s-removed-block-device-pseudo-locks.patch",
         ],
         pre_patches = [
             "//third_party/go/patches:k8s-e2e-tests-providerless.patch",

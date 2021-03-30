@@ -103,7 +103,7 @@ func makeTestDeploymentSpec(name string) *appsv1.Deployment {
 }
 
 // makeTestStatefulSet generates a StatefulSet spec
-func makeTestStatefulSet(name string) *appsv1.StatefulSet {
+func makeTestStatefulSet(name string, volumeMode corev1.PersistentVolumeMode) *appsv1.StatefulSet {
 	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 		Spec: appsv1.StatefulSetSpec{
@@ -118,6 +118,7 @@ func makeTestStatefulSet(name string) *appsv1.StatefulSet {
 						Resources: corev1.ResourceRequirements{
 							Requests: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: resource.MustParse("50Mi")},
 						},
+						VolumeMode: &volumeMode,
 					},
 				},
 			},

@@ -28,6 +28,7 @@ func depsKubernetes(p *planner) {
 			"k8s-native-metrics.patch",
 			"k8s-use-native.patch",
 			"k8s-revert-seccomp-runtime-default.patch",
+			"k8s-removed-block-device-pseudo-locks.patch",
 		),
 		prePatches(
 			"k8s-e2e-tests-providerless.patch",

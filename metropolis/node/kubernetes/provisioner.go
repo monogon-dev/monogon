@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"golang.org/x/sys/unix"
 	v1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
@@ -40,8 +41,8 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/fsquota"
+	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
@@ -255,26 +256,37 @@ func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, stora
 		return fmt.Errorf("PVC requesting more than 2^63 bytes of storage, this is not supported")
 	}
 
-	if *pvc.Spec.VolumeMode == v1.PersistentVolumeBlock {
-		return fmt.Errorf("Block PVCs are currently not supported by Metropolis")
-	}
-
 	volumeID := "pvc-" + string(pvc.ObjectMeta.UID)
 	volumePath := p.volumePath(volumeID)
 
 	p.logger.Infof("Creating local PV %s", volumeID)
-	if err := os.Mkdir(volumePath, 0644); err != nil && !os.IsExist(err) {
-		return fmt.Errorf("failed to create volume directory: %w", err)
-	}
-	files, err := ioutil.ReadDir(volumePath)
-	if err != nil {
-		return fmt.Errorf("failed to list files in newly-created volume: %w", err)
-	}
-	if len(files) > 0 {
-		return errors.New("newly-created volume already contains data, bailing")
-	}
-	if err := fsquota.SetQuota(volumePath, uint64(capacity), 100000); err != nil {
-		return fmt.Errorf("failed to update quota: %v", err)
+
+	switch *pvc.Spec.VolumeMode {
+	case "", v1.PersistentVolumeFilesystem:
+		if err := os.Mkdir(volumePath, 0644); err != nil && !os.IsExist(err) {
+			return fmt.Errorf("failed to create volume directory: %w", err)
+		}
+		files, err := ioutil.ReadDir(volumePath)
+		if err != nil {
+			return fmt.Errorf("failed to list files in newly-created volume: %w", err)
+		}
+		if len(files) > 0 {
+			return errors.New("newly-created volume already contains data, bailing")
+		}
+		if err := fsquota.SetQuota(volumePath, uint64(capacity), 100000); err != nil {
+			return fmt.Errorf("failed to update quota: %v", err)
+		}
+	case v1.PersistentVolumeBlock:
+		imageFile, err := os.OpenFile(volumePath, os.O_CREATE|os.O_RDWR, 0644)
+		if err != nil {
+			return fmt.Errorf("failed to create volume image: %w", err)
+		}
+		defer imageFile.Close()
+		if err := unix.Fallocate(int(imageFile.Fd()), 0, 0, capacity); err != nil {
+			return fmt.Errorf("failed to fallocate() volume image: %w", err)
+		}
+	default:
+		return fmt.Errorf("VolumeMode \"%s\" is unsupported", *pvc.Spec.VolumeMode)
 	}
 
 	vol := &v1.PersistentVolume{
@@ -294,7 +306,8 @@ func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, stora
 					VolumeHandle: volumeID,
 				},
 			},
-			ClaimRef: claimRef,
+			ClaimRef:   claimRef,
+			VolumeMode: pvc.Spec.VolumeMode,
 			NodeAffinity: &v1.VolumeNodeAffinity{
 				Required: &v1.NodeSelector{
 					NodeSelectorTerms: []v1.NodeSelectorTerm{
@@ -346,17 +359,25 @@ func (p *csiProvisionerServer) processPV(key string) error {
 
 	// Log deletes for auditing purposes
 	p.logger.Infof("Deleting persistent volume %s", pv.Spec.CSI.VolumeHandle)
-	if err := fsquota.SetQuota(volumePath, 0, 0); err != nil {
-		// We record these here manually since a successful deletion removes the PV we'd be attaching them to
-		p.recorder.Eventf(pv, v1.EventTypeWarning, "DeprovisioningFailed", "Failed to remove quota: %v", err)
-		return fmt.Errorf("failed to remove quota: %w", err)
-	}
-	err = os.RemoveAll(volumePath)
-	if os.IsNotExist(err) {
-		return nil
-	} else if err != nil {
-		p.recorder.Eventf(pv, v1.EventTypeWarning, "DeprovisioningFailed", "Failed to delete volume: %v", err)
-		return fmt.Errorf("failed to delete volume: %w", err)
+	switch *pv.Spec.VolumeMode {
+	case "", v1.PersistentVolumeFilesystem:
+		if err := fsquota.SetQuota(volumePath, 0, 0); err != nil {
+			// We record these here manually since a successful deletion removes the PV we'd be attaching them to
+			p.recorder.Eventf(pv, v1.EventTypeWarning, "DeprovisioningFailed", "Failed to remove quota: %v", err)
+			return fmt.Errorf("failed to remove quota: %w", err)
+		}
+		if err := os.RemoveAll(volumePath); err != nil && !os.IsNotExist(err) {
+			p.recorder.Eventf(pv, v1.EventTypeWarning, "DeprovisioningFailed", "Failed to delete volume: %v", err)
+			return fmt.Errorf("failed to delete volume: %w", err)
+		}
+	case v1.PersistentVolumeBlock:
+		if err := os.Remove(volumePath); err != nil && !os.IsNotExist(err) {
+			p.recorder.Eventf(pv, v1.EventTypeWarning, "DeprovisioningFailed", "Failed to delete volume: %v", err)
+			return fmt.Errorf("failed to delete volume: %w", err)
+		}
+	default:
+		p.recorder.Eventf(pv, v1.EventTypeWarning, "DeprovisioningFailed", "Invalid volume mode \"%v\"", *pv.Spec.VolumeMode)
+		return fmt.Errorf("invalid volume mode \"%v\"", *pv.Spec.VolumeMode)
 	}
 
 	err = p.Kubernetes.CoreV1().PersistentVolumes().Delete(context.Background(), pv.Name, metav1.DeleteOptions{})

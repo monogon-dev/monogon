@@ -30,22 +30,22 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	pluginregistration "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
+	"k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/pkg/fsquota"
 	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/metropolis/pkg/loop"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 // Derived from K8s spec for acceptable names, but shortened to 130 characters to avoid issues with
 // maximum path length. We don't provision longer names so this applies only if you manually create
 // a volume with a name of more than 130 characters.
-var acceptableNames = regexp.MustCompile("^[a-z][a-bz0-9-.]{0,128}[a-z0-9]$")
-
-const volumeDir = "volumes"
+var acceptableNames = regexp.MustCompile("^[a-z][a-z0-9-.]{0,128}[a-z0-9]$")
 
 type csiPluginServer struct {
+	*csi.UnimplementedNodeServer
 	KubeletDirectory *localstorage.DataKubernetesKubeletDirectory
 	VolumesDirectory *localstorage.DataVolumesDirectory
 
@@ -86,14 +86,6 @@ func (s *csiPluginServer) Run(ctx context.Context) error {
 	return nil
 }
 
-func (*csiPluginServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NodeStageVolume not supported")
-}
-
-func (*csiPluginServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NodeUnstageVolume not supported")
-}
-
 func (s *csiPluginServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
 	if !acceptableNames.MatchString(req.VolumeId) {
 		return nil, status.Error(codes.InvalidArgument, "invalid characters in volume id")
@@ -110,29 +102,66 @@ func (s *csiPluginServer) NodePublishVolume(ctx context.Context, req *csi.NodePu
 	}
 	switch req.VolumeCapability.AccessType.(type) {
 	case *csi.VolumeCapability_Mount:
+		err := unix.Mount(volumePath, req.TargetPath, "", unix.MS_BIND, "")
+		switch {
+		case err == unix.ENOENT:
+			return nil, status.Error(codes.NotFound, "volume not found")
+		case err != nil:
+			return nil, status.Errorf(codes.Unavailable, "failed to bind-mount volume: %v", err)
+		}
+
+		if req.Readonly {
+			err := unix.Mount(volumePath, req.TargetPath, "", unix.MS_BIND|unix.MS_REMOUNT|unix.MS_RDONLY, "")
+			if err != nil {
+				_ = unix.Unmount(req.TargetPath, 0) // Best-effort
+				return nil, status.Errorf(codes.Unavailable, "failed to remount volume: %v", err)
+			}
+		}
+	case *csi.VolumeCapability_Block:
+		f, err := os.OpenFile(volumePath, os.O_RDWR, 0)
+		if err != nil {
+			return nil, status.Errorf(codes.Unavailable, "failed to open block volume: %v", err)
+		}
+		defer f.Close()
+		var flags uint32 = loop.FlagDirectIO
+		if req.Readonly {
+			flags |= loop.FlagReadOnly
+		}
+		loopdev, err := loop.Create(f, loop.Config{Flags: flags})
+		if err != nil {
+			return nil, status.Errorf(codes.Unavailable, "failed to create loop device: %v", err)
+		}
+		loopdevNum, err := loopdev.Dev()
+		if err != nil {
+			loopdev.Remove()
+			return nil, status.Errorf(codes.Internal, "device number not available: %v", err)
+		}
+		if err := unix.Mknod(req.TargetPath, unix.S_IFBLK|0640, int(loopdevNum)); err != nil {
+			loopdev.Remove()
+			return nil, status.Errorf(codes.Unavailable, "failed to create device node at target path: %v", err)
+		}
+		loopdev.Close()
 	default:
 		return nil, status.Error(codes.InvalidArgument, "unsupported access type")
 	}
 
-	err := unix.Mount(volumePath, req.TargetPath, "", unix.MS_BIND, "")
-	switch {
-	case err == unix.ENOENT:
-		return nil, status.Error(codes.NotFound, "volume not found")
-	case err != nil:
-		return nil, status.Errorf(codes.Unavailable, "failed to bind-mount volume: %v", err)
-	}
-
-	if req.Readonly {
-		err := unix.Mount(volumePath, req.TargetPath, "", unix.MS_BIND|unix.MS_REMOUNT|unix.MS_RDONLY, "")
-		if err != nil {
-			_ = unix.Unmount(req.TargetPath, 0) // Best-effort
-			return nil, status.Errorf(codes.Unavailable, "failed to remount volume: %v", err)
-		}
-	}
 	return &csi.NodePublishVolumeResponse{}, nil
 }
 
-func (*csiPluginServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
+func (s *csiPluginServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
+	loopdev, err := loop.Open(req.TargetPath)
+	if err == nil {
+		defer loopdev.Close()
+		// We have a block device
+		if err := loopdev.Remove(); err != nil {
+			return nil, status.Errorf(codes.Unavailable, "failed to remove loop device: %v", err)
+		}
+		if err := os.Remove(req.TargetPath); err != nil && !os.IsNotExist(err) {
+			return nil, status.Errorf(codes.Unavailable, "failed to remove device inode: %v", err)
+		}
+		return &csi.NodeUnpublishVolumeResponse{}, nil
+	}
+	// Otherwise try a normal unmount
 	if err := unix.Unmount(req.TargetPath, 0); err != nil {
 		return nil, status.Errorf(codes.Unavailable, "failed to unmount volume: %v", err)
 	}
@@ -165,9 +194,26 @@ func (*csiPluginServer) NodeGetVolumeStats(ctx context.Context, req *csi.NodeGet
 	}, nil
 }
 
-func (*csiPluginServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
+func (s *csiPluginServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
 	if req.CapacityRange.LimitBytes <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "invalid expanded volume size: at or below zero bytes")
+	}
+	loopdev, err := loop.Open(req.VolumePath)
+	if err == nil {
+		defer loopdev.Close()
+		volumePath := filepath.Join(s.VolumesDirectory.FullPath(), req.VolumeId)
+		imageFile, err := os.OpenFile(volumePath, os.O_RDWR, 0)
+		if err != nil {
+			return nil, status.Errorf(codes.Unavailable, "failed to open block volume backing file: %v", err)
+		}
+		defer imageFile.Close()
+		if err := unix.Fallocate(int(imageFile.Fd()), 0, 0, req.CapacityRange.LimitBytes); err != nil {
+			return nil, status.Errorf(codes.Unavailable, "failed to expand volume using fallocate: %v", err)
+		}
+		if err := loopdev.RefreshSize(); err != nil {
+			return nil, status.Errorf(codes.Unavailable, "failed to refresh loop device size: %v", err)
+		}
+		return &csi.NodeExpandVolumeResponse{CapacityBytes: req.CapacityRange.LimitBytes}, nil
 	}
 	if err := fsquota.SetQuota(req.VolumePath, uint64(req.CapacityRange.LimitBytes), 0); err != nil {
 		return nil, status.Errorf(codes.Unavailable, "failed to update quota: %v", err)

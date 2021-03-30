@@ -124,7 +124,9 @@ func (d *DataDirectory) MountNew(config *ppb.SealedConfiguration) ([]byte, error
 }
 
 func (d *DataDirectory) mount() error {
-	if err := unix.Mount("/dev/data", d.FullPath(), "xfs", unix.MS_NOEXEC|unix.MS_NODEV, "pquota"); err != nil {
+	// TODO(T965): MS_NODEV should definitely be set on the data partition, but as long as the kubelet root
+	// is on there, we can't do it.
+	if err := unix.Mount("/dev/data", d.FullPath(), "xfs", unix.MS_NOEXEC, "pquota"); err != nil {
 		return fmt.Errorf("mounting data directory: %w", err)
 	}
 	return nil

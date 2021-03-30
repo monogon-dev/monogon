@@ -1,0 +1,73 @@
+Copyright 2020 The Monogon Project Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+
+From f0c9fc613c15e30453295beb25bf73763a4a82df Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@brun.one>
+Date: Mon, 29 Mar 2021 13:56:06 +0200
+Subject: [PATCH] Removed questionable block device pseudo-locks
+
+This code implements a weird sort of lock using Linux loop devices. It's not exclusive (multiple loop devices per
+backing device are supported) and the devices themselves are not accessed. The lock is also not exclusive as multiple
+loop devices per backing device are allowed. The only mention of why any of this is done is in the comment below, stating
+that it is possible that a device can be removed and another device can be attached with the same name. In Metropolis
+this is not a problem as our CSI/Provisioner setup exercises tight control over devices, thus silent removals are not
+possible.
+
+Because this code calls the losetup utility which Metropolis doesn't want to ship and also repeatedly lists loop devices
+in an inefficient manner which will cause problems with the anticipated density of VM-hosting Metropolis nodes and
+does nothing for us, let's just nuke it instead of rewriting it against //metropolis/pkg/loop.
+---
+ pkg/volume/util/util.go | 18 ------------------
+ 1 file changed, 18 deletions(-)
+
+diff --git a/pkg/volume/util/util.go b/pkg/volume/util/util.go
+index 367e05a0d1a..f53f1dcbb4e 100644
+--- a/pkg/volume/util/util.go
++++ b/pkg/volume/util/util.go
+@@ -527,17 +527,6 @@ func MapBlockVolume(
+ 		return fmt.Errorf("blkUtil.MapDevice failed. devicePath: %s, podVolumeMapPath:%s, volumeMapName: %s, bindMount: %v: %v",
+ 			devicePath, podVolumeMapPath, volumeMapName, false, mapErr)
+ 	}
+-
+-	// Take file descriptor lock to keep a block device opened. Otherwise, there is a case
+-	// that the block device is silently removed and attached another device with the same name.
+-	// Container runtime can't handle this problem. To avoid unexpected condition fd lock
+-	// for the block device is required.
+-	_, mapErr = blkUtil.AttachFileDevice(filepath.Join(globalMapPath, string(podUID)))
+-	if mapErr != nil {
+-		return fmt.Errorf("blkUtil.AttachFileDevice failed. globalMapPath:%s, podUID: %s: %v",
+-			globalMapPath, string(podUID), mapErr)
+-	}
+-
+ 	return nil
+ }
+ 
+@@ -551,13 +540,6 @@ func UnmapBlockVolume(
+ 	volumeMapName string,
+ 	podUID utypes.UID,
+ ) error {
+-	// Release file descriptor lock.
+-	err := blkUtil.DetachFileDevice(filepath.Join(globalUnmapPath, string(podUID)))
+-	if err != nil {
+-		return fmt.Errorf("blkUtil.DetachFileDevice failed. globalUnmapPath:%s, podUID: %s: %v",
+-			globalUnmapPath, string(podUID), err)
+-	}
+-
+ 	// unmap devicePath from pod volume path
+ 	unmapDeviceErr := blkUtil.UnmapDevice(podDeviceUnmapPath, volumeMapName, false /* bindMount */)
+ 	if unmapDeviceErr != nil {
+-- 
+2.25.1
+
