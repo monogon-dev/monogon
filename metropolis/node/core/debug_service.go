@@ -17,15 +17,22 @@
 package main
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"regexp"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	apb "source.monogon.dev/metropolis/proto/api"
+
 	"source.monogon.dev/metropolis/node/core/cluster"
 	"source.monogon.dev/metropolis/node/kubernetes"
 	"source.monogon.dev/metropolis/pkg/logtree"
-	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 const (
@@ -37,6 +44,9 @@ type debugService struct {
 	cluster    *cluster.Manager
 	kubernetes *kubernetes.Service
 	logtree    *logtree.LogTree
+	// traceLock provides exclusive access to the Linux tracing infrastructure (ftrace)
+	// This is a channel because Go's mutexes can't be cancelled or be acquired in a non-blocking way.
+	traceLock chan struct{}
 }
 
 func (s *debugService) GetDebugKubeconfig(ctx context.Context, req *apb.GetDebugKubeconfigRequest) (*apb.GetDebugKubeconfigResponse, error) {
@@ -180,4 +190,74 @@ func (s *debugService) GetLogs(req *apb.GetLogsRequest, srv apb.NodeDebugService
 			return err
 		}
 	}
+}
+
+// Validate property names as they are used in path construction and we really don't want a path traversal vulnerability
+var safeTracingPropertyNamesRe = regexp.MustCompile("^[a-z0-9_]+$")
+
+func writeTracingProperty(name string, value string) error {
+	if !safeTracingPropertyNamesRe.MatchString(name) {
+		return fmt.Errorf("disallowed tracing property name received: \"%v\"", name)
+	}
+	return ioutil.WriteFile("/sys/kernel/tracing/"+name, []byte(value+"\n"), 0)
+}
+
+func (s *debugService) Trace(req *apb.TraceRequest, srv apb.NodeDebugService_TraceServer) error {
+	// Don't allow more than one trace as the kernel doesn't support this.
+	select {
+	case s.traceLock <- struct{}{}:
+		defer func() {
+			<-s.traceLock
+		}()
+	default:
+		return status.Error(codes.FailedPrecondition, "a trace is already in progress")
+	}
+
+	if len(req.FunctionFilter) == 0 {
+		req.FunctionFilter = []string{"*"} // For reset purposes
+	}
+	if len(req.GraphFunctionFilter) == 0 {
+		req.GraphFunctionFilter = []string{"*"} // For reset purposes
+	}
+
+	defer writeTracingProperty("current_tracer", "nop")
+	if err := writeTracingProperty("current_tracer", req.Tracer); err != nil {
+		return status.Errorf(codes.InvalidArgument, "requested tracer not available: %v", err)
+	}
+
+	if err := writeTracingProperty("set_ftrace_filter", strings.Join(req.FunctionFilter, " ")); err != nil {
+		return status.Errorf(codes.InvalidArgument, "setting ftrace filter failed: %v", err)
+	}
+	if err := writeTracingProperty("set_graph_function", strings.Join(req.GraphFunctionFilter, " ")); err != nil {
+		return status.Errorf(codes.InvalidArgument, "setting graph filter failed: %v", err)
+	}
+	tracePipe, err := os.Open("/sys/kernel/tracing/trace_pipe")
+	if err != nil {
+		return status.Errorf(codes.Unavailable, "cannot open trace output pipe: %v", err)
+	}
+	defer tracePipe.Close()
+
+	defer writeTracingProperty("tracing_on", "0")
+	if err := writeTracingProperty("tracing_on", "1"); err != nil {
+		return status.Errorf(codes.InvalidArgument, "requested tracer not available: %v", err)
+	}
+
+	go func() {
+		<-srv.Context().Done()
+		tracePipe.Close()
+	}()
+
+	eventScanner := bufio.NewScanner(tracePipe)
+	for eventScanner.Scan() {
+		if err := eventScanner.Err(); err != nil {
+			return status.Errorf(codes.Unavailable, "event pipe read error: %v", err)
+		}
+		err := srv.Send(&apb.TraceEvent{
+			RawLine: eventScanner.Text(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

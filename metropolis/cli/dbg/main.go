@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -68,6 +69,14 @@ func main() {
 
 		fmt.Fprintf(os.Stderr, "Example:\n  %s %s IPAssigned\n", os.Args[0], os.Args[1])
 	}
+
+	traceCmd := flag.NewFlagSet("trace", flag.ExitOnError)
+	traceCmd.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %v %v [options] tracer\n", os.Args[0], os.Args[1])
+		flag.PrintDefaults()
+	}
+	functionFilter := traceCmd.String("function_filter", "", "Only trace functions matched by this filter (comma-separated, supports wildcards via *)")
+	functionGraphFilter := traceCmd.String("function_graph_filter", "", "Only trace functions matched by this filter and their children (syntax same as function_filter)")
 
 	switch os.Args[1] {
 	case "logs":
@@ -156,6 +165,38 @@ func main() {
 		command.SetArgs(os.Args[2:])
 		if err := command.Execute(); err != nil {
 			os.Exit(1)
+		}
+	case "trace":
+		traceCmd.Parse(os.Args[2:])
+		tracer := traceCmd.Arg(0)
+		var fgf []string
+		var ff []string
+		if len(*functionGraphFilter) > 0 {
+			fgf = strings.Split(*functionGraphFilter, ",")
+		}
+		if len(*functionFilter) > 0 {
+			ff = strings.Split(*functionFilter, ",")
+		}
+		req := apb.TraceRequest{
+			GraphFunctionFilter: fgf,
+			FunctionFilter:      ff,
+			Tracer:              tracer,
+		}
+		traceEvents, err := debugClient.Trace(ctx, &req)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to trace: %v", err)
+			os.Exit(1)
+		}
+		for {
+			traceEvent, err := traceEvents.Recv()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				fmt.Fprintf(os.Stderr, "stream aborted unexpectedly: %v", err)
+				os.Exit(1)
+			}
+			fmt.Println(traceEvent.RawLine)
 		}
 	}
 }

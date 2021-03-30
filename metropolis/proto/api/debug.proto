@@ -39,6 +39,9 @@ service NodeDebugService {
     //
     // TODO(q3k): move method and its related messages to the non-debug node endpoint once we have one.
     rpc GetLogs(GetLogsRequest) returns (stream GetLogsResponse);
+
+    // Trace enables tracing of Metropolis using the Linux ftrace infrastructure.
+    rpc Trace(TraceRequest) returns (stream TraceEvent);
 }
 
 
@@ -145,4 +148,22 @@ message LogEntry {
         Leveled leveled = 2;
         Raw raw = 3;
     }
+}
+
+message TraceRequest {
+    // Name of the tracer to use. Defined in https://www.kernel.org/doc/html/latest/trace/ftrace.html#the-tracers.
+    // Useful ones enabled in Metropolis: function_graph, function.
+    // Gets reset to nop automatically after the stream is terminated.
+    string tracer = 1;
+
+    // List of functions to trace. Accepts wildcards using the '*' character. If left empty traces all functions.
+    repeated string function_filter = 2;
+
+    // List of functions and their descendants to trace with the function_graph tracer.
+    repeated string graph_function_filter = 3;
+}
+
+message TraceEvent {
+    // Currently we do not parse the event data and just return what the kernel outputs, line-by-line.
+    string raw_line = 1;
 }

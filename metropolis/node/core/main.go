@@ -208,6 +208,7 @@ func main() {
 			cluster:    m,
 			logtree:    lt,
 			kubernetes: kubeSvc,
+			traceLock:  make(chan struct{}, 1),
 		}
 		dbgSrv := grpc.NewServer()
 		apb.RegisterNodeDebugServiceServer(dbgSrv, dbg)
