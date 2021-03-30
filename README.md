@@ -1,12 +1,12 @@
-# Monogon Source Monorepo
+# Monogon Monorepo
 
-This is the main repository containing Monogon's public source code, including Metropolis.
+This is the main repository containing the source code for the Monogon Project.
+
+*⚠️ This is pre-release software that happens to be publicly available. Nothing to see here, please move along.*
 
 ## Environment
 
-We assume a Fedora host system provisioned using rW, and IntelliJ as the IDE.
-
-For better reproducibility, all builds are executed in containers.
+Our build environment required a working podman or docker environment. 
 
 #### Usage
 
@@ -20,12 +20,14 @@ Using bazel using a wrapper script: `scripts/bin/bazel <...>` (add to your local
 
 #### IntelliJ
 
-This repository is compatible with the IntelliJ Bazel plugin. All commands run inside the container, and
-necessary paths are mapped into the container.
+This repository is compatible with the IntelliJ Bazel plugin, which enables
+full autocompletion for external dependencies and generated code. All commands
+run inside the container, and necessary paths are mapped into the container.
 
 The following steps are necessary:
 
-- Install Google's [Bazel plugin](https://plugins.jetbrains.com/plugin/8609-bazel) in IntelliJ.
+- Install Google's [Bazel plugin](https://plugins.jetbrains.com/plugin/8609-bazel) in IntelliJ. On IntelliJ 2020.3 or later,
+  you need to install a [beta release](https://github.com/bazelbuild/intellij/issues/2102#issuecomment-801242977) of the plugin.
 
 - Add the absolute path to your `~/.cache/bazel-nxt` folder to your `idea64.vmoptions` (Help → Edit Custom VM Options)
   and restart IntelliJ:
@@ -50,9 +52,12 @@ re-open the project in order to install them:
 
 Launch the node:
 
-    bazel run //:launch
+    scripts/bin/bazel run //:launch
     
 Run a kubectl command:
 
-    bazel run //metropolis/cli/dbg -- kubectl describe
+    scripts/bin/bazel run //metropolis/cli/dbg -- kubectl describe
  
+Run tests:
+
+    scripts/bin/bazel test //...
