@@ -2436,6 +2436,16 @@ def go_repositories():
         ],
     )
     go_repository(
+        name = "io_k8s_code_generator",
+        importpath = "k8s.io/code-generator",
+        version = "v0.19.9-rc.0",
+        sum = "h1:ci5Y09V0Uiim61fltZsjHYp+i6eNaMMmtIlIveHqQ9Y=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
         name = "io_k8s_component_base",
         importpath = "k8s.io/component-base",
         version = "v0.19.7",

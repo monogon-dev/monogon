@@ -48,6 +48,7 @@ func depsKubernetes(p *planner) {
 		"k8s.io/client-go",
 		"k8s.io/cloud-provider",
 		"k8s.io/cluster-bootstrap",
+		"k8s.io/code-generator",
 		"k8s.io/component-base",
 		"k8s.io/csi-translation-lib",
 		"k8s.io/kube-controller-manager",

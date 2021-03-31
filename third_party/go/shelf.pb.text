@@ -3051,6 +3051,13 @@ entry: <
   semver: "v0.19.7"
 >
 entry: <
+  import_path: "k8s.io/code-generator"
+  version: "kubernetes-1.19.7"
+  bazel_name: "io_k8s_code_generator"
+  sum: "h1:ci5Y09V0Uiim61fltZsjHYp+i6eNaMMmtIlIveHqQ9Y="
+  semver: "v0.19.9-rc.0"
+>
+entry: <
   import_path: "k8s.io/component-base"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_component_base"
