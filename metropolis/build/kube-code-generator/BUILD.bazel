@@ -1,0 +1,21 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+
+exports_files(["boilerplate.go.txt"])
+
+# Flag determining whether the current build graph traversal is happening for
+# preprocessing by kube-code-generator ('yes'), or not ('no'). Set by
+# preprocessing_transition.
+string_flag(
+    name = "preprocessing",
+    build_setting_default = "no",
+)
+
+# Config setting on which go_libraries embedding go_kubernetes_libraries
+# potentially forming a cycle (eg. deepcopy, which is embedded in the same
+# go_library from which it is generated) can rely on to break this cycle.
+config_setting(
+    name = "embed_deepcopy",
+    flag_values = {
+        ":preprocessing": "no",
+    },
+)
