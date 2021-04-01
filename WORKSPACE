@@ -152,7 +152,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "gperf",
     commit = "de9373c2d48a3edf29862eb8be44764a7f7d24c6",
-    remote = "https://github.com/nexantic/gperf.git",
+    remote = "https://github.com/monogon-dev/gperf.git",
     shallow_since = "1615306886 +0100",
 )
 
