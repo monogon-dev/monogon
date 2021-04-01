@@ -6,7 +6,7 @@ This is the main repository containing the source code for the Monogon Project.
 
 ## Environment
 
-Our build environment required a working podman or docker environment. 
+Our build environment requires a working Podman binary (your distribution should have one).
 
 #### Usage
 
