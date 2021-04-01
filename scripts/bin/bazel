@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # Override the intellij_aspect repository to point to our own copy that create_container.sh has applied patches to.

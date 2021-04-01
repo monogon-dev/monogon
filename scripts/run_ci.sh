@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This helper scripts executes all Bazel tests in our CI environment.
 # https://phab.monogon.dev/harbormaster/plan/2/
 set -euo pipefail
