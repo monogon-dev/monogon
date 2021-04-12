@@ -1,0 +1,30 @@
+load("//metropolis/build/kube-code-generator:defs.bzl", "go_kubernetes_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "doc.go",
+        "register.go",
+        "types.go",
+    ],
+    embed = select({
+        "//metropolis/build/kube-code-generator:embed_deepcopy": [":go_kubernetes_library"],
+        "//conditions:default": [],
+    }),
+    importpath = "source.monogon.dev/metropolis/vm/kube/apis/vm/v1alpha1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/vm/kube/apis/vm:go_default_library",
+        "@io_k8s_api//core/v1:go_default_library",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
+        "@io_k8s_apimachinery//pkg/runtime:go_default_library",
+        "@io_k8s_apimachinery//pkg/runtime/schema:go_default_library",
+    ],
+)
+
+go_kubernetes_library(
+    name = "go_kubernetes_library",
+    bundle = "//metropolis/vm/kube/generated:bundle",
+    importpath = "source.monogon.dev/metropolis/vm/kube/apis/vm/v1alpha1",
+)

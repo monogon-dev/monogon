@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_path")
+load("//metropolis/build/kube-code-generator:defs.bzl", "go_kubernetes_resource_bundle")
+
+go_kubernetes_resource_bundle(
+    name = "bundle",
+    apipath = "source.monogon.dev/metropolis/vm/kube/apis",
+    apis = {
+        "vm/v1alpha1": ["virtualmachine"],
+    },
+    gopath = ":go_path",
+    importpath = "source.monogon.dev/metropolis/vm/kube/generated",
+    visibility = ["//metropolis/vm/kube:__subpackages__"],
+)
+
+go_path(
+    name = "go_path",
+    deps = [
+        "//metropolis/vm/kube/apis/vm/v1alpha1:go_default_library",
+    ],
+)
