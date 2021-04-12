@@ -57,10 +57,6 @@ type Node struct {
 	// representing the lack of a role.
 	consensusMember  *NodeRoleConsensusMember
 	kubernetesWorker *NodeRoleKubernetesWorker
-
-	// At runtime, this represents an etcd client to the consensus cluster. This
-	// is used by applications (like Kubernetes).
-	KV clientv3.KV
 }
 
 // NodeRoleConsensusMember defines that the Node is a consensus (etcd) cluster

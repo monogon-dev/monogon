@@ -96,7 +96,7 @@ func TestBootstrap(t *testing.T) {
 	supervisor.New(b.ctx, etcd.Run)
 	waitEtcd(t, etcd)
 
-	kv := etcd.KV("foo", "bar")
+	kv := etcd.Client()
 	if _, err := kv.Put(b.ctx, "/foo", "bar"); err != nil {
 		t.Fatalf("test key creation failed: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestRestartFromDisk(t *testing.T) {
 		ctx, ctxC := context.WithCancel(b.ctx)
 		supervisor.New(ctx, etcd.Run)
 		waitEtcd(t, etcd)
-		kv := etcd.KV("foo", "bar")
+		kv := etcd.Client()
 		if new {
 			if _, err := kv.Put(b.ctx, "/foo", "bar"); err != nil {
 				t.Fatalf("test key creation failed: %v", err)

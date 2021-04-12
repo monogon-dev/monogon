@@ -96,17 +96,27 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	}
 	supervisor.Logger(ctx).Info("Bootstrapping: consensus ready.")
 
-	kv := m.consensus.KVRoot()
-	node.KV = kv
+	nodesKV, err := m.consensus.Client().Sub("nodes")
+	if err != nil {
+		return fmt.Errorf("when retrieving nodes etcd subclient: %w", err)
+	}
+	pkiKV, err := m.consensus.Client().Sub("pki")
+	if err != nil {
+		return fmt.Errorf("when retrieving pki etcd subclient: %w", err)
+	}
+	applicationKV, err := m.consensus.Client().Sub("application")
+	if err != nil {
+		return fmt.Errorf("when retrieving application etcd subclient: %w", err)
+	}
 
 	// Create Metropolis CA and this node's certificate.
-	caCertBytes, _, err := PKICA.Ensure(ctx, kv)
+	caCertBytes, _, err := PKICA.Ensure(ctx, pkiKV)
 	if err != nil {
 		return fmt.Errorf("failed to create cluster CA: %w", err)
 	}
 	nodeCert := PKINamespace.New(PKICA, "", pki.Server([]string{node.ID()}, nil))
 	nodeCert.UseExistingKey(priv)
-	nodeCertBytes, _, err := nodeCert.Ensure(ctx, kv)
+	nodeCertBytes, _, err := nodeCert.Ensure(ctx, pkiKV)
 	if err != nil {
 		return fmt.Errorf("failed to create node certificate: %w", err)
 	}
@@ -121,15 +131,18 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 		return fmt.Errorf("failed to write node private key: %w", err)
 	}
 
-	// Update our Node obejct in etcd.
-	if err := node.Store(ctx, kv); err != nil {
+	// Update our Node object in etcd.
+	if err := node.Store(ctx, nodesKV); err != nil {
 		return fmt.Errorf("failed to store new node in etcd: %w", err)
 	}
 
-	state.setResult(&node, nil)
+	m.status.Set(Status{
+		State:           ClusterHome,
+		Node:            &node,
+		consensusClient: applicationKV,
+	})
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)
 	return nil
 }
-

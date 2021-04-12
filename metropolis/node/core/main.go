@@ -150,38 +150,45 @@ func main() {
 			return fmt.Errorf("when starting enrolment: %w", err)
 		}
 
-		// Wait until the cluster manager settles.
-		node, err := m.Wait()
+		// Wait until the node finds a home in the new cluster.
+		watcher := m.Watch()
+		status, err := watcher.GetHome(ctx)
 		if err != nil {
 			close(trapdoor)
-			return fmt.Errorf("enrolment failed, aborting: %w", err)
+			return fmt.Errorf("new couldn't find home in new cluster, aborting: %w", err)
 		}
 
 		// We are now in a cluster. We can thus access our 'node' object and start all services that
 		// we should be running.
 
 		logger.Info("Enrolment success, continuing startup.")
-		logger.Info(fmt.Sprintf("This node (%s) has roles:", node.String()))
-		if cm := node.ConsensusMember(); cm != nil {
+		logger.Info(fmt.Sprintf("This node (%s) has roles:", status.Node.String()))
+		if cm := status.Node.ConsensusMember(); cm != nil {
 			// There's no need to start anything for when we are a consensus member - the cluster
 			// manager does this for us if necessary (as creating/enrolling/joining a cluster is
 			// pretty tied into cluster lifecycle management).
 			logger.Info(fmt.Sprintf(" - etcd consensus member"))
 		}
-		if kw := node.KubernetesWorker(); kw != nil {
+		if kw := status.Node.KubernetesWorker(); kw != nil {
 			logger.Info(fmt.Sprintf(" - kubernetes worker"))
 		}
 
 		// If we're supposed to be a kubernetes worker, start kubernetes services and containerd.
 		// In the future, this might be split further into kubernetes control plane and data plane
 		// roles.
+		// TODO(q3k): watch on cluster status updates to start/stop kubernetes service.
 		var containerdSvc *containerd.Service
 		var kubeSvc *kubernetes.Service
-		if kw := node.KubernetesWorker(); kw != nil {
+		if kw := status.Node.KubernetesWorker(); kw != nil {
 			logger.Info("Starting Kubernetes worker services...")
 
+			kv, err := status.ConsensusClient(cluster.ConsensusUserKubernetesPKI)
+			if err != nil {
+				return fmt.Errorf("failed to retrieve consensus kubernetes PKI client: %w", err)
+			}
+
 			// Ensure Kubernetes PKI objects exist in etcd.
-			kpki := pki.New(lt.MustLeveledFor("pki.kubernetes"), node.KV)
+			kpki := pki.New(lt.MustLeveledFor("pki.kubernetes"), kv)
 			if err := kpki.EnsureAll(ctx); err != nil {
 				return fmt.Errorf("failed to ensure kubernetes PKI present: %w", err)
 			}
