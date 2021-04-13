@@ -1,28 +1,8 @@
-genrule(
-    name = "bzImage",
-    srcs = [
-        "@linux//:all",
-        "linux-metropolis.config",
-    ],
-    outs = [
-        "bzImage",
-    ],
-    cmd = """
-    DIR=external/linux
+load("//third_party/linux:def.bzl", "linux_image")
 
-    mkdir $$DIR/.bin
+exports_files(["linux-metropolis.config"])
 
-    cp $(location linux-metropolis.config) $$DIR/.config
-
-    (cd $$DIR && make -j $$(nproc) >/dev/null)
-
-    cp $$DIR/arch/x86/boot/bzImage $(RULEDIR)
-    """,
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "kernel-config",
-    srcs = ["linux-metropolis.config"],
+linux_image(
+    name = "linux",
     visibility = ["//visibility:public"],
 )

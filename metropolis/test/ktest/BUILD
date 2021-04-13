@@ -1,5 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("//metropolis/node/build/kconfig-patcher:kconfig-patcher.bzl", "kconfig_patch")
+load("//third_party/linux:def.bzl", "linux_image")
 
 go_library(
     name = "go_default_library",
@@ -18,7 +19,7 @@ go_binary(
 
 kconfig_patch(
     name = "testing-config",
-    src = "//third_party/linux:kernel-config",
+    src = "//third_party/linux:linux-metropolis.config",
     out = "testing.config",
     override_configs = {
         # Unlock command line
@@ -33,27 +34,15 @@ kconfig_patch(
     },
 )
 
-genrule(
+linux_image(
     name = "linux-testing",
-    srcs = [
-        "@linux//:all",
-        ":testing-config",
+    image_format = "vmlinux",
+    kernel_config = ":testing-config",
+    # This image is directly used by the ktest macro, thus it needs a pretty
+    # wide visibility.
+    visibility = [
+        "//metropolis:__subpackages__",
     ],
-    outs = [
-        "linux-testing.elf",
-    ],
-    cmd = """
-    DIR=external/linux
-
-    mkdir $$DIR/.bin
-
-    cp $(location :testing-config) $$DIR/.config
-
-    (cd $$DIR && make -j $$(nproc) vmlinux >/dev/null)
-
-    cp $$DIR/vmlinux $@
-    """,
-    visibility = ["//metropolis:__subpackages__"],
 )
 
 filegroup(

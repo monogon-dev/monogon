@@ -93,7 +93,8 @@ func main() {
 		cancel()
 	}()
 
-	debugClient, portMap, err := launch.LaunchCluster(ctx, launch.ClusterOptions{NumNodes: 2})
+	// TODO(q3k): bump up number of nodes after multi-node workflow gets reimplemented.
+	debugClient, portMap, err := launch.LaunchCluster(ctx, launch.ClusterOptions{NumNodes: 1})
 	if err != nil {
 		log.Fatalf("Failed to launch cluster: %v", err)
 	}

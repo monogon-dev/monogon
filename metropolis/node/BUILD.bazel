@@ -88,7 +88,7 @@ erofs_image(
 genrule(
     name = "image",
     srcs = [
-        "//third_party/linux:bzImage",
+        "//third_party/linux",
         ":rootfs",
     ],
     outs = [
@@ -96,7 +96,7 @@ genrule(
     ],
     cmd = """
     $(location //metropolis/node/build/mkimage) \
-        -efi $(location //third_party/linux:bzImage) \
+        -efi $(location //third_party/linux) \
         -system $(location :rootfs) \
         -out $@
     """,

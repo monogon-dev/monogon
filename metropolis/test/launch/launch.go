@@ -521,7 +521,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (apb.NodeDebugServi
 
 	go func() {
 		if err := RunMicroVM(ctx, &MicroVMOptions{
-			KernelPath:             "metropolis/test/ktest/linux-testing.elf",
+			KernelPath:             "metropolis/test/ktest/vmlinux",
 			InitramfsPath:          "metropolis/test/nanoswitch/initramfs.lz4",
 			ExtraNetworkInterfaces: switchPorts,
 			PortMap:                portMap,
