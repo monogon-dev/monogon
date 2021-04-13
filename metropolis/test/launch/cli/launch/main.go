@@ -40,7 +40,7 @@ func main() {
 		SerialPort: os.Stdout,
 		NodeParameters: &apb.NodeParameters{
 			Cluster: &apb.NodeParameters_ClusterBootstrap_{
-				ClusterBootstrap: &apb.NodeParameters_ClusterBootstrap{},
+				ClusterBootstrap: launch.InsecureClusterBootstrap,
 			},
 		},
 	}); err != nil {
