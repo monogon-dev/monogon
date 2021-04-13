@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["client.go"],
+    importpath = "source.monogon.dev/metropolis/node/core/consensus/client",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@io_etcd_go_etcd//clientv3:go_default_library",
+        "@io_etcd_go_etcd//clientv3/namespace:go_default_library",
+    ],
+)
