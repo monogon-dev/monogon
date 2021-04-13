@@ -6,6 +6,7 @@ go_library(
         "cluster.go",
         "configuration.go",
         "manager.go",
+        "manager_bootstrap.go",
         "node.go",
     ],
     importpath = "source.monogon.dev/metropolis/node/core/cluster",
