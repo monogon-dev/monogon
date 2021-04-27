@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["etcd.go"],
+    importpath = "source.monogon.dev/metropolis/pkg/event/etcd",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node/core/consensus/client:go_default_library",
+        "//metropolis/pkg/event:go_default_library",
+        "@com_github_cenkalti_backoff_v4//:go_default_library",
+        "@io_etcd_go_etcd//clientv3:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["etcd_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//metropolis/node/core/consensus/client:go_default_library",
+        "//metropolis/pkg/event:go_default_library",
+        "@io_etcd_go_etcd//clientv3:go_default_library",
+        "@io_etcd_go_etcd//etcdserver/api/v3rpc/rpctypes:go_default_library",
+        "@io_etcd_go_etcd//integration:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+    ],
+)
