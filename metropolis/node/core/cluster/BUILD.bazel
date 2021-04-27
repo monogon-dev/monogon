@@ -17,6 +17,7 @@ go_library(
         "//metropolis/node/core/localstorage:go_default_library",
         "//metropolis/node/core/network:go_default_library",
         "//metropolis/pkg/event:go_default_library",
+        "//metropolis/pkg/event/memory:go_default_library",
         "//metropolis/pkg/pki:go_default_library",
         "//metropolis/pkg/supervisor:go_default_library",
         "//metropolis/proto/api:go_default_library",

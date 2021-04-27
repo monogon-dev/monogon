@@ -30,6 +30,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/pkg/event"
+	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
 	ppb "source.monogon.dev/metropolis/proto/private"
@@ -132,7 +133,7 @@ func (m *Manager) Watch() Watcher {
 type Manager struct {
 	storageRoot    *localstorage.Root
 	networkService *network.Service
-	status         event.MemoryValue
+	status         memory.Value
 
 	state
 

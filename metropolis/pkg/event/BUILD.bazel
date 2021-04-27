@@ -1,20 +1,8 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = [
-        "event.go",
-        "memory_value.go",
-    ],
+    srcs = ["event.go"],
     importpath = "source.monogon.dev/metropolis/pkg/event",
     visibility = ["//visibility:public"],
-)
-
-go_test(
-    name = "go_default_test",
-    srcs = [
-        "example_test.go",
-        "memory_value_test.go",
-    ],
-    embed = [":go_default_library"],
 )

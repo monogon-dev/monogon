@@ -33,6 +33,7 @@ import (
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
 	"source.monogon.dev/metropolis/node/core/network/dns"
 	"source.monogon.dev/metropolis/pkg/event"
+	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
@@ -53,7 +54,7 @@ type Service struct {
 	natTable            *nftables.Table
 	natPostroutingChain *nftables.Chain
 
-	status event.MemoryValue
+	status memory.Value
 }
 
 func New() *Service {

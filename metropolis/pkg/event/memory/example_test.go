@@ -14,24 +14,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package event
+package memory
 
 import (
 	"context"
 	"fmt"
 	"net"
 	"time"
+
+	"source.monogon.dev/metropolis/pkg/event"
 )
 
 // NetworkStatus is example data that will be stored in a Value.
 type NetworkStatus struct {
 	ExternalAddress net.IP
-	DefaultGateway net.IP
+	DefaultGateway  net.IP
 }
 
 // NetworkStatusWatcher is a typesafe wrapper around a Watcher.
 type NetworkStatusWatcher struct {
-	watcher Watcher
+	watcher event.Watcher
 }
 
 // Get wraps Watcher.Get and performs type assertion.
@@ -48,7 +50,7 @@ func (s *NetworkStatusWatcher) Get(ctx context.Context) (*NetworkStatus, error) 
 // communicating the newest information about a machine's network configuration
 // to consumers/watchers.
 type NetworkService struct {
-	Provider MemoryValue
+	Provider Value
 }
 
 // Watch is a thin wrapper around Value.Watch that returns the typesafe
@@ -66,23 +68,23 @@ func (s *NetworkService) Watch() NetworkStatusWatcher {
 func (s *NetworkService) Run(ctx context.Context) {
 	s.Provider.Set(NetworkStatus{
 		ExternalAddress: nil,
-		DefaultGateway: nil,
+		DefaultGateway:  nil,
 	})
 
 	select {
-	case <-time.After(100*time.Millisecond):
+	case <-time.After(100 * time.Millisecond):
 	case <-ctx.Done():
-			return
+		return
 	}
 
 	fmt.Printf("NS: Got DHCP Lease\n")
 	s.Provider.Set(NetworkStatus{
 		ExternalAddress: net.ParseIP("203.0.113.24"),
-		DefaultGateway: net.ParseIP("203.0.113.1"),
+		DefaultGateway:  net.ParseIP("203.0.113.1"),
 	})
 
 	select {
-	case <-time.After(100*time.Millisecond):
+	case <-time.After(100 * time.Millisecond):
 	case <-ctx.Done():
 		return
 	}
@@ -90,7 +92,7 @@ func (s *NetworkService) Run(ctx context.Context) {
 	fmt.Printf("NS: DHCP Address changed\n")
 	s.Provider.Set(NetworkStatus{
 		ExternalAddress: net.ParseIP("203.0.113.103"),
-		DefaultGateway: net.ParseIP("203.0.113.1"),
+		DefaultGateway:  net.ParseIP("203.0.113.1"),
 	})
 
 	time.Sleep(100 * time.Millisecond)
@@ -136,4 +138,3 @@ func ExampleValue_full() {
 	// NS: DHCP Address changed
 	// /etc/hosts: foo.example.com is now 203.0.113.103
 }
-

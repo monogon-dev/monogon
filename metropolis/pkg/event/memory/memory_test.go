@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package event
+package memory
 
 import (
 	"context"
@@ -25,10 +25,10 @@ import (
 	"time"
 )
 
-// TestAsync exercises the high-level behaviour of a MemoryValue, in which a
+// TestAsync exercises the high-level behaviour of a Value, in which a
 // watcher is able to catch up to the newest Set value.
 func TestAsync(t *testing.T) {
-	p := MemoryValue{}
+	p := Value{}
 	p.Set(0)
 
 	ctx := context.Background()
@@ -59,12 +59,12 @@ func TestAsync(t *testing.T) {
 	}
 }
 
-// TestSyncBlocks exercises the MemoryValue's 'Sync' field, which makes all
+// TestSyncBlocks exercises the Value's 'Sync' field, which makes all
 // Set() calls block until all respective watchers .Get() the updated data.
 // This particular test ensures that .Set() calls to a Watcher result in a
 // prefect log of updates being transmitted to a watcher.
 func TestSync(t *testing.T) {
-	p := MemoryValue{
+	p := Value{
 		Sync: true,
 	}
 	values := make(chan int, 100)
@@ -104,12 +104,12 @@ func TestSync(t *testing.T) {
 	}
 }
 
-// TestSyncBlocks exercises the MemoryValue's 'Sync' field, which makes all
+// TestSyncBlocks exercises the Value's 'Sync' field, which makes all
 // Set() calls block until all respective watchers .Get() the updated data.
 // This particular test ensures that .Set() calls actually block when a watcher
 // is unattended.
 func TestSyncBlocks(t *testing.T) {
-	p := MemoryValue{
+	p := Value{
 		Sync: true,
 	}
 	ctx := context.Background()
@@ -175,7 +175,7 @@ func TestSyncBlocks(t *testing.T) {
 // TestMultipleGets verifies that calling .Get() on a single watcher from two
 // goroutines is prevented by returning an error in exactly one of them.
 func TestMultipleGets(t *testing.T) {
-	p := MemoryValue{}
+	p := Value{}
 	ctx := context.Background()
 
 	w := p.Watch()
@@ -198,13 +198,13 @@ func TestMultipleGets(t *testing.T) {
 	}
 }
 
-// TestConcurrency attempts to stress the MemoryValue/MemoryWatcher
+// TestConcurrency attempts to stress the Value/Watcher
 // implementation to design limits (a hundred simultaneous watchers), ensuring
 // that the watchers all settle to the final set value.
 func TestConcurrency(t *testing.T) {
 	ctx := context.Background()
 
-	p := MemoryValue{}
+	p := Value{}
 	p.Set(0)
 
 	// Number of watchers to create.
@@ -274,7 +274,7 @@ func TestConcurrency(t *testing.T) {
 // aborts that particular Get call, but also allows subsequent use of the same
 // watcher.
 func TestCanceling(t *testing.T) {
-	p := MemoryValue{
+	p := Value{
 		Sync: true,
 	}
 
@@ -316,7 +316,7 @@ func TestCanceling(t *testing.T) {
 func TestSetAfterWatch(t *testing.T) {
 	ctx := context.Background()
 
-	p := MemoryValue{}
+	p := Value{}
 	p.Set(0)
 
 	watcher := p.Watch()
