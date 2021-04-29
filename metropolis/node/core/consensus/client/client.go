@@ -51,6 +51,26 @@ type Namespaced interface {
 	// Namespace.Sub("a").Sub("b").Sub("c") are used to create an etcd k/v
 	// prefix `a:b:c/` into which K/V access is remapped.
 	Sub(space string) (Namespaced, error)
+
+	// ThinClient returns a clientv3.Client which has the same namespacing as
+	// the namespaced interface. It only implements the KV, Lease and Watcher
+	// interfaces - all other interfaces are unimplemented and will panic when
+	// called.
+	ThinClient() *clientv3.Client
+}
+
+// ThinClient takes a set of KV, Lease and Watcher etcd clients and turns them
+// into a full Client struct. The rest of the interfaces (Cluster, Auth,
+// Maintenance) will all panic when called.
+func ThinClient(kv clientv3.KV, lease clientv3.Lease, watcher clientv3.Watcher) *clientv3.Client {
+	return &clientv3.Client{
+		Cluster:     &unimplementedCluster{},
+		KV:          kv,
+		Lease:       lease,
+		Watcher:     watcher,
+		Auth:        &unimplementedAuth{},
+		Maintenance: &unimplementedMaintenance{},
+	}
 }
 
 // local implements the Namespaced client to access a locally running etc.
@@ -93,6 +113,10 @@ func (l *local) Sub(space string) (Namespaced, error) {
 	}
 	sub.populate()
 	return sub, nil
+}
+
+func (l *local) ThinClient() *clientv3.Client {
+	return ThinClient(l.KV, l.Lease, l.Watcher)
 }
 
 func (l *local) Close() error {
