@@ -105,6 +105,16 @@ type Value interface {
 	// this should be negotiated and serialized externally by the producers.
 	Set(val interface{})
 
+	// ValueWatch implements the Watch method. It is split out into another
+	// interface to allow some 'Event Values' to implement only the watch/read
+	// part, with the write side being implicit or defined by a more complex
+	// interface then a simple Set().
+	ValueWatch
+}
+
+// ValueWatch is the read side of an 'Event Value', witch can by retrieved by
+// Consumers by performing a Watch operation on it.
+type ValueWatch interface {
 	// Watch retrieves a Watcher that keeps track on the version of the data
 	// contained within the Value that was last seen by a consumer. Once a
 	// Watcher is retrieved, it can be used to then get the actual data stored

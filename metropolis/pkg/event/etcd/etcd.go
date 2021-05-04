@@ -14,11 +14,11 @@ import (
 )
 
 var (
-	// Type assert that *Value implements event.Value. We do this artificially,
-	// as there currently is no code path that needs this to be strictly true.
-	// However, users of this library might want to rely on the Value type
-	// instead of particular Value implementations.
-	_ event.Value = &Value{}
+	// Type assert that *Value implements event.ValueWatcher. We do this
+	// artificially, as there currently is no code path that needs this to be
+	// strictly true.  However, users of this library might want to rely on the
+	// Value type instead of particular Value implementations.
+	_ event.ValueWatch = &Value{}
 )
 
 // Value is an 'Event Value' backed in an etcd cluster, accessed over an
@@ -52,11 +52,6 @@ type BytesDecoder = func(data []byte) (interface{}, error)
 // []byte type to the user.
 func NoDecoder(data []byte) (interface{}, error) {
 	return data, nil
-}
-
-func (e *Value) Set(val interface{}) {
-	// TODO(q3k): split up the Value interface into ValueReader/ValueWriter
-	panic("Set is unimplemented on etcd values")
 }
 
 func (e *Value) Watch() event.Watcher {
