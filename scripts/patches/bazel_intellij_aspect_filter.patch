@@ -18,9 +18,17 @@ limitations under the License.
 #  - properly resolve go_library rules that have both source files and embeds.
 #  - allow running test/sync against //... which contains cc_toolchain rules
 #    (see https://github.com/bazelbuild/intellij/issues/1344 )
---- a/intellij_info_impl.bzl.o
+--- a/intellij_info_impl.bzl
 +++ b/intellij_info_impl.bzl
-@@ -350,6 +350,8 @@
+@@ -13,6 +13,7 @@
+     ":make_variables.bzl",
+     "expand_make_variables",
+ )
++load("@io_bazel_rules_go//go:def.bzl", "GoLibrary")
+
+ # Defensive list of features that can appear in the C++ toolchain, but which we
+ # definitely don't want to enable (when enabled, they'd contribute command line
+@@ -350,6 +351,8 @@
          "go_appengine_test",
      ]:
          sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files.to_list()]
@@ -29,7 +37,18 @@ limitations under the License.
          generated = [f for f in sources if not f.is_source]
      elif ctx.rule.kind == "go_wrap_cc":
          genfiles = target.files.to_list()
-@@ -457,6 +459,8 @@
+@@ -372,6 +375,10 @@
+     if go_semantics:
+         import_path = go_semantics.get_import_path(ctx)
+
++    if import_path == None and getattr(ctx.rule.attr, "embed", None) != None and ctx.rule.kind == "go_library":
++        embed_attr = getattr(ctx.rule.attr, "embed", None)
++        import_path = embed_attr[0][GoLibrary].importpath
++
+     library_labels = []
+     if ctx.rule.kind == "go_test" or ctx.rule.kind == "go_appengine_test":
+         if getattr(ctx.rule.attr, "library", None) != None:
+@@ -457,6 +464,8 @@
          return False
      if cc_common.CcToolchainInfo not in target:
          return False
