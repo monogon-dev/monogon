@@ -197,10 +197,9 @@ pip_install()
 
 http_archive(
     name = "io_bazel_rules_docker",
-    sha256 = "336f711f646974ce51cbd10f0cbaaeac17364d92a9ebbcb88b168088b0df2d58",
-    strip_prefix = "rules_docker-622f9383d2a306840814c2aba8af0e5dae63c44e",
-    # Pinned to a specific commit because of #1675 and #1676 (Bazel 4 compatibility)
-    urls = ["https://github.com/bazelbuild/rules_docker/archive/622f9383d2a306840814c2aba8af0e5dae63c44e.tar.gz"],
+    sha256 = "59d5b42ac315e7eadffa944e86e90c2990110a1c8075f1cd145f487e999d22b3",
+    strip_prefix = "rules_docker-0.17.0",
+    urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.17.0/rules_docker-v0.17.0.tar.gz"],
 )
 
 load(
