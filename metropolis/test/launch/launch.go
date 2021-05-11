@@ -67,19 +67,19 @@ func (value qemuValue) toOption(name string) string {
 func copyFile(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("when opening source: %w", err)
 	}
 	defer in.Close()
 
 	out, err := os.Create(dst)
 	if err != nil {
-		return err
+		return fmt.Errorf("when creating destination: %w", err)
 	}
 	defer out.Close()
 
 	_, err = io.Copy(out, in)
 	if err != nil {
-		return err
+		return fmt.Errorf("when copying file: %w", err)
 	}
 	return out.Close()
 }
@@ -198,7 +198,7 @@ func Launch(ctx context.Context, options Options) error {
 	// Copy TPM state into a temporary directory since it's being modified by the emulator
 	tpmTargetDir := filepath.Join(tempDir, "tpm")
 	tpmSrcDir := "metropolis/node/tpm"
-	if err := os.Mkdir(tpmTargetDir, 0644); err != nil {
+	if err := os.Mkdir(tpmTargetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create TPM state directory: %w", err)
 	}
 	tpmFiles, err := ioutil.ReadDir(tpmSrcDir)
@@ -207,8 +207,10 @@ func Launch(ctx context.Context, options Options) error {
 	}
 	for _, file := range tpmFiles {
 		name := file.Name()
-		if err := copyFile(filepath.Join(tpmSrcDir, name), filepath.Join(tpmTargetDir, name)); err != nil {
-			return fmt.Errorf("failed to copy TPM directory: %w", err)
+		src := filepath.Join(tpmSrcDir, name)
+		target := filepath.Join(tpmTargetDir, name)
+		if err := copyFile(src, target); err != nil {
+			return fmt.Errorf("failed to copy TPM directory: file %q to %q: %w", src, target, err)
 		}
 	}
 
