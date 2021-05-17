@@ -85,24 +85,23 @@
 #  | go_kubernetes_resource_bundle |
 #  '-------------------------------'
 #              |   '--------------------------.
-#  .---------------------------.  .--------------------------. 
+#  .---------------------------.  .--------------------------.
 #  |   go_kubernetes_library   |  |   go_kubernetes_library  |
 #  |---------------------------|  |--------------------------| ... others ...
 #  | clientset/verioned/typed  |  | clientset/verioned/fake  |
 #  '---------------------------'  '--------------------------'
 #              |                               |
-#  .---------------------------.  .--------------------------. 
+#  .---------------------------.  .--------------------------.
 #  |       go_library          |  |       go_library         |
 #  |---------------------------|  |--------------------------| ... others ...
 #  | clientset/versioned/typed |  | clientset/versioned/fake |
 #  '---------------------------'  '--------------------------'
 #
 
-load("@io_bazel_rules_go//go:def.bzl", "go_context", "GoPath", "GoLibrary")
+load("@io_bazel_rules_go//go:def.bzl", "GoLibrary", "GoPath", "go_context")
 
 def _preprocessing_transition_impl(settings, attr):
-    return { "//metropolis/build/kube-code-generator:preprocessing": "yes" }
-
+    return {"//metropolis/build/kube-code-generator:preprocessing": "yes"}
 
 # preprocessing_transition is attached to the incoming go_path in
 # go_kubernetes_resource_bundle, unsets the
@@ -141,8 +140,7 @@ def _go_kubernetes_library_impl(ctx):
     library = libraries[0]
 
     source = go.library_to_source(go, ctx.attr, library, ctx.coverage_instrumented())
-    return [library, source]
-
+    return [library, source, OutputGroupInfo(go_generated_srcs = depset(library.srcs))]
 
 # go_kubernetes_library picks a single Go library from a kube_resource_bundle
 # and prepares it for being embedded into a go_library.
@@ -162,11 +160,9 @@ go_kubernetes_library = rule(
             providers = [GoLibrary],
             doc = "All build dependencies of this library.",
         ),
-
         "_go_context_data": attr.label(
             default = "@io_bazel_rules_go//:go_context_data",
         ),
-
     },
     toolchains = ["@io_bazel_rules_go//go:toolchain"],
 )
@@ -181,32 +177,35 @@ def _gotool_run(ctx, executable, arguments, **kwargs):
 
     inputs = [
         gopath.gopath_file,
-    ] + kwargs.get('inputs', [])
+    ] + kwargs.get("inputs", [])
 
     tools = [
         executable,
         go.sdk.go,
-    ] + go.sdk.tools + kwargs.get('tools', [])
+    ] + go.sdk.tools + kwargs.get("tools", [])
 
     env = {
         "GOTOOLWRAP_GOPATH": gopath.gopath_file.path,
         "GOTOOLWRAP_GOROOT": go.sdk.root_file.dirname,
     }
-    env.update(kwargs.get('env', {}))
+    env.update(kwargs.get("env", {}))
 
-    kwargs_ = dict([(k, v) for (k,v) in kwargs.items() if k not in [
-        'executable', 'arguments', 'inputs', 'env', 'tools',
+    kwargs_ = dict([(k, v) for (k, v) in kwargs.items() if k not in [
+        "executable",
+        "arguments",
+        "inputs",
+        "env",
+        "tools",
     ]])
 
     ctx.actions.run(
         executable = ctx.executable._gotoolwrap,
-        arguments = [ executable.path ] + arguments,
+        arguments = [executable.path] + arguments,
         env = env,
         inputs = inputs,
         tools = tools,
-        **kwargs_,
+        **kwargs_
     )
-
 
 # _output_directory returns the relative path into which
 # ctx.action.declare_file writes are rooted. This is used as code-generators
@@ -216,12 +215,11 @@ def _output_directory(ctx):
     # We combine bin_dir, the BUILDfile path and the target name. This seems
     # wrong. Is there no simpler way to do this?
     buildfile_path = ctx.build_file_path
-    parts = buildfile_path.split('/')
-    if not parts[-1].startswith('BUILD'):
+    parts = buildfile_path.split("/")
+    if not parts[-1].startswith("BUILD"):
         fail("internal error: unexpected BUILD file path: {}", parts[-1])
-    package_path = '/'.join(parts[:-1])
-    return '/'.join([ctx.bin_dir.path, package_path, ctx.attr.name])
-
+    package_path = "/".join(parts[:-1])
+    return "/".join([ctx.bin_dir.path, package_path, ctx.attr.name])
 
 # _cg returns a 'codegen context', a struct that's used to accumulate the
 # results of code generation. It assumes all output will be rooted in a
@@ -246,10 +244,8 @@ def _cg(ctx, importpath):
         # A map of importpath to list of outputs (from the above list) that
         # make up a generated Go package/library.
         libraries = {},
-
         ctx = ctx,
     )
-
 
 # _declare_library adds a single Go package/library at importpath to the
 # codegen context with the given file paths (rooted in the importpath).
@@ -265,14 +261,12 @@ def _declare_library(cg, importpath, files):
         cg.outputs.append(output)
         cg.libraries[importpath].append(output)
 
-
 # _declare_libraries declares multiple Go package/libraries to the codegen
 # context. The key of the dictionary is the importpath of the library, and the
 # value are the file names of generated outputs.
 def _declare_libraries(cg, libraries):
     for k, v in libraries.items():
         _declare_library(cg, k, v)
-
 
 # _codegen_clientset runs the clientset codegenerator.
 def _codegen_clientset(ctx):
@@ -288,10 +282,12 @@ def _codegen_clientset(ctx):
         client_name = api.split("/")[-2]
         _declare_libraries(cg, {
             "clientset/versioned/typed/{}".format(api): [
-                "doc.go", "generated_expansion.go",
+                "doc.go",
+                "generated_expansion.go",
                 "{}_client.go".format(client_name),
             ] + [
-                "{}.go".format(t) for t in types
+                "{}.go".format(t)
+                for t in types
             ],
             "clientset/versioned/typed/{}/fake".format(api): [
                 "doc.go",
@@ -299,16 +295,23 @@ def _codegen_clientset(ctx):
             ],
         })
 
-    _gotool_run(ctx,
+    _gotool_run(
+        ctx,
         mnemonic = "ClientsetGen",
         executable = ctx.executable._client_gen,
         arguments = [
-            "--clientset-name", "versioned",
-            "--input-base", ctx.attr.apipath,
-            "--input", ",".join(ctx.attr.apis),
-            "--output-package", cg.importpath + "/clientset",
-            "--output-base", cg.output_root,
-            "--go-header-file", ctx.file.boilerplate.path,
+            "--clientset-name",
+            "versioned",
+            "--input-base",
+            ctx.attr.apipath,
+            "--input",
+            ",".join(ctx.attr.apis),
+            "--output-package",
+            cg.importpath + "/clientset",
+            "--output-base",
+            cg.output_root,
+            "--go-header-file",
+            ctx.file.boilerplate.path,
         ],
         inputs = [
             ctx.file.boilerplate,
@@ -317,7 +320,6 @@ def _codegen_clientset(ctx):
     )
 
     return cg.libraries
-
 
 # _codegen_deepcopy runs the deepcopy codegenerator (outputting to the apipath,
 # not the importpath).
@@ -334,11 +336,16 @@ def _codegen_deepcopy(ctx):
         mnemonic = "DeepcopyGen",
         executable = ctx.executable._deepcopy_gen,
         arguments = [
-            "--input-dirs", ",".join(["{}/{}".format(ctx.attr.apipath, api) for api in ctx.attr.apis]),
-            "--go-header-file", ctx.file.boilerplate.path,
-            "--stderrthreshold", "0",
-            "-O", "zz_generated.deepcopy",
-            "--output-base", cg.output_root,
+            "--input-dirs",
+            ",".join(["{}/{}".format(ctx.attr.apipath, api) for api in ctx.attr.apis]),
+            "--go-header-file",
+            ctx.file.boilerplate.path,
+            "--stderrthreshold",
+            "0",
+            "-O",
+            "zz_generated.deepcopy",
+            "--output-base",
+            cg.output_root,
             ctx.attr.apipath,
         ],
         inputs = [
@@ -348,20 +355,19 @@ def _codegen_deepcopy(ctx):
     )
     return cg.libraries
 
-
 # _codegen_informer runs the informer codegenerator.
 def _codegen_informer(ctx):
     cg = _cg(ctx, ctx.attr.importpath)
 
     _declare_libraries(cg, {
-        "informers/externalversions": [ "factory.go", "generic.go" ],
-        "informers/externalversions/internalinterfaces": [ "factory_interfaces.go" ],
+        "informers/externalversions": ["factory.go", "generic.go"],
+        "informers/externalversions/internalinterfaces": ["factory_interfaces.go"],
     })
 
     for api, types in ctx.attr.apis.items():
         client_name = api.split("/")[-2]
         _declare_libraries(cg, {
-            "informers/externalversions/{}".format(client_name): [ "interface.go" ],
+            "informers/externalversions/{}".format(client_name): ["interface.go"],
             "informers/externalversions/{}".format(api): [
                 "interface.go",
             ] + [
@@ -375,12 +381,18 @@ def _codegen_informer(ctx):
         mnemonic = "InformerGen",
         executable = ctx.executable._informer_gen,
         arguments = [
-            "--input-dirs", ",".join(["{}/{}".format(ctx.attr.apipath, api) for api in ctx.attr.apis]),
-            "--versioned-clientset-package", "{}/clientset/versioned".format(ctx.attr.importpath),
-            "--listers-package", "{}/listers".format(ctx.attr.importpath),
-            "--output-package", "{}/informers".format(ctx.attr.importpath),
-            "--output-base", cg.output_root,
-            "--go-header-file", ctx.file.boilerplate.path,
+            "--input-dirs",
+            ",".join(["{}/{}".format(ctx.attr.apipath, api) for api in ctx.attr.apis]),
+            "--versioned-clientset-package",
+            "{}/clientset/versioned".format(ctx.attr.importpath),
+            "--listers-package",
+            "{}/listers".format(ctx.attr.importpath),
+            "--output-package",
+            "{}/informers".format(ctx.attr.importpath),
+            "--output-base",
+            cg.output_root,
+            "--go-header-file",
+            ctx.file.boilerplate.path,
         ],
         inputs = [
             ctx.file.boilerplate,
@@ -389,7 +401,6 @@ def _codegen_informer(ctx):
     )
 
     return cg.libraries
-
 
 # _codegen_lister runs the lister codegenerator.
 def _codegen_lister(ctx):
@@ -403,7 +414,7 @@ def _codegen_lister(ctx):
             ] + [
                 "{}.go".format(t)
                 for t in types
-            ]
+            ],
         })
 
     _gotool_run(
@@ -411,11 +422,16 @@ def _codegen_lister(ctx):
         mnemonic = "ListerGen",
         executable = ctx.executable._lister_gen,
         arguments = [
-            "--input-dirs", ",".join(["{}/{}".format(ctx.attr.apipath, api) for api in ctx.attr.apis]),
-            "--output-package", "{}/listers".format(ctx.attr.importpath),
-            "--output-base", cg.output_root,
-            "--go-header-file", ctx.file.boilerplate.path,
-            "-v", "10",
+            "--input-dirs",
+            ",".join(["{}/{}".format(ctx.attr.apipath, api) for api in ctx.attr.apis]),
+            "--output-package",
+            "{}/listers".format(ctx.attr.importpath),
+            "--output-base",
+            cg.output_root,
+            "--go-header-file",
+            ctx.file.boilerplate.path,
+            "-v",
+            "10",
         ],
         inputs = [
             ctx.file.boilerplate,
@@ -425,7 +441,6 @@ def _codegen_lister(ctx):
 
     return cg.libraries
 
-
 # _update_dict_check is a helper function that updates dict a with dict b,
 # ensuring there's no overwritten keys.
 def _update_dict_check(a, b):
@@ -433,7 +448,6 @@ def _update_dict_check(a, b):
         if k in a:
             fail("internal error: repeat importpath {}", k)
     a.update(b)
-
 
 def _go_kubernetes_resource_bundle_impl(ctx):
     go = go_context(ctx)
@@ -453,8 +467,7 @@ def _go_kubernetes_resource_bundle_impl(ctx):
         )
         libraries.append(library)
 
-    return [KubeResourceBundle(libraries=libraries)]
-
+    return [KubeResourceBundle(libraries = libraries)]
 
 # go_kubernetes_resource_bundle runs kubernetes code-generators on a codepath
 # for some requested APIs, and whose output can be made into Go library targets
@@ -469,7 +482,6 @@ go_kubernetes_resource_bundle = rule(
             cfg = preprocessing_transition,
             doc = "A rules_go go_path that contains all the API libraries for which codegen should be run.",
         ),
-
         "importpath": attr.string(
             mandatory = True,
             doc = """
@@ -480,7 +492,6 @@ go_kubernetes_resource_bundle = rule(
                 generated code.
             """,
         ),
-
         "apipath": attr.string(
             mandatory = True,
             doc = "The root importpath of the APIs for which to generate code.",
@@ -493,24 +504,20 @@ go_kubernetes_resource_bundle = rule(
                 from each (eg. widget for `type Widget struct`).
             """,
         ),
-
         "boilerplate": attr.label(
             default = "//metropolis/build/kube-code-generator:boilerplate.go.txt",
             allow_single_file = True,
             doc = "Header that will be used in the generated code.",
         ),
-
         "_go_context_data": attr.label(
             default = "@io_bazel_rules_go//:go_context_data",
         ),
-
         "_gotoolwrap": attr.label(
             default = Label("//metropolis/build/gotoolwrap"),
             allow_single_file = True,
             executable = True,
             cfg = "exec",
         ),
-
         "_deepcopy_gen": attr.label(
             default = Label("@io_k8s_code_generator//cmd/deepcopy-gen"),
             allow_single_file = True,
@@ -535,10 +542,9 @@ go_kubernetes_resource_bundle = rule(
             executable = True,
             cfg = "exec",
         ),
-
         "_allowlist_function_transition": attr.label(
-            default = "@bazel_tools//tools/allowlists/function_transition_allowlist"
-        )
+            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+        ),
     },
     toolchains = ["@io_bazel_rules_go//go:toolchain"],
 )
