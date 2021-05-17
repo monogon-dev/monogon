@@ -32,6 +32,7 @@ import (
 
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+	corev1 "k8s.io/api/core/v1"
 	deviceplugin "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 	"k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 
@@ -39,6 +40,9 @@ import (
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
+
+// Name is the name of the KVM devices this plugin exposes
+var Name corev1.ResourceName = "devices.monogon.dev/kvm"
 
 type Plugin struct {
 	*deviceplugin.UnimplementedDevicePluginServer
@@ -50,7 +54,7 @@ type Plugin struct {
 func (k *Plugin) GetInfo(context.Context, *pluginregistration.InfoRequest) (*pluginregistration.PluginInfo, error) {
 	return &pluginregistration.PluginInfo{
 		Type:              pluginregistration.DevicePlugin,
-		Name:              "devices.monogon.dev/kvm",
+		Name:              string(Name),
 		Endpoint:          k.KubeletDirectory.Plugins.KVM.FullPath(),
 		SupportedVersions: []string{"v1beta1"},
 	}, nil
