@@ -1,8 +1,3 @@
-#
-# The CI only rebuilds this Dockerfile if its hash changes.
-# Do not reference any external files, since modifications to them won't trigger a rebuild.
-#
-
 FROM fedora:32
 
 RUN dnf -y upgrade && \
@@ -33,7 +28,16 @@ RUN dnf -y upgrade && \
 	grpc-cli \
 	nc \
 	python-unversioned-command \
-	openssl-devel
+	openssl-devel \
+	java-11-openjdk
+
+# Create CI build user. This is not used by scripts/bin/bazel, but instead only
+# used by CI infrastructure to run build agents as.
+# The newly created user will have a UID of 500, and a corresponding CI group
+# of GID 500 will be created as well. This UID:GID pair's numeric values are
+# relied on by the CI infrastructure and must not change without coordination.
+RUN set -e -x ;\
+	useradd -u 500 -U -m -d /home/ci ci
 
 # Install Bazel binary
 RUN curl -o /usr/local/bin/bazel \

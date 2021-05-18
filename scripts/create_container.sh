@@ -16,7 +16,7 @@ if ! [[ -d /sys/module/kvm ]]; then
 fi
 
 # Rebuild base image
-podman build -t monogon-builder build
+podman build -t monogon-builder build/ci
 
 # Keep this in sync with ci.sh:
 
