@@ -24,7 +24,7 @@ podman pod create --name monogon
 
 # Mount bazel root to identical paths inside and outside the container.
 # This caches build state even if the container is destroyed, and
-BAZEL_ROOT=${HOME}/.cache/bazel-nxt
+BAZEL_ROOT=${HOME}/.cache/bazel-monogon
 mkdir -p ${BAZEL_ROOT}
 
 # The Bazel plugin injects a Bazel repository into the sync command line,

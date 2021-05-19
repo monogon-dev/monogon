@@ -6,9 +6,9 @@ The little Gazelle that could.
 Introduction
 ------------
 
-Fietsje is a dependency management system for Go dependencies in nxt. It does
-not replace either gomods or Gazelle, but instead builds upon both on them in
-a way that makes sense for our particular usecase: pulling in a large set of
+Fietsje is a dependency management system for Go dependencies in monogon. It
+does not replace either gomods or Gazelle, but instead builds upon both on them
+in a way that makes sense for our particular usecase: pulling in a large set of
 dependency trees from third\_party projects, and sticking to those as much as
 possible.
 
@@ -57,7 +57,7 @@ call only. This is done by calling `.with()`.
 
 In general, `.collect()`/`.collectOverride()` calls should be limited only to
 dependencies 'we' (as developers) want. These 'high-level' dependencies are
-large projects like Kubernetes, or direct imports from nxt itself. Every
+large projects like Kubernetes, or direct imports from monogon itself. Every
 transitive dependency of those should just be enabled by calling `.use()`,
 instead of another `.collectOverride()` call that might pin it to a wrong
 version.
@@ -125,7 +125,7 @@ different ways to proceed:
  - if the dependency has little transitive dependencies, use `.inject()` to
    add transitive dependencies manually after your `.collect()` call
  - otherwise, extend fietsje to allow for out-of-tree go.mod/go.sum files kept
-   within nxt, or come up with some other solution.
+   within monogon, or come up with some other solution.
 
 Your new dependency might conflict with existing dependencies, which usually
 manifests in build failures due to incompatible types. If this happens, you

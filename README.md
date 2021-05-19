@@ -29,10 +29,10 @@ The following steps are necessary:
 - Install Google's [Bazel plugin](https://plugins.jetbrains.com/plugin/8609-bazel) in IntelliJ. On IntelliJ 2020.3 or later,
   you need to install a [beta release](https://github.com/bazelbuild/intellij/issues/2102#issuecomment-801242977) of the plugin.
 
-- Add the absolute path to your `~/.cache/bazel-nxt` folder to your `idea64.vmoptions` (Help → Edit Custom VM Options)
+- Add the absolute path to your `~/.cache/bazel-monogon` folder to your `idea64.vmoptions` (Help → Edit Custom VM Options)
   and restart IntelliJ:
 
-  `-Dbazel.bep.path=/home/leopold/.cache/bazel-nxt`
+  `-Dbazel.bep.path=/home/leopold/.cache/bazel-monogon`
   
 - Set "*Bazel Binary Location*" in Other Settings → Bazel Settings to the absolute path of `scripts/bin/bazel`.
   This is a wrapper that will execute Bazel inside the container.

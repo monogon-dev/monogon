@@ -6,6 +6,6 @@ set -euo pipefail
 # The IntelliJ plugin sets the repository using a command line argument, which we need to replace:
 #   --override_repository=intellij_aspect=<...>/plugins/ijwb/aspect
 #
-ARGS=$(echo $@ | sed "s%--override_repository=intellij_aspect=[^ ]*%--override_repository=intellij_aspect=${HOME}/.cache/bazel-nxt/ijwb_aspect%")
+ARGS=$(echo $@ | sed "s%--override_repository=intellij_aspect=[^ ]*%--override_repository=intellij_aspect=${HOME}/.cache/bazel-monogon/ijwb_aspect%")
 
-exec podman exec -it monogon-dev bazel --output_user_root ${HOME}/.cache/bazel-nxt $ARGS
+exec podman exec -it monogon-dev bazel --output_user_root ${HOME}/.cache/bazel-monogon $ARGS

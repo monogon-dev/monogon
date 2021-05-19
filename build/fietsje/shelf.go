@@ -32,7 +32,7 @@ import (
 // The Shelf is a combined cache and dependency lockfile, not unlike go.sum. It's implemented as a text proto file on
 // disk, and currently stores a single mapping of shelfKeys to shelfValues, which are in order a (importpath, version)
 // tuple and the `locked` structure of a dependency.
-// The resulting shelf file should be commited to the nxt repository. It can be freely deleted to force recreation from
+// The resulting shelf file should be commited to the monogon repository. It can be freely deleted to force recreation from
 // scratch, which can be useful as there is no garbage collection implemented for it.
 // The 'lockfile' aspect of the Shelf is counter-intuitive to what readers might be used to from other dependency
 // management systems. It does not lock a third-party dependency to a particular version, but only locks a well defined
