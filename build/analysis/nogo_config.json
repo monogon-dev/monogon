@@ -88,5 +88,11 @@
       "external/com_github_google_gvisor/": "third_party",
       "external/com_github_sbezverk_nfproxy/": "third_party"
     }
+  },
+  "commentwrap": {
+    "exclude_files": {
+      "dev_source_monogon/": "temporary until fixup CR",
+      "external/": "third_party"
+    }
   }
 }

@@ -33,5 +33,13 @@ nogo(
     name = "nogo",
     config = "nogo_config.json",
     visibility = ["//visibility:public"],
-    deps = govet,
+    deps = govet + [
+        # This analyzer ensures that all comment lines are <= 80 characters long
+        # in Go source. This is in line with general practices around the Go
+        # community, where code lines can be as long as needed (and is expected
+        # to be soft-reflowable by text editors), but comments are kept at a
+        # 'standard' 80 characters long, as prose within comment blocks does not
+        # soft-reflow well.
+        "@com_github_corverroos_commentwrap//:go_tool_library",
+    ],
 )

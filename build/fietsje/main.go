@@ -135,6 +135,18 @@ func main() {
 	// goimports
 	p.collectOverride("golang.org/x/tools", "v0.0.0-20201215171152-6307297f4651")
 
+	// commentwrap is used as a nogo analyzer to stick to a maximum line
+	// length for comments.
+	// We have to patch both it and its only direct dependency to add generated
+	// go_tool_library targets. This is needed as Gazelle doesn't generate them,
+	// because they're a temporary solution to a problem that shouldn't exist soon:
+	// https://github.com/bazelbuild/rules_go/issues/2374
+	p.collect("github.com/corverroos/commentwrap", "2926638be44ce0c6c0ee2471e9b5ad9473c984cd",
+		patches("commentwrap-tool-library.patch"),
+	).with(patches("reflow-tool-library.patch")).use(
+		"github.com/muesli/reflow",
+	)
+
 	// First generate the repositories starlark rule into memory. This is because rendering will lock all unlocked
 	// dependencies, which might take a while. If a use were to interrupt it now, they would end up with an incomplete
 	// repositories.bzl and would have to restore from git.

@@ -629,6 +629,13 @@ entry: <
   semver: "v0.0.0-20180928190104-399ea9e2e55f"
 >
 entry: <
+  import_path: "github.com/corverroos/commentwrap"
+  version: "2926638be44ce0c6c0ee2471e9b5ad9473c984cd"
+  bazel_name: "com_github_corverroos_commentwrap"
+  sum: "h1:toeMwwechJKH0iwOoGJLZK6x42Ba9si+816KxqmgFc8="
+  semver: "v0.0.0-20191204065359-2926638be44c"
+>
+entry: <
   import_path: "github.com/cosiner/argv"
   version: "v0.0.0-20170225145430-13bacc38a0a5"
   bazel_name: "com_github_cosiner_argv"
@@ -1845,6 +1852,13 @@ entry: <
   bazel_name: "com_github_mrunalp_fileutils"
   sum: "h1:aZQToFSLH8ejFeSkTc3r3L4dPImcj7Ib/KgmkQqbGGg="
   semver: "v0.0.0-20200520151820-abd8a0e76976"
+>
+entry: <
+  import_path: "github.com/muesli/reflow"
+  version: "v0.0.0-20191128061954-86f094cbed14"
+  bazel_name: "com_github_muesli_reflow"
+  sum: "h1:99aDTygRy9yEwggATz+ZLrDFRsjRog5BqbAfsr47Ztw="
+  semver: "v0.0.0-20191128061954-86f094cbed14"
 >
 entry: <
   import_path: "github.com/munnerz/goautoneg"

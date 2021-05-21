@@ -475,6 +475,20 @@ def go_repositories():
         ],
     )
     go_repository(
+        name = "com_github_corverroos_commentwrap",
+        importpath = "github.com/corverroos/commentwrap",
+        version = "v0.0.0-20191204065359-2926638be44c",
+        sum = "h1:toeMwwechJKH0iwOoGJLZK6x42Ba9si+816KxqmgFc8=",
+        patches = [
+            "//third_party/go/patches:commentwrap-tool-library.patch",
+        ],
+        patch_args = ["-p1"],
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
         name = "com_github_cosiner_argv",
         importpath = "github.com/cosiner/argv",
         version = "v0.0.0-20170225145430-13bacc38a0a5",
@@ -1565,6 +1579,20 @@ def go_repositories():
         importpath = "github.com/mrunalp/fileutils",
         version = "v0.0.0-20200520151820-abd8a0e76976",
         sum = "h1:aZQToFSLH8ejFeSkTc3r3L4dPImcj7Ib/KgmkQqbGGg=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
+        name = "com_github_muesli_reflow",
+        importpath = "github.com/muesli/reflow",
+        version = "v0.0.0-20191128061954-86f094cbed14",
+        sum = "h1:99aDTygRy9yEwggATz+ZLrDFRsjRog5BqbAfsr47Ztw=",
+        patches = [
+            "//third_party/go/patches:reflow-tool-library.patch",
+        ],
+        patch_args = ["-p1"],
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
