@@ -14,8 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package nfproxy is a Kubernetes Service IP proxy based exclusively on the Linux nftables interface.
-// It uses netfilter's NAT capabilities to accept traffic on service IPs and DNAT it to the respective endpoint.
+// Package nfproxy is a Kubernetes Service IP proxy based exclusively on the
+// Linux nftables interface.  It uses netfilter's NAT capabilities to accept
+// traffic on service IPs and DNAT it to the respective endpoint.
 package nfproxy
 
 import (
@@ -42,7 +43,8 @@ import (
 )
 
 type Service struct {
-	// Traffic in ClusterCIDR is assumed to be originated inside the cluster and will not be SNATed
+	// Traffic in ClusterCIDR is assumed to be originated inside the cluster
+	// and will not be SNATed
 	ClusterCIDR net.IPNet
 	// A Kubernetes ClientSet with read access to endpoints and services
 	ClientSet kubernetes.Interface

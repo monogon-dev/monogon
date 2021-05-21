@@ -91,7 +91,6 @@
   },
   "commentwrap": {
     "exclude_files": {
-      "dev_source_monogon/": "temporary until fixup CR",
       "external/": "third_party"
     }
   }

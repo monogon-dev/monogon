@@ -14,10 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package logbuffer implements a fixed-size in-memory ring buffer for line-separated logs.
-// It implements io.Writer and splits the data into lines. The lines are kept in a ring where the
-// oldest are overwritten once it's full. It allows retrieval of the last n lines. There is a built-in
-// line length limit to bound the memory usage at maxLineLength * size.
+// Package logbuffer implements a fixed-size in-memory ring buffer for
+// line-separated logs. It implements io.Writer and splits the data into lines.
+// The lines are kept in a ring where the oldest are overwritten once it's
+// full. It allows retrieval of the last n lines. There is a built-in line
+// length limit to bound the memory usage at maxLineLength * size.
 package logbuffer
 
 import (
@@ -32,7 +33,8 @@ type LogBuffer struct {
 	*LineBuffer
 }
 
-// New creates a new LogBuffer with a given ringbuffer size and maximum line length.
+// New creates a new LogBuffer with a given ringbuffer size and maximum line
+// length.
 func New(size, maxLineLength int) *LogBuffer {
 	lb := &LogBuffer{
 		content: make([]Line, size),
@@ -49,7 +51,8 @@ func (b *LogBuffer) lineCallback(line *Line) {
 	b.length++
 }
 
-// capToContentLength caps the number of requested lines to what is actually available
+// capToContentLength caps the number of requested lines to what is actually
+// available
 func (b *LogBuffer) capToContentLength(n int) int {
 	// If there aren't enough lines to read, reduce the request size
 	if n > b.length {
@@ -62,8 +65,9 @@ func (b *LogBuffer) capToContentLength(n int) int {
 	return n
 }
 
-// ReadLines reads the last n lines from the buffer in chronological order. If n is bigger than the
-// ring buffer or the number of available lines only the number of stored lines are returned.
+// ReadLines reads the last n lines from the buffer in chronological order. If
+// n is bigger than the ring buffer or the number of available lines only the
+// number of stored lines are returned.
 func (b *LogBuffer) ReadLines(n int) []Line {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
@@ -78,13 +82,14 @@ func (b *LogBuffer) ReadLines(n int) []Line {
 	return outArray
 }
 
-// ReadLinesTruncated works exactly the same as ReadLines, but adds an ellipsis at the end of every
-// line that was truncated because it was over MaxLineLength
+// ReadLinesTruncated works exactly the same as ReadLines, but adds an ellipsis
+// at the end of every line that was truncated because it was over
+// MaxLineLength
 func (b *LogBuffer) ReadLinesTruncated(n int, ellipsis string) []string {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
-	// This does not use ReadLines() to prevent excessive reference copying and associated GC pressure
-	// since it could process a lot of lines.
+	// This does not use ReadLines() to prevent excessive reference copying and
+	// associated GC pressure since it could process a lot of lines.
 
 	n = b.capToContentLength(n)
 

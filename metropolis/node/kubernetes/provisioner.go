@@ -46,13 +46,16 @@ import (
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
-// ONCHANGE(//metropolis/node/kubernetes/reconciler:resources_csi.go): needs to match csiProvisionerServerName declared.
+// ONCHANGE(//metropolis/node/kubernetes/reconciler:resources_csi.go): needs to
+// match csiProvisionerServerName declared.
 const csiProvisionerServerName = "dev.monogon.metropolis.vfs"
 
-// csiProvisionerServer is responsible for the provisioning and deprovisioning of CSI-based container volumes. It runs on all
-// nodes and watches PVCs for ones assigned to the node it's running on and fulfills the provisioning request by
-// creating a directory, applying a quota and creating the corresponding PV. When the PV is released and its retention
-// policy is Delete, the directory and the PV resource are deleted.
+// csiProvisionerServer is responsible for the provisioning and deprovisioning
+// of CSI-based container volumes. It runs on all nodes and watches PVCs for
+// ones assigned to the node it's running on and fulfills the provisioning
+// request by creating a directory, applying a quota and creating the
+// corresponding PV. When the PV is released and its retention policy is
+// Delete, the directory and the PV resource are deleted.
 type csiProvisionerServer struct {
 	NodeName         string
 	Kubernetes       kubernetes.Interface
@@ -68,13 +71,16 @@ type csiProvisionerServer struct {
 	logger               logtree.LeveledLogger
 }
 
-// runCSIProvisioner runs the main provisioning machinery. It consists of a bunch of informers which keep track of
-// the events happening on the Kubernetes control plane and informs us when something happens. If anything happens to
-// PVCs or PVs, we enqueue the identifier of that resource in a work queue. Queues are being worked on by only one
-// worker to limit load and avoid complicated locking infrastructure. Failed items are requeued.
+// runCSIProvisioner runs the main provisioning machinery. It consists of a
+// bunch of informers which keep track of the events happening on the
+// Kubernetes control plane and informs us when something happens. If anything
+// happens to PVCs or PVs, we enqueue the identifier of that resource in a work
+// queue. Queues are being worked on by only one worker to limit load and avoid
+// complicated locking infrastructure. Failed items are requeued.
 func (p *csiProvisionerServer) Run(ctx context.Context) error {
-	// The recorder is used to log Kubernetes events for successful or failed volume provisions. These events then
-	// show up in `kubectl describe pvc` and can be used by admins to debug issues with this provisioner.
+	// The recorder is used to log Kubernetes events for successful or failed
+	// volume provisions. These events then show up in `kubectl describe pvc`
+	// and can be used by admins to debug issues with this provisioner.
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: p.Kubernetes.CoreV1().Events("")})
 	p.recorder = eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: csiProvisionerServerName, Host: p.NodeName})
@@ -119,7 +125,8 @@ func (p *csiProvisionerServer) Run(ctx context.Context) error {
 	return nil
 }
 
-// isOurPVC checks if the given PVC is is to be provisioned by this provisioner and has been scheduled onto this node
+// isOurPVC checks if the given PVC is is to be provisioned by this provisioner
+// and has been scheduled onto this node
 func (p *csiProvisionerServer) isOurPVC(pvc *v1.PersistentVolumeClaim) bool {
 	if pvc.ObjectMeta.Annotations["volume.beta.kubernetes.io/storage-provisioner"] != csiProvisionerServerName {
 		return false
@@ -130,7 +137,8 @@ func (p *csiProvisionerServer) isOurPVC(pvc *v1.PersistentVolumeClaim) bool {
 	return true
 }
 
-// isOurPV checks if the given PV has been provisioned by this provisioner and has been scheduled onto this node
+// isOurPV checks if the given PV has been provisioned by this provisioner and
+// has been scheduled onto this node
 func (p *csiProvisionerServer) isOurPV(pv *v1.PersistentVolume) bool {
 	if pv.ObjectMeta.Annotations["pv.kubernetes.io/provisioned-by"] != csiProvisionerServerName {
 		return false
@@ -161,8 +169,8 @@ func (p *csiProvisionerServer) enqueuePV(obj interface{}) {
 	p.pvQueue.Add(key)
 }
 
-// processQueueItems gets items from the given work queue and calls the process function for each of them. It self-
-// terminates once the queue is shut down.
+// processQueueItems gets items from the given work queue and calls the process
+// function for each of them. It self- terminates once the queue is shut down.
 func (p *csiProvisionerServer) processQueueItems(queue workqueue.RateLimitingInterface, process func(key string) error) {
 	for {
 		obj, shutdown := queue.Get()
@@ -194,8 +202,8 @@ func (p *csiProvisionerServer) volumePath(volumeID string) string {
 	return filepath.Join(p.VolumesDirectory.FullPath(), volumeID)
 }
 
-// processPVC looks at a single PVC item from the queue, determines if it needs to be provisioned and logs the
-// provisioning result to the recorder
+// processPVC looks at a single PVC item from the queue, determines if it needs
+// to be provisioned and logs the provisioning result to the recorder
 func (p *csiProvisionerServer) processPVC(key string) error {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -223,8 +231,9 @@ func (p *csiProvisionerServer) processPVC(key string) error {
 	}
 
 	if storageClass.Provisioner != csiProvisionerServerName {
-		// We're not responsible for this PVC. Can only happen if controller-manager makes a mistake
-		// setting the annotations, but we're bailing here anyways for safety.
+		// We're not responsible for this PVC. Can only happen if
+		// controller-manager makes a mistake setting the annotations, but
+		// we're bailing here anyways for safety.
 		return nil
 	}
 
@@ -239,8 +248,9 @@ func (p *csiProvisionerServer) processPVC(key string) error {
 	return nil
 }
 
-// provisionPVC creates the directory where the volume lives, sets a quota for the requested amount of storage and
-// creates the PV object representing this new volume
+// provisionPVC creates the directory where the volume lives, sets a quota for
+// the requested amount of storage and creates the PV object representing this
+// new volume
 func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, storageClass *storagev1.StorageClass) error {
 	claimRef, err := ref.GetReference(scheme.Scheme, pvc)
 	if err != nil {
@@ -335,8 +345,9 @@ func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, stora
 	return nil
 }
 
-// processPV looks at a single PV item from the queue and checks if it has been released and needs to be deleted. If yes
-// it deletes the associated quota, directory and the PV object and logs the result to the recorder.
+// processPV looks at a single PV item from the queue and checks if it has been
+// released and needs to be deleted. If yes it deletes the associated quota,
+// directory and the PV object and logs the result to the recorder.
 func (p *csiProvisionerServer) processPV(key string) error {
 	_, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -362,7 +373,8 @@ func (p *csiProvisionerServer) processPV(key string) error {
 	switch *pv.Spec.VolumeMode {
 	case "", v1.PersistentVolumeFilesystem:
 		if err := fsquota.SetQuota(volumePath, 0, 0); err != nil {
-			// We record these here manually since a successful deletion removes the PV we'd be attaching them to
+			// We record these here manually since a successful deletion
+			// removes the PV we'd be attaching them to.
 			p.recorder.Eventf(pv, v1.EventTypeWarning, "DeprovisioningFailed", "Failed to remove quota: %v", err)
 			return fmt.Errorf("failed to remove quota: %w", err)
 		}

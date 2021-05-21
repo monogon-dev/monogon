@@ -23,8 +23,9 @@ import (
 	"time"
 )
 
-// testEventual creates a new subtest looping the given function until it either doesn't return an error anymore or
-// the timeout is exceeded. The last returned non-context-related error is being used as the test error.
+// testEventual creates a new subtest looping the given function until it
+// either doesn't return an error anymore or the timeout is exceeded. The last
+// returned non-context-related error is being used as the test error.
 func testEventual(t *testing.T, name string, ctx context.Context, timeout time.Duration, f func(context.Context) error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	t.Helper()

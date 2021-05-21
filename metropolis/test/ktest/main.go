@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ktest is a test launcher for running tests inside a custom kernel and passes the results
-// back out.
+// ktest is a test launcher for running tests inside a custom kernel and passes
+// the results back out.
 package main
 
 import (

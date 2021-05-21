@@ -31,7 +31,8 @@ import (
 )
 
 const (
-	// RFC2474 Section 4.2.2.1 with reference to RFC791 Section 3.1 (Network Control Precedence)
+	// RFC2474 Section 4.2.2.1 with reference to RFC791 Section 3.1 (Network
+	// Control Precedence)
 	dscpCS7 = 0x7 << 3
 
 	// IPv4 MTU
@@ -49,13 +50,13 @@ func mustAssemble(insns []bpf.Instruction) []bpf.RawInstruction {
 
 // BPF filter for UDP in IPv4 with destination port 68 (DHCP Client)
 //
-// This is used to make the kernel drop non-DHCP traffic for us so that we don't have to handle
-// excessive unrelated traffic flowing on a given link which might overwhelm the single-threaded
-// receiver.
+// This is used to make the kernel drop non-DHCP traffic for us so that we
+// don't have to handle excessive unrelated traffic flowing on a given link
+// which might overwhelm the single-threaded receiver.
 var bpfFilterInstructions = []bpf.Instruction{
 	// Check IP protocol version equals 4 (first 4 bits of the first byte)
-	// With Ethernet II framing, this is more of a sanity check. We already request the kernel
-	// to only return EtherType 0x0800 (IPv4) frames.
+	// With Ethernet II framing, this is more of a sanity check. We already
+	// request the kernel to only return EtherType 0x0800 (IPv4) frames.
 	bpf.LoadAbsolute{Off: 0, Size: 1},
 	bpf.ALUOpConstant{Op: bpf.ALUOpAnd, Val: 0xf0}, // SubnetMask second 4 bits
 	bpf.JumpIf{Cond: bpf.JumpEqual, Val: 4 << 4, SkipTrue: 1},
@@ -85,8 +86,9 @@ var bpfFilterInstructions = []bpf.Instruction{
 
 var bpfFilter = mustAssemble(bpfFilterInstructions)
 
-// BroadcastTransport implements a DHCP transport based on a custom IP/UDP stack fulfilling the
-// specific requirements for broadcasting DHCP packets (like all-zero source address, no ARP, ...)
+// BroadcastTransport implements a DHCP transport based on a custom IP/UDP
+// stack fulfilling the specific requirements for broadcasting DHCP packets
+// (like all-zero source address, no ARP, ...)
 type BroadcastTransport struct {
 	rawConn *raw.Conn
 	iface   *net.Interface
@@ -122,13 +124,17 @@ func (t *BroadcastTransport) Send(payload *dhcpv4.DHCPv4) error {
 	}
 
 	ipLayer := &layers.IPv4{
-		Version:  4,
-		TOS:      dscpCS7 << 2, // Shift left of ECN field
-		TTL:      1,            // These packets should never be routed (their IP headers contain garbage)
+		Version: 4,
+		// Shift left of ECN field
+		TOS: dscpCS7 << 2,
+		// These packets should never be routed (their IP headers contain
+		// garbage)
+		TTL:      1,
 		Protocol: layers.IPProtocolUDP,
-		Flags:    layers.IPv4DontFragment, // Most DHCP servers don't support fragmented packets
-		DstIP:    net.IPv4bcast,
-		SrcIP:    net.IPv4zero,
+		// Most DHCP servers don't support fragmented packets.
+		Flags: layers.IPv4DontFragment,
+		DstIP: net.IPv4bcast,
+		SrcIP: net.IPv4zero,
 	}
 	udpLayer := &layers.UDP{
 		DstPort: 67,

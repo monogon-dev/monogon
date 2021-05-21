@@ -24,23 +24,27 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 )
 
-// Lease represents a DHCPv4 lease. It only consists of an IP, an expiration timestamp and options as all other
-// relevant parts of the message have been normalized into their respective options. It also contains some smart
-// getters for commonly-used options which extract only valid information from options.
+// Lease represents a DHCPv4 lease. It only consists of an IP, an expiration
+// timestamp and options as all other relevant parts of the message have been
+// normalized into their respective options. It also contains some smart
+// getters for commonly-used options which extract only valid information from
+// options.
 type Lease struct {
 	AssignedIP net.IP
 	ExpiresAt  time.Time
 	Options    dhcpv4.Options
 }
 
-// SubnetMask returns the SubnetMask option or the default mask if not set or invalid.
+// SubnetMask returns the SubnetMask option or the default mask if not set or
+// invalid.
 // It returns nil if the lease is nil.
 func (l *Lease) SubnetMask() net.IPMask {
 	if l == nil {
 		return nil
 	}
 	mask := net.IPMask(dhcpv4.GetIP(dhcpv4.OptionSubnetMask, l.Options))
-	if _, bits := mask.Size(); bits != 32 { // If given mask is not valid, use the default mask
+	// If given mask is not valid, use the default mask.
+	if _, bits := mask.Size(); bits != 32 {
 		mask = l.AssignedIP.DefaultMask()
 	}
 	return mask
@@ -58,7 +62,8 @@ func (l *Lease) IPNet() *net.IPNet {
 	}
 }
 
-// Router returns the first valid router from the DHCP router option or nil if none such exists.
+// Router returns the first valid router from the DHCP router option or nil if
+// none such exists.
 // It returns nil if the lease is nil.
 func (l *Lease) Router() net.IP {
 	if l == nil {
@@ -101,7 +106,8 @@ func ip4toInt(ip net.IP) uint32 {
 	return binary.BigEndian.Uint32(ip4)
 }
 
-// DNSServers returns all unique valid DNS servers from the DHCP DomainNameServers options.
+// DNSServers returns all unique valid DNS servers from the DHCP
+// DomainNameServers options.
 // It returns nil if the lease is nil.
 func (l *Lease) DNSServers() DNSServers {
 	if l == nil {

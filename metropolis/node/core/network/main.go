@@ -49,7 +49,8 @@ type Service struct {
 	// dhcp client for the 'main' interface of the node.
 	dhcp *dhcp4c.Client
 
-	// nftConn is a shared file descriptor handle to nftables, automatically initialized on first use.
+	// nftConn is a shared file descriptor handle to nftables, automatically
+	// initialized on first use.
 	nftConn             nftables.Conn
 	natTable            *nftables.Table
 	natPostroutingChain *nftables.Chain
@@ -75,7 +76,8 @@ type Status struct {
 	DNSServers      dhcp4c.DNSServers
 }
 
-// Watcher allows network Service consumers to watch for updates of the current Status.
+// Watcher allows network Service consumers to watch for updates of the current
+// Status.
 type Watcher struct {
 	watcher event.Watcher
 }
@@ -112,7 +114,8 @@ func (s *Service) ConfigureDNS(d *dns.ExtraDirective) {
 	s.dnsReg <- d
 }
 
-// nfifname converts an interface name into 16 bytes padded with zeroes (for nftables)
+// nfifname converts an interface name into 16 bytes padded with zeroes (for
+// nftables)
 func nfifname(n string) []byte {
 	b := make([]byte, 16)
 	copy(b, []byte(n+"\x00"))
@@ -180,7 +183,8 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 // sysctlOptions contains sysctl options to apply
 type sysctlOptions map[string]string
 
-// apply attempts to apply all options in sysctlOptions. It aborts on the first one which returns an error when applying.
+// apply attempts to apply all options in sysctlOptions. It aborts on the first
+// one which returns an error when applying.
 func (o sysctlOptions) apply() error {
 	for name, value := range o {
 		filePath := path.Join("/proc/sys/", strings.ReplaceAll(name, ".", "/"))
@@ -221,12 +225,14 @@ func (s *Service) Run(ctx context.Context) error {
 	sysctlOpts := sysctlOptions{
 		// Enable IP forwarding for our pods
 		"net.ipv4.ip_forward": "1",
-		// Enable strict reverse path filtering on all interfaces (important for spoofing prevention from Pods with CAP_NET_ADMIN)
+		// Enable strict reverse path filtering on all interfaces (important
+		// for spoofing prevention from Pods with CAP_NET_ADMIN)
 		"net.ipv4.conf.all.rp_filter": "1",
 		// Disable source routing
 		"net.ipv4.conf.all.accept_source_route": "0",
 
-		// Increase Linux socket kernel buffer sizes to 16MiB (needed for fast datacenter networks)
+		// Increase Linux socket kernel buffer sizes to 16MiB (needed for fast
+		// datacenter networks)
 		"net.core.rmem_max": "16777216",
 		"net.core.wmem_max": "16777216",
 		"net.ipv4.tcp_rmem": "4096 87380 16777216",

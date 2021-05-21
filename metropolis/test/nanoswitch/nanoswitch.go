@@ -15,9 +15,11 @@
 // limitations under the License.
 
 // nanoswitch is a virtualized switch/router combo intended for testing.
-// It uses the first interface as an external interface to connect to the host and pass traffic in and out. All other
-// interfaces are switched together and served by a built-in DHCP server. Traffic from that network to the
-// SLIRP/external network is SNATed as the host-side SLIRP ignores routed packets.
+// It uses the first interface as an external interface to connect to the host
+// and pass traffic in and out. All other interfaces are switched together and
+// served by a built-in DHCP server. Traffic from that network to the
+// SLIRP/external network is SNATed as the host-side SLIRP ignores routed
+// packets.
 // It also has built-in userspace proxying support for debugging.
 package main
 
@@ -49,17 +51,21 @@ import (
 var switchIP = net.IP{10, 1, 0, 1}
 var switchSubnetMask = net.CIDRMask(24, 32)
 
-// defaultLeaseOptions sets the lease options needed to properly configure connectivity to nanoswitch
+// defaultLeaseOptions sets the lease options needed to properly configure
+// connectivity to nanoswitch.
 func defaultLeaseOptions(reply *dhcpv4.DHCPv4) {
 	reply.GatewayIPAddr = switchIP
-	reply.UpdateOption(dhcpv4.OptDNS(net.IPv4(10, 42, 0, 3))) // SLIRP fake DNS server
+	// SLIRP fake DNS server.
+	reply.UpdateOption(dhcpv4.OptDNS(net.IPv4(10, 42, 0, 3)))
 	reply.UpdateOption(dhcpv4.OptRouter(switchIP))
-	reply.UpdateOption(dhcpv4.OptIPAddressLeaseTime(30 * time.Second)) // Make sure we exercise our DHCP client in E2E tests
+	// Make sure we exercise our DHCP client in E2E tests.
+	reply.UpdateOption(dhcpv4.OptIPAddressLeaseTime(30 * time.Second))
 	reply.UpdateOption(dhcpv4.OptSubnetMask(switchSubnetMask))
 }
 
-// runDHCPServer runs an extremely minimal DHCP server with most options hardcoded, a wrapping bump allocator for the
-// IPs, 30 second lease timeout and no support for DHCP collision detection.
+// runDHCPServer runs an extremely minimal DHCP server with most options
+// hardcoded, a wrapping bump allocator for the IPs, 30 second lease timeout
+// and no support for DHCP collision detection.
 func runDHCPServer(link netlink.Link) supervisor.Runnable {
 	currentIP := net.IP{10, 1, 0, 1}
 
@@ -114,7 +120,8 @@ func runDHCPServer(link netlink.Link) supervisor.Runnable {
 	}
 }
 
-// userspaceProxy listens on port and proxies all TCP connections to the same port on targetIP
+// userspaceProxy listens on port and proxies all TCP connections to the same
+// port on targetIP
 func userspaceProxy(targetIP net.IP, port uint16) supervisor.Runnable {
 	return func(ctx context.Context) error {
 		logger := supervisor.Logger(ctx)
@@ -172,7 +179,8 @@ func addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP) error {
 	return nil
 }
 
-// nfifname converts an interface name into 16 bytes padded with zeroes (for nftables)
+// nfifname converts an interface name into 16 bytes padded with zeroes (for
+// nftables)
 func nfifname(n string) []byte {
 	b := make([]byte, 16)
 	copy(b, []byte(n+"\x00"))

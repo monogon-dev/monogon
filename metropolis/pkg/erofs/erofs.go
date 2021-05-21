@@ -29,19 +29,22 @@ import (
 // Writer writes a new EROFS filesystem.
 type Writer struct {
 	w io.WriteSeeker
-	// fixDirectoryEntry contains for each referenced path where it is referenced from. Since self-references
-	// are required anyways (for the "." and ".." entries) we let the user write files in any order and just
-	// point the directory entries to the right target nid and file type on Close().
+	// fixDirectoryEntry contains for each referenced path where it is
+	// referenced from. Since self-references are required anyways (for the "."
+	// and ".." entries) we let the user write files in any order and just
+	// point the directory entries to the right target nid and file type on
+	// Close().
 	fixDirectoryEntry map[string][]direntFixupLocation
 	pathInodeMeta     map[string]*uncompressedInodeMeta
-	// legacyInodeIndex stores the next legacy (32-bit) inode to be allocated. 64 bit inodes are automatically
-	// calculated by EROFS on mount.
+	// legacyInodeIndex stores the next legacy (32-bit) inode to be allocated.
+	// 64 bit inodes are automatically calculated by EROFS on mount.
 	legacyInodeIndex    uint32
 	blockAllocatorIndex uint32
 	metadataBlocksFree  metadataBlocksMeta
 }
 
-// NewWriter creates a new EROFS filesystem writer. The given WriteSeeker needs to be at the start.
+// NewWriter creates a new EROFS filesystem writer. The given WriteSeeker needs
+// to be at the start.
 func NewWriter(w io.WriteSeeker) (*Writer, error) {
 	erofsWriter := &Writer{
 		w:                 w,
@@ -56,17 +59,20 @@ func NewWriter(w io.WriteSeeker) (*Writer, error) {
 		return nil, fmt.Errorf("failed to write initial padding: %w", err)
 	}
 	if err := binary.Write(erofsWriter.w, binary.LittleEndian, &superblock{
-		Magic:          Magic,
-		BlockSizeBits:  blockSizeBits,
-		RootNodeNumber: 36, // 1024 (padding) + 128 (superblock) / 32, not eligible for fixup as different int size
+		Magic:         Magic,
+		BlockSizeBits: blockSizeBits,
+		// 1024 (padding) + 128 (superblock) / 32, not eligible for fixup as
+		// different int size
+		RootNodeNumber: 36,
 	}); err != nil {
 		return nil, fmt.Errorf("failed to write superblock: %w", err)
 	}
 	return erofsWriter, nil
 }
 
-// allocateMetadata allocates metadata space of size bytes with a given alignment and seeks to the first byte of the
-// newly-allocated metadata space. It also returns the position of that first byte.
+// allocateMetadata allocates metadata space of size bytes with a given
+// alignment and seeks to the first byte of the newly-allocated metadata space.
+// It also returns the position of that first byte.
 func (w *Writer) allocateMetadata(size int, alignment uint16) (int64, error) {
 	if size > BlockSize {
 		panic("cannot allocate a metadata object bigger than BlockSize bytes")
@@ -90,9 +96,10 @@ func (w *Writer) allocateMetadata(size int, alignment uint16) (int64, error) {
 	return pos, nil
 }
 
-// allocateBlocks allocates n new BlockSize-sized block and seeks to the beginning of the first newly-allocated block.
-// It also returns the first newly-allocated block number.  The caller is expected to write these blocks completely
-// before calling allocateBlocks again.
+// allocateBlocks allocates n new BlockSize-sized block and seeks to the
+// beginning of the first newly-allocated block.  It also returns the first
+// newly-allocated block number.  The caller is expected to write these blocks
+// completely before calling allocateBlocks again.
 func (w *Writer) allocateBlocks(n uint32) (uint32, error) {
 	if _, err := w.w.Seek(int64(w.blockAllocatorIndex)*BlockSize, io.SeekStart); err != nil {
 		return 0, fmt.Errorf("cannot seek to end of last block, check write alignment: %w", err)
@@ -113,18 +120,20 @@ func (w *Writer) create(pathname string, inode Inode) *uncompressedInodeWriter {
 	return i
 }
 
-// CreateFile adds a new file to the EROFS. It returns a WriteCloser to which the file contents should be written and
-// which then needs to be closed. The last writer obtained by calling CreateFile() needs to be closed first before
-// opening a new one. The given pathname needs to be referenced by a directory created using Create(), otherwise it will
-// not be accessible.
+// CreateFile adds a new file to the EROFS. It returns a WriteCloser to which
+// the file contents should be written and which then needs to be closed. The
+// last writer obtained by calling CreateFile() needs to be closed first before
+// opening a new one. The given pathname needs to be referenced by a directory
+// created using Create(), otherwise it will not be accessible.
 func (w *Writer) CreateFile(pathname string, meta *FileMeta) io.WriteCloser {
 	return w.create(pathname, meta)
 }
 
-// Create adds a new non-file inode to the EROFS. This includes directories, device nodes, symlinks and FIFOs.
-// The first call to Create() needs to be with pathname "." and a directory inode.
-// The given pathname needs to be referenced by a directory, otherwise it will not be accessible (with the exception of
-// the directory ".").
+// Create adds a new non-file inode to the EROFS. This includes directories,
+// device nodes, symlinks and FIFOs.  The first call to Create() needs to be
+// with pathname "." and a directory inode.  The given pathname needs to be
+// referenced by a directory, otherwise it will not be accessible (with the
+// exception of the directory ".").
 func (w *Writer) Create(pathname string, inode Inode) error {
 	iw := w.create(pathname, inode)
 	switch i := inode.(type) {
@@ -140,8 +149,9 @@ func (w *Writer) Create(pathname string, inode Inode) error {
 	return iw.Close()
 }
 
-// Close finishes writing an EROFS filesystem. Errors by this function need to be handled as they indicate if the
-// written filesystem is consistent (i.e. there are no directory entries pointing to nonexistent inodes).
+// Close finishes writing an EROFS filesystem. Errors by this function need to
+// be handled as they indicate if the written filesystem is consistent (i.e.
+// there are no directory entries pointing to nonexistent inodes).
 func (w *Writer) Close() error {
 	for targetPath, entries := range w.fixDirectoryEntry {
 		for _, entry := range entries {
@@ -157,8 +167,9 @@ func (w *Writer) Close() error {
 	return nil
 }
 
-// uncompressedInodeMeta tracks enough metadata about a written inode to be able to point dirents to it and to provide
-// a WriteSeeker into the inode itself.
+// uncompressedInodeMeta tracks enough metadata about a written inode to be
+// able to point dirents to it and to provide a WriteSeeker into the inode
+// itself.
 type uncompressedInodeMeta struct {
 	nid   uint64
 	ftype uint8
@@ -188,8 +199,9 @@ func (a *uncompressedInodeMeta) Seek(offset int64, whence int) (int64, error) {
 
 func (a *uncompressedInodeMeta) Write(p []byte) (int, error) {
 	if a.currentOffset < a.blockLength {
-		// TODO(lorenz): Handle the special case where a directory inode is spread across multiple
-		// blocks (depending on other factors this occurs around ~200 direct children).
+		// TODO(lorenz): Handle the special case where a directory inode is
+		// spread across multiple blocks (depending on other factors this
+		// occurs around ~200 direct children).
 		return 0, errors.New("relocating dirents in multi-block directory inodes is unimplemented")
 	}
 	if _, err := a.writer.w.Seek(a.inlineStart+a.currentOffset, io.SeekStart); err != nil {
@@ -204,8 +216,9 @@ type direntFixupLocation struct {
 	entryIndex uint16
 }
 
-// direntFixup overrides nid and file type from the path the dirent is pointing to. The given iw is expected to be at
-// the start of the dirent inode to be fixed up.
+// direntFixup overrides nid and file type from the path the dirent is pointing
+// to. The given iw is expected to be at the start of the dirent inode to be
+// fixed up.
 func direntFixup(iw io.WriteSeeker, entryIndex int64, meta *uncompressedInodeMeta) error {
 	if _, err := iw.Seek(entryIndex*12, io.SeekStart); err != nil {
 		return fmt.Errorf("failed to seek to dirent: %w", err)
@@ -227,12 +240,14 @@ type metadataBlockMeta struct {
 	freeBytes   uint16
 }
 
-// metadataBlocksMeta contains metadata about all metadata blocks, most importantly the amount of free
-// bytes in each block. This is not a map for reproducibility (map ordering).
+// metadataBlocksMeta contains metadata about all metadata blocks, most
+// importantly the amount of free bytes in each block. This is not a map for
+// reproducibility (map ordering).
 type metadataBlocksMeta []metadataBlockMeta
 
-// findBlock returns the absolute position where `size` bytes with the specified alignment can still fit.
-// If there is not enough space in any metadata block it returns false as the second return value.
+// findBlock returns the absolute position where `size` bytes with the
+// specified alignment can still fit.  If there is not enough space in any
+// metadata block it returns false as the second return value.
 func (m metadataBlocksMeta) findBlock(size uint16, alignment uint16) (int64, bool) {
 	for i, blockMeta := range m {
 		freeBytesAligned := blockMeta.freeBytes - (blockMeta.freeBytes % alignment)

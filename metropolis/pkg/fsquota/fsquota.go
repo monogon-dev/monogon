@@ -14,11 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package fsquota provides a simplified interface to interact with Linux's filesystem qouta API.
-// It only supports setting quotas on directories, not groups or users.
-// Quotas need to be already enabled on the filesystem to be able to use them using this package.
-// See the quotactl package if you intend to use this on a filesystem where quotas need to be
-// enabled manually.
+// Package fsquota provides a simplified interface to interact with Linux's
+// filesystem qouta API.  It only supports setting quotas on directories, not
+// groups or users.  Quotas need to be already enabled on the filesystem to be
+// able to use them using this package.  See the quotactl package if you intend
+// to use this on a filesystem where quotas need to be enabled manually.
 package fsquota
 
 import (
@@ -32,10 +32,11 @@ import (
 	"source.monogon.dev/metropolis/pkg/fsquota/quotactl"
 )
 
-// SetQuota sets the quota of bytes and/or inodes in a given path. To not set a limit, set the
-// corresponding argument to zero. Setting both arguments to zero removes the quota entirely.
-// This function can only be called on an empty directory. It can't be used to create a quota
-// below a directory which already has a quota since Linux doesn't offer hierarchical quotas.
+// SetQuota sets the quota of bytes and/or inodes in a given path. To not set a
+// limit, set the corresponding argument to zero. Setting both arguments to
+// zero removes the quota entirely.  This function can only be called on an
+// empty directory. It can't be used to create a quota below a directory which
+// already has a quota since Linux doesn't offer hierarchical quotas.
 func SetQuota(path string, maxBytes uint64, maxInodes uint64) error {
 	dir, err := os.Open(path)
 	if err != nil {
@@ -61,10 +62,12 @@ func SetQuota(path string, maxBytes uint64, maxInodes uint64) error {
 
 	var lastID uint32 = attrs.ProjectID
 	if lastID == 0 {
-		// No project/quota exists for this directory, assign a new project quota
-		// TODO(lorenz): This is racy, but the kernel does not support atomically assigning
-		// quotas. So this needs to be added to the kernels setquota interface. Due to the short
-		// time window and infrequent calls this should not be an immediate issue.
+		// No project/quota exists for this directory, assign a new project
+		// quota.
+		// TODO(lorenz): This is racy, but the kernel does not support
+		// atomically assigning quotas. So this needs to be added to the
+		// kernels setquota interface. Due to the short time window and
+		// infrequent calls this should not be an immediate issue.
 		for {
 			quota, err := quotactl.GetNextQuota(source, quotactl.QuotaTypeProject, lastID)
 			if err == unix.ENOENT || err == unix.ESRCH {
@@ -115,7 +118,8 @@ type Quota struct {
 	InodesUsed uint64
 }
 
-// GetQuota returns the current active quota and its utilization at the given path
+// GetQuota returns the current active quota and its utilization at the given
+// path
 func GetQuota(path string) (*Quota, error) {
 	dir, err := os.Open(path)
 	if err != nil {

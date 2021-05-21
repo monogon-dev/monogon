@@ -190,10 +190,10 @@ type UEFIVariableData struct {
 	VariableData []byte // []int8
 }
 
-// ParseUEFIVariableData parses the data section of an event structured as
-// a UEFI variable.
+// ParseUEFIVariableData parses the data section of an event structured as a
+// UEFI variable.
 //
-// https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClient_Specific_Platform_Profile_for_TPM_2p0_1p04_PUBLIC.pdf#page=100
+//   https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClient_Specific_Platform_Profile_for_TPM_2p0_1p04_PUBLIC.pdf#page=100
 func ParseUEFIVariableData(r io.Reader) (ret UEFIVariableData, err error) {
 	err = binary.Read(r, binary.LittleEndian, &ret.Header)
 	if err != nil {
@@ -244,15 +244,16 @@ func ParseUEFIVariableAuthority(r io.Reader) (UEFIVariableAuthority, error) {
 	return UEFIVariableAuthority{Certs: certs}, err
 }
 
-// efiSignatureData represents the EFI_SIGNATURE_DATA type.
-// See section "31.4.1 Signature Database" in the specification for more information.
+// efiSignatureData represents the EFI_SIGNATURE_DATA type.  See section
+// "31.4.1 Signature Database" in the specification for more information.
 type efiSignatureData struct {
 	SignatureOwner efiGUID
 	SignatureData  []byte // []int8
 }
 
 // efiSignatureList represents the EFI_SIGNATURE_LIST type.
-// See section "31.4.1 Signature Database" in the specification for more information.
+// See section "31.4.1 Signature Database" in the specification for more
+// information.
 type efiSignatureListHeader struct {
 	SignatureType       efiGUID
 	SignatureListSize   uint32

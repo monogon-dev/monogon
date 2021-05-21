@@ -33,8 +33,9 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
-// GetKubeClientSet gets a Kubeconfig from the debug API and creates a K8s ClientSet using it. The identity used has
-// the system:masters group and thus has RBAC access to everything.
+// GetKubeClientSet gets a Kubeconfig from the debug API and creates a K8s
+// ClientSet using it. The identity used has the system:masters group and thus
+// has RBAC access to everything.
 func GetKubeClientSet(ctx context.Context, client apb.NodeDebugServiceClient, port uint16) (kubernetes.Interface, error) {
 	var lastErr = errors.New("context canceled before any operation completed")
 	for {
@@ -67,9 +68,11 @@ func GetKubeClientSet(ctx context.Context, client apb.NodeDebugServiceClient, po
 	}
 }
 
-// makeTestDeploymentSpec generates a Deployment spec for a single pod running NGINX with a readiness probe. This allows
-// verifying that the control plane is capable of scheduling simple pods and that kubelet works, its runtime is set up
-// well enough to run a simple container and the network to the pod can pass readiness probe traffic.
+// makeTestDeploymentSpec generates a Deployment spec for a single pod running
+// NGINX with a readiness probe. This allows verifying that the control plane
+// is capable of scheduling simple pods and that kubelet works, its runtime is
+// set up well enough to run a simple container and the network to the pod can
+// pass readiness probe traffic.
 func makeTestDeploymentSpec(name string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{Name: name},

@@ -86,7 +86,8 @@ func (cfg *config) atomicWriteFile(filename string) error {
 		return fmt.Errorf("failed to serialize: %w", err)
 	}
 
-	// Atomic write is needed, IntelliJ has inotify watches on its config and reloads (but not applies) instantly.
+	// Atomic write is needed, IntelliJ has inotify watches on its config and reloads
+	// (but not applies) instantly.
 	tmpPath := filename + ".tmp"
 	defer os.Remove(tmpPath)
 	if err := ioutil.WriteFile(tmpPath, []byte(xml.Header+string(b)), 0664); err != nil {
@@ -99,7 +100,8 @@ func (cfg *config) atomicWriteFile(filename string) error {
 	return nil
 }
 
-// RewriteConfig adds our watchers to projectDir's watchers config, overwriting existing entries with the same name.
+// RewriteConfig adds our watchers to projectDir's watchers config, overwriting
+// existing entries with the same name.
 func RewriteConfig(projectDir string) error {
 	template, err := readConfig(path.Join(projectDir, templatePath))
 	if err != nil {

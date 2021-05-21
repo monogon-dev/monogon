@@ -28,9 +28,10 @@ import (
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// kubernetesMeta unwraps an interface{} that might contain a Kubernetes resource of type that is managed by the
-// reconciler. Any time a new Kubernetes type is managed by the reconciler, the following switch should be extended
-// to cover that type.
+// kubernetesMeta unwraps an interface{} that might contain a Kubernetes
+// resource of type that is managed by the reconciler. Any time a new
+// Kubernetes type is managed by the reconciler, the following switch should be
+// extended to cover that type.
 func kubernetesMeta(v interface{}) *meta.ObjectMeta {
 	switch v2 := v.(type) {
 	case *rbac.ClusterRole:
@@ -49,9 +50,11 @@ func kubernetesMeta(v interface{}) *meta.ObjectMeta {
 	return nil
 }
 
-// TestExpectedNamedCorrectly ensures that all the Expected objects of all resource types have a correspondence between
-// their returned key and inner name. This contract must be met in order for the reconciler to not create runaway
-// resources. This assumes all managed resources are Kubernetes resources.
+// TestExpectedNamedCorrectly ensures that all the Expected objects of all
+// resource types have a correspondence between their returned key and inner
+// name. This contract must be met in order for the reconciler to not create
+// runaway resources. This assumes all managed resources are Kubernetes
+// resources.
 func TestExpectedNamedCorrectly(t *testing.T) {
 	for reconciler, r := range allResources(nil) {
 		for outer, v := range r.Expected() {
@@ -68,10 +71,13 @@ func TestExpectedNamedCorrectly(t *testing.T) {
 	}
 }
 
-// TestExpectedLabeledCorrectly ensures that all the Expected objects of all resource types have a Kubernetes metadata
-// label that signifies it's a builtin object, to be retrieved afterwards. This contract must be met in order for the
-// reconciler to not keep overwriting objects (and possibly failing), when a newly created object is not then
-// retrievable using a selector corresponding to this label. This assumes all managed resources are Kubernetes objects.
+// TestExpectedLabeledCorrectly ensures that all the Expected objects of all
+// resource types have a Kubernetes metadata label that signifies it's a
+// builtin object, to be retrieved afterwards. This contract must be met in
+// order for the reconciler to not keep overwriting objects (and possibly
+// failing), when a newly created object is not then retrievable using a
+// selector corresponding to this label. This assumes all managed resources are
+// Kubernetes objects.
 func TestExpectedLabeledCorrectly(t *testing.T) {
 	for reconciler, r := range allResources(nil) {
 		for outer, v := range r.Expected() {
@@ -88,8 +94,9 @@ func TestExpectedLabeledCorrectly(t *testing.T) {
 	}
 }
 
-// testResource is a resource type used for testing. The inner type is a string that is equal to its name (key).
-// It simulates a target (ie. k8s apiserver mock) that always acts nominally (all resources are created, deleted as
+// testResource is a resource type used for testing. The inner type is a string
+// that is equal to its name (key).  It simulates a target (ie. k8s apiserver
+// mock) that always acts nominally (all resources are created, deleted as
 // requested, and the state is consistent with requests).
 type testResource struct {
 	// current is the simulated state of resources in the target.
@@ -124,7 +131,8 @@ func (r *testResource) Expected() map[string]interface{} {
 	return exp
 }
 
-// newTestResource creates a test resource with a list of expected resource strings.
+// newTestResource creates a test resource with a list of expected resource
+// strings.
 func newTestResource(want ...string) *testResource {
 	expected := make(map[string]string)
 	for _, w := range want {
@@ -136,8 +144,9 @@ func newTestResource(want ...string) *testResource {
 	}
 }
 
-// currentDiff returns a human-readable string showing the different between the current state and the given resource
-// strings. If no difference is present, the returned string is empty.
+// currentDiff returns a human-readable string showing the different between
+// the current state and the given resource strings. If no difference is
+// present, the returned string is empty.
 func (r *testResource) currentDiff(want ...string) string {
 	expected := make(map[string]string)
 	for _, w := range want {
@@ -154,8 +163,8 @@ func (r *testResource) currentDiff(want ...string) string {
 	return ""
 }
 
-// TestBasicReconciliation ensures that the reconcile function does manipulate a target state based on a set of
-// expected resources.
+// TestBasicReconciliation ensures that the reconcile function does manipulate
+// a target state based on a set of expected resources.
 func TestBasicReconciliation(t *testing.T) {
 	ctx := context.Background()
 	r := newTestResource("foo", "bar", "baz")

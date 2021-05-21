@@ -44,7 +44,8 @@ func CertificateForNode(pubkey []byte) x509.Certificate {
 	// This has no SANs because it authenticates by public key, not by name
 	return x509.Certificate{
 		Subject: pkix.Name{
-			// We identify nodes by their ID public keys (not hashed since a strong hash is longer and serves no benefit)
+			// We identify nodes by their ID public keys (not hashed since a
+			// strong hash is longer and serves no benefit)
 			CommonName: name,
 		},
 		IsCA:                  false,
@@ -137,8 +138,8 @@ func (p *PKIDirectory) EnsureSelfSigned(namer CertificateTemplateNamer) (*tls.Ce
 	}, nil
 }
 
-// AllExist returns true if all PKI files (cert, key, CA cert) are present on the backing
-// store.
+// AllExist returns true if all PKI files (cert, key, CA cert) are present on
+// the backing store.
 func (p *PKIDirectory) AllExist() (bool, error) {
 	for _, d := range []*declarative.File{&p.CACertificate, &p.Certificate, &p.Key} {
 		exists, err := d.Exists()
@@ -152,8 +153,8 @@ func (p *PKIDirectory) AllExist() (bool, error) {
 	return true, nil
 }
 
-// AllAbsent returns true if all PKI files (cert, key, CA cert) are missing from the backing
-// store.
+// AllAbsent returns true if all PKI files (cert, key, CA cert) are missing
+// from the backing store.
 func (p *PKIDirectory) AllAbsent() (bool, error) {
 	for _, d := range []*declarative.File{&p.CACertificate, &p.Certificate, &p.Key} {
 		exists, err := d.Exists()

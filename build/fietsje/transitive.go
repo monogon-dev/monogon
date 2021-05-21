@@ -26,14 +26,14 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-// getTransitiveDeps is a hairy ball of heuristic used to find all recursively transitive dependencies of a given
-// dependency.
-// It downloads a given dependency using `go get`, and performs analysis of standard (go.mod/go.sum) and project-
-// specific dependency management configuration/lock files in order to build a full view of all known, versioned
-// transitive dependencies.
+// getTransitiveDeps is a hairy ball of heuristic used to find all recursively
+// transitive dependencies of a given dependency. It downloads a given dependency
+// using `go get`, and performs analysis of standard (go.mod/go.sum) and project-
+// specific dependency management configuration/lock files in order to build a full
+// view of all known, versioned transitive dependencies.
 func (d *dependency) getTransitiveDeps() (map[string]*dependency, error) {
-	// First, lock the dependency. Downloading it later will also return a sum, and we want to ensure both are the
-	// same.
+	// First, lock the dependency. Downloading it later will also return a sum, and we
+	// want to ensure both are the same.
 	err := d.lock()
 	if err != nil {
 		return nil, fmt.Errorf("could not lock: %v", err)
@@ -127,9 +127,10 @@ func (d *dependency) getTransitiveDeps() (map[string]*dependency, error) {
 		}
 	}
 
-	// Special case: root Kubernetes repo - rewrite staging/ deps to k8s.io/ at correct versions, quit early.
-	// Kubernetes vendors all dependencies into vendor/, and also contains sub-projects (components) in staging/.
-	// This converts all staging dependencies into appropriately versioned k8s.io/<dep> paths.
+	// Special case: root Kubernetes repo - rewrite staging/ deps to k8s.io/ at correct
+	// versions, quit early. Kubernetes vendors all dependencies into vendor/, and also
+	// contains sub-projects (components) in staging/. This converts all staging
+	// dependencies into appropriately versioned k8s.io/<dep> paths.
 	if d.importpath == "k8s.io/kubernetes" {
 		log.Printf("%q: special case for Kubernetes main repository", d.importpath)
 		if mf == nil {

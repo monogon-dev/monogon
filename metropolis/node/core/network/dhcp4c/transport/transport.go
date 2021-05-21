@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package transport contains Linux-based transports for the DHCP broadcast and unicast
-// specifications.
+// Package transport contains Linux-based transports for the DHCP broadcast and
+// unicast specifications.
 package transport
 
 import (

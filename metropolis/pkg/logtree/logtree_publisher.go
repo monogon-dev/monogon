@@ -26,8 +26,8 @@ import (
 	"source.monogon.dev/metropolis/pkg/logbuffer"
 )
 
-// LeveledFor returns a LeveledLogger publishing interface for a given DN. An error may be returned if the DN is
-// malformed.
+// LeveledFor returns a LeveledLogger publishing interface for a given DN. An error
+// may be returned if the DN is malformed.
 func (l *LogTree) LeveledFor(dn DN) (LeveledLogger, error) {
 	return l.nodeByDN(dn)
 }
@@ -40,7 +40,8 @@ func (l *LogTree) RawFor(dn DN) (io.Writer, error) {
 	return node.rawLineBuffer, nil
 }
 
-// MustLeveledFor returns a LeveledLogger publishing interface for a given DN, or panics if the given DN is invalid.
+// MustLeveledFor returns a LeveledLogger publishing interface for a given DN, or
+// panics if the given DN is invalid.
 func (l *LogTree) MustLeveledFor(dn DN) LeveledLogger {
 	leveled, err := l.LeveledFor(dn)
 	if err != nil {
@@ -57,7 +58,8 @@ func (l *LogTree) MustRawFor(dn DN) io.Writer {
 	return raw
 }
 
-// SetVerbosity sets the verbosity for a given DN (non-recursively, ie. for that DN only, not its children).
+// SetVerbosity sets the verbosity for a given DN (non-recursively, ie. for that DN
+// only, not its children).
 func (l *LogTree) SetVerbosity(dn DN, level VerbosityLevel) error {
 	node, err := l.nodeByDN(dn)
 	if err != nil {
@@ -67,8 +69,9 @@ func (l *LogTree) SetVerbosity(dn DN, level VerbosityLevel) error {
 	return nil
 }
 
-// logRaw is called by this node's LineBuffer any time a raw log line is completed. It will create a new entry, append
-// it to the journal, and notify all pertinent subscribers.
+// logRaw is called by this node's LineBuffer any time a raw log line is completed.
+// It will create a new entry, append it to the journal, and notify all pertinent
+// subscribers.
 func (n *node) logRaw(line *logbuffer.Line) {
 	e := &entry{
 		origin: n.dn,
@@ -78,8 +81,9 @@ func (n *node) logRaw(line *logbuffer.Line) {
 	n.tree.journal.notify(e)
 }
 
-// log builds a LeveledPayload and entry for a given message, including all related metadata. It will create a new
-// entry append it to the journal, and notify all pertinent subscribers.
+// log builds a LeveledPayload and entry for a given message, including all related
+// metadata. It will create a new entry append it to the journal, and notify all
+// pertinent subscribers.
 func (n *node) logLeveled(depth int, severity Severity, msg string) {
 	_, file, line, ok := runtime.Caller(2 + depth)
 	if !ok {
@@ -158,9 +162,10 @@ func (n *node) V(v VerbosityLevel) VerboseLeveledLogger {
 	}
 }
 
-// verbose implements the VerboseLeveledLogger interface. It is a thin wrapper around node, with an 'enabled' bool. This
-// means that V(n)-returned VerboseLeveledLoggers must be short lived, as a changed in verbosity will not affect all
-// already existing VerboseLeveledLoggers.
+// verbose implements the VerboseLeveledLogger interface. It is a thin wrapper
+// around node, with an 'enabled' bool. This means that V(n)-returned
+// VerboseLeveledLoggers must be short lived, as a changed in verbosity will not
+// affect all already existing VerboseLeveledLoggers.
 type verbose struct {
 	node    *node
 	enabled bool

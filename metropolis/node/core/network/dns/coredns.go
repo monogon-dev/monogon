@@ -51,9 +51,10 @@ type Service struct {
 }
 
 // New creates a new CoreDNS service.
-// The given channel can then be used to dynamically register and unregister directives in the configuaration.
-// To register a new directive, send an ExtraDirective on the channel. To remove it again, use CancelDirective()
-// to create a removal message.
+// The given channel can then be used to dynamically register and unregister
+// directives in the configuaration.
+// To register a new directive, send an ExtraDirective on the channel. To
+// remove it again, use CancelDirective() to create a removal message.
 func New(directiveRegistration chan *ExtraDirective) *Service {
 	return &Service{
 		directives:            map[string]ExtraDirective{},
@@ -83,7 +84,8 @@ func CancelDirective(d *ExtraDirective) *ExtraDirective {
 	}
 }
 
-// Run runs the DNS service consisting of the CoreDNS process and the directive registration process
+// Run runs the DNS service consisting of the CoreDNS process and the directive
+// registration process
 func (s *Service) Run(ctx context.Context) error {
 	supervisor.Run(ctx, "coredns", s.runCoreDNS)
 	supervisor.Run(ctx, "registration", s.runRegistration)
@@ -116,8 +118,9 @@ func (s *Service) runCoreDNS(ctx context.Context) error {
 	return supervisor.RunCommand(ctx, s.cmd)
 }
 
-// runRegistration runs the background registration runnable which has a different lifecycle from the CoreDNS
-// runnable. It is responsible for managing dynamic directives.
+// runRegistration runs the background registration runnable which has a
+// different lifecycle from the CoreDNS runnable. It is responsible for
+// managing dynamic directives.
 func (s *Service) runRegistration(ctx context.Context) error {
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	for {
@@ -138,7 +141,8 @@ func (s *Service) processRegistration(ctx context.Context, d *ExtraDirective) {
 	} else {
 		s.directives[d.ID] = *d
 	}
-	// If the process is not currenty running we're relying on corefile regeneration on startup
+	// If the process is not currenty running we're relying on corefile
+	// regeneration on startup
 	if s.cmd != nil && s.cmd.Process != nil && s.cmd.ProcessState == nil {
 		s.args.ArgPath("Corefile", s.makeCorefile(s.args))
 		if err := s.cmd.Process.Signal(syscall.SIGUSR1); err != nil {

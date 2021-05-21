@@ -31,8 +31,9 @@ import (
 // DefaultSize is the default size limit for FileArgs
 const DefaultSize = 4 * 1024 * 1024
 
-// TempDirectory is the directory where FileArgs will mount the actual files to. Defaults to
-// os.TempDir() but can be globally overridden by the application before any FileArgs are used.
+// TempDirectory is the directory where FileArgs will mount the actual files
+// to. Defaults to os.TempDir() but can be globally overridden by the
+// application before any FileArgs are used.
 var TempDirectory = os.TempDir()
 
 type FileArgs struct {
@@ -40,14 +41,15 @@ type FileArgs struct {
 	lastError error
 }
 
-// New initializes a new set of file-based arguments. Remember to call Close() if you're done
-// using it, otherwise this leaks memory and mounts.
+// New initializes a new set of file-based arguments. Remember to call Close()
+// if you're done using it, otherwise this leaks memory and mounts.
 func New() (*FileArgs, error) {
 	return NewWithSize(DefaultSize)
 }
 
-// NewWthSize is the same as new, but with a custom size limit. Please be aware that this data
-// cannot be swapped out and using a size limit that's too high can deadlock your kernel.
+// NewWthSize is the same as new, but with a custom size limit. Please be aware
+// that this data cannot be swapped out and using a size limit that's too high
+// can deadlock your kernel.
 func NewWithSize(size uint64) (*FileArgs, error) {
 	randomNameRaw := make([]byte, 128/8)
 	if _, err := io.ReadFull(rand.Reader, randomNameRaw); err != nil {
@@ -57,7 +59,8 @@ func NewWithSize(size uint64) (*FileArgs, error) {
 	if err := os.MkdirAll(tmpPath, 0700); err != nil {
 		return nil, err
 	}
-	// This uses ramfs instead of tmpfs because we never want to swap this for security reasons
+	// This uses ramfs instead of tmpfs because we never want to swap this for
+	// security reasons
 	if err := unix.Mount("none", tmpPath, "ramfs", unix.MS_NOEXEC|unix.MS_NOSUID|unix.MS_NODEV, fmt.Sprintf("size=%v", size)); err != nil {
 		return nil, err
 	}
@@ -66,8 +69,8 @@ func NewWithSize(size uint64) (*FileArgs, error) {
 	}, nil
 }
 
-// ArgPath returns the path of the temporary file for this argument. It names the temporary
-// file according to name.
+// ArgPath returns the path of the temporary file for this argument. It names
+// the temporary file according to name.
 func (f *FileArgs) ArgPath(name string, content []byte) string {
 	if f.lastError != nil {
 		return ""
@@ -83,8 +86,11 @@ func (f *FileArgs) ArgPath(name string, content []byte) string {
 	return path
 }
 
-// FileOpt returns a full option with the temporary file name already filled in.
-// Example: `FileOpt("--testopt", "test.txt", []byte("hello")) == "--testopt=/tmp/daf8ed.../test.txt"`
+// FileOpt returns a full option with the temporary file name already filled
+// in. Example:
+//
+// option := FileOpt("--testopt", "test.txt", []byte("hello"))
+// option == "--testopt=/tmp/daf8ed.../test.txt"
 func (f *FileArgs) FileOpt(optName, fileName string, content []byte) string {
 	return fmt.Sprintf("%v=%v", optName, f.ArgPath(fileName, content))
 }

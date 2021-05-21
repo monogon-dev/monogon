@@ -61,9 +61,8 @@ func KLogParser(logger LeveledLogger) io.WriteCloser {
 	return k
 }
 
-
 type klogParser struct {
-	n *node
+	n      *node
 	buffer *logbuffer.LineBuffer
 }
 
@@ -90,7 +89,7 @@ func (k *klogParser) consumeLine(l *logbuffer.Line) {
 	// we permit library users to 'fake' logs? This would also permit us to get rid
 	// of the type assertion in KLogParser().
 	e := &entry{
-		origin: k.n.dn,
+		origin:  k.n.dn,
 		leveled: p,
 	}
 	k.n.tree.journal.append(e)
@@ -98,14 +97,15 @@ func (k *klogParser) consumeLine(l *logbuffer.Line) {
 }
 
 var (
-	// reKLog matches and parses klog/glog-formatted log lines.
-	// Format: I0312 14:20:04.240540     204 shared_informer.go:247] Caches are synced for attach detach
+	// reKLog matches and parses klog/glog-formatted log lines. Format: I0312
+	// 14:20:04.240540     204 shared_informer.go:247] Caches are synced for attach
+	// detach
 	reKLog = regexp.MustCompile(`^([IEWF])(\d{4})\s+(\d{2}:\d{2}:\d{2}(\.\d+)?)\s+(\d+)\s+([^:]+):(\d+)]\s+(.+)$`)
 )
 
 // parse attempts to parse a klog-formatted line. Returns nil if the line
 // couldn't have been parsed successfully.
-func parse(now time.Time, s string) (*LeveledPayload) {
+func parse(now time.Time, s string) *LeveledPayload {
 	parts := reKLog.FindStringSubmatch(s)
 	if parts == nil {
 		return nil
@@ -184,13 +184,14 @@ func parse(now time.Time, s string) (*LeveledPayload) {
 	// The PID is discarded.
 	_ = pid
 
-	// Finally we have extracted all the data from the line. Inject into the log publisher.
+	// Finally we have extracted all the data from the line. Inject into the log
+	// publisher.
 	return &LeveledPayload{
 		timestamp: ts,
-		severity: severity,
-		messages: []string{message},
-		file: file,
-		line: line,
+		severity:  severity,
+		messages:  []string{message},
+		file:      file,
+		line:      line,
 	}
 }
 

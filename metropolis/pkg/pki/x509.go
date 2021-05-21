@@ -30,12 +30,12 @@ var (
 	unknownNotAfter = time.Unix(253402300799, 0)
 )
 
-// Workaround for https://github.com/golang/go/issues/26676 in Go's crypto/x509. Specifically Go
-// violates Section 4.2.1.2 of RFC 5280 without this.
-// Fixed for 1.15 in https://go-review.googlesource.com/c/go/+/227098/.
+// Workaround for https://github.com/golang/go/issues/26676 in Go's
+// crypto/x509. Specifically Go violates Section 4.2.1.2 of RFC 5280 without
+// this. Fixed for 1.15 in https://go-review.googlesource.com/c/go/+/227098/.
 //
-// Taken from https://github.com/FiloSottile/mkcert/blob/master/cert.go#L295 written by one of Go's
-// crypto engineers
+// Taken from https://github.com/FiloSottile/mkcert/blob/master/cert.go#L295
+// Written by one of Go's crypto engineers
 //
 // TODO(lorenz): remove this once we migrate to Go 1.15.
 func calculateSKID(pubKey crypto.PublicKey) ([]byte, error) {

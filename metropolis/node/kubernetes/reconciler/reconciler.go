@@ -48,20 +48,25 @@ func False() *bool {
 }
 
 const (
-	// BuiltinLabelKey is used as a k8s label to mark built-in objects (ie., managed by the reconciler)
+	// BuiltinLabelKey is used as a k8s label to mark built-in objects (ie.,
+	// managed by the reconciler)
 	BuiltinLabelKey = "metropolis.monogon.dev/builtin"
-	// BuiltinLabelValue is used as a k8s label value, under the BuiltinLabelKey key.
+	// BuiltinLabelValue is used as a k8s label value, under the
+	// BuiltinLabelKey key.
 	BuiltinLabelValue = "true"
-	// BuiltinRBACPrefix is used to prefix all built-in objects that are part of the rbac/v1 API (eg.
-	// {Cluster,}Role{Binding,} objects). This corresponds to the colon-separated 'namespaces' notation used by
+	// BuiltinRBACPrefix is used to prefix all built-in objects that are part
+	// of the rbac/v1 API (eg.  {Cluster,}Role{Binding,} objects). This
+	// corresponds to the colon-separated 'namespaces' notation used by
 	// Kubernetes system (system:) objects.
 	BuiltinRBACPrefix = "metropolis:"
 )
 
-// builtinLabels makes a kubernetes-compatible label dictionary (key->value) that is used to mark objects that are
-// built-in into Metropolis (ie., managed by the reconciler). These are then subsequently retrieved by listBuiltins.
-// The extra argument specifies what other labels are to be merged into the the labels dictionary, for convenience. If
-// nil or empty, no extra labels will be applied.
+// builtinLabels makes a kubernetes-compatible label dictionary (key->value)
+// that is used to mark objects that are built-in into Metropolis (ie., managed
+// by the reconciler). These are then subsequently retrieved by listBuiltins.
+// The extra argument specifies what other labels are to be merged into the the
+// labels dictionary, for convenience. If nil or empty, no extra labels will be
+// applied.
 func builtinLabels(extra map[string]string) map[string]string {
 	l := map[string]string{
 		BuiltinLabelKey: BuiltinLabelValue,
@@ -74,32 +79,39 @@ func builtinLabels(extra map[string]string) map[string]string {
 	return l
 }
 
-// listBuiltins returns a k8s client ListOptions structure that allows to retrieve all objects that are built-in into
-// Metropolis currently present in the API server (ie., ones that are to be managed by the reconciler). These are
-// created by applying builtinLabels to their metadata labels.
+// listBuiltins returns a k8s client ListOptions structure that allows to
+// retrieve all objects that are built-in into Metropolis currently present in
+// the API server (ie., ones that are to be managed by the reconciler). These
+// are created by applying builtinLabels to their metadata labels.
 var listBuiltins = meta.ListOptions{
 	LabelSelector: fmt.Sprintf("%s=%s", BuiltinLabelKey, BuiltinLabelValue),
 }
 
-// builtinRBACName returns a name that is compatible with colon-delimited 'namespaced' objects, a la system:*.
-// These names are to be used by all builtins created as part of the rbac/v1 Kubernetes API.
+// builtinRBACName returns a name that is compatible with colon-delimited
+// 'namespaced' objects, a la system:*.
+// These names are to be used by all builtins created as part of the rbac/v1
+// Kubernetes API.
 func builtinRBACName(name string) string {
 	return BuiltinRBACPrefix + name
 }
 
-// resource is a type of resource to be managed by the reconciler. All builti-ins/reconciled objects must implement
-// this interface to be managed correctly by the reconciler.
+// resource is a type of resource to be managed by the reconciler. All
+// builti-ins/reconciled objects must implement this interface to be managed
+// correctly by the reconciler.
 type resource interface {
-	// List returns a list of names of objects current present on the target (ie. k8s API server).
+	// List returns a list of names of objects current present on the target
+	// (ie. k8s API server).
 	List(ctx context.Context) ([]string, error)
-	// Create creates an object on the target. The el interface{} argument is the black box object returned by the
-	// Expected() call.
+	// Create creates an object on the target. The el interface{} argument is
+	// the black box object returned by the Expected() call.
 	Create(ctx context.Context, el interface{}) error
 	// Delete delete an object, by name, from the target.
 	Delete(ctx context.Context, name string) error
-	// Expected returns a map of all objects expected to be present on the target. The keys are names (which must
-	// correspond to the names returned by List() and used by Delete(), and the values are blackboxes that will then
-	// be passed to the Create() call if their corresponding key (name) does not exist on the target.
+	// Expected returns a map of all objects expected to be present on the
+	// target. The keys are names (which must correspond to the names returned
+	// by List() and used by Delete(), and the values are blackboxes that will
+	// then be passed to the Create() call if their corresponding key (name)
+	// does not exist on the target.
 	Expected() map[string]interface{}
 }
 

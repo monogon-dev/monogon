@@ -24,9 +24,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// This requires fsinfo() support, which is not yet in any stable kernel.
-// Our kernel has that syscall backported. This would otherwise be an extremely expensive
-// operation and also involve lots of logic from our side.
+// This requires fsinfo() support, which is not yet in any stable kernel. Our
+// kernel has that syscall backported. This would otherwise be an extremely
+// expensive operation and also involve lots of logic from our side.
 
 // From syscall_64.tbl
 const sys_fsinfo = 441

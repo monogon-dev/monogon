@@ -63,7 +63,9 @@ func TestAssignedIPCallback(t *testing.T) {
 		oldLease, newLease *dhcp4c.Lease
 		expectedAddrs      []netlink.Addr
 	}{
-		{ // Lifetimes are necessary, otherwise the Kernel sets the IFA_F_PERMANENT flag behind our back
+		// Lifetimes are necessary, otherwise the Kernel sets the
+		// IFA_F_PERMANENT flag behind our back.
+		{
 			name:          "RemoveOldIPs",
 			initialAddrs:  []netlink.Addr{{IPNet: &testNet1, ValidLft: 60}, {IPNet: &testNet2, ValidLft: 60}},
 			oldLease:      nil,
@@ -149,12 +151,15 @@ func TestDefaultRouteCallback(t *testing.T) {
 	if os.Getenv("IN_KTEST") != "true" {
 		t.Skip("Not in ktest")
 	}
-	// testRoute is only used as a route destination and not configured on any interface.
+	// testRoute is only used as a route destination and not configured on any
+	// interface.
 	testRoute := net.IPNet{IP: net.IP{10, 0, 3, 0}, Mask: net.CIDRMask(24, 32)}
 
-	// A test interface is set up for each test and assigned testNet1 and testNet2 so that testNet1Router and
-	// testNet2Router are valid gateways for routes in this environment. A LinkIndex of -1 is replaced by the correct
-	// link index for this test interface at runtime for both initialRoutes and expectedRoutes.
+	// A test interface is set up for each test and assigned testNet1 and
+	// testNet2 so that testNet1Router and testNet2Router are valid gateways
+	// for routes in this environment. A LinkIndex of -1 is replaced by the
+	// correct link index for this test interface at runtime for both
+	// initialRoutes and expectedRoutes.
 	var tests = []struct {
 		name               string
 		initialRoutes      []netlink.Route
@@ -167,8 +172,10 @@ func TestDefaultRouteCallback(t *testing.T) {
 			oldLease:      nil,
 			newLease:      leaseAddRouter(trivialLeaseFromNet(testNet1), testNet1Router),
 			expectedRoutes: []netlink.Route{{
-				Protocol:  unix.RTPROT_DHCP,
-				Dst:       nil, // Linux weirdly retuns no RTA_DST for default routes, but one for everything else
+				Protocol: unix.RTPROT_DHCP,
+				// Linux weirdly returns no RTA_DST for default routes, but one
+				// for everything else.
+				Dst:       nil,
 				Gw:        testNet1Router,
 				Src:       testNet1.IP,
 				Table:     mainRoutingTable,

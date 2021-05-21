@@ -33,16 +33,19 @@ import (
 // certificates, and any other Certificate that has been created with CA(),
 // which makes this Certificate act as a CA and issue (sign) ceritficates.
 type Issuer interface {
-	// CACertificate returns the DER-encoded x509 certificate of the CA that will sign certificates when Issue is
-	// called, or nil if this is self-signing issuer.
+	// CACertificate returns the DER-encoded x509 certificate of the CA that
+	// will sign certificates when Issue is called, or nil if this is
+	// self-signing issuer.
 	CACertificate(ctx context.Context, kv clientv3.KV) ([]byte, error)
-	// Issue will generate a key and certificate signed by the Issuer. The returned certificate is x509 DER-encoded,
-	// while the key is a bare ed25519 key.
+	// Issue will generate a key and certificate signed by the Issuer. The
+	// returned certificate is x509 DER-encoded, while the key is a bare
+	// ed25519 key.
 	Issue(ctx context.Context, req *Certificate, kv clientv3.KV) (cert, key []byte, err error)
 }
 
-// issueCertificate is a generic low level certificate-and-key issuance function. If ca or cakey is null, the
-// certificate will be self-signed. The returned certificate is DER-encoded, while the returned key is internal.
+// issueCertificate is a generic low level certificate-and-key issuance
+// function. If ca or cakey is null, the certificate will be self-signed. The
+// returned certificate is DER-encoded, while the returned key is internal.
 func issueCertificate(req *Certificate, ca *x509.Certificate, caKey interface{}) (cert, key []byte, err error) {
 	var privKey ed25519.PrivateKey
 	var pubKey ed25519.PublicKey
@@ -75,7 +78,8 @@ func issueCertificate(req *Certificate, ca *x509.Certificate, caKey interface{})
 	req.template.BasicConstraintsValid = true
 	req.template.SubjectKeyId = skid
 
-	// Set the AuthorityKeyID to the SKID of the signing certificate (or self, if self-signing).
+	// Set the AuthorityKeyID to the SKID of the signing certificate (or self,
+	// if self-signing).
 	if ca != nil && caKey != nil {
 		req.template.AuthorityKeyId = ca.AuthorityKeyId
 	} else {

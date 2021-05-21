@@ -24,18 +24,21 @@ import (
 
 // Type ExtraDirective contains additional config directives for CoreDNS.
 type ExtraDirective struct {
-	// ID is the identifier of this directive. There can only be one directive with a given ID active at once.
-	// The ID is also used to identify which directive to purge.
+	// ID is the identifier of this directive. There can only be one directive
+	// with a given ID active at once. The ID is also used to identify which
+	// directive to purge.
 	ID string
-	// directive contains a full CoreDNS directive as a string. It can also use the $FILE(<filename>) macro,
-	// which will be expanded to the path of a file from the files field.
+	// directive contains a full CoreDNS directive as a string. It can also use
+	// the $FILE(<filename>) macro, which will be expanded to the path of a
+	// file from the files field.
 	directive string
-	// files contains additional files used in the configuration. The map key is used as the filename.
+	// files contains additional files used in the configuration. The map key
+	// is used as the filename.
 	files map[string][]byte
 }
 
-// NewUpstreamDirective creates a forward with no fallthrough that forwards all requests not yet matched to the given
-// upstream DNS servers.
+// NewUpstreamDirective creates a forward with no fallthrough that forwards all
+// requests not yet matched to the given upstream DNS servers.
 func NewUpstreamDirective(dnsServers []net.IP) *ExtraDirective {
 	strb := strings.Builder{}
 	if len(dnsServers) > 0 {
@@ -59,9 +62,11 @@ kubernetes %v in-addr.arpa ip6.arpa {
 }
 `
 
-// NewKubernetesDirective creates a directive running a "Kubernetes DNS-Based Service Discovery" [1] compliant service
-// under clusterDomain. The given kubeconfig needs at least read access to services, endpoints and endpointslices.
-// [1] https://github.com/kubernetes/dns/blob/master/docs/specification.md
+// NewKubernetesDirective creates a directive running a "Kubernetes DNS-Based
+// Service Discovery" compliant service under clusterDomain. The given
+// kubeconfig needs at least read access to services, endpoints and
+// endpointslices.
+//   [1] https://github.com/kubernetes/dns/blob/master/docs/specification.md
 func NewKubernetesDirective(clusterDomain string, kubeconfig []byte) *ExtraDirective {
 	return &ExtraDirective{
 		ID:        "k8s-clusterdns",

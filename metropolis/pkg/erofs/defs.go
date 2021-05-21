@@ -16,11 +16,13 @@
 
 package erofs
 
-// This file contains definitions coming from the in-Kernel implementation of the EROFS filesystem.
-// All definitions come from @linux//fs/erofs:erofs_fs.h unless stated otherwise.
+// This file contains definitions coming from the in-Kernel implementation of
+// the EROFS filesystem.  All definitions come from @linux//fs/erofs:erofs_fs.h
+// unless stated otherwise.
 
-// Magic contains the 4 magic bytes starting at position 1024 identifying an EROFS filesystem.
-// Defined in @linux//include/uapi/linux/magic.h EROFS_SUPER_MAGIC_V1
+// Magic contains the 4 magic bytes starting at position 1024 identifying an
+// EROFS filesystem.  Defined in @linux//include/uapi/linux/magic.h
+// EROFS_SUPER_MAGIC_V1
 var Magic = [4]byte{0xe2, 0xe1, 0xf5, 0xe0}
 
 const blockSizeBits = 12

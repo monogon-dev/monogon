@@ -14,10 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ktestinit is an init designed to run inside a lightweight VM for running tests in there.
-// It performs basic platform initialization like mounting kernel filesystems and launches the
-// test executable at /tester, passes the exit code back out over the control socket to ktest and
-// then terminates the VM kernel.
+// ktestinit is an init designed to run inside a lightweight VM for running
+// tests in there.  It performs basic platform initialization like mounting
+// kernel filesystems and launches the test executable at /tester, passes the
+// exit code back out over the control socket to ktest and then terminates the
+// default VM kernel.
 package main
 
 import (

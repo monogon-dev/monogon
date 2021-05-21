@@ -24,8 +24,9 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
-// LogEntry contains a log entry, combining both leveled and raw logging into a single stream of events. A LogEntry
-// will contain exactly one of either LeveledPayload or RawPayload.
+// LogEntry contains a log entry, combining both leveled and raw logging into a
+// single stream of events. A LogEntry will contain exactly one of either
+// LeveledPayload or RawPayload.
 type LogEntry struct {
 	// If non-nil, this is a leveled logging entry.
 	Leveled *LeveledPayload
@@ -35,10 +36,12 @@ type LogEntry struct {
 	DN DN
 }
 
-// String returns a canonical representation of this payload as a single string prefixed with metadata. If the entry is
-// a leveled log entry that originally was logged with newlines this representation will also contain newlines, with
-// each original message part prefixed by the metadata.
-// For an alternative call that will instead return a canonical prefix and a list of lines in the message, see Strings().
+// String returns a canonical representation of this payload as a single string
+// prefixed with metadata. If the entry is a leveled log entry that originally was
+// logged with newlines this representation will also contain newlines, with each
+// original message part prefixed by the metadata. For an alternative call that
+// will instead return a canonical prefix and a list of lines in the message, see
+// Strings().
 func (l *LogEntry) String() string {
 	if l.Leveled != nil {
 		prefix, messages := l.Leveled.Strings()
@@ -54,9 +57,11 @@ func (l *LogEntry) String() string {
 	return "INVALID"
 }
 
-// Strings returns the canonical representation of this payload split into a prefix and all lines that were contained in
-// the original message. This is meant to be displayed to the user by showing the prefix before each line, concatenated
-// together - possibly in a table form with the prefixes all unified with a rowspan-like mechanism.
+// Strings returns the canonical representation of this payload split into a
+// prefix and all lines that were contained in the original message. This is
+// meant to be displayed to the user by showing the prefix before each line,
+// concatenated together - possibly in a table form with the prefixes all
+// unified with a rowspan- like mechanism.
 //
 // For example, this function can return:
 //   prefix = "root.foo.bar                    I1102 17:20:06.921395     0 foo.go:42] "
@@ -68,14 +73,14 @@ func (l *LogEntry) String() string {
 // root.foo.bar                    I1102 17:20:06.921395 foo.go:42]  - two
 //
 // Or, in a table layout:
-// .-------------------------------------------------------------------------------------.
-// | root.foo.bar                    I1102 17:20:06.921395 foo.go:42] : current tags:    |
-// |                                                                  :------------------|
-// |                                                                  :  - one           |
-// |                                                                  :------------------|
-// |                                                                  :  - two           |
-// '-------------------------------------------------------------------------------------'
-//
+// .----------------------------------------------------------------------.
+// | root.foo.bar     I1102 17:20:06.921395 foo.go:42] : current tags:    |
+// |                                                   :------------------|
+// |                                                   :  - one           |
+// |                                                   :------------------|
+// |                                                   :  - two           |
+// '----------------------------------------------------------------------'
+
 func (l *LogEntry) Strings() (prefix string, lines []string) {
 	if l.Leveled != nil {
 		prefix, messages := l.Leveled.Strings()
@@ -88,8 +93,8 @@ func (l *LogEntry) Strings() (prefix string, lines []string) {
 	return "INVALID ", []string{"INVALID"}
 }
 
-// Convert this LogEntry to proto. Returned value may be nil if given LogEntry is invalid, eg. contains neither a Raw
-// nor Leveled entry.
+// Convert this LogEntry to proto. Returned value may be nil if given LogEntry is
+// invalid, eg. contains neither a Raw nor Leveled entry.
 func (l *LogEntry) Proto() *apb.LogEntry {
 	p := &apb.LogEntry{
 		Dn: string(l.DN),
@@ -111,8 +116,8 @@ func (l *LogEntry) Proto() *apb.LogEntry {
 	return p
 }
 
-// Parse a proto LogEntry back into internal structure. This can be used in log proto API consumers to easily print
-// received log entries.
+// Parse a proto LogEntry back into internal structure. This can be used in log
+// proto API consumers to easily print received log entries.
 func LogEntryFromProto(l *apb.LogEntry) (*LogEntry, error) {
 	dn := DN(l.Dn)
 	if _, err := dn.Path(); err != nil {

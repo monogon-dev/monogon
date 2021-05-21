@@ -106,11 +106,11 @@ func depsContainerd(p *planner) {
 		// not yet merged by upstream.
 		// See: https://github.com/containerd/ttrpc/pull/67
 		//
-		// It also contains our own fix that builds up on the above and allows
-		// services to return the original status error library values. This is
-		// required for ttrpc to actually work from runsc and for results to be
-		// correctly interpreted by containerd.
-		// See: https://github.com/monogon-dev/ttrpc/commit/222b428f008e3ecb11cfff12e3fd92e3143a2f01
+		// It also contains our own fix that builds up on the above and allows services to
+		// return the original status error library values. This is required for ttrpc to
+		// actually work from runsc and for results to be correctly interpreted by
+		// containerd. See:
+		//   https://github.com/monogon-dev/ttrpc/commit/222b428f008e3ecb11cfff12e3fd92e3143a2f01
 		//
 		// Note: this is not a good fix, and has known issues, like not being
 		// able to return Details in gRPC status errors. However, with the
@@ -121,10 +121,10 @@ func depsContainerd(p *planner) {
 		"github.com/monogon-dev/ttrpc", "222b428f008e3ecb11cfff12e3fd92e3143a2f01",
 	)
 
-	// This is depended on by github.com/containerd/containerd, but not mentioned in their
-	// vendor.conf. They seem to be moving off of vendoring to gomod, so this should be
-	// reverted on the next containerd bump (when fietsje will panic about vendor.conf
-	// missing).
+	// This is depended on by github.com/containerd/containerd, but not mentioned in
+	// their vendor.conf. They seem to be moving off of vendoring to gomod, so this
+	// should be reverted on the next containerd bump (when fietsje will panic about
+	// vendor.conf missing).
 	p.collectOverride(
 		"github.com/checkpoint-restore/go-criu/v4", "v4.1.0",
 	)

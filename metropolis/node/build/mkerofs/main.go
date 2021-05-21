@@ -14,8 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// mkerofs takes a specification in the form of a prototext file (see fsspec next to this) and assembles an
-// EROFS filesystem according to it. The output is fully reproducible.
+// mkerofs takes a specification in the form of a prototext file (see fsspec
+// next to this) and assembles an EROFS filesystem according to it. The output
+// is fully reproducible.
 package main
 
 import (
@@ -99,9 +100,11 @@ type entrySpec struct {
 	children map[string]*entrySpec
 }
 
-// pathRef gets the entrySpec at the leaf of the given path, inferring directories if necessary
+// pathRef gets the entrySpec at the leaf of the given path, inferring
+// directories if necessary
 func (s *entrySpec) pathRef(p string) *entrySpec {
-	// This block gets a path array starting at the root of the filesystem. The root folder is the zero-length array.
+	// This block gets a path array starting at the root of the filesystem. The
+	// root folder is the zero-length array.
 	pathParts := strings.Split(path.Clean("./"+p), "/")
 	if pathParts[0] == "." {
 		pathParts = pathParts[1:]

@@ -14,19 +14,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package consensus implements a managed etcd cluster member service, with a self-hosted CA system for issuing peer
-// certificates. Currently each Metropolis node runs an etcd member, and connects to the etcd member locally over a
-// domain socket.
+// Package consensus implements a managed etcd cluster member service, with a
+// self-hosted CA system for issuing peer certificates. Currently each
+// Metropolis node runs an etcd member, and connects to the etcd member locally
+// over a domain socket.
 //
 // The service supports two modes of startup:
-//  - initializing a new cluster, by bootstrapping the CA in memory, starting a cluster, committing the CA to etcd
-//    afterwards, and saving the new node's certificate to local storage
-//  - joining an existing cluster, using certificates from local storage and loading the CA from etcd. This flow is also
-//    used when the node joins a cluster for the first time (then the certificates required must be provisioned
-//    externally before starting the consensus service).
+//  - initializing a new cluster, by bootstrapping the CA in memory, starting a
+//    cluster, committing the CA to etcd afterwards, and saving the new node's
+//    certificate to local storage
+//  - joining an existing cluster, using certificates from local storage and
+//    loading the CA from etcd. This flow is also used when the node joins a
+//    cluster for the first time (then the certificates required must be
+//    provisioned externally before starting the consensus service).
 //
-// Regardless of how the etcd member service was started, the resulting running service is further managed and used
-// in the same way.
+// Regardless of how the etcd member service was started, the resulting running
+// service is further managed and used in the same way.
 //
 package consensus
 
@@ -59,8 +62,9 @@ type Service struct {
 	// The configuration with which the service was started. This is immutable.
 	config *Config
 
-	// stateMu guards state. This is locked internally on public methods of Service that require access to state. The
-	// state might be recreated on service restart.
+	// stateMu guards state. This is locked internally on public methods of
+	// Service that require access to state. The state might be recreated on
+	// service restart.
 	stateMu sync.Mutex
 	state   *state
 }
@@ -71,8 +75,8 @@ type state struct {
 	ready atomic.Bool
 
 	ca *ca.CA
-	// cl is an etcd client that loops back to the localy running etcd server. This runs over the Client unix domain
-	// socket that etcd starts.
+	// cl is an etcd client that loops back to the localy running etcd server.
+	// This runs over the Client unix domain socket that etcd starts.
 	cl *clientv3.Client
 }
 
@@ -82,16 +86,19 @@ type Config struct {
 	// Ephemeral directory for etcd.
 	Ephemeral *localstorage.EphemeralConsensusDirectory
 
-	// Name is the cluster name. This must be the same amongst all etcd members within one cluster.
+	// Name is the cluster name. This must be the same amongst all etcd members
+	// within one cluster.
 	Name string
-	// NewCluster selects whether the etcd member will start a new cluster and bootstrap a CA and the first member
-	// certificate, or load existing PKI certificates from disk.
+	// NewCluster selects whether the etcd member will start a new cluster and
+	// bootstrap a CA and the first member certificate, or load existing PKI
+	// certificates from disk.
 	NewCluster bool
-	// Port is the port at which this cluster member will listen for other members. If zero, defaults to the global
-	// Metropolis setting.
+	// Port is the port at which this cluster member will listen for other
+	// members. If zero, defaults to the global Metropolis setting.
 	Port int
 
-	// externalHost is used by tests to override the address at which etcd should listen for peer connections.
+	// externalHost is used by tests to override the address at which etcd
+	// should listen for peer connections.
 	externalHost string
 }
 
@@ -101,8 +108,8 @@ func New(config Config) *Service {
 	}
 }
 
-// configure transforms the service configuration into an embedded etcd configuration. This is pure and side effect
-// free.
+// configure transforms the service configuration into an embedded etcd
+// configuration. This is pure and side effect free.
 func (s *Service) configure(ctx context.Context) (*embed.Config, error) {
 	if err := s.config.Ephemeral.MkdirAll(0700); err != nil {
 		return nil, fmt.Errorf("failed to create ephemeral directory: %w", err)
@@ -166,8 +173,8 @@ func (s *Service) configure(ctx context.Context) (*embed.Config, error) {
 	return cfg, nil
 }
 
-// Run is a Supervisor runnable that starts the etcd member service. It will become healthy once the member joins the
-// cluster successfully.
+// Run is a Supervisor runnable that starts the etcd member service. It will
+// become healthy once the member joins the cluster successfully.
 func (s *Service) Run(ctx context.Context) error {
 	st := &state{
 		ready: *atomic.NewBool(false),
@@ -298,8 +305,8 @@ func (s *Service) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-// watchCRL is a sub-runnable of the etcd cluster member service that updates the on-local-storage CRL to match the
-// newest available version in etcd.
+// watchCRL is a sub-runnable of the etcd cluster member service that updates
+// the on-local-storage CRL to match the newest available version in etcd.
 func (s *Service) watchCRL(ctx context.Context) error {
 	s.stateMu.Lock()
 	cl := s.state.cl
@@ -339,9 +346,10 @@ func (s *Service) autopromoter(ctx context.Context) error {
 				continue
 			}
 
-			// We always call PromoteMember since the metadata necessary to decide if we should is private.
-			// Luckily etcd already does sanity checks internally and will refuse to promote nodes that aren't
-			// connected or are still behind on transactions.
+			// We always call PromoteMember since the metadata necessary to
+			// decide if we should is private.  Luckily etcd already does
+			// sanity checks internally and will refuse to promote nodes that
+			// aren't connected or are still behind on transactions.
 			if _, err := st.etcd.Server.PromoteMember(ctx, uint64(member.ID)); err != nil {
 				supervisor.Logger(ctx).Infof("Failed to promote consensus node %s: %v", member.Name, err)
 			} else {
@@ -371,7 +379,8 @@ func (s *Service) IsReady() bool {
 }
 
 func (s *Service) WaitReady(ctx context.Context) error {
-	// TODO(q3k): reimplement the atomic ready flag as an event synchronization mechanism
+	// TODO(q3k): reimplement the atomic ready flag as an event synchronization
+	// mechanism
 	if s.IsReady() {
 		return nil
 	}
@@ -411,8 +420,9 @@ func (s *Service) Cluster() clientv3.Cluster {
 	return s.state.cl.Cluster
 }
 
-// MemberInfo returns information about this etcd cluster member: its ID and name. This will block until this
-// information is available (ie. the cluster status is Ready).
+// MemberInfo returns information about this etcd cluster member: its ID and
+// name. This will block until this information is available (ie. the cluster
+// status is Ready).
 func (s *Service) MemberInfo(ctx context.Context) (id uint64, name string, err error) {
 	if err = s.WaitReady(ctx); err != nil {
 		err = fmt.Errorf("when waiting for cluster readiness: %w", err)

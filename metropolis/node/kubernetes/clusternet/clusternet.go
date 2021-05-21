@@ -14,15 +14,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package clusternet implements a WireGuard-based overlay network for Kubernetes. It relies on controller-manager's
-// IPAM to assign IP ranges to nodes and on Kubernetes' Node objects to distribute the Node IPs and public keys.
+// Package clusternet implements a WireGuard-based overlay network for
+// Kubernetes. It relies on controller-manager's IPAM to assign IP ranges to
+// nodes and on Kubernetes' Node objects to distribute the Node IPs and public
+// keys.
 //
-// It sets up a single WireGuard network interface and routes the entire ClusterCIDR into that network interface,
-// relying on WireGuard's AllowedIPs mechanism to look up the correct peer node to send the traffic to. This means
-// that the routing table doesn't change and doesn't have to be separately managed. When clusternet is started
-// it annotates its WireGuard public key onto its node object.
-// For each node object that's created or updated on the K8s apiserver it checks if a public key annotation is set and
-// if yes a peer with that public key, its InternalIP as endpoint and the CIDR for that node as AllowedIPs is created.
+// It sets up a single WireGuard network interface and routes the entire
+// ClusterCIDR into that network interface, relying on WireGuard's AllowedIPs
+// mechanism to look up the correct peer node to send the traffic to. This
+// means that the routing table doesn't change and doesn't have to be
+// separately managed. When clusternet is started it annotates its WireGuard
+// public key onto its node object.
+// For each node object that's created or updated on the K8s apiserver it
+// checks if a public key annotation is set and if yes a peer with that public
+// key, its InternalIP as endpoint and the CIDR for that node as AllowedIPs is
+// created.
 package clusternet
 
 import (
@@ -45,8 +51,8 @@ import (
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/jsonpatch"
+	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
@@ -67,7 +73,8 @@ type Service struct {
 	logger   logtree.LeveledLogger
 }
 
-// ensureNode creates/updates the corresponding WireGuard peer entry for the given node objet
+// ensureNode creates/updates the corresponding WireGuard peer entry for the
+// given node objet
 func (s *Service) ensureNode(newNode *corev1.Node) error {
 	if newNode.Name == s.NodeName {
 		// Node doesn't need to connect to itself
@@ -108,8 +115,8 @@ func (s *Service) ensureNode(newNode *corev1.Node) error {
 	}
 	allowedIPs = append(allowedIPs, net.IPNet{IP: internalIP, Mask: net.CIDRMask(32, 32)})
 	s.logger.V(1).Infof("Adding/Updating WireGuard peer node %s, endpoint %s, allowedIPs %+v", newNode.Name, internalIP.String(), allowedIPs)
-	// WireGuard's kernel side has create/update semantics on peers by default. So we can just add the peer multiple
-	// times to update it.
+	// WireGuard's kernel side has create/update semantics on peers by default.
+	// So we can just add the peer multiple times to update it.
 	err = s.wgClient.ConfigureDevice(clusterNetDeviceName, wgtypes.Config{
 		Peers: []wgtypes.PeerConfig{{
 			PublicKey:         pubKey,
@@ -124,7 +131,8 @@ func (s *Service) ensureNode(newNode *corev1.Node) error {
 	return nil
 }
 
-// removeNode removes the corresponding WireGuard peer entry for the given node object
+// removeNode removes the corresponding WireGuard peer entry for the given node
+// object
 func (s *Service) removeNode(oldNode *corev1.Node) error {
 	if oldNode.Name == s.NodeName {
 		// Node doesn't need to connect to itself
@@ -150,7 +158,8 @@ func (s *Service) removeNode(oldNode *corev1.Node) error {
 	return nil
 }
 
-// ensureOnDiskKey loads the private key from disk or (if none exists) generates one and persists it.
+// ensureOnDiskKey loads the private key from disk or (if none exists)
+// generates one and persists it.
 func (s *Service) ensureOnDiskKey() error {
 	keyRaw, err := s.DataDirectory.Key.Read()
 	if os.IsNotExist(err) {
@@ -176,7 +185,8 @@ func (s *Service) ensureOnDiskKey() error {
 	return nil
 }
 
-// annotateThisNode annotates the node (as defined by NodeName) with the wireguard public key of this node.
+// annotateThisNode annotates the node (as defined by NodeName) with the
+// wireguard public key of this node.
 func (s *Service) annotateThisNode(ctx context.Context) error {
 	patch := []jsonpatch.JsonPatchOp{{
 		Operation: "add",

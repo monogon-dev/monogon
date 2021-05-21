@@ -172,7 +172,8 @@ func TestClient_runTransactionState(t *testing.T) {
 	assert.Equal(t, dhcpv4.MessageTypeDiscover, mt.sentPacket.MessageType())
 }
 
-// TestAcceptableLease tests if a minimal valid lease is accepted by acceptableLease
+// TestAcceptableLease tests if a minimal valid lease is accepted by
+// acceptableLease
 func TestAcceptableLease(t *testing.T) {
 	c := Client{}
 	offer := &dhcpv4.DHCPv4{
@@ -223,8 +224,8 @@ func newResponse(m dhcpv4.MessageType) *dhcpv4.DHCPv4 {
 	return o
 }
 
-// TestDiscoverOffer tests if the DHCP state machine in discovering state properly selects the first valid lease
-// and transitions to requesting state
+// TestDiscoverOffer tests if the DHCP state machine in discovering state
+// properly selects the first valid lease and transitions to requesting state
 func TestDiscoverRequesting(t *testing.T) {
 	p := newPuppetClient(stateDiscovering)
 
@@ -250,8 +251,8 @@ func TestDiscoverRequesting(t *testing.T) {
 	assert.Equal(t, testIP, p.c.offer.YourIPAddr, "DHCP client requested invalid offer")
 }
 
-// TestOfferBound tests if the DHCP state machine in requesting state processes a valid DHCPACK and transitions to
-// bound state.
+// TestOfferBound tests if the DHCP state machine in requesting state processes
+// a valid DHCPACK and transitions to bound state.
 func TestRequestingBound(t *testing.T) {
 	p := newPuppetClient(stateRequesting)
 
@@ -276,8 +277,8 @@ func TestRequestingBound(t *testing.T) {
 	assert.Equal(t, testIP, p.c.lease.YourIPAddr, "DHCP client requested invalid offer")
 }
 
-// TestRequestingDiscover tests if the DHCP state machine in requesting state transitions back to discovering if it
-// takes too long to get a valid DHCPACK.
+// TestRequestingDiscover tests if the DHCP state machine in requesting state
+// transitions back to discovering if it takes too long to get a valid DHCPACK.
 func TestRequestingDiscover(t *testing.T) {
 	p := newPuppetClient(stateRequesting)
 
@@ -306,8 +307,9 @@ func TestRequestingDiscover(t *testing.T) {
 	assert.Equal(t, stateDiscovering, p.c.state, "DHCP client didn't switch back to offer after requesting expired")
 }
 
-// TestDiscoverRapidCommit tests if the DHCP state machine in discovering state transitions directly to bound if a
-// rapid commit response (DHCPACK) is received.
+// TestDiscoverRapidCommit tests if the DHCP state machine in discovering state
+// transitions directly to bound if a rapid commit response (DHCPACK) is
+// received.
 func TestDiscoverRapidCommit(t *testing.T) {
 	testIP := net.IP{192, 0, 2, 2}
 	offer := newResponse(dhcpv4.MessageTypeAck)
@@ -341,8 +343,9 @@ func (o TestOption) String() string {
 	return fmt.Sprintf("Test Option %d", uint8(o))
 }
 
-// TestBoundRenewingBound tests if the DHCP state machine in bound correctly transitions to renewing after
-// leaseBoundDeadline expires, sends a DHCPREQUEST and after it gets a DHCPACK response calls LeaseCallback and
+// TestBoundRenewingBound tests if the DHCP state machine in bound correctly
+// transitions to renewing after leaseBoundDeadline expires, sends a
+// DHCPREQUEST and after it gets a DHCPACK response calls LeaseCallback and
 // transitions back to bound with correct new deadlines.
 func TestBoundRenewingBound(t *testing.T) {
 	offer := newResponse(dhcpv4.MessageTypeAck)
@@ -364,7 +367,8 @@ func TestBoundRenewingBound(t *testing.T) {
 	if err := p.c.runState(context.Background()); err != nil {
 		t.Error(err)
 	}
-	p.ft.Advance(5 * time.Millisecond) // We cannot intercept time.After so we just advance the clock by the time slept
+	// We cannot intercept time.After so we just advance the clock by the time slept
+	p.ft.Advance(5 * time.Millisecond)
 	assert.Equal(t, stateRenewing, p.c.state, "DHCP client not renewing")
 	offer.UpdateOption(dhcpv4.OptGeneric(TestOption(1), []byte{0x12}))
 	p.umt.sendPackets(offer)
@@ -384,8 +388,9 @@ func TestBoundRenewingBound(t *testing.T) {
 	assert.Equal(t, dhcpv4.MessageTypeRequest, p.umt.sentPacket.MessageType(), "Invalid message type for renewal")
 }
 
-// TestRenewingRebinding tests if the DHCP state machine in renewing state correctly sends DHCPREQUESTs and transitions
-// to the rebinding state when it hasn't received a valid response until the deadline expires.
+// TestRenewingRebinding tests if the DHCP state machine in renewing state
+// correctly sends DHCPREQUESTs and transitions to the rebinding state when it
+// hasn't received a valid response until the deadline expires.
 func TestRenewingRebinding(t *testing.T) {
 	offer := newResponse(dhcpv4.MessageTypeAck)
 	testIP := net.IP{192, 0, 2, 2}
@@ -431,8 +436,9 @@ func TestRenewingRebinding(t *testing.T) {
 	assert.True(t, p.umt.closed)
 }
 
-// TestRebindingBound tests if the DHCP state machine in rebinding state sends DHCPREQUESTs to the network and if
-// it receives a valid DHCPACK correctly transitions back to bound state.
+// TestRebindingBound tests if the DHCP state machine in rebinding state sends
+// DHCPREQUESTs to the network and if it receives a valid DHCPACK correctly
+// transitions back to bound state.
 func TestRebindingBound(t *testing.T) {
 	offer := newResponse(dhcpv4.MessageTypeAck)
 	testIP := net.IP{192, 0, 2, 2}
@@ -471,8 +477,9 @@ func TestRebindingBound(t *testing.T) {
 	assert.Equal(t, stateBound, p.c.state, "DHCP client didn't go back to bound")
 }
 
-// TestRebindingBound tests if the DHCP state machine in rebinding state transitions to discovering state if
-// leaseDeadline expires and calls LeaseCallback with an empty new lease.
+// TestRebindingBound tests if the DHCP state machine in rebinding state
+// transitions to discovering state if leaseDeadline expires and calls
+// LeaseCallback with an empty new lease.
 func TestRebindingDiscovering(t *testing.T) {
 	offer := newResponse(dhcpv4.MessageTypeAck)
 	testIP := net.IP{192, 0, 2, 2}

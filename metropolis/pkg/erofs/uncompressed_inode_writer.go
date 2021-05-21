@@ -24,9 +24,10 @@ import (
 	"math"
 )
 
-// uncompressedInodeWriter exposes a io.Write-style interface for a single uncompressed inode. It splits the Write-calls
-// into blocks and writes both the blocks and inode metadata. It is required to call Close() to ensure everything is
-// properly written down before writing another inode.
+// uncompressedInodeWriter exposes a io.Write-style interface for a single
+// uncompressed inode. It splits the Write-calls into blocks and writes both
+// the blocks and inode metadata. It is required to call Close() to ensure
+// everything is properly written down before writing another inode.
 type uncompressedInodeWriter struct {
 	buf               bytes.Buffer
 	writer            *Writer

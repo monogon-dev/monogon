@@ -46,8 +46,8 @@ import (
 
 type qemuValue map[string][]string
 
-// toOption encodes structured data into a QEMU option.
-// Example: "test", {"key1": {"val1"}, "key2": {"val2", "val3"}} returns "test,key1=val1,key2=val2,key2=val3"
+// toOption encodes structured data into a QEMU option. Example: "test", {"key1":
+// {"val1"}, "key2": {"val2", "val3"}} returns "test,key1=val1,key2=val2,key2=val3"
 func (value qemuValue) toOption(name string) string {
 	var optionValues []string
 	if name != "" {
@@ -84,11 +84,12 @@ func copyFile(src, dst string) error {
 	return out.Close()
 }
 
-// PortMap represents where VM ports are mapped to on the host. It maps from the VM port number to the host port number.
+// PortMap represents where VM ports are mapped to on the host. It maps from the VM
+// port number to the host port number.
 type PortMap map[uint16]uint16
 
-// toQemuForwards generates QEMU hostfwd values (https://qemu.weilnetz.de/doc/qemu-doc.html#:~:text=hostfwd=) for all
-// mapped ports.
+// toQemuForwards generates QEMU hostfwd values (https://qemu.weilnetz.de/doc/qemu-
+// doc.html#:~:text=hostfwd=) for all mapped ports.
 func (p PortMap) toQemuForwards() []string {
 	var hostfwdOptions []string
 	for vmPort, hostPort := range p {
@@ -97,8 +98,8 @@ func (p PortMap) toQemuForwards() []string {
 	return hostfwdOptions
 }
 
-// DialGRPC creates a gRPC client for a VM port that's forwarded/mapped to the host. The given port is automatically
-// resolved to the host-mapped port.
+// DialGRPC creates a gRPC client for a VM port that's forwarded/mapped to the
+// host. The given port is automatically resolved to the host-mapped port.
 func (p PortMap) DialGRPC(port uint16, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	mappedPort, ok := p[port]
 	if !ok {
@@ -113,24 +114,29 @@ func (p PortMap) DialGRPC(port uint16, opts ...grpc.DialOption) (*grpc.ClientCon
 
 // Options contains all options that can be passed to Launch()
 type Options struct {
-	// Ports contains the port mapping where to expose the internal ports of the VM to the host. See IdentityPortMap()
-	// and ConflictFreePortMap(). Ignored when ConnectToSocket is set.
+	// Ports contains the port mapping where to expose the internal ports of the VM to
+	// the host. See IdentityPortMap() and ConflictFreePortMap(). Ignored when
+	// ConnectToSocket is set.
 	Ports PortMap
 
-	// If set to true, reboots are honored. Otherwise all reboots exit the Launch() command. Metropolis nodes
-	// generally restarts on almost all errors, so unless you want to test reboot behavior this should be false.
+	// If set to true, reboots are honored. Otherwise all reboots exit the Launch()
+	// command. Metropolis nodes generally restarts on almost all errors, so unless you
+	// want to test reboot behavior this should be false.
 	AllowReboot bool
 
-	// By default the VM is connected to the Host via SLIRP. If ConnectToSocket is set, it is instead connected
-	// to the given file descriptor/socket. If this is set, all port maps from the Ports option are ignored.
-	// Intended for networking this instance together with others for running  more complex network configurations.
+	// By default the VM is connected to the Host via SLIRP. If ConnectToSocket is set,
+	// it is instead connected to the given file descriptor/socket. If this is set, all
+	// port maps from the Ports option are ignored. Intended for networking this
+	// instance together with others for running  more complex network configurations.
 	ConnectToSocket *os.File
 
-	// SerialPort is a io.ReadWriter over which you can communicate with the serial port of the machine
-	// It can be set to an existing file descriptor (like os.Stdout/os.Stderr) or any Go structure implementing this interface.
+	// SerialPort is a io.ReadWriter over which you can communicate with the serial
+	// port of the machine It can be set to an existing file descriptor (like
+	// os.Stdout/os.Stderr) or any Go structure implementing this interface.
 	SerialPort io.ReadWriter
 
-	// NodeParameters is passed into the VM and subsequently used for bootstrapping or registering into a cluster.
+	// NodeParameters is passed into the VM and subsequently used for bootstrapping or
+	// registering into a cluster.
 	NodeParameters *apb.NodeParameters
 }
 
@@ -138,8 +144,9 @@ type Options struct {
 var NodePorts = []uint16{node.ConsensusPort, node.NodeServicePort, node.MasterServicePort,
 	node.ExternalServicePort, node.DebugServicePort, node.KubernetesAPIPort, node.DebuggerPort}
 
-// IdentityPortMap returns a port map where each given port is mapped onto itself on the host. This is mainly useful
-// for development against Metropolis. The dbg command requires this mapping.
+// IdentityPortMap returns a port map where each given port is mapped onto itself
+// on the host. This is mainly useful for development against Metropolis. The dbg
+// command requires this mapping.
 func IdentityPortMap(ports []uint16) PortMap {
 	portMap := make(PortMap)
 	for _, port := range ports {
@@ -148,10 +155,11 @@ func IdentityPortMap(ports []uint16) PortMap {
 	return portMap
 }
 
-// ConflictFreePortMap returns a port map where each given port is mapped onto a random free port on the host. This is
-// intended for automated testing where multiple instances of Metropolis nodes might be running. Please call this
-// function for each Launch command separately and as close to it as possible since it cannot guarantee that the ports
-// will remain free.
+// ConflictFreePortMap returns a port map where each given port is mapped onto a
+// random free port on the host. This is intended for automated testing where
+// multiple instances of Metropolis nodes might be running. Please call this
+// function for each Launch command separately and as close to it as possible since
+// it cannot guarantee that the ports will remain free.
 func ConflictFreePortMap(ports []uint16) (PortMap, error) {
 	portMap := make(PortMap)
 	for _, port := range ports {
@@ -159,7 +167,8 @@ func ConflictFreePortMap(ports []uint16) (PortMap, error) {
 		if err != nil {
 			return portMap, fmt.Errorf("failed to get free host port: %w", err)
 		}
-		// Defer closing of the listening port until the function is done and all ports are allocated
+		// Defer closing of the listening port until the function is done and all ports are
+		// allocated
 		defer listenCloser.Close()
 		portMap[port] = mappedPort
 	}
@@ -181,21 +190,26 @@ func generateRandomEthernetMAC() (*net.HardwareAddr, error) {
 	return &mac, nil
 }
 
-// Launch launches a Metropolis node instance with the given options. The instance runs mostly paravirtualized but
-// with some emulated hardware similar to how a cloud provider might set up its VMs. The disk is fully writable but
-// is run in snapshot mode meaning that changes are not kept beyond a single invocation.
+// Launch launches a Metropolis node instance with the given options. The instance
+// runs mostly paravirtualized but with some emulated hardware similar to how a
+// cloud provider might set up its VMs. The disk is fully writable but is run in
+// snapshot mode meaning that changes are not kept beyond a single invocation.
 func Launch(ctx context.Context, options Options) error {
-	// Pin temp directory to /tmp until we can use abstract socket namespace in QEMU (next release after 5.0,
-	// https://github.com/qemu/qemu/commit/776b97d3605ed0fc94443048fdf988c7725e38a9). swtpm accepts already-open FDs
-	// so we can pass in an abstract socket namespace FD that we open and pass the name of it to QEMU. Not pinning this
-	// crashes both swtpm and qemu because we run into UNIX socket length limitations (for legacy reasons 108 chars).
+	// Pin temp directory to /tmp until we can use abstract socket namespace in QEMU
+	// (next release after 5.0,
+	// https://github.com/qemu/qemu/commit/776b97d3605ed0fc94443048fdf988c7725e38a9).
+	// swtpm accepts already-open FDs so we can pass in an abstract socket namespace FD
+	// that we open and pass the name of it to QEMU. Not pinning this crashes both
+	// swtpm and qemu because we run into UNIX socket length limitations (for legacy
+	// reasons 108 chars).
 	tempDir, err := ioutil.TempDir("/tmp", "launch*")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary directory: %w", err)
 	}
 	defer os.RemoveAll(tempDir)
 
-	// Copy TPM state into a temporary directory since it's being modified by the emulator
+	// Copy TPM state into a temporary directory since it's being modified by the
+	// emulator
 	tpmTargetDir := filepath.Join(tempDir, "tpm")
 	tpmSrcDir := "metropolis/node/tpm"
 	if err := os.Mkdir(tpmTargetDir, 0755); err != nil {
@@ -315,8 +329,9 @@ func Launch(ctx context.Context, options Options) error {
 	return err
 }
 
-// NewSocketPair creates a new socket pair. By connecting both ends to different instances you can connect them
-// with a virtual "network cable". The ends can be passed into the ConnectToSocket option.
+// NewSocketPair creates a new socket pair. By connecting both ends to different
+// instances you can connect them with a virtual "network cable". The ends can be
+// passed into the ConnectToSocket option.
 func NewSocketPair() (*os.File, *os.File, error) {
 	fds, err := unix.Socketpair(unix.AF_UNIX, syscall.SOCK_STREAM, 0)
 	if err != nil {
@@ -328,8 +343,8 @@ func NewSocketPair() (*os.File, *os.File, error) {
 	return fd1, fd2, nil
 }
 
-// HostInterfaceMAC is the MAC address the host SLIRP network interface has if it is not disabled (see
-// DisableHostNetworkInterface in MicroVMOptions)
+// HostInterfaceMAC is the MAC address the host SLIRP network interface has if it
+// is not disabled (see DisableHostNetworkInterface in MicroVMOptions)
 var HostInterfaceMAC = net.HardwareAddr{0x02, 0x72, 0x82, 0xbf, 0xc3, 0x56}
 
 // MicroVMOptions contains all options to start a MicroVM
@@ -343,39 +358,47 @@ type MicroVMOptions struct {
 	// Cmdline contains additional kernel commandline options
 	Cmdline string
 
-	// SerialPort is a File(descriptor) over which you can communicate with the serial port of the machine
-	// It can be set to an existing file descriptor (like os.Stdout/os.Stderr) or you can use NewSocketPair() to get one
-	// end to talk to from Go.
+	// SerialPort is a File(descriptor) over which you can communicate with the serial
+	// port of the machine It can be set to an existing file descriptor (like
+	// os.Stdout/os.Stderr) or you can use NewSocketPair() to get one end to talk to
+	// from Go.
 	SerialPort *os.File
 
-	// ExtraChardevs can be used similar to SerialPort, but can contain an arbitrary number of additional serial ports
+	// ExtraChardevs can be used similar to SerialPort, but can contain an arbitrary
+	// number of additional serial ports
 	ExtraChardevs []*os.File
 
-	// ExtraNetworkInterfaces can contain an arbitrary number of file descriptors which are mapped into the VM as virtio
-	// network interfaces. The first interface is always a SLIRP-backed interface for communicating with the host.
+	// ExtraNetworkInterfaces can contain an arbitrary number of file descriptors which
+	// are mapped into the VM as virtio network interfaces. The first interface is
+	// always a SLIRP-backed interface for communicating with the host.
 	ExtraNetworkInterfaces []*os.File
 
-	// PortMap contains ports that are mapped to the host through the built-in SLIRP network interface.
+	// PortMap contains ports that are mapped to the host through the built-in SLIRP
+	// network interface.
 	PortMap PortMap
 
-	// DisableHostNetworkInterface disables the SLIRP-backed host network interface that is normally the first network
-	// interface. If this is set PortMap is ignored. Mostly useful for speeding up QEMU's startup time for tests.
+	// DisableHostNetworkInterface disables the SLIRP-backed host network interface
+	// that is normally the first network interface. If this is set PortMap is ignored.
+	// Mostly useful for speeding up QEMU's startup time for tests.
 	DisableHostNetworkInterface bool
 }
 
-// RunMicroVM launches a tiny VM mostly intended for testing. Very quick to boot (<40ms).
+// RunMicroVM launches a tiny VM mostly intended for testing. Very quick to boot
+// (<40ms).
 func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
-	// Generate options for all the file descriptors we'll be passing as virtio "serial ports"
+	// Generate options for all the file descriptors we'll be passing as virtio "serial
+	// ports"
 	var extraArgs []string
 	for idx, _ := range opts.ExtraChardevs {
 		idxStr := strconv.Itoa(idx)
 		id := "extra" + idxStr
-		// That this works is pretty much a hack, but upstream QEMU doesn't have a bidirectional chardev backend not
-		// based around files/sockets on the disk which are a giant pain to work with.
-		// We're using QEMU's fdset functionality to make FDs available as pseudo-files and then "ab"using the pipe
-		// backend's fallback functionality to get a single bidirectional chardev backend backed by a passed-down
-		// RDWR fd.
-		// Ref https://lists.gnu.org/archive/html/qemu-devel/2015-12/msg01256.html
+		// That this works is pretty much a hack, but upstream QEMU doesn't have a
+		// bidirectional chardev backend not based around files/sockets on the disk which
+		// are a giant pain to work with. We're using QEMU's fdset functionality to make
+		// FDs available as pseudo-files and then "ab"using the pipe backend's fallback
+		// functionality to get a single bidirectional chardev backend backed by a passed-
+		// down RDWR fd. Ref https://lists.gnu.org/archive/html/qemu-devel/2015-
+		// 12/msg01256.html
 		addFdConf := qemuValue{
 			"set": {idxStr},
 			"fd":  {strconv.Itoa(idx + 3)},
@@ -400,23 +423,29 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 		extraArgs = append(extraArgs, "-netdev", netdevConf.toOption("socket"), "-device", "virtio-net-device,netdev="+id)
 	}
 
-	// This sets up a minimum viable environment for our Linux kernel.
-	// It clears all standard QEMU configuration and sets up a MicroVM machine
-	// (https://github.com/qemu/qemu/blob/master/docs/microvm.rst) with all legacy emulation turned off. This means
-	// the only "hardware" the Linux kernel inside can communicate with is a single virtio-mmio region. Over that MMIO
-	// interface we run a paravirtualized RNG (since the kernel in there has nothing to gather that from and it
-	// delays booting), a single paravirtualized console and an arbitrary number of extra serial ports for talking to
-	// various things that might run inside. The kernel, initramfs and command line are mapped into VM memory at boot
-	// time and not loaded from any sort of disk. Booting and shutting off one of these VMs takes <100ms.
+	// This sets up a minimum viable environment for our Linux kernel. It clears all
+	// standard QEMU configuration and sets up a MicroVM machine
+	// (https://github.com/qemu/qemu/blob/master/docs/microvm.rst) with all legacy
+	// emulation turned off. This means the only "hardware" the Linux kernel inside can
+	// communicate with is a single virtio-mmio region. Over that MMIO interface we run
+	// a paravirtualized RNG (since the kernel in there has nothing to gather that from
+	// and it delays booting), a single paravirtualized console and an arbitrary number
+	// of extra serial ports for talking to various things that might run inside. The
+	// kernel, initramfs and command line are mapped into VM memory at boot time and
+	// not loaded from any sort of disk. Booting and shutting off one of these VMs
+	// takes <100ms.
 	baseArgs := []string{"-nodefaults", "-no-user-config", "-nographic", "-no-reboot",
 		"-accel", "kvm", "-cpu", "host",
-		// Needed until QEMU updates their bundled qboot version (needs https://github.com/bonzini/qboot/pull/28)
+		// Needed until QEMU updates their bundled qboot version (needs
+		// https://github.com/bonzini/qboot/pull/28)
 		"-bios", "external/com_github_bonzini_qboot/bios.bin",
 		"-M", "microvm,x-option-roms=off,pic=off,pit=off,rtc=off,isa-serial=off",
 		"-kernel", opts.KernelPath,
-		// We force using a triple-fault reboot strategy since otherwise the kernel first tries others (like ACPI) which
-		// are not available in this very restricted environment. Similarly we need to override the boot console since
-		// there's nothing on the ISA bus that the kernel could talk to. We also force quiet for performance reasons.
+		// We force using a triple-fault reboot strategy since otherwise the kernel first
+		// tries others (like ACPI) which are not available in this very restricted
+		// environment. Similarly we need to override the boot console since there's
+		// nothing on the ISA bus that the kernel could talk to. We also force quiet for
+		// performance reasons.
 		"-append", "reboot=t console=hvc0 quiet " + opts.Cmdline,
 		"-initrd", opts.InitramfsPath,
 		"-device", "virtio-rng-device,max-bytes=1024,period=1000",
@@ -457,8 +486,8 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 	return err
 }
 
-// QEMUError is a special type of ExitError used when QEMU fails. In addition to normal ExitError features it
-// prints stderr for debugging.
+// QEMUError is a special type of ExitError used when QEMU fails. In addition to
+// normal ExitError features it prints stderr for debugging.
 type QEMUError exec.ExitError
 
 func (e *QEMUError) Error() string {
@@ -478,7 +507,8 @@ type ClusterOptions struct {
 	NumNodes int
 }
 
-// LaunchCluster launches a cluster of Metropolis node VMs together with a Nanoswitch instance to network them all together.
+// LaunchCluster launches a cluster of Metropolis node VMs together with a
+// Nanoswitch instance to network them all together.
 func LaunchCluster(ctx context.Context, opts ClusterOptions) (apb.NodeDebugServiceClient, PortMap, error) {
 	var switchPorts []*os.File
 	var vmPorts []*os.File
@@ -509,9 +539,10 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (apb.NodeDebugServi
 			},
 		}); err != nil {
 
-			// Launch() only terminates when QEMU has terminated. At that point our function probably doesn't run anymore
-			// so we have no way of communicating the error back up, so let's just log it. Also a failure in launching
-			// VMs should be very visible by the unavailability of the clients we return.
+			// Launch() only terminates when QEMU has terminated. At that point our function
+			// probably doesn't run anymore so we have no way of communicating the error back
+			// up, so let's just log it. Also a failure in launching VMs should be very visible
+			// by the unavailability of the clients we return.
 			log.Printf("Failed to launch vm0: %v", err)
 		}
 	}()

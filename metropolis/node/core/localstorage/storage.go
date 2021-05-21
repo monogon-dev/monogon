@@ -16,20 +16,24 @@
 
 package localstorage
 
-// Localstorage is a replacement for the old 'storage' internal library. It is currently unused, but will become
-// so as the node code gets rewritten.
+// Localstorage is a replacement for the old 'storage' internal library. It is
+// currently unused, but will become so as the node code gets rewritten.
 
-// The library is centered around the idea of a declarative filesystem tree defined as mutually recursive Go structs.
-// This structure is then Placed onto an abstract real filesystem (eg. a local POSIX filesystem at /), and a handle
-// to that placed filesystem is then used by the consumers of this library to refer to subsets of the tree (that now
-// correspond to locations on a filesystem).
+// The library is centered around the idea of a declarative filesystem tree
+// defined as mutually recursive Go structs.  This structure is then Placed
+// onto an abstract real filesystem (eg. a local POSIX filesystem at /), and a
+// handle to that placed filesystem is then used by the consumers of this
+// library to refer to subsets of the tree (that now correspond to locations on
+// a filesystem).
 //
-// Every member of the storage hierarchy must either be, or inherit from Directory or File. In order to be placed
-// correctly, Directory embedding structures must use `dir:` or `file:` tags for child Directories and files
-// respectively. The content of the tag specifies the path part that this element will be placed at.
+// Every member of the storage hierarchy must either be, or inherit from
+// Directory or File. In order to be placed correctly, Directory embedding
+// structures must use `dir:` or `file:` tags for child Directories and files
+// respectively. The content of the tag specifies the path part that this
+// element will be placed at.
 //
-// Full placement path(available via FullPath()) format is placement implementation-specific. However, they're always
-// strings.
+// Full placement path(available via FullPath()) format is placement
+// implementation-specific. However, they're always strings.
 
 import (
 	"sync"
@@ -43,9 +47,11 @@ type Root struct {
 	ESP ESPDirectory `dir:"esp"`
 	// Persistent Data partition, mounted from encrypted and authenticated storage.
 	Data DataDirectory `dir:"data"`
-	// FHS-standard /etc directory, containes /etc/hosts, /etc/machine-id, and other compatibility files.
+	// FHS-standard /etc directory, containes /etc/hosts, /etc/machine-id, and
+	// other compatibility files.
 	Etc EtcDirectory `dir:"etc"`
-	// Ephemeral data, used by runtime, stored in tmpfs. Things like sockets, temporary config files, etc.
+	// Ephemeral data, used by runtime, stored in tmpfs. Things like sockets,
+	// temporary config files, etc.
 	Ephemeral EphemeralDirectory `dir:"ephemeral"`
 	// FHS-standard /tmp directory, used by ioutil.TempFile.
 	Tmp TmpDirectory `dir:"tmp"`
@@ -60,15 +66,18 @@ type PKIDirectory struct {
 	Key           declarative.File `file:"cert-key.pem"`
 }
 
-// DataDirectory is an xfs partition mounted via cryptsetup/LUKS, with a key derived from {global,local}Unlock keys.
+// DataDirectory is an xfs partition mounted via cryptsetup/LUKS, with a key
+// derived from {global,local}Unlock keys.
 type DataDirectory struct {
 	declarative.Directory
 
 	// flagLock locks canMount and mounted.
 	flagLock sync.Mutex
-	// canMount is set by Root when it is initialized. It is required to be set for mounting the data directory.
+	// canMount is set by Root when it is initialized. It is required to be set
+	// for mounting the data directory.
 	canMount bool
-	// mounted is set by DataDirectory when it is mounted. It ensures it's only mounted once.
+	// mounted is set by DataDirectory when it is mounted. It ensures it's only
+	// mounted once.
 	mounted bool
 
 	Containerd declarative.Directory   `dir:"containerd"`
@@ -108,11 +117,13 @@ type DataKubernetesKubeletDirectory struct {
 
 	DevicePlugins struct {
 		declarative.Directory
-		// Used by Kubelet, hardcoded relative to DataKubernetesKubeletDirectory
+		// Used by Kubelet, hardcoded relative to
+		// DataKubernetesKubeletDirectory
 		Kubelet declarative.File `file:"kubelet.sock"`
 	} `dir:"device-plugins"`
 
-	// Pod logs, hardcoded to /data/kubelet/logs in @com_github_kubernetes//pkg/kubelet/kuberuntime:kuberuntime_manager.go
+	// Pod logs, hardcoded to /data/kubelet/logs in
+	// @com_github_kubernetes//pkg/kubelet/kuberuntime:kuberuntime_manager.go
 	Logs declarative.Directory `dir:"logs"`
 
 	Plugins struct {
@@ -134,8 +145,10 @@ type DataVolumesDirectory struct {
 
 type EtcDirectory struct {
 	declarative.Directory
-	Hosts     declarative.File `file:"hosts"`      // Symlinked to /ephemeral/hosts, baked into the erofs system image
-	MachineID declarative.File `file:"machine-id"` // Symlinked to /ephemeral/machine-id, baked into the erofs system image
+	// Symlinked to /ephemeral/hosts, baked into the erofs system image
+	Hosts declarative.File `file:"hosts"`
+	// Symlinked to /ephemeral/machine-id, baked into the erofs system image
+	MachineID declarative.File `file:"machine-id"`
 }
 
 type EphemeralDirectory struct {

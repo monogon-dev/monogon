@@ -16,13 +16,16 @@
 
 package tpm
 
-// This file is adapted from github.com/google/go-tpm/tpm2/credactivation which outputs broken
-// challenges for unknown reasons. They use u16 length-delimited outputs for the challenge blobs
-// which is incorrect. Rather than rewriting the routine, we only applied minimal fixes to it
-// and skip the ECC part of the issue (because we would rather trust the proprietary RSA implementation).
+// This file is adapted from github.com/google/go-tpm/tpm2/credactivation which
+// outputs broken challenges for unknown reasons. They use u16 length-delimited
+// outputs for the challenge blobs which is incorrect. Rather than rewriting
+// the routine, we only applied minimal fixes to it and skip the ECC part of
+// the issue (because we would rather trust the proprietary RSA
+// implementation).
 //
-// TODO(lorenz): I'll eventually deal with this upstream, but for now just fix it here (it's not that)
-// much code after all (https://github.com/google/go-tpm/issues/121)
+// TODO(lorenz): I'll eventually deal with this upstream, but for now just fix
+// it here (it's not that) much code after all.
+//   https://github.com/google/go-tpm/issues/121
 
 import (
 	"crypto/aes"
@@ -48,7 +51,8 @@ func generateRSA(aik *tpm2.HashValue, pub *rsa.PublicKey, symBlockSize int, secr
 		return nil, nil, err
 	}
 
-	// The seed length should match the keysize used by the EKs symmetric cipher.
+	// The seed length should match the keysize used by the EKs symmetric
+	// cipher.
 	// For typical RSA EKs, this will be 128 bits (16 bytes).
 	// Spec: TCG 2.0 EK Credential Profile revision 14, section 2.1.5.1.
 	seed := make([]byte, symBlockSize)
@@ -64,8 +68,8 @@ func generateRSA(aik *tpm2.HashValue, pub *rsa.PublicKey, symBlockSize int, secr
 		return nil, nil, fmt.Errorf("generating encrypted seed: %v", err)
 	}
 
-	// Generate the encrypted credential by convolving the seed with the digest of
-	// the AIK, and using the result as the key to encrypt the secret.
+	// Generate the encrypted credential by convolving the seed with the digest
+	// of the AIK, and using the result as the key to encrypt the secret.
 	// See section 24.4 of TPM 2.0 specification, part 1.
 	aikNameEncoded, err := aik.Encode()
 	if err != nil {

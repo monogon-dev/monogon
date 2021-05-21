@@ -28,12 +28,14 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// Inode specifies an interface that all inodes that can be written to an EROFS filesystem implement.
+// Inode specifies an interface that all inodes that can be written to an EROFS
+// filesystem implement.
 type Inode interface {
 	inode() *inodeCompact
 }
 
-// Base contains generic inode metadata independent from the specific inode type.
+// Base contains generic inode metadata independent from the specific inode
+// type.
 type Base struct {
 	Permissions uint16
 	UID, GID    uint16
@@ -47,8 +49,8 @@ func (b *Base) baseInode(fileType uint16) *inodeCompact {
 	}
 }
 
-// Directory represents a directory inode. The Children property contains the directories' direct children (just the
-// name, not the full path).
+// Directory represents a directory inode. The Children property contains the
+// directories' direct children (just the name, not the full path).
 type Directory struct {
 	Base
 	Children []string
@@ -59,7 +61,8 @@ func (d *Directory) inode() *inodeCompact {
 }
 
 func (d *Directory) writeTo(w *uncompressedInodeWriter) error {
-	// children is d.Children with appended backrefs (. and ..), copied to not pollute source
+	// children is d.Children with appended backrefs (. and ..), copied to not
+	// pollute source
 	children := make([]string, len(d.Children))
 	copy(children, d.Children)
 	children = append(children, ".", "..")
@@ -97,7 +100,8 @@ func (d *Directory) writeTo(w *uncompressedInodeWriter) error {
 	return nil
 }
 
-// CharacterDevice represents a Unix character device inode with major and minor numbers.
+// CharacterDevice represents a Unix character device inode with major and
+// minor numbers.
 type CharacterDevice struct {
 	Base
 	Major uint32
@@ -110,7 +114,8 @@ func (c *CharacterDevice) inode() *inodeCompact {
 	return i
 }
 
-// CharacterDevice represents a Unix block device inode with major and minor numbers.
+// CharacterDevice represents a Unix block device inode with major and minor
+// numbers.
 type BlockDevice struct {
 	Base
 	Major uint32
@@ -141,7 +146,8 @@ func (s *Socket) inode() *inodeCompact {
 	return s.baseInode(unix.S_IFSOCK)
 }
 
-// SymbolicLink represents a symbolic link/symlink to another inode. Target is the literal string target of the symlink.
+// SymbolicLink represents a symbolic link/symlink to another inode. Target is
+// the literal string target of the symlink.
 type SymbolicLink struct {
 	Base
 	Target string
@@ -156,8 +162,9 @@ func (s *SymbolicLink) writeTo(w io.Writer) error {
 	return err
 }
 
-// FileMeta represents the metadata of a regular file. In this case the contents are written to a Writer returned by the
-// CreateFile function on the EROFS Writer and not included in the structure itself.
+// FileMeta represents the metadata of a regular file. In this case the
+// contents are written to a Writer returned by the CreateFile function on the
+// EROFS Writer and not included in the structure itself.
 type FileMeta struct {
 	Base
 }

@@ -16,21 +16,26 @@
 
 package supervisor
 
-// Supporting infrastructure to allow running some non-Go payloads under supervision.
+// Supporting infrastructure to allow running some non-Go payloads under
+// supervision.
 
 import (
 	"context"
 	"net"
 	"os/exec"
+
 	"source.monogon.dev/metropolis/pkg/logtree"
 
 	"google.golang.org/grpc"
 )
 
-// GRPCServer creates a Runnable that serves gRPC requests as longs as it's not canceled.
-// If graceful is set to true, the server will be gracefully stopped instead of plain stopped. This means all pending
-// RPCs will finish, but also requires streaming gRPC handlers to check their context liveliness and exit accordingly.
-// If the server code does not support this, `graceful` should be false and the server will be killed violently instead.
+// GRPCServer creates a Runnable that serves gRPC requests as longs as it's not
+// canceled.
+// If graceful is set to true, the server will be gracefully stopped instead of
+// plain stopped. This means all pending RPCs will finish, but also requires
+// streaming gRPC handlers to check their context liveliness and exit
+// accordingly.  If the server code does not support this, `graceful` should be
+// false and the server will be killed violently instead.
 func GRPCServer(srv *grpc.Server, lis net.Listener, graceful bool) Runnable {
 	return func(ctx context.Context) error {
 		Signal(ctx, SignalHealthy)
@@ -52,7 +57,8 @@ func GRPCServer(srv *grpc.Server, lis net.Listener, graceful bool) Runnable {
 	}
 }
 
-// RunCommand will create a Runnable that starts a long-running command, whose exit is determined to be a failure.
+// RunCommand will create a Runnable that starts a long-running command, whose
+// exit is determined to be a failure.
 func RunCommand(ctx context.Context, cmd *exec.Cmd, opts ...RunCommandOption) error {
 	Signal(ctx, SignalHealthy)
 
@@ -86,8 +92,8 @@ type RunCommandOption struct {
 	parseKlog bool
 }
 
-// ParseKLog signals that the command being run will return klog-compatible logs
-// to stdout and/or stderr, and these will be re-interpreted as structured
+// ParseKLog signals that the command being run will return klog-compatible
+// logs to stdout and/or stderr, and these will be re-interpreted as structured
 // logging and emitted to the supervisor's logger.
 func ParseKLog() RunCommandOption {
 	return RunCommandOption{

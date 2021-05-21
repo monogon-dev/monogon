@@ -35,7 +35,7 @@ func readDataSectors(path string) (uint64, error) {
 	}
 	defer integrityPartition.Close()
 	// Based on structure defined in
-	// https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-integrity.c#n59
+	//   https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-integrity.c#n59
 	if _, err := integrityPartition.Seek(16, 0); err != nil {
 		return 0, err
 	}

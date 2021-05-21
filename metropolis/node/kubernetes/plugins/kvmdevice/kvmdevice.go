@@ -14,10 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package kvmdevice implements a Kubernetes device plugin for the virtual KVM device. Using the device plugin API
-// allows us to take advantage of the scheduler to locate pods on machines eligible for KVM and also allows granular
-// access control to KVM using quotas instead of needing privileged access.
-// Since KVM devices are virtual, this plugin emulates a huge number of them so that we never run out.
+// Package kvmdevice implements a Kubernetes device plugin for the virtual KVM
+// device. Using the device plugin API allows us to take advantage of the
+// scheduler to locate pods on machines eligible for KVM and also allows
+// granular access control to KVM using quotas instead of needing privileged
+// access.
+// Since KVM devices are virtual, this plugin emulates a huge number of them so
+// that we never run out.
 package kvmdevice
 
 import (
@@ -110,8 +113,9 @@ func (k *Plugin) Allocate(ctx context.Context, req *deviceplugin.AllocateRequest
 	return &response, nil
 }
 
-// deviceNumberFromString gets a Linux device number from a string containing two decimal numbers representing the major
-// and minor device numbers separated by a colon. Whitespace is ignored.
+// deviceNumberFromString gets a Linux device number from a string containing
+// two decimal numbers representing the major and minor device numbers
+// separated by a colon. Whitespace is ignored.
 func deviceNumberFromString(s string) (uint64, error) {
 	kvmDevParts := strings.Split(s, ":")
 	if len(kvmDevParts) != 2 {

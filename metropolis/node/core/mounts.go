@@ -27,8 +27,9 @@ import (
 	"source.monogon.dev/metropolis/pkg/logtree"
 )
 
-// setupMounts sets up basic mounts like sysfs, procfs, devtmpfs and cgroups. This should be called early during init
-// as a lot of processes depend on this being available.
+// setupMounts sets up basic mounts like sysfs, procfs, devtmpfs and cgroups.
+// This should be called early during init as a lot of processes depend on this
+// being available.
 func setupMounts(log logtree.LeveledLogger) error {
 	// Set up target filesystems.
 	for _, el := range []struct {
@@ -50,7 +51,8 @@ func setupMounts(log logtree.LeveledLogger) error {
 		}
 	}
 
-	// Mount all available CGroups for v1 (v2 uses a single unified hierarchy and is not supported by our runtimes yet)
+	// Mount all available CGroups for v1 (v2 uses a single unified hierarchy
+	// and is not supported by our runtimes yet)
 	if err := unix.Mount("tmpfs", "/sys/fs/cgroup", "tmpfs", unix.MS_NOEXEC|unix.MS_NOSUID|unix.MS_NODEV, ""); err != nil {
 		panic(err)
 	}

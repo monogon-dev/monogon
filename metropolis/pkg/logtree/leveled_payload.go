@@ -25,12 +25,13 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
-// LeveledPayload is a log entry for leveled logs (as per leveled.go). It contains the input to these calls (severity and
-// message split into newline-delimited messages) and additional metadata that would be usually seen in a text
+// LeveledPayload is a log entry for leveled logs (as per leveled.go). It contains
+// the input to these calls (severity and message split into newline-delimited
+// messages) and additional metadata that would be usually seen in a text
 // representation of a leveled log entry.
 type LeveledPayload struct {
-	// messages is the list of messages contained in this payload. This list is built from splitting up the given message
-	// from the user by newline.
+	// messages is the list of messages contained in this payload. This list is built
+	// from splitting up the given message from the user by newline.
 	messages []string
 	// timestamp is the time at which this message was emitted.
 	timestamp time.Time
@@ -42,10 +43,11 @@ type LeveledPayload struct {
 	line int
 }
 
-// String returns a canonical representation of this payload as a single string prefixed with metadata. If the original
-// message was logged with newlines, this representation will also contain newlines, with each original message part
-// prefixed by the metadata.
-// For an alternative call that will instead return a canonical prefix and a list of lines in the message, see Strings().
+// String returns a canonical representation of this payload as a single string
+// prefixed with metadata. If the original message was logged with newlines, this
+// representation will also contain newlines, with each original message part
+// prefixed by the metadata. For an alternative call that will instead return a
+// canonical prefix and a list of lines in the message, see Strings().
 func (p *LeveledPayload) String() string {
 	prefix, lines := p.Strings()
 	res := make([]string, len(p.messages))
@@ -55,9 +57,11 @@ func (p *LeveledPayload) String() string {
 	return strings.Join(res, "\n")
 }
 
-// Strings returns the canonical representation of this payload split into a prefix and all lines that were contained in
-// the original message. This is meant to be displayed to the user by showing the prefix before each line, concatenated
-// together - possibly in a table form with the prefixes all unified with a rowspan-like mechanism.
+// Strings returns the canonical representation of this payload split into a
+// prefix and all lines that were contained in the original message. This is
+// meant to be displayed to the user by showing the prefix before each line,
+// concatenated together - possibly in a table form with the prefixes all
+// unified with a rowspan- like mechanism.
 //
 // For example, this function can return:
 //   prefix = "I1102 17:20:06.921395 foo.go:42] "
@@ -76,7 +80,6 @@ func (p *LeveledPayload) String() string {
 // |                                        :------------------|
 // |                                        :  - two           |
 // '-----------------------------------------------------------'
-//
 func (p *LeveledPayload) Strings() (prefix string, lines []string) {
 	_, month, day := p.timestamp.Date()
 	hour, minute, second := p.timestamp.Clock()
@@ -91,8 +94,8 @@ func (p *LeveledPayload) Strings() (prefix string, lines []string) {
 	return
 }
 
-// Message returns the inner message lines of this entry, ie. what was passed to the actual logging method, but split by
-// newlines.
+// Message returns the inner message lines of this entry, ie. what was passed to
+// the actual logging method, but split by newlines.
 func (p *LeveledPayload) Messages() []string { return p.messages }
 
 func (p *LeveledPayload) MessagesJoined() string { return strings.Join(p.messages, "\n") }
@@ -100,8 +103,8 @@ func (p *LeveledPayload) MessagesJoined() string { return strings.Join(p.message
 // Timestamp returns the time at which this entry was logged.
 func (p *LeveledPayload) Timestamp() time.Time { return p.timestamp }
 
-// Location returns a string in the form of file_name:line_number that shows the origin of the log entry in the
-// program source.
+// Location returns a string in the form of file_name:line_number that shows the
+// origin of the log entry in the program source.
 func (p *LeveledPayload) Location() string { return fmt.Sprintf("%s:%d", p.file, p.line) }
 
 // Severity returns the Severity with which this entry was logged.

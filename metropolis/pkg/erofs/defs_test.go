@@ -24,8 +24,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// These test that the specified structures serialize to the same number of bytes as the ones in the
-// EROFS kernel module.
+// These test that the specified structures serialize to the same number of
+// bytes as the ones in the EROFS kernel module.
 
 func TestSuperblockSize(t *testing.T) {
 	var buf bytes.Buffer

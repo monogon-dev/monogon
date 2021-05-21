@@ -29,8 +29,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// UnicastTransport implements a DHCP transport based on a normal Linux UDP socket with some custom
-// socket options to influence DSCP and routing.
+// UnicastTransport implements a DHCP transport based on a normal Linux UDP
+// socket with some custom socket options to influence DSCP and routing.
 type UnicastTransport struct {
 	udpConn  *net.UDPConn
 	targetIP net.IP

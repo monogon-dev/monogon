@@ -102,8 +102,8 @@ func (s *kubeletService) configure() *kubeletconfig.KubeletConfiguration {
 			"memory": "300Mi",
 		},
 
-		// We're not going to use this, but let's make it point to a known-empty directory in case anybody manages to
-		// trigger it.
+		// We're not going to use this, but let's make it point to a
+		// known-empty directory in case anybody manages to trigger it.
 		VolumePluginDir: s.EphemeralDirectory.FlexvolumePlugins.FullPath(),
 	}
 }

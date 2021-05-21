@@ -14,8 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This package launches a Metropolis cluster with two nodes and spawns in the CTS container. Then it streams its output
-// to the console. When the CTS has finished it exits with the appropriate error code.
+// This package launches a Metropolis cluster with two nodes and spawns in the
+// CTS container. Then it streams its output to the console. When the CTS has
+// finished it exits with the appropriate error code.
 package main
 
 import (
@@ -37,18 +38,22 @@ import (
 	"source.monogon.dev/metropolis/test/launch"
 )
 
-// makeCTSPodSpec generates a spec for a standalone pod running the Kubernetes CTS. It also sets the test configuration
-// for the Kubernetes E2E test suite to only run CTS tests and excludes known-broken ones.
+// makeCTSPodSpec generates a spec for a standalone pod running the Kubernetes
+// CTS. It also sets the test configuration for the Kubernetes E2E test suite
+// to only run CTS tests and excludes known-broken ones.
 func makeCTSPodSpec(name string, saName string) *corev1.Pod {
 	skipRegexes := []string{
-		// hostNetworking cannot be supported since we run different network stacks for the host and containers
+		// hostNetworking cannot be supported since we run different network
+		// stacks for the host and containers
 		"should function for node-pod communication",
-		// gVisor misreports statfs() syscalls: https://github.com/google/gvisor/issues/3339
+		// gVisor misreports statfs() syscalls:
+		//   https://github.com/google/gvisor/issues/3339
 		`should support \((non-)?root,`,
 		"volume on tmpfs should have the correct mode",
 		"volume on default medium should have the correct mode",
-		// gVisor doesn't support the full Linux privilege machinery including SUID and NewPrivs
-		// https://github.com/google/gvisor/issues/189#issuecomment-481064000
+		// gVisor doesn't support the full Linux privilege machinery including
+		// SUID and NewPrivs:
+		//   https://github.com/google/gvisor/issues/189#issuecomment-481064000
 		"should run the container as unprivileged when false",
 	}
 	return &corev1.Pod{
@@ -73,10 +78,12 @@ func makeCTSPodSpec(name string, saName string) *corev1.Pod {
 					ImagePullPolicy: corev1.PullNever,
 				},
 			},
-			Tolerations: []corev1.Toleration{{ // Tolerate all taints, otherwise the CTS likes to self-evict
+			// Tolerate all taints, otherwise the CTS likes to self-evict.
+			Tolerations: []corev1.Toleration{{
 				Operator: "Exists",
 			}},
-			PriorityClassName:  "system-cluster-critical", // Don't evict the CTS pod
+			// Don't evict the CTS pod.
+			PriorityClassName:  "system-cluster-critical",
 			RestartPolicy:      corev1.RestartPolicyNever,
 			ServiceAccountName: saName,
 		},
@@ -145,7 +152,8 @@ func main() {
 	}
 	var logs io.ReadCloser
 	go func() {
-		// This loops the whole .Stream()/io.Copy process because the API sometimes returns streams that immediately return EOF
+		// This loops the whole .Stream()/io.Copy process because the API
+		// sometimes returns streams that immediately return EOF
 		for {
 			logs, err = clientSet.CoreV1().Pods("default").GetLogs(podName, &corev1.PodLogOptions{Follow: true}).Stream(ctx)
 			if err == nil {

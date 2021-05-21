@@ -14,7 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package jsonpatch contains data structures and encoders for JSON Patch (RFC 6902) and JSON Pointers (RFC 6901)
+// Package jsonpatch contains data structures and encoders for JSON Patch (RFC
+// 6902) and JSON Pointers (RFC 6901)
 package jsonpatch
 
 import "strings"
@@ -27,7 +28,8 @@ type JsonPatchOp struct {
 	Value     interface{} `json:"value,omitempty"`
 }
 
-// EncodeJSONRefToken encodes a JSON reference token as part of a JSON Pointer (RFC 6901 Section 2)
+// EncodeJSONRefToken encodes a JSON reference token as part of a JSON Pointer
+// (RFC 6901 Section 2)
 func EncodeJSONRefToken(token string) string {
 	x := strings.ReplaceAll(token, "~", "~0")
 	return strings.ReplaceAll(x, "/", "~1")

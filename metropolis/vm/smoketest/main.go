@@ -14,8 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This is a small smoke test which will run in a container on top of Metropolis Kubernetes. It exercises Metropolis'
-// KVM device plugin,
+// This is a small smoke test which will run in a container on top of Metropolis
+// Kubernetes. It exercises Metropolis' KVM device plugin,
 package main
 
 import (

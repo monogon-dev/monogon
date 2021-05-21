@@ -56,9 +56,9 @@ func main() {
 
 	hyperkubeCommand, allCommandFns := NewHyperKubeCommand()
 
-	// TODO: once we switch everything over to Cobra commands, we can go back to calling
-	// cliflag.InitFlags() (by removing its pflag.Parse() call). For now, we have to set the
-	// normalize func and add the go flag set by hand.
+	// TODO: once we switch everything over to Cobra commands, we can go back
+	// to calling cliflag.InitFlags() (by removing its pflag.Parse() call). For
+	// now, we have to set the normalize func and add the go flag set by hand.
 	pflag.CommandLine.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)
 	pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 	// cliflag.InitFlags()
@@ -89,8 +89,8 @@ func commandFor(basename string, defaultCommand *cobra.Command, commands []func(
 
 // NewHyperKubeCommand is the entry point for hyperkube
 func NewHyperKubeCommand() (*cobra.Command, []func() *cobra.Command) {
-	// these have to be functions since the command is polymorphic. Cobra wants you to be top level
-	// command to get executed
+	// these have to be functions since the command is polymorphic. Cobra wants
+	// you to be top level command to get executed
 	apiserver := func() *cobra.Command { return kubeapiserver.NewAPIServerCommand() }
 	controller := func() *cobra.Command { return kubecontrollermanager.NewControllerManagerCommand() }
 	scheduler := func() *cobra.Command { return kubescheduler.NewSchedulerCommand() }

@@ -24,9 +24,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// TODO(q3k): this is duplicated with //metropolis/node/kubernetes:provisioner.go; integrate this once provisioner.go
-// gets moved into a subpackage.
-// ONCHANGE(//metropolis/node/kubernetes:provisioner.go): needs to match csiProvisionerName declared.
+// TODO(q3k): this is duplicated with
+// //metropolis/node/kubernetes:provisioner.go; integrate this once
+// provisioner.go gets moved into a subpackage.
+// ONCHANGE(//metropolis/node/kubernetes:provisioner.go): needs to match
+// csiProvisionerName declared.
 const csiProvisionerName = "dev.monogon.metropolis.vfs"
 
 type resourceCSIDrivers struct {

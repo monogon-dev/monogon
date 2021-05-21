@@ -25,7 +25,8 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
-// Line is a line stored in the log buffer - a string, that has been perhaps truncated (due to exceeded limits).
+// Line is a line stored in the log buffer - a string, that has been perhaps
+// truncated (due to exceeded limits).
 type Line struct {
 	Data           string
 	OriginalLength int
@@ -36,8 +37,8 @@ func (l *Line) Truncated() bool {
 	return l.OriginalLength > len(l.Data)
 }
 
-// String returns the line with an ellipsis at the end (...) if the line has been truncated, or the original line
-// otherwise.
+// String returns the line with an ellipsis at the end (...) if the line has been
+// truncated, or the original line otherwise.
 func (l *Line) String() string {
 	if l.Truncated() {
 		return l.Data + "..."
@@ -68,24 +69,27 @@ func LineFromLogProto(raw *apb.LogEntry_Raw) (*Line, error) {
 	}, nil
 }
 
-// LineBuffer is a io.WriteCloser that will call a given callback every time a line is completed.
+// LineBuffer is a io.WriteCloser that will call a given callback every time a line
+// is completed.
 type LineBuffer struct {
 	maxLineLength int
 	cb            LineBufferCallback
 
 	mu  sync.Mutex
 	cur strings.Builder
-	// length is the length of the line currently being written - this will continue to increase, even if the string
-	// exceeds maxLineLength.
+	// length is the length of the line currently being written - this will continue to
+	// increase, even if the string exceeds maxLineLength.
 	length int
 	closed bool
 }
 
-// LineBufferCallback is a callback that will get called any time the line is completed. The function must not cause another
-// write to the LineBuffer, or the program will deadlock.
+// LineBufferCallback is a callback that will get called any time the line is
+// completed. The function must not cause another write to the LineBuffer, or the
+// program will deadlock.
 type LineBufferCallback func(*Line)
 
-// NewLineBuffer creates a new LineBuffer with a given line length limit and callback.
+// NewLineBuffer creates a new LineBuffer with a given line length limit and
+// callback.
 func NewLineBuffer(maxLineLength int, cb LineBufferCallback) *LineBuffer {
 	return &LineBuffer{
 		maxLineLength: maxLineLength,
@@ -93,7 +97,8 @@ func NewLineBuffer(maxLineLength int, cb LineBufferCallback) *LineBuffer {
 	}
 }
 
-// writeLimited writes to the internal buffer, making sure that its size does not exceed the maxLineLength.
+// writeLimited writes to the internal buffer, making sure that its size does not
+// exceed the maxLineLength.
 func (l *LineBuffer) writeLimited(data []byte) {
 	l.length += len(data)
 	if l.cur.Len()+len(data) > l.maxLineLength {
@@ -144,8 +149,8 @@ func (l *LineBuffer) Write(data []byte) (int, error) {
 	return len(data), nil
 }
 
-// Close will emit any leftover data in the buffer to the callback. Subsequent calls to Write will fail. Subsequent calls to Close
-// will also fail.
+// Close will emit any leftover data in the buffer to the callback. Subsequent
+// calls to Write will fail. Subsequent calls to Close will also fail.
 func (l *LineBuffer) Close() error {
 	if l.closed {
 		return fmt.Errorf("already closed")

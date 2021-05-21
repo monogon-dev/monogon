@@ -76,7 +76,8 @@ func runnableSpawnsMore(healthy, done chan struct{}, levels int) Runnable {
 	}
 }
 
-// rc is a Remote Controlled runnable. It is a generic runnable used for testing the supervisor.
+// rc is a Remote Controlled runnable. It is a generic runnable used for
+// testing the supervisor.
 type rc struct {
 	req chan rcRunnableRequest
 }
@@ -129,7 +130,8 @@ func (r *rc) state() rcRunnableState {
 }
 
 func (r *rc) waitState(s rcRunnableState) {
-	// This is poll based. Making it non-poll based would make the RC runnable logic a bit more complex for little gain.
+	// This is poll based. Making it non-poll based would make the RC runnable
+	// logic a bit more complex for little gain.
 	for {
 		got := r.state()
 		if got == s {
@@ -384,12 +386,14 @@ func TestBackoff(t *testing.T) {
 	}, WithPropagatePanic)
 
 	one.becomeHealthy()
-	// Die a bunch of times in a row, this brings up the next exponential backoff to over a second.
+	// Die a bunch of times in a row, this brings up the next exponential
+	// backoff to over a second.
 	for i := 0; i < 4; i += 1 {
 		one.die()
 		one.waitState(rcRunnableStateNew)
 	}
-	// Measure how long it takes for the runnable to respawn after a number of failures
+	// Measure how long it takes for the runnable to respawn after a number of
+	// failures
 	start := time.Now()
 	one.die()
 	one.becomeHealthy()
@@ -411,8 +415,9 @@ func TestBackoff(t *testing.T) {
 	}
 }
 
-// TestResilience throws some curveballs at the supervisor - either programming errors or high load. It then ensures
-// that another runnable is running, and that it restarts on its sibling failure.
+// TestResilience throws some curveballs at the supervisor - either programming
+// errors or high load. It then ensures that another runnable is running, and
+// that it restarts on its sibling failure.
 func TestResilience(t *testing.T) {
 	// request/response channel for testing liveness of the 'one' runnable
 	req := make(chan chan struct{})
@@ -443,7 +448,8 @@ func TestResilience(t *testing.T) {
 		timeout.Stop()
 	}
 
-	// A nasty runnable that calls Signal with the wrong context (this is a programming error)
+	// A nasty runnable that calls Signal with the wrong context (this is a
+	// programming error)
 	two := func(ctx context.Context) error {
 		Signal(context.TODO(), SignalHealthy)
 		return nil

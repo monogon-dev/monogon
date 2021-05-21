@@ -29,9 +29,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// withinTolerance is a helper for asserting that a value is within a certain percentage of the
-// expected value. The tolerance is specified as a float between 0 (exact match)
-// and 1 (between 0 and twice the expected value).
+// withinTolerance is a helper for asserting that a value is within a certain
+// percentage of the expected value. The tolerance is specified as a float
+// between 0 (exact match) and 1 (between 0 and twice the expected value).
 func withinTolerance(t *testing.T, expected uint64, actual uint64, tolerance float64, name string) {
 	t.Helper()
 	delta := uint64(math.Round(float64(expected) * tolerance))
@@ -131,8 +131,9 @@ func TestBasic(t *testing.T) {
 		require.Equal(t, uint64(bytesQuota), quotaUtil.Bytes, "bytes quota readback incorrect")
 		require.Equal(t, uint64(inodesQuota), quotaUtil.Inodes, "inodes quota readback incorrect")
 
-		// Give 10% tolerance for quota used values to account for metadata overhead and internal
-		// structures that are also in there. If it's out by more than that it's an issue anyways.
+		// Give 10% tolerance for quota used values to account for metadata
+		// overhead and internal structures that are also in there. If it's out
+		// by more than that it's an issue anyways.
 		withinTolerance(t, uint64(len(sizeFileData)), quotaUtil.BytesUsed, 0.1, "BytesUsed")
 
 		// Write 50 inodes for a total of 51 (with the 512K file)

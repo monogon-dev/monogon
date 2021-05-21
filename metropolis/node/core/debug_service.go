@@ -44,8 +44,10 @@ type debugService struct {
 	cluster    *cluster.Manager
 	kubernetes *kubernetes.Service
 	logtree    *logtree.LogTree
-	// traceLock provides exclusive access to the Linux tracing infrastructure (ftrace)
-	// This is a channel because Go's mutexes can't be cancelled or be acquired in a non-blocking way.
+	// traceLock provides exclusive access to the Linux tracing infrastructure
+	// (ftrace)
+	// This is a channel because Go's mutexes can't be cancelled or be acquired
+	// in a non-blocking way.
 	traceLock chan struct{}
 }
 
@@ -192,7 +194,8 @@ func (s *debugService) GetLogs(req *apb.GetLogsRequest, srv apb.NodeDebugService
 	}
 }
 
-// Validate property names as they are used in path construction and we really don't want a path traversal vulnerability
+// Validate property names as they are used in path construction and we really
+// don't want a path traversal vulnerability
 var safeTracingPropertyNamesRe = regexp.MustCompile("^[a-z0-9_]+$")
 
 func writeTracingProperty(name string, value string) error {

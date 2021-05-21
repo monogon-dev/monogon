@@ -47,8 +47,10 @@ import (
 )
 
 var (
-	// kubernetesConfig is the static/global part of the Kubernetes service configuration. In the future, this might
-	// be configurable by loading it from the EnrolmentConfig. Fow now, it's static and same across all clusters.
+	// kubernetesConfig is the static/global part of the Kubernetes service
+	// configuration. In the future, this might be configurable by loading it
+	// from the EnrolmentConfig. Fow now, it's static and same across all
+	// clusters.
 	kubernetesConfig = kubernetes.Config{
 		ServiceIPRange: net.IPNet{ // TODO(q3k): Decide if configurable / final value
 			IP:   net.IP{10, 0, 255, 1},
@@ -69,7 +71,8 @@ func main() {
 		}
 		unix.Sync()
 		// TODO(lorenz): Switch this to Reboot when init panics are less likely
-		// Best effort, nothing we can do if this fails except printing the error to the console.
+		// Best effort, nothing we can do if this fails except printing the
+		// error to the console.
 		if err := unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF); err != nil {
 			panic(fmt.Sprintf("failed to halt node: %v\n", err))
 		}
@@ -97,7 +100,8 @@ func main() {
 		panic(fmt.Errorf("could not set up basic mounts: %w", err))
 	}
 
-	// Linux kernel default is 4096 which is far too low. Raise it to 1M which is what gVisor suggests.
+	// Linux kernel default is 4096 which is far too low. Raise it to 1M which
+	// is what gVisor suggests.
 	if err := unix.Setrlimit(unix.RLIMIT_NOFILE, &unix.Rlimit{Cur: 1048576, Max: 1048576}); err != nil {
 		logger.Fatalf("Failed to raise rlimits: %v", err)
 	}
@@ -113,7 +117,8 @@ func main() {
 
 	networkSvc := network.New()
 
-	// This function initializes a headless Delve if this is a debug build or does nothing if it's not
+	// This function initializes a headless Delve if this is a debug build or
+	// does nothing if it's not
 	initializeDebugger(networkSvc)
 
 	// Prepare local storage.
@@ -122,15 +127,17 @@ func main() {
 		panic(fmt.Errorf("when placing root FS: %w", err))
 	}
 
-	// trapdoor is a channel used to signal to the init service that a very low-level, unrecoverable failure
-	// occured. This causes a GURU MEDITATION ERROR visible to the end user.
+	// trapdoor is a channel used to signal to the init service that a very
+	// low-level, unrecoverable failure occured. This causes a GURU MEDITATION
+	// ERROR visible to the end user.
 	trapdoor := make(chan struct{})
 
 	// Make context for supervisor. We cancel it when we reach the trapdoor.
 	ctxS, ctxC := context.WithCancel(context.Background())
 
-	// Start root initialization code as a supervisor one-shot runnable. This means waiting for the network, starting
-	// the cluster manager, and then starting all services related to the node's roles.
+	// Start root initialization code as a supervisor one-shot runnable. This
+	// means waiting for the network, starting the cluster manager, and then
+	// starting all services related to the node's roles.
 	// TODO(q3k): move this to a separate 'init' service.
 	supervisor.New(ctxS, func(ctx context.Context) error {
 		logger := supervisor.Logger(ctx)
@@ -143,8 +150,8 @@ func main() {
 			return fmt.Errorf("when starting network: %w", err)
 		}
 
-		// Start cluster manager. This kicks off cluster membership machinery, which will either start
-		// a new cluster, enroll into one or join one.
+		// Start cluster manager. This kicks off cluster membership machinery,
+		// which will either start a new cluster, enroll into one or join one.
 		m := cluster.NewManager(root, networkSvc)
 		if err := supervisor.Run(ctx, "enrolment", m.Run); err != nil {
 			return fmt.Errorf("when starting enrolment: %w", err)
@@ -158,25 +165,27 @@ func main() {
 			return fmt.Errorf("new couldn't find home in new cluster, aborting: %w", err)
 		}
 
-		// We are now in a cluster. We can thus access our 'node' object and start all services that
-		// we should be running.
+		// We are now in a cluster. We can thus access our 'node' object and
+		// start all services that we should be running.
 
 		logger.Info("Enrolment success, continuing startup.")
 		logger.Info(fmt.Sprintf("This node (%s) has roles:", status.Node.String()))
 		if cm := status.Node.ConsensusMember(); cm != nil {
-			// There's no need to start anything for when we are a consensus member - the cluster
-			// manager does this for us if necessary (as creating/enrolling/joining a cluster is
-			// pretty tied into cluster lifecycle management).
+			// There's no need to start anything for when we are a consensus
+			// member - the cluster manager does this for us if necessary (as
+			// creating/enrolling/joining a cluster is pretty tied into cluster
+			// lifecycle management).
 			logger.Info(fmt.Sprintf(" - etcd consensus member"))
 		}
 		if kw := status.Node.KubernetesWorker(); kw != nil {
 			logger.Info(fmt.Sprintf(" - kubernetes worker"))
 		}
 
-		// If we're supposed to be a kubernetes worker, start kubernetes services and containerd.
-		// In the future, this might be split further into kubernetes control plane and data plane
-		// roles.
-		// TODO(q3k): watch on cluster status updates to start/stop kubernetes service.
+		// If we're supposed to be a kubernetes worker, start kubernetes
+		// services and containerd.  In the future, this might be split further
+		// into kubernetes control plane and data plane roles.
+		// TODO(q3k): watch on cluster status updates to start/stop kubernetes
+		// service.
 		var containerdSvc *containerd.Service
 		var kubeSvc *kubernetes.Service
 		if kw := status.Node.KubernetesWorker(); kw != nil {
@@ -236,8 +245,9 @@ func main() {
 	for {
 		select {
 		case <-trapdoor:
-			// If the trapdoor got closed, we got stuck early enough in the boot process that we can't do anything about
-			// it. Display a generic error message until we handle error conditions better.
+			// If the trapdoor got closed, we got stuck early enough in the
+			// boot process that we can't do anything about it. Display a
+			// generic error message until we handle error conditions better.
 			ctxC()
 			log.Printf("                  ########################")
 			log.Printf("                  # GURU MEDIATION ERROR #")
@@ -266,9 +276,11 @@ func main() {
 					}
 				}
 			case unix.SIGURG:
-				// Go 1.14 introduced asynchronous preemption, which uses SIGURG.
-				// In order not to break backwards compatibility in the unlikely case
-				// of an application actually using SIGURG on its own, they're not filtering them.
+				// Go 1.14 introduced asynchronous preemption, which uses
+				// SIGURG.
+				// In order not to break backwards compatibility in the
+				// unlikely case of an application actually using SIGURG on its
+				// own, they're not filtering them.
 				// (https://github.com/golang/go/issues/37942)
 				logger.V(5).Info("Ignoring SIGURG")
 			// TODO(lorenz): We can probably get more than just SIGCHLD as init, but I can't think
@@ -280,8 +292,9 @@ func main() {
 	}
 }
 
-// nodeCertificate creates a node key/certificate for a foreign node. This is duplicated code with localstorage's
-// PKIDirectory EnsureSelfSigned, but is temporary (and specific to 'golden tickets').
+// nodeCertificate creates a node key/certificate for a foreign node. This is
+// duplicated code with localstorage's PKIDirectory EnsureSelfSigned, but is
+// temporary (and specific to 'golden tickets').
 func (s *debugService) nodeCertificate() (cert, key []byte, err error) {
 	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {

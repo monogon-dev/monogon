@@ -21,8 +21,8 @@ package erofs
 
 import "encoding/binary"
 
-// mapHeader is a legacy but still-used advisory structure at the start of a compressed VLE block. It contains constant
-// values as annotated.
+// mapHeader is a legacy but still-used advisory structure at the start of a
+// compressed VLE block. It contains constant values as annotated.
 type mapHeader struct {
 	Reserved      uint32 // 0
 	Advise        uint16 // 1

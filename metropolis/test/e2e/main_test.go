@@ -44,8 +44,8 @@ import (
 const (
 	// Timeout for the global test context.
 	//
-	// Bazel would eventually time out the test after 900s ("large") if, for some reason,
-	// the context cancellation fails to abort it.
+	// Bazel would eventually time out the test after 900s ("large") if, for
+	// some reason, the context cancellation fails to abort it.
 	globalTestTimeout = 600 * time.Second
 
 	// Timeouts for individual end-to-end tests of different sizes.
@@ -53,8 +53,10 @@ const (
 	largeTestTimeout = 120 * time.Second
 )
 
-// TestE2E is the main E2E test entrypoint for single-node freshly-bootstrapped E2E tests. It starts a full Metropolis node
-// in bootstrap mode and then runs tests against it. The actual tests it performs are located in the RunGroup subtest.
+// TestE2E is the main E2E test entrypoint for single-node freshly-bootstrapped
+// E2E tests. It starts a full Metropolis node in bootstrap mode and then runs
+// tests against it. The actual tests it performs are located in the RunGroup
+// subtest.
 func TestE2E(t *testing.T) {
 	// Run pprof server for debugging
 	go func() {
@@ -102,8 +104,9 @@ func TestE2E(t *testing.T) {
 	}
 	debugClient := apb.NewNodeDebugServiceClient(grpcClient)
 
-	// This exists to keep the parent around while all the children race
-	// It currently tests both a set of OS-level conditions and Kubernetes Deployments and StatefulSets
+	// This exists to keep the parent around while all the children race.
+	// It currently tests both a set of OS-level conditions and Kubernetes
+	// Deployments and StatefulSets
 	t.Run("RunGroup", func(t *testing.T) {
 		t.Run("Get Kubernetes Debug Kubeconfig", func(t *testing.T) {
 			t.Parallel()

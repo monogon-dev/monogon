@@ -53,8 +53,8 @@ func main() {
 		shelf: shelf,
 	}
 
-	// Currently can't bump past v1.30.0, as that removes the old balancer.Picker API that
-	// go-etcd depends upon. See https://github.com/etcd-io/etcd/pull/12398 .
+	// Currently can't bump past v1.30.0, as that removes the old balancer.Picker API
+	// that go-etcd depends upon. See https://github.com/etcd-io/etcd/pull/12398 .
 	p.collect(
 		"google.golang.org/grpc", "v1.29.1",
 	).use(
@@ -147,8 +147,9 @@ func main() {
 		"github.com/muesli/reflow",
 	)
 
-	// First generate the repositories starlark rule into memory. This is because rendering will lock all unlocked
-	// dependencies, which might take a while. If a use were to interrupt it now, they would end up with an incomplete
+	// First generate the repositories starlark rule into memory. This is because
+	// rendering will lock all unlocked dependencies, which might take a while. If a
+	// use were to interrupt it now, they would end up with an incomplete
 	// repositories.bzl and would have to restore from git.
 	buf := bytes.NewBuffer(nil)
 	err = p.render(buf)

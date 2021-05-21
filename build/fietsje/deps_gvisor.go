@@ -32,6 +32,7 @@ func depsGVisor(p *planner) {
 		"github.com/mohae/deepcopy",
 		"golang.org/x/time",
 	)
-	// gRPC is used by gvisor's bazel machinery, but not present in go.sum. Include it manually.
+	// gRPC is used by gvisor's bazel machinery, but not present in go.sum. Include it
+	// manually.
 	p.collect("github.com/grpc/grpc", "v1.29.1")
 }

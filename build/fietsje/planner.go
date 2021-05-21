@@ -20,28 +20,31 @@ import (
 	"fmt"
 )
 
-// The Planner provides the main DSL and high-level control logic for resolving dependencies. It is the main API that
-// fietsje users should consume.
+// The Planner provides the main DSL and high-level control logic for resolving
+// dependencies. It is the main API that fietsje users should consume.
 
-// planner is a builder for a single world of Go package dependencies, and what is then emitted into a Starlark file
-// containing gazelle go_repository rules.
-// The planner's builder system covers three increasingly specific contextx:
+// planner is a builder for a single world of Go package dependencies, and what is
+// then emitted into a Starlark file containing gazelle go_repository rules. The
+// planner's builder system covers three increasingly specific contextx:
 //  - planner (this structure, allows for 'collecting' in high-level dependencies. ie. collections)
 //  - collection (represents what has been pulled in by a high-level dependency, and allows for 'using' transitive
 //    dependencies from a collection)
 //  - optionized (represents a collection with extra build flags, eg. disabled proto builds)
 type planner struct {
-	// available is a map of importpaths to dependencies that the planner knows. This is a flat structure that is the
-	// main source of truth of actual dependency data, like a registry of everything that the planner knows about.
-	// The available dependency for a given importpath, as the planner progresses, might change, ie. when there is a
-	// version conflict. As such, code should use importpaths as atoms describing dependencies, instead of holding
-	// dependency pointers.
+	// available is a map of importpaths to dependencies that the planner knows. This
+	// is a flat structure that is the main source of truth of actual dependency data,
+	// like a registry of everything that the planner knows about. The available
+	// dependency for a given importpath, as the planner progresses, might change, ie.
+	// when there is a version conflict. As such, code should use importpaths as atoms
+	// describing dependencies, instead of holding dependency pointers.
 	available map[string]*dependency
-	// enabled is a map of dependencies that will be emitted by the planner into the build via Gazelle.
+	// enabled is a map of dependencies that will be emitted by the planner into the
+	// build via Gazelle.
 	enabled map[string]bool
-	// seen is a map of 'dependency' -> 'parent' importpaths, ie. returns what higher-level dependency (ie. one enabled
-	// with .collect()) pulled in a given dependency. This is only used for error messages to help the user find what
-	// a transitive  dependency has been pulled in by.
+	// seen is a map of 'dependency' -> 'parent' importpaths, ie. returns what higher-
+	// level dependency (ie. one enabled with .collect()) pulled in a given dependency.
+	// This is only used for error messages to help the user find what a transitive
+	// dependency has been pulled in by.
 	seen map[string]string
 
 	shelf *shelf
@@ -89,7 +92,8 @@ func (p *planner) collectInternal(importpath, version string, override bool, opt
 	}
 	// add transitive deps to 'available' map
 	for k, v := range td {
-		// skip dependencies that have already been enabled, dependencies are 'first enabled version wins'.
+		// skip dependencies that have already been enabled, dependencies are 'first
+		// enabled version wins'.
 		if _, ok := p.available[k]; ok && p.enabled[k] {
 			continue
 		}
@@ -107,8 +111,9 @@ func (p *planner) collectInternal(importpath, version string, override bool, opt
 	}
 }
 
-// collection represents the context of the planner after pulling/collecting in a high-level dependency. In this state,
-// the planner can be used to enable transitive dependencies of the high-level dependency.
+// collection represents the context of the planner after pulling/collecting in a
+// high-level dependency. In this state, the planner can be used to enable
+// transitive dependencies of the high-level dependency.
 type collection struct {
 	p *planner
 
@@ -116,18 +121,21 @@ type collection struct {
 	transitive map[string]*dependency
 }
 
-// use enables given dependencies defined in the collection by a high-level dependency.
+// use enables given dependencies defined in the collection by a high-level
+// dependency.
 func (c *collection) use(paths ...string) *collection {
 	return c.with().use(paths...)
 }
 
-// replace injects a new dependency with a replacement importpath. This is used to reflect 'replace' stanzas in go.mod
-// files of third-party dependencies. This is not done automatically by Fietsje, as a replacement is global to the
-// entire build tree, and should be done knowingly and explicitly by configuration. The 'oldpath' importpath will be
-// visible to the build system, but will be backed at 'newpath' locked at 'version'.
+// replace injects a new dependency with a replacement importpath. This is used to
+// reflect 'replace' stanzas in go.mod files of third-party dependencies. This is
+// not done automatically by Fietsje, as a replacement is global to the entire
+// build tree, and should be done knowingly and explicitly by configuration. The
+// 'oldpath' importpath will be visible to the build system, but will be backed at
+// 'newpath' locked at 'version'.
 func (c *collection) replace(oldpath, newpath, version string) *collection {
-	// Ensure oldpath is in use. We want as little replacements as possible, and if it's not being used by anything,
-	// it means that we likely don't need it.
+	// Ensure oldpath is in use. We want as little replacements as possible, and if
+	// it's not being used by anything, it means that we likely don't need it.
 	c.use(oldpath)
 
 	d := c.highlevel.child(oldpath, version)
@@ -139,9 +147,11 @@ func (c *collection) replace(oldpath, newpath, version string) *collection {
 	return c
 }
 
-// inject adds a dependency to a collection as if requested by the high-level dependency of the collection. This should
-// be used sparingly, for instance when high-level dependencies contain bazel code that uses some external workspaces
-// from Go modules, and those workspaces are not defined in parsed transitive dependency definitions like go.mod/sum.
+// inject adds a dependency to a collection as if requested by the high-level
+// dependency of the collection. This should be used sparingly, for instance when
+// high-level dependencies contain bazel code that uses some external workspaces
+// from Go modules, and those workspaces are not defined in parsed transitive
+// dependency definitions like go.mod/sum.
 func (c *collection) inject(importpath, version string, opts ...buildOpt) *collection {
 	d := c.highlevel.child(importpath, version)
 	c.transitive[importpath] = d
@@ -162,8 +172,8 @@ func (c *collection) with(o ...buildOpt) *optionized {
 	}
 }
 
-// optionized is a collection that has some build options set, that will be applied to all dependencies 'used' in this
-// context
+// optionized is a collection that has some build options set, that will be applied
+// to all dependencies 'used' in this context
 type optionized struct {
 	c    *collection
 	opts []buildOpt
@@ -191,7 +201,8 @@ func patches(patches ...string) buildOpt {
 	}
 }
 
-// prePatches applies patches in affected dependencies before BUILD file generation.
+// prePatches applies patches in affected dependencies before BUILD file
+// generation.
 func prePatches(patches ...string) buildOpt {
 	return func(d *dependency) {
 		d.prePatches = patches
@@ -208,8 +219,9 @@ func buildExtraArgs(args ...string) buildOpt {
 	}
 }
 
-// use enables given dependencies defined in the collection by a high-level dependency, with any set build options.
-// After returning, the builder degrades to a collection - ie, all build options are reset.
+// use enables given dependencies defined in the collection by a high-level
+// dependency, with any set build options. After returning, the builder degrades to
+// a collection - ie, all build options are reset.
 func (o *optionized) use(paths ...string) *collection {
 	for _, path := range paths {
 		el, ok := o.c.transitive[path]

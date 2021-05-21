@@ -39,9 +39,10 @@ import (
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
-// Derived from K8s spec for acceptable names, but shortened to 130 characters to avoid issues with
-// maximum path length. We don't provision longer names so this applies only if you manually create
-// a volume with a name of more than 130 characters.
+// Derived from K8s spec for acceptable names, but shortened to 130 characters
+// to avoid issues with maximum path length. We don't provision longer names so
+// this applies only if you manually create a volume with a name of more than
+// 130 characters.
 var acceptableNames = regexp.MustCompile("^[a-z][a-z0-9-.]{0,128}[a-z0-9]$")
 
 type csiPluginServer struct {
@@ -64,8 +65,8 @@ func (s *csiPluginServer) Run(ctx context.Context) error {
 	pluginServer := grpc.NewServer()
 	csi.RegisterIdentityServer(pluginServer, s)
 	csi.RegisterNodeServer(pluginServer, s)
-	// Enable graceful shutdown since we don't have long-running RPCs and most of them shouldn't and can't be
-	// cancelled anyways.
+	// Enable graceful shutdown since we don't have long-running RPCs and most
+	// of them shouldn't and can't be cancelled anyways.
 	if err := supervisor.Run(ctx, "csi-node", supervisor.GRPCServer(pluginServer, pluginListener, true)); err != nil {
 		return err
 	}

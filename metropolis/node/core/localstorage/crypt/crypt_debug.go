@@ -22,8 +22,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// CryptMap implements a debug version of CryptMap from crypt.go. It aliases the given baseName device into name
-// without any encryption.
+// CryptMap implements a debug version of CryptMap from crypt.go. It aliases
+// the given baseName device into name without any encryption.
 func CryptMap(name string, baseName string, _ []byte) error {
 	var stat unix.Stat_t
 	if err := unix.Stat(baseName, &stat); err != nil {
@@ -36,8 +36,9 @@ func CryptMap(name string, baseName string, _ []byte) error {
 	return nil
 }
 
-// CryptInit implements a debug version of CryptInit from crypt.go. It aliases the given baseName device into name
-// without any encryption. As an identity mapping doesn't need any initialization it doesn't do anything else.
+// CryptInit implements a debug version of CryptInit from crypt.go. It aliases
+// the given baseName device into name without any encryption. As an identity
+// mapping doesn't need any initialization it doesn't do anything else.
 func CryptInit(name, baseName string, encryptionKey []byte) error {
 	return CryptMap(name, baseName, encryptionKey)
 }

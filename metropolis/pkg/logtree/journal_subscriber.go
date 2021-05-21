@@ -24,12 +24,15 @@ import (
 type subscriber struct {
 	// filters that entries need to pass through in order to be sent to the subscriber.
 	filters []filter
-	// dataC is the channel to which entries that pass filters will be sent. The channel must be drained regularly in
-	// order to prevent accumulation of goroutines and possible reordering of messages.
+	// dataC is the channel to which entries that pass filters will be sent. The
+	// channel must be drained regularly in order to prevent accumulation of goroutines
+	// and possible reordering of messages.
 	dataC chan *LogEntry
-	// doneC is a channel that is closed once the subscriber wishes to stop receiving notifications.
+	// doneC is a channel that is closed once the subscriber wishes to stop receiving
+	// notifications.
 	doneC chan struct{}
-	// missed is the amount of messages missed by the subscriber by not receiving from dataC fast enough
+	// missed is the amount of messages missed by the subscriber by not receiving from
+	// dataC fast enough
 	missed uint64
 }
 

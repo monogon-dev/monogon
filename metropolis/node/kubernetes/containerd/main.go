@@ -76,10 +76,12 @@ func (s *Service) logPump(fifo *os.File) supervisor.Runnable {
 
 			n, err := io.Copy(supervisor.RawLogger(ctx), fifo)
 			if n == 0 && err == nil {
-				// Hack because pipes/FIFOs can return zero reads when nobody is writing. To avoid busy-looping,
-				// sleep a bit before retrying. This does not loose data since the FIFO internal buffer will
-				// stall writes when it becomes full. 10ms maximum stall in a non-latency critical process (reading
-				// debug logs) is not an issue for us.
+				// Hack because pipes/FIFOs can return zero reads when nobody
+				// is writing. To avoid busy-looping, sleep a bit before
+				// retrying. This does not loose data since the FIFO internal
+				// buffer will stall writes when it becomes full. 10ms maximum
+				// stall in a non-latency critical process (reading debug logs)
+				// is not an issue for us.
 				time.Sleep(10 * time.Millisecond)
 			} else if err != nil {
 				return fmt.Errorf("log pump failed: %v", err)
@@ -88,14 +90,18 @@ func (s *Service) logPump(fifo *os.File) supervisor.Runnable {
 	}
 }
 
-// runPreseed loads OCI bundles in tar form from preseedNamespacesDir into containerd at startup.
-// This can be run multiple times, containerd will automatically dedup the layers.
-// containerd uses namespaces to keep images (and everything else) separate so to define where the images will be loaded
-// to they need to be in a folder named after the namespace they should be loaded into.
-// containerd's CRI plugin (which is built as part of containerd) uses a hardcoded namespace ("k8s.io") for everything
-// accessed through CRI, so if an image should be available on K8s it needs to be in that namespace.
-// As an example if image helloworld should be loaded for use with Kubernetes, the OCI bundle needs to be at
-// <preseedNamespacesDir>/k8s.io/helloworld.tar. No tagging beyond what's in the bundle is performed.
+// runPreseed loads OCI bundles in tar form from preseedNamespacesDir into
+// containerd at startup.
+// This can be run multiple times, containerd will automatically dedup the
+// layers.  containerd uses namespaces to keep images (and everything else)
+// separate so to define where the images will be loaded to they need to be in
+// a folder named after the namespace they should be loaded into.  containerd's
+// CRI plugin (which is built as part of containerd) uses a hardcoded namespace
+// ("k8s.io") for everything accessed through CRI, so if an image should be
+// available on K8s it needs to be in that namespace.
+// As an example if image helloworld should be loaded for use with Kubernetes,
+// the OCI bundle needs to be at <preseedNamespacesDir>/k8s.io/helloworld.tar.
+// No tagging beyond what's in the bundle is performed.
 func (s *Service) runPreseed(ctx context.Context) error {
 	client, err := ctr.New(s.EphemeralVolume.ClientSocket.FullPath())
 	if err != nil {
@@ -126,8 +132,9 @@ func (s *Service) runPreseed(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("failed to open preseed image \"%v\": %w", image.Name(), err)
 			}
-			// defer in this loop is fine since we're never going to preseed more than ~1M images which is where our
-			// file descriptor limit is.
+			// defer in this loop is fine since we're never going to preseed
+			// more than ~1M images which is where our file descriptor limit
+			// is.
 			defer imageFile.Close()
 			importedImages, err := client.Import(ctxWithNS, imageFile)
 			if err != nil {

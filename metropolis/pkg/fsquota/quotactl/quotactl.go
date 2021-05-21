@@ -14,9 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package quotactl implements a low-level wrapper around the modern portion of Linux's
-// quotactl() syscall. See the fsquota package for a nicer interface to the most common part
-// of this API.
+// Package quotactl implements a low-level wrapper around the modern portion of
+// Linux's quotactl() syscall. See the fsquota package for a nicer interface to
+// the most common part of this API.
 package quotactl
 
 import (
@@ -212,7 +212,8 @@ func SetQuota(device string, qtype QuotaType, id uint32, quota *Quota) error {
 	return nil
 }
 
-// Sync syncs disk copy of filesystems quotas. If device is empty it syncs all filesystems.
+// Sync syncs disk copy of filesystems quotas. If device is empty it syncs all
+// filesystems.
 func Sync(device string) error {
 	if device != "" {
 		devArg, err := unix.BytePtrFromString(device)

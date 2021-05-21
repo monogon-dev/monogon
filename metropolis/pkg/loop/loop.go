@@ -16,10 +16,13 @@
 
 // Package loop implements an interface to configure Linux loop devices.
 //
-// This package requires Linux 5.8 or higher because it uses the newer LOOP_CONFIGURE ioctl, which is better-behaved
-// and twice as fast as the old approach. It doesn't support all of the cryptloop functionality as it has been
-// superseded by dm-crypt and has known vulnerabilities. It also doesn't support on-the-fly reconfiguration of loop
-// devices as this is rather unusual, works only under very specific circumstances and would make the API less clean.
+// This package requires Linux 5.8 or higher because it uses the newer
+// LOOP_CONFIGURE ioctl, which is better-behaved and twice as fast as the old
+// approach. It doesn't support all of the cryptloop functionality as it has
+// been superseded by dm-crypt and has known vulnerabilities. It also doesn't
+// support on-the-fly reconfiguration of loop devices as this is rather
+// unusual, works only under very specific circumstances and would make the API
+// less clean.
 package loop
 
 import (
@@ -35,7 +38,8 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// Lazily-initialized file descriptor for the control device /dev/loop-control (singleton)
+// Lazily-initialized file descriptor for the control device /dev/loop-control
+// (singleton)
 var (
 	mutex         sync.Mutex
 	loopControlFd *os.File
@@ -50,8 +54,10 @@ const (
 
 // struct loop_config from @linux//include/uapi/linux:loop.h
 type loopConfig struct {
-	fd        uint32
-	blockSize uint32 // Power of 2 between 512 and os.Getpagesize(), defaults reasonably
+	fd uint32
+	// blockSize is a power of 2 between 512 and os.Getpagesize(), defaults
+	// reasonably
+	blockSize uint32
 	info      loopInfo64
 	_reserved [64]byte
 }
@@ -74,14 +80,16 @@ type loopInfo64 struct {
 }
 
 type Config struct {
-	// Block size of the loop device in bytes. Power of 2 between 512 and page size.
-	// Zero defaults to an reasonable block size.
+	// Block size of the loop device in bytes. Power of 2 between 512 and page
+	// size.  Zero defaults to an reasonable block size.
 	BlockSize uint32
 	// Combination of flags from the Flag constants in this package.
 	Flags uint32
-	// Offset in bytes from the start of the file to the first byte of the device. Usually zero.
+	// Offset in bytes from the start of the file to the first byte of the
+	// device. Usually zero.
 	Offset uint64
-	// Maximum size of the loop device in bytes. Zero defaults to the whole file.
+	// Maximum size of the loop device in bytes. Zero defaults to the whole
+	// file.
 	SizeLimit uint64
 }
 
@@ -118,12 +126,14 @@ type Device struct {
 const (
 	// Makes the loop device read-only even if the backing file is read-write.
 	FlagReadOnly = 1
-	// Unbinds the backing file as soon as the last user is gone. Useful for unbinding after unmount.
+	// Unbinds the backing file as soon as the last user is gone. Useful for
+	// unbinding after unmount.
 	FlagAutoclear = 4
-	// Enables kernel-side partition scanning on the loop device. Needed if you want to access specific partitions on
-	// a loop device.
+	// Enables kernel-side partition scanning on the loop device. Needed if you
+	// want to access specific partitions on a loop device.
 	FlagPartscan = 8
-	// Enables direct IO for the loop device, bypassing caches and buffer copying.
+	// Enables direct IO for the loop device, bypassing caches and buffer
+	// copying.
 	FlagDirectIO = 16
 )
 
@@ -169,7 +179,8 @@ func Create(f *os.File, c Config) (*Device, error) {
 	}
 }
 
-// Open opens a loop device at the given path. It returns an error if the path is not a loop device.
+// Open opens a loop device at the given path. It returns an error if the path
+// is not a loop device.
 func Open(path string) (*Device, error) {
 	potentialDevice, err := os.Open(path)
 	if err != nil {
@@ -219,7 +230,8 @@ func (d *Device) BackingFilePath() (string, error) {
 	return string(backingFile), err
 }
 
-// RefreshSize recalculates the size of the loop device based on the config and the size of the backing file.
+// RefreshSize recalculates the size of the loop device based on the config and
+// the size of the backing file.
 func (d *Device) RefreshSize() error {
 	if err := d.ensureOpen(); err != nil {
 		return err
@@ -227,7 +239,8 @@ func (d *Device) RefreshSize() error {
 	return unix.IoctlSetInt(int(d.dev.Fd()), unix.LOOP_SET_CAPACITY, 0)
 }
 
-// Close closes all file descriptors open to the device. Does not remove the device itself or alter its configuration.
+// Close closes all file descriptors open to the device. Does not remove the
+// device itself or alter its configuration.
 func (d *Device) Close() error {
 	if err := d.ensureOpen(); err != nil {
 		return err

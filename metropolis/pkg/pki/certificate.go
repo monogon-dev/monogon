@@ -37,7 +37,8 @@ type Namespace struct {
 	prefix string
 }
 
-// Namespaced creates a namespace for storing certificate data in etcd at a given 'path' prefix.
+// Namespaced creates a namespace for storing certificate data in etcd at a
+// given 'path' prefix.
 func Namespaced(prefix string) Namespace {
 	return Namespace{
 		prefix: prefix,
@@ -91,7 +92,7 @@ func (n *Namespace) New(issuer Issuer, name string, template x509.Certificate) *
 
 // Client makes a Kubernetes PKI-compatible client certificate template.
 // Directly derived from Kubernetes PKI requirements documented at
-// https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually
+//   https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually
 func Client(identity string, groups []string) x509.Certificate {
 	return x509.Certificate{
 		Subject: pkix.Name{

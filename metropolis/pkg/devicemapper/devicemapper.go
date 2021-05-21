@@ -122,8 +122,8 @@ func newReq() DMIoctl {
 	}
 }
 
-// stringToDelimitedBuf copies src to dst and returns an error if len(src) > len(dst),
-// or when the string contains a null byte.
+// stringToDelimitedBuf copies src to dst and returns an error if len(src) >
+// len(dst), or when the string contains a null byte.
 func stringToDelimitedBuf(dst []byte, src string) error {
 	if len(src) > len(dst)-1 {
 		return fmt.Errorf("string longer than target buffer (%v > %v)", len(src), len(dst)-1)

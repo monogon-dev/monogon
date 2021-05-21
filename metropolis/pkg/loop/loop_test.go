@@ -32,8 +32,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// Write a test file with a very specific pattern (increasing little-endian 16 bit unsigned integers) to detect offset
-// correctness. File is always 128KiB large (2^16 * 2 bytes).
+// Write a test file with a very specific pattern (increasing little-endian 16
+// bit unsigned integers) to detect offset correctness. File is always 128KiB
+// large (2^16 * 2 bytes).
 func makeTestFile() *os.File {
 	f, err := ioutil.TempFile("/tmp", "")
 	if err != nil {
@@ -100,8 +101,9 @@ func TestDeviceAccessors(t *testing.T) {
 
 	backingFile, err := dev.BackingFilePath()
 	assert.NoError(t, err)
-	// The filename of the temporary file is not available in this context, but we know that the file
-	// needs to be in /tmp, which should be a good-enough test.
+	// The filename of the temporary file is not available in this context, but
+	// we know that the file needs to be in /tmp, which should be a good-enough
+	// test.
 	assert.Contains(t, backingFile, "/tmp/")
 }
 

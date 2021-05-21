@@ -206,7 +206,8 @@ func (s *Service) Run(ctx context.Context) error {
 	return nil
 }
 
-// GetDebugKubeconfig issues a kubeconfig for an arbitrary given identity. Useful for debugging and testing.
+// GetDebugKubeconfig issues a kubeconfig for an arbitrary given identity.
+// Useful for debugging and testing.
 func (s *Service) GetDebugKubeconfig(ctx context.Context, request *apb.GetDebugKubeconfigRequest) (*apb.GetDebugKubeconfigResponse, error) {
 	client, err := s.c.KPKI.VolatileClient(ctx, request.Id, request.Groups)
 	if err != nil {

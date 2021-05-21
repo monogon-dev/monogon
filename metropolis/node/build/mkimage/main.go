@@ -84,7 +84,8 @@ func main() {
 	}
 
 	table := &gpt.Table{
-		// This is appropriate at least for virtio disks. Might need to be adjusted for real ones.
+		// This is appropriate at least for virtio disks. Might need to be
+		// adjusted for real ones.
 		LogicalSectorSize:  512,
 		PhysicalSectorSize: 512,
 		ProtectiveMBR:      true,
@@ -165,7 +166,8 @@ func put(fs filesystem.FileSystem, src, dst string) {
 		log.Fatalf("os.Open(%q): %v", src, err)
 	}
 	defer source.Close()
-	// If this is streamed (e.g. using io.Copy) it exposes a bug in diskfs, so do it in one go.
+	// If this is streamed (e.g. using io.Copy) it exposes a bug in diskfs, so
+	// do it in one go.
 	data, err := ioutil.ReadAll(source)
 	if err != nil {
 		log.Fatalf("Reading %q: %v", src, err)

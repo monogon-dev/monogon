@@ -27,18 +27,21 @@ import (
 	"github.com/bazelbuild/bazel-gazelle/label"
 )
 
-// dependency is an external Go package/module, requested by the user of Fietsje directly or indirectly.
+// dependency is an external Go package/module, requested by the user of Fietsje
+// directly or indirectly.
 type dependency struct {
 	// importpath is the Go import path that was used to import this dependency.
 	importpath string
-	// version at which this dependency has been requested. This can be in any form that `go get` or the go module
-	// system understands.
+	// version at which this dependency has been requested. This can be in any form
+	// that `go get` or the go module system understands.
 	version string
 
-	// locked is the 'resolved' version of a dependency, containing information about the dependency's hash, etc.
+	// locked is the 'resolved' version of a dependency, containing information about
+	// the dependency's hash, etc.
 	locked *locked
 
-	// parent is the dependency that pulled in this one, or nil if pulled in by the user.
+	// parent is the dependency that pulled in this one, or nil if pulled in by the
+	// user.
 	parent *dependency
 
 	shelf *shelf
@@ -50,9 +53,10 @@ type dependency struct {
 	patches              []string
 	prePatches           []string
 	buildExtraArgs       []string
-	// replace is an importpath that this dependency will replace. If this is set, this dependency will be visible
-	// in the build as 'importpath', but downloaded at 'replace'/'version'. This might be slighly confusing, but
-	// follows the semantics of what Gazelle exposes via 'replace' in 'go_repository'.
+	// replace is an importpath that this dependency will replace. If this is set, this
+	// dependency will be visible in the build as 'importpath', but downloaded at
+	// 'replace'/'version'. This might be slighly confusing, but follows the semantics
+	// of what Gazelle exposes via 'replace' in 'go_repository'.
 	replace string
 }
 
@@ -63,20 +67,24 @@ func (d *dependency) remoteImportpath() string {
 	return d.importpath
 }
 
-// locked is information about a dependency resolved from the go module system. It is expensive to get, and as such
-// it is cached both in memory (as .locked in a dependency) and in the shelf.
+// locked is information about a dependency resolved from the go module system. It
+// is expensive to get, and as such it is cached both in memory (as .locked in a
+// dependency) and in the shelf.
 type locked struct {
-	// bazelName is the external workspace name that Bazel should use for this dependency, eg. com_github_google_glog.
+	// bazelName is the external workspace name that Bazel should use for this
+	// dependency, eg. com_github_google_glog.
 	bazelName string
-	// sum is the gomod compatible checksum of the depdendency, egh1:4A07+ZFc2wgJwo8YNlQpr1rVlgUDlxXHhPJciaPY5gs=.
+	// sum is the gomod compatible checksum of the depdendency,
+	// egh1:4A07+ZFc2wgJwo8YNlQpr1rVlgUDlxXHhPJciaPY5gs=.
 	sum string
-	// semver is the gomod-compatible version of this dependency. If the dependency was requested by git hash that does
-	// not resolve to a particular release, this will be in the form of v0.0.0-20200520133742-deadbeefcafe.
+	// semver is the gomod-compatible version of this dependency. If the dependency was
+	// requested by git hash that does not resolve to a particular release, this will
+	// be in the form of v0.0.0-20200520133742-deadbeefcafe.
 	semver string
 }
 
-// child creates a new child dependence for this dependency, ie. one where the 'parent' pointer points to the dependency
-// on which this method is called.
+// child creates a new child dependence for this dependency, ie. one where the
+// 'parent' pointer points to the dependency on which this method is called.
 func (d *dependency) child(importpath, version string) *dependency {
 	return &dependency{
 		importpath: importpath,
@@ -93,8 +101,9 @@ func (d *dependency) String() string {
 	return fmt.Sprintf("%s@%s", d.importpath, d.version)
 }
 
-// lock ensures that this dependency is locked, which means that it has been resolved to a particular, stable version
-// and VCS details. We lock a dependency by either asking the go module subsystem (via a go module proxy or a download),
+// lock ensures that this dependency is locked, which means that it has been
+// resolved to a particular, stable version and VCS details. We lock a dependency
+// by either asking the go module subsystem (via a go module proxy or a download),
 // or by consulting the shelf as a cache.
 func (d *dependency) lock() error {
 	// If already locked in-memory, use that.
@@ -133,8 +142,8 @@ func (l *locked) String() string {
 	return fmt.Sprintf("%s@%s", l.bazelName, l.sum)
 }
 
-// download ensures that this dependency is download locally, and returns the download location and the dependency's
-// gomod-compatible sum.
+// download ensures that this dependency is download locally, and returns the
+// download location and the dependency's gomod-compatible sum.
 func (d *dependency) download() (version, dir, sum string, err error) {
 	goroot := os.Getenv("GOROOT")
 	if goroot == "" {

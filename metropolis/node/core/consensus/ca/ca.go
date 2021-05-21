@@ -73,19 +73,21 @@ type CA struct {
 	CACert     *x509.Certificate
 	CACertRaw  []byte
 
-	// bootstrapIssued are certificates that have been issued by the CA before it has been successfully Saved to etcd.
+	// bootstrapIssued are certificates that have been issued by the CA before
+	// it has been successfully Saved to etcd.
 	bootstrapIssued [][]byte
-	// canBootstrapIssue is set on CAs that have been created by New and not yet stored to etcd. If not set,
-	// certificates cannot be issued in-memory.
+	// canBootstrapIssue is set on CAs that have been created by New and not
+	// yet stored to etcd. If not set, certificates cannot be issued in-memory.
 	canBootstrapIssue bool
 }
 
-// Workaround for https://github.com/golang/go/issues/26676 in Go's crypto/x509. Specifically Go
-// violates Section 4.2.1.2 of RFC 5280 without this.
+// Workaround for https://github.com/golang/go/issues/26676 in Go's
+// crypto/x509. Specifically Go violates Section 4.2.1.2 of RFC 5280 without
+// this.
 // Fixed for 1.15 in https://go-review.googlesource.com/c/go/+/227098/.
 //
-// Taken from https://github.com/FiloSottile/mkcert/blob/master/cert.go#L295 written by one of Go's
-// crypto engineers (BSD 3-clause).
+// Taken from https://github.com/FiloSottile/mkcert/blob/master/cert.go#L295
+// written by one of Go's crypto engineers (BSD 3-clause).
 func calculateSKID(pubKey crypto.PublicKey) ([]byte, error) {
 	spkiASN1, err := x509.MarshalPKIXPublicKey(pubKey)
 	if err != nil {
@@ -104,8 +106,9 @@ func calculateSKID(pubKey crypto.PublicKey) ([]byte, error) {
 	return skid[:], nil
 }
 
-// New creates a new certificate authority with the given common name. The newly created CA will be stored in memory
-// until committed to etcd by calling .Save.
+// New creates a new certificate authority with the given common name. The
+// newly created CA will be stored in memory until committed to etcd by calling
+// .Save.
 func New(name string) (*CA, error) {
 	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -159,7 +162,8 @@ func Load(ctx context.Context, kv clientv3.KV) (*CA, error) {
 	resp, err := kv.Txn(ctx).Then(
 		clientv3.OpGet(pathCACertificate),
 		clientv3.OpGet(pathCAKey),
-		// We only read the CRL to ensure it exists on etcd (and early fail on inconsistency)
+		// We only read the CRL to ensure it exists on etcd (and early fail on
+		// inconsistency)
 		clientv3.OpGet(pathCACRL)).Commit()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve CA from etcd: %w", err)
@@ -198,7 +202,8 @@ func Load(ctx context.Context, kv clientv3.KV) (*CA, error) {
 	}, nil
 }
 
-// Save stores a newly created CA into etcd, committing both the CA data and any certificates issued until then.
+// Save stores a newly created CA into etcd, committing both the CA data and
+// any certificates issued until then.
 func (c *CA) Save(ctx context.Context, kv clientv3.KV) error {
 	crl, err := c.makeCRL(nil)
 	if err != nil {
@@ -233,8 +238,9 @@ func (c *CA) Save(ctx context.Context, kv clientv3.KV) error {
 	return nil
 }
 
-// Issue issues a certificate. If kv is non-nil, the newly issued certificate will be immediately stored to etcd,
-// otherwise it will be kept in memory (until .Save is called). Certificates can only be issued to memory on
+// Issue issues a certificate. If kv is non-nil, the newly issued certificate
+// will be immediately stored to etcd, otherwise it will be kept in memory
+// (until .Save is called). Certificates can only be issued to memory on
 // newly-created CAs that have not been saved to etcd yet.
 func (c *CA) Issue(ctx context.Context, kv clientv3.KV, commonName string) (cert []byte, privkey []byte, err error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 127)
@@ -297,9 +303,10 @@ func (c *CA) makeCRL(revoked []pkix.RevokedCertificate) ([]byte, error) {
 	return crl, nil
 }
 
-// Revoke revokes a certificate by hostname. The selected hostname will be added to the CRL stored in etcd. This call
-// might fail (safely) if a simultaneous revoke happened that caused the CRL to be bumped. The call can be then retried
-// safely.
+// Revoke revokes a certificate by hostname. The selected hostname will be
+// added to the CRL stored in etcd. This call might fail (safely) if a
+// simultaneous revoke happened that caused the CRL to be bumped. The call can
+// be then retried safely.
 func (c *CA) Revoke(ctx context.Context, kv clientv3.KV, hostname string) error {
 	res, err := kv.Txn(ctx).Then(
 		clientv3.OpGet(pathCACRL),
@@ -383,8 +390,9 @@ func (c *CA) Revoke(ctx context.Context, kv clientv3.KV, hostname string) error 
 	return nil
 }
 
-// WaitCRLChange returns a channel that will receive a CRLUpdate any time the remote CRL changed. Immediately after
-// calling this method, the current CRL is retrieved from the cluster and put into the channel.
+// WaitCRLChange returns a channel that will receive a CRLUpdate any time the
+// remote CRL changed. Immediately after calling this method, the current CRL
+// is retrieved from the cluster and put into the channel.
 func (c *CA) WaitCRLChange(ctx context.Context, kv clientv3.KV, w clientv3.Watcher) <-chan CRLUpdate {
 	C := make(chan CRLUpdate)
 
@@ -424,16 +432,20 @@ func (c *CA) WaitCRLChange(ctx context.Context, kv clientv3.KV, w clientv3.Watch
 	return C
 }
 
-// CRLUpdate is emitted for every remote CRL change, and spuriously on ever new WaitCRLChange.
+// CRLUpdate is emitted for every remote CRL change, and spuriously on ever new
+// WaitCRLChange.
 type CRLUpdate struct {
-	// The new (or existing, in the case of the first call) CRL. If nil, Err will be set.
+	// The new (or existing, in the case of the first call) CRL. If nil, Err
+	// will be set.
 	CRL []byte
-	// If set, an error occurred and the WaitCRLChange call must be restarted. If set, CRL will be nil.
+	// If set, an error occurred and the WaitCRLChange call must be restarted.
+	// If set, CRL will be nil.
 	Err error
 }
 
-// GetCurrentCRL returns the current CRL for the CA. This should only be used for one-shot operations like
-// bootstrapping a new node that doesn't yet have access to etcd - otherwise, WaitCRLChange shoulde be used.
+// GetCurrentCRL returns the current CRL for the CA. This should only be used
+// for one-shot operations like bootstrapping a new node that doesn't yet have
+// access to etcd - otherwise, WaitCRLChange shoulde be used.
 func (c *CA) GetCurrentCRL(ctx context.Context, kv clientv3.KV) ([]byte, error) {
 	initial, err := kv.Get(ctx, pathCACRL)
 	if err != nil {

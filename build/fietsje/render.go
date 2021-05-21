@@ -22,7 +22,8 @@ import (
 	"sort"
 )
 
-// render writes a gazelle-compatible starlark file based on the enabled dependencies in this planner.
+// render writes a gazelle-compatible starlark file based on the enabled
+// dependencies in this planner.
 func (p *planner) render(w io.Writer) error {
 	fmt.Fprintln(w, `load("@bazel_gazelle//:deps.bzl", "go_repository")`)
 	fmt.Fprintln(w, ``)

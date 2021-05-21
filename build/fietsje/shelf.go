@@ -29,17 +29,21 @@ import (
 	pb "source.monogon.dev/build/fietsje/proto"
 )
 
-// The Shelf is a combined cache and dependency lockfile, not unlike go.sum. It's implemented as a text proto file on
-// disk, and currently stores a single mapping of shelfKeys to shelfValues, which are in order a (importpath, version)
-// tuple and the `locked` structure of a dependency.
-// The resulting shelf file should be commited to the monogon repository. It can be freely deleted to force recreation from
-// scratch, which can be useful as there is no garbage collection implemented for it.
-// The 'lockfile' aspect of the Shelf is counter-intuitive to what readers might be used to from other dependency
-// management systems. It does not lock a third-party dependency to a particular version, but only locks a well defined
-// version to its checksum. As such, recreating the shelf from scratch should not bump any dependencies, unless some
-// upstream-project retagged a release to a different VCS commit, or a fietsje user pinned to 'master' instead of a
-// particular commit. The effective changes will always be reflected in the resulting starlark repository ruleset,
-// which (also being commited to source control) can be used as a canary of a version being effectively bumped.
+// The Shelf is a combined cache and dependency lockfile, not unlike go.sum. It's
+// implemented as a text proto file on disk, and currently stores a single mapping
+// of shelfKeys to shelfValues, which are in order a (importpath, version) tuple
+// and the `locked` structure of a dependency. The resulting shelf file should be
+// commited to the monogon repository. It can be freely deleted to force recreation
+// from scratch, which can be useful as there is no garbage collection implemented
+// for it. The 'lockfile' aspect of the Shelf is counter-intuitive to what readers
+// might be used to from other dependency management systems. It does not lock a
+// third-party dependency to a particular version, but only locks a well defined
+// version to its checksum. As such, recreating the shelf from scratch should not
+// bump any dependencies, unless some upstream-project retagged a release to a
+// different VCS commit, or a fietsje user pinned to 'master' instead of a
+// particular commit. The effective changes will always be reflected in the
+// resulting starlark repository ruleset, which (also being commited to source
+// control) can be used as a canary of a version being effectively bumped.
 
 // shelfKey is the key into the shelf map structure.
 type shelfKey struct {
@@ -107,12 +111,14 @@ func (s *shelf) get(importpath, version string) *locked {
 	return res.l
 }
 
-// put stores a given locked entry in memory. This will not be commited to disk until .save() is called.
+// put stores a given locked entry in memory. This will not be commited to disk
+// until .save() is called.
 func (s *shelf) put(importpath, version string, l *locked) {
 	s.data[shelfKey{importpath: importpath, version: version}] = shelfValue{l: l}
 }
 
-// save commits the shelf to disk (to the same location it was loaded from), fully overwriting from in-memory data.
+// save commits the shelf to disk (to the same location it was loaded from), fully
+// overwriting from in-memory data.
 func (s *shelf) save() error {
 	// Build proto representation of shelf data.
 	var shelfProto pb.Shelf

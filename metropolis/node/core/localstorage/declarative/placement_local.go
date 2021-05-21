@@ -27,7 +27,8 @@ import (
 
 // FSRoot is a root of a storage backend that resides on the local filesystem.
 type FSRoot struct {
-	// The local path at which the declarative directory structure is located (eg. "/").
+	// The local path at which the declarative directory structure is located
+	// (eg. "/").
 	root string
 }
 
@@ -83,8 +84,9 @@ func (f *FSPlacement) MkdirAll(perm os.FileMode) error {
 	return os.MkdirAll(f.FullPath(), perm)
 }
 
-// PlaceFS takes a pointer to a Directory or a pointer to a structure embedding Directory and places it at a given
-// filesystem root. From this point on the given structure pointer has valid Placement interfaces.
+// PlaceFS takes a pointer to a Directory or a pointer to a structure embedding
+// Directory and places it at a given filesystem root. From this point on the
+// given structure pointer has valid Placement interfaces.
 func PlaceFS(dd interface{}, root string) error {
 	r := &FSRoot{root}
 	pathFor := func(parent, this string) string {

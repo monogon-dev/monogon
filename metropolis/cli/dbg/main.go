@@ -40,8 +40,8 @@ import (
 
 func main() {
 	ctx := context.Background()
-	// Hardcode localhost since this should never be used to interface with a production node because of missing
-	// encryption & authentication
+	// Hardcode localhost since this should never be used to interface with a
+	// production node because of missing encryption & authentication
 	grpcClient, err := grpc.Dial("localhost:7837", grpc.WithInsecure())
 	if err != nil {
 		fmt.Printf("Failed to dial debug service (is it running): %v\n", err)
@@ -132,7 +132,8 @@ func main() {
 			}
 		}
 	case "kubectl":
-		// Always get a kubeconfig with cluster-admin (group system:masters), kubectl itself can impersonate
+		// Always get a kubeconfig with cluster-admin (group system:masters),
+		// kubectl itself can impersonate
 		kubeconfigFile, err := ioutil.TempFile("", "dbg_kubeconfig")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create kubeconfig temp file: %v\n", err)
@@ -151,10 +152,13 @@ func main() {
 			os.Exit(1)
 		}
 
-		// This magic sets up everything as if this was just the kubectl binary. It sets the KUBECONFIG environment
-		// variable so that it knows where the Kubeconfig is located and forcibly overwrites the arguments so that
-		// the "wrapper" arguments are not visible to its flags parser. The base code is straight from
-		// https://github.com/kubernetes/kubernetes/blob/master/cmd/kubectl/kubectl.go
+		// This magic sets up everything as if this was just the kubectl
+		// binary. It sets the KUBECONFIG environment variable so that it knows
+		// where the Kubeconfig is located and forcibly overwrites the
+		// arguments so that the "wrapper" arguments are not visible to its
+		// flags parser.
+		// The base code is straight from:
+		//   https://github.com/kubernetes/kubernetes/blob/master/cmd/kubectl/kubectl.go
 		os.Setenv("KUBECONFIG", kubeconfigFile.Name())
 		rand.Seed(time.Now().UnixNano())
 		pflag.CommandLine.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)

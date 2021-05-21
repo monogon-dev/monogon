@@ -25,13 +25,16 @@ import (
 	"source.monogon.dev/metropolis/node/core/network"
 )
 
-// initializeDebugger attaches Delve to ourselves and exposes it on common.DebuggerPort
-// This is coupled to compilation_mode=dbg because otherwise Delve doesn't have the necessary DWARF debug info
+// initializeDebugger attaches Delve to ourselves and exposes it on
+// common.DebuggerPort
+// This is coupled to compilation_mode=dbg because otherwise Delve doesn't have
+// the necessary DWARF debug info
 func initializeDebugger(networkSvc *network.Service) {
 	go func() {
-		// This is intentionally delayed until network becomes available since Delve for some reason connects to itself
-		// and in early-boot no network interface is available to do that through. Also external access isn't possible
-		// early on anyways.
+		// This is intentionally delayed until network becomes available since
+		// Delve for some reason connects to itself and in early-boot no
+		// network interface is available to do that through. Also external
+		// access isn't possible early on anyways.
 		watcher := networkSvc.Watch()
 		_, err := watcher.Get(context.Background())
 		if err != nil {

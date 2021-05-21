@@ -14,8 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// genosrelease provides rudimentary support to generate os-release files following the freedesktop spec
-// (https://www.freedesktop.org/software/systemd/man/os-release.html) from arguments and stamping
+// genosrelease provides rudimentary support to generate os-release files
+// following the freedesktop spec from arguments and stamping
+//
+// https://www.freedesktop.org/software/systemd/man/os-release.html
 package main
 
 import (
