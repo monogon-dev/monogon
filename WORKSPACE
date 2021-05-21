@@ -66,7 +66,7 @@ go_rules_dependencies()
 
 go_register_toolchains(
     go_version = "1.14",
-    nogo = "@//:nogo_vet",
+    nogo = "@dev_source_monogon//build/analysis:nogo",
 )
 
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")

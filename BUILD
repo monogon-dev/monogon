@@ -1,6 +1,6 @@
 load("@bazel_gazelle//:def.bzl", "gazelle")
 load("//build/fietsje:def.bzl", "fietsje")
-load("@io_bazel_rules_go//go:def.bzl", "go_path", "nogo")
+load("@io_bazel_rules_go//go:def.bzl", "go_path")
 
 # gazelle:prefix source.monogon.dev
 # gazelle:go_naming_convention go_default_library
@@ -14,42 +14,6 @@ alias(
     name = "go",
     actual = "@go_sdk//:bin/go",
     visibility = ["//visibility:public"],
-)
-
-# nogo linters
-nogo(
-    name = "nogo_vet",
-    config = "nogo_config.json",
-    visibility = ["//visibility:public"],
-    # These deps enable the analyses equivalent to running `go vet`.
-    # Passing vet = True enables only a tiny subset of these (the ones
-    # that are always correct).
-    #
-    # You can see the what `go vet` does by running `go doc cmd/vet`.
-    deps = [
-        "@org_golang_x_tools//go/analysis/passes/asmdecl:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/assign:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/atomic:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/bools:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/buildtag:go_tool_library",
-        # Disable cgocall because it fails processing com_github_mattn_go_sqlite3 before exclusions are applied
-        #"@org_golang_x_tools//go/analysis/passes/cgocall:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/composite:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/copylock:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/httpresponse:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/loopclosure:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/lostcancel:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/nilfunc:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/printf:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/shift:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/stdmethods:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/structtag:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/tests:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/unmarshal:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/unreachable:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/unsafeptr:go_tool_library",
-        "@org_golang_x_tools//go/analysis/passes/unusedresult:go_tool_library",
-    ],
 )
 
 load("@rules_python//python:defs.bzl", "py_runtime_pair")
