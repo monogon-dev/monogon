@@ -41,11 +41,6 @@ The following steps are necessary:
 
 After running the first sync, everything should now resolve in the IDE, including generated code.
 
-It's strongly recommend to use our project presets for file watchers and other IDE features. Run this command and
-re-open the project in order to install them:
-
-    bazel run intellij/localconfig $(pwd)
-
 ## Metropolis
 
 ### Run a single node cluster
