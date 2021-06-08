@@ -1,0 +1,299 @@
+syntax = "proto3";
+
+package metropolis.proto.vm;
+
+// VMSpec fully defines all information about a VM and is consumed by the VM
+// hypervisor through a runtime environment variable.
+message VMSpec {
+  // Name field from Kubernetes VirtualMachine object.
+  string name = 1;
+  // Namespace of VM object
+  string namespace = 2;
+
+  enum StartMode {
+    SM_UNKNOWN = 0;
+    // Normal VM start
+    SM_RUN = 1;
+    // Initialize the disk of the new VM according to `initial_image` and start
+    // the VM
+    SM_PREPARE_IMAGE = 2;
+    // Wait for an incoming migration and start the migrated VM
+    SM_INCOMING_MIGRATION = 3;
+  }
+  StartMode mode = 3;
+  // Reference initial data which is copied to the root block device before
+  // starting the VM for the first time. Only used if starting with
+  // SM_PREPARE_IMAGE.
+  InitialImage initial_image = 4;
+  // Set of IP addresses assigned to the VM. Populated from vmIPs in the
+  // VirtualMachine object. Currently a maximum of one IP per IP protocol
+  // version is supported.
+  repeated string address = 5;
+  // gRPC endpoint of the controller for this VM
+  string controller_endpoint = 6;
+  // Lease mode used for the VM. See LeaseMode for additional info.
+  LeaseMode lease_mode = 7;
+}
+
+// InitialImage represents a source from which a new VM root block device can be
+// instantiated.
+message InitialImage {
+  // A URL to an image file. Populated from initialImage.url in the
+  // VirtualMachine object.
+  string url = 1;
+}
+
+// LeaseMode represents the different modes VM run authorizations can be
+// managed. The VM system has its own system for authorizing a given pod to run
+// a given VM because it requires different tradeoff as part of its distributed
+// systems design than Kubernetes. The core issue is that Kubernetes's design
+// does not guarantee that the control plane always has an accurate view
+// of running pods especially when nodes fail or get partitioned which they
+// trade for potentially better availability by keeping both sides of the
+// partition running. Kubernetes is also prone to bugs that result in running
+// pods no longer being accounted for (for example
+// https://github.com/kubernetes/kubernetes/issues/80968) or duplicated.This can
+// result in pods running which the controller cannot see which results in more
+// than one running pod for a VM indefinitely.
+// For stateful single-instance workloads like VMs this can cause
+// control issues (VMs no longer converging to the configured state because
+// the current pod is "out of control", continued unavailability because an
+// uncontrollable pod holds a lock on the backing storage or even data
+// corruption in case two VMs are concurrently writing to the same storage.
+//
+// To avoid these issues the VM system implements two different strategies
+// providing mutual exclusion itself: One for use exclusively with
+// local storage-backed VMs and one tailored for VMs with distributed storage.
+// They significantly differ in the tradeoffs they make and the guarantees they
+// deliver as documented below.
+// Both strategies rely (at least in part) on asking the VM controller directly
+// if a pod should keep running its VM. The statement of the VM controller
+// is called a "run authorization" in the context of the VM system. The exact
+// format of this run authorization depends on the strategy in use.
+enum LeaseMode {
+  LM_UNKNOWN = 0;
+  // In storage locking mode mutual exclusion and thus run authorization is
+  // provided through locks on the backing block storage system. Control plane
+  // convergence is only on a best-effort basis, under certain K8s failure modes
+  // the VM control plane might never converge. A Hypervisor that's partitioned
+  // from the control plane will continue to run its VM indefinitely and will
+  // not fence itself off from storage or networking. This mode is appropriate
+  // for local storage as the full leases mode would introduce more disruptions
+  // than it solves under these constraints. The run authorization for this
+  // strategy is a simple STATUS_OK/STATUS_TERMINATE status value with no
+  // explicit lease expiration as VMs should not stop executing if the control
+  // plane is unavailable. These authorizations are still useful as a way to
+  // ensure at least on a best-effort basis that leaked/out-of-control pods shut
+  // themselves down and locks held by the wrong pods are released.
+  LM_STORAGE_LOCKING = 1;
+  // In full leases mode all run authorizations come exclusively from the
+  // controller and are passed as leases to all external systems (like storage
+  // and network).  A Hypervisor that's partitioned from the control plane
+  // will after its lease expires kill its VM and fence itself from network and
+  // storage before terminating itself. This mode is appropriate for fully
+  // distributed storage as it allows higher availability in that scenario.
+  // The run authorization for this strategy is an expiring lease which also
+  // needs to be passed together with any IO operation for proper fencing.
+  // The hypervisor kills the VM if its lease expires.
+  // Not implemented currently.
+  LM_FULL_LEASES = 2;
+}
+
+// This is a structure exposing VM metadata to the VM via fw_cfg interface. It
+// currently only contains the name of the VM and its network configuration.
+// Exposed as vm.metropolis.monogon.dev/v1/metadata.pb to the VM.
+message VMMetadata {
+  // Name field from Kubernetes VirtualMachine object.
+  string name = 1;
+  NetworkConfig network_config = 2;
+}
+
+// PTPAddress contains the VM IP and the hypervisor IP for an IP point to
+// point interface. Both IPs need to be for the same IP protocol version (v4 or
+// v6).
+// For example on Linux this could be configured using
+// `ip addr add $ip peer $peer_ip dev eth0` for the PtP connection and
+// `ip route add default via $peer_ip` for the default route.
+message PTPAddress {
+  // IP address of the VM
+  string ip = 1;
+  // IP address of the hypervisor side, default gateway for the VM
+  string peer_ip = 2;
+}
+
+// NetworkConfig represents the network configuration the VM needs to configure
+// to communicate via its network interface.
+message NetworkConfig {
+  // IPv4 addresses of the PtP link between the VM and the hypervisor, if any.
+  PTPAddress v4 = 1;
+  // IPv6 addresses of the PtP link between the VM and the hypervisor, if any.
+  PTPAddress v6 = 2;
+}
+
+// HypervisorID identifies a running instance of a hypervisor uniquely.
+message HypervisorID {
+  // vm_name is the name of the VM object.
+  string vm_name = 1;
+  // namespace is the K8s namespace of the VM object.
+  string namespace = 2;
+  // pod_name is the pod name in which the hypervisor is running.
+  string pod_name = 3;
+  // run_id is selected by the hypervisor at the start of the process to
+  // uniquely identify that specific running process. A process which starts
+  // later with respect to other instances on the same node should have a higher
+  // run_id so that the controller can know that. In practice this should be
+  // derived from a precise timestamp like nanoseconds since the UNIX epoch.
+  uint64 run_id = 4;
+}
+
+message RunLeaseRequest {
+  HypervisorID us = 1;
+}
+
+message RunLeaseUpdate {
+  enum Status {
+    STATUS_UNKNOWN = 0;
+    // The pod should keep running its VM
+    STATUS_OK = 1;
+    // The pod should terminate the VM immediately and exit
+    STATUS_TERMINATE = 2;
+  }
+  Status status = 1;
+}
+
+message MigrationSwitchoverRequest {
+  HypervisorID us = 1;
+  HypervisorID them = 2;
+}
+message MigrationSwitchoverResponse {}
+
+message EnsureMigrationTargetRequest {
+  HypervisorID us = 1;
+}
+
+message EnsureMigrationTargetResponse {
+  enum Action {
+    ACTION_UNKNOWN = 0;
+    ACTION_LIVE_MIGRATE = 1;
+    ACTION_SOFT_SHUTDOWN = 2;
+  }
+  Action action = 1;
+  // Endpoint of the new Pod exposing a metropolis.vm.Hypervisor service if
+  // action == ACTION_LIVE_MIGRATE.
+  string target_endpoint = 2;
+}
+
+// The VMController service is exposed by the controller for the hypervisors to
+// interact with. It is responsible for (pseudo)-leases and and migrations.
+// A typical migration looks like this:
+// 1. Currently running pod with VM gets SIGTERM.
+// 2. Source pod runs EnsureMigrationTarget to inform the controller of its wish
+//    to migrate its VM away. The controller creates or reuses a target pod to
+//    migrate to and returns its endpoint to the source pod.
+// 3. Source pod runs Hypervisor.StartMigration on the target pod to negotiate a
+//    channel to migrate.
+// 4. Source pod bulk-migrates the vm in a hypervisor-specific way.
+// 5. After the bulk migration is done, the source pod stops executing the VM.
+//    The target pod calls MigrationSwitchover on the controller with `us` set
+//    to itself and `them` to the `us` parameter in the StartMigrationRequest it
+//    received in step 3.
+// 6. The controller performs the Compare-and-Swap and returns either Ok or
+//    PreconditionFailed depending on whether the authoritative pod has changed
+//    in the meantime. If the MigrationSwitchover RPC succeeded, the VM is now
+//    running on the target pod. If it doesn't succeed, the target pod will
+//    retry this step for a set period of time and then exit.
+// 7. After a set timeout, the source pod will regenerate is run id and attempt
+//    to call MigrationSwitchover with them set to its old identity and us to
+//    its new identity formed by updating its run id. This call is expected to
+//    fail with PreconditionFailed which will cause the source pod to shut
+//    itself down. If the call succeeds, the source pod will start running the
+//    VM again.
+service VMController {
+  // EnsureMigrationTarget returns either a request to soft-shutdown or a
+  // reference to a pod to which the caller should connect to migrate the VM.
+  // It waits for the pod to run and complete a gRPC health check, but clients
+  // should still retry a connection a few times before giving up and calling
+  // this endpoint again.
+  rpc EnsureMigrationTarget(EnsureMigrationTargetRequest) returns (EnsureMigrationTargetResponse);
+  // MigrationSwitchover attempts to atomically swap the authoritative Pod and
+  // PVC from the one in `them` to the one in `us`. If this request succeeds the
+  // pod in `us` (the caller) is now authoritative for a given VM. If the
+  // authoritative pod is not the one in `them`, this method will return
+  // PreconditionFailed and do nothing.
+  rpc MigrationSwitchover(MigrationSwitchoverRequest) returns (MigrationSwitchoverResponse);
+  // RunLease requests a pseudo-lease (or a full lease in LeaseMode
+  // LM_FULL_LEASES) and streams updates to the lease status or new leases (in
+  // LM_FULL_LEASES). Clients should always attempt to keep one RunLease
+  // connection open to ensure reliable control from the control plane.
+  rpc RunLease(RunLeaseRequest) returns (stream RunLeaseUpdate);
+}
+
+// The OOBManagement service is exposed by each VM pod to perform OOB
+// maintenance on the VM running inside of it.
+service OOBManagement {
+  // Reset resets the virtual CPU of the VM (essentially equivalent to a hard
+  // reboot). This has no effect on the hypervisor itself.
+  // TODO(lorenz): This API should have idempotency counters.
+  rpc Reset(ResetRequest) returns (ResetResponse);
+  // Console opens a bidirectional stream to the virtual serial port (for
+  // debugging or OOB data transfer).
+  // If multiple streams are open data from the VM is broadcast to all clients
+  // and data from all clients are sent to the VM. Ordering with multiple
+  // clients connected is best-effort and cannot be relied upon.
+  rpc Console(stream ConsoleIO) returns (stream ConsoleIO);
+}
+
+message ResetRequest {}
+message ResetResponse {}
+
+message ConsoleIO {
+  bytes data = 1;
+}
+
+// The Hypervisor service is exposed by each VM pod for migrations.
+service Hypervisor {
+  // StartMigration is called by the source pod when it wants to initiate a
+  // migration. It is used to negotiate parameters for migration and endpoints
+  // for the bulk transfer. If no common migration protocol is found,
+  // InvalidArgument is returned.
+  rpc StartMigration(StartMigrationRequest) returns (StartMigrationResponse);
+}
+
+// MigrationProtocol represents a protocol and some protocol-specific metadata
+// to allow for negotiating a connection using that protocol.
+// For each migration  protocol message, some fields will be set by the source
+// as constraints (constraint_*), and some will be populated by the target if
+// that migration protocol is picked (negotiated_*). The migration target will
+// keep all constraint_* fields that it was aware of, so that the source can
+// verify that all critical fields were considered by the target (thereby
+// allowing different versions of source/target to communicate).
+message MigrationProtocol {
+  // Qemu represents the native QEMU migration protocol.
+  message Qemu {
+    // If set, the root block device is migrated together with the VM. If the
+    // target doesn't have storage attached directly via QEMU (like RBD or
+    // iSCSI) this needs to be set otherwise this protocol cannot be picked as
+    // the VM would loose it storage during the migration. The opposite is
+    // allowed, it migrates a local-storage volume into QEMU-attached storage
+    // storage.
+    bool constraint_with_blockmigration = 1;
+    // Bulk endpoint on the migration target in QEMU native format
+    string negotiated_endpoint = 2;
+  }
+  oneof kind { Qemu qmeu_block = 1; }
+}
+
+message StartMigrationRequest {
+  // List of migration protocols supported by the source pod
+  repeated MigrationProtocol supported_migration_protocol = 1;
+
+  // Hypervisor ID of the hypervisor making the request (i.e. is currently
+  // running the VM)
+  HypervisorID us = 2;
+}
+
+message StartMigrationResponse {
+  // Migration protocol chosen from supported_migration_protocol by the target
+  // pod.
+  MigrationProtocol migration_protocol = 1;
+}
