@@ -22,7 +22,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
-	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/pkg/event"
@@ -290,10 +289,6 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 }
 
-func (s *Service) DialCluster(ctx context.Context) (apb.CuratorClient, error) {
-	conn, err := grpc.DialContext(ctx, fmt.Sprintf("unix://%s", s.config.Directory.ClientSocket.FullPath()), grpc.WithInsecure())
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial local curator socket: %w", err)
-	}
-	return apb.NewCuratorClient(conn), nil
+func (s *Service) DialCluster(ctx context.Context) (*grpc.ClientConn, error) {
+	return grpc.DialContext(ctx, fmt.Sprintf("unix://%s", s.config.Directory.ClientSocket.FullPath()), grpc.WithInsecure())
 }
