@@ -18,9 +18,11 @@ import (
 	"time"
 
 	"go.etcd.io/etcd/clientv3/concurrency"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
+	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/pkg/event"
@@ -253,6 +255,19 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 	}()
 
+	// Start listener. This is a gRPC service listening on a local socket,
+	// providing the Curator API to consumers, dispatching to either a locally
+	// running leader, or forwarding to a remotely running leader.
+	lis := listener{
+		directory:     s.config.Directory,
+		electionWatch: s.electionWatch,
+		etcd:          s.config.Etcd,
+		dispatchC:     make(chan dispatchRequest),
+	}
+	if err := supervisor.Run(ctx, "listener", lis.run); err != nil {
+		return fmt.Errorf("when starting listener: %w", err)
+	}
+
 	// Calculate effective TTL. This replicates the behaviour of clientv3's WithTTL,
 	// but allows us to explicitly log the used TTL.
 	s.ttl = int(s.config.LeaderTTL.Seconds())
@@ -273,4 +288,12 @@ func (s *Service) Run(ctx context.Context) error {
 		supervisor.Logger(ctx).Infof("Curator election round done: %v", err)
 		supervisor.Logger(ctx).Info("Curator election restarting...")
 	}
+}
+
+func (s *Service) DialCluster(ctx context.Context) (apb.CuratorClient, error) {
+	conn, err := grpc.DialContext(ctx, fmt.Sprintf("unix://%s", s.config.Directory.ClientSocket.FullPath()), grpc.WithInsecure())
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial local curator socket: %w", err)
+	}
+	return apb.NewCuratorClient(conn), nil
 }
