@@ -154,6 +154,7 @@ type EtcDirectory struct {
 type EphemeralDirectory struct {
 	declarative.Directory
 	Consensus         EphemeralConsensusDirectory  `dir:"consensus"`
+	Curator           EphemeralCuratorDirectory    `dir:"curator"`
 	Containerd        EphemeralContainerdDirectory `dir:"containerd"`
 	FlexvolumePlugins declarative.Directory        `dir:"flexvolume_plugins"`
 	Hosts             declarative.File             `file:"hosts"`
@@ -162,6 +163,13 @@ type EphemeralDirectory struct {
 
 type EphemeralConsensusDirectory struct {
 	declarative.Directory
+	ClientSocket declarative.File `file:"client.sock"`
+}
+
+type EphemeralCuratorDirectory struct {
+	declarative.Directory
+	// Curator ephemeral socket, dialed by local curator clients.
+	// See: //metropolis/node/core/curator.
 	ClientSocket declarative.File `file:"client.sock"`
 }
 

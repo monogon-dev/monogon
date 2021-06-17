@@ -60,6 +60,7 @@ func (r *Root) Start(ctx context.Context) error {
 	// TODO(q3k): do this automatically?
 	for _, d := range []declarative.DirectoryPlacement{
 		r.Ephemeral.Consensus,
+		r.Ephemeral.Curator,
 		r.Ephemeral.Containerd, r.Ephemeral.Containerd.Tmp, r.Ephemeral.Containerd.RunSC, r.Ephemeral.Containerd.IPAM,
 		r.Ephemeral.FlexvolumePlugins,
 	} {
