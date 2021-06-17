@@ -139,7 +139,6 @@ func New(l logtree.LeveledLogger, kv clientv3.KV) *PKI {
 // are present on etcd.
 func (k *PKI) EnsureAll(ctx context.Context) error {
 	for n, v := range k.Certificates {
-		k.logger.Infof("Ensuring %s exists", string(n))
 		_, _, err := v.Ensure(ctx, k.KV)
 		if err != nil {
 			return fmt.Errorf("could not ensure certificate %q exists: %w", n, err)
