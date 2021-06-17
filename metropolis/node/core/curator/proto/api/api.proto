@@ -1,0 +1,78 @@
+syntax = "proto3";
+option go_package = "source.monogon.dev/metropolis/node/core/curator/proto/api";
+package metropolis.node.core.curator.proto.api;
+
+import "metropolis/proto/common/common.proto";
+
+// The Curator is the main cluster management service of Metropolis.
+//
+// It runs on top of Metropolis and is the main entrypoint for both external
+// and internal services to get cluster state and and get/mutate cluster
+// configuration.
+// It is currently implemented as a leader-elected service running on all nodes
+// that run a consensus server (etcd). Every instance either serves traffic
+// directly (if it is the leader) or passes all RPCs over to the current
+// leader.
+// The curator listens on gRPC over a local UNIX domain socket accessible to the
+// rest of the node code, and on a node's port over TLS with a certificate
+// issued by the Cluster CA.
+//
+// The curator is a privileged service, and performs per-RPC authorization based
+// on the identity of the client:
+//  - When serving traffic locally over a UNIX domain socket, the service
+//    attaches the identity of this node to the RPCs.
+//  - When serving over public gRPC, cluster authentication is required and gRPC
+//    client identity will be tied to the RPCs.
+//
+// TODO(q3k): implement and document public Cluster gRPC.
+// TODO(q3k): implement and document cluster auth for nodes and escrowed user
+// keys.
+service Curator {
+    // Watch returns a stream of updates concerning some part of the cluster
+    // managed by the curator, and is the main way in which node code responds
+    // to cluster configuration/state changes.
+    // Once open, the Curator will stream WatchEvents pertinent to the
+    // requested data. At first, the Curator will send WatchEvent(s) describing
+    // the current state of the watched resources, letting the client 'catch
+    // up' with the current cluster state. Then, it will stream WatchEvent(s)
+    // as the pertinent objects change.
+    // There is no way for the client to know whether it is 'up to date' on the
+    // object state, as streamed WatchEvents are not synchronous to internal
+    // state changes within the Curator. Effectively, the view of Watch clients
+    // is eventually consistent with the state of the objects in the Curator.
+    rpc Watch(WatchRequest) returns (stream WatchEvent);
+}
+
+// Node is the state and configuration of a node in the cluster.
+message Node {
+    // ID of the node. Unique across all nodes. Opaque but human-readable.
+    string id = 1;
+    // Roles that the nodes is supposed to take on.
+    metropolis.proto.common.NodeRoles roles = 2;
+};
+
+// WatchRequest specifies what data the caller is interested in. This influences
+// the contents of WatchEvents.
+message WatchRequest {
+    // The watcher wants information about a single node within the cluster.
+    // This is designed to be used by node-local code that needs to know what
+    // the state of the node and the cluster are for purposes of
+    // starting/stopping services, performing software updates and general node
+    // lifecycle management.
+    message NodeInCluster {
+        // node_id that the watcher is interested in. The curator will, best
+        // effort, stream updates (not necessarily all updates) to this node
+        // within WatchEvents.
+        string node_id = 1;
+    }
+    oneof kind {
+        NodeInCluster node_in_cluster = 1;
+    }
+}
+
+message WatchEvent {
+    // Nodes pertinent to the watch request. The nodes contained might not
+    // contain just the nodes requested in WatchRequest, so the client needs to
+    // filter out anything spurious.
+    repeated Node nodes = 1;
+}
