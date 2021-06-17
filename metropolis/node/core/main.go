@@ -32,7 +32,6 @@ import (
 
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
-
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/cluster"
 	"source.monogon.dev/metropolis/node/core/curator"
@@ -174,7 +173,7 @@ func main() {
 		}
 		c := curator.New(curator.Config{
 			Etcd:   kv,
-			NodeID: status.Node.ID(),
+			NodeID: status.Credentials.ID(),
 			// TODO(q3k): make this configurable?
 			LeaderTTL: time.Second * 5,
 			Directory: &root.Ephemeral.Curator,
@@ -187,54 +186,35 @@ func main() {
 		// start all services that we should be running.
 
 		logger.Info("Enrolment success, continuing startup.")
-		logger.Info(fmt.Sprintf("This node (%s) has roles:", status.Node.String()))
-		if cm := status.Node.ConsensusMember(); cm != nil {
-			// There's no need to start anything for when we are a consensus
-			// member - the cluster manager does this for us if necessary (as
-			// creating/enrolling/joining a cluster is pretty tied into cluster
-			// lifecycle management).
-			logger.Info(fmt.Sprintf(" - etcd consensus member"))
-		}
-		if kw := status.Node.KubernetesWorker(); kw != nil {
-			logger.Info(fmt.Sprintf(" - kubernetes worker"))
+
+		// HACK: always start k8s worker, this is being currently refactored
+		// and will get fixed in review/188.
+		logger.Info("Starting Kubernetes worker services...")
+
+		kkv, err := status.ConsensusClient(cluster.ConsensusUserKubernetesPKI)
+		if err != nil {
+			return fmt.Errorf("failed to retrieve consensus kubernetes PKI client: %w", err)
 		}
 
-		// If we're supposed to be a kubernetes worker, start kubernetes
-		// services and containerd.  In the future, this might be split further
-		// into kubernetes control plane and data plane roles.
-		// TODO(q3k): watch on cluster status updates to start/stop kubernetes
-		// service.
-		var containerdSvc *containerd.Service
-		var kubeSvc *kubernetes.Service
-		if kw := status.Node.KubernetesWorker(); kw != nil {
-			logger.Info("Starting Kubernetes worker services...")
+		// Ensure Kubernetes PKI objects exist in etcd.
+		kpki := pki.New(lt.MustLeveledFor("pki.kubernetes"), kkv)
+		if err := kpki.EnsureAll(ctx); err != nil {
+			return fmt.Errorf("failed to ensure kubernetes PKI present: %w", err)
+		}
 
-			kv, err := status.ConsensusClient(cluster.ConsensusUserKubernetesPKI)
-			if err != nil {
-				return fmt.Errorf("failed to retrieve consensus kubernetes PKI client: %w", err)
-			}
+		containerdSvc := &containerd.Service{
+			EphemeralVolume: &root.Ephemeral.Containerd,
+		}
+		if err := supervisor.Run(ctx, "containerd", containerdSvc.Run); err != nil {
+			return fmt.Errorf("failed to start containerd service: %w", err)
+		}
 
-			// Ensure Kubernetes PKI objects exist in etcd.
-			kpki := pki.New(lt.MustLeveledFor("pki.kubernetes"), kv)
-			if err := kpki.EnsureAll(ctx); err != nil {
-				return fmt.Errorf("failed to ensure kubernetes PKI present: %w", err)
-			}
-
-			containerdSvc = &containerd.Service{
-				EphemeralVolume: &root.Ephemeral.Containerd,
-			}
-			if err := supervisor.Run(ctx, "containerd", containerdSvc.Run); err != nil {
-				return fmt.Errorf("failed to start containerd service: %w", err)
-			}
-
-			kubernetesConfig.KPKI = kpki
-			kubernetesConfig.Root = root
-			kubernetesConfig.Network = networkSvc
-			kubeSvc = kubernetes.New(kubernetesConfig)
-			if err := supervisor.Run(ctx, "kubernetes", kubeSvc.Run); err != nil {
-				return fmt.Errorf("failed to start kubernetes service: %w", err)
-			}
-
+		kubernetesConfig.KPKI = kpki
+		kubernetesConfig.Root = root
+		kubernetesConfig.Network = networkSvc
+		kubeSvc := kubernetes.New(kubernetesConfig)
+		if err := supervisor.Run(ctx, "kubernetes", kubeSvc.Run); err != nil {
+			return fmt.Errorf("failed to start kubernetes service: %w", err)
 		}
 
 		// Start the node debug service.

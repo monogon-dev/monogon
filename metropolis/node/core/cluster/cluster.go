@@ -14,69 +14,165 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// cluster implements low-level clustering logic, especially logic regarding to
+// bootstrapping, registering into and joining a cluster. Its goal is to provide
+// the rest of the node code with the following:
+//  - A mounted plaintext storage.
+//  - Node credentials/identity.
+//  - A locally running etcd server if the node is supposed to run one, and a
+//    client connection to that etcd cluster if so.
+//  - The state of the cluster as seen by the node, to enable code to respond to
+//    node lifecycle changes.
 package cluster
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"sync"
 
-	"source.monogon.dev/metropolis/pkg/pki"
+	"google.golang.org/protobuf/proto"
+
+	"source.monogon.dev/metropolis/node/core/consensus"
+	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/node/core/network"
+	"source.monogon.dev/metropolis/pkg/event/memory"
+	"source.monogon.dev/metropolis/pkg/supervisor"
+	apb "source.monogon.dev/metropolis/proto/api"
+	ppb "source.monogon.dev/metropolis/proto/private"
 )
 
-// ClusterState is the state of the cluster from the point of view of the
-// current node. Clients within the node code can watch this state to change
-// their behaviour as needed.
-type ClusterState int
+type state struct {
+	mu sync.RWMutex
 
-const (
-	// ClusterStateUnknown means the node has not yet determined the existence
-	// of a cluster it should join or start. This is a transient, initial state
-	// that should only manifest during boot.
-	ClusterUnknown ClusterState = iota
-	// ClusterForeign means the node is attempting to register into an already
-	// existing cluster with which it managed to make preliminary contact, but
-	// which the cluster has not yet fully productionized (eg. the node is
-	// still being hardware attested, or the operator needs to confirm the
-	// registration of this node).
-	ClusterForeign
-	// ClusterTrusted means the node is attempting to register into an already
-	// registered cluster, and has been trusted by it. The node is now
-	// attempting to finally commit into registering the cluster.
-	ClusterTrusted
-	// ClusterHome means the node is part of a cluster. This is the bulk of
-	// time in which this node will spend its time.
-	ClusterHome
-	// ClusterDisowning means the node has been disowned (ie., removed) by the
-	// cluster, and that it will not be ever part of any cluster again, and
-	// that it will be decommissioned by the operator.
-	ClusterDisowning
-	// ClusterSplit means that the node would usually be Home in a cluster, but
-	// has been split from the consensus of the cluster. This can happen for
-	// nodes running consensus when consensus is lost (eg. when there is no
-	// quorum or this node has been netsplit), and for other nodes if they have
-	// lost network connectivity to the consensus nodes. Clients should make
-	// their own decision what action to perform in this state, depending on
-	// the level of consistency required and whether it makes sense for the
-	// node to fence its services off.
-	ClusterSplit
-)
+	oneway bool
 
-func (s ClusterState) String() string {
-	switch s {
-	case ClusterForeign:
-		return "ClusterForeign"
-	case ClusterTrusted:
-		return "ClusterTrusted"
-	case ClusterHome:
-		return "ClusterHome"
-	case ClusterDisowning:
-		return "ClusterDisowning"
-	case ClusterSplit:
-		return "ClusterSplit"
-	}
-	return fmt.Sprintf("Invalid(%d)", s)
+	configuration *ppb.SealedConfiguration
 }
 
-var (
-	PKINamespace = pki.Namespaced("/cluster-pki/")
-	PKICA        = PKINamespace.New(pki.SelfSigned, "cluster-ca", pki.CA("Metropolis Cluster CA"))
-)
+type Manager struct {
+	storageRoot    *localstorage.Root
+	networkService *network.Service
+	status         memory.Value
+
+	state
+
+	// consensus is the spawned etcd/consensus service, if the Manager brought
+	// up a Node that should run one.
+	consensus *consensus.Service
+}
+
+// NewManager creates a new cluster Manager. The given localstorage Root must
+// be places, but not yet started (and will be started as the Manager makes
+// progress). The given network Service must already be running.
+func NewManager(storageRoot *localstorage.Root, networkService *network.Service) *Manager {
+	return &Manager{
+		storageRoot:    storageRoot,
+		networkService: networkService,
+
+		state: state{},
+	}
+}
+
+func (m *Manager) lock() (*state, func()) {
+	m.mu.Lock()
+	return &m.state, m.mu.Unlock
+}
+
+func (m *Manager) rlock() (*state, func()) {
+	m.mu.RLock()
+	return &m.state, m.mu.RUnlock
+}
+
+// Run is the runnable of the Manager, to be started using the Supervisor. It
+// is one-shot, and should not be restarted.
+func (m *Manager) Run(ctx context.Context) error {
+	state, unlock := m.lock()
+	if state.oneway {
+		unlock()
+		// TODO(q3k): restart the entire system if this happens
+		return fmt.Errorf("cannot restart cluster manager")
+	}
+	state.oneway = true
+	unlock()
+
+	configuration, err := m.storageRoot.ESP.SealedConfiguration.Unseal()
+	if err == nil {
+		supervisor.Logger(ctx).Info("Sealed configuration present. attempting to join cluster")
+		return m.join(ctx, configuration)
+	}
+
+	if !errors.Is(err, localstorage.ErrNoSealed) {
+		return fmt.Errorf("unexpected sealed config error: %w", err)
+	}
+
+	supervisor.Logger(ctx).Info("No sealed configuration, looking for node parameters")
+
+	params, err := m.nodeParams(ctx)
+	if err != nil {
+		return fmt.Errorf("no parameters available: %w", err)
+	}
+
+	switch inner := params.Cluster.(type) {
+	case *apb.NodeParameters_ClusterBootstrap_:
+		return m.bootstrap(ctx, inner.ClusterBootstrap)
+	case *apb.NodeParameters_ClusterRegister_:
+		return m.register(ctx, inner.ClusterRegister)
+	default:
+		return fmt.Errorf("node parameters misconfigured: neither cluster_bootstrap nor cluster_register set")
+	}
+}
+
+func (m *Manager) register(ctx context.Context, bootstrap *apb.NodeParameters_ClusterRegister) error {
+	return fmt.Errorf("unimplemented")
+}
+
+func (m *Manager) nodeParamsFWCFG(ctx context.Context) (*apb.NodeParameters, error) {
+	bytes, err := ioutil.ReadFile("/sys/firmware/qemu_fw_cfg/by_name/dev.monogon.metropolis/parameters.pb/raw")
+	if err != nil {
+		return nil, fmt.Errorf("could not read firmware enrolment file: %w", err)
+	}
+
+	config := apb.NodeParameters{}
+	err = proto.Unmarshal(bytes, &config)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal: %v", err)
+	}
+
+	return &config, nil
+}
+
+func (m *Manager) nodeParams(ctx context.Context) (*apb.NodeParameters, error) {
+	// Retrieve node parameters from qemu's fwcfg interface or ESP.
+	// TODO(q3k): probably abstract this away and implement per platform/build/...
+	paramsFWCFG, err := m.nodeParamsFWCFG(ctx)
+	if err != nil {
+		supervisor.Logger(ctx).Warningf("Could not retrieve node parameters from qemu fwcfg: %v", err)
+		paramsFWCFG = nil
+	} else {
+		supervisor.Logger(ctx).Infof("Retrieved node parameters from qemu fwcfg")
+	}
+	paramsESP, err := m.storageRoot.ESP.NodeParameters.Unmarshal()
+	if err != nil {
+		supervisor.Logger(ctx).Warningf("Could not retrieve node parameters from ESP: %v", err)
+		paramsESP = nil
+	} else {
+		supervisor.Logger(ctx).Infof("Retrieved node parameters from ESP")
+	}
+	if paramsFWCFG == nil && paramsESP == nil {
+		return nil, fmt.Errorf("could not find node parameters in ESP or qemu fwcfg")
+	}
+	if paramsFWCFG != nil && paramsESP != nil {
+		supervisor.Logger(ctx).Warningf("Node parameters found both in both ESP and qemu fwcfg, using the latter")
+		return paramsFWCFG, nil
+	} else if paramsFWCFG != nil {
+		return paramsFWCFG, nil
+	} else {
+		return paramsESP, nil
+	}
+}
+
+func (m *Manager) join(ctx context.Context, cfg *ppb.SealedConfiguration) error {
+	return fmt.Errorf("unimplemented")
+}

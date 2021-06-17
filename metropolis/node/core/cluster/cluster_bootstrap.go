@@ -24,9 +24,10 @@ import (
 	"fmt"
 
 	"source.monogon.dev/metropolis/node/core/consensus"
-	"source.monogon.dev/metropolis/pkg/pki"
+	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 	ppb "source.monogon.dev/metropolis/proto/private"
 )
 
@@ -50,18 +51,12 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	}
 	supervisor.Logger(ctx).Infof("Bootstrapping: node public key: %s", hex.EncodeToString([]byte(pub)))
 
-	node := Node{
-		clusterUnlockKey: cuk,
-		pubkey:           pub,
-		state:            ppb.Node_FSM_STATE_UP,
-		// TODO(q3k): make this configurable.
-		consensusMember:  &NodeRoleConsensusMember{},
-		kubernetesWorker: &NodeRoleKubernetesWorker{},
-	}
+	node := curator.NewNodeForBootstrap(cuk, pub)
 
 	// Run worker to keep updating /ephemeral/hosts (and thus, /etc/hosts) with
 	// our own IP address. This ensures that the node's ID always resolves to
 	// its current external IP address.
+	// TODO(q3k): move this out into roleserver.
 	supervisor.Run(ctx, "hostsfile", func(ctx context.Context) error {
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
 		watcher := m.networkService.Watch()
@@ -96,51 +91,42 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	}
 	supervisor.Logger(ctx).Info("Bootstrapping: consensus ready.")
 
-	nodesKV, err := m.consensus.Client().Sub("nodes")
-	if err != nil {
-		return fmt.Errorf("when retrieving nodes etcd subclient: %w", err)
-	}
-	pkiKV, err := m.consensus.Client().Sub("pki")
-	if err != nil {
-		return fmt.Errorf("when retrieving pki etcd subclient: %w", err)
-	}
-	applicationKV, err := m.consensus.Client().Sub("application")
+	metropolisKV, err := m.consensus.Client().Sub("metropolis")
 	if err != nil {
 		return fmt.Errorf("when retrieving application etcd subclient: %w", err)
 	}
 
-	// Create Metropolis CA and this node's certificate.
-	caCertBytes, _, err := PKICA.Ensure(ctx, pkiKV)
-	if err != nil {
-		return fmt.Errorf("failed to create cluster CA: %w", err)
-	}
-	nodeCert := PKINamespace.New(PKICA, "", pki.Server([]string{node.ID()}, nil))
-	nodeCert.UseExistingKey(priv)
-	nodeCertBytes, _, err := nodeCert.Ensure(ctx, pkiKV)
-	if err != nil {
-		return fmt.Errorf("failed to create node certificate: %w", err)
+	status := Status{
+		State:             cpb.ClusterState_CLUSTER_STATE_HOME,
+		hasLocalConsensus: true,
+		consensusClient:   metropolisKV,
+		// Credentials are set further down once created through a curator
+		// short-circuit bootstrap function.
+		Credentials: nil,
 	}
 
-	if err := m.storageRoot.Data.Node.Credentials.CACertificate.Write(caCertBytes, 0400); err != nil {
-		return fmt.Errorf("failed to write CA certificate: %w", err)
-	}
-	if err := m.storageRoot.Data.Node.Credentials.Certificate.Write(nodeCertBytes, 0400); err != nil {
-		return fmt.Errorf("failed to write node certificate: %w", err)
-	}
-	if err := m.storageRoot.Data.Node.Credentials.Key.Write(priv, 0400); err != nil {
-		return fmt.Errorf("failed to write node private key: %w", err)
+	// Short circuit curator into storing the new node.
+	ckv, err := status.ConsensusClient(ConsensusUserCurator)
+	if err != nil {
+		return fmt.Errorf("when retrieving consensus user for curator: %w", err)
 	}
 
-	// Update our Node object in etcd.
-	if err := node.Store(ctx, nodesKV); err != nil {
+	if err := node.BootstrapStore(ctx, ckv); err != nil {
 		return fmt.Errorf("failed to store new node in etcd: %w", err)
 	}
 
-	m.status.Set(Status{
-		State:           ClusterHome,
-		Node:            &node,
-		consensusClient: applicationKV,
-	})
+	// And short-circuit creating the curator CA and node certificate.
+	creds, err := curator.BootstrapNodeCredentials(ctx, ckv, priv, pub)
+	if err != nil {
+		return fmt.Errorf("failed to bootstrap node credentials: %w", err)
+	}
+
+	if err := creds.Save(&m.storageRoot.Data.Node.Credentials); err != nil {
+		return fmt.Errorf("failed to write node credentials: %w", err)
+	}
+
+	status.Credentials = creds
+	m.status.Set(status)
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)
