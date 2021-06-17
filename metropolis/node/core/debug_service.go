@@ -28,11 +28,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	apb "source.monogon.dev/metropolis/proto/api"
-
-	"source.monogon.dev/metropolis/node/core/cluster"
-	"source.monogon.dev/metropolis/node/kubernetes"
+	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/pkg/logtree"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 const (
@@ -41,9 +39,8 @@ const (
 
 // debugService implements the Metropolis node debug API.
 type debugService struct {
-	cluster    *cluster.Manager
-	kubernetes *kubernetes.Service
-	logtree    *logtree.LogTree
+	roleserve *roleserve.Service
+	logtree   *logtree.LogTree
 	// traceLock provides exclusive access to the Linux tracing infrastructure
 	// (ftrace)
 	// This is a channel because Go's mutexes can't be cancelled or be acquired
@@ -52,7 +49,18 @@ type debugService struct {
 }
 
 func (s *debugService) GetDebugKubeconfig(ctx context.Context, req *apb.GetDebugKubeconfigRequest) (*apb.GetDebugKubeconfigResponse, error) {
-	return s.kubernetes.GetDebugKubeconfig(ctx, req)
+	w := s.roleserve.Watch()
+	defer w.Close()
+	for {
+		v, err := w.Get(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.Unavailable, "could not get roleserve status: %v", err)
+		}
+		if v.Kubernetes == nil {
+			continue
+		}
+		return v.Kubernetes.GetDebugKubeconfig(ctx, req)
+	}
 }
 
 func (s *debugService) GetLogs(req *apb.GetLogsRequest, srv apb.NodeDebugService_GetLogsServer) error {
