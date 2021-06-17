@@ -53,6 +53,7 @@ type ConsensusUser string
 
 const (
 	ConsensusUserKubernetesPKI ConsensusUser = "kubernetes-pki"
+	ConsensusUserCurator       ConsensusUser = "curator"
 )
 
 // ConsensusClient returns an etcd/consensus client for a given ConsensusUser.
@@ -73,6 +74,7 @@ func (s *Status) ConsensusClient(user ConsensusUser) (client.Namespaced, error) 
 	// casting to ConsensusUser from an arbitrary string.
 	switch user {
 	case ConsensusUserKubernetesPKI:
+	case ConsensusUserCurator:
 	default:
 		return nil, fmt.Errorf("unknown ConsensusUser %q", user)
 	}

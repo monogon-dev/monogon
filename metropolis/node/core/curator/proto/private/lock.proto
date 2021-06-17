@@ -1,0 +1,16 @@
+syntax = "proto3";
+option go_package = "source.monogon.dev/metropolis/node/core/curator/proto/private";
+package metropolis.node.core.curator.proto.private;
+
+// LeaderElectionValue is the value set under an election key by the curator
+// leader. It is used by curator followers to be able to contact the current
+// leader and forward any client requests to it.
+message LeaderElectionValue {
+    // node_id is the ID of the node whose curator is acting as the leader.
+    string node_id = 1;
+    // ttl is the time-to-live set on the underlying session used for leader
+    // election. It is effectively an upper bound on how long the leader might
+    // be unavailable for until another curator instance can be elected as a
+    // replacement leader.
+    uint64 ttl = 2;
+}

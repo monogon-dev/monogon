@@ -28,12 +28,14 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"time"
 
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/cluster"
+	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/node/core/network"
@@ -163,6 +165,22 @@ func main() {
 		if err != nil {
 			close(trapdoor)
 			return fmt.Errorf("new couldn't find home in new cluster, aborting: %w", err)
+		}
+
+		// Start cluster curator.
+		kv, err := status.ConsensusClient(cluster.ConsensusUserCurator)
+		if err != nil {
+			return fmt.Errorf("failed to retrieve consensus curator client: %w", err)
+		}
+		c := curator.New(curator.Config{
+			Etcd:   kv,
+			NodeID: status.Node.ID(),
+			// TODO(q3k): make this configurable?
+			LeaderTTL: time.Second * 5,
+			Directory: &root.Ephemeral.Curator,
+		})
+		if err := supervisor.Run(ctx, "curator", c.Run); err != nil {
+			return fmt.Errorf("when starting curator: %w", err)
 		}
 
 		// We are now in a cluster. We can thus access our 'node' object and
