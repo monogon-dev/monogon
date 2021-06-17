@@ -18,3 +18,78 @@ syntax = "proto3";
 package metropolis.proto.common;
 option go_package = "source.monogon.dev/metropolis/proto/common";
 
+// NodeRoles are the possible roles that a Metropolis Node should run within the
+// cluster. These are configured by the cluster and can be retrieved through the
+// Curator.
+message NodeRoles {
+    message KubernetesWorker {
+    }
+    KubernetesWorker kubernetes_worker = 1;
+}
+
+// NodeState is the state of a Metropolis node from the point of view of the
+// cluster it is a part of (or intending to be a part of).
+enum NodeState {
+    NODE_STATE_INVALID = 0;
+
+    // NEW: the node has established a first contact with the cluster and
+    // intends to register into it. The node's identity has not been verified
+    // and no hardware attestation of the new node was performed.
+    // The node has generated a CUK/LUK and set up storage encrypted with the
+    // combination of both keys.
+    // The node has generated a private/public keypair, and that keypair has
+    // been used to contact the already running Cluster.
+    NODE_STATE_NEW = 1;
+    // STANDBY: the node has successfully passed identity and hardware
+    // attestation checks as defined by the cluster policy. The node still isn't
+    // part of the cluster, as it itself might perform checks against the
+    // running Cluster.
+    NODE_STATE_STANDBY = 2;
+    // UP: the node has passed all preconditions for STANDBY and has also
+    // performed a commit into the cluster by exchanging its CUK for a
+    // certificate issued by the cluster.
+    // The node is now ready to serve, and its certificate can be used to
+    // authenticate its identity cryptographically.
+    NODE_STATE_UP = 3;
+    // DISOWNED: the node has been rejected or decommissioned by the cluster.
+    // Any further contact from the node to the cluster will be rejected.
+    NODE_STATE_DISOWNED = 4;
+};
+
+// ClusterState is the state of the cluster from the point of view of a node.
+// Different subsystems can watch this state and depend on it for behaviour
+// (eg. start serving when HOME, maybe self-fence on SPLIT, etc.).
+enum ClusterState {
+    CLUSTER_STATE_INVALID = 0;
+
+    // UNKNOWN: the node has not yet determined the existence of a cluster it
+    // should join or start. This is a transient, initial state that should only
+    // manifest during boot.
+    CLUSTER_STATE_UNKNOWN = 1;
+    // FOREIGN: the node is attempting to register into an already existing
+    // cluster with which it managed to make preliminary contact, but which the
+    // cluster has not yet fully productionized (eg. the node is still being
+    // hardware attested, or the operator needs to confirm the
+    // registration of this node).
+    CLUSTER_STATE_FOREIGN = 2;
+    // TRUSTED: the node is attempting to register into an already registered
+    // cluster, and has been trusted by it. The node is now attempting to fully
+    // commit to registering into the cluster.
+    CLUSTER_STATE_TRUSTED = 3;
+    // HOME: the node is part of this cluster. This is the bulk of time in which
+    // this node will spend its time.
+    CLUSTER_STATE_HOME = 4;
+    // DISOWNING: the node has been disowned (ie., removed) by the cluster, and
+    // that it will not be ever part of any cluster again, and  that it will be
+    // decommissioned by the operator.
+    CLUSTER_STATE_DISOWNING = 5;
+    // SPLIT:the node would usually be Home in a cluster, but has been split
+    // from the consensus of the cluster. This can happen for nodes running
+    // consensus when consensus is lost (eg. when there is no quorum or this
+    // node has been netsplit), and for other nodes if they have lost network
+    // connectivity to the consensus nodes. Clients should make their own
+    // decision what action to perform in this state, depending on the level of
+    // consistency required and whether it makes sense for the node to fence its
+    // services off.
+    CLUSTER_STATE_SPLIT = 6;
+}
