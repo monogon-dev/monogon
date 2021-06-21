@@ -4,8 +4,12 @@ load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
 
 proto_library(
     name = "private_proto",
-    srcs = ["lock.proto"],
+    srcs = [
+        "lock.proto",
+        "storage.proto",
+    ],
     visibility = ["//visibility:public"],
+    deps = ["//metropolis/proto/common:common_proto"],
 )
 
 go_proto_library(
@@ -13,6 +17,7 @@ go_proto_library(
     importpath = "source.monogon.dev/metropolis/node/core/curator/proto/private",
     proto = ":private_proto",
     visibility = ["//visibility:public"],
+    deps = ["//metropolis/proto/common:go_default_library"],
 )
 
 go_library(

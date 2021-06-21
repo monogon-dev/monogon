@@ -1,0 +1,24 @@
+syntax = "proto3";
+option go_package = "source.monogon.dev/metropolis/node/core/curator/proto/private";
+package metropolis.node.core.curator.proto.private;
+
+import "metropolis/proto/common/common.proto";
+
+// Node describes a single node's state in etcd. This is only ever visible to
+// the curator, and fully managed by the curator.
+message Node {
+    // The node's public key.
+    bytes public_key = 1;
+    // Node's individual cluster part of the data partition encryption key. It
+    // is combined with the Node Unlock Key (NUK) kept within
+    // SealedConfiguration.
+    bytes cluster_unlock_key = 2;
+
+    // The node's state, as seen by the cluster. This state is persisted and
+    // represents the progress the node is making through registering into the
+    // cluster or joining the cluster.
+    metropolis.proto.common.NodeState fsm_state = 3;
+
+    // The node's intended roles when running.
+    metropolis.proto.common.NodeRoles roles = 4;
+}
