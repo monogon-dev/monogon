@@ -21,6 +21,7 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -52,25 +53,26 @@ type Namespaced interface {
 	// prefix `a:b:c/` into which K/V access is remapped.
 	Sub(space string) (Namespaced, error)
 
-	// ThinClient returns a clientv3.Client which has the same namespacing as
-	// the namespaced interface. It only implements the KV, Lease and Watcher
-	// interfaces - all other interfaces are unimplemented and will panic when
-	// called.
-	ThinClient() *clientv3.Client
+	// ThinClient returns a clientv3.Client which has the same namespacing as the
+	// namespaced interface. It only implements the KV, Lease and Watcher interfaces
+	// - all other interfaces are unimplemented and will panic when called. The
+	// given context is returned by client.Ctx() and is used by some library code
+	// (eg. etcd client-go's built-in concurrency library).
+	ThinClient(ctx context.Context) *clientv3.Client
 }
 
 // ThinClient takes a set of KV, Lease and Watcher etcd clients and turns them
 // into a full Client struct. The rest of the interfaces (Cluster, Auth,
 // Maintenance) will all panic when called.
-func ThinClient(kv clientv3.KV, lease clientv3.Lease, watcher clientv3.Watcher) *clientv3.Client {
-	return &clientv3.Client{
-		Cluster:     &unimplementedCluster{},
-		KV:          kv,
-		Lease:       lease,
-		Watcher:     watcher,
-		Auth:        &unimplementedAuth{},
-		Maintenance: &unimplementedMaintenance{},
-	}
+func ThinClient(ctx context.Context, kv clientv3.KV, lease clientv3.Lease, watcher clientv3.Watcher) *clientv3.Client {
+	cli := clientv3.NewCtxClient(ctx)
+	cli.Cluster = &unimplementedCluster{}
+	cli.KV = kv
+	cli.Lease = lease
+	cli.Watcher = watcher
+	cli.Auth = &unimplementedAuth{}
+	cli.Maintenance = &unimplementedMaintenance{}
+	return cli
 }
 
 // local implements the Namespaced client to access a locally running etc.
@@ -115,8 +117,8 @@ func (l *local) Sub(space string) (Namespaced, error) {
 	return sub, nil
 }
 
-func (l *local) ThinClient() *clientv3.Client {
-	return ThinClient(l.KV, l.Lease, l.Watcher)
+func (l *local) ThinClient(ctx context.Context) *clientv3.Client {
+	return ThinClient(ctx, l.KV, l.Lease, l.Watcher)
 }
 
 func (l *local) Close() error {
