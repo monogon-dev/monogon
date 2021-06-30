@@ -60,9 +60,6 @@ func rpcError(err error) (error, bool) {
 	if errors.Is(err, lostLeadership) {
 		return status.Error(codes.Unavailable, "lost leadership"), true
 	}
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return status.Errorf(codes.Unavailable, "%v", err), true
-	}
 	return err, false
 }
 

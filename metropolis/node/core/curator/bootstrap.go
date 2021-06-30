@@ -22,31 +22,27 @@ import (
 // consumer like the bootstrap code.
 
 // BootstrapNodeCredentials creates node credentials for the first node in a
-// cluster. It can only be called by cluster bootstrap code.
+// cluster. It can only be called by cluster bootstrap code. It returns the
+// generated x509 CA and node certificates.
 //
 // TODO(q3k): don't require privkey, but that needs some //metropolis/pkg/pki changes first.
-func BootstrapNodeCredentials(ctx context.Context, etcd client.Namespaced, priv, pub []byte) (*NodeCredentials, error) {
+func BootstrapNodeCredentials(ctx context.Context, etcd client.Namespaced, priv, pub []byte) (ca, node []byte, err error) {
 	id := NodeID(pub)
 
-	caCertBytes, _, err := pkiCA.Ensure(ctx, etcd)
+	ca, _, err = pkiCA.Ensure(ctx, etcd)
 	if err != nil {
-		return nil, fmt.Errorf("when ensuring CA: %w", err)
+		err = fmt.Errorf("when ensuring CA: %w", err)
+		return
 	}
 	nodeCert := pkiNamespace.New(pkiCA, "", pki.Server([]string{id}, nil))
 	nodeCert.UseExistingKey(priv)
-	nodeCertBytes, _, err := nodeCert.Ensure(ctx, etcd)
+	node, _, err = nodeCert.Ensure(ctx, etcd)
 	if err != nil {
-		return nil, fmt.Errorf("when ensuring node cert: %w", err)
+		err = fmt.Errorf("when ensuring node cert: %w", err)
+		return
 	}
 
-	return &NodeCredentials{
-		NodeCertificate: NodeCertificate{
-			PublicKey:     pub,
-			Certificate:   nodeCertBytes,
-			CACertificate: caCertBytes,
-		},
-		PrivateKey: priv,
-	}, nil
+	return
 }
 
 // BootstrapStore saves the Node into etcd, without regard for any other cluster

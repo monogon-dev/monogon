@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 
@@ -116,9 +117,23 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	}
 
 	// And short-circuit creating the curator CA and node certificate.
-	creds, err := curator.BootstrapNodeCredentials(ctx, ckv, priv, pub)
+	caCert, nodeCert, err := curator.BootstrapNodeCredentials(ctx, ckv, priv, pub)
 	if err != nil {
 		return fmt.Errorf("failed to bootstrap node credentials: %w", err)
+	}
+
+	// Using the short-circuited credentials from the curator, build our
+	// NodeCredentials. That, and the public part of the credentials
+	// (NodeCertificate) are the primary output of the cluster manager.
+	creds, err := NewNodeCredentials(priv, nodeCert, caCert)
+	if err != nil {
+		return fmt.Errorf("failed to use newly bootstrapped node credentials: %w", err)
+	}
+
+	// Overly cautious check: ensure that the credentials are for the public key
+	// we've generated.
+	if want, got := pub, []byte(creds.PublicKey()); subtle.ConstantTimeCompare(want, got) != 1 {
+		return fmt.Errorf("newly bootstrapped node credentials emitted for wrong public key")
 	}
 
 	if err := creds.Save(&m.storageRoot.Data.Node.Credentials); err != nil {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
-	"source.monogon.dev/metropolis/node/core/curator"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -27,7 +26,7 @@ type Status struct {
 
 	// Credentials used for the node to authenticate to the Curator and other
 	// cluster services.
-	Credentials *curator.NodeCredentials
+	Credentials *NodeCredentials
 }
 
 // ConsensusUser is the to-level user of an etcd client in Metropolis node
