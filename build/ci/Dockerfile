@@ -49,6 +49,17 @@ RUN curl -o /usr/local/bin/bazel \
 # https://github.com/bazelbuild/bazel-gazelle/pull/535
 ENV GO_REPOSITORY_USE_HOST_CACHE=1
 
+# Install ibazel (bazel-watcher)
+RUN set -e -x ;\
+    cd /tmp ;\
+    git clone -b v0.15.10 https://github.com/bazelbuild/bazel-watcher ;\
+    cd bazel-watcher ;\
+    [ $(git rev-parse HEAD) == "84cab6f15f64850fb972ea88701e634c8b611301" ] ;\
+    bazel --output_user_root /tmp/bazel-watcher-cache build //ibazel ;\
+    cp bazel-bin/ibazel/linux_amd64_stripped/ibazel /usr/local/bin/ibazel ;\
+    cd /tmp ;\
+    rm -rf bazel-watcher bazel-watcher-cache
+
 # --userns=keep-id uses the workdir as $HOME otherwise
 RUN mkdir /user
 ENV HOME=/user

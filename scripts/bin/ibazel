@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ibazel doesn't take a --output_user_root, set it using the per-user .bazelrc inside the container.
+podman exec -i monogon-dev bash -c "cat - > /user/.bazelrc" <<EOF
+startup --output_user_root ${HOME}/.cache/bazel-monogon
+EOF
+
+exec podman exec -it monogon-dev ibazel "$@"
