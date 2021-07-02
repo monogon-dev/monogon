@@ -1215,6 +1215,16 @@ def go_repositories():
         ],
     )
     go_repository(
+        name = "com_github_inconshreveable_mousetrap",
+        importpath = "github.com/inconshreveable/mousetrap",
+        version = "v1.0.0",
+        sum = "h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NHg9XEKhtSvM=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
         name = "com_github_infobloxopen_go_trees",
         importpath = "github.com/infobloxopen/go-trees",
         version = "v0.0.0-20190313150506-2af4e13f9062",

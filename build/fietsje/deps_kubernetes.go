@@ -119,6 +119,7 @@ func depsKubernetes(p *planner) {
 		"github.com/grpc-ecosystem/grpc-gateway",
 		"github.com/hashicorp/hcl",
 		"github.com/hpcloud/tail",
+		"github.com/inconshreveable/mousetrap",
 		"github.com/jonboulle/clockwork",
 		"github.com/karrick/godirwalk",
 		"github.com/liggitt/tabwriter",
