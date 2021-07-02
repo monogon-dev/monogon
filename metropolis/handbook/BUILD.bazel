@@ -1,0 +1,7 @@
+load("//metropolis/handbook:defs.bzl", "mdbook_html")
+
+mdbook_html(
+    name = "handbook",
+    srcs = glob(["src/**/*.md"]),
+    title = "Metropolis Handbook",
+)
