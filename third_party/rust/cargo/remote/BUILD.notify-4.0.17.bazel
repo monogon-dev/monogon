@@ -1,0 +1,87 @@
+"""
+@generated
+cargo-raze crate build file.
+
+DO NOT EDIT! Replaced on runs of cargo-raze
+"""
+
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+# buildifier: disable=load
+load(
+    "@rules_rust//rust:rust.bzl",
+    "rust_binary",
+    "rust_library",
+    "rust_test",
+)
+
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/rust/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "unencumbered",  # CC0-1.0 from expression "CC0-1.0"
+])
+
+# Generated Targets
+
+# Unsupported target "monitor_debounced" with type "example" omitted
+
+# Unsupported target "monitor_raw" with type "example" omitted
+
+rust_library(
+    name = "notify",
+    srcs = glob(["**/*.rs"]),
+    aliases = {
+    },
+    crate_features = [
+    ],
+    crate_root = "src/lib.rs",
+    crate_type = "lib",
+    data = [],
+    edition = "2015",
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+    version = "4.0.17",
+    # buildifier: leave-alone
+    deps = [
+        "@raze__bitflags__1_2_1//:bitflags",
+        "@raze__filetime__0_2_14//:filetime",
+        "@raze__libc__0_2_97//:libc",
+        "@raze__walkdir__2_3_2//:walkdir",
+    ] + selects.with_or({
+        # cfg(target_os = "linux")
+        (
+            "@rules_rust//rust/platform:x86_64-unknown-linux-gnu",
+        ): [
+            "@raze__inotify__0_7_1//:inotify",
+            "@raze__mio__0_6_23//:mio",
+            "@raze__mio_extras__2_0_6//:mio_extras",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+# Unsupported target "debounce" with type "test" omitted
+
+# Unsupported target "event_path" with type "test" omitted
+
+# Unsupported target "fsevents" with type "test" omitted
+
+# Unsupported target "notify" with type "test" omitted
+
+# Unsupported target "race-with-remove-dir" with type "test" omitted
+
+# Unsupported target "watcher" with type "test" omitted
+
+# Unsupported target "windows" with type "test" omitted

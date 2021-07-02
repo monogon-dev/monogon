@@ -1,0 +1,64 @@
+"""
+@generated
+cargo-raze crate build file.
+
+DO NOT EDIT! Replaced on runs of cargo-raze
+"""
+
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+# buildifier: disable=load
+load(
+    "@rules_rust//rust:rust.bzl",
+    "rust_binary",
+    "rust_library",
+    "rust_test",
+)
+
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/rust/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # ISC from expression "ISC"
+])
+
+# Generated Targets
+
+# Unsupported target "issue-120-workaround" with type "example" omitted
+
+# Unsupported target "stream" with type "example" omitted
+
+# Unsupported target "watch" with type "example" omitted
+
+rust_library(
+    name = "inotify",
+    srcs = glob(["**/*.rs"]),
+    crate_features = [
+    ],
+    crate_root = "src/lib.rs",
+    crate_type = "lib",
+    data = [],
+    edition = "2015",
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+    version = "0.7.1",
+    # buildifier: leave-alone
+    deps = [
+        "@raze__bitflags__1_2_1//:bitflags",
+        "@raze__inotify_sys__0_1_5//:inotify_sys",
+        "@raze__libc__0_2_97//:libc",
+    ],
+)
+
+# Unsupported target "main" with type "test" omitted

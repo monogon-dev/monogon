@@ -1,0 +1,80 @@
+"""
+@generated
+cargo-raze crate build file.
+
+DO NOT EDIT! Replaced on runs of cargo-raze
+"""
+
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+# buildifier: disable=load
+load(
+    "@rules_rust//rust:rust.bzl",
+    "rust_binary",
+    "rust_library",
+    "rust_test",
+)
+
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/rust/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # MIT from expression "MIT OR Apache-2.0"
+])
+
+# Generated Targets
+
+# Unsupported target "autobahn-client" with type "example" omitted
+
+# Unsupported target "autobahn-server" with type "example" omitted
+
+# Unsupported target "callback-error" with type "example" omitted
+
+# Unsupported target "client" with type "example" omitted
+
+# Unsupported target "server" with type "example" omitted
+
+rust_library(
+    name = "tungstenite",
+    srcs = glob(["**/*.rs"]),
+    crate_features = [
+    ],
+    crate_root = "src/lib.rs",
+    crate_type = "lib",
+    data = [],
+    edition = "2018",
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+    version = "0.11.1",
+    # buildifier: leave-alone
+    deps = [
+        "@raze__base64__0_12_3//:base64",
+        "@raze__byteorder__1_4_3//:byteorder",
+        "@raze__bytes__0_5_6//:bytes",
+        "@raze__http__0_2_4//:http",
+        "@raze__httparse__1_4_1//:httparse",
+        "@raze__input_buffer__0_3_1//:input_buffer",
+        "@raze__log__0_4_14//:log",
+        "@raze__rand__0_7_3//:rand",
+        "@raze__sha_1__0_9_6//:sha_1",
+        "@raze__url__2_2_2//:url",
+        "@raze__utf_8__0_7_6//:utf_8",
+    ],
+)
+
+# Unsupported target "connection_reset" with type "test" omitted
+
+# Unsupported target "no_send_after_close" with type "test" omitted
+
+# Unsupported target "receive_after_init_close" with type "test" omitted

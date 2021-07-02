@@ -100,6 +100,25 @@ http_archive(
     url = "https://github.com/bazelbuild/rules_pkg/releases/download/0.2.0/rules_pkg-0.2.0.tar.gz",
 )
 
+# Rust rules
+http_archive(
+    name = "rules_rust",
+    sha256 = "6c6abf4100b3118467a9674e9dba5f4933aa97840f909823aacddffc2abe139b",
+    strip_prefix = "rules_rust-f4cbea56b8053436fbab625fc32254da212a0304",
+    urls = [
+        # Main branch as of 2021-07-01
+        "https://github.com/bazelbuild/rules_rust/archive/f4cbea56b8053436fbab625fc32254da212a0304.tar.gz",
+    ],
+)
+
+load("@rules_rust//rust:repositories.bzl", "rust_repositories")
+
+rust_repositories()
+
+load("//third_party/rust/cargo:crates.bzl", "raze_fetch_remote_crates")
+
+raze_fetch_remote_crates()
+
 # third_party external repositories
 load("//third_party/linux:external.bzl", "linux_external")
 
