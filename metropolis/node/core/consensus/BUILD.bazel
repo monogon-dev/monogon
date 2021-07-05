@@ -25,6 +25,7 @@ go_library(
 
 go_test(
     name = "go_default_test",
+    size = "small",
     srcs = [
         "consensus_test.go",
         "logparser_test.go",

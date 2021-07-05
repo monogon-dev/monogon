@@ -69,11 +69,7 @@ func (b *boilerplate) close() {
 }
 
 func waitEtcd(t *testing.T, s *Service) {
-	deadline := time.Now().Add(5 * time.Second)
 	for {
-		if time.Now().After(deadline) {
-			t.Fatalf("etcd did not start up on time")
-		}
 		if s.IsReady() {
 			break
 		}
@@ -224,11 +220,7 @@ func TestCRL(t *testing.T) {
 		t.Fatalf("cert revoke failed: %v", err)
 	}
 
-	deadline := time.Now().Add(5 * time.Second)
 	for {
-		if time.Now().After(deadline) {
-			t.Fatalf("CRL did not get updated in time")
-		}
 		time.Sleep(100 * time.Millisecond)
 
 		crlRaw, err := b.root.Data.Etcd.PeerCRL.Read()
