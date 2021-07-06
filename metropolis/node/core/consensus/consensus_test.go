@@ -93,7 +93,7 @@ func TestBootstrap(t *testing.T) {
 		externalHost: "127.0.0.1",
 	})
 
-	supervisor.New(b.ctx, etcd.Run)
+	supervisor.TestHarness(t, etcd.Run)
 	waitEtcd(t, etcd)
 
 	kv := etcd.Client()
@@ -116,7 +116,7 @@ func TestMemberInfo(t *testing.T) {
 		Port:         freeport.MustConsume(freeport.AllocateTCPPort()),
 		externalHost: "127.0.0.1",
 	})
-	supervisor.New(b.ctx, etcd.Run)
+	supervisor.TestHarness(t, etcd.Run)
 	waitEtcd(t, etcd)
 
 	id, name, err := etcd.MemberInfo(b.ctx)
@@ -159,9 +159,9 @@ func TestRestartFromDisk(t *testing.T) {
 			Port:         freeport.MustConsume(freeport.AllocateTCPPort()),
 			externalHost: "127.0.0.1",
 		})
-		ctx, ctxC := context.WithCancel(b.ctx)
-		supervisor.New(ctx, etcd.Run)
+		ctxC, _ := supervisor.TestHarness(t, etcd.Run)
 		waitEtcd(t, etcd)
+
 		kv := etcd.Client()
 		if new {
 			if _, err := kv.Put(b.ctx, "/foo", "bar"); err != nil {
@@ -203,7 +203,7 @@ func TestCRL(t *testing.T) {
 		Port:         freeport.MustConsume(freeport.AllocateTCPPort()),
 		externalHost: "127.0.0.1",
 	})
-	supervisor.New(b.ctx, etcd.Run)
+	supervisor.TestHarness(t, etcd.Run)
 	waitEtcd(t, etcd)
 
 	etcd.stateMu.Lock()

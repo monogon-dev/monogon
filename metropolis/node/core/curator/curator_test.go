@@ -221,7 +221,7 @@ func TestLeaderElectionStatus(t *testing.T) {
 
 	// Start a new supervisor in which we create all curator DUTs.
 	dutC := make(chan *dut)
-	supervisor.New(ctx, func(ctx context.Context) error {
+	supervisor.TestHarness(t, func(ctx context.Context) error {
 		for e, _ := range endpointToNum {
 			dutC <- newDut(ctx, t, e)
 		}

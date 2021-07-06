@@ -54,14 +54,16 @@ func TestListenerSwitch(t *testing.T) {
 	}
 
 	// Start listener under supervisor.
-	ctx, ctxC := context.WithCancel(context.Background())
-	defer ctxC()
-	supervisor.New(ctx, l.run)
+	supervisor.TestHarness(t, l.run)
 
 	// Begin with a follower.
 	val.Set(electionStatus{
 		follower: &electionStatusFollower{},
 	})
+
+	// Context for this test.
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
 
 	// Simulate a request context.
 	ctxR, ctxRC := context.WithCancel(ctx)
