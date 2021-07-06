@@ -123,6 +123,10 @@ func WithExistingLogtree(lt *logtree.LogTree) SupervisorOpt {
 
 // New creates a new supervisor with its root running the given root runnable.
 // The given context can be used to cancel the entire supervision tree.
+//
+// For tests, we reccomend using TestHarness instead, which will also stream
+// logs to stderr and take care of propagating root runnable errors to the test
+// output.
 func New(ctx context.Context, rootRunnable Runnable, opts ...SupervisorOpt) *supervisor {
 	sup := &supervisor{
 		logtree: logtree.New(),

@@ -15,3 +15,44 @@
 // limitations under the License.
 
 package supervisor
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"source.monogon.dev/metropolis/pkg/logtree"
+)
+
+// TestHarness runs a supervisor in a harness designed for unit testing
+// runnables and runnable trees.
+//
+// The given runnable will be run in a new supervisor, and the logs from this
+// supervisor will be streamed to stderr. If the runnable returns a non-context
+// error, the harness will throw a test error, but will not abort the test.
+//
+// The harness also returns a context cancel function that can be used to
+// terminate the started supervisor early.  Regardless of manual cancellation,
+// the supervisor will always be terminated up at the end of the test/benchmark
+// it's running in.
+//
+// The second returned value is the logtree used by this supervisor. It can be
+// used to assert some log messages are emitted in tests that exercise some
+// log-related functionality.
+func TestHarness(t *testing.T, r func(ctx context.Context) error) (context.CancelFunc, *logtree.LogTree) {
+	t.Helper()
+
+	ctx, ctxC := context.WithCancel(context.Background())
+	t.Cleanup(ctxC)
+
+	lt := logtree.New()
+	logtree.PipeAllToStderr(t, lt)
+
+	New(ctx, func(ctx context.Context) error {
+		if err := r(ctx); err != nil && !errors.Is(err, ctx.Err()) {
+			t.Errorf("Supervised runnable in harness returned error: %v", err)
+		}
+		return nil
+	}, WithExistingLogtree(lt))
+	return ctxC, lt
+}
