@@ -163,7 +163,8 @@ type EphemeralDirectory struct {
 
 type EphemeralConsensusDirectory struct {
 	declarative.Directory
-	ClientSocket declarative.File `file:"client.sock"`
+	ClientSocket   declarative.File `file:"client.sock"`
+	ServerLogsFIFO declarative.File `file:"server-logs.fifo"`
 }
 
 type EphemeralCuratorDirectory struct {

@@ -49,6 +49,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus/ca"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/pkg/logtree/unraw"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
@@ -166,9 +167,24 @@ func (s *Service) configure(ctx context.Context) (*embed.Config, error) {
 		cfg.ClusterState = "existing"
 	}
 
+	converter := unraw.Converter{
+		Parser: parseEtcdLogEntry,
+		// The initial line from a starting etcd instance is fairly long.
+		MaximumLineLength: 8192,
+		LeveledLogger:     supervisor.Logger(ctx),
+	}
+	fifoPath := s.config.Ephemeral.ServerLogsFIFO.FullPath()
+	pipe, err := converter.NamedPipeReader(fifoPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not get named pipe reader: %w", err)
+	}
+	if err := supervisor.Run(ctx, "pipe", pipe); err != nil {
+		return nil, fmt.Errorf("could not start server log reader: %w", err)
+	}
+
 	// TODO(q3k): pipe logs from etcd to supervisor.RawLogger via a file.
 	cfg.Logger = DefaultLogger
-	cfg.LogOutputs = []string{"stderr"}
+	cfg.LogOutputs = []string{fifoPath}
 
 	return cfg, nil
 }
