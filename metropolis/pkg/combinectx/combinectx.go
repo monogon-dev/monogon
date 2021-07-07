@@ -18,8 +18,8 @@ import (
 // parent contexts is Done().
 func Combine(a, b context.Context) context.Context {
 	c := &Combined{
-		a: a,
-		b: b,
+		a:     a,
+		b:     b,
 		doneC: make(chan struct{}),
 	}
 	go c.run()
@@ -180,5 +180,3 @@ func (c *Combined) Value(key interface{}) interface{} {
 	}
 	return nil
 }
-
-

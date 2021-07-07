@@ -16,7 +16,7 @@ func ExampleCombine() {
 	// some long-term local worker context, while the second is a context from some
 	// incoming request.
 	ctxA, cancelA := context.WithCancel(context.Background())
-	ctxB, cancelB := context.WithTimeout(context.Background(), time.Millisecond * 100)
+	ctxB, cancelB := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancelA()
 	defer cancelB()
 
