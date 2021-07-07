@@ -81,6 +81,25 @@ func (n *node) logRaw(line *logbuffer.Line) {
 	n.tree.journal.notify(e)
 }
 
+// LogExternalLeveled injects a ExternalLeveledPayload into a given
+// LeveledLogger. This should only be used by systems which translate external
+// data sources into leveled logging - see ExternelLeveledPayload for more
+// information.
+func LogExternalLeveled(l LeveledLogger, e *ExternalLeveledPayload) error {
+	n, ok := l.(*node)
+	if !ok {
+		return fmt.Errorf("the given LeveledLogger is not a logtree node")
+	}
+	p := e.sanitize()
+	entry := &entry{
+		origin:  n.dn,
+		leveled: p,
+	}
+	n.tree.journal.append(entry)
+	n.tree.journal.notify(entry)
+	return nil
+}
+
 // log builds a LeveledPayload and entry for a given message, including all related
 // metadata. It will create a new entry append it to the journal, and notify all
 // pertinent subscribers.

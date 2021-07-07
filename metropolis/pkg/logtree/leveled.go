@@ -120,6 +120,17 @@ func (s Severity) AtLeast(other Severity) bool {
 	return false
 }
 
+// Valid returns whether true if this severity is one of the known levels
+// (INFO, WARNING, ERROR or FATAL), false otherwise.
+func (s Severity) Valid() bool {
+	switch s {
+	case INFO, WARNING, ERROR, FATAL:
+		return true
+	default:
+		return false
+	}
+}
+
 func SeverityFromProto(s apb.LeveledLogSeverity) (Severity, error) {
 	switch s {
 	case apb.LeveledLogSeverity_INFO:

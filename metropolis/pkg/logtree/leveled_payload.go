@@ -143,3 +143,55 @@ func LeveledPayloadFromProto(p *apb.LogEntry_Leveled) (*LeveledPayload, error) {
 		line:      line,
 	}, nil
 }
+
+// ExternalLeveledPayload is a LeveledPayload received from an external source,
+// eg. from parsing the logging output of third-party programs. It can be
+// converted into a LeveledPayload and inserted into a leveled logger, but will
+// be sanitized before that, ensuring that potentially buggy
+// emitters/converters do not end up polluting the leveled logger data.
+//
+// This type should be used only when inserting data from external systems, not
+// by code that just wishes to log things. In the future, data inserted this
+// way might be explicitly marked as tainted so operators can understand that
+// parts of this data might not give the same guarantees as the log entries
+// emitted by the native LeveledLogger API.
+type ExternalLeveledPayload struct {
+	// Log line. If any newlines are found, they will split the message into
+	// multiple messages within LeveledPayload. Empty messages are accepted
+	// verbatim.
+	Message string
+	// Timestamp when this payload was emitted according to its source. If not
+	// given, will default to the time of conversion to LeveledPayload.
+	Timestamp time.Time
+	// Log severity. If invalid or unset will default to INFO.
+	Severity Severity
+	// File name of originating code. Defaults to "unknown" if not set.
+	File string
+	// Line in File. Zero indicates the line is not known.
+	Line int
+}
+
+// sanitize the given ExternalLeveledPayload by creating a corresponding
+// LeveledPayload. The original object is unaltered.
+func (e *ExternalLeveledPayload) sanitize() *LeveledPayload {
+	l := &LeveledPayload{
+		messages:  strings.Split(e.Message, "\n"),
+		timestamp: e.Timestamp,
+		severity:  e.Severity,
+		file:      e.File,
+		line:      e.Line,
+	}
+	if l.timestamp.IsZero() {
+		l.timestamp = time.Now()
+	}
+	if !l.severity.Valid() {
+		l.severity = INFO
+	}
+	if l.file == "" {
+		l.file = "unknown"
+	}
+	if l.line < 0 {
+		l.line = 0
+	}
+	return l
+}
