@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["unraw.go"],
+    importpath = "source.monogon.dev/metropolis/pkg/logtree/unraw",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/pkg/logbuffer:go_default_library",
+        "//metropolis/pkg/logtree:go_default_library",
+        "//metropolis/pkg/supervisor:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["unraw_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//metropolis/pkg/logbuffer:go_default_library",
+        "//metropolis/pkg/logtree:go_default_library",
+        "//metropolis/pkg/supervisor:go_default_library",
+    ],
+)
