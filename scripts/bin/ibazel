@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "$(podman inspect monogon-dev --format "{{ (index .Mounts 0).Source }}")" != "$(pwd)" ]]; then
+    echo "Please run this wrapper from the original checkout"
+    exit 1
+fi
+
 # ibazel doesn't take a --output_user_root, set it using the per-user .bazelrc inside the container.
 podman exec -i monogon-dev bash -c "cat - > /user/.bazelrc" <<EOF
 startup --output_user_root ${HOME}/.cache/bazel-monogon
