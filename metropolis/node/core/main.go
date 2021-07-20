@@ -217,6 +217,7 @@ func main() {
 			roleserve: rs,
 			logtree:   lt,
 			traceLock: make(chan struct{}, 1),
+			ephemeralVolume: &root.Ephemeral.Containerd,
 		}
 		dbgSrv := grpc.NewServer()
 		apb.RegisterNodeDebugServiceServer(dbgSrv, dbg)

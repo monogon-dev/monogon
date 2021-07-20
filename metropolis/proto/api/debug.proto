@@ -42,8 +42,19 @@ service NodeDebugService {
 
     // Trace enables tracing of Metropolis using the Linux ftrace infrastructure.
     rpc Trace(TraceRequest) returns (stream TraceEvent);
+
+    // LoadImage loads an uncompressed tarball containing a Docker v1.1, v1.2 or OCI v1 image into the local
+    // containerd image store. The client streams the tarball in arbitrary-sized chunks and closes the sending side
+    // once it has sent the entire image. The server then either returns an empty response if successful or a gRPC error.
+    rpc LoadImage(stream ImagePart) returns (LoadImageResponse);
 }
 
+message ImagePart {
+    bytes data_part = 1;
+}
+
+message LoadImageResponse {
+}
 
 message GetDebugKubeconfigRequest {
     string id = 1; // Kubernetes identity (user)

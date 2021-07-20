@@ -25,10 +25,13 @@ import (
 	"regexp"
 	"strings"
 
+	ctr "github.com/containerd/containerd"
+	"github.com/containerd/containerd/namespaces"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"source.monogon.dev/metropolis/node/core/roleserve"
+	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
@@ -41,6 +44,8 @@ const (
 type debugService struct {
 	roleserve *roleserve.Service
 	logtree   *logtree.LogTree
+	ephemeralVolume *localstorage.EphemeralContainerdDirectory
+
 	// traceLock provides exclusive access to the Linux tracing infrastructure
 	// (ftrace)
 	// This is a channel because Go's mutexes can't be cancelled or be acquired
@@ -271,4 +276,41 @@ func (s *debugService) Trace(req *apb.TraceRequest, srv apb.NodeDebugService_Tra
 		}
 	}
 	return nil
+}
+
+// imageReader is an adapter converting a gRPC stream into an io.Reader
+type imageReader struct {
+	srv        apb.NodeDebugService_LoadImageServer
+	restOfPart []byte
+}
+
+func (i *imageReader) Read(p []byte) (n int, err error) {
+	n1 := copy(p, i.restOfPart)
+	if len(p) > len(i.restOfPart) {
+		part, err := i.srv.Recv()
+		if err != nil {
+			return n1, err
+		}
+		n2 := copy(p[n1:], part.DataPart)
+		i.restOfPart = part.DataPart[n2:]
+		return n1 + n2, nil
+	} else {
+		i.restOfPart = i.restOfPart[n1:]
+		return n1, nil
+	}
+}
+
+// LoadImage loads an OCI image into the image cache of this node
+func (s *debugService) LoadImage(srv apb.NodeDebugService_LoadImageServer) error {
+	client, err := ctr.New(s.ephemeralVolume.ClientSocket.FullPath())
+	if err != nil {
+		return status.Errorf(codes.Unavailable, "failed to connect to containerd: %v", err)
+	}
+	ctxWithNS := namespaces.WithNamespace(srv.Context(), "k8s.io")
+	reader := &imageReader{srv: srv}
+	_, err = client.Import(ctxWithNS, reader)
+	if err != nil {
+		return status.Errorf(codes.Unknown, "failed to import image: %v", err)
+	}
+	return srv.SendAndClose(&apb.LoadImageResponse{})
 }

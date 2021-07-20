@@ -78,6 +78,14 @@ func main() {
 	functionFilter := traceCmd.String("function_filter", "", "Only trace functions matched by this filter (comma-separated, supports wildcards via *)")
 	functionGraphFilter := traceCmd.String("function_graph_filter", "", "Only trace functions matched by this filter and their children (syntax same as function_filter)")
 
+	loadimageCmd := flag.NewFlagSet("loadimage", flag.ExitOnError)
+	loadimageCmd.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %v %v [options] image\n", os.Args[0], os.Args[1])
+		flag.PrintDefaults()
+
+		fmt.Fprintf(os.Stderr, "Example: %v %v [options] helloworld_oci.tar.gz\n", os.Args[0], os.Args[1])
+	}
+
 	switch os.Args[1] {
 	case "logs":
 		logsCmd.Parse(os.Args[2:])
@@ -202,5 +210,39 @@ func main() {
 			}
 			fmt.Println(traceEvent.RawLine)
 		}
+	case "loadimage":
+		loadimageCmd.Parse(os.Args[2:])
+		imagePath := loadimageCmd.Arg(0)
+		image, err := os.Open(imagePath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to open image file: %v\n", err)
+			os.Exit(1)
+		}
+		defer image.Close()
+
+		loadStream, err := debugClient.LoadImage(ctx)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to start loading image: %v\n", err)
+			os.Exit(1)
+		}
+		buf := make([]byte, 64*1024)
+		for {
+			n, err := image.Read(buf)
+			if err != io.EOF && err != nil {
+				fmt.Fprintf(os.Stderr, "failed to read image: %v\n", err)
+				os.Exit(1)
+			}
+			if err == io.EOF && n == 0 {
+				break
+			}
+			if err := loadStream.Send(&apb.ImagePart{DataPart: buf[:n]}); err != nil {
+				fmt.Fprintf(os.Stderr, "failed to send image part: %v\n", err)
+				os.Exit(1)
+			}
+		}
+		if _, err := loadStream.CloseAndRecv(); err != nil {
+			fmt.Fprintf(os.Stderr, "image failed to load: %v\n", err)
+		}
+		fmt.Fprintf(os.Stderr, "Image loaded into Metropolis node\n")
 	}
 }
