@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ "$(podman inspect monogon-dev --format "{{ (index .Mounts 0).Source }}")" != "$(pwd)" ]]; then
+if ! podman inspect monogon-dev --format ":{{ range .Mounts }}{{.Source }}:{{ end }}" | grep -q ":$(pwd):"; then
     echo "Please run this wrapper from the original checkout"
     exit 1
 fi
