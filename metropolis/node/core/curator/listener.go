@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
-	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/pkg/combinectx"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -23,13 +23,17 @@ import (
 // - a follower implementation that forwards the RPCs over to a remote leader.
 //
 // Its goal is to make any switches over between leader and follower painless to
-// the gRPC callers.
-// Any pending calls will be canceled with UNAVAILABLE and an error message
-// describing the fact that the implementation has been switched over.
-// The gRPC sockets will always be listening for connections, and block until
-// able to serve a request (either locally or by forwarding).
-// No retries will be attempted on switchover, as some calls might not be
-// idempotent and the caller is better equipped to know when to retry.
+// the gRPC callers. Each incoming RPC first goes into a shim defined directly
+// on the listener, then goes on to be passed into either implementation with a
+// context that is valid as long as that implementation is current.
+//
+// Any calls which are pending during a switchover will have their context
+// canceled with UNAVAILABLE and an error message describing the fact that the
+// implementation has been switched over. The gRPC sockets will always be
+// listening for connections, and block until able to serve a request (either
+// locally or by forwarding). No retries will be attempted on switchover, as
+// some calls might not be idempotent and the caller is better equipped to know
+// when to retry.
 type listener struct {
 	// etcd is a client to the locally running consensus (etcd) server which is used
 	// both for storing lock/leader election status and actual Curator data.
@@ -105,6 +109,12 @@ func (l *listener) dispatcher(ctx context.Context) error {
 	}
 }
 
+// services is the interface containing all gRPC services that a curator
+// must implement.
+type services interface {
+	cpb.CuratorServer
+}
+
 // activeTarget is the active implementation used by the listener dispatcher, or
 // nil if none is active yet.
 type activeTarget struct {
@@ -114,7 +124,7 @@ type activeTarget struct {
 	// context cancel function for ctx, or nil if ctx is nil.
 	ctxC *context.CancelFunc
 	// active Curator implementation, or nil if not yet set up.
-	impl apb.CuratorServer
+	impl services
 }
 
 // switchTo switches the activeTarget over to a Curator implementation as per
@@ -129,11 +139,11 @@ func (t *activeTarget) switchTo(ctx context.Context, l *listener, status *electi
 	t.ctxC = &implCtxC
 	if leader := status.leader; leader != nil {
 		supervisor.Logger(ctx).Info("Dispatcher switching over to local leader")
-		t.impl = &curatorLeader{
+		t.impl = newCuratorLeader(leadership{
 			lockKey: leader.lockKey,
 			lockRev: leader.lockRev,
 			etcd:    l.etcd,
-		}
+		})
 	} else {
 		supervisor.Logger(ctx).Info("Dispatcher switching over to follower")
 		t.impl = &curatorFollower{}
@@ -154,7 +164,7 @@ type listenerTarget struct {
 	ctx context.Context
 	// impl is the CuratorServer implementation to which RPCs should be directed
 	// according to the dispatcher.
-	impl apb.CuratorServer
+	impl services
 }
 
 // dispatch contacts the dispatcher to retrieve an up-to-date listenerTarget.
@@ -197,7 +207,7 @@ func (l *listener) run(ctx context.Context) error {
 	// TODO(q3k): run remote/public gRPC listener.
 
 	srv := grpc.NewServer()
-	apb.RegisterCuratorServer(srv, l)
+	cpb.RegisterCuratorServer(srv, l)
 
 	if err := supervisor.Run(ctx, "local", supervisor.GRPCServer(srv, lis, true)); err != nil {
 		return fmt.Errorf("while starting local gRPC listener: %w", err)
@@ -210,13 +220,25 @@ func (l *listener) run(ctx context.Context) error {
 	return ctx.Err()
 }
 
+// implOperation is a function passed to callImpl by a listener RPC shim. It
+// sets up and calls the appropriate RPC for the shim that is it's being used in.
+//
+// Each gRPC service exposed by the Curator is implemented directly on the
+// listener as a shim, and that shim uses callImpl to execute the correct,
+// current (leader or follower) RPC call. The implOperation is defined inline in
+// each shim to perform that call, and received the context and implementation
+// reflecting the current active implementation (leader/follower). Errors
+// returned are either returned directly or converted to an UNAVAILABLE status
+// if the error is as a result of the context being canceled due to the
+// implementation switching.
+type implOperation func(ctx context.Context, impl services) error
+
 // callImpl gets the newest listenerTarget from the dispatcher, combines the
 // given context with the context of the listenerTarget implementation and calls
 // the given function with the combined context and implementation.
 //
-// It is effectively a helper wrapper used by the Curator implementation of the
-// listener to run the RPC against the active listenerTarget.
-func (l *listener) callImpl(ctx context.Context, f func(ctx context.Context, impl apb.CuratorServer) error) error {
+// It's called by listener RPC shims.
+func (l *listener) callImpl(ctx context.Context, op implOperation) error {
 	lt, err := l.dispatch(ctx)
 	// dispatch will only return errors on context cancellations.
 	if err != nil {
@@ -224,7 +246,7 @@ func (l *listener) callImpl(ctx context.Context, f func(ctx context.Context, imp
 	}
 
 	ctxCombined := combinectx.Combine(ctx, lt.ctx)
-	err = f(ctxCombined, lt.impl)
+	err = op(ctxCombined, lt.impl)
 
 	// No error occurred? Nothing else to do.
 	if err == nil {
@@ -247,9 +269,14 @@ func (l *listener) callImpl(ctx context.Context, f func(ctx context.Context, imp
 	}
 }
 
-// curatorWatchServer implements Curator_WatchServer but overrides the context
-// of the streaming RPC call with some other context (in this case, the combined
-// context from callImpl).
+// RPC shims start here. Each method defined below is a gRPC RPC handler which
+// uses callImpl to forward the incoming RPC into the current implementation of
+// the curator (leader or follower).
+//
+// TODO(q3k): once Go 1.18 lands, simplify this using type arguments (Generics).
+
+// curatorWatchServer is a Curator_WatchServer but shimmed to use an expiring
+// context.
 type curatorWatchServer struct {
 	grpc.ServerStream
 	ctx context.Context
@@ -259,17 +286,16 @@ func (c *curatorWatchServer) Context() context.Context {
 	return c.ctx
 }
 
-func (c *curatorWatchServer) Send(m *apb.WatchEvent) error {
+func (c *curatorWatchServer) Send(m *cpb.WatchEvent) error {
 	return c.ServerStream.SendMsg(m)
 }
 
-// Watch implements the Watch RPC from Curator by dispatching it against the
-// correct implementation for this curator instance.
-func (l *listener) Watch(req *apb.WatchRequest, srv apb.Curator_WatchServer) error {
-	return l.callImpl(srv.Context(), func(ctx context.Context, impl apb.CuratorServer) error {
+func (l *listener) Watch(req *cpb.WatchRequest, srv cpb.Curator_WatchServer) error {
+	proxy := func(ctx context.Context, impl services) error {
 		return impl.Watch(req, &curatorWatchServer{
 			ServerStream: srv,
 			ctx:          ctx,
 		})
-	})
+	}
+	return l.callImpl(srv.Context(), proxy)
 }

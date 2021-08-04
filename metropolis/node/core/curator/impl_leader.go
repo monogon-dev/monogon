@@ -10,17 +10,11 @@ import (
 	"google.golang.org/grpc/status"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
-	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
-	"source.monogon.dev/metropolis/pkg/event/etcd"
 )
 
-// curatorLeader implements the curator acting as the elected leader of a
-// cluster. It performs direct reads/writes from/to etcd as long as it remains
-// leader.
-//
-// It effectively implements all the core management logic of a Metropolis
-// cluster.
-type curatorLeader struct {
+// leadership represents the curator leader's ability to perform actions as a
+// leader. It is available to all services implemented by the leader.
+type leadership struct {
 	// lockKey is the etcd key which backs this leader-elected instance.
 	lockKey string
 	// lockRev is the revision at which lockKey was created. The leader will use it
@@ -40,9 +34,9 @@ var (
 
 // txnAsLeader performs an etcd transaction guarded by continued leadership.
 // lostLeadership will be returned as an error in case the leadership is lost.
-func (c *curatorLeader) txnAsLeader(ctx context.Context, ops ...clientv3.Op) (*clientv3.TxnResponse, error) {
-	resp, err := c.etcd.Txn(ctx).If(
-		clientv3.Compare(clientv3.CreateRevision(c.lockKey), "=", c.lockRev),
+func (l *leadership) txnAsLeader(ctx context.Context, ops ...clientv3.Op) (*clientv3.TxnResponse, error) {
+	resp, err := l.etcd.Txn(ctx).If(
+		clientv3.Compare(clientv3.CreateRevision(l.lockKey), "=", l.lockRev),
 	).Then(ops...).Commit()
 	if err != nil {
 		return nil, fmt.Errorf("when running leader transaction: %w", err)
@@ -63,44 +57,18 @@ func rpcError(err error) (error, bool) {
 	return err, false
 }
 
-func (l *curatorLeader) Watch(req *apb.WatchRequest, srv apb.Curator_WatchServer) error {
-	nic, ok := req.Kind.(*apb.WatchRequest_NodeInCluster_)
-	if !ok {
-		return status.Error(codes.Unimplemented, "unsupported watch kind")
-	}
-	nodeID := nic.NodeInCluster.NodeId
-	// Constructing arbitrary etcd path: this is okay, as we only have node objects
-	// underneath the NodeEtcdPrefix. Worst case an attacker can do is request a node
-	// that doesn't exist, and that will just hang . All access is privileged, so
-	// there's also no need to filter anything.
-	// TODO(q3k): formalize and strongly type etcd paths for cluster state?
-	// Probably worth waiting for type parameters before attempting to do that.
-	nodePath := nodeEtcdPath(nodeID)
+// curatorLeader implements the curator acting as the elected leader of a
+// cluster. It performs direct reads/writes from/to etcd as long as it remains
+// leader.
+//
+// Its made up of different subcomponents implementing gRPC services, each of
+// which has access to the leadership structure.
+type curatorLeader struct {
+	leaderCurator
+}
 
-	value := etcd.NewValue(l.etcd, nodePath, func(data []byte) (interface{}, error) {
-		return nodeUnmarshal(data)
-	})
-	w := value.Watch()
-	defer w.Close()
-
-	for {
-		v, err := w.Get(srv.Context())
-		if err != nil {
-			if rpcErr, ok := rpcError(err); ok {
-				return rpcErr
-			}
-		}
-		node := v.(*Node)
-		ev := &apb.WatchEvent{
-			Nodes: []*apb.Node{
-				{
-					Id:    node.ID(),
-					Roles: node.proto().Roles,
-				},
-			},
-		}
-		if err := srv.Send(ev); err != nil {
-			return err
-		}
+func newCuratorLeader(l leadership) *curatorLeader {
+	return &curatorLeader{
+		leaderCurator{l},
 	}
 }

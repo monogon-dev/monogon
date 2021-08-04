@@ -32,6 +32,7 @@ import (
 
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/cluster"
 	"source.monogon.dev/metropolis/node/core/curator"
