@@ -203,14 +203,24 @@ func RemoveDevice(name string) error {
 	return nil
 }
 
+// Target represents a byte region inside a devicemapper table for a given
+// device provided by a given target implementation.
 type Target struct {
+	// StartSector is the first sector (defined as being 512 bytes long) this
+	// target covers.
 	StartSector uint64
-	Length      uint64
-	Type        string
-	Parameters  string
+	// Length is the number of sectors (defined as being 512 bytes long) this
+	// target covers, starting from StartSector.
+	Length uint64
+	// Type is the type of target handling this byte region.
+	// Types implemented by the Linux kernel can be found at
+	// @linux//drivers/md/... by looking for dm_register_target() calls.
+	Type string
+	// Parameters are additional parameters specific to the target type.
+	Parameters string
 }
 
-func LoadTable(name string, targets []Target) error {
+func LoadTable(name string, readOnly bool, targets []Target) error {
 	req := newReq()
 	if err := stringToDelimitedBuf(req.Name[:], name); err != nil {
 		return err
@@ -244,6 +254,9 @@ func LoadTable(name string, targets []Target) error {
 	}
 	req.DataSize = baseDataSize + uint32(data.Len())
 	copy(req.Data[:], data.Bytes())
+	if readOnly {
+		req.Flags = DM_READONLY_FLAG
+	}
 	fd, err := getFd()
 	if err != nil {
 		return err
@@ -281,12 +294,12 @@ func Resume(name string) error {
 	return suspendResume(name, false)
 }
 
-func CreateActiveDevice(name string, targets []Target) (uint64, error) {
+func CreateActiveDevice(name string, readOnly bool, targets []Target) (uint64, error) {
 	dev, err := CreateDevice(name)
 	if err != nil {
 		return 0, fmt.Errorf("DM_DEV_CREATE failed: %w", err)
 	}
-	if err := LoadTable(name, targets); err != nil {
+	if err := LoadTable(name, readOnly, targets); err != nil {
 		_ = RemoveDevice(name)
 		return 0, fmt.Errorf("DM_TABLE_LOAD failed: %w", err)
 	}

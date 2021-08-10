@@ -56,7 +56,7 @@ func CryptMap(name string, baseName string, encryptionKey []byte) error {
 
 	integrityDevName := fmt.Sprintf("/dev/%v-integrity", name)
 	integrityDMName := fmt.Sprintf("%v-integrity", name)
-	integrityDev, err := devicemapper.CreateActiveDevice(integrityDMName, []devicemapper.Target{
+	integrityDev, err := devicemapper.CreateActiveDevice(integrityDMName, false, []devicemapper.Target{
 		devicemapper.Target{
 			Length:     integritySectors,
 			Type:       "integrity",
@@ -73,7 +73,7 @@ func CryptMap(name string, baseName string, encryptionKey []byte) error {
 	}
 
 	cryptDevName := fmt.Sprintf("/dev/%v", name)
-	cryptDev, err := devicemapper.CreateActiveDevice(name, []devicemapper.Target{
+	cryptDev, err := devicemapper.CreateActiveDevice(name, false, []devicemapper.Target{
 		devicemapper.Target{
 			Length:     integritySectors,
 			Type:       "crypt",
@@ -111,7 +111,7 @@ func CryptInit(name, baseName string, encryptionKey []byte) error {
 	integrityPartition.Close()
 
 	integrityDMName := fmt.Sprintf("%v-integrity", name)
-	_, err = devicemapper.CreateActiveDevice(integrityDMName, []devicemapper.Target{
+	_, err = devicemapper.CreateActiveDevice(integrityDMName, false, []devicemapper.Target{
 		{
 			Length:     1,
 			Type:       "integrity",
