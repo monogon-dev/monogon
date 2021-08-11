@@ -37,29 +37,15 @@ type Issuer interface {
 	// will sign certificates when Issue is called, or nil if this is
 	// self-signing issuer.
 	CACertificate(ctx context.Context, kv clientv3.KV) ([]byte, error)
-	// Issue will generate a key and certificate signed by the Issuer. The
-	// returned certificate is x509 DER-encoded, while the key is a bare
-	// ed25519 key.
-	Issue(ctx context.Context, req *Certificate, kv clientv3.KV) (cert, key []byte, err error)
+	// Issue will generate a certificate signed by the Issuer. The returned
+	// certificate is x509 DER-encoded.
+	Issue(ctx context.Context, req *Certificate, kv clientv3.KV) (cert []byte, err error)
 }
 
 // issueCertificate is a generic low level certificate-and-key issuance
-// function. If ca or cakey is null, the certificate will be self-signed. The
-// returned certificate is DER-encoded, while the returned key is internal.
-func issueCertificate(req *Certificate, ca *x509.Certificate, caKey interface{}) (cert, key []byte, err error) {
-	var privKey ed25519.PrivateKey
-	var pubKey ed25519.PublicKey
-	if req.key != nil {
-		privKey = req.key
-		pubKey = privKey.Public().(ed25519.PublicKey)
-	} else {
-		var err error
-		pubKey, privKey, err = ed25519.GenerateKey(rand.Reader)
-		if err != nil {
-			panic(err)
-		}
-	}
-
+// function. If ca is null, the certificate will be self-signed. The returned
+// certificate is DER-encoded
+func issueCertificate(req *Certificate, ca *x509.Certificate, caKey ed25519.PrivateKey) (cert []byte, err error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 127)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
@@ -67,32 +53,27 @@ func issueCertificate(req *Certificate, ca *x509.Certificate, caKey interface{})
 		return
 	}
 
-	skid, err := calculateSKID(pubKey)
+	skid, err := calculateSKID(req.PublicKey)
 	if err != nil {
-		return []byte{}, privKey, err
+		return nil, err
 	}
 
-	req.template.SerialNumber = serialNumber
-	req.template.NotBefore = time.Now()
-	req.template.NotAfter = unknownNotAfter
-	req.template.BasicConstraintsValid = true
-	req.template.SubjectKeyId = skid
+	req.Template.SerialNumber = serialNumber
+	req.Template.NotBefore = time.Now()
+	req.Template.NotAfter = unknownNotAfter
+	req.Template.BasicConstraintsValid = true
+	req.Template.SubjectKeyId = skid
 
 	// Set the AuthorityKeyID to the SKID of the signing certificate (or self,
 	// if self-signing).
-	if ca != nil && caKey != nil {
-		req.template.AuthorityKeyId = ca.AuthorityKeyId
+	if ca != nil {
+		req.Template.AuthorityKeyId = ca.AuthorityKeyId
 	} else {
-		req.template.AuthorityKeyId = req.template.SubjectKeyId
+		req.Template.AuthorityKeyId = req.Template.SubjectKeyId
+		ca = &req.Template
 	}
 
-	if ca == nil || caKey == nil {
-		ca = &req.template
-		caKey = privKey
-	}
-
-	caCertRaw, err := x509.CreateCertificate(rand.Reader, &req.template, ca, pubKey, caKey)
-	return caCertRaw, privKey, err
+	return x509.CreateCertificate(rand.Reader, &req.Template, ca, req.PublicKey, caKey)
 }
 
 type selfSigned struct{}
@@ -103,8 +84,14 @@ var (
 )
 
 // Issue will generate a key and certificate that is self-signed.
-func (s *selfSigned) Issue(ctx context.Context, req *Certificate, kv clientv3.KV) (cert, key []byte, err error) {
-	return issueCertificate(req, nil, nil)
+func (s *selfSigned) Issue(ctx context.Context, req *Certificate, kv clientv3.KV) (cert []byte, err error) {
+	if err := req.ensureKey(ctx, kv); err != nil {
+		return nil, err
+	}
+	if req.PrivateKey == nil {
+		return nil, fmt.Errorf("cannot issue self-signed certificate without a private key")
+	}
+	return issueCertificate(req, nil, req.PrivateKey)
 }
 
 // CACertificate returns nil for self-signed issuers.
@@ -114,24 +101,33 @@ func (s *selfSigned) CACertificate(ctx context.Context, kv clientv3.KV) ([]byte,
 
 // Issue will generate a key and certificate that is signed by this
 // Certificate, if the Certificate is a CA.
-func (c *Certificate) Issue(ctx context.Context, req *Certificate, kv clientv3.KV) (cert, key []byte, err error) {
-	caCert, caKey, err := c.ensure(ctx, kv)
+func (c *Certificate) Issue(ctx context.Context, req *Certificate, kv clientv3.KV) (cert []byte, err error) {
+	if err := c.ensureKey(ctx, kv); err != nil {
+		return nil, fmt.Errorf("could not ensure CA %q key exists: %w", c.Name, err)
+	}
+	if err := req.ensureKey(ctx, kv); err != nil {
+		return nil, fmt.Errorf("could not subject %q key exists: %w", req.Name, err)
+	}
+	if c.PrivateKey == nil {
+		return nil, fmt.Errorf("cannot use certificate without private key as CA")
+	}
+
+	caCert, err := c.ensure(ctx, kv)
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not ensure CA certificate %q exists: %w", c.name, err)
+		return nil, fmt.Errorf("could not ensure CA %q certificate exists: %w", c.Name, err)
 	}
 
 	ca, err := x509.ParseCertificate(caCert)
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not parse CA certificate: %w", err)
+		return nil, fmt.Errorf("could not parse CA certificate: %w", err)
 	}
 	// Ensure only one level of CAs exist, and that they are created explicitly.
-	req.template.IsCA = false
-	return issueCertificate(req, ca, ed25519.PrivateKey(caKey))
+	req.Template.IsCA = false
+	return issueCertificate(req, ca, c.PrivateKey)
 }
 
 // CACertificate returns the DER encoded x509 form of this Certificate that
 // will be the used to issue child certificates.
 func (c *Certificate) CACertificate(ctx context.Context, kv clientv3.KV) ([]byte, error) {
-	cert, _, err := c.ensure(ctx, kv)
-	return cert, err
+	return c.ensure(ctx, kv)
 }

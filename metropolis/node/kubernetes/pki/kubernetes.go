@@ -106,10 +106,22 @@ func New(l logtree.LeveledLogger, kv clientv3.KV) *PKI {
 	}
 
 	make := func(i, name KubeCertificateName, template x509.Certificate) {
-		pki.Certificates[name] = pki.namespace.New(pki.Certificates[i], string(name), template)
+		pki.Certificates[name] = &opki.Certificate{
+			Namespace: &pki.namespace,
+			Issuer:    pki.Certificates[i],
+			Name:      string(name),
+			Template:  template,
+			Mode:      opki.CertificateManaged,
+		}
 	}
 
-	pki.Certificates[IdCA] = pki.namespace.New(opki.SelfSigned, string(IdCA), opki.CA("Metropolis Kubernetes ID CA"))
+	pki.Certificates[IdCA] = &opki.Certificate{
+		Namespace: &pki.namespace,
+		Issuer:    opki.SelfSigned,
+		Name:      string(IdCA),
+		Template:  opki.CA("Metropolis Kubernetes ID CA"),
+		Mode:      opki.CertificateManaged,
+	}
 	make(IdCA, APIServer, opki.Server(
 		[]string{
 			"kubernetes",
@@ -129,7 +141,13 @@ func New(l logtree.LeveledLogger, kv clientv3.KV) *PKI {
 	make(IdCA, Scheduler, opki.Server([]string{"kube-scheduler.local"}, nil))
 	make(IdCA, Master, opki.Client("metropolis:master", []string{"system:masters"}))
 
-	pki.Certificates[AggregationCA] = pki.namespace.New(opki.SelfSigned, string(AggregationCA), opki.CA("Metropolis OpenAPI Aggregation CA"))
+	pki.Certificates[AggregationCA] = &opki.Certificate{
+		Namespace: &pki.namespace,
+		Issuer:    opki.SelfSigned,
+		Name:      string(AggregationCA),
+		Template:  opki.CA("Metropolis OpenAPI Aggregation CA"),
+		Mode:      opki.CertificateManaged,
+	}
 	make(AggregationCA, FrontProxyClient, opki.Client("front-proxy-client", nil))
 
 	return &pki
@@ -139,7 +157,7 @@ func New(l logtree.LeveledLogger, kv clientv3.KV) *PKI {
 // are present on etcd.
 func (k *PKI) EnsureAll(ctx context.Context) error {
 	for n, v := range k.Certificates {
-		_, _, err := v.Ensure(ctx, k.KV)
+		_, err := v.Ensure(ctx, k.KV)
 		if err != nil {
 			return fmt.Errorf("could not ensure certificate %q exists: %w", n, err)
 		}
@@ -171,16 +189,25 @@ func (k *PKI) Certificate(ctx context.Context, name KubeCertificateName) (cert, 
 	if !ok {
 		return nil, nil, fmt.Errorf("no certificate %q", name)
 	}
-	return c.Ensure(ctx, k.KV)
+	cert, err = c.Ensure(ctx, k.KV)
+	if err != nil {
+		return
+	}
+	key, err = c.PrivateKeyX509()
+	return
 }
 
 // Kubeconfig generates a kubeconfig blob for this certificate. The same
 // lifetime semantics as in .Ensure apply.
 func Kubeconfig(ctx context.Context, kv clientv3.KV, c *opki.Certificate) ([]byte, error) {
 
-	cert, key, err := c.Ensure(ctx, kv)
+	cert, err := c.Ensure(ctx, kv)
 	if err != nil {
 		return nil, fmt.Errorf("could not ensure certificate exists: %w", err)
+	}
+	key, err := c.PrivateKeyX509()
+	if err != nil {
+		return nil, fmt.Errorf("could not get certificate's private key: %w", err)
 	}
 
 	kubeconfig := configapi.NewConfig()
@@ -249,18 +276,28 @@ func (k *PKI) ServiceAccountKey(ctx context.Context) ([]byte, error) {
 }
 
 // VolatileKubelet returns a pair of server/client ceritficates for the Kubelet
-// to use. The certificates are volatile, meaning they are not stored in etcd,
+// to use. The certificates are ephemeral, meaning they are not stored in etcd,
 // and instead are regenerated any time this function is called.
 func (k *PKI) VolatileKubelet(ctx context.Context, name string) (server *opki.Certificate, client *opki.Certificate, err error) {
 	name = fmt.Sprintf("system:node:%s", name)
 	err = k.EnsureAll(ctx)
 	if err != nil {
-		err = fmt.Errorf("could not ensure certificates exist: %w", err)
+		return nil, nil, fmt.Errorf("could not ensure certificates exist: %w", err)
 	}
 	kubeCA := k.Certificates[IdCA]
-	server = k.namespace.New(kubeCA, "", opki.Server([]string{name}, nil))
-	client = k.namespace.New(kubeCA, "", opki.Client(name, []string{"system:nodes"}))
-	return
+	server = &opki.Certificate{
+		Namespace: &k.namespace,
+		Issuer:    kubeCA,
+		Template:  opki.Server([]string{name}, nil),
+		Mode:      opki.CertificateEphemeral,
+	}
+	client = &opki.Certificate{
+		Namespace: &k.namespace,
+		Issuer:    kubeCA,
+		Template:  opki.Client(name, []string{"system:nodes"}),
+		Mode:      opki.CertificateEphemeral,
+	}
+	return server, client, nil
 }
 
 // VolatileClient returns a client certificate for Kubernetes clients to use.
@@ -270,6 +307,10 @@ func (k *PKI) VolatileClient(ctx context.Context, identity string, groups []stri
 	if err := k.EnsureAll(ctx); err != nil {
 		return nil, fmt.Errorf("could not ensure certificates exist: %w", err)
 	}
-	kubeCA := k.Certificates[IdCA]
-	return k.namespace.New(kubeCA, "", opki.Client(identity, groups)), nil
+	return &opki.Certificate{
+		Namespace: &k.namespace,
+		Issuer:    k.Certificates[IdCA],
+		Template:  opki.Client(identity, groups),
+		Mode:      opki.CertificateEphemeral,
+	}, nil
 }

@@ -2,6 +2,7 @@ package curator
 
 import (
 	"context"
+	"crypto/ed25519"
 	"fmt"
 
 	"go.etcd.io/etcd/clientv3"
@@ -24,19 +25,22 @@ import (
 // BootstrapNodeCredentials creates node credentials for the first node in a
 // cluster. It can only be called by cluster bootstrap code. It returns the
 // generated x509 CA and node certificates.
-//
-// TODO(q3k): don't require privkey, but that needs some //metropolis/pkg/pki changes first.
-func BootstrapNodeCredentials(ctx context.Context, etcd client.Namespaced, priv, pub []byte) (ca, node []byte, err error) {
-	id := NodeID(pub)
+func BootstrapNodeCredentials(ctx context.Context, etcd client.Namespaced, pubkey ed25519.PublicKey) (ca, node []byte, err error) {
+	id := NodeID(pubkey)
 
-	ca, _, err = pkiCA.Ensure(ctx, etcd)
+	ca, err = pkiCA.Ensure(ctx, etcd)
 	if err != nil {
 		err = fmt.Errorf("when ensuring CA: %w", err)
 		return
 	}
-	nodeCert := pkiNamespace.New(pkiCA, "", pki.Server([]string{id}, nil))
-	nodeCert.UseExistingKey(priv)
-	node, _, err = nodeCert.Ensure(ctx, etcd)
+	nodeCert := &pki.Certificate{
+		Namespace: &pkiNamespace,
+		Issuer:    pkiCA,
+		Template:  pki.Server([]string{id}, nil),
+		Mode:      pki.CertificateExternal,
+		PublicKey: pubkey,
+	}
+	node, err = nodeCert.Ensure(ctx, etcd)
 	if err != nil {
 		err = fmt.Errorf("when ensuring node cert: %w", err)
 		return

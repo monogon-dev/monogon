@@ -117,7 +117,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	}
 
 	// And short-circuit creating the curator CA and node certificate.
-	caCert, nodeCert, err := curator.BootstrapNodeCredentials(ctx, ckv, priv, pub)
+	caCert, nodeCert, err := curator.BootstrapNodeCredentials(ctx, ckv, pub)
 	if err != nil {
 		return fmt.Errorf("failed to bootstrap node credentials: %w", err)
 	}

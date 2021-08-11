@@ -14,11 +14,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// package pki implements an x509 PKI (Public Key Infrastructure) system backed
+// on etcd.
 package pki
 
 import (
+	"bytes"
 	"context"
 	"crypto/ed25519"
+	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -45,49 +49,68 @@ func Namespaced(prefix string) Namespace {
 	}
 }
 
+type CertificateMode int
+
+const (
+	// CertificateManaged is a certificate whose key material is fully managed by
+	// the Certificate code. When set, PublicKey and PrivateKey must not be set by
+	// the user, and instead will be populated by the Ensure call. Name must be set,
+	// and will be used to store this Certificate and its keys within etcd. After
+	// the initial generation during Ensure, other Certificates with the same Name
+	// will be retrieved (including key material) from etcd.
+	CertificateManaged CertificateMode = iota
+
+	// CertificateExternal is a certificate whose key material is not managed by
+	// Certificate or stored in etcd, but the X509 certificate itself is. PublicKey
+	// must be set while PrivateKey must not be set. Name must be set, and will be
+	// used to store the emitted X509 certificate in etcd on Ensure. After the
+	// initial generation during Ensure, other Certificates with the same Name will
+	// be retrieved (without key material) from etcd.
+	CertificateExternal
+
+	// CertificateEphemeral is a certificate whose data (X509 certificate and
+	// possibly key material) is generated on demand each time Ensure is called.
+	// Nothing is stored in etcd or loaded from etcd. PrivateKey or PublicKey can be
+	// set, if both are nil then a new keypair will be generated. Name is ignored.
+	CertificateEphemeral
+)
+
 // Certificate is the promise of a Certificate being available to the caller.
 // In this case, Certificate refers to a pair of x509 certificate and
 // corresponding private key.  Certificates can be stored in etcd, and their
 // issuers might also be store on etcd. As such, this type's methods contain
-// references to an etcd KV client.  This Certificate type is agnostic to
-// usage, but mostly geared towards Kubernetes certificates.
+// references to an etcd KV client.
 type Certificate struct {
-	namespace *Namespace
+	Namespace *Namespace
 
-	// issuer is the Issuer that will generate this certificate if one doesn't
-	// yet exist or etcd, or the requested certificate is volatile (not to be
+	// Issuer is the Issuer that will generate this certificate if one doesn't
+	// yet exist or etcd, or the requested certificate is ephemeral (not to be
 	// stored on etcd).
 	Issuer Issuer
-	// name is a unique key for storing the certificate in etcd. If empty,
-	// certificate is 'volatile', will not be stored on etcd, and every
-	// .Ensure() call will generate a new pair.
-	name string
-	// template is an x509 certificate definition that will be used to generate
+	// Name is a unique key for storing the certificate in etcd (if the requested
+	// certificate is not ephemeral).
+	Name string
+	// Template is an x509 certificate definition that will be used to generate
 	// the certificate when issuing it.
-	template x509.Certificate
-	// key is the private key for which the certificate should emitted, or nil
-	// if the key should be generated. The private key is required (vs. the
-	// private one) because the Certificate might be attempted to be issued via
-	// self-signing.
-	key ed25519.PrivateKey
+	Template x509.Certificate
+
+	// Mode in which this Certificate will operate. This influences the behaviour of
+	// the Ensure call.
+	Mode CertificateMode
+
+	// PrivateKey is the private key for this Certificate. It should never be set by
+	// the user, and instead will be populated by the Ensure call for Managed
+	// Certificates.
+	PrivateKey ed25519.PrivateKey
+
+	// PublicKey is the public key for this Certificate. It should only be set by
+	// the user for External or Ephemeral certificates, and will be populated by the
+	// next Ensure call if missing.
+	PublicKey ed25519.PublicKey
 }
 
 func (n *Namespace) etcdPath(f string, args ...interface{}) string {
 	return n.prefix + fmt.Sprintf(f, args...)
-}
-
-// New creates a new Certificate, or to be more precise, a promise that a
-// certificate will exist once Ensure is called.  Issuer must be a valid
-// certificate issuer (SelfSigned or another Certificate). Name must be unique
-// among all certificates, or empty (which will cause the certificate to be
-// volatile, ie. not stored in etcd).
-func (n *Namespace) New(issuer Issuer, name string, template x509.Certificate) *Certificate {
-	return &Certificate{
-		namespace: n,
-		Issuer:    issuer,
-		name:      name,
-		template:  template,
-	}
 }
 
 // Client makes a Kubernetes PKI-compatible client certificate template.
@@ -127,81 +150,70 @@ func CA(cn string) x509.Certificate {
 	}
 }
 
-func (c *Certificate) etcdPaths() (cert, key string) {
-	return c.namespace.etcdPath("%s-cert.der", c.name), c.namespace.etcdPath("%s-key.der", c.name)
-}
-
-func (c *Certificate) UseExistingKey(key ed25519.PrivateKey) {
-	c.key = key
-}
-
 // ensure returns a DER-encoded x509 certificate and internally encoded bare
-// ed25519 key for a given Certificate, in memory (if volatile), loading it
+// ed25519 key for a given Certificate, in memory (if ephemeral), loading it
 // from etcd, or creating and saving it on etcd if needed.
 // This function is safe to call in parallel from multiple etcd clients
 // (including across machines), but it will error in case a concurrent
 // certificate generation happens. These errors are, however, safe to retry -
 // as long as all the certificate creators (ie., Metropolis nodes) run the same
 // version of this code.
-//
-// TODO(q3k): in the future, this should be handled better - especially as we
-// introduce new certificates, or worse, change the issuance chain. As a
-// stopgap measure, an explicit per-certificate or even global lock can be
-// implemented.  And, even before that, we can handle concurrency errors in a
-// smarter way.
-func (c *Certificate) ensure(ctx context.Context, kv clientv3.KV) (cert, key []byte, err error) {
-	if c.name == "" {
-		// Volatile certificate - generate.
-		// TODO(q3k): cache internally?
-		cert, key, err = c.Issuer.Issue(ctx, c, kv)
-		if err != nil {
-			err = fmt.Errorf("failed to issue: %w", err)
-			return
-		}
-		return
+func (c *Certificate) ensure(ctx context.Context, kv clientv3.KV) (cert []byte, err error) {
+	// Ensure key is available.
+	if err := c.ensureKey(ctx, kv); err != nil {
+		return nil, err
 	}
 
-	certPath, keyPath := c.etcdPaths()
+	switch c.Mode {
+	case CertificateEphemeral:
+		// TODO(q3k): cache internally?
+		cert, err = c.Issuer.Issue(ctx, c, kv)
+		if err != nil {
+			return nil, fmt.Errorf("failed to issue: %w", err)
+		}
+		return cert, nil
+	case CertificateManaged, CertificateExternal:
+	default:
+		return nil, fmt.Errorf("invalid certificate mode %v", c.Mode)
+	}
 
-	// Try loading certificate and key from etcd.
+	certPath := c.Namespace.etcdPath("%s-cert.der", c.Name)
+
+	// Try loading certificate from etcd.
 	certRes, err := kv.Get(ctx, certPath)
 	if err != nil {
-		err = fmt.Errorf("failed to get certificate from etcd: %w", err)
-		return
+		return nil, fmt.Errorf("failed to get certificate from etcd: %w", err)
 	}
-	keyRes, err := kv.Get(ctx, keyPath)
+
+	if len(certRes.Kvs) == 1 {
+		certBytes := certRes.Kvs[0].Value
+		cert, err := x509.ParseCertificate(certBytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse certificate retrieved from etcd: %w", err)
+		}
+		pk, ok := cert.PublicKey.(ed25519.PublicKey)
+		if !ok {
+			return nil, fmt.Errorf("unexpected non-ed25519 certificate found in etcd")
+		}
+		if !bytes.Equal(pk, c.PublicKey) {
+			return nil, fmt.Errorf("certificate stored in etcd emitted for different public key")
+		}
+		// TODO(q3k): ensure issuer and template haven't changed
+		return certBytes, nil
+	}
+
+	// No certificate found - issue one and save to etcd.
+	cert, err = c.Issuer.Issue(ctx, c, kv)
 	if err != nil {
-		err = fmt.Errorf("failed to get key from etcd: %w", err)
-		return
+		return nil, fmt.Errorf("failed to issue: %w", err)
 	}
 
-	if len(certRes.Kvs) == 1 && len(keyRes.Kvs) == 1 {
-		// Certificate and key exists in etcd, return that.
-		cert = certRes.Kvs[0].Value
-		key = keyRes.Kvs[0].Value
-
-		err = nil
-		// TODO(q3k): check for expiration
-		return
-	}
-
-	// No certificate found - issue one.
-	cert, key, err = c.Issuer.Issue(ctx, c, kv)
-	if err != nil {
-		err = fmt.Errorf("failed to issue: %w", err)
-		return
-	}
-
-	// Save to etcd in transaction. This ensures that no partial writes happen,
-	// and that we haven't been raced to the save.
 	res, err := kv.Txn(ctx).
 		If(
 			clientv3.Compare(clientv3.CreateRevision(certPath), "=", 0),
-			clientv3.Compare(clientv3.CreateRevision(keyPath), "=", 0),
 		).
 		Then(
 			clientv3.OpPut(certPath, string(cert)),
-			clientv3.OpPut(keyPath, string(key)),
 		).Commit()
 	if err != nil {
 		err = fmt.Errorf("failed to write newly issued certificate: %w", err)
@@ -212,21 +224,105 @@ func (c *Certificate) ensure(ctx context.Context, kv clientv3.KV) (cert, key []b
 	return
 }
 
-// Ensure returns an x509 DER-encoded (but not PEM-encoded) certificate and key
-// for a given Certificate.  If the certificate is volatile, each call to
-// Ensure will cause a new certificate to be generated.  Otherwise, it will be
-// retrieved from etcd, or generated and stored there if needed.
-func (c *Certificate) Ensure(ctx context.Context, kv clientv3.KV) (cert, key []byte, err error) {
-	cert, key, err = c.ensure(ctx, kv)
-	if err != nil {
-		return nil, nil, err
+// ensureKey retrieves or creates PublicKey as needed based on the Certificate
+// Mode. For Managed Certificates and Ephemeral Certificates with no PrivateKey
+// it will also populate PrivateKay.
+func (c *Certificate) ensureKey(ctx context.Context, kv clientv3.KV) error {
+	// If we have a public key then we're all set.
+	if c.PublicKey != nil {
+		return nil
 	}
-	key, err = x509.MarshalPKCS8PrivateKey(ed25519.PrivateKey(key))
-	if err != nil {
-		err = fmt.Errorf("could not marshal private key (data corruption?): %w", err)
-		return
+
+	// For ephemeral keys, we just generate them.
+	// For external keys, we can't do anything - not having the keys set means
+	// a programming error.
+
+	switch c.Mode {
+	case CertificateEphemeral:
+		pub, priv, err := ed25519.GenerateKey(rand.Reader)
+		if err != nil {
+			return fmt.Errorf("when generating ephemeral key: %w", err)
+		}
+		c.PublicKey = pub
+		c.PrivateKey = priv
+		return nil
+	case CertificateExternal:
+		if c.PrivateKey != nil {
+			// We prohibit having PrivateKey set in External Certificates to simplify the
+			// different logic paths this library implements. Being able to assume External
+			// == PublicKey only makes things easier elsewhere.
+			return fmt.Errorf("external certificate must not have PrivateKey set")
+		}
+		return fmt.Errorf("external certificate must have PublicKey set")
+	case CertificateManaged:
+	default:
+		return fmt.Errorf("invalid certificate mode %v", c.Mode)
 	}
-	return cert, key, err
+
+	// For managed keys, synchronize with etcd.
+	if c.Name == "" {
+		return fmt.Errorf("managed certificate must have Name set")
+	}
+
+	// First, try loading.
+	privPath := c.Namespace.etcdPath("%s-privkey.bin", c.Name)
+	privRes, err := kv.Get(ctx, privPath)
+	if err != nil {
+		return fmt.Errorf("failed to get private key from etcd: %w", err)
+	}
+	if len(privRes.Kvs) == 1 {
+		privBytes := privRes.Kvs[0].Value
+		if len(privBytes) != ed25519.PrivateKeySize {
+			return fmt.Errorf("stored private key has invalid size")
+		}
+		c.PrivateKey = privBytes
+		c.PublicKey = c.PrivateKey.Public().(ed25519.PublicKey)
+		return nil
+	}
+
+	// No key in etcd? Generate and save.
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return fmt.Errorf("while generating keypair: %w", err)
+	}
+
+	res, err := kv.Txn(ctx).
+		If(
+			clientv3.Compare(clientv3.CreateRevision(privPath), "=", 0),
+		).
+		Then(
+			clientv3.OpPut(privPath, string(priv)),
+		).Commit()
+	if err != nil {
+		return fmt.Errorf("failed to write newly generated keypair: %w", err)
+	} else if !res.Succeeded {
+		return fmt.Errorf("key generation transaction failed: concurrent write")
+	}
+
+	c.PrivateKey = priv
+	c.PublicKey = pub
+	return nil
+}
+
+// Ensure returns an x509 DER-encoded (but not PEM-encoded) certificate for a
+// given Certificate.
+//
+// If the Certificate is ephemeral, each call to Ensure will cause a new
+// certificate to be generated. Otherwise, it will be retrieved from etcd, or
+// generated and stored there if needed.
+func (c *Certificate) Ensure(ctx context.Context, kv clientv3.KV) (cert []byte, err error) {
+	return c.ensure(ctx, kv)
+}
+
+func (c *Certificate) PrivateKeyX509() ([]byte, error) {
+	if c.PrivateKey == nil {
+		return nil, fmt.Errorf("certificate has no private key")
+	}
+	key, err := x509.MarshalPKCS8PrivateKey(c.PrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal private key (data corruption?): %w", err)
+	}
+	return key, nil
 }
 
 // FilesystemCertificate is a fileargs.FileArgs wrapper which will contain PEM
@@ -244,7 +340,8 @@ type FilesystemCertificate struct {
 	// CertPath is the full path at which the certificate is available. Read
 	// only.
 	CertPath string
-	// KeyPath is the full path at which the key is available. Read only.
+	// KeyPath is the full path at which the private key is available, or an empty
+	// string if the Certificate was created without a private key. Read only.
 	KeyPath string
 }
 
@@ -262,7 +359,7 @@ func (c *Certificate) Mount(ctx context.Context, kv clientv3.KV) (*FilesystemCer
 	}
 	fs := &FilesystemCertificate{FileArgs: fa}
 
-	cert, key, err := c.Ensure(ctx, kv)
+	cert, err := c.Ensure(ctx, kv)
 	if err != nil {
 		return nil, fmt.Errorf("when issuing certificate: %w", err)
 	}
@@ -278,7 +375,13 @@ func (c *Certificate) Mount(ctx context.Context, kv clientv3.KV) (*FilesystemCer
 
 	fs.CACertPath = fs.ArgPath("ca.crt", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cacert}))
 	fs.CertPath = fs.ArgPath("tls.crt", pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert}))
-	fs.KeyPath = fs.ArgPath("tls.key", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
+	if c.PrivateKey != nil {
+		key, err := c.PrivateKeyX509()
+		if err != nil {
+			return nil, err
+		}
+		fs.KeyPath = fs.ArgPath("tls.key", pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
+	}
 
 	return fs, nil
 }

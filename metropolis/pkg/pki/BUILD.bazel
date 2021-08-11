@@ -1,11 +1,10 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "go_default_library",
     srcs = [
         "ca.go",
         "certificate.go",
-        "doc.go",
         "x509.go",
     ],
     importpath = "source.monogon.dev/metropolis/pkg/pki",
@@ -14,4 +13,11 @@ go_library(
         "//metropolis/pkg/fileargs:go_default_library",
         "@io_etcd_go_etcd//clientv3:go_default_library",
     ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["certificate_test.go"],
+    embed = [":go_default_library"],
+    deps = ["@io_etcd_go_etcd//integration:go_default_library"],
 )

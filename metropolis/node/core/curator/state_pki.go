@@ -10,5 +10,10 @@ var (
 	pkiNamespace = pki.Namespaced("/cluster-pki/")
 	// pkiCA is the main cluster CA, stored in etcd. It is used to emit cluster,
 	// node and user certificates.
-	pkiCA = pkiNamespace.New(pki.SelfSigned, "cluster-ca", pki.CA("Metropolis Cluster CA"))
+	pkiCA = &pki.Certificate{
+		Namespace: &pkiNamespace,
+		Issuer:    pki.SelfSigned,
+		Template:  pki.CA("Metropolis Cluster CA"),
+		Name:      "cluster-ca",
+	}
 )
