@@ -39,6 +39,7 @@ func BootstrapNodeCredentials(ctx context.Context, etcd client.Namespaced, pubke
 		Template:  pki.Server([]string{id}, nil),
 		Mode:      pki.CertificateExternal,
 		PublicKey: pubkey,
+		Name:      fmt.Sprintf("node-%s", id),
 	}
 	node, err = nodeCert.Ensure(ctx, etcd)
 	if err != nil {

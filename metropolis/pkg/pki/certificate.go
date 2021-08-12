@@ -177,6 +177,14 @@ func (c *Certificate) ensure(ctx context.Context, kv clientv3.KV) (cert []byte, 
 		return nil, fmt.Errorf("invalid certificate mode %v", c.Mode)
 	}
 
+	if c.Name == "" {
+		if c.Mode == CertificateExternal {
+			return nil, fmt.Errorf("external certificate must have name set")
+		} else {
+			return nil, fmt.Errorf("managed certificate must have name set")
+		}
+	}
+
 	certPath := c.Namespace.etcdPath("%s-cert.der", c.Name)
 
 	// Try loading certificate from etcd.
