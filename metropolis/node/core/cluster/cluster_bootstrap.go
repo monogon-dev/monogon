@@ -37,6 +37,8 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	state, unlock := m.lock()
 	defer unlock()
 
+	ownerKey := bootstrap.OwnerPublicKey
+
 	state.configuration = &ppb.SealedConfiguration{}
 
 	// Mount new storage with generated CUK, and save LUK into sealed config proto.
@@ -112,8 +114,8 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 		return fmt.Errorf("when retrieving consensus user for curator: %w", err)
 	}
 
-	if err := node.BootstrapStore(ctx, ckv); err != nil {
-		return fmt.Errorf("failed to store new node in etcd: %w", err)
+	if err := curator.BootstrapFinish(ctx, ckv, &node, ownerKey); err != nil {
+		return fmt.Errorf("failed to finish bootstrap: %w", err)
 	}
 
 	// And short-circuit creating the curator CA and node certificate.

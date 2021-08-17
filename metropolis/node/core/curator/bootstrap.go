@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
+	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/pkg/pki"
 )
 
@@ -50,33 +51,49 @@ func BootstrapNodeCredentials(ctx context.Context, etcd client.Namespaced, pubke
 	return
 }
 
-// BootstrapStore saves the Node into etcd, without regard for any other cluster
-// state and directly using a given etcd client.
+const (
+	initialOwnerEtcdPath = "/global/initial_owner"
+)
+
+// BootstrapFinish saves the given Node and initial cluster owner pubkey into
+// etcd, without regard for any other cluster state and directly using a given
+// etcd client.
 //
-// This can only be used by the cluster bootstrap logic.
-func (n *Node) BootstrapStore(ctx context.Context, etcd client.Namespaced) error {
-	// Currently the only flow to store a node to etcd is a write-once flow:
-	// once a node is created, it cannot be deleted or updated. In the future,
-	// flows to change cluster node roles might be introduced (ie. to promote
-	// nodes to consensus members, etc).
-	key := n.etcdPath()
-	msg := n.proto()
-	nodeRaw, err := proto.Marshal(msg)
+// This is ran by the cluster bootstrap workflow to finish bootstrapping a
+// cluster - afterwards, this cluster will be ready to serve.
+//
+// This can only be used by the cluster bootstrap logic, and may only be called
+// once. It's guaranteed to either succeed fully or fail fully, without leaving
+// the cluster in an inconsistent state.
+func BootstrapFinish(ctx context.Context, etcd client.Namespaced, initialNode *Node, pubkey []byte) error {
+	nodeKey := initialNode.etcdPath()
+	nodeRaw, err := proto.Marshal(initialNode.proto())
 	if err != nil {
 		return fmt.Errorf("failed to marshal node: %w", err)
 	}
 
+	owner := &ppb.InitialOwner{
+		PublicKey: pubkey,
+	}
+	ownerKey := initialOwnerEtcdPath
+	ownerRaw, err := proto.Marshal(owner)
+	if err != nil {
+		return fmt.Errorf("failed to marshal iniail owner: %w", err)
+	}
+
 	res, err := etcd.Txn(ctx).If(
-		clientv3.Compare(clientv3.CreateRevision(key), "=", 0),
+		clientv3.Compare(clientv3.CreateRevision(nodeKey), "=", 0),
+		clientv3.Compare(clientv3.CreateRevision(ownerKey), "=", 0),
 	).Then(
-		clientv3.OpPut(key, string(nodeRaw)),
+		clientv3.OpPut(nodeKey, string(nodeRaw)),
+		clientv3.OpPut(ownerKey, string(ownerRaw)),
 	).Commit()
 	if err != nil {
-		return fmt.Errorf("failed to store node: %w", err)
+		return fmt.Errorf("failed to store initial cluster state: %w", err)
 	}
 
 	if !res.Succeeded {
-		return fmt.Errorf("attempted to re-register node (unsupported flow)")
+		return fmt.Errorf("cluster already bootstrapped")
 	}
 	return nil
 }

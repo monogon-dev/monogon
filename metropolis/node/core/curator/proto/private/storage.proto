@@ -6,6 +6,9 @@ import "metropolis/proto/common/common.proto";
 
 // Node describes a single node's state in etcd. This is only ever visible to
 // the curator, and fully managed by the curator.
+//
+// Serialized nodes are stored in /nodes/$id, where $id is the node's ID as
+// calculated from its public key.
 message Node {
     // The node's public key.
     bytes public_key = 1;
@@ -21,4 +24,15 @@ message Node {
 
     // The node's intended roles when running.
     metropolis.proto.common.NodeRoles roles = 4;
+}
+
+// Information about the cluster owner, currently the only Metropolis management
+// entity, named 'owner' in public APIs.
+//
+// In the future, once we have implemented a manager/user entity system, this
+// will be replaced by a proper per-user entry.
+//
+// Stored under /global/initial_owner.
+message InitialOwner {
+    bytes public_key = 1;
 }
