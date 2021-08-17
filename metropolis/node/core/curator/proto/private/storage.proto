@@ -29,10 +29,14 @@ message Node {
 // Information about the cluster owner, currently the only Metropolis management
 // entity, named 'owner' in public APIs.
 //
-// In the future, once we have implemented a manager/user entity system, this
-// will be replaced by a proper per-user entry.
+// This is populated from NodeParameters.cluster_bootstrap.owner_public_key on
+// cluster bootstrap.
 //
-// Stored under /global/initial_owner.
+// MVP: In the future, once we have implemented a manager/user entity system,
+// this will be replaced by a proper per-user entry.
+//
+// Stored under /global/initial_owner (see curator.initialOwnerEtcdPath).
 message InitialOwner {
+    // ED25519 public key of cluster owner.
     bytes public_key = 1;
 }

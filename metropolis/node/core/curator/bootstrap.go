@@ -51,10 +51,6 @@ func BootstrapNodeCredentials(ctx context.Context, etcd client.Namespaced, pubke
 	return
 }
 
-const (
-	initialOwnerEtcdPath = "/global/initial_owner"
-)
-
 // BootstrapFinish saves the given Node and initial cluster owner pubkey into
 // etcd, without regard for any other cluster state and directly using a given
 // etcd client.

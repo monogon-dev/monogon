@@ -65,10 +65,12 @@ func rpcError(err error) (error, bool) {
 // which has access to the leadership structure.
 type curatorLeader struct {
 	leaderCurator
+	leaderAAA
 }
 
 func newCuratorLeader(l leadership) *curatorLeader {
 	return &curatorLeader{
 		leaderCurator{l},
+		leaderAAA{l},
 	}
 }

@@ -17,6 +17,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/pkg/combinectx"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 // listener is the curator runnable responsible for listening for gRPC
@@ -116,6 +117,7 @@ func (l *listener) dispatcher(ctx context.Context) error {
 // must implement.
 type services interface {
 	cpb.CuratorServer
+	apb.AAAServer
 }
 
 // activeTarget is the active implementation used by the listener dispatcher, or
@@ -215,7 +217,7 @@ func (l *listener) run(ctx context.Context) error {
 	srvPublic := grpc.NewServer(grpc.Creds(l.publicCreds))
 
 	cpb.RegisterCuratorServer(srvLocal, l)
-	// TODO(q3k): register servers on srvPublic.
+	apb.RegisterAAAServer(srvPublic, l)
 
 	if err := supervisor.Run(ctx, "local", supervisor.GRPCServer(srvLocal, lisLocal, true)); err != nil {
 		return fmt.Errorf("while starting local gRPC listener: %w", err)
@@ -310,4 +312,34 @@ func (l *listener) Watch(req *cpb.WatchRequest, srv cpb.Curator_WatchServer) err
 		})
 	}
 	return l.callImpl(srv.Context(), proxy)
+}
+
+type aaaEscrowServer struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (m *aaaEscrowServer) Context() context.Context {
+	return m.ctx
+}
+
+func (m *aaaEscrowServer) Send(r *apb.EscrowFromServer) error {
+	return m.ServerStream.SendMsg(r)
+}
+
+func (m *aaaEscrowServer) Recv() (*apb.EscrowFromClient, error) {
+	var res apb.EscrowFromClient
+	if err := m.ServerStream.RecvMsg(&res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func (l *listener) Escrow(srv apb.AAA_EscrowServer) error {
+	return l.callImpl(srv.Context(), func(ctx context.Context, impl services) error {
+		return impl.Escrow(&aaaEscrowServer{
+			ServerStream: srv,
+			ctx:          ctx,
+		})
+	})
 }
