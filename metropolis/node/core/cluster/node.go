@@ -3,8 +3,11 @@ package cluster
 import (
 	"crypto/ed25519"
 	"crypto/subtle"
+	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+
+	"google.golang.org/grpc/credentials"
 
 	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/localstorage"
@@ -137,4 +140,23 @@ func (nc *NodeCertificate) PublicKey() ed25519.PublicKey {
 // certificate/credentials were emitted.
 func (nc *NodeCertificate) ID() string {
 	return curator.NodeID(nc.PublicKey())
+}
+
+// PublicGRPCServerCredentials returns gRPC TransportCredentials that should be
+// used by this node to run public gRPC services (ie. the AAA service and any
+// other management/user services).
+//
+// SECURITY: The returned TransportCredentials accepts _any_ client certificate
+// served by the client and does not perform any verification. The gRPC service
+// instance (via per-method checks or middleware) should perform user
+// authentication/authorization.
+func (nc *NodeCredentials) PublicGRPCServerCredentials() credentials.TransportCredentials {
+	tlsCert := tls.Certificate{
+		Certificate: [][]byte{nc.node.Raw},
+		PrivateKey:  nc.private,
+	}
+	return credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+		ClientAuth:   tls.RequireAnyClientCert,
+	})
 }

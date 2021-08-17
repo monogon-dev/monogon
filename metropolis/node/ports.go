@@ -17,7 +17,7 @@
 package node
 
 const (
-	NodeServicePort     = 7835
+	CuratorServicePort  = 7835
 	ConsensusPort       = 7834
 	MasterServicePort   = 7833
 	ExternalServicePort = 7836

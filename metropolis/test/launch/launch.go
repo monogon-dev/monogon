@@ -141,7 +141,7 @@ type Options struct {
 }
 
 // NodePorts is the list of ports a fully operational Metropolis node listens on
-var NodePorts = []uint16{node.ConsensusPort, node.NodeServicePort, node.MasterServicePort,
+var NodePorts = []uint16{node.ConsensusPort, node.CuratorServicePort, node.MasterServicePort,
 	node.ExternalServicePort, node.DebugServicePort, node.KubernetesAPIPort, node.DebuggerPort}
 
 // IdentityPortMap returns a port map where each given port is mapped onto itself

@@ -8,8 +8,10 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
+	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/localstorage"
@@ -40,7 +42,8 @@ type listener struct {
 	etcd client.Namespaced
 	// directory is the ephemeral directory in which the local gRPC socket will
 	// be available for node-local consumers.
-	directory *localstorage.EphemeralCuratorDirectory
+	directory   *localstorage.EphemeralCuratorDirectory
+	publicCreds credentials.TransportCredentials
 	// electionWatch is a function that returns an active electionWatcher for the
 	// listener to use when determining local leadership. As the listener may
 	// restart on error, this factory-function is used instead of an electionWatcher
@@ -199,20 +202,29 @@ func (l *listener) run(ctx context.Context) error {
 	}
 
 	// TODO(q3k): recreate socket if already exists? Is this needed?
-	lis, err := net.ListenUnix("unix", &net.UnixAddr{Name: l.directory.ClientSocket.FullPath(), Net: "unix"})
+	lisLocal, err := net.ListenUnix("unix", &net.UnixAddr{Name: l.directory.ClientSocket.FullPath(), Net: "unix"})
 	if err != nil {
-		return fmt.Errorf("failed to listen on curator listener socket: %w", err)
+		return fmt.Errorf("failed to listen on local curator socket: %w", err)
+	}
+	lisPublic, err := net.Listen("tcp", fmt.Sprintf(":%d", node.CuratorServicePort))
+	if err != nil {
+		return fmt.Errorf("failed to listen on public curator socket: %w", err)
 	}
 
-	// TODO(q3k): run remote/public gRPC listener.
+	srvLocal := grpc.NewServer()
+	srvPublic := grpc.NewServer(grpc.Creds(l.publicCreds))
 
-	srv := grpc.NewServer()
-	cpb.RegisterCuratorServer(srv, l)
+	cpb.RegisterCuratorServer(srvLocal, l)
+	// TODO(q3k): register servers on srvPublic.
 
-	if err := supervisor.Run(ctx, "local", supervisor.GRPCServer(srv, lis, true)); err != nil {
+	if err := supervisor.Run(ctx, "local", supervisor.GRPCServer(srvLocal, lisLocal, true)); err != nil {
 		return fmt.Errorf("while starting local gRPC listener: %w", err)
 	}
-	supervisor.Logger(ctx).Info("Listener running.")
+	if err := supervisor.Run(ctx, "public", supervisor.GRPCServer(srvPublic, lisPublic, true)); err != nil {
+		return fmt.Errorf("while starting public gRPC listener: %w", err)
+	}
+
+	supervisor.Logger(ctx).Info("Listeners running.")
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 
 	// Keep the listener running, as its a parent to the gRPC listener.
