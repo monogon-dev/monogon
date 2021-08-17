@@ -78,5 +78,6 @@ cc_library(
         ":seccomp.h",
         "include/seccomp-syscalls.h",
     ],
+    includes = ["."],
     visibility = ["//visibility:public"],
 )

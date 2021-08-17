@@ -196,6 +196,12 @@ qemu_external(
     version = "5.2.0",
 )
 
+load("//third_party/chrony:external.bzl", "chrony_external")
+
+chrony_external(
+    name = "chrony",
+)
+
 register_toolchains("//:host_python")
 
 # python dependencies. Currently we don't use Python, but some of our deps (ie. gvisor) do expect @pydeps// to exist, even
