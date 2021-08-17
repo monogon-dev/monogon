@@ -30,8 +30,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
@@ -42,8 +42,8 @@ const (
 
 // debugService implements the Metropolis node debug API.
 type debugService struct {
-	roleserve *roleserve.Service
-	logtree   *logtree.LogTree
+	roleserve       *roleserve.Service
+	logtree         *logtree.LogTree
 	ephemeralVolume *localstorage.EphemeralContainerdDirectory
 
 	// traceLock provides exclusive access to the Linux tracing infrastructure

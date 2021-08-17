@@ -215,9 +215,9 @@ func main() {
 		// Start the node debug service.
 		supervisor.Logger(ctx).Infof("Starting debug service...")
 		dbg := &debugService{
-			roleserve: rs,
-			logtree:   lt,
-			traceLock: make(chan struct{}, 1),
+			roleserve:       rs,
+			logtree:         lt,
+			traceLock:       make(chan struct{}, 1),
 			ephemeralVolume: &root.Ephemeral.Containerd,
 		}
 		dbgSrv := grpc.NewServer()
