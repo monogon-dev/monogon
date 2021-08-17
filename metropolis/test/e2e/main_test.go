@@ -17,7 +17,9 @@
 package e2e
 
 import (
+	"bytes"
 	"context"
+	"crypto/ed25519"
 	"errors"
 	"fmt"
 	"log"
@@ -77,6 +79,7 @@ func TestE2E(t *testing.T) {
 
 	// Set a global timeout to make sure this terminates
 	ctx, cancel := context.WithTimeout(context.Background(), globalTestTimeout)
+	defer cancel()
 	portMap, err := launch.ConflictFreePortMap(launch.NodePorts)
 	if err != nil {
 		t.Fatalf("Failed to acquire ports for e2e test: %v", err)
@@ -90,7 +93,7 @@ func TestE2E(t *testing.T) {
 			SerialPort: os.Stdout,
 			NodeParameters: &apb.NodeParameters{
 				Cluster: &apb.NodeParameters_ClusterBootstrap_{
-					ClusterBootstrap: &apb.NodeParameters_ClusterBootstrap{},
+					ClusterBootstrap: launch.InsecureClusterBootstrap,
 				},
 			},
 		}); err != nil {
@@ -98,21 +101,45 @@ func TestE2E(t *testing.T) {
 		}
 		close(procExit)
 	}()
-	grpcClient, err := portMap.DialGRPC(common.DebugServicePort, grpc.WithInsecure())
+
+	grpcDebug, err := portMap.DialGRPC(common.DebugServicePort, grpc.WithInsecure())
 	if err != nil {
-		fmt.Printf("Failed to dial debug service (is it running): %v\n", err)
+		log.Printf("Failed to dial debug service (is it running?): %v", err)
+		return
 	}
-	debugClient := apb.NewNodeDebugServiceClient(grpcClient)
+	debug := apb.NewNodeDebugServiceClient(grpcDebug)
 
 	// This exists to keep the parent around while all the children race.
 	// It currently tests both a set of OS-level conditions and Kubernetes
 	// Deployments and StatefulSets
 	t.Run("RunGroup", func(t *testing.T) {
+		t.Run("Connect to Curator", func(t *testing.T) {
+			testEventual(t, "Retrieving owner credentials succesful", ctx, 60*time.Second, func(ctx context.Context) error {
+				initClient, err := launch.NewInitialClient(&launch.InitialClientOptions{
+					Remote:  fmt.Sprintf("localhost:%v", portMap[common.CuratorServicePort]),
+					Private: launch.InsecurePrivateKey,
+				})
+				if err != nil {
+					return fmt.Errorf("NewInitialClient: %w", err)
+				}
+
+				cert, err := initClient.RetrieveOwnerCertificate(ctx)
+				if err != nil {
+					return fmt.Errorf("RetrieveOwnerCertificate: %w", err)
+				}
+
+				if !bytes.Equal(cert.PrivateKey.(ed25519.PrivateKey), launch.InsecurePrivateKey) {
+					t.Fatalf("Received certificate for wrong private key")
+				}
+
+				return nil
+			})
+		})
 		t.Run("Get Kubernetes Debug Kubeconfig", func(t *testing.T) {
 			t.Parallel()
 			selfCtx, cancel := context.WithTimeout(ctx, largeTestTimeout)
 			defer cancel()
-			clientSet, err := GetKubeClientSet(selfCtx, debugClient, portMap[common.KubernetesAPIPort])
+			clientSet, err := GetKubeClientSet(selfCtx, debug, portMap[common.KubernetesAPIPort])
 			if err != nil {
 				t.Fatal(err)
 			}
