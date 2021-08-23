@@ -118,6 +118,7 @@ func (l *listener) dispatcher(ctx context.Context) error {
 type services interface {
 	cpb.CuratorServer
 	apb.AAAServer
+	apb.ManagementServer
 }
 
 // activeTarget is the active implementation used by the listener dispatcher, or
@@ -208,6 +209,7 @@ func (l *listener) run(ctx context.Context) error {
 
 	cpb.RegisterCuratorServer(srvLocal, l)
 	apb.RegisterAAAServer(srvPublic, l)
+	apb.RegisterManagementServer(srvPublic, l)
 
 	err := supervisor.Run(ctx, "local", func(ctx context.Context) error {
 		lisLocal, err := net.ListenUnix("unix", &net.UnixAddr{Name: l.directory.ClientSocket.FullPath(), Net: "unix"})
@@ -353,4 +355,13 @@ func (l *listener) Escrow(srv apb.AAA_EscrowServer) error {
 			ctx:          ctx,
 		})
 	})
+}
+
+func (l *listener) GetRegisterTicket(ctx context.Context, req *apb.GetRegisterTicketRequest) (res *apb.GetRegisterTicketResponse, err error) {
+	err = l.callImpl(ctx, func(ctx context.Context, impl services) error {
+		var err2 error
+		res, err2 = impl.GetRegisterTicket(ctx, req)
+		return err2
+	})
+	return
 }

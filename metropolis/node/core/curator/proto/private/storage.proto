@@ -40,3 +40,15 @@ message InitialOwner {
     // ED25519 public key of cluster owner.
     bytes public_key = 1;
 }
+
+// A blob which needs to be provided by nodes registering into the cluster.
+// Presenting this ticket on registration does not automatically grant access
+// to arbitrary node registration. Instead it is used to guard the API surface
+// of the Register RPC from potential denial of service attacks, and can be
+// regenerated at any time in case it leaks.
+//
+// Stored under /global/register_ticket (see curator.registerTicketEtcdPath).
+message RegisterTicket {
+    bytes opaque = 1;
+}
+

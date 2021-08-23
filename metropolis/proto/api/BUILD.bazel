@@ -8,6 +8,7 @@ proto_library(
         "aaa.proto",
         "configuration.proto",
         "debug.proto",
+        "management.proto",
     ],
     visibility = ["//visibility:public"],
 )

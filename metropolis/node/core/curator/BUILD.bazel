@@ -9,6 +9,7 @@ go_library(
         "impl_leader.go",
         "impl_leader_aaa.go",
         "impl_leader_curator.go",
+        "impl_leader_management.go",
         "listener.go",
         "state_node.go",
         "state_pki.go",
@@ -45,6 +46,7 @@ go_test(
     name = "go_default_test",
     srcs = [
         "curator_test.go",
+        "impl_leader_test.go",
         "listener_test.go",
     ],
     embed = [":go_default_library"],
@@ -54,6 +56,7 @@ go_test(
         "//metropolis/node/core/localstorage/declarative:go_default_library",
         "//metropolis/pkg/event/memory:go_default_library",
         "//metropolis/pkg/supervisor:go_default_library",
+        "//metropolis/proto/api:go_default_library",
         "@io_etcd_go_etcd//clientv3:go_default_library",
         "@io_etcd_go_etcd//integration:go_default_library",
         "@org_golang_google_grpc//codes:go_default_library",

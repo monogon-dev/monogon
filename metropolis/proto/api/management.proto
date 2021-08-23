@@ -1,0 +1,22 @@
+syntax = "proto3";
+package metropolis.proto.api;
+option go_package = "source.monogon.dev/metropolis/proto/api";
+
+// Management service available to Cluster Managers.
+service Management {
+    // GetRegisterTicket retrieves the current RegisterTicket which is required
+    // for new nodes to register into the cluster. Presenting this ticket on
+    // registration does not automatically grant access to arbitrary node
+    // registration. Instead, it is used to guard the API surface of the
+    // Register RPC from potential denial of service attacks, and can be
+    // regenerated at any time in case it leaks.
+    rpc GetRegisterTicket(GetRegisterTicketRequest) returns (GetRegisterTicketResponse);
+}
+
+message GetRegisterTicketRequest {
+}
+
+message GetRegisterTicketResponse {
+    // Opaque bytes that comprise the RegisterTicket.
+    bytes ticket = 1;
+}

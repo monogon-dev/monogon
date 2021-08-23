@@ -1,6 +1,8 @@
 package curator
 
 import (
+	"context"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -17,4 +19,8 @@ func (f *curatorFollower) Watch(req *cpb.WatchRequest, srv cpb.Curator_WatchServ
 
 func (f *curatorFollower) Escrow(srv apb.AAA_EscrowServer) error {
 	return status.Error(codes.Unimplemented, "curator follower not implemented")
+}
+
+func (f *curatorFollower) GetRegisterTicket(_ context.Context, _ *apb.GetRegisterTicketRequest) (*apb.GetRegisterTicketResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "curator follower not implemented")
 }

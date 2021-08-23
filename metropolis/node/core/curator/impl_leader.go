@@ -66,11 +66,13 @@ func rpcError(err error) (error, bool) {
 type curatorLeader struct {
 	leaderCurator
 	leaderAAA
+	leaderManagement
 }
 
 func newCuratorLeader(l leadership) *curatorLeader {
 	return &curatorLeader{
 		leaderCurator{l},
 		leaderAAA{l},
+		leaderManagement{l},
 	}
 }
