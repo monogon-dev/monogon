@@ -198,19 +198,9 @@ func (l *listener) dispatch(ctx context.Context) (*listenerTarget, error) {
 
 // run is the listener runnable. It listens on gRPC sockets and serves RPCs.
 func (l *listener) run(ctx context.Context) error {
-	supervisor.Logger(ctx).Info("Listener starting...")
+	supervisor.Logger(ctx).Info("Listeners starting...")
 	if err := supervisor.Run(ctx, "dispatcher", l.dispatcher); err != nil {
 		return fmt.Errorf("when starting dispatcher: %w", err)
-	}
-
-	// TODO(q3k): recreate socket if already exists? Is this needed?
-	lisLocal, err := net.ListenUnix("unix", &net.UnixAddr{Name: l.directory.ClientSocket.FullPath(), Net: "unix"})
-	if err != nil {
-		return fmt.Errorf("failed to listen on local curator socket: %w", err)
-	}
-	lisPublic, err := net.Listen("tcp", fmt.Sprintf(":%d", node.CuratorServicePort))
-	if err != nil {
-		return fmt.Errorf("failed to listen on public curator socket: %w", err)
 	}
 
 	srvLocal := grpc.NewServer()
@@ -219,14 +209,35 @@ func (l *listener) run(ctx context.Context) error {
 	cpb.RegisterCuratorServer(srvLocal, l)
 	apb.RegisterAAAServer(srvPublic, l)
 
-	if err := supervisor.Run(ctx, "local", supervisor.GRPCServer(srvLocal, lisLocal, true)); err != nil {
+	err := supervisor.Run(ctx, "local", func(ctx context.Context) error {
+		lisLocal, err := net.ListenUnix("unix", &net.UnixAddr{Name: l.directory.ClientSocket.FullPath(), Net: "unix"})
+		if err != nil {
+			return fmt.Errorf("failed to listen: %w", err)
+		}
+		defer lisLocal.Close()
+
+		runnable := supervisor.GRPCServer(srvLocal, lisLocal, true)
+		return runnable(ctx)
+	})
+	if err != nil {
 		return fmt.Errorf("while starting local gRPC listener: %w", err)
 	}
-	if err := supervisor.Run(ctx, "public", supervisor.GRPCServer(srvPublic, lisPublic, true)); err != nil {
+
+	err = supervisor.Run(ctx, "public", func(ctx context.Context) error {
+		lisPublic, err := net.Listen("tcp", fmt.Sprintf(":%d", node.CuratorServicePort))
+		if err != nil {
+			return fmt.Errorf("failed to listen on public curator socket: %w", err)
+		}
+		defer lisPublic.Close()
+
+		runnable := supervisor.GRPCServer(srvPublic, lisPublic, true)
+		return runnable(ctx)
+	})
+	if err != nil {
 		return fmt.Errorf("while starting public gRPC listener: %w", err)
 	}
 
-	supervisor.Logger(ctx).Info("Listeners running.")
+	supervisor.Logger(ctx).Info("Listeners started.")
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 
 	// Keep the listener running, as its a parent to the gRPC listener.

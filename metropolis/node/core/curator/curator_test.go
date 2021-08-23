@@ -77,7 +77,7 @@ func newDut(ctx context.Context, t *testing.T, endpoint string) *dut {
 
 	// Create ephemeral directory for curator and place it into /tmp.
 	dir := localstorage.EphemeralCuratorDirectory{}
-	tmp, err := ioutil.TempDir("", "curator-test-*")
+	tmp, err := ioutil.TempDir("/tmp", "curator-test-*")
 	if err != nil {
 		t.Fatalf("TempDir: %v", err)
 	}
