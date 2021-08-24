@@ -84,9 +84,9 @@ go_repositories()
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "758249b537abba2f21ebc2d02555bf080917f0f2f88f4cbe2903e0e28c4187ed",
-    strip_prefix = "protobuf-3.10.0",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.10.0.tar.gz"],
+    sha256 = "c6003e1d2e7fefa78a3039f19f383b4f3a61e81be8c19356f85b6461998ad3db",
+    strip_prefix = "protobuf-3.17.3",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.17.3.tar.gz"],
 )
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
