@@ -4,6 +4,9 @@
 
 pipeline {
     agent none
+    options {
+        disableConcurrentBuilds()
+    }
     stages {
         stage('Parallel') {
             parallel {
