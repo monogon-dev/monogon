@@ -60,7 +60,7 @@ func CryptMap(name string, baseName string, encryptionKey []byte) error {
 		devicemapper.Target{
 			Length:     integritySectors,
 			Type:       "integrity",
-			Parameters: fmt.Sprintf("%v 0 28 J 1 journal_sectors:1024", baseName),
+			Parameters: []string{baseName, "0", "28", "J", "1", "journal_sectors:1024"},
 		},
 	})
 	if err != nil {
@@ -77,7 +77,7 @@ func CryptMap(name string, baseName string, encryptionKey []byte) error {
 		devicemapper.Target{
 			Length:     integritySectors,
 			Type:       "crypt",
-			Parameters: fmt.Sprintf("capi:gcm(aes)-random %v 0 %v 0 1 integrity:28:aead", hex.EncodeToString(encryptionKey), integrityDevName),
+			Parameters: []string{"capi:gcm(aes)-random", hex.EncodeToString(encryptionKey), "0", integrityDevName, "0", "1", "integrity:28:aead"},
 		},
 	})
 	if err != nil {
@@ -115,7 +115,7 @@ func CryptInit(name, baseName string, encryptionKey []byte) error {
 		{
 			Length:     1,
 			Type:       "integrity",
-			Parameters: fmt.Sprintf("%v 0 28 J 1 journal_sectors:1024", baseName),
+			Parameters: []string{baseName, "0", "28", "J", "1", "journal_sectors:1024"},
 		},
 	})
 	if err != nil {

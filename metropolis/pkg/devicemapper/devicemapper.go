@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -137,6 +138,35 @@ func stringToDelimitedBuf(dst []byte, src string) error {
 	return nil
 }
 
+// marshalParams marshals a list of strings into a single string according to
+// the rules in the kernel-side decoder. Strings with null bytes or only
+// whitespace characters cannot be encoded and will return an errors.
+func marshalParams(params []string) (string, error) {
+	var strb strings.Builder
+	for _, param := range params {
+		var hasNonWhitespace bool
+		for i := 0; i < len(param); i++ {
+			b := param[i]
+			if b == 0x00 {
+				return "", errors.New("parameter with null bytes cannot be encoded")
+			}
+			isWhitespace := ctypeLookup[b]&_S != 0
+			if !isWhitespace {
+				hasNonWhitespace = true
+			}
+			if isWhitespace || b == '\\' {
+				strb.WriteByte('\\')
+			}
+			strb.WriteByte(b)
+		}
+		if !hasNonWhitespace {
+			return "", errors.New("parameter with only whitespace cannot be encoded")
+		}
+		strb.WriteByte(' ')
+	}
+	return strb.String(), nil
+}
+
 var fd uintptr
 
 func getFd() (uintptr, error) {
@@ -217,7 +247,9 @@ type Target struct {
 	// @linux//drivers/md/... by looking for dm_register_target() calls.
 	Type string
 	// Parameters are additional parameters specific to the target type.
-	Parameters string
+	// Note that null bytes and parameters consisting only of whitespace
+	// characters cannot be encoded and will return an error.
+	Parameters []string
 }
 
 func LoadTable(name string, readOnly bool, targets []Target) error {
@@ -227,9 +259,13 @@ func LoadTable(name string, readOnly bool, targets []Target) error {
 	}
 	var data bytes.Buffer
 	for _, target := range targets {
+		encodedParams, err := marshalParams(target.Parameters)
+		if err != nil {
+			return fmt.Errorf("cannot encode parameters: %w", err)
+		}
 		// Gives the size of the spec and the null-terminated params aligned to 8 bytes
-		padding := len(target.Parameters) % 8
-		targetSize := uint32(int(unsafe.Sizeof(DMTargetSpec{})) + (len(target.Parameters) + 1) + padding)
+		padding := len(encodedParams) % 8
+		targetSize := uint32(int(unsafe.Sizeof(DMTargetSpec{})) + (len(encodedParams) + 1) + padding)
 
 		targetSpec := DMTargetSpec{
 			SectorStart: target.StartSector,
@@ -242,7 +278,7 @@ func LoadTable(name string, readOnly bool, targets []Target) error {
 		if err := binary.Write(&data, native_endian.NativeEndian(), &targetSpec); err != nil {
 			panic(err)
 		}
-		data.WriteString(target.Parameters)
+		data.WriteString(encodedParams)
 		data.WriteByte(0x00)
 		for i := 0; i < padding; i++ {
 			data.WriteByte(0x00)
