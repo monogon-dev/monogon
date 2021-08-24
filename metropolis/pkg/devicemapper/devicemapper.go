@@ -25,6 +25,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -167,36 +168,33 @@ func marshalParams(params []string) (string, error) {
 	return strb.String(), nil
 }
 
-var fd uintptr
+var ctrlFile *os.File
+var ctrlFileError error
+var ctrlFileOnce sync.Once
 
-func getFd() (uintptr, error) {
-	if fd == 0 {
-		f, err := os.Open("/dev/mapper/control")
-		if os.IsNotExist(err) {
-			_ = os.MkdirAll("/dev/mapper", 0755)
-			if err := unix.Mknod("/dev/mapper/control", unix.S_IFCHR|0600, int(unix.Mkdev(10, 236))); err != nil {
-				return 0, err
-			}
-			f, err = os.Open("/dev/mapper/control")
-			if err != nil {
-				return 0, err
-			}
-		} else if err != nil {
-			return 0, err
+func initCtrlFile() {
+	ctrlFile, ctrlFileError = os.Open("/dev/mapper/control")
+	if os.IsNotExist(ctrlFileError) {
+		_ = os.MkdirAll("/dev/mapper", 0755)
+		ctrlFileError = unix.Mknod("/dev/mapper/control", unix.S_IFCHR|0600, int(unix.Mkdev(10, 236)))
+		if ctrlFileError != nil {
+			ctrlFileError = fmt.Errorf("devicemapper control device doesn't exist and can't be mknod()ed: %w", ctrlFileError)
+			return
 		}
-		fd = f.Fd()
-		return f.Fd(), nil
+		ctrlFile, ctrlFileError = os.Open("/dev/mapper/control")
 	}
-	return fd, nil
+	if ctrlFileError != nil {
+		ctrlFileError = fmt.Errorf("failed to open devicemapper control device: %w", ctrlFileError)
+	}
 }
 
 func GetVersion() (Version, error) {
 	req := newReq()
-	fd, err := getFd()
-	if err != nil {
-		return Version{}, err
+	ctrlFileOnce.Do(initCtrlFile)
+	if ctrlFileError != nil {
+		return Version{}, ctrlFileError
 	}
-	if _, _, err := unix.Syscall(unix.SYS_IOCTL, fd, DM_VERSION_CMD, uintptr(unsafe.Pointer(&req))); err != 0 {
+	if _, _, err := unix.Syscall(unix.SYS_IOCTL, ctrlFile.Fd(), DM_VERSION_CMD, uintptr(unsafe.Pointer(&req))); err != 0 {
 		return Version{}, err
 	}
 	return req.Version, nil
@@ -207,11 +205,11 @@ func CreateDevice(name string) (uint64, error) {
 	if err := stringToDelimitedBuf(req.Name[:], name); err != nil {
 		return 0, err
 	}
-	fd, err := getFd()
-	if err != nil {
-		return 0, err
+	ctrlFileOnce.Do(initCtrlFile)
+	if ctrlFileError != nil {
+		return 0, ctrlFileError
 	}
-	if _, _, err := unix.Syscall(unix.SYS_IOCTL, fd, DM_DEV_CREATE_CMD, uintptr(unsafe.Pointer(&req))); err != 0 {
+	if _, _, err := unix.Syscall(unix.SYS_IOCTL, ctrlFile.Fd(), DM_DEV_CREATE_CMD, uintptr(unsafe.Pointer(&req))); err != 0 {
 		return 0, err
 	}
 	return req.Dev, nil
@@ -222,11 +220,11 @@ func RemoveDevice(name string) error {
 	if err := stringToDelimitedBuf(req.Name[:], name); err != nil {
 		return err
 	}
-	fd, err := getFd()
-	if err != nil {
-		return err
+	ctrlFileOnce.Do(initCtrlFile)
+	if ctrlFileError != nil {
+		return ctrlFileError
 	}
-	if _, _, err := unix.Syscall(unix.SYS_IOCTL, fd, DM_DEV_REMOVE_CMD, uintptr(unsafe.Pointer(&req))); err != 0 {
+	if _, _, err := unix.Syscall(unix.SYS_IOCTL, ctrlFile.Fd(), DM_DEV_REMOVE_CMD, uintptr(unsafe.Pointer(&req))); err != 0 {
 		return err
 	}
 	runtime.KeepAlive(req)
@@ -293,11 +291,11 @@ func LoadTable(name string, readOnly bool, targets []Target) error {
 	if readOnly {
 		req.Flags = DM_READONLY_FLAG
 	}
-	fd, err := getFd()
-	if err != nil {
-		return err
+	ctrlFileOnce.Do(initCtrlFile)
+	if ctrlFileError != nil {
+		return ctrlFileError
 	}
-	if _, _, err := unix.Syscall(unix.SYS_IOCTL, fd, DM_TABLE_LOAD_CMD, uintptr(unsafe.Pointer(&req))); err != 0 {
+	if _, _, err := unix.Syscall(unix.SYS_IOCTL, ctrlFile.Fd(), DM_TABLE_LOAD_CMD, uintptr(unsafe.Pointer(&req))); err != 0 {
 		return err
 	}
 	runtime.KeepAlive(req)
@@ -312,11 +310,11 @@ func suspendResume(name string, suspend bool) error {
 	if suspend {
 		req.Flags = DM_SUSPEND_FLAG
 	}
-	fd, err := getFd()
-	if err != nil {
-		return err
+	ctrlFileOnce.Do(initCtrlFile)
+	if ctrlFileError != nil {
+		return ctrlFileError
 	}
-	if _, _, err := unix.Syscall(unix.SYS_IOCTL, fd, DM_DEV_SUSPEND_CMD, uintptr(unsafe.Pointer(&req))); err != 0 {
+	if _, _, err := unix.Syscall(unix.SYS_IOCTL, ctrlFile.Fd(), DM_DEV_SUSPEND_CMD, uintptr(unsafe.Pointer(&req))); err != 0 {
 		return err
 	}
 	runtime.KeepAlive(req)
