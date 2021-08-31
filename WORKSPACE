@@ -202,6 +202,13 @@ chrony_external(
     name = "chrony",
 )
 
+load("//third_party/cap:external.bzl", "cap_external")
+
+cap_external(
+    name = "cap",
+    version = "1.2.55",
+)
+
 register_toolchains("//:host_python")
 
 # python dependencies. Currently we don't use Python, but some of our deps (ie. gvisor) do expect @pydeps// to exist, even
