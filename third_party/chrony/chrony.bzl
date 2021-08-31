@@ -7,7 +7,7 @@ template_file(
     substitutions = {
         # ONCHANGE(//third_party/chrony:external.bzl): version needs to be kept in sync
         "%CHRONY_VERSION%": "4.1-monogon",
-    }
+    },
 )
 
 # Headers which couldn't be decoupled into sub-libraries.
@@ -88,7 +88,6 @@ cc_library(
     ],
 )
 
-
 # MD5 library used by keys.c, which does #include "md5.c".
 cc_library(
     name = "md5",
@@ -120,7 +119,6 @@ cc_library(
         "nts_ntp_auth.h",
         "nts_ntp_server.h",
         "nts_ntp.h",
-
         "ntp_auth.h",
         "ntp_auth.c",
         "ntp_core.c",
@@ -155,6 +153,7 @@ cc_library(
     deps = [
         ":common",
         "@seccomp//:seccomp",
+        "@cap//:cap",
     ],
 )
 
@@ -190,7 +189,6 @@ cc_binary(
         "main.h",
         "main.c",
         "stubs.c",
-
     ],
     deps = [
         ":common",

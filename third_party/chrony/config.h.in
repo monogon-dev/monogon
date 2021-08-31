@@ -8,6 +8,8 @@
 #define FEAT_RTC
 #define FEAT_SCFILTER
 #define FEAT_ASYNCDNS
+#define FEAT_PRIVDROP
+#define CAP_IS_SUPPORTED
 
 #define DEFAULT_COMMAND_SOCKET "/todo/chronyd.sock"
 #define DEFAULT_CONF_FILE "/todo/chrony.conf"
