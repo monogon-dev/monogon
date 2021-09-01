@@ -18,6 +18,8 @@ syntax = "proto3";
 package metropolis.proto.api;
 option go_package = "source.monogon.dev/metropolis/proto/api";
 
+import "metropolis/proto/ext/authorization.proto";
+
 // Authentication, authorization and accounting.
 service AAA {
     // Escrow is an endpoint used to retrieve short-lived access credentials to
@@ -144,7 +146,13 @@ service AAA {
     // will lead to retrieving identities from with the same namespace of
     // entities.
     //
-    rpc Escrow(stream EscrowFromClient) returns (stream EscrowFromServer);
+    rpc Escrow(stream EscrowFromClient) returns (stream EscrowFromServer) {
+        option (metropolis.proto.ext.authorization) = {
+            // The AAA implementation performs its own checks as needed, so the
+            // RPC middleware should allow everything through.
+            allow_unauthenticated: true
+        };
+    }
 }
 
 message EscrowFromClient {

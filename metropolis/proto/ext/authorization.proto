@@ -1,0 +1,36 @@
+syntax = "proto3";
+package metropolis.proto.ext;
+option go_package = "source.monogon.dev/metropolis/proto/ext";
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.MethodOptions {
+    // Set authorization policy for this RPC. If not set but the service is
+    // configured to use authorization, the default/zero value of the
+    // Authorization message will be used (effectively allowing all
+    // authenticated users).
+    Authorization authorization = 1000;
+}
+
+
+// Permission is a combined activity/object that an identity can perform in the
+// cluster.
+//
+// MVP: this might get replaced with a full activity/object split later on.
+enum Permission {
+    PERMISSION_UNSPECIFIED = 0;
+    PERMISSION_GET_REGISTER_TICKET = 1;
+}
+
+// Authorization policy for an RPC method. This message/API does not have the
+// same stability guarantees as the rest of Metropolis APIs - it is internal,
+// might change in wire and text incompatible ways and should not be used by
+// consumers of the API.
+message Authorization {
+    // Set of permissions required from the caller.
+    repeated Permission need = 1;
+    // If set, this API can be called unauthorized and unauthenticated, thereby
+    // allowing full access to anyone, including public access by anyone with
+    // network connectivity to the cluster.. Ignored if `need` is non-empty.
+    bool allow_unauthenticated = 2;
+}

@@ -38,8 +38,6 @@ const (
 )
 
 func (l *leaderManagement) GetRegisterTicket(ctx context.Context, req *apb.GetRegisterTicketRequest) (*apb.GetRegisterTicketResponse, error) {
-	// TODO9(q3k): authenticate and authorize
-
 	// Retrieve existing ticket, if any.
 	res, err := l.txnAsLeader(ctx, clientv3.OpGet(registerTicketEtcdPath))
 	if err != nil {

@@ -171,7 +171,6 @@ func main() {
 		}
 
 		// TODO(q3k): restart curator on credentials change?
-		curatorServerCreds := status.Credentials.PublicGRPCServerCredentials()
 
 		// Start cluster curator. The cluster curator is responsible for lifecycle
 		// management of the cluster.
@@ -180,9 +179,10 @@ func main() {
 			Etcd:   ckv,
 			NodeID: status.Credentials.ID(),
 			// TODO(q3k): make this configurable?
-			LeaderTTL:         time.Second * 5,
-			Directory:         &root.Ephemeral.Curator,
-			ServerCredentials: curatorServerCreds,
+			LeaderTTL:            time.Second * 5,
+			Directory:            &root.Ephemeral.Curator,
+			ServerCredentials:    status.Credentials.TLSCredentials(),
+			ClusterCACertificate: status.Credentials.ClusterCA(),
 		})
 		if err := supervisor.Run(ctx, "curator", c.Run); err != nil {
 			close(trapdoor)

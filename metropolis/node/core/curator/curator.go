@@ -13,13 +13,14 @@ package curator
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"time"
 
 	"go.etcd.io/etcd/clientv3/concurrency"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
@@ -47,8 +48,16 @@ type Config struct {
 	LeaderTTL time.Duration
 	// Directory is the curator ephemeral directory in which the curator will
 	// store its local domain socket for connections from the node.
-	Directory         *localstorage.EphemeralCuratorDirectory
-	ServerCredentials credentials.TransportCredentials
+	Directory *localstorage.EphemeralCuratorDirectory
+
+	// ServerCredentials is the TLS certificate/key of the node that the curator
+	// will use to run public gRPC services. It should be signed by
+	// ClusterCACertificate.
+	ServerCredentials tls.Certificate
+	// ClusterCACertificate is the cluster's CA certificate. It will be used to
+	// authenticate the client certificates of incoming connections to the public
+	// gRPC services.
+	ClusterCACertificate *x509.Certificate
 }
 
 // Service is the Curator service. See the package-level documentation for more
@@ -260,8 +269,11 @@ func (s *Service) Run(ctx context.Context) error {
 	// providing the Curator API to consumers, dispatching to either a locally
 	// running leader, or forwarding to a remotely running leader.
 	lis := listener{
-		directory:     s.config.Directory,
-		publicCreds:   s.config.ServerCredentials,
+		directory: s.config.Directory,
+		listenerSecurity: listenerSecurity{
+			nodeCredentials:      s.config.ServerCredentials,
+			clusterCACertificate: s.config.ClusterCACertificate,
+		},
 		electionWatch: s.electionWatch,
 		etcd:          s.config.Etcd,
 		dispatchC:     make(chan dispatchRequest),

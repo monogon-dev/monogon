@@ -23,7 +23,6 @@ go_library(
         "//metropolis/proto/api:go_default_library",
         "//metropolis/proto/common:go_default_library",
         "//metropolis/proto/private:go_default_library",
-        "@org_golang_google_grpc//credentials:go_default_library",
         "@org_golang_google_protobuf//proto:go_default_library",
     ],
 )

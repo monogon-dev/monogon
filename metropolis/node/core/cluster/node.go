@@ -7,8 +7,6 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	"google.golang.org/grpc/credentials"
-
 	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 )
@@ -18,6 +16,12 @@ import (
 type NodeCertificate struct {
 	node *x509.Certificate
 	ca   *x509.Certificate
+}
+
+// ClusterCA returns the CA certificate of the cluster for which this
+// NodeCertificate is emitted.
+func (n *NodeCertificate) ClusterCA() *x509.Certificate {
+	return n.ca
 }
 
 // NodeCredentials are the public and private part of the credentials of a node.
@@ -142,21 +146,9 @@ func (nc *NodeCertificate) ID() string {
 	return curator.NodeID(nc.PublicKey())
 }
 
-// PublicGRPCServerCredentials returns gRPC TransportCredentials that should be
-// used by this node to run public gRPC services (ie. the AAA service and any
-// other management/user services).
-//
-// SECURITY: The returned TransportCredentials accepts _any_ client certificate
-// served by the client and does not perform any verification. The gRPC service
-// instance (via per-method checks or middleware) should perform user
-// authentication/authorization.
-func (nc *NodeCredentials) PublicGRPCServerCredentials() credentials.TransportCredentials {
-	tlsCert := tls.Certificate{
+func (nc *NodeCredentials) TLSCredentials() tls.Certificate {
+	return tls.Certificate{
 		Certificate: [][]byte{nc.node.Raw},
 		PrivateKey:  nc.private,
 	}
-	return credentials.NewTLS(&tls.Config{
-		Certificates: []tls.Certificate{tlsCert},
-		ClientAuth:   tls.RequireAnyClientCert,
-	})
 }

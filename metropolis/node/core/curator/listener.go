@@ -8,7 +8,6 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
 	"source.monogon.dev/metropolis/node"
@@ -38,13 +37,14 @@ import (
 // some calls might not be idempotent and the caller is better equipped to know
 // when to retry.
 type listener struct {
+	listenerSecurity
+
 	// etcd is a client to the locally running consensus (etcd) server which is used
 	// both for storing lock/leader election status and actual Curator data.
 	etcd client.Namespaced
 	// directory is the ephemeral directory in which the local gRPC socket will
 	// be available for node-local consumers.
-	directory   *localstorage.EphemeralCuratorDirectory
-	publicCreds credentials.TransportCredentials
+	directory *localstorage.EphemeralCuratorDirectory
 	// electionWatch is a function that returns an active electionWatcher for the
 	// listener to use when determining local leadership. As the listener may
 	// restart on error, this factory-function is used instead of an electionWatcher
@@ -205,11 +205,9 @@ func (l *listener) run(ctx context.Context) error {
 	}
 
 	srvLocal := grpc.NewServer()
-	srvPublic := grpc.NewServer(grpc.Creds(l.publicCreds))
-
 	cpb.RegisterCuratorServer(srvLocal, l)
-	apb.RegisterAAAServer(srvPublic, l)
-	apb.RegisterManagementServer(srvPublic, l)
+
+	srvPublic := l.setupPublicGRPC(l)
 
 	err := supervisor.Run(ctx, "local", func(ctx context.Context) error {
 		lisLocal, err := net.ListenUnix("unix", &net.UnixAddr{Name: l.directory.ClientSocket.FullPath(), Net: "unix"})

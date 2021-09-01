@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "ca.go",
         "certificate.go",
+        "testhelpers.go",
         "x509.go",
     ],
     importpath = "source.monogon.dev/metropolis/pkg/pki",

@@ -11,6 +11,7 @@ proto_library(
         "management.proto",
     ],
     visibility = ["//visibility:public"],
+    deps = ["//metropolis/proto/ext:ext_proto"],
 )
 
 go_proto_library(
@@ -19,6 +20,7 @@ go_proto_library(
     importpath = "source.monogon.dev/metropolis/proto/api",
     proto = ":api_proto",
     visibility = ["//visibility:public"],
+    deps = ["//metropolis/proto/ext:go_default_library"],
 )
 
 go_library(
