@@ -1,0 +1,52 @@
+--- a/main.c
++++ b/main.c
+@@ -439,6 +439,7 @@ int main
+   int scfilter_level = 0, lock_memory = 0, sched_priority = 0;
+   int clock_control = 1, system_log = 1, log_severity = LOGS_INFO;
+   int user_check = 1, config_args = 0, print_config = 0;
++  int uid = -1, gid = -1;
+ 
+   do_platform_checks();
+ 
+@@ -458,7 +459,7 @@ int main
+   optind = 1;
+ 
+   /* Parse short command-line options */
+-  while ((opt = getopt(argc, argv, "46df:F:hl:L:mnpP:qQrRst:u:Uvx")) != -1) {
++  while ((opt = getopt(argc, argv, "46df:F:g:hi:l:L:mnpP:qQrRst:u:Uvx")) != -1) {
+     switch (opt) {
+       case '4':
+       case '6':
+@@ -475,6 +476,12 @@ int main
+       case 'F':
+         scfilter_level = parse_int_arg(optarg);
+         break;
++      case 'g':
++        gid = parse_int_arg(optarg);
++        break;
++      case 'i': // u and U were alredy used, so i for id
++        uid = parse_int_arg(optarg);
++        break;
+       case 'l':
+         log_file = optarg;
+         break;
+@@ -583,9 +590,13 @@ int main
+   if (!user)
+     user = CNF_GetUser();
+ 
+-  pw = getpwnam(user);
+-  if (!pw)
+-    LOG_FATAL("Could not get user/group ID of %s", user);
++  if (uid != -1 && gid != -1) {
++    pw = &(struct passwd) { .pw_uid = uid, .pw_gid = gid };
++  } else {
++    pw = getpwnam(user);
++    if (!pw)
++      LOG_FATAL("Could not get user/group ID of %s", user);
++  }
+ 
+   /* Create directories for sockets, log files, and dump files */
+   CNF_CreateDirs(pw->pw_uid, pw->pw_gid);
+-- 
+2.25.1
+

@@ -3,7 +3,10 @@ load("//metropolis/node/build:def.bzl", "erofs_image")
 
 go_library(
     name = "go_default_library",
-    srcs = ["ports.go"],
+    srcs = [
+        "ids.go",
+        "ports.go",
+    ],
     importpath = "source.monogon.dev/metropolis/node",
     visibility = ["//metropolis:__subpackages__"],
 )
@@ -78,6 +81,7 @@ erofs_image(
         # runc runtime, with cgo
         "@com_github_opencontainers_runc//:runc": "/containerd/bin/runc",
         "@xfsprogs//:mkfs": "/bin/mkfs.xfs",
+        "@chrony//:chrony": "/time/chrony",
     },
     symlinks = {
         "/ephemeral/machine-id": "/etc/machine-id",

@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["time.go"],
+    importpath = "source.monogon.dev/metropolis/node/core/time",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node:go_default_library",
+        "//metropolis/pkg/fileargs:go_default_library",
+        "//metropolis/pkg/supervisor:go_default_library",
+    ],
+)

@@ -40,6 +40,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/roleserve"
+	timesvc "source.monogon.dev/metropolis/node/core/time"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -100,6 +101,7 @@ func main() {
 	}
 
 	networkSvc := network.New()
+	timeSvc := timesvc.New()
 
 	// This function initializes a headless Delve if this is a debug build or
 	// does nothing if it's not
@@ -130,6 +132,9 @@ func main() {
 		}
 		if err := supervisor.Run(ctx, "network", networkSvc.Run); err != nil {
 			return fmt.Errorf("when starting network: %w", err)
+		}
+		if err := supervisor.Run(ctx, "time", timeSvc.Run); err != nil {
+			return fmt.Errorf("when starting time: %w", err)
 		}
 
 		// Start cluster manager. This kicks off cluster membership machinery,
