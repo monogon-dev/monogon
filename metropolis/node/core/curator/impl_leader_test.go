@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
+	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/pki"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
@@ -69,14 +70,14 @@ func fakeLeader(t *testing.T) (grpc.ClientConnInterface, context.CancelFunc) {
 	// Build a test cluster PKI and node/manager certificates, and create the
 	// listener security parameters which will authenticate incoming requests.
 	node, manager, ca := pki.EphemeralClusterCredentials(t)
-	sec := &listenerSecurity{
-		nodeCredentials:      node,
-		clusterCACertificate: ca,
+	sec := &rpc.ServerSecurity{
+		NodeCredentials:      node,
+		ClusterCACertificate: ca,
 	}
 
 	// Create a curator gRPC server which performs authentication as per the created
 	// listenerSecurity and is backed by the created leader.
-	srv := sec.setupPublicGRPC(leader)
+	srv := sec.SetupPublicGRPC(leader)
 	// The gRPC server will listen on an internal 'loopback' buffer.
 	lis := bufconn.Listen(1024 * 1024)
 	go func() {

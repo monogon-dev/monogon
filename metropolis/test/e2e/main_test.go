@@ -39,6 +39,7 @@ import (
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 
 	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/metropolis/test/launch"
 )
@@ -115,15 +116,14 @@ func TestE2E(t *testing.T) {
 	t.Run("RunGroup", func(t *testing.T) {
 		t.Run("Connect to Curator", func(t *testing.T) {
 			testEventual(t, "Retrieving owner credentials succesful", ctx, 60*time.Second, func(ctx context.Context) error {
-				initClient, err := launch.NewInitialClient(&launch.InitialClientOptions{
-					Remote:  fmt.Sprintf("localhost:%v", portMap[common.CuratorServicePort]),
-					Private: launch.InsecurePrivateKey,
-				})
+				remote := fmt.Sprintf("localhost:%v", portMap[common.CuratorServicePort])
+				initClient, err := rpc.NewEphemeralClient(remote, launch.InsecurePrivateKey, nil)
 				if err != nil {
 					return fmt.Errorf("NewInitialClient: %w", err)
 				}
 
-				cert, err := initClient.RetrieveOwnerCertificate(ctx)
+				aaa := apb.NewAAAClient(initClient)
+				cert, err := rpc.RetrieveOwnerCertificate(ctx, aaa, launch.InsecurePrivateKey)
 				if err != nil {
 					return fmt.Errorf("RetrieveOwnerCertificate: %w", err)
 				}

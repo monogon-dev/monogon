@@ -60,7 +60,7 @@ func issueCertificate(req *Certificate, ca *x509.Certificate, caKey ed25519.Priv
 
 	req.Template.SerialNumber = serialNumber
 	req.Template.NotBefore = time.Now()
-	req.Template.NotAfter = unknownNotAfter
+	req.Template.NotAfter = UnknownNotAfter
 	req.Template.BasicConstraintsValid = true
 	req.Template.SubjectKeyId = skid
 

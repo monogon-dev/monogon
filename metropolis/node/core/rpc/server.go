@@ -1,4 +1,4 @@
-package curator
+package rpc
 
 import (
 	"context"
@@ -15,30 +15,46 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
+	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	apb "source.monogon.dev/metropolis/proto/api"
 	epb "source.monogon.dev/metropolis/proto/ext"
 )
 
-// listenerSecurity are the security options for the listener, relating to
-// authentication and authorization.
-//
-// They are factored out to a separate struct for ease of testing.
-type listenerSecurity struct {
-	// nodeCredentials is the TLS certificate/key of the node that the listener
-	// is running on. It should be signed by clusterCACertificate.
-	nodeCredentials tls.Certificate
-	// clusterCACertificate is the cluster's CA certificate. It will be used to
-	// authenticate the client certificates of incoming gRPC connections.
-	clusterCACertificate *x509.Certificate
+// ClusterServices is the interface containing all gRPC services that a
+// Metropolis Cluster implements on its public interface. With the current
+// implementaiton of Metropolis, this is all implemented by the Curator.
+type ClusterServices interface {
+	cpb.CuratorServer
+	apb.AAAServer
+	apb.ManagementServer
 }
 
-// setupPublicGRPC returns a grpc.Server ready to listen and serve all public
-// gRPC APIs that the listener should run, with all calls being authenticated
-// and authorized based on the data in listenerSecurity. The argument 'impls' is
-// the object implementing the gRPC APIs.
-func (l *listenerSecurity) setupPublicGRPC(impls services) *grpc.Server {
+// ServerSecurity are the security options of a RPC server that will run
+// ClusterServices on a Metropolis node. It contains all the data for the
+// server implementation to authenticate itself to the clients and authenticate
+// and authorize clients connecting to it.
+type ServerSecurity struct {
+	// NodeCredentials is the TLS certificate/key of the node that the server
+	// implementation is running on. It should be signed by
+	// ClusterCACertificate.
+	NodeCredentials tls.Certificate
+	// ClusterCACertificate is the cluster's CA certificate. It will be used to
+	// authenticate the client certificates of incoming gRPC connections.
+	ClusterCACertificate *x509.Certificate
+}
+
+// SetupPublicGRPC returns a grpc.Server ready to listen and serve all public
+// gRPC APIs that the cluster server implementation should run, with all calls
+// being authenticated and authorized based on the data in ServerSecurity. The
+// argument 'impls' is the object implementing the gRPC APIs.
+//
+// This effectively configures gRPC interceptors that verify
+// metropolis.proto.ext.authorizaton options and authenticate/authorize
+// incoming connections. It also runs the gRPC server with the correct TLS
+// settings for authenticating itself to callers.
+func (l *ServerSecurity) SetupPublicGRPC(impls ClusterServices) *grpc.Server {
 	publicCreds := credentials.NewTLS(&tls.Config{
-		Certificates: []tls.Certificate{l.nodeCredentials},
+		Certificates: []tls.Certificate{l.NodeCredentials},
 		ClientAuth:   tls.RequestClientCert,
 	})
 
@@ -47,6 +63,7 @@ func (l *listenerSecurity) setupPublicGRPC(impls services) *grpc.Server {
 		grpc.UnaryInterceptor(l.unaryInterceptor),
 		grpc.StreamInterceptor(l.streamInterceptor),
 	)
+	cpb.RegisterCuratorServer(s, impls)
 	apb.RegisterAAAServer(s, impls)
 	apb.RegisterManagementServer(s, impls)
 	return s
@@ -61,7 +78,7 @@ func (l *listenerSecurity) setupPublicGRPC(impls services) *grpc.Server {
 // If the peer (as retrieved from the context) is authorized to run this method,
 // no error is returned. Otherwise, a gRPC status is returned outlining the
 // reason the authorization being rejected.
-func (l *listenerSecurity) authorize(ctx context.Context, methodName string) error {
+func (l *ServerSecurity) authorize(ctx context.Context, methodName string) error {
 	if !strings.HasPrefix(methodName, "/") {
 		return status.Errorf(codes.InvalidArgument, "invalid method name %q", methodName)
 	}
@@ -106,7 +123,7 @@ func (l *listenerSecurity) authorize(ctx context.Context, methodName string) err
 	pCert := tlsInfo.State.PeerCertificates[0]
 
 	// Ensure that the certificate is signed by the cluster CA.
-	if err := pCert.CheckSignatureFrom(l.clusterCACertificate); err != nil {
+	if err := pCert.CheckSignatureFrom(l.ClusterCACertificate); err != nil {
 		return status.Errorf(codes.Unauthenticated, "invalid client certificate: %v", err)
 	}
 	// Ensure that the certificate is a client certificate.
@@ -130,7 +147,7 @@ func (l *listenerSecurity) authorize(ctx context.Context, methodName string) err
 // streamInterceptor is a gRPC server stream interceptor that performs
 // authentication and authorization of incoming RPCs based on the Authorization
 // option set on each method.
-func (l *listenerSecurity) streamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+func (l *ServerSecurity) streamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	if err := l.authorize(ss.Context(), info.FullMethod); err != nil {
 		return err
 	}
@@ -140,7 +157,7 @@ func (l *listenerSecurity) streamInterceptor(srv interface{}, ss grpc.ServerStre
 // unaryInterceptor is a gRPC server unary interceptor that performs
 // authentication and authorization of incoming RPCs based on the Authorization
 // option set on each method.
-func (l *listenerSecurity) unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+func (l *ServerSecurity) unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 	if err := l.authorize(ctx, info.FullMethod); err != nil {
 		return nil, err
 	}

@@ -27,7 +27,7 @@ import (
 
 var (
 	// From RFC 5280 Section 4.1.2.5
-	unknownNotAfter = time.Unix(253402300799, 0)
+	UnknownNotAfter = time.Unix(253402300799, 0)
 )
 
 // Workaround for https://github.com/golang/go/issues/26676 in Go's

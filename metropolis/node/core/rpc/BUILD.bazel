@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "client.go",
+        "server.go",
+    ],
+    importpath = "source.monogon.dev/metropolis/node/core/rpc",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node/core/curator/proto/api:go_default_library",
+        "//metropolis/pkg/pki:go_default_library",
+        "//metropolis/proto/api:go_default_library",
+        "//metropolis/proto/ext:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//credentials:go_default_library",
+        "@org_golang_google_grpc//peer:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+        "@org_golang_google_protobuf//proto:go_default_library",
+        "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
+        "@org_golang_google_protobuf//reflect/protoregistry:go_default_library",
+    ],
+)

@@ -3,6 +3,7 @@ option go_package = "source.monogon.dev/metropolis/node/core/curator/proto/api";
 package metropolis.node.core.curator.proto.api;
 
 import "metropolis/proto/common/common.proto";
+import "metropolis/proto/ext/authorization.proto";
 
 // The Curator is the main cluster management service of Metropolis.
 //
@@ -40,7 +41,11 @@ service Curator {
     // object state, as streamed WatchEvents are not synchronous to internal
     // state changes within the Curator. Effectively, the view of Watch clients
     // is eventually consistent with the state of the objects in the Curator.
-    rpc Watch(WatchRequest) returns (stream WatchEvent);
+    rpc Watch(WatchRequest) returns (stream WatchEvent) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_READ_CLUSTER_STATUS;
+        };
+    }
 }
 
 // Node is the state and configuration of a node in the cluster.

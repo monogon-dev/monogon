@@ -20,6 +20,7 @@ extend google.protobuf.MethodOptions {
 enum Permission {
     PERMISSION_UNSPECIFIED = 0;
     PERMISSION_GET_REGISTER_TICKET = 1;
+    PERMISSION_READ_CLUSTER_STATUS = 2;
 }
 
 // Authorization policy for an RPC method. This message/API does not have the

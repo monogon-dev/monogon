@@ -26,6 +26,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -270,9 +271,9 @@ func (s *Service) Run(ctx context.Context) error {
 	// running leader, or forwarding to a remotely running leader.
 	lis := listener{
 		directory: s.config.Directory,
-		listenerSecurity: listenerSecurity{
-			nodeCredentials:      s.config.ServerCredentials,
-			clusterCACertificate: s.config.ClusterCACertificate,
+		ServerSecurity: rpc.ServerSecurity{
+			NodeCredentials:      s.config.ServerCredentials,
+			ClusterCACertificate: s.config.ClusterCACertificate,
 		},
 		electionWatch: s.electionWatch,
 		etcd:          s.config.Etcd,

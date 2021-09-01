@@ -6,7 +6,10 @@ proto_library(
     name = "api_proto",
     srcs = ["api.proto"],
     visibility = ["//visibility:public"],
-    deps = ["//metropolis/proto/common:common_proto"],
+    deps = [
+        "//metropolis/proto/common:common_proto",
+        "//metropolis/proto/ext:ext_proto",
+    ],
 )
 
 go_proto_library(
@@ -15,7 +18,10 @@ go_proto_library(
     importpath = "source.monogon.dev/metropolis/node/core/curator/proto/api",
     proto = ":api_proto",
     visibility = ["//visibility:public"],
-    deps = ["//metropolis/proto/common:go_default_library"],
+    deps = [
+        "//metropolis/proto/common:go_default_library",
+        "//metropolis/proto/ext:go_default_library",
+    ],
 )
 
 go_library(

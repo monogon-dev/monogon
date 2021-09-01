@@ -14,6 +14,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/combinectx"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -37,7 +38,7 @@ import (
 // some calls might not be idempotent and the caller is better equipped to know
 // when to retry.
 type listener struct {
-	listenerSecurity
+	rpc.ServerSecurity
 
 	// etcd is a client to the locally running consensus (etcd) server which is used
 	// both for storing lock/leader election status and actual Curator data.
@@ -113,14 +114,6 @@ func (l *listener) dispatcher(ctx context.Context) error {
 	}
 }
 
-// services is the interface containing all gRPC services that a curator
-// must implement.
-type services interface {
-	cpb.CuratorServer
-	apb.AAAServer
-	apb.ManagementServer
-}
-
 // activeTarget is the active implementation used by the listener dispatcher, or
 // nil if none is active yet.
 type activeTarget struct {
@@ -130,7 +123,7 @@ type activeTarget struct {
 	// context cancel function for ctx, or nil if ctx is nil.
 	ctxC *context.CancelFunc
 	// active Curator implementation, or nil if not yet set up.
-	impl services
+	impl rpc.ClusterServices
 }
 
 // switchTo switches the activeTarget over to a Curator implementation as per
@@ -170,7 +163,7 @@ type listenerTarget struct {
 	ctx context.Context
 	// impl is the CuratorServer implementation to which RPCs should be directed
 	// according to the dispatcher.
-	impl services
+	impl rpc.ClusterServices
 }
 
 // dispatch contacts the dispatcher to retrieve an up-to-date listenerTarget.
@@ -207,7 +200,7 @@ func (l *listener) run(ctx context.Context) error {
 	srvLocal := grpc.NewServer()
 	cpb.RegisterCuratorServer(srvLocal, l)
 
-	srvPublic := l.setupPublicGRPC(l)
+	srvPublic := l.SetupPublicGRPC(l)
 
 	err := supervisor.Run(ctx, "local", func(ctx context.Context) error {
 		lisLocal, err := net.ListenUnix("unix", &net.UnixAddr{Name: l.directory.ClientSocket.FullPath(), Net: "unix"})
@@ -256,7 +249,7 @@ func (l *listener) run(ctx context.Context) error {
 // returned are either returned directly or converted to an UNAVAILABLE status
 // if the error is as a result of the context being canceled due to the
 // implementation switching.
-type implOperation func(ctx context.Context, impl services) error
+type implOperation func(ctx context.Context, impl rpc.ClusterServices) error
 
 // callImpl gets the newest listenerTarget from the dispatcher, combines the
 // given context with the context of the listenerTarget implementation and calls
@@ -316,7 +309,7 @@ func (c *curatorWatchServer) Send(m *cpb.WatchEvent) error {
 }
 
 func (l *listener) Watch(req *cpb.WatchRequest, srv cpb.Curator_WatchServer) error {
-	proxy := func(ctx context.Context, impl services) error {
+	proxy := func(ctx context.Context, impl rpc.ClusterServices) error {
 		return impl.Watch(req, &curatorWatchServer{
 			ServerStream: srv,
 			ctx:          ctx,
@@ -347,7 +340,7 @@ func (m *aaaEscrowServer) Recv() (*apb.EscrowFromClient, error) {
 }
 
 func (l *listener) Escrow(srv apb.AAA_EscrowServer) error {
-	return l.callImpl(srv.Context(), func(ctx context.Context, impl services) error {
+	return l.callImpl(srv.Context(), func(ctx context.Context, impl rpc.ClusterServices) error {
 		return impl.Escrow(&aaaEscrowServer{
 			ServerStream: srv,
 			ctx:          ctx,
@@ -356,7 +349,7 @@ func (l *listener) Escrow(srv apb.AAA_EscrowServer) error {
 }
 
 func (l *listener) GetRegisterTicket(ctx context.Context, req *apb.GetRegisterTicketRequest) (res *apb.GetRegisterTicketResponse, err error) {
-	err = l.callImpl(ctx, func(ctx context.Context, impl services) error {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterServices) error {
 		var err2 error
 		res, err2 = impl.GetRegisterTicket(ctx, req)
 		return err2
