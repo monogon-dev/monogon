@@ -33,7 +33,7 @@ func New() *Service {
 func (s *Service) Run(ctx context.Context) error {
 	// TODO(#72): Apply for a NTP pool vendor zone
 	config := strings.Join([]string{
-		"pool pool.ntp.org iburst",
+		"pool ntp.monogon.dev iburst",
 		"bindcmdaddress /",
 		"stratumweight 0.01",
 		"leapsecmode slew",
