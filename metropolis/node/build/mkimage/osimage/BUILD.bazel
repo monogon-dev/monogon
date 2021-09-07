@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["osimage.go"],
+    importpath = "source.monogon.dev/metropolis/node/build/mkimage/osimage",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/pkg/efivarfs:go_default_library",
+        "@com_github_diskfs_go_diskfs//:go_default_library",
+        "@com_github_diskfs_go_diskfs//disk:go_default_library",
+        "@com_github_diskfs_go_diskfs//filesystem:go_default_library",
+        "@com_github_diskfs_go_diskfs//partition/gpt:go_default_library",
+    ],
+)
