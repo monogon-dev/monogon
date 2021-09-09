@@ -358,3 +358,12 @@ func (l *listener) GetRegisterTicket(ctx context.Context, req *apb.GetRegisterTi
 	})
 	return
 }
+
+func (l *listener) UpdateNodeStatus(ctx context.Context, req *cpb.UpdateNodeStatusRequest) (res *cpb.UpdateNodeStatusResponse, err error) {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+		var err2 error
+		res, err2 = impl.UpdateNodeStatus(ctx, req)
+		return err2
+	})
+	return
+}

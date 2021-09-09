@@ -12,6 +12,7 @@ var (
 	// services, either locally or remotely.
 	nodePermissions = Permissions{
 		epb.Permission_PERMISSION_READ_CLUSTER_STATUS: true,
+		epb.Permission_PERMISSION_UPDATE_NODE_SELF:    true,
 	}
 )
 

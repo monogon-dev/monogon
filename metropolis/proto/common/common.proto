@@ -93,3 +93,45 @@ enum ClusterState {
     // services off.
     CLUSTER_STATE_SPLIT = 6;
 }
+
+// NodeStatus contains all fields self-reported by nodes. This data is
+// inherently less trusted than other data available about a node, as it can be
+// updated to any value by each node individually, including compromised nodes.
+message NodeStatus {
+    // external_address is the IP address that the node expects management,
+    // cluster and user traffic to arrive at (ie. the address on which it is
+    // listening for gRPC, and role-specific services like etcd and
+    // Kubernetes).
+    string external_address = 1;
+}
+
+// The Cluster Directory is information about the network addressing of nodes
+// in a cluster. It is a serialized snapshot of some of the state within the
+// etcd cluster, and can be used by external processes (like a node Registering
+// into the cluster) to know how to reach this cluster over the network. It can
+// be thought of as a phonebook, or a static name/address configuration that
+// could live in /etc/hosts.
+//
+// The directory explicitly doesn't carry any information about the cluster's
+// identity or security - these should be configured and checked by higher
+// level configuration and processes. The directory can be stored and
+// transmitted in cleartext and without an integrity checks (like saved to the
+// EFI system partition across reboots) and any malicious change to it will
+// cause no more than a denial of service against the consumer of this
+// directory. This is because all nodes contacted must present a valid cluster
+// identity/certificate before they are trusted by the consumers of this
+// directory.
+message ClusterDirectory {
+    message Node {
+        bytes public_key = 1;
+        message Address {
+            string host = 1;
+        };
+        repeated Address addesses = 2;
+    };
+    repeated Node nodes = 1;
+}
+
+message ClusterIdentity {
+    bytes ca_fingerprint = 1;
+}

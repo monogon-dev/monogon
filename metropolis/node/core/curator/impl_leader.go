@@ -77,8 +77,8 @@ type curatorLeader struct {
 
 func newCuratorLeader(l leadership) *curatorLeader {
 	return &curatorLeader{
-		leaderCurator{l},
-		leaderAAA{l},
-		leaderManagement{l},
+		leaderCurator{leadership: l},
+		leaderAAA{leadership: l},
+		leaderManagement{leadership: l},
 	}
 }

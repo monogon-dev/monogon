@@ -46,6 +46,14 @@ service Curator {
             need: PERMISSION_READ_CLUSTER_STATUS;
         };
     }
+    // UpdateNodestatus is called by nodes in the cluster to report their own
+    // status. This status is recorded by the curator and can be retrieved via
+    // Watch.
+    rpc UpdateNodeStatus(UpdateNodeStatusRequest) returns (UpdateNodeStatusResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_UPDATE_NODE_SELF;
+        };
+    }
 }
 
 // Node is the state and configuration of a node in the cluster.
@@ -54,6 +62,8 @@ message Node {
     string id = 1;
     // Roles that the nodes is supposed to take on.
     metropolis.proto.common.NodeRoles roles = 2;
+    // Last reported status of the node, if available.
+    metropolis.proto.common.NodeStatus status = 3;
 };
 
 // WatchRequest specifies what data the caller is interested in. This influences
@@ -80,4 +90,16 @@ message WatchEvent {
     // contain just the nodes requested in WatchRequest, so the client needs to
     // filter out anything spurious.
     repeated Node nodes = 1;
+}
+
+message UpdateNodeStatusRequest {
+    // node_id is the Metropolis node identity string of the node for which to
+    // set a new status. This currently must be the same node as the one
+    // performing the RPC and is included for safety.
+    string node_id = 1;
+    // status to be set. All fields are overwritten.
+    metropolis.proto.common.NodeStatus status = 2;
+}
+
+message UpdateNodeStatusResponse {
 }

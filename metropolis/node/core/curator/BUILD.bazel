@@ -54,6 +54,7 @@ go_test(
     embed = [":go_default_library"],
     deps = [
         "//metropolis/node/core/consensus/client:go_default_library",
+        "//metropolis/node/core/curator/proto/api:go_default_library",
         "//metropolis/node/core/identity:go_default_library",
         "//metropolis/node/core/localstorage:go_default_library",
         "//metropolis/node/core/localstorage/declarative:go_default_library",
@@ -61,6 +62,7 @@ go_test(
         "//metropolis/pkg/event/memory:go_default_library",
         "//metropolis/pkg/supervisor:go_default_library",
         "//metropolis/proto/api:go_default_library",
+        "//metropolis/proto/common:go_default_library",
         "@io_etcd_go_etcd//clientv3:go_default_library",
         "@io_etcd_go_etcd//integration:go_default_library",
         "@org_golang_google_grpc//:go_default_library",

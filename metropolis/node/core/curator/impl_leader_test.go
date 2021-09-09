@@ -10,8 +10,10 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 // fakeLeader creates a curatorLeader without any underlying leader election, in
@@ -63,7 +65,7 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 
 	// Build a test cluster PKI and node/manager certificates, and create the
 	// listener security parameters which will authenticate incoming requests.
-	ephemeral := rpc.NewEphemeralClusterCredentials(t, 1)
+	ephemeral := rpc.NewEphemeralClusterCredentials(t, 2)
 	nodeCredentials := ephemeral.Nodes[0]
 
 	cNode := NewNodeForBootstrap(nil, nodeCredentials.PublicKey())
@@ -127,6 +129,7 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		mgmtConn:      mcl,
 		localNodeConn: lcl,
 		localNodeID:   nodeCredentials.ID(),
+		otherNodeID:   ephemeral.Nodes[1].ID(),
 		cancel:        ctxC,
 	}
 }
@@ -143,6 +146,9 @@ type fakeLeaderData struct {
 	localNodeConn grpc.ClientConnInterface
 	// localNodeID is the NodeID of the fake node that the leader is running on.
 	localNodeID string
+	// otherNodeID is the NodeID of some other node present in the curator
+	// state.
+	otherNodeID string
 	// cancel shuts down the fake leader and all client connections.
 	cancel context.CancelFunc
 }
@@ -173,5 +179,76 @@ func TestManagementRegisterTicket(t *testing.T) {
 	}
 	if !bytes.Equal(res1.Ticket, res2.Ticket) {
 		t.Errorf("Unexpected ticket change between calls")
+	}
+}
+
+// TestClusterUpdateNodeStatus exercises the Curator.UpdateNodeStatus RPC by
+// sending node updates and making sure they are reflected in subsequent Watch
+// events.
+func TestClusterUpdateNodeStatus(t *testing.T) {
+	cl := fakeLeader(t)
+	defer cl.cancel()
+
+	curator := ipb.NewCuratorClient(cl.localNodeConn)
+
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	// Retrieve initial node data, it should have no status set.
+	value, err := curator.Watch(ctx, &ipb.WatchRequest{
+		Kind: &ipb.WatchRequest_NodeInCluster_{
+			NodeInCluster: &ipb.WatchRequest_NodeInCluster{
+				NodeId: cl.localNodeID,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Could not request node watch: %v", err)
+	}
+	ev, err := value.Recv()
+	if err != nil {
+		t.Fatalf("Could not receive initial node value: %v", err)
+	}
+	if status := ev.Nodes[0].Status; status != nil {
+		t.Errorf("Initial node value contains status, should be nil: %+v", status)
+	}
+
+	// Update status...
+	_, err = curator.UpdateNodeStatus(ctx, &ipb.UpdateNodeStatusRequest{
+		NodeId: cl.localNodeID,
+		Status: &cpb.NodeStatus{
+			ExternalAddress: "192.0.2.10",
+		},
+	})
+	if err != nil {
+		t.Fatalf("UpdateNodeStatus: %v", err)
+	}
+
+	// ... and expect it to be reflected in the new node value.
+	for {
+		ev, err = value.Recv()
+		if err != nil {
+			t.Fatalf("Could not receive second node value: %v", err)
+		}
+		// Keep waiting until we get a status.
+		status := ev.Nodes[0].Status
+		if status == nil {
+			continue
+		}
+		if want, got := "192.0.2.10", status.ExternalAddress; want != got {
+			t.Errorf("Wanted external address %q, got %q", want, got)
+		}
+		break
+	}
+
+	// Expect updating some other node's ID to fail.
+	_, err = curator.UpdateNodeStatus(ctx, &ipb.UpdateNodeStatusRequest{
+		NodeId: cl.otherNodeID,
+		Status: &cpb.NodeStatus{
+			ExternalAddress: "192.0.2.10",
+		},
+	})
+	if err == nil {
+		t.Errorf("UpdateNodeStatus for other node (%q vs local %q) succeeded, should have failed", cl.localNodeID, cl.otherNodeID)
 	}
 }

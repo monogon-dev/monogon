@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	cpb "source.monogon.dev/metropolis/node/core/curator/proto/private"
+	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
@@ -52,7 +52,7 @@ func (l *leaderManagement) GetRegisterTicket(ctx context.Context, req *apb.GetRe
 	}
 
 	// No ticket, generate one.
-	ticket := &cpb.RegisterTicket{
+	ticket := &ppb.RegisterTicket{
 		Opaque: make([]byte, registerTicketSize),
 	}
 	_, err = rand.Read(ticket.Opaque)

@@ -24,6 +24,8 @@ message Node {
 
     // The node's intended roles when running.
     metropolis.proto.common.NodeRoles roles = 4;
+
+    metropolis.proto.common.NodeStatus status = 5;
 }
 
 // Information about the cluster owner, currently the only Metropolis management

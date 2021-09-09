@@ -24,3 +24,7 @@ func (f *curatorFollower) Escrow(srv apb.AAA_EscrowServer) error {
 func (f *curatorFollower) GetRegisterTicket(_ context.Context, _ *apb.GetRegisterTicketRequest) (*apb.GetRegisterTicketResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "curator follower not implemented")
 }
+
+func (f *curatorFollower) UpdateNodeStatus(ctx context.Context, req *cpb.UpdateNodeStatusRequest) (*cpb.UpdateNodeStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "curator follower not implemented")
+}

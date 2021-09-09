@@ -64,6 +64,8 @@ type Node struct {
 	// cluster. See //metropolis/proto:common.proto for more information.
 	state cpb.NodeState
 
+	status *cpb.NodeStatus
+
 	// A Node can have multiple Roles. Each Role is represented by the presence
 	// of NodeRole* structures in this structure, with a nil pointer
 	// representing the lack of a role.
@@ -131,6 +133,7 @@ func (n *Node) proto() *ppb.Node {
 		PublicKey:        n.pubkey,
 		FsmState:         n.state,
 		Roles:            &cpb.NodeRoles{},
+		Status:           n.status,
 	}
 	if n.kubernetesWorker != nil {
 		msg.Roles.KubernetesWorker = &cpb.NodeRoles_KubernetesWorker{}
@@ -147,6 +150,7 @@ func nodeUnmarshal(data []byte) (*Node, error) {
 		clusterUnlockKey: msg.ClusterUnlockKey,
 		pubkey:           msg.PublicKey,
 		state:            msg.FsmState,
+		status:           msg.Status,
 	}
 	if msg.Roles.KubernetesWorker != nil {
 		n.kubernetesWorker = &NodeRoleKubernetesWorker{}
