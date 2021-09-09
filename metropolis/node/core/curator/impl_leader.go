@@ -54,6 +54,12 @@ func rpcError(err error) (error, bool) {
 	if errors.Is(err, lostLeadership) {
 		return status.Error(codes.Unavailable, "lost leadership"), true
 	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return status.Error(codes.DeadlineExceeded, err.Error()), true
+	}
+	if errors.Is(err, context.Canceled) {
+		return status.Error(codes.Canceled, err.Error()), true
+	}
 	return err, false
 }
 

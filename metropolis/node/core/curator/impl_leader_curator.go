@@ -47,6 +47,8 @@ func (l *leaderCurator) Watch(req *cpb.WatchRequest, srv cpb.Curator_WatchServer
 			if rpcErr, ok := rpcError(err); ok {
 				return rpcErr
 			}
+			// TODO(q3k): log err
+			return status.Error(codes.Unavailable, "internal error")
 		}
 		node := v.(*Node)
 		ev := &cpb.WatchEvent{
