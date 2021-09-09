@@ -62,7 +62,10 @@ func BootstrapNodeCredentials(ctx context.Context, etcd client.Namespaced, pubke
 // once. It's guaranteed to either succeed fully or fail fully, without leaving
 // the cluster in an inconsistent state.
 func BootstrapFinish(ctx context.Context, etcd client.Namespaced, initialNode *Node, pubkey []byte) error {
-	nodeKey := initialNode.etcdPath()
+	nodeKey, err := initialNode.etcdPath()
+	if err != nil {
+		return fmt.Errorf("failed to get node key: %w", err)
+	}
 	nodeRaw, err := proto.Marshal(initialNode.proto())
 	if err != nil {
 		return fmt.Errorf("failed to marshal node: %w", err)

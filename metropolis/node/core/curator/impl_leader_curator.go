@@ -30,7 +30,10 @@ func (l *leaderCurator) Watch(req *cpb.WatchRequest, srv cpb.Curator_WatchServer
 	// there's also no need to filter anything.
 	// TODO(q3k): formalize and strongly type etcd paths for cluster state?
 	// Probably worth waiting for type parameters before attempting to do that.
-	nodePath := nodeEtcdPath(nodeID)
+	nodePath, err := nodeEtcdPrefix.Key(nodeID)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "invalid node name: %v", err)
+	}
 
 	value := etcd.NewValue(l.etcd, nodePath, func(data []byte) (interface{}, error) {
 		return nodeUnmarshal(data)

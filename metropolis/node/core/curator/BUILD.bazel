@@ -11,6 +11,7 @@ go_library(
         "impl_leader_curator.go",
         "impl_leader_management.go",
         "listener.go",
+        "state.go",
         "state_node.go",
         "state_pki.go",
     ],
@@ -49,6 +50,7 @@ go_test(
         "curator_test.go",
         "impl_leader_test.go",
         "listener_test.go",
+        "state_test.go",
     ],
     embed = [":go_default_library"],
     deps = [

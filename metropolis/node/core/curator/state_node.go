@@ -126,18 +126,14 @@ func (n *Node) KubernetesWorker() *NodeRoleKubernetesWorker {
 	return &kw
 }
 
-const (
-	nodeEtcdPrefix = "/nodes/"
+var (
+	nodeEtcdPrefix = mustNewEtcdPrefix("/nodes/")
 )
-
-func nodeEtcdPath(id string) string {
-	return fmt.Sprintf("%s%s", nodeEtcdPrefix, id)
-}
 
 // etcdPath builds the etcd path in which this node's protobuf-serialized state
 // is stored in etcd.
-func (n *Node) etcdPath() string {
-	return nodeEtcdPath(n.ID())
+func (n *Node) etcdPath() (string, error) {
+	return nodeEtcdPrefix.Key(n.ID())
 }
 
 // proto serializes the Node object into protobuf, to be used for saving to
