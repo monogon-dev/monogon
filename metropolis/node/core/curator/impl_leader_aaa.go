@@ -7,12 +7,12 @@ import (
 	"errors"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
+	"source.monogon.dev/metropolis/node/core/identity"
+	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/pki"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
@@ -24,37 +24,6 @@ const (
 
 type leaderAAA struct {
 	leadership
-}
-
-// pubkeyFromGRPC returns the ed25519 public key presented by the client in any
-// client certificate for a gRPC call. If no certificate is presented, nil is
-// returned. If the connection is insecure or the client presented some invalid
-// certificate configuration, a gRPC status is returned that can be directly
-// passed to the client. Otherwise, the public key is returned.
-//
-// SECURITY: the public key is not verified to be authorized to perform any
-// action,just to be a valid ed25519 key.
-func pubkeyFromGRPC(ctx context.Context) (ed25519.PublicKey, error) {
-	p, ok := peer.FromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unavailable, "could not retrieve peer info")
-	}
-	tlsInfo, ok := p.AuthInfo.(credentials.TLSInfo)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "connection not secure")
-	}
-	count := len(tlsInfo.State.PeerCertificates)
-	if count == 0 {
-		return nil, nil
-	}
-	if count > 1 {
-		return nil, status.Errorf(codes.Unauthenticated, "exactly one client certificate must be sent (got %d)", count)
-	}
-	pk, ok := tlsInfo.State.PeerCertificates[0].PublicKey.(ed25519.PublicKey)
-	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "client certificate must be for ed25519 key")
-	}
-	return pk, nil
 }
 
 // getOwnerPubkey returns the public key of the configured owner of the cluster.
@@ -90,6 +59,13 @@ func (a *leaderAAA) getOwnerPubkey(ctx context.Context) (ed25519.PublicKey, erro
 // certificate which can be used to perform further management actions.
 func (a *leaderAAA) Escrow(srv apb.AAA_EscrowServer) error {
 	ctx := srv.Context()
+	peerInfo := rpc.GetPeerInfo(ctx)
+	if peerInfo == nil {
+		return status.Error(codes.Unauthenticated, "no PeerInfo available")
+	}
+	if peerInfo.Unauthenticated == nil {
+		return status.Error(codes.InvalidArgument, "connection is already authenticated")
+	}
 
 	// Receive Parameters from client. This tells us what identity the client wants
 	// from us.
@@ -117,13 +93,7 @@ func (a *leaderAAA) Escrow(srv apb.AAA_EscrowServer) error {
 	// TODO(q3k) The AAA proto doesn't really have a proof kind for this, for now we
 	// go with REFRESH_CERTIFICATE. We should either make the AAA proto explicitly
 	// handle this as a special KIND.
-	pk, err := pubkeyFromGRPC(ctx)
-	if err != nil {
-		// If an error occurred, it's either because the connection is not secured by
-		// TLS, or an invalid certificate was presented (ie. more then one cert, or a
-		// non-ed25519 cert). Fail as per AAA proto.
-		return err
-	}
+	pk := peerInfo.Unauthenticated.SelfSignedPublicKey
 	if pk == nil {
 		// No cert was presented, respond with REFRESH_CERTIFICATE request.
 		err := srv.Send(&apb.EscrowFromServer{
@@ -159,7 +129,7 @@ func (a *leaderAAA) Escrow(srv apb.AAA_EscrowServer) error {
 	oc := pki.Certificate{
 		Namespace: &pkiNamespace,
 		Issuer:    pkiCA,
-		Template:  pki.Client("owner", nil),
+		Template:  identity.UserCertificate("owner"),
 		Name:      "owner",
 		Mode:      pki.CertificateExternal,
 		PublicKey: pk,

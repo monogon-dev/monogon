@@ -1,6 +1,7 @@
 package curator
 
 import (
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/pkg/pki"
 )
 
@@ -13,7 +14,7 @@ var (
 	pkiCA = &pki.Certificate{
 		Namespace: &pkiNamespace,
 		Issuer:    pki.SelfSigned,
-		Template:  pki.CA("Metropolis Cluster CA"),
+		Template:  identity.CACertificate("Metropolis Cluster CA"),
 		Name:      "cluster-ca",
 	}
 )

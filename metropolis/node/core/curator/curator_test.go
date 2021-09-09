@@ -12,8 +12,10 @@ import (
 	"go.etcd.io/etcd/integration"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
+	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
@@ -61,7 +63,7 @@ func (d *dut) cleanup() {
 
 // newDut creates a new dut harness for a curator instance, connected to a given
 // etcd endpoint.
-func newDut(ctx context.Context, t *testing.T, endpoint string) *dut {
+func newDut(ctx context.Context, t *testing.T, endpoint string, n *identity.NodeCredentials) *dut {
 	t.Helper()
 	// Create new etcd client to the given endpoint.
 	cli, err := clientv3.New(clientv3.Config{
@@ -86,15 +88,14 @@ func newDut(ctx context.Context, t *testing.T, endpoint string) *dut {
 		t.Fatalf("PlaceFS: %v", err)
 	}
 
-	id := fmt.Sprintf("test-%s", endpoint)
 	svc := New(Config{
-		Etcd:      client.NewLocal(cli),
-		NodeID:    id,
-		LeaderTTL: time.Second,
-		Directory: &dir,
+		Etcd:            client.NewLocal(cli),
+		NodeCredentials: n,
+		LeaderTTL:       time.Second,
+		Directory:       &dir,
 	})
-	if err := supervisor.Run(ctx, id, svc.Run); err != nil {
-		t.Fatalf("Run %s: %v", id, err)
+	if err := supervisor.Run(ctx, n.ID(), svc.Run); err != nil {
+		t.Fatalf("Run %s: %v", n.ID(), err)
 	}
 	return &dut{
 		endpoint:  endpoint,
@@ -220,10 +221,11 @@ func TestLeaderElectionStatus(t *testing.T) {
 	}
 
 	// Start a new supervisor in which we create all curator DUTs.
+	ephemeral := rpc.NewEphemeralClusterCredentials(t, 3)
 	dutC := make(chan *dut)
 	supervisor.TestHarness(t, func(ctx context.Context) error {
-		for e, _ := range endpointToNum {
-			dutC <- newDut(ctx, t, e)
+		for e, n := range endpointToNum {
+			dutC <- newDut(ctx, t, e, ephemeral.Nodes[n])
 		}
 		close(dutC)
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
@@ -256,7 +258,7 @@ func TestLeaderElectionStatus(t *testing.T) {
 	// these have changed when we switch to another leader and back.
 	key := dss[leaderEndpoint].leader.lockKey
 	rev := dss[leaderEndpoint].leader.lockRev
-	leaderNodeID := duts[leaderEndpoint].instance.config.NodeID
+	leaderNodeID := duts[leaderEndpoint].instance.config.NodeCredentials.ID()
 	leaderNum := endpointToNum[leaderEndpoint]
 
 	// Ensure the leader/follower data in the electionStatus are as expected.
@@ -316,7 +318,7 @@ func TestLeaderElectionStatus(t *testing.T) {
 	// Get new leader's key and rev.
 	newKey := dss[newLeaderEndpoint].leader.lockKey
 	newRev := dss[newLeaderEndpoint].leader.lockRev
-	newLeaderNodeID := duts[newLeaderEndpoint].instance.config.NodeID
+	newLeaderNodeID := duts[newLeaderEndpoint].instance.config.NodeCredentials.ID()
 
 	if leaderEndpoint == newLeaderEndpoint {
 		t.Errorf("leader endpoint didn't change (%q -> %q)", leaderEndpoint, newLeaderEndpoint)

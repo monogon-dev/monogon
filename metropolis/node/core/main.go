@@ -181,13 +181,11 @@ func main() {
 		// management of the cluster.
 		// In the future, this will only be started on nodes that run etcd.
 		c := curator.New(curator.Config{
-			Etcd:   ckv,
-			NodeID: status.Credentials.ID(),
+			Etcd:            ckv,
+			NodeCredentials: status.Credentials,
 			// TODO(q3k): make this configurable?
-			LeaderTTL:            time.Second * 5,
-			Directory:            &root.Ephemeral.Curator,
-			ServerCredentials:    status.Credentials.TLSCredentials(),
-			ClusterCACertificate: status.Credentials.ClusterCA(),
+			LeaderTTL: time.Second * 5,
+			Directory: &root.Ephemeral.Curator,
 		})
 		if err := supervisor.Run(ctx, "curator", c.Run); err != nil {
 			close(trapdoor)

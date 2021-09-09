@@ -18,7 +18,6 @@ package curator
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"net"
 	"strings"
@@ -27,6 +26,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -94,22 +94,9 @@ func NewNodeForBootstrap(cuk, pubkey []byte) Node {
 type NodeRoleKubernetesWorker struct {
 }
 
-// nodeIDBare returns the `{pubkeyHash}` part of the node ID.
-func nodeIDBare(pub []byte) string {
-	return hex.EncodeToString(pub[:16])
-}
-
-// NodeID returns the name of this node, which is `metropolis-{pubkeyHash}`.
-// This name should be the primary way to refer to Metropoils nodes within a
-// cluster, and is guaranteed to be unique by relying on cryptographic
-// randomness.
-func NodeID(pub []byte) string {
-	return fmt.Sprintf("metropolis-%s", nodeIDBare(pub))
-}
-
 // ID returns the name of this node. See NodeID for more information.
 func (n *Node) ID() string {
-	return NodeID(n.pubkey)
+	return identity.NodeID(n.pubkey)
 }
 
 func (n *Node) String() string {
@@ -183,7 +170,7 @@ func (n *Node) ConfigureLocalHostname(ctx context.Context, ephemeral *localstora
 	if err := ephemeral.Hosts.Write([]byte(strings.Join(hosts, "\n")), 0644); err != nil {
 		return fmt.Errorf("failed to write /ephemeral/hosts: %w", err)
 	}
-	if err := ephemeral.MachineID.Write([]byte(nodeIDBare(n.pubkey)), 0644); err != nil {
+	if err := ephemeral.MachineID.Write([]byte(identity.NodeIDBare(n.pubkey)), 0644); err != nil {
 		return fmt.Errorf("failed to write /ephemeral/machine-id: %w", err)
 	}
 

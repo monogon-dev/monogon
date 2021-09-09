@@ -13,6 +13,7 @@ import (
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/combinectx"
@@ -38,8 +39,7 @@ import (
 // some calls might not be idempotent and the caller is better equipped to know
 // when to retry.
 type listener struct {
-	rpc.ServerSecurity
-
+	node *identity.NodeCredentials
 	// etcd is a client to the locally running consensus (etcd) server which is used
 	// both for storing lock/leader election status and actual Curator data.
 	etcd client.Namespaced
@@ -123,7 +123,7 @@ type activeTarget struct {
 	// context cancel function for ctx, or nil if ctx is nil.
 	ctxC *context.CancelFunc
 	// active Curator implementation, or nil if not yet set up.
-	impl rpc.ClusterServices
+	impl rpc.ClusterExternalServices
 }
 
 // switchTo switches the activeTarget over to a Curator implementation as per
@@ -163,7 +163,7 @@ type listenerTarget struct {
 	ctx context.Context
 	// impl is the CuratorServer implementation to which RPCs should be directed
 	// according to the dispatcher.
-	impl rpc.ClusterServices
+	impl rpc.ClusterExternalServices
 }
 
 // dispatch contacts the dispatcher to retrieve an up-to-date listenerTarget.
@@ -197,10 +197,12 @@ func (l *listener) run(ctx context.Context) error {
 		return fmt.Errorf("when starting dispatcher: %w", err)
 	}
 
-	srvLocal := grpc.NewServer()
-	cpb.RegisterCuratorServer(srvLocal, l)
-
-	srvPublic := l.SetupPublicGRPC(l)
+	es := rpc.ExternalServerSecurity{
+		NodeCredentials: l.node,
+	}
+	ls := rpc.LocalServerSecurity{
+		Node: &l.node.Node,
+	}
 
 	err := supervisor.Run(ctx, "local", func(ctx context.Context) error {
 		lisLocal, err := net.ListenUnix("unix", &net.UnixAddr{Name: l.directory.ClientSocket.FullPath(), Net: "unix"})
@@ -209,25 +211,25 @@ func (l *listener) run(ctx context.Context) error {
 		}
 		defer lisLocal.Close()
 
-		runnable := supervisor.GRPCServer(srvLocal, lisLocal, true)
+		runnable := supervisor.GRPCServer(ls.SetupLocalGRPC(l), lisLocal, true)
 		return runnable(ctx)
 	})
 	if err != nil {
 		return fmt.Errorf("while starting local gRPC listener: %w", err)
 	}
 
-	err = supervisor.Run(ctx, "public", func(ctx context.Context) error {
-		lisPublic, err := net.Listen("tcp", fmt.Sprintf(":%d", node.CuratorServicePort))
+	err = supervisor.Run(ctx, "external", func(ctx context.Context) error {
+		lisExternal, err := net.Listen("tcp", fmt.Sprintf(":%d", node.CuratorServicePort))
 		if err != nil {
-			return fmt.Errorf("failed to listen on public curator socket: %w", err)
+			return fmt.Errorf("failed to listen on external curator socket: %w", err)
 		}
-		defer lisPublic.Close()
+		defer lisExternal.Close()
 
-		runnable := supervisor.GRPCServer(srvPublic, lisPublic, true)
+		runnable := supervisor.GRPCServer(es.SetupExternalGRPC(l), lisExternal, true)
 		return runnable(ctx)
 	})
 	if err != nil {
-		return fmt.Errorf("while starting public gRPC listener: %w", err)
+		return fmt.Errorf("while starting external gRPC listener: %w", err)
 	}
 
 	supervisor.Logger(ctx).Info("Listeners started.")
@@ -249,7 +251,7 @@ func (l *listener) run(ctx context.Context) error {
 // returned are either returned directly or converted to an UNAVAILABLE status
 // if the error is as a result of the context being canceled due to the
 // implementation switching.
-type implOperation func(ctx context.Context, impl rpc.ClusterServices) error
+type implOperation func(ctx context.Context, impl rpc.ClusterExternalServices) error
 
 // callImpl gets the newest listenerTarget from the dispatcher, combines the
 // given context with the context of the listenerTarget implementation and calls
@@ -309,7 +311,7 @@ func (c *curatorWatchServer) Send(m *cpb.WatchEvent) error {
 }
 
 func (l *listener) Watch(req *cpb.WatchRequest, srv cpb.Curator_WatchServer) error {
-	proxy := func(ctx context.Context, impl rpc.ClusterServices) error {
+	proxy := func(ctx context.Context, impl rpc.ClusterExternalServices) error {
 		return impl.Watch(req, &curatorWatchServer{
 			ServerStream: srv,
 			ctx:          ctx,
@@ -340,7 +342,7 @@ func (m *aaaEscrowServer) Recv() (*apb.EscrowFromClient, error) {
 }
 
 func (l *listener) Escrow(srv apb.AAA_EscrowServer) error {
-	return l.callImpl(srv.Context(), func(ctx context.Context, impl rpc.ClusterServices) error {
+	return l.callImpl(srv.Context(), func(ctx context.Context, impl rpc.ClusterExternalServices) error {
 		return impl.Escrow(&aaaEscrowServer{
 			ServerStream: srv,
 			ctx:          ctx,
@@ -349,7 +351,7 @@ func (l *listener) Escrow(srv apb.AAA_EscrowServer) error {
 }
 
 func (l *listener) GetRegisterTicket(ctx context.Context, req *apb.GetRegisterTicketRequest) (res *apb.GetRegisterTicketResponse, err error) {
-	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterServices) error {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
 		var err2 error
 		res, err2 = impl.GetRegisterTicket(ctx, req)
 		return err2

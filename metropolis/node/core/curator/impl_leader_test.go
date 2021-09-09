@@ -3,34 +3,28 @@ package curator
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"net"
 	"testing"
 
 	"go.etcd.io/etcd/integration"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/test/bufconn"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/node/core/rpc"
-	"source.monogon.dev/metropolis/pkg/pki"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 // fakeLeader creates a curatorLeader without any underlying leader election, in
-// its own etcd namespace. It starts a gRPC listener of its public services
-// implementation and returns a client to it.
+// its own etcd namespace. It starts public and local gRPC listeners and returns
+// clients to them.
 //
-// The entire gRPC layer is encrypted, authenticated and authorized in the same
-// way as by the full Curator codebase running in Metropolis. An ephemeral
-// cluster CA and node/manager credentials are created, and are used to
-// establish a secure channel when creating the gRPC listener and client.
+// The gRPC listeners are replicated to behave as when running the Curator
+// within Metropolis, so all calls performed will be authenticated and encrypted
+// the same way.
 //
 // This is used to test functionality of the individual curatorLeader RPC
 // implementations without the overhead of having to wait for a leader election.
-func fakeLeader(t *testing.T) (grpc.ClientConnInterface, context.CancelFunc) {
+func fakeLeader(t *testing.T) fakeLeaderData {
 	t.Helper()
 	// Set up context whose cancel function will be returned to the user for
 	// terminating all harnesses started by this function.
@@ -69,57 +63,96 @@ func fakeLeader(t *testing.T) (grpc.ClientConnInterface, context.CancelFunc) {
 
 	// Build a test cluster PKI and node/manager certificates, and create the
 	// listener security parameters which will authenticate incoming requests.
-	node, manager, ca := pki.EphemeralClusterCredentials(t)
-	sec := &rpc.ServerSecurity{
-		NodeCredentials:      node,
-		ClusterCACertificate: ca,
+	ephemeral := rpc.NewEphemeralClusterCredentials(t, 1)
+	nodeCredentials := ephemeral.Nodes[0]
+
+	cNode := NewNodeForBootstrap(nil, nodeCredentials.PublicKey())
+	// Inject new node into leader, using curator bootstrap functionality.
+	if err := BootstrapFinish(ctx, cl, &cNode, nodeCredentials.PublicKey()); err != nil {
+		t.Fatalf("could not finish node bootstrap: %v", err)
 	}
 
+	// Create security interceptors for both gRPC listeners.
+	externalSec := &rpc.ExternalServerSecurity{
+		NodeCredentials: nodeCredentials,
+	}
+	localSec := &rpc.LocalServerSecurity{
+		Node: &nodeCredentials.Node,
+	}
 	// Create a curator gRPC server which performs authentication as per the created
 	// listenerSecurity and is backed by the created leader.
-	srv := sec.SetupPublicGRPC(leader)
+	externalSrv := externalSec.SetupExternalGRPC(leader)
+	localSrv := localSec.SetupLocalGRPC(leader)
 	// The gRPC server will listen on an internal 'loopback' buffer.
-	lis := bufconn.Listen(1024 * 1024)
+	externalLis := bufconn.Listen(1024 * 1024)
+	localLis := bufconn.Listen(1024 * 1024)
 	go func() {
-		if err := srv.Serve(lis); err != nil {
+		if err := externalSrv.Serve(externalLis); err != nil {
 			t.Fatalf("GRPC serve failed: %v", err)
 		}
 	}()
+	go func() {
+		if err := localSrv.Serve(localLis); err != nil {
+			t.Fatalf("GRPC serve failed: %v", err)
+		}
+	}()
+
 	// Stop the gRPC server on context cancel.
 	go func() {
 		<-ctx.Done()
-		srv.Stop()
+		externalSrv.Stop()
+		localSrv.Stop()
 	}()
 
 	// Create an authenticated manager gRPC client.
-	// TODO(q3k): factor this out to its own library, alongside the code in //metropolis/test/e2e/client.go.
-	pool := x509.NewCertPool()
-	pool.AddCert(ca)
-	gclCreds := credentials.NewTLS(&tls.Config{
-		Certificates: []tls.Certificate{manager},
-		RootCAs:      pool,
-	})
-	gcl, err := grpc.Dial("test-server", grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
-		return lis.Dial()
-	}), grpc.WithTransportCredentials(gclCreds))
+	mcl, err := rpc.NewAuthenticatedClientTest(externalLis, ephemeral.Manager, ephemeral.CA)
+	if err != nil {
+		t.Fatalf("Dialing external GRPC failed: %v", err)
+	}
+
+	// Create a locally authenticated node gRPC client.
+	lcl, err := rpc.NewNodeClientTest(localLis)
 	if err != nil {
 		t.Fatalf("Dialing local GRPC failed: %v", err)
 	}
-	// Close the client on context cancel.
+
+	// Close the clients on context cancel.
 	go func() {
 		<-ctx.Done()
-		gcl.Close()
+		mcl.Close()
+		lcl.Close()
 	}()
 
-	return gcl, ctxC
+	return fakeLeaderData{
+		mgmtConn:      mcl,
+		localNodeConn: lcl,
+		localNodeID:   nodeCredentials.ID(),
+		cancel:        ctxC,
+	}
+}
+
+// fakeLeaderData is returned by fakeLeader and contains information about the
+// newly created leader and connections to its gRPC listeners.
+type fakeLeaderData struct {
+	// mgmtConn is a gRPC connection to the leader's public gRPC interface,
+	// authenticated as a cluster manager.
+	mgmtConn grpc.ClientConnInterface
+	// localNodeConn is a gRPC connection to the leader's internal/local node gRPC
+	// interface, which usually runs on a domain socket and is only available to
+	// other Metropolis node code.
+	localNodeConn grpc.ClientConnInterface
+	// localNodeID is the NodeID of the fake node that the leader is running on.
+	localNodeID string
+	// cancel shuts down the fake leader and all client connections.
+	cancel context.CancelFunc
 }
 
 // TestManagementRegisterTicket exercises the Management.GetRegisterTicket RPC.
 func TestManagementRegisterTicket(t *testing.T) {
-	cl, cancel := fakeLeader(t)
-	defer cancel()
+	cl := fakeLeader(t)
+	defer cl.cancel()
 
-	mgmt := apb.NewManagementClient(cl)
+	mgmt := apb.NewManagementClient(cl.mgmtConn)
 
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()

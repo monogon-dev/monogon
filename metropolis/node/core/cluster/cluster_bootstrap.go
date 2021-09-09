@@ -26,6 +26,7 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/curator"
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -127,7 +128,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	// Using the short-circuited credentials from the curator, build our
 	// NodeCredentials. That, and the public part of the credentials
 	// (NodeCertificate) are the primary output of the cluster manager.
-	creds, err := NewNodeCredentials(priv, nodeCert, caCert)
+	creds, err := identity.NewNodeCredentials(priv, nodeCert, caCert)
 	if err != nil {
 		return fmt.Errorf("failed to use newly bootstrapped node credentials: %w", err)
 	}

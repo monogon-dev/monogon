@@ -1,11 +1,10 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
     srcs = [
         "cluster.go",
         "cluster_bootstrap.go",
-        "node.go",
         "status.go",
         "watcher.go",
     ],
@@ -15,6 +14,7 @@ go_library(
         "//metropolis/node/core/consensus:go_default_library",
         "//metropolis/node/core/consensus/client:go_default_library",
         "//metropolis/node/core/curator:go_default_library",
+        "//metropolis/node/core/identity:go_default_library",
         "//metropolis/node/core/localstorage:go_default_library",
         "//metropolis/node/core/network:go_default_library",
         "//metropolis/pkg/event:go_default_library",
@@ -25,11 +25,4 @@ go_library(
         "//metropolis/proto/private:go_default_library",
         "@org_golang_google_protobuf//proto:go_default_library",
     ],
-)
-
-go_test(
-    name = "go_default_test",
-    srcs = ["node_test.go"],
-    embed = [":go_default_library"],
-    deps = ["//metropolis/node/core/curator:go_default_library"],
 )

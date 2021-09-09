@@ -8,14 +8,36 @@ import (
 	"crypto/x509"
 	"fmt"
 	"math/big"
+	"net"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/test/bufconn"
 
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/pkg/pki"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
+
+type verifyPeerCertificate func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
+
+func verifyClusterCertificate(ca *x509.Certificate) verifyPeerCertificate {
+	return func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+		if len(rawCerts) != 1 {
+			return fmt.Errorf("server presented %d certificates, wanted exactly one", len(rawCerts))
+		}
+		serverCert, err := x509.ParseCertificate(rawCerts[0])
+		if err != nil {
+			return fmt.Errorf("server presented unparseable certificate: %w", err)
+		}
+		if _, err := identity.VerifyNodeInCluster(serverCert, ca); err != nil {
+			return fmt.Errorf("node certificate verification failed: %w", err)
+		}
+
+		return nil
+	}
+}
 
 // NewEphemeralClient dials a cluster's services using just a self-signed
 // certificate and can be used to then escrow real cluster credentials for the
@@ -26,18 +48,16 @@ import (
 // 'real' client certificate (yet). Current users include users of AAA.Escrow
 // and new nodes Registering into the Cluster.
 //
-// If ca is given, the other side of the connection is verified to be served by
-// a node presenting a certificate signed by that CA. Otherwise, no
-// verification of the other side is performed (however, any attacker
-// impersonating the cluster cannot use the escrowed credentials as the private
-// key is never passed to the server).
-func NewEphemeralClient(remote string, private ed25519.PrivateKey, ca *x509.Certificate) (*grpc.ClientConn, error) {
+// If 'ca' is given, the remote side will be cryptographically verified to be a
+// node that's part of the cluster represented by the ca. Otherwise, no
+// verification is performed and this function is unsafe.
+func NewEphemeralClient(remote string, private ed25519.PrivateKey, ca *x509.Certificate, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		NotBefore:    time.Now(),
 		NotAfter:     pki.UnknownNotAfter,
 
-		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
 	}
@@ -49,53 +69,13 @@ func NewEphemeralClient(remote string, private ed25519.PrivateKey, ca *x509.Cert
 		Certificate: [][]byte{certificateBytes},
 		PrivateKey:  private,
 	}
-	creds := credentials.NewTLS(&tls.Config{
-		Certificates: []tls.Certificate{
-			certificate,
-		},
-		InsecureSkipVerify: true,
-		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-			if len(rawCerts) < 1 {
-				return fmt.Errorf("server presented no certificate")
-			}
-			certs := make([]*x509.Certificate, len(rawCerts))
-			for i, rawCert := range rawCerts {
-				cert, err := x509.ParseCertificate(rawCert)
-				if err != nil {
-					return fmt.Errorf("could not parse server certificate %d: %v", i, err)
-				}
-				certs[i] = cert
-			}
+	return NewAuthenticatedClient(remote, certificate, ca, opts...)
+}
 
-			if ca != nil {
-				// CA given, perform full chain verification.
-				roots := x509.NewCertPool()
-				roots.AddCert(ca)
-				opts := x509.VerifyOptions{
-					Roots:         roots,
-					Intermediates: x509.NewCertPool(),
-				}
-				for _, cert := range certs[1:] {
-					opts.Intermediates.AddCert(cert)
-				}
-				_, err := certs[0].Verify(opts)
-				if err != nil {
-					return err
-				}
-			}
-
-			// Regardless of CA given, ensure that the leaf certificate has the
-			// right ExtKeyUsage.
-			for _, ku := range certs[0].ExtKeyUsage {
-				if ku == x509.ExtKeyUsageServerAuth {
-					return nil
-				}
-			}
-			return fmt.Errorf("server presented a certificate without server auth ext key usage")
-		},
-	})
-
-	return grpc.Dial(remote, grpc.WithTransportCredentials(creds))
+func NewEphemeralClientTest(listener *bufconn.Listener, private ed25519.PrivateKey, ca *x509.Certificate) (*grpc.ClientConn, error) {
+	return NewEphemeralClient("local", private, ca, grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
+		return listener.Dial()
+	}))
 }
 
 // RetrieveOwnerCertificates uses AAA.Escrow to retrieve a cluster manager
@@ -128,4 +108,39 @@ func RetrieveOwnerCertificate(ctx context.Context, aaa apb.AAAClient, private ed
 		Certificate: [][]byte{resp.EmittedCertificate},
 		PrivateKey:  private,
 	}, nil
+}
+
+// NewAuthenticatedClient dials a cluster's services using the given TLS
+// credentials (either user or node credentials).
+//
+// If 'ca' is given, the remote side will be cryptographically verified to be a
+// node that's part of the cluster represented by the ca. Otherwise, no
+// verification is performed and this function is unsafe.
+func NewAuthenticatedClient(remote string, cert tls.Certificate, ca *x509.Certificate, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+	config := &tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		InsecureSkipVerify: true,
+	}
+	if ca != nil {
+		config.VerifyPeerCertificate = verifyClusterCertificate(ca)
+	}
+	opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(config)))
+	return grpc.Dial(remote, opts...)
+}
+
+func NewNodeClient(remote string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+	opts = append(opts, grpc.WithInsecure())
+	return grpc.Dial(remote, opts...)
+}
+
+func NewAuthenticatedClientTest(listener *bufconn.Listener, cert tls.Certificate, ca *x509.Certificate) (*grpc.ClientConn, error) {
+	return NewAuthenticatedClient("local", cert, ca, grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
+		return listener.Dial()
+	}))
+}
+
+func NewNodeClientTest(listener *bufconn.Listener) (*grpc.ClientConn, error) {
+	return NewNodeClient("local", grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
+		return listener.Dial()
+	}))
 }

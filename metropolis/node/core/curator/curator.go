@@ -13,8 +13,6 @@ package curator
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"fmt"
 	"time"
@@ -25,6 +23,7 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event"
@@ -34,12 +33,12 @@ import (
 
 // Config is the configuration of the curator.
 type Config struct {
+	// NodeCredentials are the identity credentials for the node that is running
+	// this curator.
+	NodeCredentials *identity.NodeCredentials
 	// Etcd is an etcd client in which all curator storage and leader election
 	// will be kept.
 	Etcd client.Namespaced
-	// NodeID is the ID of the node that this curator will run on. It's used to
-	// populate the leader election lock.
-	NodeID string
 	// LeaderTTL is the timeout on the lease used to perform leader election.
 	// Any active leader must continue updating its lease at least this often,
 	// or the lease (and leadership) will be lost.
@@ -50,15 +49,6 @@ type Config struct {
 	// Directory is the curator ephemeral directory in which the curator will
 	// store its local domain socket for connections from the node.
 	Directory *localstorage.EphemeralCuratorDirectory
-
-	// ServerCredentials is the TLS certificate/key of the node that the curator
-	// will use to run public gRPC services. It should be signed by
-	// ClusterCACertificate.
-	ServerCredentials tls.Certificate
-	// ClusterCACertificate is the cluster's CA certificate. It will be used to
-	// authenticate the client certificates of incoming connections to the public
-	// gRPC services.
-	ClusterCACertificate *x509.Certificate
 }
 
 // Service is the Curator service. See the package-level documentation for more
@@ -137,7 +127,7 @@ func (w *electionWatcher) get(ctx context.Context) (*electionStatus, error) {
 // LeaderElectionValue from private/storage.proto.
 func (c *Config) buildLockValue(ttl int) ([]byte, error) {
 	v := &ppb.LeaderElectionValue{
-		NodeId: c.NodeID,
+		NodeId: c.NodeCredentials.ID(),
 		Ttl:    uint64(ttl),
 	}
 	bytes, err := proto.Marshal(v)
@@ -255,7 +245,7 @@ func (s *Service) Run(ctx context.Context) error {
 		for {
 			s, err := w.get(ctx)
 			if err != nil {
-				supervisor.Logger(ctx).Warningf("Election watcher existing: get(): %w", err)
+				supervisor.Logger(ctx).Warningf("Election watcher exiting: get(): %v", err)
 				return
 			}
 			if l := s.leader; l != nil {
@@ -270,11 +260,8 @@ func (s *Service) Run(ctx context.Context) error {
 	// providing the Curator API to consumers, dispatching to either a locally
 	// running leader, or forwarding to a remotely running leader.
 	lis := listener{
-		directory: s.config.Directory,
-		ServerSecurity: rpc.ServerSecurity{
-			NodeCredentials:      s.config.ServerCredentials,
-			ClusterCACertificate: s.config.ClusterCACertificate,
-		},
+		directory:     s.config.Directory,
+		node:          s.config.NodeCredentials,
 		electionWatch: s.electionWatch,
 		etcd:          s.config.Etcd,
 		dispatchC:     make(chan dispatchRequest),
@@ -306,5 +293,6 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func (s *Service) DialCluster(ctx context.Context) (*grpc.ClientConn, error) {
-	return grpc.DialContext(ctx, fmt.Sprintf("unix://%s", s.config.Directory.ClientSocket.FullPath()), grpc.WithInsecure())
+	remote := fmt.Sprintf("unix://%s", s.config.Directory.ClientSocket.FullPath())
+	return rpc.NewNodeClient(remote)
 }

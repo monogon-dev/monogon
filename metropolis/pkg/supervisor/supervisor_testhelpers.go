@@ -49,6 +49,7 @@ func TestHarness(t *testing.T, r func(ctx context.Context) error) (context.Cance
 	logtree.PipeAllToStderr(t, lt)
 
 	New(ctx, func(ctx context.Context) error {
+		Logger(ctx).Infof("Starting test %s...", t.Name())
 		if err := r(ctx); err != nil && !errors.Is(err, ctx.Err()) {
 			t.Errorf("Supervised runnable in harness returned error: %v", err)
 		}

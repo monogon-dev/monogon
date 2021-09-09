@@ -1,15 +1,20 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "go_default_library",
     srcs = [
         "client.go",
+        "methodinfo.go",
+        "peerinfo.go",
         "server.go",
+        "server_authentication.go",
+        "testhelpers.go",
     ],
     importpath = "source.monogon.dev/metropolis/node/core/rpc",
     visibility = ["//visibility:public"],
     deps = [
         "//metropolis/node/core/curator/proto/api:go_default_library",
+        "//metropolis/node/core/identity:go_default_library",
         "//metropolis/pkg/pki:go_default_library",
         "//metropolis/proto/api:go_default_library",
         "//metropolis/proto/ext:go_default_library",
@@ -18,8 +23,23 @@ go_library(
         "@org_golang_google_grpc//credentials:go_default_library",
         "@org_golang_google_grpc//peer:go_default_library",
         "@org_golang_google_grpc//status:go_default_library",
+        "@org_golang_google_grpc//test/bufconn:go_default_library",
         "@org_golang_google_protobuf//proto:go_default_library",
         "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
         "@org_golang_google_protobuf//reflect/protoregistry:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["server_authentication_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//metropolis/node/core/curator/proto/api:go_default_library",
+        "//metropolis/proto/api:go_default_library",
+        "//metropolis/proto/ext:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",
+        "@org_golang_google_grpc//test/bufconn:go_default_library",
     ],
 )

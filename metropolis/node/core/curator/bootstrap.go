@@ -10,6 +10,7 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/pkg/pki"
 )
 
@@ -27,7 +28,7 @@ import (
 // cluster. It can only be called by cluster bootstrap code. It returns the
 // generated x509 CA and node certificates.
 func BootstrapNodeCredentials(ctx context.Context, etcd client.Namespaced, pubkey ed25519.PublicKey) (ca, node []byte, err error) {
-	id := NodeID(pubkey)
+	id := identity.NodeID(pubkey)
 
 	ca, err = pkiCA.Ensure(ctx, etcd)
 	if err != nil {
@@ -37,7 +38,7 @@ func BootstrapNodeCredentials(ctx context.Context, etcd client.Namespaced, pubke
 	nodeCert := &pki.Certificate{
 		Namespace: &pkiNamespace,
 		Issuer:    pkiCA,
-		Template:  pki.Server([]string{id}, nil),
+		Template:  identity.NodeCertificate(pubkey),
 		Mode:      pki.CertificateExternal,
 		PublicKey: pubkey,
 		Name:      fmt.Sprintf("node-%s", id),
