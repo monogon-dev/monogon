@@ -15,6 +15,14 @@ go_library(
 
 exports_files([
     "config.toml",
-    "runsc.toml",
     "cnispec.gojson",
 ])
+
+alias(
+    name = "runsc.toml",
+    actual = select({
+        "//metropolis/node:debug_build": ":runsc_debug.toml",
+        "//conditions:default": ":runsc_nondebug.toml",
+    }),
+    visibility = ["//metropolis/node:__pkg__"],
+)

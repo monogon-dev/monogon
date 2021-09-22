@@ -1,0 +1,5 @@
+root = "/ephemeral/containerd/runsc"
+[runsc_config]
+debug = "false"
+panic-log = "/ephemeral/containerd/runsc-logs.fifo"
+log = "/ephemeral/containerd/runsc-logs.fifo"
