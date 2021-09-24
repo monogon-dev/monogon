@@ -1,5 +1,4 @@
 load("@bazel_gazelle//:def.bzl", "gazelle")
-load("//build/fietsje:def.bzl", "fietsje")
 load("@io_bazel_rules_go//go:def.bzl", "go_path")
 
 # gazelle:prefix source.monogon.dev
@@ -7,7 +6,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_path")
 # gazelle:go_naming_convention_external go_default_library
 gazelle(name = "gazelle")
 
-fietsje(name = "fietsje")
+alias(
+    name = "fietsje",
+    actual = "//build/fietsje",
+)
 
 # Shortcut for the Go SDK
 alias(

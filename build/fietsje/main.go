@@ -21,26 +21,27 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
-)
+	"os"
+	"path"
 
-var (
-	flagShelfPath          string
-	flagRepositoresBzlPath string
+	"source.monogon.dev/build/toolbase"
+	"source.monogon.dev/build/toolbase/gotoolchain"
 )
 
 func main() {
-	flag.StringVar(&flagShelfPath, "shelf_path", "", "Path to shelf (cache/lockfile)")
-	flag.StringVar(&flagRepositoresBzlPath, "repositories_bzl", "", "Path to output repositories.bzl file")
 	flag.Parse()
 
-	if flagShelfPath == "" {
-		log.Fatalf("shelf_path must be set")
+	// TODO(q3k): factor out fietsje as a library, make it independent from
+	// monogon workspace assumptions.
+	wd, err := toolbase.WorkspaceDirectory()
+	if err != nil {
+		log.Fatalf("%v", err)
 	}
-	if flagRepositoresBzlPath == "" {
-		log.Fatalf("repositories_bzl must be set")
-	}
+	shelfPath := path.Join(wd, "third_party/go/shelf.pb.text")
+	repositoriesBzlPath := path.Join(wd, "third_party/go/repositories.bzl")
+	os.Setenv("GOROOT", gotoolchain.Root)
 
-	shelf, err := shelfLoad(flagShelfPath)
+	shelf, err := shelfLoad(shelfPath)
 	if err != nil {
 		log.Fatalf("could not load shelf: %v", err)
 	}
@@ -157,7 +158,7 @@ func main() {
 		log.Fatalf("could not render deps: %v", err)
 	}
 
-	err = ioutil.WriteFile(flagRepositoresBzlPath, buf.Bytes(), 0666)
+	err = ioutil.WriteFile(repositoriesBzlPath, buf.Bytes(), 0666)
 	if err != nil {
 		log.Fatalf("could not write deps: %v", err)
 	}
