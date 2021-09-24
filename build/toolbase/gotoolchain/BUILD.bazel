@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load(":def.bzl", "toolchain_library")
+
+toolchain_library(
+    name = "toolchain_library",
+    importpath = "source.monogon.dev/build/toolbase/gotoolchain",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@io_bazel_rules_go//go/tools/bazel:go_default_library",
+    ],
+)
+
+# keep
+go_library(
+    name = "go_default_library",
+    embed = [":toolchain_library"],
+    importpath = "source.monogon.dev/build/toolbase/gotoolchain",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["toolchain_test.go"],
+    embed = [":go_default_library"],  # keep
+)

@@ -1,0 +1,24 @@
+// gotoolchain provides information about the Go toolchain used on the host by
+// rules_go.
+package gotoolchain
+
+import (
+	"fmt"
+
+	"github.com/bazelbuild/rules_go/go/tools/bazel"
+)
+
+func mustRunfile(s string) string {
+	res, err := bazel.Runfile(s)
+	if err != nil {
+		panic(fmt.Sprintf("runfile %q not found: %v", s, err))
+	}
+	return res
+}
+
+var (
+	// Go is a path to the `go` executable.
+	Go = mustRunfile(`GOTOOL`)
+	// Root is the GOROOT path.
+	Root = mustRunfile(`GOROOT`)
+)
