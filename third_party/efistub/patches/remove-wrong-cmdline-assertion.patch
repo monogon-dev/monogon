@@ -1,0 +1,26 @@
+From 8f0fa4ec981e6c22013949f551ef1b2d7b7dc0e3 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Wed, 29 Sep 2021 19:10:17 +0200
+Subject: [PATCH] Remove wrong assertion that a cmdline exists
+
+All uses of cmdline are gated behind an if statement, it is perfectly
+acceptable for cmdline to not be passed.
+---
+ src/boot/efi/linux.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/boot/efi/linux.c b/src/boot/efi/linux.c
+index 0d58f39ff6..ad82ade019 100644
+--- a/src/boot/efi/linux.c
++++ b/src/boot/efi/linux.c
+@@ -40,7 +40,6 @@ EFI_STATUS linux_exec(EFI_HANDLE image,
+         EFI_STATUS err;
+ 
+         assert(image);
+-        assert(cmdline);
+ 
+         image_params = (const struct boot_params *) linux_addr;
+ 
+-- 
+2.25.1
+

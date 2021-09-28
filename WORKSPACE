@@ -216,6 +216,15 @@ gnuefi_external(
     version = "3.0.14",
 )
 
+load("//third_party/efistub:external.bzl", "efistub_external")
+
+efistub_external(
+    name = "efistub",
+    # Developed in the systemd monorepo, pinned to master as there have been a bunch of critical fixes for the
+    # EFI stub since 249.
+    version = "3542da2442d8b29661b47c42ad7e5fa9bc8562ec",
+)
+
 register_toolchains("//:host_python")
 
 # python dependencies. Currently we don't use Python, but some of our deps (ie. gvisor) do expect @pydeps// to exist, even

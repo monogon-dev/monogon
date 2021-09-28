@@ -1,0 +1,35 @@
+From d725d3cd472434c52e3c4bebbd7b242329d7a1b4 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Tue, 28 Sep 2021 05:21:10 +0200
+Subject: [PATCH] Use the SysV ABI calling into the kernel
+
+The original code expected to be compiled into a PE binary but
+internally still using the SysV ABI. Lots of trampolines are used to
+make that work as everything outside is using the MSVC ABI.
+The kernel also exposes the MSVC ABI using trampolines, but only for
+direct PE entrypoints. The EFI handover jump target does not do ABI
+conversion and thus matches the kernel's internal ABI, which is SysV.
+
+This means this call needs to be annotated as otherwise we'd call into
+the Kernel's EFI code using the MSVC ABI which is expecting SysV.
+Sigh.
+---
+ src/boot/efi/linux.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/boot/efi/linux.c b/src/boot/efi/linux.c
+index 5232a3ba40..0d58f39ff6 100644
+--- a/src/boot/efi/linux.c
++++ b/src/boot/efi/linux.c
+@@ -12,7 +12,7 @@
+ #define __regparm0__
+ #endif
+ 
+-typedef VOID(*handover_f)(VOID *image, EFI_SYSTEM_TABLE *table, struct boot_params *params) __regparm0__;
++typedef __attribute__((sysv_abi)) VOID(*handover_f)(VOID *image, EFI_SYSTEM_TABLE *table, struct boot_params *params) __regparm0__;
+ 
+ static VOID linux_efi_handover(EFI_HANDLE image, struct boot_params *params) {
+         handover_f handover;
+-- 
+2.25.1
+
