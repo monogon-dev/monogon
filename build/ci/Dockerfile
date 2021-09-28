@@ -4,6 +4,8 @@ RUN dnf -y upgrade && \
 	dnf -y install \
 	"@Development Tools" \
 	g++ \
+	llvm \
+	lld \
 	libuuid-devel \
 	python3 \
 	nasm \
