@@ -209,6 +209,13 @@ cap_external(
     version = "1.2.55",
 )
 
+load("//third_party/gnuefi:external.bzl", "gnuefi_external")
+
+gnuefi_external(
+    name = "gnuefi",
+    version = "3.0.14",
+)
+
 register_toolchains("//:host_python")
 
 # python dependencies. Currently we don't use Python, but some of our deps (ie. gvisor) do expect @pydeps// to exist, even
