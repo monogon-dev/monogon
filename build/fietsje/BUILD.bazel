@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
@@ -8,28 +8,20 @@ go_library(
         "deps_delve.go",
         "deps_gvisor.go",
         "deps_kubernetes.go",
-        "main.go",
+        "deps_monogon.go",
         "planner.go",
         "render.go",
         "shelf.go",
         "transitive.go",
     ],
     importpath = "source.monogon.dev/build/fietsje",
-    visibility = ["//visibility:private"],
+    visibility = ["//build:__subpackages__"],
     deps = [
         "//build/fietsje/proto:go_default_library",
-        "//build/toolbase:go_default_library",
-        "//build/toolbase/gotoolchain:go_default_library",
         "@bazel_gazelle//label:go_default_library",
         "@com_github_golang_protobuf//proto:go_default_library",
         "@org_golang_x_mod//modfile:go_default_library",
     ],
-)
-
-go_binary(
-    name = "fietsje",
-    embed = [":go_default_library"],
-    visibility = ["//visibility:public"],
 )
 
 exports_files(

@@ -1,49 +1,20 @@
-// Copyright 2020 The Monogon Project Authors.
-//
-// SPDX-License-Identifier: Apache-2.0
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+package fietsje
 
-package main
+// deps_monogon.go contains the main entrypoint for Monogon-specific
+// dependencies to be handled by fietsje, and calls out to all other functions
+// in deps_*.go.
 
 import (
 	"bytes"
-	"flag"
+	"fmt"
 	"io/ioutil"
-	"log"
-	"os"
-	"path"
-
-	"source.monogon.dev/build/toolbase"
-	"source.monogon.dev/build/toolbase/gotoolchain"
 )
 
-func main() {
-	flag.Parse()
-
-	// TODO(q3k): factor out fietsje as a library, make it independent from
-	// monogon workspace assumptions.
-	wd, err := toolbase.WorkspaceDirectory()
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-	shelfPath := path.Join(wd, "third_party/go/shelf.pb.text")
-	repositoriesBzlPath := path.Join(wd, "third_party/go/repositories.bzl")
-	os.Setenv("GOROOT", gotoolchain.Root)
-
+// Monogon runs fietsje for all Monogon transitive dependencies.
+func Monogon(shelfPath, repositoriesBzlPath string) error {
 	shelf, err := shelfLoad(shelfPath)
 	if err != nil {
-		log.Fatalf("could not load shelf: %v", err)
+		return fmt.Errorf("could not load shelf: %w", err)
 	}
 
 	p := &planner{
@@ -160,11 +131,12 @@ func main() {
 	buf := bytes.NewBuffer(nil)
 	err = p.render(buf)
 	if err != nil {
-		log.Fatalf("could not render deps: %v", err)
+		return fmt.Errorf("could not render deps: %w", err)
 	}
 
 	err = ioutil.WriteFile(repositoriesBzlPath, buf.Bytes(), 0666)
 	if err != nil {
-		log.Fatalf("could not write deps: %v", err)
+		return fmt.Errorf("could not write deps: %w", err)
 	}
+	return nil
 }

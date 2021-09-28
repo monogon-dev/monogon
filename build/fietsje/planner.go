@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package fietsje
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ import (
 
 // planner is a builder for a single world of Go package dependencies, and what is
 // then emitted into a Starlark file containing gazelle go_repository rules. The
-// planner's builder system covers three increasingly specific contextx:
+// planner's builder system covers three increasingly specific contexts:
 //  - planner (this structure, allows for 'collecting' in high-level dependencies. ie. collections)
 //  - collection (represents what has been pulled in by a high-level dependency, and allows for 'using' transitive
 //    dependencies from a collection)

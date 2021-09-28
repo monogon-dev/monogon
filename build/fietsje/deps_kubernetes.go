@@ -14,7 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package fietsje
+
+// deps_kubernetes.go contains all dependencies required by Kubernetes.
 
 func depsKubernetes(p *planner) {
 	// containerd and its deps

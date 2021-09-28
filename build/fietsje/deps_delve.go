@@ -14,7 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package fietsje
+
+// deps_delve.go contains all dependencies required by the Delve debugger.
 
 func depsDelve(p *planner) {
 	p.collect("github.com/go-delve/delve", "v1.4.1").use(

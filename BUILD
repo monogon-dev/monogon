@@ -8,7 +8,7 @@ gazelle(name = "gazelle")
 
 alias(
     name = "fietsje",
-    actual = "//build/fietsje",
+    actual = "//build/fietsje/cmd",
 )
 
 # Shortcut for the Go SDK
