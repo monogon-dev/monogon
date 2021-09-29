@@ -1,5 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("//metropolis/node/build:def.bzl", "erofs_image")
+load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
 
 go_library(
     name = "go_default_library",
@@ -89,10 +90,16 @@ erofs_image(
     },
 )
 
+efi_unified_kernel_image(
+    name = "kernel_efi",
+    kernel = "//third_party/linux",
+    os_release = ":os-release-info",
+)
+
 genrule(
     name = "image",
     srcs = [
-        "//third_party/linux",
+        ":kernel_efi",
         ":rootfs",
     ],
     outs = [
@@ -100,7 +107,7 @@ genrule(
     ],
     cmd = """
     $(location //metropolis/node/build/mkimage) \
-        -efi $(location //third_party/linux) \
+        -efi $(location :kernel_efi) \
         -system $(location :rootfs) \
         -out $@
     """,
