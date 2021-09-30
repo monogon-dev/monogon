@@ -2,6 +2,7 @@ package curator
 
 import (
 	"context"
+	"crypto/subtle"
 	"fmt"
 
 	"go.etcd.io/etcd/clientv3"
@@ -13,6 +14,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event/etcd"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 // leaderCurator implements the Curator gRPC API (ipb.Curator) as a curator
@@ -267,4 +269,87 @@ func (l *leaderCurator) UpdateNodeStatus(ctx context.Context, req *ipb.UpdateNod
 	}
 
 	return &ipb.UpdateNodeStatusResponse{}, nil
+}
+
+func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeRequest) (*ipb.RegisterNodeResponse, error) {
+	// Call is unauthenticated - verify the other side has connected with an
+	// ephemeral certificate. That certificate's pubkey will become the node's
+	// pubkey.
+	pi := rpc.GetPeerInfo(ctx)
+	if pi == nil || pi.Unauthenticated == nil {
+		return nil, status.Error(codes.Unauthenticated, "connection must be established with a self-signed ephemeral certificate")
+	}
+	pubkey := pi.Unauthenticated.SelfSignedPublicKey
+
+	// Verify that call contains a RegisterTicket and that this RegisterTicket is
+	// valid.
+	wantTicket, err := l.ensureRegisterTicket(ctx)
+	if err != nil {
+		// TODO(q3k): log err
+		return nil, status.Error(codes.Unavailable, "could not retrieve register ticket")
+	}
+	gotTicket := req.RegisterTicket
+	if subtle.ConstantTimeCompare(wantTicket, gotTicket) != 1 {
+		return nil, status.Error(codes.PermissionDenied, "registerticket invalid")
+	}
+
+	// Doing a read-then-write operation below, take lock.
+	//
+	// MVP: This can lock up the cluster if too many RegisterNode calls get issued,
+	// we should either ratelimit these or remove the need to lock.
+	l.muNodes.Lock()
+	defer l.muNodes.Unlock()
+
+	// Check if there already is a node with this pubkey in the cluster.
+	id := identity.NodeID(pubkey)
+	key, err := nodeEtcdPrefix.Key(id)
+	if err != nil {
+		// TODO(q3k): log err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid node id")
+	}
+	res, err := l.txnAsLeader(ctx, clientv3.OpGet(key))
+	if err != nil {
+		if rpcErr, ok := rpcError(err); ok {
+			return nil, rpcErr
+		}
+		// TODO(q3k): log this
+		return nil, status.Errorf(codes.Unavailable, "could not retrieve node %s: %v", id, err)
+	}
+	kvs := res.Responses[0].GetResponseRange().Kvs
+	if len(kvs) > 0 {
+		node, err := nodeUnmarshal(kvs[0].Value)
+		if err != nil {
+			// TODO(q3k): log this
+			return nil, status.Errorf(codes.Unavailable, "could not unmarshal node")
+		}
+		// If the existing node is in the NEW state already, there's nothing to do,
+		// return no error. This can happen in case of spurious retries from the calling
+		// node.
+		if node.state == cpb.NodeState_NODE_STATE_NEW {
+			return &ipb.RegisterNodeResponse{}, nil
+		}
+		// We can return a bit more information to the calling node here, as if it's in
+		// possession of the private key corresponding to an existing node in the
+		// cluster, it should have access to the status of the node without danger of
+		// leaking data about other nodes. TODO(q3k): log this
+		return nil, status.Errorf(codes.FailedPrecondition, "node already exists in cluster, state %s", node.state.String())
+	}
+
+	// No node exists, create one.
+	node := &Node{
+		pubkey: pubkey,
+		state:  cpb.NodeState_NODE_STATE_NEW,
+	}
+	nodeBytes, err := proto.Marshal(node.proto())
+	if err != nil {
+		// TODO(q3k): log this
+		return nil, status.Errorf(codes.Unavailable, "could not marshal new node")
+	}
+	_, err = l.txnAsLeader(ctx, clientv3.OpPut(key, string(nodeBytes)))
+	if err != nil {
+		// TODO(q3k): log this
+		return nil, status.Error(codes.Unavailable, "could not save new node")
+	}
+
+	return &ipb.RegisterNodeResponse{}, nil
 }

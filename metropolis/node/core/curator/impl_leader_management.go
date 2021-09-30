@@ -4,15 +4,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
-	"crypto/rand"
 	"sort"
 
-	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 
-	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -49,40 +45,12 @@ const (
 )
 
 func (l *leaderManagement) GetRegisterTicket(ctx context.Context, req *apb.GetRegisterTicketRequest) (*apb.GetRegisterTicketResponse, error) {
-	// Retrieve existing ticket, if any.
-	res, err := l.txnAsLeader(ctx, clientv3.OpGet(registerTicketEtcdPath))
+	ticket, err := l.ensureRegisterTicket(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not retrieve register ticket: %v", err)
+		return nil, err
 	}
-	kvs := res.Responses[0].GetResponseRange().Kvs
-	if len(kvs) > 0 {
-		// Ticket already generated, return.
-		return &apb.GetRegisterTicketResponse{
-			Ticket: kvs[0].Value,
-		}, nil
-	}
-
-	// No ticket, generate one.
-	ticket := &ppb.RegisterTicket{
-		Opaque: make([]byte, registerTicketSize),
-	}
-	_, err = rand.Read(ticket.Opaque)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not generate new ticket: %v", err)
-	}
-	ticketBytes, err := proto.Marshal(ticket)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not marshal new ticket: %v", err)
-	}
-
-	// Commit new ticket to etcd.
-	_, err = l.txnAsLeader(ctx, clientv3.OpPut(registerTicketEtcdPath, string(ticketBytes)))
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not save new ticket: %v", err)
-	}
-
 	return &apb.GetRegisterTicketResponse{
-		Ticket: ticketBytes,
+		Ticket: ticket,
 	}, nil
 }
 

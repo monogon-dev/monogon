@@ -43,7 +43,7 @@ service Curator {
     // is eventually consistent with the state of the objects in the Curator.
     rpc Watch(WatchRequest) returns (stream WatchEvent) {
         option (metropolis.proto.ext.authorization) = {
-            need: PERMISSION_READ_CLUSTER_STATUS;
+            need: PERMISSION_READ_CLUSTER_STATUS
         };
     }
     // UpdateNodestatus is called by nodes in the cluster to report their own
@@ -51,7 +51,18 @@ service Curator {
     // Watch.
     rpc UpdateNodeStatus(UpdateNodeStatusRequest) returns (UpdateNodeStatusResponse) {
         option (metropolis.proto.ext.authorization) = {
-            need: PERMISSION_UPDATE_NODE_SELF;
+            need: PERMISSION_UPDATE_NODE_SELF
+        };
+    }
+
+    // RegisterNode is called by nodes that wish to begin registering into the
+    // cluster. This will created a 'New' node in the cluster state.
+    rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            // The node doesn't yet have any credentials and will provide a
+            // self-signed ephemeral certificate to prove ownership of an
+            // Ed25519 key.
+            allow_unauthenticated: true
         };
     }
 }
@@ -137,4 +148,15 @@ message UpdateNodeStatusRequest {
 }
 
 message UpdateNodeStatusResponse {
+}
+
+message RegisterNodeRequest {
+    // register_ticket is the opaque Register Ticket required from a node to
+    // begin registering it into a cluster. It's provided to the registering
+    // node by a cluster operator in NodeParameters, and it retrieved by an
+    // operator from a running cluster via Management.GetRegisterTicket.
+    bytes register_ticket = 1;
+}
+
+message RegisterNodeResponse {
 }

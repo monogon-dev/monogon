@@ -18,6 +18,8 @@ syntax = "proto3";
 package metropolis.proto.api;
 option go_package = "source.monogon.dev/metropolis/proto/api";
 
+import "metropolis/proto/common/common.proto";
+
 // NodeParameters is the data with which a Node is set booted. It contains the
 // configuration required for a node to either bootstrap a new cluster, or
 // register into an existing one.
@@ -25,10 +27,34 @@ option go_package = "source.monogon.dev/metropolis/proto/api";
 // implementation-specific way (currently: either on ESP partition or via qemu
 // fw_cfg).
 message NodeParameters {
+    // ClusterBootstrap configures the node to attempt to create a new cluster
+    // from scratch. Further nodes can become part of the cluster by being
+    // configured with ClusterRegister, which should contain data retrieved from
+    // the newly bootstrapped cluster by its operator.
     message ClusterBootstrap {
+        // owner_public_key is a raw Ed25519 public whose corresponding private
+        // key can be used to prove ownership of the cluster and retrieve
+        // management credentials for the cluster via an AAA.Escrow call.
         bytes owner_public_key = 1;
     }
+    // ClusterRegister configures the node to attempt to register into an
+    // existing cluster, ie. contact an existing running cluster and become
+    // its member.
     message ClusterRegister {
+        // cluster_directory is a directory (mapping of names into IP addresses
+        // and public keys) of existing nodes in the cluster. It's used as the
+        // initial contact point of the already running cluster that the node
+        // should register into. It can be retrieved by an operator from
+        // a running cluster via Management.GetClusterInfo.
+        metropolis.proto.common.ClusterDirectory cluster_directory = 1;
+        // register_ticket is the opaque Register Ticket required from a node to
+        // begin registering it into a cluster. It can be retrieved by an
+        // operator from a running cluster via Management.GetRegisterTicket.
+        bytes register_ticket = 2;
+        // ca_public_key is the public key of the CA of the cluster that the
+        // node should expect when contacting nodes in cluster_directory and
+        // attempting to register into a cluster.
+        bytes ca_public_key = 3;
     }
     oneof cluster {
         ClusterBootstrap cluster_bootstrap = 1;

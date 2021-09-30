@@ -123,6 +123,13 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		t.Fatalf("Dialing local GRPC failed: %v", err)
 	}
 
+	// Create an ephemeral node gRPC client for the 'other node'.
+	otherNode := ephemeral.Nodes[1]
+	ocl, err := rpc.NewEphemeralClientTest(externalLis, otherNode.TLSCredentials().PrivateKey.(ed25519.PrivateKey), ephemeral.CA)
+	if err != nil {
+		t.Fatalf("Dialing external GRPC failed: %v", err)
+	}
+
 	// Close the clients on context cancel.
 	go func() {
 		<-ctx.Done()
@@ -134,7 +141,8 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		mgmtConn:      mcl,
 		localNodeConn: lcl,
 		localNodeID:   nodeCredentials.ID(),
-		otherNodeID:   ephemeral.Nodes[1].ID(),
+		otherNodeConn: ocl,
+		otherNodeID:   otherNode.ID(),
 		caPubKey:      ephemeral.CA.PublicKey.(ed25519.PublicKey),
 		cancel:        ctxC,
 		etcd:          cl,
@@ -153,6 +161,9 @@ type fakeLeaderData struct {
 	localNodeConn grpc.ClientConnInterface
 	// localNodeID is the NodeID of the fake node that the leader is running on.
 	localNodeID string
+	// otherNodeConn is an connection from some other node (otherNodeID) into the
+	// cluster, authenticated using an ephemeral certificate.
+	otherNodeConn grpc.ClientConnInterface
 	// otherNodeID is the NodeID of some other node present in the curator
 	// state.
 	otherNodeID string
@@ -423,8 +434,10 @@ func TestWatchNodesInCluster(t *testing.T) {
 	}
 }
 
-// TestManagementRegisterTicket exercises the Management.GetRegisterTicket RPC.
-func TestManagementRegisterTicket(t *testing.T) {
+// TestRegistration exercises the Management.GetRegisterTicket RPC and
+// Curator.RegisterNode. A node should be able to register itself into a running
+// cluster, and have a NEW state.
+func TestRegistration(t *testing.T) {
 	cl := fakeLeader(t)
 	defer cl.cancel()
 
@@ -449,6 +462,15 @@ func TestManagementRegisterTicket(t *testing.T) {
 	}
 	if !bytes.Equal(res1.Ticket, res2.Ticket) {
 		t.Errorf("Unexpected ticket change between calls")
+	}
+
+	// Register 'other node' into cluster.
+	cur := ipb.NewCuratorClient(cl.otherNodeConn)
+	_, err = cur.RegisterNode(ctx, &ipb.RegisterNodeRequest{
+		RegisterTicket: res1.Ticket,
+	})
+	if err != nil {
+		t.Fatalf("RegisterNode failed: %v", err)
 	}
 }
 

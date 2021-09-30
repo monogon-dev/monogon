@@ -35,6 +35,10 @@ type leadership struct {
 	// This lock has to be taken any time such RMW operation takes place when not
 	// additionally guarded using etcd transactions.
 	muNodes sync.Mutex
+
+	// muRegisterTicket guards changes to the register ticket. Its usage semantics
+	// are the same as for muNodes, as described above.
+	muRegisterTicket sync.Mutex
 }
 
 var (
