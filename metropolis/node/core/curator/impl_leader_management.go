@@ -3,6 +3,7 @@ package curator
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"crypto/rand"
 	"sort"
 
@@ -12,12 +13,19 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
+	"source.monogon.dev/metropolis/node/core/identity"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 type leaderManagement struct {
 	*leadership
+
+	// node certificate on which leaderManagement runs. It's used by
+	// GetClusterInformation which needs access to the CA pubkey.
+	// Alternatively this could be stored in etcd, instead of being dependency
+	// injected here.
+	node *identity.Node
 }
 
 const (
@@ -130,5 +138,6 @@ func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClust
 
 	return &apb.GetClusterInfoResponse{
 		ClusterDirectory: directory,
+		CaPublicKey:      l.node.ClusterCA().PublicKey.(ed25519.PublicKey),
 	}, nil
 }

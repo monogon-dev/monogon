@@ -44,4 +44,7 @@ message GetClusterInfoResponse {
     // cluster_directory contains information about individual nodes in the
     // cluster that can be used to dial the cluster's services.
     metropolis.proto.common.ClusterDirectory cluster_directory = 1;
+
+    // ca_public_key is the Ed25519 public key of the CA of the cluster.
+    bytes ca_public_key = 2;
 }

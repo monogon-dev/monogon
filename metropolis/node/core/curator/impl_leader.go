@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
+	"source.monogon.dev/metropolis/node/core/identity"
 )
 
 // leadership represents the curator leader's ability to perform actions as a
@@ -85,10 +86,10 @@ type curatorLeader struct {
 	leaderManagement
 }
 
-func newCuratorLeader(l *leadership) *curatorLeader {
+func newCuratorLeader(l *leadership, node *identity.Node) *curatorLeader {
 	return &curatorLeader{
 		leaderCurator{leadership: l},
 		leaderAAA{leadership: l},
-		leaderManagement{leadership: l},
+		leaderManagement{leadership: l, node: node},
 	}
 }

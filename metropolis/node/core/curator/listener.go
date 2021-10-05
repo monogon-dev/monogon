@@ -149,7 +149,7 @@ func (t *activeTarget) switchTo(ctx context.Context, l *listener, status *electi
 			lockKey: leader.lockKey,
 			lockRev: leader.lockRev,
 			etcd:    l.etcd,
-		})
+		}, &l.node.Node)
 	} else {
 		supervisor.Logger(ctx).Info("Dispatcher switching over to follower")
 		t.impl = &curatorFollower{}

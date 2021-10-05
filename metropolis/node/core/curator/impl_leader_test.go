@@ -3,6 +3,8 @@ package curator
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
+	"encoding/hex"
 	"testing"
 
 	"go.etcd.io/etcd/integration"
@@ -55,18 +57,17 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	}
 	lockRev := res.Header.Revision
 
+	// Build a test cluster PKI and node/manager certificates.
+	ephemeral := rpc.NewEphemeralClusterCredentials(t, 2)
+	nodeCredentials := ephemeral.Nodes[0]
+
 	// Build a curator leader object. This implements methods that will be
 	// exercised by tests.
 	leader := newCuratorLeader(&leadership{
 		lockKey: lockKey,
 		lockRev: lockRev,
 		etcd:    cl,
-	})
-
-	// Build a test cluster PKI and node/manager certificates, and create the
-	// listener security parameters which will authenticate incoming requests.
-	ephemeral := rpc.NewEphemeralClusterCredentials(t, 2)
-	nodeCredentials := ephemeral.Nodes[0]
+	}, &nodeCredentials.Node)
 
 	cNode := NewNodeForBootstrap(nil, nodeCredentials.PublicKey())
 	// Inject new node into leader, using curator bootstrap functionality.
@@ -130,6 +131,7 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		localNodeConn: lcl,
 		localNodeID:   nodeCredentials.ID(),
 		otherNodeID:   ephemeral.Nodes[1].ID(),
+		caPubKey:      ephemeral.CA.PublicKey.(ed25519.PublicKey),
 		cancel:        ctxC,
 	}
 }
@@ -149,6 +151,8 @@ type fakeLeaderData struct {
 	// otherNodeID is the NodeID of some other node present in the curator
 	// state.
 	otherNodeID string
+	// caPubKey is the public key of the CA for this cluster.
+	caPubKey ed25519.PublicKey
 	// cancel shuts down the fake leader and all client connections.
 	cancel context.CancelFunc
 }
@@ -292,6 +296,11 @@ func TestMangementClusterInfo(t *testing.T) {
 		t.Fatalf("ClusterDirectory.Nodes[0].Addresses has %d elements, wanted %d", want, got)
 	}
 	if want, got := "192.0.2.10", node.Addresses[0].Host; want != got {
-		t.Fatalf("Nodes[0].Addresses[0].Host is %q, wanted %q", want, got)
+		t.Errorf("Nodes[0].Addresses[0].Host is %q, wanted %q", want, got)
+	}
+
+	// Cluster CA public key should match
+	if want, got := cl.caPubKey, res.CaPublicKey; !bytes.Equal(want, got) {
+		t.Fatalf("CaPublicKey mismatch (wanted %s, got %s)", hex.EncodeToString(want), hex.EncodeToString(got))
 	}
 }
