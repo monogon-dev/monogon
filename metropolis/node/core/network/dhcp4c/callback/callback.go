@@ -34,11 +34,11 @@ import (
 	"os"
 	"time"
 
-	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
-
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
+
+	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 )
 
 // Compose can be used to chain multiple callbacks

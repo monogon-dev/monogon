@@ -20,10 +20,11 @@ import (
 	"fmt"
 	"io"
 	"regexp"
-	"source.monogon.dev/metropolis/pkg/logbuffer"
 	"strconv"
 	"strings"
 	"time"
+
+	"source.monogon.dev/metropolis/pkg/logbuffer"
 )
 
 // KLogParser returns an io.WriteCloser to which raw logging from a klog emitter

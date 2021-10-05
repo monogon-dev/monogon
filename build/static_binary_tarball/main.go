@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"google.golang.org/protobuf/encoding/prototext"
+
 	"source.monogon.dev/build/static_binary_tarball/spec"
 )
 

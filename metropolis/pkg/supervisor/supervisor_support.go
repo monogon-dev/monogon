@@ -24,9 +24,9 @@ import (
 	"net"
 	"os/exec"
 
-	"source.monogon.dev/metropolis/pkg/logtree"
-
 	"google.golang.org/grpc"
+
+	"source.monogon.dev/metropolis/pkg/logtree"
 )
 
 // GRPCServer creates a Runnable that serves gRPC requests as longs as it's not

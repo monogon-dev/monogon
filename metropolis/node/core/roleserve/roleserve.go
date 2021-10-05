@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc"
+
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"

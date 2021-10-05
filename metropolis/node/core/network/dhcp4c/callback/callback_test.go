@@ -24,12 +24,12 @@ import (
 	"testing"
 	"time"
 
-	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
-
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/stretchr/testify/require"
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
+
+	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 )
 
 func trivialLeaseFromNet(ipnet net.IPNet) *dhcp4c.Lease {
