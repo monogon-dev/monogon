@@ -20,8 +20,8 @@ pipeline {
                     steps {
                         gerritCheck checks: ['jenkins:test': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
                         sh "git clean -fdx -e '/bazel-*'"
-                        sh "bazel test //..."
-                        sh "bazel test -c dbg //..."
+                        sh "JENKINS_NODE_COOKIE=dontKillMe bazel test //..."
+                        sh "JENKINS_NODE_COOKIE=dontKillMe bazel test -c dbg //..."
                     }
                     post {
                         success {
@@ -43,8 +43,8 @@ pipeline {
                     steps {
                         gerritCheck checks: ['jenkins:gazelle': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
                         sh "git clean -fdx -e '/bazel-*'"
-                        sh "bazel run //:fietsje"
-                        sh "bazel run //:gazelle -- update"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe bazel run //:fietsje"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe bazel run //:gazelle -- update"
 
                         script {
                             def diff = sh script: "git status --porcelain", returnStdout: true
