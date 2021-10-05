@@ -14,7 +14,7 @@ import (
 )
 
 type leaderManagement struct {
-	leadership
+	*leadership
 }
 
 const (

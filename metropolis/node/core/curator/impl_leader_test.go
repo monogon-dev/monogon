@@ -57,7 +57,7 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 
 	// Build a curator leader object. This implements methods that will be
 	// exercised by tests.
-	leader := newCuratorLeader(leadership{
+	leader := newCuratorLeader(&leadership{
 		lockKey: lockKey,
 		lockRev: lockRev,
 		etcd:    cl,

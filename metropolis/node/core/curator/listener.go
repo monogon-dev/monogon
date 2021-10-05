@@ -138,7 +138,14 @@ func (t *activeTarget) switchTo(ctx context.Context, l *listener, status *electi
 	t.ctxC = &implCtxC
 	if leader := status.leader; leader != nil {
 		supervisor.Logger(ctx).Info("Dispatcher switching over to local leader")
-		t.impl = newCuratorLeader(leadership{
+		// Create a new leadership and pass it to all leader service instances.
+		//
+		// This shares the leadership locks across all of them. Each time we regain
+		// leadership, a new set of locks is created - this is fine, as even if we
+		// happen to have to instances of the leader running (one old hanging on a lock
+		// and a new one with the lock freed) the previous leader will fail on
+		// txnAsLeader due to the leadership being outdated.
+		t.impl = newCuratorLeader(&leadership{
 			lockKey: leader.lockKey,
 			lockRev: leader.lockRev,
 			etcd:    l.etcd,

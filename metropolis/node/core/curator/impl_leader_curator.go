@@ -2,7 +2,6 @@ package curator
 
 import (
 	"context"
-	"sync"
 
 	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc/codes"
@@ -18,16 +17,7 @@ import (
 // leaderCurator implements the Curator gRPC API (cpb.Curator) as a curator
 // leader.
 type leaderCurator struct {
-	leadership
-
-	// muNodes guards any changes to nodes, and prevents race conditions where the
-	// curator performs a read-modify-write operation to node data. The curator's
-	// leadership ensure no two curators run simultaneously, and this lock ensures
-	// no two parallel curator operations race eachother.
-	//
-	// This lock has to be taken any time such RMW operation takes place when not
-	// additionally guarded using etcd transactions.
-	muNodes sync.Mutex
+	*leadership
 }
 
 // Watch returns a stream of updates concerning some part of the cluster

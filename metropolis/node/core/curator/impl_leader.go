@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc/codes"
@@ -24,6 +25,15 @@ type leadership struct {
 	// etcd is the etcd client in which curator data and leader election state is
 	// stored.
 	etcd client.Namespaced
+
+	// muNodes guards any changes to nodes, and prevents race conditions where the
+	// curator performs a read-modify-write operation to node data. The curator's
+	// leadership ensure no two curators run simultaneously, and this lock ensures
+	// no two parallel curator operations race eachother.
+	//
+	// This lock has to be taken any time such RMW operation takes place when not
+	// additionally guarded using etcd transactions.
+	muNodes sync.Mutex
 }
 
 var (
@@ -75,7 +85,7 @@ type curatorLeader struct {
 	leaderManagement
 }
 
-func newCuratorLeader(l leadership) *curatorLeader {
+func newCuratorLeader(l *leadership) *curatorLeader {
 	return &curatorLeader{
 		leaderCurator{leadership: l},
 		leaderAAA{leadership: l},

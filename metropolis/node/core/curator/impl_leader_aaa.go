@@ -23,7 +23,7 @@ const (
 )
 
 type leaderAAA struct {
-	leadership
+	*leadership
 }
 
 // getOwnerPubkey returns the public key of the configured owner of the cluster.
