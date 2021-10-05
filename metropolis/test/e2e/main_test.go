@@ -132,6 +132,33 @@ func TestE2E(t *testing.T) {
 					t.Fatalf("Received certificate for wrong private key")
 				}
 
+				// Connect to management endpoint and retrieve cluster directory.
+				authClient, err := rpc.NewAuthenticatedClient(remote, *cert, nil)
+				if err != nil {
+					return fmt.Errorf("NewAuthenticatedClient: %w", err)
+				}
+				mgmt := apb.NewManagementClient(authClient)
+				res, err := mgmt.GetClusterInfo(ctx, &apb.GetClusterInfoRequest{})
+				if err != nil {
+					return fmt.Errorf("GetClusterInfo: %w", err)
+				}
+
+				// Ensure the node is there with its address.
+				nodes := res.ClusterDirectory.Nodes
+				if want, got := 1, len(nodes); want != got {
+					return fmt.Errorf("wanted %d nodes in cluster directory, got %d", want, got)
+				}
+				node := nodes[0]
+				if want, got := ed25519.PublicKeySize, len(node.PublicKey); want != got {
+					return fmt.Errorf("wanted %d bytes long public key, got %d", want, got)
+				}
+				if want, got := 1, len(node.Addresses); want != got {
+					return fmt.Errorf("wanted %d node address, got %d", want, got)
+				}
+				if want, got := "10.42.0.10", node.Addresses[0].Host; want != got {
+					return fmt.Errorf("wanted status address %q, got %q", want, got)
+				}
+
 				return nil
 			})
 		})

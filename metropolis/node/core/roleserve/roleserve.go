@@ -127,6 +127,10 @@ func (s *Service) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to launch updater: %w", err)
 	}
 
+	if err := supervisor.Run(ctx, "cluster-agent", s.runClusterAgent); err != nil {
+		return fmt.Errorf("failed to launch cluster agent: %w", err)
+	}
+
 	if err := supervisor.Run(ctx, "kubernetes-worker", s.runKubernetesWorkerLauncher); err != nil {
 		return fmt.Errorf("failed to start kubernetes-worker launcher: %w", err)
 	}

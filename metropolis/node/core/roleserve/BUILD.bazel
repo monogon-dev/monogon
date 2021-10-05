@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
+        "cluster_agent.go",
         "kubernetes_worker.go",
         "roleserve.go",
     ],
@@ -18,6 +19,7 @@ go_library(
         "//metropolis/pkg/event:go_default_library",
         "//metropolis/pkg/event/memory:go_default_library",
         "//metropolis/pkg/supervisor:go_default_library",
+        "//metropolis/proto/common:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
     ],
 )
