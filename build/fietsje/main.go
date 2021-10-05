@@ -69,6 +69,11 @@ func main() {
 	// our own deps, common
 	p.collectOverride("go.uber.org/zap", "v1.15.0")
 	p.collectOverride("golang.org/x/mod", "v0.3.0")
+	p.collectOverride("github.com/spf13/viper", "v1.9.0").use(
+		"gopkg.in/ini.v1",
+		"github.com/subosito/gotenv",
+	)
+	p.collectOverride("github.com/spf13/cobra", "v1.2.1")
 	p.collect("github.com/cenkalti/backoff/v4", "v4.0.2")
 
 	p.collect("github.com/google/go-tpm", "ae6dd98980d4")

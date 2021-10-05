@@ -2295,6 +2295,13 @@ entry: <
   semver: "v1.0.0"
 >
 entry: <
+  import_path: "github.com/spf13/cobra"
+  version: "v1.2.1"
+  bazel_name: "com_github_spf13_cobra"
+  sum: "h1:+KmjbUw1hriSNMF55oPrkZcb27aECyrj8V2ytv7kWDw="
+  semver: "v1.2.1"
+>
+entry: <
   import_path: "github.com/spf13/jwalterweatherman"
   version: "v1.1.0"
   bazel_name: "com_github_spf13_jwalterweatherman"
@@ -2316,6 +2323,13 @@ entry: <
   semver: "v1.4.0"
 >
 entry: <
+  import_path: "github.com/spf13/viper"
+  version: "v1.9.0"
+  bazel_name: "com_github_spf13_viper"
+  sum: "h1:yR6EXjTp0y0cLN8OZg1CRZmOBdI88UcGkhgyJhu6nZk="
+  semver: "v1.9.0"
+>
+entry: <
   import_path: "github.com/stretchr/testify"
   version: "221dbe5ed46703ee255b1da0dec05086f5035f62"
   bazel_name: "com_github_stretchr_testify"
@@ -2328,6 +2342,13 @@ entry: <
   bazel_name: "com_github_stretchr_testify"
   sum: "h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk="
   semver: "v1.4.0"
+>
+entry: <
+  import_path: "github.com/subosito/gotenv"
+  version: "v1.2.0"
+  bazel_name: "com_github_subosito_gotenv"
+  sum: "h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s="
+  semver: "v1.2.0"
 >
 entry: <
   import_path: "github.com/syndtr/gocapability"
@@ -2748,6 +2769,13 @@ entry: <
   bazel_name: "in_gopkg_inf_v0"
   sum: "h1:73M5CoZyi3ZLMOyDlQh031Cx6N9NDJ2Vvfl76EDAgDc="
   semver: "v0.9.1"
+>
+entry: <
+  import_path: "gopkg.in/ini.v1"
+  version: "v1.63.2"
+  bazel_name: "in_gopkg_ini_v1"
+  sum: "h1:tGK/CyBg7SMzb60vP1M03vNZ3VDu3wGQJwn7Sxi9r3c="
+  semver: "v1.63.2"
 >
 entry: <
   import_path: "gopkg.in/natefinch/lumberjack.v2"
