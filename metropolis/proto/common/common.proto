@@ -127,11 +127,7 @@ message ClusterDirectory {
         message Address {
             string host = 1;
         };
-        repeated Address addesses = 2;
+        repeated Address addresses = 2;
     };
     repeated Node nodes = 1;
-}
-
-message ClusterIdentity {
-    bytes ca_fingerprint = 1;
 }

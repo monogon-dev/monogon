@@ -374,3 +374,12 @@ func (l *listener) UpdateNodeStatus(ctx context.Context, req *cpb.UpdateNodeStat
 	})
 	return
 }
+
+func (l *listener) GetClusterInfo(ctx context.Context, req *apb.GetClusterInfoRequest) (res *apb.GetClusterInfoResponse, err error) {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+		var err2 error
+		res, err2 = impl.GetClusterInfo(ctx, req)
+		return err2
+	})
+	return
+}

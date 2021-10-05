@@ -2,6 +2,7 @@ syntax = "proto3";
 package metropolis.proto.api;
 option go_package = "source.monogon.dev/metropolis/proto/api";
 
+import "metropolis/proto/common/common.proto";
 import "metropolis/proto/ext/authorization.proto";
 
 // Management service available to Cluster Managers.
@@ -17,6 +18,15 @@ service Management {
             need: PERMISSION_GET_REGISTER_TICKET
         };
     }
+    // GetClusterInfo retrieves publicly available summary information about
+    // this cluster, notably data required for nodes to register into a cluster
+    // or join it (other than the Register Ticket, which is gated by an
+    // additional permission).
+    rpc GetClusterInfo(GetClusterInfoRequest) returns (GetClusterInfoResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_READ_CLUSTER_STATUS
+        };
+    }
 }
 
 message GetRegisterTicketRequest {
@@ -25,4 +35,13 @@ message GetRegisterTicketRequest {
 message GetRegisterTicketResponse {
     // Opaque bytes that comprise the RegisterTicket.
     bytes ticket = 1;
+}
+
+message GetClusterInfoRequest {
+}
+
+message GetClusterInfoResponse {
+    // cluster_directory contains information about individual nodes in the
+    // cluster that can be used to dial the cluster's services.
+    metropolis.proto.common.ClusterDirectory cluster_directory = 1;
 }

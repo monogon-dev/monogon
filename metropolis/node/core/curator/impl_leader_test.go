@@ -252,3 +252,46 @@ func TestClusterUpdateNodeStatus(t *testing.T) {
 		t.Errorf("UpdateNodeStatus for other node (%q vs local %q) succeeded, should have failed", cl.localNodeID, cl.otherNodeID)
 	}
 }
+
+// TestManagementClusterInfo exercises GetClusterInfo after setting a status.
+func TestMangementClusterInfo(t *testing.T) {
+	cl := fakeLeader(t)
+	defer cl.cancel()
+
+	mgmt := apb.NewManagementClient(cl.mgmtConn)
+	curator := ipb.NewCuratorClient(cl.localNodeConn)
+
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	// Update status to set an external address.
+	_, err := curator.UpdateNodeStatus(ctx, &ipb.UpdateNodeStatusRequest{
+		NodeId: cl.localNodeID,
+		Status: &cpb.NodeStatus{
+			ExternalAddress: "192.0.2.10",
+		},
+	})
+	if err != nil {
+		t.Fatalf("UpdateNodeStatus: %v", err)
+	}
+
+	// Retrieve cluster info and make sure it's as expected.
+	res, err := mgmt.GetClusterInfo(ctx, &apb.GetClusterInfoRequest{})
+	if err != nil {
+		t.Fatalf("GetClusterInfo failed: %v", err)
+	}
+
+	nodes := res.ClusterDirectory.Nodes
+	if want, got := 1, len(nodes); want != got {
+		t.Fatalf("ClusterDirectory.Nodes contains %d elements, wanted %d", want, got)
+	}
+	node := nodes[0]
+
+	// Address should match address set from status.
+	if want, got := 1, len(node.Addresses); want != got {
+		t.Fatalf("ClusterDirectory.Nodes[0].Addresses has %d elements, wanted %d", want, got)
+	}
+	if want, got := "192.0.2.10", node.Addresses[0].Host; want != got {
+		t.Fatalf("Nodes[0].Addresses[0].Host is %q, wanted %q", want, got)
+	}
+}
