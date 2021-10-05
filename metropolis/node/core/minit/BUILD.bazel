@@ -1,0 +1,9 @@
+cc_binary(
+    name = "minit",
+    srcs = [
+        "main.c",
+    ],
+    visibility = [
+        "//metropolis/node:__pkg__",
+    ],
+)

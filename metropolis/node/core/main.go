@@ -18,15 +18,9 @@ package main
 
 import (
 	"context"
-	"crypto/ed25519"
-	"crypto/rand"
-	"crypto/x509"
 	"fmt"
-	"log"
-	"math/big"
 	"net"
 	"os"
-	"os/signal"
 	"runtime/debug"
 	"time"
 
@@ -51,14 +45,16 @@ import (
 func main() {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("Init panicked:", r)
+			fmt.Fprintf(os.Stderr, "\n\n")
+			fmt.Fprintf(os.Stderr, "  Metropolis encountered an uncorrectable error and this node must be restarted.\n")
+			fmt.Fprintf(os.Stderr, "  Core panicked: %v\n\n", r)
 			debug.PrintStack()
 		}
 		unix.Sync()
-		// TODO(lorenz): Switch this to Reboot when init panics are less likely
-		// Best effort, nothing we can do if this fails except printing the
-		// error to the console.
+		// TODO(lorenz): Switch this to Reboot when init panics are less likely.
 		if err := unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF); err != nil {
+			// Best effort, nothing we can do if this fails except printing the error to the
+			// console.
 			panic(fmt.Sprintf("failed to halt node: %v\n", err))
 		}
 	}()
@@ -93,9 +89,6 @@ func main() {
 
 	logger.Info("Starting Metropolis node init")
 
-	signalChannel := make(chan os.Signal, 2)
-	signal.Notify(signalChannel)
-
 	if err := tpm.Initialize(logger); err != nil {
 		logger.Fatalf("Failed to initialize TPM 2.0: %v", err)
 	}
@@ -114,8 +107,7 @@ func main() {
 	}
 
 	// trapdoor is a channel used to signal to the init service that a very
-	// low-level, unrecoverable failure occured. This causes a GURU MEDITATION
-	// ERROR visible to the end user.
+	// low-level, unrecoverable failure occured.
 	trapdoor := make(chan struct{})
 
 	// Make context for supervisor. We cancel it when we reach the trapdoor.
@@ -242,87 +234,7 @@ func main() {
 		return nil
 	}, supervisor.WithExistingLogtree(lt))
 
-	// We're PID1, so orphaned processes get reparented to us to clean up
-	for {
-		select {
-		case <-trapdoor:
-			// If the trapdoor got closed, we got stuck early enough in the
-			// boot process that we can't do anything about it. Display a
-			// generic error message until we handle error conditions better.
-			ctxC()
-			log.Printf("                  ########################")
-			log.Printf("                  # GURU MEDIATION ERROR #")
-			log.Printf("                  ########################")
-			log.Printf("")
-			log.Printf("Metropolis encountered an uncorrectable error and this node must be")
-			log.Printf("restarted.")
-			log.Printf("")
-			log.Printf("(Error condition: init trapdoor closed)")
-			log.Printf("")
-			select {}
-
-		case sig := <-signalChannel:
-			switch sig {
-			case unix.SIGCHLD:
-				var status unix.WaitStatus
-				var rusage unix.Rusage
-				for {
-					res, err := unix.Wait4(-1, &status, unix.WNOHANG, &rusage)
-					if err != nil && err != unix.ECHILD {
-						logger.Errorf("Failed to wait on orphaned child: %v", err)
-						break
-					}
-					if res <= 0 {
-						break
-					}
-				}
-			case unix.SIGURG:
-				// Go 1.14 introduced asynchronous preemption, which uses
-				// SIGURG.
-				// In order not to break backwards compatibility in the
-				// unlikely case of an application actually using SIGURG on its
-				// own, they're not filtering them.
-				// (https://github.com/golang/go/issues/37942)
-				logger.V(5).Info("Ignoring SIGURG")
-			// TODO(lorenz): We can probably get more than just SIGCHLD as init, but I can't think
-			// of any others right now, just log them in case we hit any of them.
-			default:
-				logger.Warningf("Got unexpected signal %s", sig.String())
-			}
-		}
-	}
-}
-
-// nodeCertificate creates a node key/certificate for a foreign node. This is
-// duplicated code with localstorage's PKIDirectory EnsureSelfSigned, but is
-// temporary (and specific to 'golden tickets').
-func (s *debugService) nodeCertificate() (cert, key []byte, err error) {
-	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		err = fmt.Errorf("failed to generate key: %w", err)
-		return
-	}
-
-	key, err = x509.MarshalPKCS8PrivateKey(privKey)
-	if err != nil {
-		err = fmt.Errorf("failed to marshal key: %w", err)
-		return
-	}
-
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 127)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	if err != nil {
-		err = fmt.Errorf("failed to generate serial number: %w", err)
-		return
-	}
-
-	template := localstorage.CertificateForNode(pubKey)
-	template.SerialNumber = serialNumber
-
-	cert, err = x509.CreateCertificate(rand.Reader, &template, &template, pubKey, privKey)
-	if err != nil {
-		err = fmt.Errorf("could not sign certificate: %w", err)
-		return
-	}
-	return
+	<-trapdoor
+	logger.Infof("Trapdoor closed, exiting core.")
+	ctxC()
 }

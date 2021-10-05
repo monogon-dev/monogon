@@ -35,7 +35,7 @@ erofs_image(
         "/data",
     ],
     files = {
-        "//metropolis/node/core": "/init",
+        "//metropolis/node/core": "/core",
 
         # CA Certificate bundle & os-release & resolv.conf
         # These should not be explicitly used by Metropolis code and are only here for compatibility with
@@ -79,6 +79,7 @@ erofs_image(
         "@com_github_go_delve_delve//cmd/dlv:dlv": "/dlv",
     },
     files_cc = {
+        "//metropolis/node/core/minit": "/init",
         # runc runtime, with cgo
         "@com_github_opencontainers_runc//:runc": "/containerd/bin/runc",
         "@xfsprogs//:mkfs": "/bin/mkfs.xfs",
