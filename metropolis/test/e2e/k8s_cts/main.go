@@ -35,7 +35,7 @@ import (
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/test/e2e"
-	"source.monogon.dev/metropolis/test/launch"
+	"source.monogon.dev/metropolis/test/launch/cluster"
 )
 
 // makeCTSPodSpec generates a spec for a standalone pod running the Kubernetes
@@ -101,12 +101,12 @@ func main() {
 	}()
 
 	// TODO(q3k): bump up number of nodes after multi-node workflow gets reimplemented.
-	debugClient, portMap, err := launch.LaunchCluster(ctx, launch.ClusterOptions{NumNodes: 1})
+	cl, err := cluster.LaunchCluster(ctx, cluster.ClusterOptions{NumNodes: 1})
 	if err != nil {
 		log.Fatalf("Failed to launch cluster: %v", err)
 	}
 	log.Println("Cluster initialized")
-	clientSet, err := e2e.GetKubeClientSet(ctx, debugClient, portMap[common.KubernetesAPIPort])
+	clientSet, err := e2e.GetKubeClientSet(ctx, cl.Debug, cl.Ports[common.KubernetesAPIPort])
 	if err != nil {
 		log.Fatalf("Failed to get clientSet: %v", err)
 	}

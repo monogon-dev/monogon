@@ -25,6 +25,7 @@ import (
 
 	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/metropolis/test/launch"
+	"source.monogon.dev/metropolis/test/launch/cluster"
 )
 
 func main() {
@@ -35,12 +36,12 @@ func main() {
 		<-sigs
 		cancel()
 	}()
-	if err := launch.Launch(ctx, launch.Options{
-		Ports:      launch.IdentityPortMap(launch.NodePorts),
+	if err := cluster.LaunchNode(ctx, cluster.NodeOptions{
+		Ports:      launch.IdentityPortMap(cluster.NodePorts),
 		SerialPort: os.Stdout,
 		NodeParameters: &apb.NodeParameters{
 			Cluster: &apb.NodeParameters_ClusterBootstrap_{
-				ClusterBootstrap: launch.InsecureClusterBootstrap,
+				ClusterBootstrap: cluster.InsecureClusterBootstrap,
 			},
 		},
 	}); err != nil {

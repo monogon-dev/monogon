@@ -309,7 +309,7 @@ func main() {
 			logger.Info("No upstream interface detected")
 		}
 		supervisor.Run(ctx, "dhcp-server", runDHCPServer(vmBridgeLink))
-		supervisor.Run(ctx, "proxy-ext1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.ExternalServicePort))
+		supervisor.Run(ctx, "proxy-cur1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.CuratorServicePort))
 		supervisor.Run(ctx, "proxy-dbg1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.DebugServicePort))
 		supervisor.Run(ctx, "proxy-k8s-api1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.KubernetesAPIPort))
 		supervisor.Signal(ctx, supervisor.SignalHealthy)

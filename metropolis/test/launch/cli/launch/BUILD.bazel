@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//metropolis/proto/api:go_default_library",
         "//metropolis/test/launch:go_default_library",
+        "//metropolis/test/launch/cluster:go_default_library",
     ],
 )
 

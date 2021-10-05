@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "cluster.go",
+        "insecure_key.go",
+    ],
+    data = [
+        "//metropolis/node:image",
+        "//metropolis/node:swtpm_data",
+        "//metropolis/test/ktest:linux-testing",
+        "//metropolis/test/nanoswitch:initramfs",
+        "//third_party/edk2:firmware",
+        "@com_github_bonzini_qboot//:qboot-bin",
+    ],
+    importpath = "source.monogon.dev/metropolis/test/launch/cluster",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node:go_default_library",
+        "//metropolis/node/core/rpc:go_default_library",
+        "//metropolis/proto/api:go_default_library",
+        "//metropolis/test/launch:go_default_library",
+        "@com_github_cenkalti_backoff_v4//:go_default_library",
+        "@com_github_grpc_ecosystem_go_grpc_middleware//retry:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_protobuf//proto:go_default_library",
+        "@org_uber_go_multierr//:go_default_library",
+    ],
+)

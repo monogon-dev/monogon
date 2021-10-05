@@ -33,7 +33,7 @@ go_library(
     deps = [
         "//metropolis/node:go_default_library",
         "//metropolis/test/e2e:go_default_library",
-        "//metropolis/test/launch:go_default_library",
+        "//metropolis/test/launch/cluster:go_default_library",
         "@io_k8s_api//core/v1:go_default_library",
         "@io_k8s_api//rbac/v1:go_default_library",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
@@ -42,14 +42,6 @@ go_library(
 
 go_binary(
     name = "k8s_cts",
-    data = [
-        "//metropolis/node:image",
-        "//metropolis/node:swtpm_data",
-        "//metropolis/test/ktest:linux-testing",
-        "//metropolis/test/nanoswitch:initramfs",
-        "//third_party/edk2:firmware",
-        "@com_github_bonzini_qboot//:qboot-bin",
-    ],
     embed = [":go_default_library"],
     visibility = ["//visibility:private"],
 )

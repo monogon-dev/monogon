@@ -17,7 +17,6 @@
 package e2e
 
 import (
-	"bytes"
 	"context"
 	"crypto/ed25519"
 	"errors"
@@ -32,16 +31,14 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/grpc"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 
 	common "source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
-	"source.monogon.dev/metropolis/test/launch"
+	"source.monogon.dev/metropolis/test/launch/cluster"
 )
 
 const (
@@ -62,83 +59,49 @@ const (
 // subtest.
 func TestE2E(t *testing.T) {
 	// Run pprof server for debugging
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		panic(err)
+	}
+
+	pprofListen, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		log.Fatalf("Failed to listen on pprof port: %s", pprofListen.Addr())
+	}
+
+	log.Printf("E2E: pprof server listening on %s", pprofListen.Addr())
 	go func() {
-		addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-		if err != nil {
-			panic(err)
-		}
-
-		l, err := net.ListenTCP("tcp", addr)
-		if err != nil {
-			log.Fatalf("Failed to listen on pprof port: %s", l.Addr())
-		}
-		defer l.Close()
-
-		log.Printf("pprof server listening on %s", l.Addr())
-		log.Printf("pprof server returned an error: %v", http.Serve(l, nil))
+		log.Printf("E2E: pprof server returned an error: %v", http.Serve(pprofListen, nil))
+		pprofListen.Close()
 	}()
 
 	// Set a global timeout to make sure this terminates
 	ctx, cancel := context.WithTimeout(context.Background(), globalTestTimeout)
 	defer cancel()
-	portMap, err := launch.ConflictFreePortMap(launch.NodePorts)
+
+	// Launch cluster.
+	cluster, err := cluster.LaunchCluster(ctx, cluster.ClusterOptions{
+		NumNodes: 1,
+	})
 	if err != nil {
-		t.Fatalf("Failed to acquire ports for e2e test: %v", err)
+		t.Fatalf("LaunchCluster failed: %v", err)
 	}
-
-	procExit := make(chan struct{})
-
-	go func() {
-		if err := launch.Launch(ctx, launch.Options{
-			Ports:      portMap,
-			SerialPort: os.Stdout,
-			NodeParameters: &apb.NodeParameters{
-				Cluster: &apb.NodeParameters_ClusterBootstrap_{
-					ClusterBootstrap: launch.InsecureClusterBootstrap,
-				},
-			},
-		}); err != nil {
-			panic(err)
+	defer func() {
+		err := cluster.Close()
+		if err != nil {
+			t.Fatalf("cluster Close failed: %v", err)
 		}
-		close(procExit)
 	}()
 
-	grpcDebug, err := portMap.DialGRPC(common.DebugServicePort, grpc.WithInsecure())
-	if err != nil {
-		log.Printf("Failed to dial debug service (is it running?): %v", err)
-		return
-	}
-	debug := apb.NewNodeDebugServiceClient(grpcDebug)
+	log.Printf("E2E: Cluster running, starting tests...")
 
 	// This exists to keep the parent around while all the children race.
 	// It currently tests both a set of OS-level conditions and Kubernetes
 	// Deployments and StatefulSets
 	t.Run("RunGroup", func(t *testing.T) {
 		t.Run("Connect to Curator", func(t *testing.T) {
-			testEventual(t, "Retrieving owner credentials succesful", ctx, 60*time.Second, func(ctx context.Context) error {
-				remote := fmt.Sprintf("localhost:%v", portMap[common.CuratorServicePort])
-				initClient, err := rpc.NewEphemeralClient(remote, launch.InsecurePrivateKey, nil)
-				if err != nil {
-					return fmt.Errorf("NewInitialClient: %w", err)
-				}
-
-				aaa := apb.NewAAAClient(initClient)
-				cert, err := rpc.RetrieveOwnerCertificate(ctx, aaa, launch.InsecurePrivateKey)
-				if err != nil {
-					return fmt.Errorf("RetrieveOwnerCertificate: %w", err)
-				}
-
-				if !bytes.Equal(cert.PrivateKey.(ed25519.PrivateKey), launch.InsecurePrivateKey) {
-					t.Fatalf("Received certificate for wrong private key")
-				}
-
-				// Connect to management endpoint and retrieve cluster directory.
-				authClient, err := rpc.NewAuthenticatedClient(remote, *cert, nil)
-				if err != nil {
-					return fmt.Errorf("NewAuthenticatedClient: %w", err)
-				}
-				mgmt := apb.NewManagementClient(authClient)
-				res, err := mgmt.GetClusterInfo(ctx, &apb.GetClusterInfoRequest{})
+			testEventual(t, "Retrieving cluster directory sucessful", ctx, 60*time.Second, func(ctx context.Context) error {
+				res, err := cluster.Management.GetClusterInfo(ctx, &apb.GetClusterInfoRequest{})
 				if err != nil {
 					return fmt.Errorf("GetClusterInfo: %w", err)
 				}
@@ -155,7 +118,7 @@ func TestE2E(t *testing.T) {
 				if want, got := 1, len(node.Addresses); want != got {
 					return fmt.Errorf("wanted %d node address, got %d", want, got)
 				}
-				if want, got := "10.42.0.10", node.Addresses[0].Host; want != got {
+				if want, got := "10.1.0.2", node.Addresses[0].Host; want != got {
 					return fmt.Errorf("wanted status address %q, got %q", want, got)
 				}
 
@@ -166,7 +129,7 @@ func TestE2E(t *testing.T) {
 			t.Parallel()
 			selfCtx, cancel := context.WithTimeout(ctx, largeTestTimeout)
 			defer cancel()
-			clientSet, err := GetKubeClientSet(selfCtx, debug, portMap[common.KubernetesAPIPort])
+			clientSet, err := GetKubeClientSet(selfCtx, cluster.Debug, cluster.Ports[common.KubernetesAPIPort])
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -365,9 +328,4 @@ func TestE2E(t *testing.T) {
 			}
 		})
 	})
-
-	// Cancel the main context and wait for our subprocesses to exit
-	// to avoid leaking them and blocking the parent.
-	cancel()
-	<-procExit
 }

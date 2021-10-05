@@ -14,41 +14,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// launch implements test harnesses for running qemu VMs from tests.
 package launch
 
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 
-	"github.com/golang/protobuf/proto"
-	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
-	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/pkg/freeport"
-	apb "source.monogon.dev/metropolis/proto/api"
 )
 
-type qemuValue map[string][]string
+type QemuValue map[string][]string
 
-// toOption encodes structured data into a QEMU option. Example: "test", {"key1":
+// ToOption encodes structured data into a QEMU option. Example: "test", {"key1":
 // {"val1"}, "key2": {"val2", "val3"}} returns "test,key1=val1,key2=val2,key2=val3"
-func (value qemuValue) toOption(name string) string {
+func (value QemuValue) ToOption(name string) string {
 	var optionValues []string
 	if name != "" {
 		optionValues = append(optionValues, name)
@@ -64,33 +55,13 @@ func (value qemuValue) toOption(name string) string {
 	return strings.Join(optionValues, ",")
 }
 
-func copyFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return fmt.Errorf("when opening source: %w", err)
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return fmt.Errorf("when creating destination: %w", err)
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	if err != nil {
-		return fmt.Errorf("when copying file: %w", err)
-	}
-	return out.Close()
-}
-
 // PortMap represents where VM ports are mapped to on the host. It maps from the VM
 // port number to the host port number.
 type PortMap map[uint16]uint16
 
-// toQemuForwards generates QEMU hostfwd values (https://qemu.weilnetz.de/doc/qemu-
+// ToQemuForwards generates QEMU hostfwd values (https://qemu.weilnetz.de/doc/qemu-
 // doc.html#:~:text=hostfwd=) for all mapped ports.
-func (p PortMap) toQemuForwards() []string {
+func (p PortMap) ToQemuForwards() []string {
 	var hostfwdOptions []string
 	for vmPort, hostPort := range p {
 		hostfwdOptions = append(hostfwdOptions, fmt.Sprintf("tcp::%v-:%v", hostPort, vmPort))
@@ -111,38 +82,6 @@ func (p PortMap) DialGRPC(port uint16, opts ...grpc.DialOption) (*grpc.ClientCon
 	}
 	return grpcClient, nil
 }
-
-// Options contains all options that can be passed to Launch()
-type Options struct {
-	// Ports contains the port mapping where to expose the internal ports of the VM to
-	// the host. See IdentityPortMap() and ConflictFreePortMap(). Ignored when
-	// ConnectToSocket is set.
-	Ports PortMap
-
-	// If set to true, reboots are honored. Otherwise all reboots exit the Launch()
-	// command. Metropolis nodes generally restarts on almost all errors, so unless you
-	// want to test reboot behavior this should be false.
-	AllowReboot bool
-
-	// By default the VM is connected to the Host via SLIRP. If ConnectToSocket is set,
-	// it is instead connected to the given file descriptor/socket. If this is set, all
-	// port maps from the Ports option are ignored. Intended for networking this
-	// instance together with others for running  more complex network configurations.
-	ConnectToSocket *os.File
-
-	// SerialPort is a io.ReadWriter over which you can communicate with the serial
-	// port of the machine It can be set to an existing file descriptor (like
-	// os.Stdout/os.Stderr) or any Go structure implementing this interface.
-	SerialPort io.ReadWriter
-
-	// NodeParameters is passed into the VM and subsequently used for bootstrapping or
-	// registering into a cluster.
-	NodeParameters *apb.NodeParameters
-}
-
-// NodePorts is the list of ports a fully operational Metropolis node listens on
-var NodePorts = []uint16{node.ConsensusPort, node.CuratorServicePort, node.MasterServicePort,
-	node.ExternalServicePort, node.DebugServicePort, node.KubernetesAPIPort, node.DebuggerPort}
 
 // IdentityPortMap returns a port map where each given port is mapped onto itself
 // on the host. This is mainly useful for development against Metropolis. The dbg
@@ -173,160 +112,6 @@ func ConflictFreePortMap(ports []uint16) (PortMap, error) {
 		portMap[port] = mappedPort
 	}
 	return portMap, nil
-}
-
-// Gets a random EUI-48 Ethernet MAC address
-func generateRandomEthernetMAC() (*net.HardwareAddr, error) {
-	macBuf := make([]byte, 6)
-	_, err := rand.Read(macBuf)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read randomness for MAC: %v", err)
-	}
-
-	// Set U/L bit and clear I/G bit (locally administered individual MAC)
-	// Ref IEEE 802-2014 Section 8.2.2
-	macBuf[0] = (macBuf[0] | 2) & 0xfe
-	mac := net.HardwareAddr(macBuf)
-	return &mac, nil
-}
-
-// Launch launches a Metropolis node instance with the given options. The instance
-// runs mostly paravirtualized but with some emulated hardware similar to how a
-// cloud provider might set up its VMs. The disk is fully writable but is run in
-// snapshot mode meaning that changes are not kept beyond a single invocation.
-func Launch(ctx context.Context, options Options) error {
-	// Pin temp directory to /tmp until we can use abstract socket namespace in QEMU
-	// (next release after 5.0,
-	// https://github.com/qemu/qemu/commit/776b97d3605ed0fc94443048fdf988c7725e38a9).
-	// swtpm accepts already-open FDs so we can pass in an abstract socket namespace FD
-	// that we open and pass the name of it to QEMU. Not pinning this crashes both
-	// swtpm and qemu because we run into UNIX socket length limitations (for legacy
-	// reasons 108 chars).
-	tempDir, err := ioutil.TempDir("/tmp", "launch*")
-	if err != nil {
-		return fmt.Errorf("failed to create temporary directory: %w", err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	// Copy TPM state into a temporary directory since it's being modified by the
-	// emulator
-	tpmTargetDir := filepath.Join(tempDir, "tpm")
-	tpmSrcDir := "metropolis/node/tpm"
-	if err := os.Mkdir(tpmTargetDir, 0755); err != nil {
-		return fmt.Errorf("failed to create TPM state directory: %w", err)
-	}
-	tpmFiles, err := ioutil.ReadDir(tpmSrcDir)
-	if err != nil {
-		return fmt.Errorf("failed to read TPM directory: %w", err)
-	}
-	for _, file := range tpmFiles {
-		name := file.Name()
-		src := filepath.Join(tpmSrcDir, name)
-		target := filepath.Join(tpmTargetDir, name)
-		if err := copyFile(src, target); err != nil {
-			return fmt.Errorf("failed to copy TPM directory: file %q to %q: %w", src, target, err)
-		}
-	}
-
-	var qemuNetType string
-	var qemuNetConfig qemuValue
-	if options.ConnectToSocket != nil {
-		qemuNetType = "socket"
-		qemuNetConfig = qemuValue{
-			"id": {"net0"},
-			"fd": {"3"},
-		}
-	} else {
-		qemuNetType = "user"
-		qemuNetConfig = qemuValue{
-			"id":        {"net0"},
-			"net":       {"10.42.0.0/24"},
-			"dhcpstart": {"10.42.0.10"},
-			"hostfwd":   options.Ports.toQemuForwards(),
-		}
-	}
-
-	tpmSocketPath := filepath.Join(tempDir, "tpm-socket")
-
-	mac, err := generateRandomEthernetMAC()
-	if err != nil {
-		return err
-	}
-
-	qemuArgs := []string{"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "4096",
-		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
-		"-drive", "if=pflash,format=raw,readonly,file=external/edk2/OVMF_CODE.fd",
-		"-drive", "if=pflash,format=raw,snapshot=on,file=external/edk2/OVMF_VARS.fd",
-		"-drive", "if=virtio,format=raw,snapshot=on,cache=unsafe,file=metropolis/node/node.img",
-		"-netdev", qemuNetConfig.toOption(qemuNetType),
-		"-device", "virtio-net-pci,netdev=net0,mac=" + mac.String(),
-		"-chardev", "socket,id=chrtpm,path=" + tpmSocketPath,
-		"-tpmdev", "emulator,id=tpm0,chardev=chrtpm",
-		"-device", "tpm-tis,tpmdev=tpm0",
-		"-device", "virtio-rng-pci",
-		"-serial", "stdio"}
-
-	if !options.AllowReboot {
-		qemuArgs = append(qemuArgs, "-no-reboot")
-	}
-
-	if options.NodeParameters != nil {
-		parametersPath := filepath.Join(tempDir, "parameters.pb")
-		parametersRaw, err := proto.Marshal(options.NodeParameters)
-		if err != nil {
-			return fmt.Errorf("failed to encode node paraeters: %w", err)
-		}
-		if err := ioutil.WriteFile(parametersPath, parametersRaw, 0644); err != nil {
-			return fmt.Errorf("failed to write node parameters: %w", err)
-		}
-		qemuArgs = append(qemuArgs, "-fw_cfg", "name=dev.monogon.metropolis/parameters.pb,file="+parametersPath)
-	}
-
-	// Start TPM emulator as a subprocess
-	tpmCtx, tpmCancel := context.WithCancel(ctx)
-	defer tpmCancel()
-
-	tpmEmuCmd := exec.CommandContext(tpmCtx, "swtpm", "socket", "--tpm2", "--tpmstate", "dir="+tpmTargetDir, "--ctrl", "type=unixio,path="+tpmSocketPath)
-	tpmEmuCmd.Stderr = os.Stderr
-	tpmEmuCmd.Stdout = os.Stdout
-
-	err = tpmEmuCmd.Start()
-	if err != nil {
-		return fmt.Errorf("failed to start TPM emulator: %w", err)
-	}
-
-	// Start the main qemu binary
-	systemCmd := exec.CommandContext(ctx, "qemu-system-x86_64", qemuArgs...)
-	if options.ConnectToSocket != nil {
-		systemCmd.ExtraFiles = []*os.File{options.ConnectToSocket}
-	}
-
-	var stdErrBuf bytes.Buffer
-	systemCmd.Stderr = &stdErrBuf
-	systemCmd.Stdout = options.SerialPort
-
-	err = systemCmd.Run()
-
-	// Stop TPM emulator and wait for it to exit to properly reap the child process
-	tpmCancel()
-	log.Print("Waiting for TPM emulator to exit")
-	// Wait returns a SIGKILL error because we just cancelled its context.
-	// We still need to call it to avoid creating zombies.
-	_ = tpmEmuCmd.Wait()
-
-	var exerr *exec.ExitError
-	if err != nil && errors.As(err, &exerr) {
-		status := exerr.ProcessState.Sys().(syscall.WaitStatus)
-		if status.Signaled() && status.Signal() == syscall.SIGKILL {
-			// Process was killed externally (most likely by our context being canceled).
-			// This is a normal exit for us, so return nil
-			return nil
-		}
-		exerr.Stderr = stdErrBuf.Bytes()
-		newErr := QEMUError(*exerr)
-		return &newErr
-	}
-	return err
 }
 
 // NewSocketPair creates a new socket pair. By connecting both ends to different
@@ -399,28 +184,28 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 		// functionality to get a single bidirectional chardev backend backed by a passed-
 		// down RDWR fd. Ref https://lists.gnu.org/archive/html/qemu-devel/2015-
 		// 12/msg01256.html
-		addFdConf := qemuValue{
+		addFdConf := QemuValue{
 			"set": {idxStr},
 			"fd":  {strconv.Itoa(idx + 3)},
 		}
-		chardevConf := qemuValue{
+		chardevConf := QemuValue{
 			"id":   {id},
 			"path": {"/dev/fdset/" + idxStr},
 		}
-		deviceConf := qemuValue{
+		deviceConf := QemuValue{
 			"chardev": {id},
 		}
-		extraArgs = append(extraArgs, "-add-fd", addFdConf.toOption(""),
-			"-chardev", chardevConf.toOption("pipe"), "-device", deviceConf.toOption("virtserialport"))
+		extraArgs = append(extraArgs, "-add-fd", addFdConf.ToOption(""),
+			"-chardev", chardevConf.ToOption("pipe"), "-device", deviceConf.ToOption("virtserialport"))
 	}
 
 	for idx, _ := range opts.ExtraNetworkInterfaces {
 		id := fmt.Sprintf("net%v", idx)
-		netdevConf := qemuValue{
+		netdevConf := QemuValue{
 			"id": {id},
 			"fd": {strconv.Itoa(idx + 3 + len(opts.ExtraChardevs))},
 		}
-		extraArgs = append(extraArgs, "-netdev", netdevConf.toOption("socket"), "-device", "virtio-net-device,netdev="+id)
+		extraArgs = append(extraArgs, "-netdev", netdevConf.ToOption("socket"), "-device", "virtio-net-device,netdev="+id)
 	}
 
 	// This sets up a minimum viable environment for our Linux kernel. It clears all
@@ -455,16 +240,16 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 
 	if !opts.DisableHostNetworkInterface {
 		qemuNetType := "user"
-		qemuNetConfig := qemuValue{
+		qemuNetConfig := QemuValue{
 			"id":        {"usernet0"},
 			"net":       {"10.42.0.0/24"},
 			"dhcpstart": {"10.42.0.10"},
 		}
 		if opts.PortMap != nil {
-			qemuNetConfig["hostfwd"] = opts.PortMap.toQemuForwards()
+			qemuNetConfig["hostfwd"] = opts.PortMap.ToQemuForwards()
 		}
 
-		baseArgs = append(baseArgs, "-netdev", qemuNetConfig.toOption(qemuNetType),
+		baseArgs = append(baseArgs, "-netdev", qemuNetConfig.ToOption(qemuNetType),
 			"-device", "virtio-net-device,netdev=usernet0,mac="+HostInterfaceMAC.String())
 	}
 
@@ -477,6 +262,13 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 	cmd.ExtraFiles = append(cmd.ExtraFiles, opts.ExtraNetworkInterfaces...)
 
 	err := cmd.Run()
+	// If it's a context error, just quit. There's no way to tell a
+	// killed-due-to-context vs killed-due-to-external-reason error returned by Run,
+	// so we approximate by looking at the context's status.
+	if err != nil && ctx.Err() != nil {
+		return ctx.Err()
+	}
+
 	var exerr *exec.ExitError
 	if err != nil && errors.As(err, &exerr) {
 		exerr.Stderr = stdErrBuf.Bytes()
@@ -492,89 +284,4 @@ type QEMUError exec.ExitError
 
 func (e *QEMUError) Error() string {
 	return fmt.Sprintf("%v: %v", e.String(), string(e.Stderr))
-}
-
-// NanoswitchPorts contains all ports forwarded by Nanoswitch to the first VM
-var NanoswitchPorts = []uint16{
-	node.ExternalServicePort,
-	node.DebugServicePort,
-	node.KubernetesAPIPort,
-}
-
-// ClusterOptions contains all options for launching a Metropolis cluster
-type ClusterOptions struct {
-	// The number of nodes this cluster should be started with initially
-	NumNodes int
-}
-
-// LaunchCluster launches a cluster of Metropolis node VMs together with a
-// Nanoswitch instance to network them all together.
-func LaunchCluster(ctx context.Context, opts ClusterOptions) (apb.NodeDebugServiceClient, PortMap, error) {
-	var switchPorts []*os.File
-	var vmPorts []*os.File
-	for i := 0; i < opts.NumNodes; i++ {
-		switchPort, vmPort, err := NewSocketPair()
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get socketpair: %w", err)
-		}
-		switchPorts = append(switchPorts, switchPort)
-		vmPorts = append(vmPorts, vmPort)
-	}
-
-	if opts.NumNodes == 0 {
-		return nil, nil, errors.New("refusing to start cluster with zero nodes")
-	}
-
-	if opts.NumNodes > 2 {
-		return nil, nil, errors.New("launching more than 2 nodes is unsupported pending replacement of golden tickets")
-	}
-
-	go func() {
-		if err := Launch(ctx, Options{
-			ConnectToSocket: vmPorts[0],
-			NodeParameters: &apb.NodeParameters{
-				Cluster: &apb.NodeParameters_ClusterBootstrap_{
-					ClusterBootstrap: &apb.NodeParameters_ClusterBootstrap{},
-				},
-			},
-		}); err != nil {
-
-			// Launch() only terminates when QEMU has terminated. At that point our function
-			// probably doesn't run anymore so we have no way of communicating the error back
-			// up, so let's just log it. Also a failure in launching VMs should be very visible
-			// by the unavailability of the clients we return.
-			log.Printf("Failed to launch vm0: %v", err)
-		}
-	}()
-
-	portMap, err := ConflictFreePortMap(NanoswitchPorts)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to allocate ephemeral ports: %w", err)
-	}
-
-	go func() {
-		if err := RunMicroVM(ctx, &MicroVMOptions{
-			KernelPath:             "metropolis/test/ktest/vmlinux",
-			InitramfsPath:          "metropolis/test/nanoswitch/initramfs.lz4",
-			ExtraNetworkInterfaces: switchPorts,
-			PortMap:                portMap,
-		}); err != nil {
-			log.Printf("Failed to launch nanoswitch: %v", err)
-		}
-	}()
-	copts := []grpcretry.CallOption{
-		grpcretry.WithBackoff(grpcretry.BackoffExponential(100 * time.Millisecond)),
-	}
-	conn, err := portMap.DialGRPC(node.DebugServicePort, grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(grpcretry.UnaryClientInterceptor(copts...)))
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to dial debug service: %w", err)
-	}
-	debug := apb.NewNodeDebugServiceClient(conn)
-
-	if opts.NumNodes == 2 {
-		return nil, nil, fmt.Errorf("multinode unimplemented")
-	}
-
-	return debug, portMap, nil
 }
