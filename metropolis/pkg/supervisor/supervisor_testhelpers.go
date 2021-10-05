@@ -52,6 +52,7 @@ func TestHarness(t *testing.T, r func(ctx context.Context) error) (context.Cance
 		Logger(ctx).Infof("Starting test %s...", t.Name())
 		if err := r(ctx); err != nil && !errors.Is(err, ctx.Err()) {
 			t.Errorf("Supervised runnable in harness returned error: %v", err)
+			return err
 		}
 		return nil
 	}, WithExistingLogtree(lt))

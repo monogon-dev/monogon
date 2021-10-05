@@ -113,6 +113,7 @@ func (e *Converter) NamedPipeReader(path string) (supervisor.Runnable, error) {
 		if err != nil {
 			return fmt.Errorf("when opening named pipe: %w", err)
 		}
+		defer fifo.Close()
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
 		for {
 			// Quit if requested.

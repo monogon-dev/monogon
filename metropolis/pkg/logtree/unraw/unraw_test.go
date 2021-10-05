@@ -2,9 +2,11 @@ package unraw
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"syscall"
 	"testing"
 
 	"source.monogon.dev/metropolis/pkg/logbuffer"
@@ -19,11 +21,11 @@ func testParser(l *logbuffer.Line, w LeveledWriter) {
 }
 
 func TestNamedPipeReader(t *testing.T) {
-	dir, err := ioutil.TempDir("", "metropolis-test-named-pipe-reader")
+	dir, err := ioutil.TempDir("/tmp", "metropolis-test-named-pipe-reader")
 	if err != nil {
 		t.Fatalf("could not create tempdir: %v", err)
 	}
-	//defer os.RemoveAll(dir)
+	defer os.RemoveAll(dir)
 	fifoPath := dir + "/fifo"
 
 	// Start named pipe reader.
@@ -42,8 +44,13 @@ func TestNamedPipeReader(t *testing.T) {
 		return r(ctx)
 	})
 
-	// Wait until NamedPipeReader returns to make sure the fifo was created..
 	<-started
+
+	// Open FIFO...
+	f, err := os.OpenFile(fifoPath, os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatalf("could not open fifo: %v", err)
+	}
 
 	// Start reading all logs.
 	reader, err := lt.Read("root", logtree.WithChildren(), logtree.WithStream())
@@ -53,10 +60,6 @@ func TestNamedPipeReader(t *testing.T) {
 	defer reader.Close()
 
 	// Write two lines to the fifo.
-	f, err := os.OpenFile(fifoPath, os.O_RDWR, 0)
-	if err != nil {
-		t.Fatalf("could not open fifo: %v", err)
-	}
 	fmt.Fprintf(f, "foo\nbar\n")
 	f.Close()
 
@@ -68,9 +71,33 @@ func TestNamedPipeReader(t *testing.T) {
 		t.Errorf("expected second message to be %q, got %q", want, got)
 	}
 
-	// Fully restart the entire hypervisor and pipe reader, redo test, things
+	// Fully restart the entire supervisor and pipe reader, redo test, things
 	// should continue to work.
 	stop()
+
+	// Block until FIFO isn't being read anymore. This ensures that the
+	// NamedPipeReader actually stopped running, otherwise the following write to
+	// the fifo can race by writing to the old NamedPipeReader and making the test
+	// time out. This can also happen in production, but that will just cause us to
+	// lose piped data in the very small race window when this can happen
+	// (statistically in this test, <0.1%).
+	//
+	// The check is being done by opening the FIFO in 'non-blocking mode', which
+	// returns ENXIO immediately if the FIFO has no corresponding writer, and
+	// succeeds otherwise.
+	for {
+		ft, err := os.OpenFile(fifoPath, os.O_WRONLY|syscall.O_NONBLOCK, 0)
+		if err == nil {
+			// There's still a writer, keep trying.
+			ft.Close()
+		} else if errors.Is(err, syscall.ENXIO) {
+			// No writer, break.
+			break
+		} else {
+			// Something else?
+			t.Fatalf("OpenFile(%q): %v", fifoPath, err)
+		}
+	}
 
 	started = make(chan struct{})
 	stop, lt = supervisor.TestHarness(t, func(ctx context.Context) error {
@@ -87,6 +114,8 @@ func TestNamedPipeReader(t *testing.T) {
 		return r(ctx)
 	})
 
+	<-started
+
 	// Start reading all logs.
 	reader, err = lt.Read("root", logtree.WithChildren(), logtree.WithStream())
 	if err != nil {
@@ -94,11 +123,8 @@ func TestNamedPipeReader(t *testing.T) {
 	}
 	defer reader.Close()
 
-	<-started
-
 	// Write line to the fifo.
-	// Write two lines to the fifo.
-	f, err = os.OpenFile(fifoPath, os.O_RDWR, 0)
+	f, err = os.OpenFile(fifoPath, os.O_WRONLY, 0)
 	if err != nil {
 		t.Fatalf("could not open fifo: %v", err)
 	}
