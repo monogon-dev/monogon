@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_context", "GoSource")
+load("@io_bazel_rules_go//go:def.bzl", "GoSource", "go_context")
 
 # This implements the toolchain_library rule, which is used to generate a
 # rules_go compatible go_library-style target which contains toolchain.go.in
@@ -17,8 +17,8 @@ def _toolchain_library_impl(ctx):
         template = ctx.file._template,
         output = out,
         substitutions = {
-            'GOROOT': go.root,
-            'GOTOOL': go.go.path,
+            "GOROOT": go.root,
+            "GOTOOL": go.go.path,
         },
     )
 
@@ -37,27 +37,18 @@ def _toolchain_library_impl(ctx):
     source = {
         key: getattr(source, key)
         for key in dir(source)
-        if key not in ['to_json', 'to_proto']
+        if key not in ["to_json", "to_proto"]
     }
-    source['runfiles'] = runfiles
+    source["runfiles"] = runfiles
     source = GoSource(**source)
-    archive = go.archive(go, source)
-
 
     return [
         library,
         source,
-        archive,
-        DefaultInfo(
-            files = depset([archive.data.file]),
-            runfiles = runfiles,
-        ),
         OutputGroupInfo(
-            cgo_exports = archive.cgo_exports,
-            compilation_outputs = [archive.data.file],
+            go_generated_srcs = depset([out]),
         ),
     ]
-
 
 toolchain_library = rule(
     implementation = _toolchain_library_impl,
