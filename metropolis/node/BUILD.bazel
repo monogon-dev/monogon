@@ -93,6 +93,7 @@ erofs_image(
 
 efi_unified_kernel_image(
     name = "kernel_efi",
+    cmdline = "console=ttyS0 root=PARTLABEL=METROPOLIS-SYSTEM rootfstype=erofs init=/init",
     kernel = "//third_party/linux",
     os_release = ":os-release-info",
 )
