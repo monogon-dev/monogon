@@ -20,7 +20,7 @@ type Status struct {
 
 	// hasLocalConsensus is true if the local node is running a local consensus
 	// (etcd) server.
-	hasLocalConsensus bool
+	HasLocalConsensus bool
 	// consensusClient is an etcd client to the local consensus server if the node
 	// has such a server and the cluster state is HOME or SPLIT.
 	consensusClient client.Namespaced
@@ -43,7 +43,7 @@ const (
 // ConsensusClient returns an etcd/consensus client for a given ConsensusUser.
 // The node must be running a local consensus/etcd server.
 func (s *Status) ConsensusClient(user ConsensusUser) (client.Namespaced, error) {
-	if !s.hasLocalConsensus {
+	if !s.HasLocalConsensus {
 		return nil, ErrNoLocalConsensus
 	}
 

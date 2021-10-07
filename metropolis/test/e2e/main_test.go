@@ -18,7 +18,6 @@ package e2e
 
 import (
 	"context"
-	"crypto/ed25519"
 	"errors"
 	"fmt"
 	"log"
@@ -80,9 +79,10 @@ func TestE2E(t *testing.T) {
 	defer cancel()
 
 	// Launch cluster.
-	cluster, err := cluster.LaunchCluster(ctx, cluster.ClusterOptions{
-		NumNodes: 1,
-	})
+	clusterOptions := cluster.ClusterOptions{
+		NumNodes: 2,
+	}
+	cluster, err := cluster.LaunchCluster(ctx, clusterOptions)
 	if err != nil {
 		t.Fatalf("LaunchCluster failed: %v", err)
 	}
@@ -106,22 +106,11 @@ func TestE2E(t *testing.T) {
 					return fmt.Errorf("GetClusterInfo: %w", err)
 				}
 
-				// Ensure the node is there with its address.
+				// Ensure that the expected node count is present.
 				nodes := res.ClusterDirectory.Nodes
-				if want, got := 1, len(nodes); want != got {
+				if want, got := clusterOptions.NumNodes, len(nodes); want != got {
 					return fmt.Errorf("wanted %d nodes in cluster directory, got %d", want, got)
 				}
-				node := nodes[0]
-				if want, got := ed25519.PublicKeySize, len(node.PublicKey); want != got {
-					return fmt.Errorf("wanted %d bytes long public key, got %d", want, got)
-				}
-				if want, got := 1, len(node.Addresses); want != got {
-					return fmt.Errorf("wanted %d node address, got %d", want, got)
-				}
-				if want, got := "10.1.0.2", node.Addresses[0].Host; want != got {
-					return fmt.Errorf("wanted status address %q, got %q", want, got)
-				}
-
 				return nil
 			})
 		})

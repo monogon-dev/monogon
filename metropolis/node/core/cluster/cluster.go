@@ -128,10 +128,6 @@ func (m *Manager) Run(ctx context.Context) error {
 	}
 }
 
-func (m *Manager) register(ctx context.Context, bootstrap *apb.NodeParameters_ClusterRegister) error {
-	return fmt.Errorf("unimplemented")
-}
-
 func (m *Manager) nodeParamsFWCFG(ctx context.Context) (*apb.NodeParameters, error) {
 	bytes, err := os.ReadFile("/sys/firmware/qemu_fw_cfg/by_name/dev.monogon.metropolis/parameters.pb/raw")
 	if err != nil {

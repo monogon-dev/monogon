@@ -18,8 +18,10 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//metropolis/node:go_default_library",
+        "//metropolis/node/core/identity:go_default_library",
         "//metropolis/node/core/rpc:go_default_library",
         "//metropolis/proto/api:go_default_library",
+        "//metropolis/proto/common:go_default_library",
         "//metropolis/test/launch:go_default_library",
         "@com_github_cenkalti_backoff_v4//:go_default_library",
         "@com_github_grpc_ecosystem_go_grpc_middleware//retry:go_default_library",

@@ -99,7 +99,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 
 	status := Status{
 		State:             cpb.ClusterState_CLUSTER_STATE_HOME,
-		hasLocalConsensus: true,
+		HasLocalConsensus: true,
 		consensusClient:   metropolisKV,
 		// Credentials are set further down once created through a curator
 		// short-circuit bootstrap function.

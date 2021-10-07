@@ -61,15 +61,39 @@ func CACertificate(cn string) x509.Certificate {
 	}
 }
 
+// VerifyCAInsecure ensures that the given certificate is a valid certificate
+// that is allowed to act as a CA and which is emitted for an Ed25519 keypair.
+//
+// It does _not_ ensure that the certificate is the local node's CA, and should
+// not be used for security checks, just for data validation checks.
+func VerifyCAInsecure(ca *x509.Certificate) error {
+	// Ensure ca certificate uses ED25519 keypair.
+	if _, ok := ca.PublicKey.(ed25519.PublicKey); !ok {
+		return fmt.Errorf("not issued for ed25519 keypair")
+	}
+	// Ensure CA certificate has the X.509 basic constraints extension. Everything
+	// else is legacy, we might as well weed that out early.
+	if !ca.BasicConstraintsValid {
+		return fmt.Errorf("does not have basic constraints")
+	}
+	// Ensure CA certificate can act as CA per BasicConstraints.
+	if !ca.IsCA {
+		return fmt.Errorf("not permitted to act as CA")
+	}
+	if ca.KeyUsage != 0 && ca.KeyUsage&x509.KeyUsageCertSign == 0 {
+		return fmt.Errorf("not permitted to sign certificates")
+	}
+	return nil
+}
+
 // VerifyInCluster ensures that the given certificate has been signed by a CA
 // certificate and are both certificates emitted for ed25519 keypairs.
 //
 // The subject certificate's public key is returned if verification is
 // successful, and error is returned otherwise.
 func VerifyInCluster(cert, ca *x509.Certificate) (ed25519.PublicKey, error) {
-	// Ensure ca certificate uses ED25519 keypair.
-	if _, ok := ca.PublicKey.(ed25519.PublicKey); !ok {
-		return nil, fmt.Errorf("ca certificate not issued for ed25519 keypair")
+	if err := VerifyCAInsecure(ca); err != nil {
+		return nil, fmt.Errorf("ca certificate invalid: %w", err)
 	}
 
 	// Ensure subject cert is signed by ca.

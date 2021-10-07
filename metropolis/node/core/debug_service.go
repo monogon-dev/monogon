@@ -53,6 +53,9 @@ type debugService struct {
 }
 
 func (s *debugService) GetDebugKubeconfig(ctx context.Context, req *apb.GetDebugKubeconfigRequest) (*apb.GetDebugKubeconfigResponse, error) {
+	if s.roleserve == nil {
+		return nil, status.Errorf(codes.Unavailable, "node does not run roleserver/kubernetes")
+	}
 	w := s.roleserve.Watch()
 	defer w.Close()
 	for {
