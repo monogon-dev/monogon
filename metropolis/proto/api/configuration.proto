@@ -51,10 +51,11 @@ message NodeParameters {
         // begin registering it into a cluster. It can be retrieved by an
         // operator from a running cluster via Management.GetRegisterTicket.
         bytes register_ticket = 2;
-        // ca_public_key is the public key of the CA of the cluster that the
+        // ca_certificate is the DER-encoded x509 CA of the cluster that the
         // node should expect when contacting nodes in cluster_directory and
-        // attempting to register into a cluster.
-        bytes ca_public_key = 3;
+        // attempting to register into a cluster. It can be retrieved by
+        // an operator from a running cluster via Management.GetClusterInfo.
+        bytes ca_certificate = 3;
     }
     oneof cluster {
         ClusterBootstrap cluster_bootstrap = 1;

@@ -3,7 +3,6 @@ package curator
 import (
 	"bytes"
 	"context"
-	"crypto/ed25519"
 	"sort"
 
 	"google.golang.org/grpc/codes"
@@ -106,6 +105,6 @@ func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClust
 
 	return &apb.GetClusterInfoResponse{
 		ClusterDirectory: directory,
-		CaPublicKey:      l.node.ClusterCA().PublicKey.(ed25519.PublicKey),
+		CaCertificate:    l.node.ClusterCA().Raw,
 	}, nil
 }

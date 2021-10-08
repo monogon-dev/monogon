@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/x509"
 	"encoding/hex"
 	"testing"
 
@@ -588,7 +589,11 @@ func TestMangementClusterInfo(t *testing.T) {
 	}
 
 	// Cluster CA public key should match
-	if want, got := cl.caPubKey, res.CaPublicKey; !bytes.Equal(want, got) {
+	ca, err := x509.ParseCertificate(res.CaCertificate)
+	if err != nil {
+		t.Fatalf("CaCertificate could not be parsed: %v", err)
+	}
+	if want, got := cl.caPubKey, ca.PublicKey.(ed25519.PublicKey); !bytes.Equal(want, got) {
 		t.Fatalf("CaPublicKey mismatch (wanted %s, got %s)", hex.EncodeToString(want), hex.EncodeToString(got))
 	}
 }
