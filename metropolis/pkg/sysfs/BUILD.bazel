@@ -2,7 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["uevents.go"],
+    srcs = [
+        "block.go",
+        "uevents.go",
+    ],
     importpath = "source.monogon.dev/metropolis/pkg/sysfs",
     visibility = ["//metropolis:__subpackages__"],
 )
