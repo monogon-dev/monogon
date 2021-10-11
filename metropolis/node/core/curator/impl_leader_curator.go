@@ -73,7 +73,7 @@ func (l *leaderCurator) watchNodeInCluster(nic *ipb.WatchRequest_NodeInCluster, 
 			if rpcErr, ok := rpcError(err); ok {
 				return rpcErr
 			}
-			// TODO(q3k): log err
+			// TODO(issues/85): log err
 			return status.Error(codes.Unavailable, "internal error")
 		}
 
@@ -106,7 +106,7 @@ func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, 
 			break
 		}
 		if err != nil {
-			// TODO(q3k): log err
+			// TODO(issues/85): log err
 			return status.Error(codes.Unavailable, "internal error during initial fetch")
 		}
 		nodeKV := v.(nodeAtID)
@@ -144,7 +144,7 @@ func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, 
 	for {
 		v, err := w.Get(ctx)
 		if err != nil {
-			// TODO(q3k): log err
+			// TODO(issues/85): log err
 			return status.Errorf(codes.Unavailable, "internal error during update")
 		}
 		we := &ipb.WatchEvent{}
@@ -285,7 +285,7 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 	// valid.
 	wantTicket, err := l.ensureRegisterTicket(ctx)
 	if err != nil {
-		// TODO(q3k): log err
+		// TODO(issues/85): log err
 		return nil, status.Error(codes.Unavailable, "could not retrieve register ticket")
 	}
 	gotTicket := req.RegisterTicket
@@ -304,7 +304,7 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 	id := identity.NodeID(pubkey)
 	key, err := nodeEtcdPrefix.Key(id)
 	if err != nil {
-		// TODO(q3k): log err
+		// TODO(issues/85): log err
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node id")
 	}
 	res, err := l.txnAsLeader(ctx, clientv3.OpGet(key))
@@ -312,14 +312,14 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 		if rpcErr, ok := rpcError(err); ok {
 			return nil, rpcErr
 		}
-		// TODO(q3k): log this
+		// TODO(issues/85): log this
 		return nil, status.Errorf(codes.Unavailable, "could not retrieve node %s: %v", id, err)
 	}
 	kvs := res.Responses[0].GetResponseRange().Kvs
 	if len(kvs) > 0 {
 		node, err := nodeUnmarshal(kvs[0].Value)
 		if err != nil {
-			// TODO(q3k): log this
+			// TODO(issues/85): log this
 			return nil, status.Errorf(codes.Unavailable, "could not unmarshal node")
 		}
 		// If the existing node is in the NEW state already, there's nothing to do,
@@ -331,7 +331,9 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 		// We can return a bit more information to the calling node here, as if it's in
 		// possession of the private key corresponding to an existing node in the
 		// cluster, it should have access to the status of the node without danger of
-		// leaking data about other nodes. TODO(q3k): log this
+		// leaking data about other nodes.
+		//
+		// TODO(issues/85): log this
 		return nil, status.Errorf(codes.FailedPrecondition, "node already exists in cluster, state %s", node.state.String())
 	}
 
@@ -342,12 +344,12 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 	}
 	nodeBytes, err := proto.Marshal(node.proto())
 	if err != nil {
-		// TODO(q3k): log this
+		// TODO(issues/85): log this
 		return nil, status.Errorf(codes.Unavailable, "could not marshal new node")
 	}
 	_, err = l.txnAsLeader(ctx, clientv3.OpPut(key, string(nodeBytes)))
 	if err != nil {
-		// TODO(q3k): log this
+		// TODO(issues/85): log this
 		return nil, status.Error(codes.Unavailable, "could not save new node")
 	}
 

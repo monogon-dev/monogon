@@ -33,7 +33,7 @@ func (a *leaderAAA) getOwnerPubkey(ctx context.Context) (ed25519.PublicKey, erro
 	res, err := a.etcd.Get(ctx, initialOwnerEtcdPath)
 	if err != nil {
 		if !errors.Is(err, ctx.Err()) {
-			// TODO(q3k): log
+			// TODO(issues/85): log
 			return nil, status.Error(codes.Unavailable, "could not retrieve initial owner status in etcd")
 		}
 		return nil, err

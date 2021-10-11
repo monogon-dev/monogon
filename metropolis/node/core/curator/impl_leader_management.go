@@ -53,7 +53,7 @@ func (l *leaderManagement) GetRegisterTicket(ctx context.Context, req *apb.GetRe
 	}, nil
 }
 
-// GetClusterInfo implements Curator.GetClusterInfo, which returns summary
+// GetClusterInfo implements Management.GetClusterInfo, which returns summary
 // information about the Metropolis cluster.
 func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClusterInfoRequest) (*apb.GetClusterInfoResponse, error) {
 	res, err := l.txnAsLeader(ctx, nodeEtcdPrefix.Range())
@@ -71,7 +71,7 @@ func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClust
 	for _, kv := range kvs {
 		node, err := nodeUnmarshal(kv.Value)
 		if err != nil {
-			// TODO(q3k): log this
+			// TODO(issues/85): log this
 			continue
 		}
 		if node.state != cpb.NodeState_NODE_STATE_UP {
@@ -107,4 +107,47 @@ func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClust
 		ClusterDirectory: directory,
 		CaCertificate:    l.node.ClusterCA().Raw,
 	}, nil
+}
+
+// GetNodes implements Management.GetNodes, which returns a list of nodes from
+// the point of view of the cluster.
+func (l *leaderManagement) GetNodes(_ *apb.GetNodesRequest, srv apb.Management_GetNodesServer) error {
+	ctx := srv.Context()
+
+	l.muNodes.Lock()
+	defer l.muNodes.Unlock()
+
+	// Retrieve all nodes from etcd in a single Get call.
+	res, err := l.txnAsLeader(ctx, nodeEtcdPrefix.Range())
+	if err != nil {
+		return status.Errorf(codes.Unavailable, "could not retrieve list of nodes: %v", err)
+	}
+
+	// Convert etcd data into proto nodes, send one streaming response for each
+	// node.
+	kvs := res.Responses[0].GetResponseRange().Kvs
+	for _, kv := range kvs {
+		node, err := nodeUnmarshal(kv.Value)
+		if err != nil {
+			// TODO(issues/85): log this
+			continue
+		}
+
+		// Convert node roles.
+		roles := &cpb.NodeRoles{}
+		if node.kubernetesWorker != nil {
+			roles.KubernetesWorker = &cpb.NodeRoles_KubernetesWorker{}
+		}
+
+		if err := srv.Send(&apb.Node{
+			Pubkey: node.pubkey,
+			State:  node.state,
+			Status: node.status,
+			Roles:  roles,
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

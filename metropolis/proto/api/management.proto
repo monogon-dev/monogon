@@ -5,7 +5,9 @@ option go_package = "source.monogon.dev/metropolis/proto/api";
 import "metropolis/proto/common/common.proto";
 import "metropolis/proto/ext/authorization.proto";
 
-// Management service available to Cluster Managers.
+// Management service available to Cluster Managers, allowing operational work
+// to be performed on the cluster (eg. adding nodes, retrieving information
+// about a running cluster, etc.).
 service Management {
     // GetRegisterTicket retrieves the current RegisterTicket which is required
     // for new nodes to register into the cluster. Presenting this ticket on
@@ -18,11 +20,20 @@ service Management {
             need: PERMISSION_GET_REGISTER_TICKET
         };
     }
+
     // GetClusterInfo retrieves publicly available summary information about
     // this cluster, notably data required for nodes to register into a cluster
     // or join it (other than the Register Ticket, which is gated by an
     // additional permission).
     rpc GetClusterInfo(GetClusterInfoRequest) returns (GetClusterInfoResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_READ_CLUSTER_STATUS
+        };
+    }
+
+    // GetNodes retrieves information about nodes in the cluster. Currently,
+    // it returns all available data about all nodes.
+    rpc GetNodes(GetNodesRequest) returns (stream Node) {
         option (metropolis.proto.ext.authorization) = {
             need: PERMISSION_READ_CLUSTER_STATUS
         };
@@ -47,4 +58,30 @@ message GetClusterInfoResponse {
 
     // ca_certificate is the x509 DER encoded CA certificate of the cluster.
     bytes ca_certificate = 2;
+}
+
+message GetNodesRequest {
+}
+
+// Node in a Metropolis cluster, streamed by Management.GetNodes. For each node
+// in the cluster, this message will be emitted and will contain information
+// about that node.
+//
+// The fields contained are node fields that PERMISSION_READ_CLUSTER_STATUS
+// allows access to, ie. 'non-private' fields, ones that might be internal to
+// the cluster and possibly considered sensitive information about the
+// infrastructure, but whose knowledge does not allow to escalate privileges
+// within the cluster.
+message Node {
+    // Raw Ed25519 public key of this node, which can be used to generate
+    // the node's ID. This is always set.
+    bytes pubkey = 1;
+    // State of the node from the point of view of the cluster. This is
+    // always set.
+    metropolis.proto.common.NodeState state = 2;
+    // Last reported status by the Node, absent if a node hasn't yet reported
+    // its status.
+    metropolis.proto.common.NodeStatus status = 3;
+    // Roles assigned by the cluster. This is always set.
+    metropolis.proto.common.NodeRoles roles = 4;
 }

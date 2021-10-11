@@ -597,3 +597,51 @@ func TestMangementClusterInfo(t *testing.T) {
 		t.Fatalf("CaPublicKey mismatch (wanted %s, got %s)", hex.EncodeToString(want), hex.EncodeToString(got))
 	}
 }
+
+// TestRegisterNode is a smoke test for Curator.RegisterNode and
+// Management.GetNodes.
+func TestRegisterNode(t *testing.T) {
+	cl := fakeLeader(t)
+	defer cl.cancel()
+
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	// Get RegisterTicket.
+	mgmt := apb.NewManagementClient(cl.mgmtConn)
+	resT, err := mgmt.GetRegisterTicket(ctx, &apb.GetRegisterTicketRequest{})
+	if err != nil {
+		t.Fatalf("GetRegisterTicket: %v", err)
+	}
+
+	// Register as other node.
+	curOther := ipb.NewCuratorClient(cl.otherNodeConn)
+	_, err = curOther.RegisterNode(ctx, &ipb.RegisterNodeRequest{RegisterTicket: resT.Ticket})
+	if err != nil {
+		t.Fatalf("RegisterNode: %v", err)
+	}
+
+	// Ensure that the cluster sees the node as NEW via GetNodes.
+	resN, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
+	if err != nil {
+		t.Fatalf("GetNodes: %v", err)
+	}
+	// Receive nodes from GetNodes until we find the node that we just registered.
+	var otherNode *apb.Node
+	for {
+		node, err := resN.Recv()
+		if err != nil {
+			t.Fatalf("GetNodes.Recv: %v", err)
+		}
+
+		id := identity.NodeID(node.Pubkey)
+		if id == cl.otherNodeID {
+			otherNode = node
+			break
+		}
+	}
+	// Ensure that this node is marked as NEW.
+	if want, got := cpb.NodeState_NODE_STATE_NEW, otherNode.State; want != got {
+		t.Fatalf("Newly registerd should have state %s, got %s", want, got)
+	}
+}

@@ -392,3 +392,26 @@ func (l *listener) RegisterNode(ctx context.Context, req *cpb.RegisterNodeReques
 	})
 	return
 }
+
+type managementGetNodesServer struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (s *managementGetNodesServer) Context() context.Context {
+	return s.ctx
+}
+
+func (s *managementGetNodesServer) Send(m *apb.Node) error {
+	return s.ServerStream.SendMsg(m)
+}
+
+func (l *listener) GetNodes(req *apb.GetNodesRequest, srv apb.Management_GetNodesServer) error {
+	proxy := func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+		return impl.GetNodes(req, &managementGetNodesServer{
+			ServerStream: srv,
+			ctx:          ctx,
+		})
+	}
+	return l.callImpl(srv.Context(), proxy)
+}
