@@ -23,6 +23,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/hex"
+	"encoding/pem"
 	"fmt"
 	"math/big"
 	"time"
@@ -166,4 +167,29 @@ func (p *PKIDirectory) AllAbsent() (bool, error) {
 		}
 	}
 	return true, nil
+}
+
+// WriteAll (over)writes the PKI data in this directory with the given private
+// key, certificate and CA certificate.
+//
+// For ease of use, the accepted certificates are expected to already be in
+// DER-encoded form (eg. from the Raw field in a x509.Certificate).
+func (p *PKIDirectory) WriteAll(cert []byte, key ed25519.PrivateKey, ca []byte) error {
+	if err := p.MkdirAll(0700); err != nil {
+		return fmt.Errorf("failed to make PKI directory: %w", err)
+	}
+	keyBytes, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		return fmt.Errorf("failed to marshal key: %w", err)
+	}
+	if err := p.Key.Write(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyBytes}), 0600); err != nil {
+		return fmt.Errorf("failed to write key: %w", err)
+	}
+	if err := p.Certificate.Write(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert}), 0600); err != nil {
+		return fmt.Errorf("failed to write certificate: %w", err)
+	}
+	if err := p.CACertificate.Write(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: ca}), 0600); err != nil {
+		return fmt.Errorf("failed to write CA certificate: %w", err)
+	}
+	return nil
 }

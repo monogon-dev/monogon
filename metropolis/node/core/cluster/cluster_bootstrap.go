@@ -25,6 +25,7 @@ import (
 	"fmt"
 
 	"source.monogon.dev/metropolis/node/core/consensus"
+	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/network/hostsfile"
@@ -75,10 +76,9 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 
 	// Bring up consensus with this node as the only member.
 	m.consensus = consensus.New(consensus.Config{
-		Data:       &m.storageRoot.Data.Etcd,
-		Ephemeral:  &m.storageRoot.Ephemeral.Consensus,
-		NewCluster: true,
-		Name:       node.ID(),
+		Data:           &m.storageRoot.Data.Etcd,
+		Ephemeral:      &m.storageRoot.Ephemeral.Consensus,
+		NodePrivateKey: priv,
 	})
 
 	supervisor.Logger(ctx).Infof("Bootstrapping: starting consensus...")
@@ -86,15 +86,21 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 		return fmt.Errorf("when starting consensus: %w", err)
 	}
 
-	supervisor.Logger(ctx).Info("Bootstrapping: waiting for consensus...")
-	if err := m.consensus.WaitReady(ctx); err != nil {
-		return fmt.Errorf("consensus service failed to become ready: %w", err)
-	}
-	supervisor.Logger(ctx).Info("Bootstrapping: consensus ready.")
-
-	metropolisKV, err := m.consensus.Client().Sub("metropolis")
-	if err != nil {
-		return fmt.Errorf("when retrieving application etcd subclient: %w", err)
+	var metropolisKV client.Namespaced
+	cw := m.consensus.Watch()
+	for {
+		st, err := cw.Get(ctx)
+		if err != nil {
+			return fmt.Errorf("when waiting for consensus status: %w", err)
+		}
+		if !st.Running() {
+			continue
+		}
+		metropolisKV, err = st.MetropolisClient()
+		if err != nil {
+			return fmt.Errorf("when retrieving curator client")
+		}
+		break
 	}
 
 	status := Status{

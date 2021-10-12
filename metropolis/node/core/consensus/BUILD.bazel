@@ -3,23 +3,27 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = [
+        "configuration.go",
         "consensus.go",
         "logparser.go",
+        "status.go",
     ],
     importpath = "source.monogon.dev/metropolis/node/core/consensus",
     visibility = ["//:__subpackages__"],
     deps = [
         "//metropolis/node:go_default_library",
-        "//metropolis/node/core/consensus/ca:go_default_library",
         "//metropolis/node/core/consensus/client:go_default_library",
+        "//metropolis/node/core/identity:go_default_library",
         "//metropolis/node/core/localstorage:go_default_library",
+        "//metropolis/pkg/event:go_default_library",
+        "//metropolis/pkg/event/memory:go_default_library",
         "//metropolis/pkg/logbuffer:go_default_library",
         "//metropolis/pkg/logtree:go_default_library",
         "//metropolis/pkg/logtree/unraw:go_default_library",
+        "//metropolis/pkg/pki:go_default_library",
         "//metropolis/pkg/supervisor:go_default_library",
         "@io_etcd_go_etcd//clientv3:go_default_library",
         "@io_etcd_go_etcd//embed:go_default_library",
-        "@org_uber_go_atomic//:go_default_library",
     ],
 )
 
@@ -31,10 +35,15 @@ go_test(
         "logparser_test.go",
     ],
     embed = [":go_default_library"],
+    tags = [
+        # Enable network sandboxing by asking the Bazel executor to block any
+        # network access. This is necessary as tests listen on static ports on
+        # loopback.
+        "block-network",
+    ],
     deps = [
         "//metropolis/node/core/localstorage:go_default_library",
         "//metropolis/node/core/localstorage/declarative:go_default_library",
-        "//metropolis/pkg/freeport:go_default_library",
         "//metropolis/pkg/logbuffer:go_default_library",
         "//metropolis/pkg/logtree:go_default_library",
         "//metropolis/pkg/supervisor:go_default_library",
