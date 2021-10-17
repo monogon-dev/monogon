@@ -19,6 +19,7 @@ pipeline {
                     }
                     steps {
                         gerritCheck checks: ['jenkins:test': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
+                        echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
                         sh "JENKINS_NODE_COOKIE=dontKillMe bazel test //..."
                         sh "JENKINS_NODE_COOKIE=dontKillMe bazel test -c dbg //..."
@@ -42,6 +43,7 @@ pipeline {
                     }
                     steps {
                         gerritCheck checks: ['jenkins:gazelle': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
+                        echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
                         sh "JENKINS_NODE_COOKIE=dontKillMe bazel run //:fietsje"
                         sh "JENKINS_NODE_COOKIE=dontKillMe bazel run //:gazelle -- update"
