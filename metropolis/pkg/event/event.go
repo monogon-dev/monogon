@@ -168,9 +168,11 @@ type Watcher interface {
 	// continue skipping some updates.
 	// If multiple goroutines need to access the Value, they should each use
 	// their own Watcher.
-	Get(context.Context) (interface{}, error)
+	Get(context.Context, ...GetOption) (interface{}, error)
 
 	// Close must be called if the Watcher is not going to be used anymore -
 	// otherwise, a goroutine will leak.
 	Close() error
 }
+
+type GetOption interface{}

@@ -230,9 +230,14 @@ func (m *watcher) Close() error {
 	return nil
 }
 
+// GetOption is a memory.Get-specific option passed to Get. Currently no options
+// are implemented.
+type GetOption struct {
+}
+
 // Get blocks until a Value's data is available. See event.Watcher.Get for
 // guarantees and more information.
-func (m *watcher) Get(ctx context.Context) (interface{}, error) {
+func (m *watcher) Get(ctx context.Context, opts ...event.GetOption) (interface{}, error) {
 	// Make sure we're the only active .Get call.
 	select {
 	case m.getSem <- struct{}{}:
@@ -242,6 +247,13 @@ func (m *watcher) Get(ctx context.Context) (interface{}, error) {
 	defer func() {
 		<-m.getSem
 	}()
+
+	for _, optI := range opts {
+		_, ok := optI.(GetOption)
+		if !ok {
+			return nil, fmt.Errorf("get options must be of type memory.GetOption")
+		}
+	}
 
 	c := make(chan interface{})
 

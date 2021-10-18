@@ -41,7 +41,7 @@ func (l *leaderCurator) Watch(req *cpb.WatchRequest, srv cpb.Curator_WatchServer
 		return status.Errorf(codes.InvalidArgument, "invalid node name: %v", err)
 	}
 
-	value := etcd.NewValue(l.etcd, nodePath, func(data []byte) (interface{}, error) {
+	value := etcd.NewValue(l.etcd, nodePath, func(_, data []byte) (interface{}, error) {
 		return nodeUnmarshal(data)
 	})
 	w := value.Watch()
