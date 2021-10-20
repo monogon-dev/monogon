@@ -31,6 +31,7 @@ def linux_external(name, version):
             "//third_party/linux/external:0001-fsinfo-Introduce-a-non-repeating-system-unique-super.patch",
             "//third_party/linux/external:0002-fsinfo-Add-fsinfo-syscall-to-query-filesystem-inform.patch",
             "//third_party/linux/external:0003-fsinfo-Allow-retrieval-of-superblock-devname-options.patch",
+            "//third_party/linux/external:0001-block-partition-expose-PARTUUID-through-uevent.patch",
         ],
         sha256 = sums[version],
         strip_prefix = "linux-" + version,

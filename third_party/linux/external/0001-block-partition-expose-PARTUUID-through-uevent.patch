@@ -1,0 +1,26 @@
+From 360fb82dc695dbddc31be40ed86c1d3105ca8edf Mon Sep 17 00:00:00 2001
+From: Mateusz Zalega <mateusz@monogon.tech>
+Date: Tue, 19 Oct 2021 18:18:14 +0200
+Subject: [PATCH] block: partition: expose PARTUUID through uevent
+
+Signed-off-by: Mateusz Zalega <mateusz@monogon.tech>
+---
+ block/partitions/core.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/block/partitions/core.c b/block/partitions/core.c
+index a02e22411594..5c66aae379e7 100644
+--- a/block/partitions/core.c
++++ b/block/partitions/core.c
+@@ -270,6 +270,8 @@ static int part_uevent(struct device *dev, struct kobj_uevent_env *env)
+ 	add_uevent_var(env, "PARTN=%u", part->partno);
+ 	if (part->info && part->info->volname[0])
+ 		add_uevent_var(env, "PARTNAME=%s", part->info->volname);
++	if (part->info && part->info->uuid[0])
++		add_uevent_var(env, "PARTUUID=%s", part->info->uuid);
+ 	return 0;
+ }
+ 
+-- 
+2.31.1
+
