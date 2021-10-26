@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "core.go",
+        "install.go",
+    ],
+    importpath = "source.monogon.dev/metropolis/cli/metroctl/core",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/proto/api:go_default_library",
+        "@com_github_diskfs_go_diskfs//:go_default_library",
+        "@com_github_diskfs_go_diskfs//disk:go_default_library",
+        "@com_github_diskfs_go_diskfs//filesystem:go_default_library",
+        "@com_github_diskfs_go_diskfs//partition/gpt:go_default_library",
+        "@org_golang_google_protobuf//proto:go_default_library",
+    ],
+)

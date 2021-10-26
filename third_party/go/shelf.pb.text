@@ -699,6 +699,13 @@ entry: <
   semver: "v1.0.0"
 >
 entry: <
+  import_path: "github.com/diskfs/go-diskfs"
+  version: "v1.2.0"
+  bazel_name: "com_github_diskfs_go_diskfs"
+  sum: "h1:Ow4xorEDw1VNYKbC+SA/qQNwi5gWIwdKUxmUcLFST24="
+  semver: "v1.2.0"
+>
+entry: <
   import_path: "github.com/dnstap/golang-dnstap"
   version: "v0.2.0"
   bazel_name: "com_github_dnstap_golang_dnstap"
@@ -2064,6 +2071,13 @@ entry: <
   semver: "v0.0.0-20180202154549-b0b1615b78e5"
 >
 entry: <
+  import_path: "github.com/pierrec/lz4"
+  version: "v2.3.0+incompatible"
+  bazel_name: "com_github_pierrec_lz4"
+  sum: "h1:CZzRn4Ut9GbUkHlQ7jqBXeZQV41ZSKWFc302ZU6lUTk="
+  semver: "v2.3.0+incompatible"
+>
+entry: <
   import_path: "github.com/pkg/errors"
   version: "ba968bfe8b2f7e042a574c888954fccecfa385b4"
   bazel_name: "com_github_pkg_errors"
@@ -2076,6 +2090,13 @@ entry: <
   bazel_name: "com_github_pkg_errors"
   sum: "h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4="
   semver: "v0.9.1"
+>
+entry: <
+  import_path: "github.com/pkg/xattr"
+  version: "v0.4.1"
+  bazel_name: "com_github_pkg_xattr"
+  sum: "h1:dhclzL6EqOXNaPDWqoeb9tIxATfBSmjqL0b4DpSjwRw="
+  semver: "v0.4.1"
 >
 entry: <
   import_path: "github.com/pquerna/cachecontrol"
@@ -2398,6 +2419,13 @@ entry: <
   bazel_name: "com_github_u_root_u_root"
   sum: "h1:u+KSS04pSxJGI5E7WE4Bs9+Zd75QjFv+REkjy/aoAc8="
   semver: "v7.0.0+incompatible"
+>
+entry: <
+  import_path: "github.com/ulikunitz/xz"
+  version: "v0.5.6"
+  bazel_name: "com_github_ulikunitz_xz"
+  sum: "h1:jGHAfXawEGZQ3blwU5wnWKQJvAraT7Ftq9EXjnXYgt8="
+  semver: "v0.5.6"
 >
 entry: <
   import_path: "github.com/urfave/cli"

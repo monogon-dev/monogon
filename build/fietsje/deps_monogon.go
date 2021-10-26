@@ -62,8 +62,11 @@ func Monogon(shelfPath, repositoriesBzlPath string) error {
 	p.collectOverride("github.com/mattn/go-shellwords", "v1.0.11")
 
 	// Used by //metropolis/build/mkimage
-	p.collect("github.com/diskfs/go-diskfs", "v1.0.0").use(
+	p.collect("github.com/diskfs/go-diskfs", "v1.2.0").use(
 		"gopkg.in/djherbis/times.v1",
+		"github.com/pkg/xattr",
+		"github.com/pierrec/lz4",
+		"github.com/ulikunitz/xz",
 	)
 
 	// Used by //metropolis/build/genosrelease
