@@ -113,6 +113,10 @@ func (e *Converter) NamedPipeReader(path string) (supervisor.Runnable, error) {
 		if err != nil {
 			return fmt.Errorf("when opening named pipe: %w", err)
 		}
+		go func() {
+			<-ctx.Done()
+			fifo.Close()
+		}()
 		defer fifo.Close()
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
 		for {
@@ -131,7 +135,12 @@ func (e *Converter) NamedPipeReader(path string) (supervisor.Runnable, error) {
 				// is not an issue for us.
 				time.Sleep(10 * time.Millisecond)
 			} else if err != nil {
-				return fmt.Errorf("log pump failed: %v", err)
+				// Since we close fifo on context cancel, we'll get a 'file is already closed'
+				// io error here. Translate that over to the context error that caused it.
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+				return fmt.Errorf("log pump failed: %w", err)
 			}
 
 		}
