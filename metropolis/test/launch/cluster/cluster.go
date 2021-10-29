@@ -62,14 +62,13 @@ type NodeOptions struct {
 }
 
 // NodePorts is the list of ports a fully operational Metropolis node listens on
-var NodePorts = []uint16{
+var NodePorts = []node.Port{
 	node.ConsensusPort,
 
 	node.CuratorServicePort,
 	node.DebugServicePort,
 
 	node.KubernetesAPIPort,
-	node.MasterServicePort,
 	node.CuratorServicePort,
 	node.DebuggerPort,
 }
@@ -252,7 +251,7 @@ func generateRandomEthernetMAC() (*net.HardwareAddr, error) {
 
 // ClusterPorts contains all ports forwarded by Nanoswitch to the first VM in a
 // launched Metropolis cluster.
-var ClusterPorts = []uint16{
+var ClusterPorts = []node.Port{
 	node.CuratorServicePort,
 	node.DebugServicePort,
 

@@ -122,7 +122,7 @@ func runDHCPServer(link netlink.Link) supervisor.Runnable {
 
 // userspaceProxy listens on port and proxies all TCP connections to the same
 // port on targetIP
-func userspaceProxy(targetIP net.IP, port uint16) supervisor.Runnable {
+func userspaceProxy(targetIP net.IP, port common.Port) supervisor.Runnable {
 	return func(ctx context.Context) error {
 		logger := supervisor.Logger(ctx)
 		tcpListener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.IPv4(0, 0, 0, 0), Port: int(port)})

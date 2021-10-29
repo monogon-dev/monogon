@@ -98,7 +98,7 @@ func (s *apiserverService) Run(ctx context.Context) error {
 		"--enable-admission-plugins=NodeRestriction,PodSecurityPolicy",
 		"--enable-aggregator-routing=true",
 		"--insecure-port=0",
-		fmt.Sprintf("--secure-port=%v", common.KubernetesAPIPort),
+		fmt.Sprintf("--secure-port=%d", common.KubernetesAPIPort),
 		fmt.Sprintf("--etcd-servers=unix:///%s:0", s.EphemeralConsensusDirectory.ClientSocket.FullPath()),
 		args.FileOpt("--kubelet-client-certificate", "kubelet-client-cert.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: s.kubeletClientCert})),

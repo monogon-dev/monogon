@@ -124,7 +124,7 @@ func (s *Service) configure(ctx context.Context) (*embed.Config, error) {
 	}
 	port := s.config.Port
 	if port == 0 {
-		port = node.ConsensusPort
+		port = int(node.ConsensusPort)
 	}
 
 	cfg := embed.NewConfig()

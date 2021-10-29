@@ -213,7 +213,7 @@ func Kubeconfig(ctx context.Context, kv clientv3.KV, c *opki.Certificate) ([]byt
 	kubeconfig := configapi.NewConfig()
 
 	cluster := configapi.NewCluster()
-	cluster.Server = fmt.Sprintf("https://127.0.0.1:%v", common.KubernetesAPIPort)
+	cluster.Server = fmt.Sprintf("https://127.0.0.1:%d", common.KubernetesAPIPort)
 
 	ca, err := c.Issuer.CACertificate(ctx, kv)
 	if err != nil {

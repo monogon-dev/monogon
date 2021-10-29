@@ -120,7 +120,7 @@ func (s *Service) ensureNode(newNode *corev1.Node) error {
 	err = s.wgClient.ConfigureDevice(clusterNetDeviceName, wgtypes.Config{
 		Peers: []wgtypes.PeerConfig{{
 			PublicKey:         pubKey,
-			Endpoint:          &net.UDPAddr{Port: common.WireGuardPort, IP: internalIP},
+			Endpoint:          &net.UDPAddr{Port: int(common.WireGuardPort), IP: internalIP},
 			ReplaceAllowedIPs: true,
 			AllowedIPs:        allowedIPs,
 		}},
@@ -227,7 +227,7 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 	defer netlink.LinkDel(wgInterface)
 
-	listenPort := common.WireGuardPort
+	listenPort := int(common.WireGuardPort)
 	if err := wgClient.ConfigureDevice(clusterNetDeviceName, wgtypes.Config{
 		PrivateKey: &s.privKey,
 		ListenPort: &listenPort,
