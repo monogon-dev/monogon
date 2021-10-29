@@ -334,8 +334,10 @@ func (s *supervisor) processGC() {
 		// they're ready/restartable. All of the node's children must be
 		// restartable in order for this node to be restartable.
 		childrenReady := true
+		var childrenNotReady []string
 		for _, c := range cur.children {
 			if !ready[c.dn()] {
+				childrenNotReady = append(childrenNotReady, c.dn())
 				childrenReady = false
 				break
 			}
@@ -351,6 +353,10 @@ func (s *supervisor) processGC() {
 			curReady = true
 		case nodeStateDead:
 			curReady = true
+		}
+
+		if cur.state == nodeStateDead && !childrenReady {
+			s.ilogger.Warningf("Not restarting %s: children not ready to be restarted: %v", curDn, childrenNotReady)
 		}
 
 		// Note down that we have an opinion on this node, and note that
