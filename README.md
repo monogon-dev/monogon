@@ -1,8 +1,8 @@
 # Monogon Monorepo
 
-This is the main repository containing the source code for the Monogon Project.
+This is the main repository containing the source code for the [Monogon Project](https://monogon.tech).
 
-*⚠️ This is pre-release software that happens to be publicly available. Nothing to see here, please move along.*
+*This is pre-release software - feel free to look around, and check back later for our first release!*
 
 ## Environment
 
