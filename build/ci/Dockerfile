@@ -30,8 +30,7 @@ RUN dnf -y upgrade && \
 	grpc-cli \
 	nc \
 	python-unversioned-command \
-	openssl-devel \
-	java-11-openjdk
+	openssl-devel
 
 # Create CI build user. This is not used by scripts/bin/bazel, but instead only
 # used by CI infrastructure to run build agents as.
