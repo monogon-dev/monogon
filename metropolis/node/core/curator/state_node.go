@@ -17,18 +17,12 @@
 package curator
 
 import (
-	"context"
 	"fmt"
-	"net"
-	"strings"
 
-	"golang.org/x/sys/unix"
 	"google.golang.org/protobuf/proto"
 
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -156,33 +150,4 @@ func nodeUnmarshal(data []byte) (*Node, error) {
 		n.kubernetesWorker = &NodeRoleKubernetesWorker{}
 	}
 	return n, nil
-}
-
-// ConfigureLocalHostname uses the node's ID as a hostname, and sets the
-// current hostname, and local files like hosts and machine-id accordingly.
-//
-// TODO(q3k): move this to roleserver?
-func (n *Node) ConfigureLocalHostname(ctx context.Context, ephemeral *localstorage.EphemeralDirectory, address net.IP) error {
-	if err := unix.Sethostname([]byte(n.ID())); err != nil {
-		return fmt.Errorf("failed to set runtime hostname: %w", err)
-	}
-	hosts := []string{
-		"127.0.0.1 localhost",
-		"::1 localhost",
-		fmt.Sprintf("%s %s", address.String(), n.ID()),
-	}
-	if err := ephemeral.Hosts.Write([]byte(strings.Join(hosts, "\n")), 0644); err != nil {
-		return fmt.Errorf("failed to write /ephemeral/hosts: %w", err)
-	}
-	if err := ephemeral.MachineID.Write([]byte(identity.NodeIDBare(n.pubkey)), 0644); err != nil {
-		return fmt.Errorf("failed to write /ephemeral/machine-id: %w", err)
-	}
-
-	// Check that we are self-resolvable.
-	ip, err := net.ResolveIPAddr("ip", n.ID())
-	if err != nil {
-		return fmt.Errorf("failed to self-resolve: %w", err)
-	}
-	supervisor.Logger(ctx).Infof("This is node %s at %v", n.ID(), ip)
-	return nil
 }

@@ -27,6 +27,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/identity"
+	"source.monogon.dev/metropolis/node/core/network/hostsfile"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -61,20 +62,16 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	// our own IP address. This ensures that the node's ID always resolves to
 	// its current external IP address.
 	// TODO(q3k): move this out into roleserver.
-	supervisor.Run(ctx, "hostsfile", func(ctx context.Context) error {
-		supervisor.Signal(ctx, supervisor.SignalHealthy)
-		watcher := m.networkService.Watch()
-		for {
-			status, err := watcher.Get(ctx)
-			if err != nil {
-				return err
-			}
-			err = node.ConfigureLocalHostname(ctx, &m.storageRoot.Ephemeral, status.ExternalAddress)
-			if err != nil {
-				return fmt.Errorf("could not configure hostname: %w", err)
-			}
-		}
-	})
+	hostsfileSvc := hostsfile.Service{
+		Config: hostsfile.Config{
+			NodePublicKey: pub,
+			Network:       m.networkService,
+			Ephemeral:     &m.storageRoot.Ephemeral,
+		},
+	}
+	if err := supervisor.Run(ctx, "hostsfile", hostsfileSvc.Run); err != nil {
+		return err
+	}
 
 	// Bring up consensus with this node as the only member.
 	m.consensus = consensus.New(consensus.Config{
