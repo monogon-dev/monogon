@@ -67,6 +67,9 @@ func mustNewEtcdPrefix(p string) etcdPrefix {
 // Key returns the key for an item within an etcdPrefix, or an error if the
 // given ID is invalid (ie. contains a / character).
 func (p etcdPrefix) Key(id string) (string, error) {
+	if id == "" {
+		return "", fmt.Errorf("invalid id: cannot be empty")
+	}
 	if strings.Contains(id, "/") {
 		return "", fmt.Errorf("invalid id: cannot contain / character")
 	}
@@ -74,12 +77,35 @@ func (p etcdPrefix) Key(id string) (string, error) {
 	return "/" + strings.Join(path, "/"), nil
 }
 
+// keyRange returns a pair of [start, end) keys for use with etcd range queries
+// to retrieve all keys under a given prefix.
+func (p etcdPrefix) KeyRange() (start, end string) {
+	// Range from /foo/bar/ ... to /foo/bar0 ('0' is one ASCII codepoint after '/').
+	start = "/" + strings.Join(p.parts, "/") + "/"
+	end = "/" + strings.Join(p.parts, "/") + "0"
+	return
+}
+
 // Range returns an etcd clientv3.Op that represents a Range Get request over
 // all the keys within this etcdPrefix.
 func (p etcdPrefix) Range() clientv3.Op {
-	// Range from /foo/bar/ ... to /foo/bar0 ('0' is one ASCII codepoint after '/').
-	start := "/" + strings.Join(p.parts, "/") + "/"
-	end := "/" + strings.Join(p.parts, "/") + "0"
-
+	start, end := p.KeyRange()
 	return clientv3.OpGet(start, clientv3.WithRange(end))
+}
+
+// ExtractID carves out the etcdPrefix ID from an existing etcd key for this
+// range, ie. is the reverse of the Key() function.
+//
+// If the given etcd key does not correspond to a valid ID, an empty string is
+// returned.
+func (p etcdPrefix) ExtractID(key string) string {
+	strPrefix := "/" + strings.Join(p.parts, "/") + "/"
+	if !strings.HasPrefix(key, strPrefix) {
+		return ""
+	}
+	id := key[len(strPrefix):]
+	if strings.Contains(id, "/") {
+		return ""
+	}
+	return id
 }

@@ -42,7 +42,11 @@ func TestEtcdPrefixKeyRange(t *testing.T) {
 		t.Errorf("Wrong key, wanted %q, got %q", want, got)
 	}
 
-	// Test Key() with invalid ID.
+	// Test Key() with invalid IDs.
+	_, err = p.Key("")
+	if err == nil {
+		t.Error("Key(bar/baz) returned nil, wanted error")
+	}
 	_, err = p.Key("bar/baz")
 	if err == nil {
 		t.Error("Key(bar/baz) returned nil, wanted error")
@@ -55,5 +59,27 @@ func TestEtcdPrefixKeyRange(t *testing.T) {
 	}
 	if want, got := "/foo0", string(op.RangeBytes()); want != got {
 		t.Errorf("Wrong end key, wanted %q, got %q", want, got)
+	}
+}
+
+func TestEtcdPrefixExtractID(t *testing.T) {
+	p := mustNewEtcdPrefix("/foo/")
+
+	for i, te := range []struct {
+		key  string
+		want string
+	}{
+		{"/foo/", ""},
+		{"/foo0", ""},
+		{"/foo", ""},
+		{"bar", ""},
+
+		{"/foo/bar", "bar"},
+		{"/foo/bar/baz", ""},
+	} {
+		got := p.ExtractID(te.key)
+		if te.want != got {
+			t.Errorf("%d: ExtractID(%q) should have returned %q, got %q", i, te.key, te.want, got)
+		}
 	}
 }

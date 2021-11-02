@@ -4,15 +4,19 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"crypto/rand"
 	"encoding/hex"
 	"testing"
 
 	"go.etcd.io/etcd/integration"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -133,6 +137,7 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		otherNodeID:   ephemeral.Nodes[1].ID(),
 		caPubKey:      ephemeral.CA.PublicKey.(ed25519.PublicKey),
 		cancel:        ctxC,
+		etcd:          cl,
 	}
 }
 
@@ -155,6 +160,267 @@ type fakeLeaderData struct {
 	caPubKey ed25519.PublicKey
 	// cancel shuts down the fake leader and all client connections.
 	cancel context.CancelFunc
+	// etcd contains a low-level connection to the curator K/V store, which can be
+	// used to perform low-level changes to the store in tests.
+	etcd client.Namespaced
+}
+
+// TestWatchNodeInCluster exercises a NodeInCluster Watch, from node creation,
+// through updates, to its deletion.
+func TestWatchNodeInCluster(t *testing.T) {
+	cl := fakeLeader(t)
+	defer cl.cancel()
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	cur := ipb.NewCuratorClient(cl.localNodeConn)
+
+	// We'll be using a fake node throughout, manually updating it in the etcd
+	// cluster.
+	fakeNodePub, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("GenerateKey: %v", err)
+	}
+	fakeNodeID := identity.NodeID(fakeNodePub)
+	fakeNodeKey, _ := nodeEtcdPrefix.Key(fakeNodeID)
+
+	w, err := cur.Watch(ctx, &ipb.WatchRequest{
+		Kind: &ipb.WatchRequest_NodeInCluster_{
+			NodeInCluster: &ipb.WatchRequest_NodeInCluster{
+				NodeId: fakeNodeID,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Watch: %v", err)
+	}
+
+	// Recv() should block here, as we don't yet have a node in the cluster. We
+	// can't really test that reliably, unfortunately.
+
+	// Populate new node.
+	fakeNode := &ppb.Node{
+		PublicKey: fakeNodePub,
+		Roles:     &cpb.NodeRoles{},
+	}
+	fakeNodeInit, err := proto.Marshal(fakeNode)
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+	_, err = cl.etcd.Put(ctx, fakeNodeKey, string(fakeNodeInit))
+	if err != nil {
+		t.Fatalf("Put: %v", err)
+	}
+
+	// Receive cluster node status. This should go through immediately.
+	ev, err := w.Recv()
+	if err != nil {
+		t.Fatalf("Recv: %v", err)
+	}
+	if want, got := 1, len(ev.Nodes); want != got {
+		t.Errorf("wanted %d nodes, got %d", want, got)
+	} else {
+		n := ev.Nodes[0]
+		if want, got := fakeNodeID, n.Id; want != got {
+			t.Errorf("wanted node %q, got %q", want, got)
+		}
+		if n.Status != nil {
+			t.Errorf("wanted nil status, got %v", n.Status)
+		}
+	}
+
+	// Update node status. This should trigger an update from the watcher.
+	fakeNode.Status = &cpb.NodeStatus{
+		ExternalAddress: "203.0.113.42",
+	}
+	fakeNodeInit, err = proto.Marshal(fakeNode)
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+	_, err = cl.etcd.Put(ctx, fakeNodeKey, string(fakeNodeInit))
+	if err != nil {
+		t.Fatalf("Put: %v", err)
+	}
+
+	// Receive new node. This should go through immediately.
+	ev, err = w.Recv()
+	if err != nil {
+		t.Fatalf("Recv: %v", err)
+	}
+	if want, got := 1, len(ev.Nodes); want != got {
+		t.Errorf("wanted %d nodes, got %d", want, got)
+	} else {
+		n := ev.Nodes[0]
+		if want, got := fakeNodeID, n.Id; want != got {
+			t.Errorf("wanted node %q, got %q", want, got)
+		}
+		if want := "203.0.113.42"; n.Status == nil || n.Status.ExternalAddress != want {
+			t.Errorf("wanted status with ip address %q, got %v", want, n.Status)
+		}
+	}
+
+	// Remove node. This should trigger an update from the watcher.
+	k, _ := nodeEtcdPrefix.Key(fakeNodeID)
+	if _, err := cl.etcd.Delete(ctx, k); err != nil {
+		t.Fatalf("could not delete node from etcd: %v", err)
+	}
+	ev, err = w.Recv()
+	if err != nil {
+		t.Fatalf("Recv: %v", err)
+	}
+	if want, got := 1, len(ev.NodeTombstones); want != got {
+		t.Errorf("wanted %d node tombstoness, got %d", want, got)
+	} else {
+		n := ev.NodeTombstones[0]
+		if want, got := fakeNodeID, n.NodeId; want != got {
+			t.Errorf("wanted node %q, got %q", want, got)
+		}
+	}
+}
+
+// TestWatchNodeInCluster exercises a NodesInCluster Watch, from node creation,
+// through updates, to not deletion.
+func TestWatchNodesInCluster(t *testing.T) {
+	cl := fakeLeader(t)
+	defer cl.cancel()
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	cur := ipb.NewCuratorClient(cl.localNodeConn)
+
+	w, err := cur.Watch(ctx, &ipb.WatchRequest{
+		Kind: &ipb.WatchRequest_NodesInCluster_{
+			NodesInCluster: &ipb.WatchRequest_NodesInCluster{},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Watch: %v", err)
+	}
+
+	nodes := make(map[string]*ipb.Node)
+	syncNodes := func() *ipb.WatchEvent {
+		t.Helper()
+		ev, err := w.Recv()
+		if err != nil {
+			t.Fatalf("Recv: %v", err)
+		}
+		for _, n := range ev.Nodes {
+			n := n
+			nodes[n.Id] = n
+		}
+		for _, nt := range ev.NodeTombstones {
+			delete(nodes, nt.NodeId)
+		}
+		return ev
+	}
+
+	// Retrieve initial node fetch. This should yield one node.
+	for {
+		ev := syncNodes()
+		if ev.Progress == ipb.WatchEvent_PROGRESS_LAST_BACKLOGGED {
+			break
+		}
+	}
+	if n := nodes[cl.localNodeID]; n == nil || n.Id != cl.localNodeID {
+		t.Errorf("Expected node %q to be present, got %v", cl.localNodeID, nodes[cl.localNodeID])
+	}
+	if len(nodes) != 1 {
+		t.Errorf("Expected exactly one node, got %d", len(nodes))
+	}
+
+	// Update the node status and expect a corresponding WatchEvent.
+	_, err = cur.UpdateNodeStatus(ctx, &ipb.UpdateNodeStatusRequest{
+		NodeId: cl.localNodeID,
+		Status: &cpb.NodeStatus{
+			ExternalAddress: "203.0.113.43",
+		},
+	})
+	if err != nil {
+		t.Fatalf("UpdateNodeStatus: %v", err)
+	}
+	for {
+		syncNodes()
+		n := nodes[cl.localNodeID]
+		if n == nil {
+			continue
+		}
+		if n.Status == nil || n.Status.ExternalAddress != "203.0.113.43" {
+			continue
+		}
+		break
+	}
+
+	// Add a new (fake) node, and expect a corresponding WatchEvent.
+	fakeNodePub, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("GenerateKey: %v", err)
+	}
+	fakeNodeID := identity.NodeID(fakeNodePub)
+	fakeNodeKey, _ := nodeEtcdPrefix.Key(fakeNodeID)
+	fakeNode := &ppb.Node{
+		PublicKey: fakeNodePub,
+		Roles:     &cpb.NodeRoles{},
+	}
+	fakeNodeInit, err := proto.Marshal(fakeNode)
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+	_, err = cl.etcd.Put(ctx, fakeNodeKey, string(fakeNodeInit))
+	if err != nil {
+		t.Fatalf("Put: %v", err)
+	}
+
+	for {
+		syncNodes()
+		n := nodes[fakeNodeID]
+		if n == nil {
+			continue
+		}
+		if n.Id != fakeNodeID {
+			t.Errorf("Wanted faked node ID %q, got %q", fakeNodeID, n.Id)
+		}
+		break
+	}
+
+	// Re-open watcher, resynchronize, expect two nodes to be present.
+	nodes = make(map[string]*ipb.Node)
+	w, err = cur.Watch(ctx, &ipb.WatchRequest{
+		Kind: &ipb.WatchRequest_NodesInCluster_{
+			NodesInCluster: &ipb.WatchRequest_NodesInCluster{},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Watch: %v", err)
+	}
+	for {
+		ev := syncNodes()
+		if ev.Progress == ipb.WatchEvent_PROGRESS_LAST_BACKLOGGED {
+			break
+		}
+	}
+	if n := nodes[cl.localNodeID]; n == nil || n.Status == nil || n.Status.ExternalAddress != "203.0.113.43" {
+		t.Errorf("Node %q should exist and have external address, got %v", cl.localNodeID, n)
+	}
+	if n := nodes[fakeNodeID]; n == nil {
+		t.Errorf("Node %q should exist, got %v", fakeNodeID, n)
+	}
+	if len(nodes) != 2 {
+		t.Errorf("Exptected two nodes in map, got %d", len(nodes))
+	}
+
+	// Remove fake node, expect it to be removed from synced map.
+	k, _ := nodeEtcdPrefix.Key(fakeNodeID)
+	if _, err := cl.etcd.Delete(ctx, k); err != nil {
+		t.Fatalf("could not delete node from etcd: %v", err)
+	}
+
+	for {
+		syncNodes()
+		n := nodes[fakeNodeID]
+		if n == nil {
+			break
+		}
+	}
 }
 
 // TestManagementRegisterTicket exercises the Management.GetRegisterTicket RPC.

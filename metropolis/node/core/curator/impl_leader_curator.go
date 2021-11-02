@@ -2,19 +2,20 @@ package curator
 
 import (
 	"context"
+	"fmt"
 
 	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event/etcd"
 )
 
-// leaderCurator implements the Curator gRPC API (cpb.Curator) as a curator
+// leaderCurator implements the Curator gRPC API (ipb.Curator) as a curator
 // leader.
 type leaderCurator struct {
 	*leadership
@@ -23,32 +24,49 @@ type leaderCurator struct {
 // Watch returns a stream of updates concerning some part of the cluster
 // managed by the curator.
 //
-// See metropolis.node.core.curator.proto.api.Curator for more information.
-func (l *leaderCurator) Watch(req *cpb.WatchRequest, srv cpb.Curator_WatchServer) error {
-	nic, ok := req.Kind.(*cpb.WatchRequest_NodeInCluster_)
-	if !ok {
+// See metropolis.node.core.curator.proto.api.Curator for more information about
+// the RPC semantics.
+//
+// TODO(q3k): Currently the watch RPCs are individually backed by etcd cluster
+// watches (via individual etcd event values), which might be problematic in
+// case of a significant amount of parallel Watches being issued to the Curator.
+// It might make sense to combine all pending Watch requests into a single watch
+// issued to the cluster, with an intermediary caching stage within the curator
+// instance. However, that is effectively implementing etcd learner/relay logic,
+// which has has to be carefully considered, especially with regards to serving
+// stale data.
+func (l *leaderCurator) Watch(req *ipb.WatchRequest, srv ipb.Curator_WatchServer) error {
+	switch x := req.Kind.(type) {
+	case *ipb.WatchRequest_NodeInCluster_:
+		return l.watchNodeInCluster(x.NodeInCluster, srv)
+	case *ipb.WatchRequest_NodesInCluster_:
+		return l.watchNodesInCluster(x.NodesInCluster, srv)
+	default:
 		return status.Error(codes.Unimplemented, "unsupported watch kind")
 	}
-	nodeID := nic.NodeInCluster.NodeId
+}
+
+// watchNodeInCluster implements the Watch API when dealing with a single
+// node-in-cluster request. Effectively, it pipes an etcd value watcher into the
+// Watch API.
+func (l *leaderCurator) watchNodeInCluster(nic *ipb.WatchRequest_NodeInCluster, srv ipb.Curator_WatchServer) error {
+	ctx := srv.Context()
+
 	// Constructing arbitrary etcd path: this is okay, as we only have node objects
 	// underneath the NodeEtcdPrefix. Worst case an attacker can do is request a node
 	// that doesn't exist, and that will just hang . All access is privileged, so
 	// there's also no need to filter anything.
-	// TODO(q3k): formalize and strongly type etcd paths for cluster state?
-	// Probably worth waiting for type parameters before attempting to do that.
-	nodePath, err := nodeEtcdPrefix.Key(nodeID)
+	nodePath, err := nodeEtcdPrefix.Key(nic.NodeId)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "invalid node name: %v", err)
 	}
+	value := etcd.NewValue(l.etcd, nodePath, nodeValueConverter)
 
-	value := etcd.NewValue(l.etcd, nodePath, func(_, data []byte) (interface{}, error) {
-		return nodeUnmarshal(data)
-	})
 	w := value.Watch()
 	defer w.Close()
 
 	for {
-		v, err := w.Get(srv.Context())
+		v, err := w.Get(ctx)
 		if err != nil {
 			if rpcErr, ok := rpcError(err); ok {
 				return rpcErr
@@ -56,26 +74,139 @@ func (l *leaderCurator) Watch(req *cpb.WatchRequest, srv cpb.Curator_WatchServer
 			// TODO(q3k): log err
 			return status.Error(codes.Unavailable, "internal error")
 		}
-		node := v.(*Node)
-		ev := &cpb.WatchEvent{
-			Nodes: []*cpb.Node{
-				{
-					Id:     node.ID(),
-					Roles:  node.proto().Roles,
-					Status: node.status,
-				},
-			},
-		}
+
+		ev := &ipb.WatchEvent{}
+		nodeKV := v.(nodeAtID)
+		nodeKV.appendToEvent(ev)
 		if err := srv.Send(ev); err != nil {
 			return err
 		}
 	}
 }
 
+// watchNodesInCluster implements the Watch API when dealing with a
+// all-nodes-in-cluster request. Effectively, it pipes a ranged etcd value
+// watcher into the Watch API.
+func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, srv ipb.Curator_WatchServer) error {
+	ctx := srv.Context()
+
+	start, end := nodeEtcdPrefix.KeyRange()
+	value := etcd.NewValue(l.etcd, start, nodeValueConverter, etcd.Range(end))
+
+	w := value.Watch()
+	defer w.Close()
+
+	// Perform initial fetch from etcd.
+	nodes := make(map[string]*Node)
+	for {
+		v, err := w.Get(ctx, etcd.BacklogOnly)
+		if err == etcd.BacklogDone {
+			break
+		}
+		if err != nil {
+			// TODO(q3k): log err
+			return status.Error(codes.Unavailable, "internal error during initial fetch")
+		}
+		nodeKV := v.(nodeAtID)
+		if nodeKV.value != nil {
+			nodes[nodeKV.id] = nodeKV.value
+		}
+	}
+
+	// Initial send, chunked to not go over 2MiB (half of the default gRPC message
+	// size limit).
+	//
+	// TODO(q3k): formalize message limits, set const somewhere.
+	we := &ipb.WatchEvent{}
+	for _, n := range nodes {
+		we.Nodes = append(we.Nodes, &ipb.Node{
+			Id:     n.ID(),
+			Roles:  n.proto().Roles,
+			Status: n.status,
+		})
+		if proto.Size(we) > (2 << 20) {
+			if err := srv.Send(we); err != nil {
+				return err
+			}
+			we = &ipb.WatchEvent{}
+		}
+	}
+	// Send last update message. This might be empty, but we need to send the
+	// LAST_BACKLOGGED marker.
+	we.Progress = ipb.WatchEvent_PROGRESS_LAST_BACKLOGGED
+	if err := srv.Send(we); err != nil {
+		return err
+	}
+
+	// Send updates as they arrive from etcd watcher.
+	for {
+		v, err := w.Get(ctx)
+		if err != nil {
+			// TODO(q3k): log err
+			return status.Errorf(codes.Unavailable, "internal error during update")
+		}
+		we := &ipb.WatchEvent{}
+		nodeKV := v.(nodeAtID)
+		nodeKV.appendToEvent(we)
+		if err := srv.Send(we); err != nil {
+			return err
+		}
+	}
+}
+
+// nodeAtID is a key/pair container for a node update received from an etcd
+// watcher. The value will be nil if this update represents a node being
+// deleted.
+type nodeAtID struct {
+	id    string
+	value *Node
+}
+
+// nodeValueConverter is called by etcd node value watchers to convert updates
+// from the cluster into nodeAtID, ensuring data integrity and checking
+// invariants.
+func nodeValueConverter(key, value []byte) (interface{}, error) {
+	res := nodeAtID{
+		id: nodeEtcdPrefix.ExtractID(string(key)),
+	}
+	if len(value) > 0 {
+		node, err := nodeUnmarshal(value)
+		if err != nil {
+			return nil, err
+		}
+		res.value = node
+		if res.id != res.value.ID() {
+			return nil, fmt.Errorf("node ID mismatch (etcd key: %q, value: %q)", res.id, res.value.ID())
+		}
+	}
+	if res.id == "" {
+		// This shouldn't happen, to the point where this might be better handled by a
+		// panic.
+		return nil, fmt.Errorf("invalid node key %q", key)
+	}
+	return res, nil
+}
+
+// appendToId records a node update represented by nodeAtID into a Curator
+// WatchEvent, either a Node or NodeTombstone.
+func (kv nodeAtID) appendToEvent(ev *ipb.WatchEvent) {
+	if node := kv.value; node != nil {
+		ev.Nodes = append(ev.Nodes, &ipb.Node{
+			Id:     node.ID(),
+			Roles:  node.proto().Roles,
+			Status: node.status,
+		})
+	} else {
+		ev.NodeTombstones = append(ev.NodeTombstones, &ipb.WatchEvent_NodeTombstone{
+			NodeId: kv.id,
+		})
+	}
+}
+
 // UpdateNodeStatus is called by nodes in the cluster to report their own
 // status. This status is recorded by the curator and can be retrieed via
 // Watch.
-func (l *leaderCurator) UpdateNodeStatus(ctx context.Context, req *cpb.UpdateNodeStatusRequest) (*cpb.UpdateNodeStatusResponse, error) {
+func (l *leaderCurator) UpdateNodeStatus(ctx context.Context, req *ipb.UpdateNodeStatusRequest) (*ipb.UpdateNodeStatusResponse, error) {
 	// Ensure that the given node_id matches the calling node. We currently
 	// only allow for direct self-reporting of status by nodes.
 	pi := rpc.GetPeerInfo(ctx)
@@ -135,5 +266,5 @@ func (l *leaderCurator) UpdateNodeStatus(ctx context.Context, req *cpb.UpdateNod
 		return nil, status.Errorf(codes.Unavailable, "could not update node: %v", err)
 	}
 
-	return &cpb.UpdateNodeStatusResponse{}, nil
+	return &ipb.UpdateNodeStatusResponse{}, nil
 }

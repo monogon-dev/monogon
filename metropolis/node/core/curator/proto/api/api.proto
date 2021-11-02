@@ -74,14 +74,27 @@ message WatchRequest {
     // the state of the node and the cluster are for purposes of
     // starting/stopping services, performing software updates and general node
     // lifecycle management.
+    //
+    // If the requested node is not yet present in the cluster, the Watch will
+    // block until it is available. If a node is then deleted, a tombstone will
+    // be returned and the call Watch will block forever.
     message NodeInCluster {
         // node_id that the watcher is interested in. The curator will, best
         // effort, stream updates (not necessarily all updates) to this node
         // within WatchEvents.
         string node_id = 1;
     }
+    // The watcher wants information about all the nodes in the cluster. This
+    // is designed to be used by node-local code that needs to know the state
+    // of all the nodes within the cluster, for purposes of building aggregate
+    // views of the cluster, eg. the addresses of all nodes or a list of nodes
+    // fitting some criterion. With time, this call might offer filter
+    // functionality to perform some of this filtering server-side.
+    message NodesInCluster {
+    }
     oneof kind {
         NodeInCluster node_in_cluster = 1;
+        NodesInCluster nodes_in_cluster = 2;
     }
 }
 
@@ -90,6 +103,28 @@ message WatchEvent {
     // contain just the nodes requested in WatchRequest, so the client needs to
     // filter out anything spurious.
     repeated Node nodes = 1;
+    // Node tombstones, a list of node IDs that have been removed from the
+    // cluster since the last sent WatchEvent. For any node in this list, the
+    // watcher should perform logic to remove that node from its current state.
+    message NodeTombstone {
+        string node_id = 1;
+    }
+    repeated NodeTombstone node_tombstones = 3;
+
+    // Progress of the watch stream. This is set for any event which fulfills
+    // some criterion within the context of the watch stream, and is unspecified
+    // otherwise.
+    enum Progress {
+        PROGRESS_UNSPECIFIED = 0;
+        // This event contains the last backlogged data from the watcher: all
+        // data pertinent to the request that is already known to the server
+        // has been returned, and subsequent event receives will block until new
+        // data is available. This will be set on exactly one WatchEvent from
+        // a NodesInCluster RPC, its behaviour is not defined for other Watch
+        // RPCs.
+        PROGRESS_LAST_BACKLOGGED = 1;
+    }
+    Progress progress = 2;
 }
 
 message UpdateNodeStatusRequest {
