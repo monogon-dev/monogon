@@ -111,6 +111,13 @@ entry: <
   semver: "v0.0.0-20170810143723-de5bf2ad4578"
 >
 entry: <
+  import_path: "github.com/adrg/xdg"
+  version: "v0.4.0"
+  bazel_name: "com_github_adrg_xdg"
+  sum: "h1:RzRqFcjH4nE5C6oTAxhBtoE2IRyjBSa62SCbyPidvls="
+  semver: "v0.4.0"
+>
+entry: <
   import_path: "github.com/alexflint/go-filemutex"
   version: "v0.0.0-20171022225611-72bdc8eae2ae"
   bazel_name: "com_github_alexflint_go_filemutex"

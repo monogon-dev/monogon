@@ -2,10 +2,18 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = ["main.go"],
+    srcs = [
+        "install.go",
+        "main.go",
+    ],
     importpath = "source.monogon.dev/metropolis/cli/metroctl",
     visibility = ["//visibility:private"],
-    deps = ["@com_github_spf13_cobra//:go_default_library"],
+    deps = [
+        "//metropolis/cli/metroctl/core:go_default_library",
+        "//metropolis/proto/api:go_default_library",
+        "@com_github_adrg_xdg//:go_default_library",
+        "@com_github_spf13_cobra//:go_default_library",
+    ],
 )
 
 go_binary(

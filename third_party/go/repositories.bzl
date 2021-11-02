@@ -93,6 +93,16 @@ def go_repositories():
         ],
     )
     go_repository(
+        name = "com_github_adrg_xdg",
+        importpath = "github.com/adrg/xdg",
+        version = "v0.4.0",
+        sum = "h1:RzRqFcjH4nE5C6oTAxhBtoE2IRyjBSa62SCbyPidvls=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
         name = "com_github_alexflint_go_filemutex",
         importpath = "github.com/alexflint/go-filemutex",
         version = "v0.0.0-20171022225611-72bdc8eae2ae",

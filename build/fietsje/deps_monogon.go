@@ -121,6 +121,9 @@ func Monogon(shelfPath, repositoriesBzlPath string) error {
 		"github.com/muesli/reflow",
 	)
 
+	// Used by metroctl to resolve XDG directories
+	p.collect("github.com/adrg/xdg", "v0.4.0")
+
 	// First generate the repositories starlark rule into memory. This is because
 	// rendering will lock all unlocked dependencies, which might take a while. If a
 	// use were to interrupt it now, they would end up with an incomplete
