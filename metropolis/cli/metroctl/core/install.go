@@ -76,9 +76,10 @@ func MakeInstallerImage(args MakeInstallerImageArgs) error {
 	// 5% filesystem overhead
 	partitionSizeBytes := (uint64(float32(5*MiB+args.BundleSize+args.InstallerSize+uint64(len(nodeParamsRaw))) * 1.05)) & align1MiBMask
 	// FAT32 has a minimum partition size of 32MiB, so clamp the lower partition
-	// size to that.
-	if partitionSizeBytes < 32*MiB {
-		partitionSizeBytes = 32 * MiB
+	// size to a notch more than that.
+	minimumSize := uint64(33 * MiB)
+	if partitionSizeBytes < minimumSize {
+		partitionSizeBytes = minimumSize
 	}
 	// If creating an image, create it with minimal size, i.e. 1MiB at each
 	// end for partitioning metadata and alignment.
