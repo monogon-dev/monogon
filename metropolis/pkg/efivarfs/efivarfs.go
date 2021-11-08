@@ -34,6 +34,11 @@ const (
 	GlobalGuid = "8be4df61-93ca-11d2-aa0d-00e098032b8c"
 )
 
+// Encoding defines the Unicode encoding used by UEFI, which is UCS-2 Little
+// Endian. For BMP characters UTF-16 is equivalent to UCS-2. See the UEFI
+// Spec 2.9, Sections 33.2.6 and 1.8.1.
+var Encoding = unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM)
+
 // ExtractString returns EFI variable data based on raw variable file contents.
 // It returns string-represented data, or an error.
 func ExtractString(contents []byte) (string, error) {
@@ -41,13 +46,9 @@ func ExtractString(contents []byte) (string, error) {
 	if len(contents) < 4 {
 		return "", fmt.Errorf("contents too short.")
 	}
-	// efiUnicode defines the Unicode encoding used by UEFI which is UCS-2
-	// Little Endian. For BMP characters UTF-16 is equivalent to UCS-2.
-	// See the UEFI Spec 2.9, Sections 33.2.6 and 1.8.1.
-	efiUnicode := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM)
 	// Skip attributes, see @linux//Documentation/filesystems:efivarfs.rst for format
 	efiVarData := contents[4:]
-	espUUIDNullTerminated, err := efiUnicode.NewDecoder().Bytes(efiVarData)
+	espUUIDNullTerminated, err := Encoding.NewDecoder().Bytes(efiVarData)
 	if err != nil {
 		// Pass the decoding error unwrapped.
 		return "", err
