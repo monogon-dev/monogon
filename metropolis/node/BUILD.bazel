@@ -108,6 +108,7 @@ pkg_zip(
         ":kernel_efi",
         ":rootfs",
     ],
+    visibility = ["//visibility:public"],
 )
 
 genrule(

@@ -32,10 +32,25 @@ var genusbCmd = &cobra.Command{
 	Run:     doGenUSB,
 }
 
+// If useInTreeArtifacts is true metroctl should use a bundle and installer
+// directly from the build tree. It is automatically set to true if metroctl is
+// running under bazel run. Specifying either one manually still overrides
+// the in-tree artifacts.
+var useInTreeArtifacts = os.Getenv("BUILD_WORKSPACE_DIRECTORY") != ""
+
+var inTreeInstaller = "metropolis/node/installer/kernel.efi"
+var inTreeBundle = "metropolis/node/node.zip"
+
 // A PEM block type for a Metropolis initial owner private key
 const ownerKeyType = "METROPOLIS INITIAL OWNER PRIVATE KEY"
 
 func doGenUSB(cmd *cobra.Command, args []string) {
+	if useInTreeArtifacts && *installer == "" {
+		installer = &inTreeInstaller
+	}
+	if useInTreeArtifacts && *bundle == "" {
+		bundle = &inTreeBundle
+	}
 	installerFile, err := os.Open(*installer)
 	if err != nil {
 		log.Fatalf("Failed to open installer: %v", err)

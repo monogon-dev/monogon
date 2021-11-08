@@ -6,6 +6,10 @@ go_library(
         "install.go",
         "main.go",
     ],
+    data = [
+        "//metropolis/node",
+        "//metropolis/node/installer:kernel",
+    ],
     importpath = "source.monogon.dev/metropolis/cli/metroctl",
     visibility = ["//visibility:private"],
     deps = [
