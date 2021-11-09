@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["efivarfs.go"],
+    importpath = "source.monogon.dev/metropolis/pkg/efivarfs",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_x_text//encoding/unicode:go_default_library"],
+)
