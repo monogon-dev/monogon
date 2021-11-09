@@ -20,6 +20,7 @@
 package main
 
 import (
+	"archive/zip"
 	"fmt"
 	"io"
 	"log"
@@ -196,6 +197,28 @@ func main() {
 		log.Fatalf("while mounting the installer ESP: %s", err.Error())
 	}
 
+	nodeParameters, err := os.Open("/installer/EFI/metropolis-installer/nodeparams.pb")
+	if err != nil {
+		log.Fatalf("failed to open node parameters from ESP: %v", err)
+	}
+
+	// TODO(lorenz): Replace with proper bundles
+	bundle, err := zip.OpenReader("/installer/EFI/metropolis-installer/bundle.bin")
+	if err != nil {
+		log.Fatalf("failed to open node bundle from ESP: %v", err)
+	}
+	defer bundle.Close()
+	efiPayload, err := bundle.Open("kernel_efi.efi")
+	if err != nil {
+		log.Fatalf("Cannot open EFI payload in bundle: %v", err)
+	}
+	defer efiPayload.Close()
+	systemImage, err := bundle.Open("rootfs.img")
+	if err != nil {
+		log.Fatalf("Cannot open system image in bundle: %v", err)
+	}
+	defer systemImage.Close()
+
 	// Build the osimage parameters.
 	installParams := osimage.Params{
 		PartitionSize: osimage.PartitionSizeInfo{
@@ -215,9 +238,9 @@ func main() {
 		// TODO(mateusz@monogon.tech): Address that bug either by patching go-diskfs
 		// or rewriting osimage.
 		SystemImage: nil,
-		// TODO(mateusz@monogon.tech): Plug in.
-		EFIPayload:     strings.NewReader("TODO"),
-		NodeParameters: strings.NewReader("TODO"),
+
+		EFIPayload:     efiPayload,
+		NodeParameters: nodeParameters,
 	}
 	// Calculate the minimum target size based on the installation parameters.
 	minSize := uint64((installParams.PartitionSize.ESP +
@@ -259,8 +282,7 @@ func main() {
 	}
 	sysBlkdevPath := filepath.Join("/dev", sysBlkdevName)
 	// Copy the system partition contents.
-	contents := strings.NewReader("TODO") // TODO(mz): plug in
-	if err := initializeSystemPartition(contents, sysBlkdevPath); err != nil {
+	if err := initializeSystemPartition(systemImage, sysBlkdevPath); err != nil {
 		log.Fatalf("while initializing the system partition at %q: %s", sysBlkdevPath, err.Error())
 	}
 

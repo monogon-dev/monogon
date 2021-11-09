@@ -33,12 +33,15 @@ import (
 	diskfs "github.com/diskfs/go-diskfs"
 	"github.com/diskfs/go-diskfs/disk"
 	"github.com/diskfs/go-diskfs/partition/gpt"
+	"source.monogon.dev/metropolis/proto/api"
+
 	mctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	osimage "source.monogon.dev/metropolis/node/build/mkimage/osimage"
 )
 
 const (
 	InstallerEFIPayload = "metropolis/node/installer/kernel.efi"
+	TestOSBundle        = "metropolis/test/installer/testos/testos_bundle.zip"
 	InstallerImage      = "metropolis/test/installer/installer.img"
 	NodeStorage         = "metropolis/test/installer/stor.img"
 )
@@ -55,7 +58,6 @@ func runQemu(args []string, expectedOutput string) (bool, error) {
 		"-cpu", "host",
 		"-drive", "if=pflash,format=raw,readonly,file=external/edk2/OVMF_CODE.fd",
 		"-drive", "if=pflash,format=raw,snapshot=on,file=external/edk2/OVMF_VARS.fd",
-		"-drive", "if=virtio,format=raw,snapshot=on,cache=unsafe,file=" + InstallerImage,
 		"-serial", "stdio",
 		"-no-reboot",
 	}
@@ -81,6 +83,14 @@ func runQemu(args []string, expectedOutput string) (bool, error) {
 	result := bytes.Contains(outBuf.Bytes(), []byte(expectedOutput)) ||
 		bytes.Contains(errBuf.Bytes(), []byte(expectedOutput))
 	return result, nil
+}
+
+// runQemuWithInstaller starts a QEMU process and waits for it to finish. args is
+// concatenated to the list of predefined default arguments. It returns true if
+// expectedOutput is found in the serial port output. It may return an error.
+func runQemuWithInstaller(args []string, expectedOutput string) (bool, error) {
+	args = append(args, "-drive", "if=virtio,format=raw,snapshot=on,cache=unsafe,file="+InstallerImage)
+	return runQemu(args, expectedOutput)
 }
 
 // getStorage creates a sparse file, given a size expressed in mebibytes, and
@@ -132,10 +142,21 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Couldn't stat the installer EFI executable: %s", err.Error())
 	}
+	bundle, err := os.Open(TestOSBundle)
+	if err != nil {
+		log.Fatalf("failed to open TestOS bundle: %v", err)
+	}
+	bundleStat, err := bundle.Stat()
+	if err != nil {
+		log.Fatalf("failed to stat() TestOS bundle: %v", err)
+	}
 	iargs := mctl.MakeInstallerImageArgs{
 		Installer:     installer,
 		InstallerSize: uint64(info.Size()),
 		TargetPath:    InstallerImage,
+		NodeParams:    &api.NodeParameters{},
+		Bundle:        bundle,
+		BundleSize:    uint64(bundleStat.Size()),
 	}
 	if err := mctl.MakeInstallerImage(iargs); err != nil {
 		log.Fatalf("Couldn't create the installer image at %q: %s", InstallerImage, err.Error())
@@ -181,7 +202,7 @@ func TestNoBlockDevices(t *testing.T) {
 	// the installer to fail at the device probe stage rather than attempting to
 	// use the medium as the target device.
 	expectedOutput := "couldn't find a suitable block device"
-	result, err := runQemu(nil, expectedOutput)
+	result, err := runQemuWithInstaller(nil, expectedOutput)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -201,7 +222,7 @@ func TestBlockDeviceTooSmall(t *testing.T) {
 
 	// Run QEMU. Expect the installer to fail with a predefined error string.
 	expectedOutput := "couldn't find a suitable block device"
-	result, err := runQemu(qemuDriveParam(imagePath), expectedOutput)
+	result, err := runQemuWithInstaller(qemuDriveParam(imagePath), expectedOutput)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -220,7 +241,7 @@ func TestInstall(t *testing.T) {
 
 	// Run QEMU. Expect the installer to succeed.
 	expectedOutput := "Installation completed"
-	result, err := runQemu(qemuDriveParam(storagePath), expectedOutput)
+	result, err := runQemuWithInstaller(qemuDriveParam(storagePath), expectedOutput)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -262,5 +283,14 @@ func TestInstall(t *testing.T) {
 	// Verify the ESP contents.
 	if err := checkEspContents(storage); err != nil {
 		t.Error(err.Error())
+	}
+	// Run QEMU again. Expect TestOS to launch successfully.
+	expectedOutput = "_TESTOS_LAUNCH_SUCCESS_"
+	result, err = runQemu(qemuDriveParam(storagePath), expectedOutput)
+	if err != nil {
+		t.Error(err.Error())
+	}
+	if result != true {
+		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
 	}
 }
