@@ -1,6 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("//metropolis/node/build:def.bzl", "erofs_image")
 load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
+load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
 go_library(
     name = "go_default_library",
@@ -96,6 +97,17 @@ efi_unified_kernel_image(
     cmdline = "console=ttyS0 root=PARTLABEL=METROPOLIS-SYSTEM rootfstype=erofs init=/init",
     kernel = "//third_party/linux",
     os_release = ":os-release-info",
+)
+
+# An intermediary "bundle" format until we finalize the actual bundle format. This is NOT stable until migrated
+# to the actual bundle format.
+# TODO(lorenz): Replace this
+pkg_zip(
+    name = "node",
+    srcs = [
+        ":kernel_efi",
+        ":rootfs",
+    ],
 )
 
 genrule(
