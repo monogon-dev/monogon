@@ -47,8 +47,8 @@ RUN set -e -x ;\
 
 # Install Bazel binary
 RUN curl -o /usr/local/bin/bazel \
-	https://releases.bazel.build/4.0.0/release/bazel-4.0.0-linux-x86_64 && \
-	echo '7bee349a626281fc8b8d04a7a0b0358492712377400ab12533aeb39c2eb2b901  /usr/local/bin/bazel' | sha256sum --check && \
+	https://releases.bazel.build/4.2.0/release/bazel-4.2.0-linux-x86_64 && \
+	echo '643f3cdc707fc27dad3e5eb4f97ed7fa8f2a132a5477fb4ac2eae3c52d7abb65  /usr/local/bin/bazel' | sha256sum --check && \
 	chmod +x /usr/local/bin/bazel
 
 # Use a shared Go module cache for gazelle
