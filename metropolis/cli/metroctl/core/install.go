@@ -11,6 +11,7 @@ import (
 	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/partition/gpt"
 	"google.golang.org/protobuf/proto"
+
 	"source.monogon.dev/metropolis/proto/api"
 )
 
