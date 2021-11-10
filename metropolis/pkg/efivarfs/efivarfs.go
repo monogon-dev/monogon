@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -72,4 +73,43 @@ func ReadLoaderDevicePartUUID() (string, error) {
 		return "", fmt.Errorf("couldn't decode an EFI variable: %w", err)
 	}
 	return strings.ToLower(contents), nil
+}
+
+// CreateBootEntry creates an EFI boot entry variable and returns its
+// non-negative index on success. It may return an io error.
+func CreateBootEntry(be *BootEntry) (int, error) {
+	// Find the index by looking up the first empty slot.
+	var ep string
+	var n int
+	for ; ; n++ {
+		en := fmt.Sprintf("Boot%04x-%s", n, GlobalGuid)
+		ep = filepath.Join(Path, en)
+		_, err := os.Stat(ep)
+		if os.IsNotExist(err) {
+			break
+		}
+		if err != nil {
+			return -1, err
+		}
+	}
+
+	// Create the boot variable.
+	bem, err := be.Marshal()
+	if err != nil {
+		return -1, fmt.Errorf("while marshaling the EFI boot entry: %w", err)
+	}
+	if err := ioutil.WriteFile(ep, bem, 0644); err != nil {
+		return -1, fmt.Errorf("while creating a boot entry variable: %w", err)
+	}
+	return n, nil
+}
+
+// SetBootOrder replaces contents of the boot order variable with the order
+// specified in ord. It may return an io error.
+func SetBootOrder(ord *BootOrder) error {
+	op := filepath.Join(Path, fmt.Sprintf("BootOrder-%s", GlobalGuid))
+	if err := ioutil.WriteFile(op, ord.Marshal(), 0644); err != nil {
+		return fmt.Errorf("while creating a boot order variable: %w", err)
+	}
+	return nil
 }
