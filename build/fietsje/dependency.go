@@ -53,6 +53,7 @@ type dependency struct {
 	patches              []string
 	prePatches           []string
 	buildExtraArgs       []string
+	useImportAliasNaming bool
 	// replace is an importpath that this dependency will replace. If this is set, this
 	// dependency will be visible in the build as 'importpath', but downloaded at
 	// 'replace'/'version'. This might be slighly confusing, but follows the semantics

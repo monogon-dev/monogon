@@ -81,12 +81,13 @@ func depsContainerd(p *planner) {
 		"go.opencensus.io",
 		"golang.org/x/crypto",
 		"golang.org/x/oauth2",
-		"golang.org/x/sync",
 		"google.golang.org/genproto",
 		"gopkg.in/inf.v0",
 		"gopkg.in/yaml.v2",
 		"k8s.io/klog/v2",
 		"sigs.k8s.io/yaml",
+	).with(useImportAliasNaming).use(
+		"golang.org/x/sync",
 	).with(disabledProtoBuild, patches("containerd-netns-statedir.patch")).use(
 		"github.com/containerd/cri",
 	).with(disabledProtoBuild).use(

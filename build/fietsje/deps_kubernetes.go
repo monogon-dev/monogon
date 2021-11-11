@@ -41,7 +41,7 @@ func depsKubernetes(p *planner) {
 	).inject(
 		// repo infra, not requested by k8s, but used with bazel
 		"k8s.io/repo-infra", "a3483874bd37251c629c92df6d82a226b0e6ad92",
-		prePatches("k8s-infra-bzl4-compat.patch"),
+		prePatches("k8s-infra-bzl4-compat.patch", "k8s-infra-fix-go116.patch"),
 	).with(prePatches("k8s-client-go.patch")).use(
 		"k8s.io/client-go",
 	).with(patches("k8s-native-mounter.patch")).use(
@@ -113,7 +113,6 @@ func depsKubernetes(p *planner) {
 		"github.com/golang/groupcache",
 		"github.com/google/btree",
 		"github.com/google/go-cmp",
-		"github.com/googleapis/gnostic",
 		"github.com/gorilla/websocket",
 		"github.com/gregjones/httpcache",
 		"github.com/grpc-ecosystem/go-grpc-middleware",
@@ -182,5 +181,6 @@ func depsKubernetes(p *planner) {
 		"github.com/google/cadvisor",
 	).with(disabledProtoBuild).use(
 		"go.etcd.io/etcd",
+		"github.com/googleapis/gnostic",
 	)
 }

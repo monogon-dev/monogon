@@ -82,8 +82,13 @@ func (p *planner) render(w io.Writer) error {
 			fmt.Fprintf(w, "        patch_args = [%q],\n", "-p1")
 		}
 		fmt.Fprintf(w, "        build_extra_args = [\n")
-		fmt.Fprintf(w, "            %q,\n", "-go_naming_convention=go_default_library")
-		fmt.Fprintf(w, "            %q,\n", "-go_naming_convention_external=go_default_library")
+		if d.useImportAliasNaming {
+			fmt.Fprintf(w, "            %q,\n", "-go_naming_convention=import_alias")
+			fmt.Fprintf(w, "            %q,\n", "-go_naming_convention_external=import_alias")
+		} else {
+			fmt.Fprintf(w, "            %q,\n", "-go_naming_convention=go_default_library")
+			fmt.Fprintf(w, "            %q,\n", "-go_naming_convention_external=go_default_library")
+		}
 		for _, arg := range d.buildExtraArgs {
 			fmt.Fprintf(w, "            %q,\n", arg)
 		}

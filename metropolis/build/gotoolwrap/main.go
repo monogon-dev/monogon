@@ -127,10 +127,21 @@ func main() {
 		}
 		cmd.Env = append(cmd.Env, v)
 	}
+	// Create a temporary cache directory and remove everything afterwards.
+	// Based on code from
+	// @io_bazel_rules_go//go/tools/builders:stdliblist.go L174
+	tempDir, err := os.MkdirTemp("", "gocache")
+	if err != nil {
+		log.Fatalf("Cannot create temporary directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
 	cmd.Env = append(cmd.Env,
 		fmt.Sprintf("GOROOT=%s", gorootAbs),
 		fmt.Sprintf("GOPATH=%s", gopathAbs),
 		fmt.Sprintf("PATH=%s", path),
+		fmt.Sprintf("GO111MODULE=off"),
+		fmt.Sprintf("GOCACHE=%s", tempDir),
 	)
 
 	// Run the command interactively.

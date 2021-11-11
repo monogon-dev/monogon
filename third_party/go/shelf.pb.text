@@ -55,6 +55,13 @@ entry: <
   semver: "v0.4.14"
 >
 entry: <
+  import_path: "github.com/Microsoft/go-winio"
+  version: "v0.4.17"
+  bazel_name: "com_github_microsoft_go_winio"
+  sum: "h1:iT12IBVClFevaf8PuVyi3UmZOVh4OqnaLxDTW2O6j3w="
+  semver: "v0.4.17"
+>
+entry: <
   import_path: "github.com/Microsoft/hcsshim"
   version: "0b571ac85d7c5842b26d2571de4868634a4c39d7"
   bazel_name: "com_github_microsoft_hcsshim"
@@ -67,6 +74,13 @@ entry: <
   bazel_name: "com_github_microsoft_hcsshim"
   sum: "h1:k5wTrpnVU2/xv8ZuzGkbXVd3js5zJ8RnumPo5RxiIxU="
   semver: "v0.8.10"
+>
+entry: <
+  import_path: "github.com/Microsoft/hcsshim"
+  version: "v0.8.21"
+  bazel_name: "com_github_microsoft_hcsshim"
+  sum: "h1:btRfUDThBE5IKcvI8O8jOiIkujUsAMBSRsYDYmEi6oM="
+  semver: "v0.8.21"
 >
 entry: <
   import_path: "github.com/Microsoft/hcsshim"
@@ -140,6 +154,13 @@ entry: <
 >
 entry: <
   import_path: "github.com/beorn7/perks"
+  version: "v0.0.0-20180321164747-3a771d992973"
+  bazel_name: "com_github_beorn7_perks"
+  sum: "h1:xJ4a3vCFaGF/jqvzLMYoU8P317H5OQ+Via4RmuPwCS0="
+  semver: "v0.0.0-20180321164747-3a771d992973"
+>
+entry: <
+  import_path: "github.com/beorn7/perks"
   version: "v1.0.1"
   bazel_name: "com_github_beorn7_perks"
   sum: "h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM="
@@ -151,6 +172,13 @@ entry: <
   bazel_name: "com_github_bgentry_speakeasy"
   sum: "h1:ByYyxL9InA1OWqxJqqp2A5pYHUrCiAL6K3J+LKSsQkY="
   semver: "v0.1.0"
+>
+entry: <
+  import_path: "github.com/bits-and-blooms/bitset"
+  version: "v1.2.0"
+  bazel_name: "com_github_bits_and_blooms_bitset"
+  sum: "h1:Kn4yilvwNtMACtf1eYDlG8H77R07mZSPbMjLyS07ChA="
+  semver: "v1.2.0"
 >
 entry: <
   import_path: "github.com/blang/semver"
@@ -244,6 +272,13 @@ entry: <
   semver: "v4.1.0"
 >
 entry: <
+  import_path: "github.com/checkpoint-restore/go-criu/v5"
+  version: "v5.0.0"
+  bazel_name: "com_github_checkpoint_restore_go_criu_v5"
+  sum: "h1:TW8f/UvntYoVDMN1K2HlT82qH1rb0sOjpGw3m6Ym+i4="
+  semver: "v5.0.0"
+>
+entry: <
   import_path: "github.com/cilium/arping"
   version: "v1.0.1-0.20190728065459-c5eaf8d7a710"
   bazel_name: "com_github_cilium_arping"
@@ -284,6 +319,20 @@ entry: <
   bazel_name: "com_github_cilium_ebpf"
   sum: "h1:kNrHgLQr3ftwQr9JKL3lmyNVlc/7Mjd8lwcbccE5BsI="
   semver: "v0.0.0-20191203103619-60c3aa43f488"
+>
+entry: <
+  import_path: "github.com/cilium/ebpf"
+  version: "v0.2.0"
+  bazel_name: "com_github_cilium_ebpf"
+  sum: "h1:Fv93L3KKckEcEHR3oApXVzyBTDA8WAm6VXhPE00N3f8="
+  semver: "v0.2.0"
+>
+entry: <
+  import_path: "github.com/cilium/ebpf"
+  version: "v0.6.2"
+  bazel_name: "com_github_cilium_ebpf"
+  sum: "h1:iHsfF/t4aW4heW2YKfeHrVPGdtYTL4C4KocpM8KTSnI="
+  semver: "v0.6.2"
 >
 entry: <
   import_path: "github.com/cilium/ipam"
@@ -349,6 +398,13 @@ entry: <
   semver: "v0.0.0-20201111183144-404b9149801e"
 >
 entry: <
+  import_path: "github.com/containerd/btrfs"
+  version: "v1.0.0"
+  bazel_name: "com_github_containerd_btrfs"
+  sum: "h1:osn1exbzdub9L5SouXO5swW4ea/xVdJZ3wokxN5GrnA="
+  semver: "v1.0.0"
+>
+entry: <
   import_path: "github.com/containerd/cgroups"
   version: "318312a373405e5e91134d8063d04d59768a1bff"
   bazel_name: "com_github_containerd_cgroups"
@@ -363,6 +419,13 @@ entry: <
   semver: "v0.0.0-20200113070643-7347743e5d1e"
 >
 entry: <
+  import_path: "github.com/containerd/cgroups"
+  version: "v1.0.1"
+  bazel_name: "com_github_containerd_cgroups"
+  sum: "h1:iJnMvco9XGvKUvNQkv88bE4uJXxRQH18efbKo9w5vHQ="
+  semver: "v1.0.1"
+>
+entry: <
   import_path: "github.com/containerd/console"
   version: "8375c3424e4d7b114e8a90a4a40c8e1b40d1d4e6"
   bazel_name: "com_github_containerd_console"
@@ -375,6 +438,13 @@ entry: <
   bazel_name: "com_github_containerd_console"
   sum: "h1:fU3UuQapBs+zLJu82NhR11Rif1ny2zfMMAyPJzSN5tQ="
   semver: "v1.0.0"
+>
+entry: <
+  import_path: "github.com/containerd/console"
+  version: "v1.0.2"
+  bazel_name: "com_github_containerd_console"
+  sum: "h1:Pi6D+aZXM+oUw1czuKgH5IJ+y0jhYcwBJfx5/Ghn9dE="
+  semver: "v1.0.2"
 >
 entry: <
   import_path: "github.com/containerd/containerd"
@@ -398,6 +468,13 @@ entry: <
   semver: "v1.4.3"
 >
 entry: <
+  import_path: "github.com/containerd/containerd"
+  version: "v1.5.7"
+  bazel_name: "com_github_containerd_containerd"
+  sum: "h1:rQyoYtj4KddB3bxG6SAqd4+08gePNyJjRqvOIfV3rkM="
+  semver: "v1.5.7"
+>
+entry: <
   import_path: "github.com/containerd/continuity"
   version: "0ec596719c75bfd42908850990acea594b7593ac"
   bazel_name: "com_github_containerd_continuity"
@@ -417,6 +494,13 @@ entry: <
   bazel_name: "com_github_containerd_continuity"
   sum: "h1:PEmIrUvwG9Yyv+0WKZqjXfSFDeZjs/q15g0m08BYS9k="
   semver: "v0.0.0-20200710164510-efbc4488d8fe"
+>
+entry: <
+  import_path: "github.com/containerd/continuity"
+  version: "v0.1.0"
+  bazel_name: "com_github_containerd_continuity"
+  sum: "h1:UFRRY5JemiAhPZrr/uE0n8fMTLcZsUvySPr1+D7pgr8="
+  semver: "v0.1.0"
 >
 entry: <
   import_path: "github.com/containerd/cri"
@@ -454,6 +538,13 @@ entry: <
   semver: "v0.0.0-20200410184934-f15a3290365b"
 >
 entry: <
+  import_path: "github.com/containerd/fifo"
+  version: "v1.0.0"
+  bazel_name: "com_github_containerd_fifo"
+  sum: "h1:6PirWBr9/L7GDamKr+XM0IeUFXu5mf3M/BPpH9gaLBU="
+  semver: "v1.0.0"
+>
+entry: <
   import_path: "github.com/containerd/go-cni"
   version: "0d360c50b10b350b6bb23863fd4dfb1c232b01c9"
   bazel_name: "com_github_containerd_go_cni"
@@ -475,6 +566,13 @@ entry: <
   semver: "v1.0.1"
 >
 entry: <
+  import_path: "github.com/containerd/go-cni"
+  version: "v1.0.2"
+  bazel_name: "com_github_containerd_go_cni"
+  sum: "h1:YbJAhpTevL2v6u8JC1NhCYRwf+3Vzxcc5vGnYoJ7VeE="
+  semver: "v1.0.2"
+>
+entry: <
   import_path: "github.com/containerd/go-runc"
   version: "7016d3ce2328dd2cb1192b2076ebd565c4e8df0c"
   bazel_name: "com_github_containerd_go_runc"
@@ -489,11 +587,32 @@ entry: <
   semver: "v0.0.0-20191206163734-a5c2862aed5e"
 >
 entry: <
+  import_path: "github.com/containerd/go-runc"
+  version: "v1.0.0"
+  bazel_name: "com_github_containerd_go_runc"
+  sum: "h1:oU+lLv1ULm5taqgV/CJivypVODI4SUz1znWjv3nNYS0="
+  semver: "v1.0.0"
+>
+entry: <
   import_path: "github.com/containerd/imgcrypt"
   version: "v1.0.1"
   bazel_name: "com_github_containerd_imgcrypt"
   sum: "h1:IyI3IIP4m6zrNFuNFT7HizGVcuD6BYJFpdM1JvPKCbQ="
   semver: "v1.0.1"
+>
+entry: <
+  import_path: "github.com/containerd/imgcrypt"
+  version: "v1.1.1"
+  bazel_name: "com_github_containerd_imgcrypt"
+  sum: "h1:LBwiTfoUsdiEGAR1TpvxE+Gzt7469oVu87iR3mv3Byc="
+  semver: "v1.1.1"
+>
+entry: <
+  import_path: "github.com/containerd/nri"
+  version: "v0.1.0"
+  bazel_name: "com_github_containerd_nri"
+  sum: "h1:6QioHRlThlKh2RkRTR4kIT3PKAcrLo3gIWnjkM4dQmQ="
+  semver: "v0.1.0"
 >
 entry: <
   import_path: "github.com/containerd/ttrpc"
@@ -524,6 +643,13 @@ entry: <
   semver: "v1.0.1"
 >
 entry: <
+  import_path: "github.com/containerd/typeurl"
+  version: "v1.0.2"
+  bazel_name: "com_github_containerd_typeurl"
+  sum: "h1:Chlt8zIieDbzQFzXzAeBEF92KhExuE4p9p92/QmY7aY="
+  semver: "v1.0.2"
+>
+entry: <
   import_path: "github.com/containernetworking/cni"
   version: "4cfb7b568922a3c79a23e438dc52fe537fc9687e"
   bazel_name: "com_github_containernetworking_cni"
@@ -545,6 +671,13 @@ entry: <
   semver: "v0.8.0"
 >
 entry: <
+  import_path: "github.com/containernetworking/cni"
+  version: "v0.8.1"
+  bazel_name: "com_github_containernetworking_cni"
+  sum: "h1:7zpDnQ3T3s4ucOuJ/ZCLrYBxzkg0AELFfII3Epo9TmI="
+  semver: "v0.8.1"
+>
+entry: <
   import_path: "github.com/containernetworking/plugins"
   version: "v0.8.2"
   bazel_name: "com_github_containernetworking_plugins"
@@ -557,6 +690,13 @@ entry: <
   bazel_name: "com_github_containers_ocicrypt"
   sum: "h1:EToign46OSLTFWnb2oNj9RG3XDnkOX8r28ZIXUuk5Pc="
   semver: "v1.0.1"
+>
+entry: <
+  import_path: "github.com/containers/ocicrypt"
+  version: "v1.1.1"
+  bazel_name: "com_github_containers_ocicrypt"
+  sum: "h1:prL8l9w3ntVqXvNH1CiNn5ENjcCnr38JqpSyvKKB4GI="
+  semver: "v1.1.1"
 >
 entry: <
   import_path: "github.com/coredns/coredns"
@@ -615,6 +755,13 @@ entry: <
   semver: "v22.1.0"
 >
 entry: <
+  import_path: "github.com/coreos/go-systemd/v22"
+  version: "v22.3.2"
+  bazel_name: "com_github_coreos_go_systemd_v22"
+  sum: "h1:D9/bQk5vlXQFZ6Kwuu6zaiXJ9oTPe68++AzAJc1DzSI="
+  semver: "v22.3.2"
+>
+entry: <
   import_path: "github.com/coreos/pkg"
   version: "v0.0.0-20180108230652-97fdf19511ea"
   bazel_name: "com_github_coreos_pkg"
@@ -655,6 +802,13 @@ entry: <
   bazel_name: "com_github_cpuguy83_go_md2man_v2"
   sum: "h1:EoUDS0afbrsXAZ9YQ9jdu/mZ2sXgT1/2yyNng4PGlyM="
   semver: "v2.0.0"
+>
+entry: <
+  import_path: "github.com/cpuguy83/go-md2man/v2"
+  version: "v2.0.0-20190314233015-f79a8a8ca69d"
+  bazel_name: "com_github_cpuguy83_go_md2man_v2"
+  sum: "h1:U+s90UTSYgptZMwQh2aRr3LuazLJIa+Pg3Kc1ylSYVY="
+  semver: "v2.0.0-20190314233015-f79a8a8ca69d"
 >
 entry: <
   import_path: "github.com/cyphar/filepath-securejoin"
@@ -741,6 +895,13 @@ entry: <
   semver: "v17.12.0-ce-rc1.0.20191121165722-d1d5f6476656+incompatible"
 >
 entry: <
+  import_path: "github.com/docker/docker"
+  version: "v1.4.2-0.20200309214505-aa6a9891b09c"
+  bazel_name: "com_github_docker_docker"
+  sum: "h1:zviRyz1SWO8+WVJbi9/jlJCkrsZ54r/lTRbgtcaQhLs="
+  semver: "v1.4.2-0.20200309214505-aa6a9891b09c"
+>
+entry: <
   import_path: "github.com/docker/go-connections"
   version: "v0.3.0"
   bazel_name: "com_github_docker_go_connections"
@@ -764,6 +925,13 @@ entry: <
 entry: <
   import_path: "github.com/docker/go-events"
   version: "e31b211e4f1cd09aa76fe4ac244571fab96ae47f"
+  bazel_name: "com_github_docker_go_events"
+  sum: "h1:+pKlWGMw7gf6bQ+oDZB4KHQFypsfjYlq/C4rfL7D3g8="
+  semver: "v0.0.0-20190806004212-e31b211e4f1c"
+>
+entry: <
+  import_path: "github.com/docker/go-events"
+  version: "v0.0.0-20190806004212-e31b211e4f1c"
   bazel_name: "com_github_docker_go_events"
   sum: "h1:+pKlWGMw7gf6bQ+oDZB4KHQFypsfjYlq/C4rfL7D3g8="
   semver: "v0.0.0-20190806004212-e31b211e4f1c"
@@ -804,6 +972,13 @@ entry: <
   semver: "v0.0.0-20160310174837-449fdfce4d96"
 >
 entry: <
+  import_path: "github.com/docker/spdystream"
+  version: "v0.0.0-20160310174837-449fdfce4d96"
+  bazel_name: "com_github_docker_spdystream"
+  sum: "h1:cenwrSVm+Z7QLSV/BsnenAOcDXdX4cMv4wP0B/5QbPg="
+  semver: "v0.0.0-20160310174837-449fdfce4d96"
+>
+entry: <
   import_path: "github.com/dustin/go-humanize"
   version: "v1.0.0"
   bazel_name: "com_github_dustin_go_humanize"
@@ -827,6 +1002,13 @@ entry: <
 entry: <
   import_path: "github.com/emicklei/go-restful"
   version: "v2.9.5"
+  bazel_name: "com_github_emicklei_go_restful"
+  sum: "h1:spTtZBk5DYEvbxMVutUuTyh1Ao2r4iyvLdACqsl/Ljk="
+  semver: "v2.9.5+incompatible"
+>
+entry: <
+  import_path: "github.com/emicklei/go-restful"
+  version: "v2.9.5+incompatible"
   bazel_name: "com_github_emicklei_go_restful"
   sum: "h1:spTtZBk5DYEvbxMVutUuTyh1Ao2r4iyvLdACqsl/Ljk="
   semver: "v2.9.5+incompatible"
@@ -938,6 +1120,13 @@ entry: <
 >
 entry: <
   import_path: "github.com/go-logr/logr"
+  version: "v0.1.0"
+  bazel_name: "com_github_go_logr_logr"
+  sum: "h1:M1Tv3VzNlEHg6uyACnRdtrploV2P7wZqH8BoQMtz0cg="
+  semver: "v0.1.0"
+>
+entry: <
+  import_path: "github.com/go-logr/logr"
   version: "v0.2.0"
   bazel_name: "com_github_go_logr_logr"
   sum: "h1:QvGt2nLcHH0WK9orKa+ppBPAxREcH364nPUedEpK0TY="
@@ -1035,11 +1224,25 @@ entry: <
   semver: "v5.0.3"
 >
 entry: <
+  import_path: "github.com/godbus/dbus/v5"
+  version: "v5.0.4"
+  bazel_name: "com_github_godbus_dbus_v5"
+  sum: "h1:9349emZab16e7zQvpmsbtjc18ykshndd8y2PG3sgJbA="
+  semver: "v5.0.4"
+>
+entry: <
   import_path: "github.com/gofrs/flock"
   version: "v0.6.1-0.20180915234121-886344bea079"
   bazel_name: "com_github_gofrs_flock"
   sum: "h1:JFTFz3HZTGmgMz4E1TabNBNJljROSYgja1b4l50FNVs="
   semver: "v0.6.1-0.20180915234121-886344bea079"
+>
+entry: <
+  import_path: "github.com/gofrs/flock"
+  version: "v0.8.0"
+  bazel_name: "com_github_gofrs_flock"
+  sum: "h1:MSdYClljsF3PbENUUEx85nkWfJSGfzYI9yEBZOJz6CY="
+  semver: "v0.8.0"
 >
 entry: <
   import_path: "github.com/gofrs/uuid"
@@ -1075,6 +1278,13 @@ entry: <
   bazel_name: "com_github_gogo_protobuf"
   sum: "h1:DqDEcV5aeaTmdFBePNpYsp3FlcVH/2ISVVM9Qf8PSls="
   semver: "v1.3.1"
+>
+entry: <
+  import_path: "github.com/gogo/protobuf"
+  version: "v1.3.2"
+  bazel_name: "com_github_gogo_protobuf"
+  sum: "h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q="
+  semver: "v1.3.2"
 >
 entry: <
   import_path: "github.com/golang/groupcache"
@@ -1133,6 +1343,27 @@ entry: <
   semver: "v0.37.3"
 >
 entry: <
+  import_path: "github.com/google/cadvisor"
+  version: "v0.37.5"
+  bazel_name: "com_github_google_cadvisor"
+  sum: "h1:7JxmD4TqlGk/B+bsabeBNL3YS+ppVjx74EUnautkVfk="
+  semver: "v0.37.5"
+>
+entry: <
+  import_path: "github.com/google/cadvisor"
+  version: "v0.39.2"
+  bazel_name: "com_github_google_cadvisor"
+  sum: "h1:SzgL5IYoMZEFVA9usi0xCy8SXSVXKQ6aL/rYs/kQjXE="
+  semver: "v0.39.2"
+>
+entry: <
+  import_path: "github.com/google/cadvisor"
+  version: "v0.43.0"
+  bazel_name: "com_github_google_cadvisor"
+  sum: "h1:z0ULgYPKZ7L/c7Zjq+ZD6ltklWwYdCSvBMgSjNC/hGo="
+  semver: "v0.43.0"
+>
+entry: <
   import_path: "github.com/google/certificate-transparency-go"
   version: "v1.1.0"
   bazel_name: "com_github_google_certificate_transparency_go"
@@ -1176,6 +1407,13 @@ entry: <
 >
 entry: <
   import_path: "github.com/google/gofuzz"
+  version: "v1.0.0"
+  bazel_name: "com_github_google_gofuzz"
+  sum: "h1:A8PeW59pxE9IoFRqBp37U+mSNaQoZ46F1f0f863XSXw="
+  semver: "v1.0.0"
+>
+entry: <
+  import_path: "github.com/google/gofuzz"
   version: "v1.1.0"
   bazel_name: "com_github_google_gofuzz"
   sum: "h1:Hsa8mG0dQ46ij8Sl2AYJDUv1oA9/d6Vk+3LG99Oe02g="
@@ -1208,6 +1446,13 @@ entry: <
   bazel_name: "com_github_google_gvisor"
   sum: "h1:gNssWp0Zg2Ij2OMz4Gi5ciVLnMVGzqfvPOADTN1ou+E="
   semver: "v0.0.0-20201216082428-b645fcd241a8"
+>
+entry: <
+  import_path: "github.com/google/gvisor"
+  version: "release-20211101.0"
+  bazel_name: "com_github_google_gvisor"
+  sum: "h1:DLypxrLRMq0P4f96vlutTfJpM5/Y8q6rDafgBU1pxAs="
+  semver: "v0.0.0-20211029210316-b822923b706d"
 >
 entry: <
   import_path: "github.com/google/gvisor-containerd-shim"
@@ -1257,6 +1502,13 @@ entry: <
   bazel_name: "com_github_google_uuid"
   sum: "h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY="
   semver: "v1.1.1"
+>
+entry: <
+  import_path: "github.com/google/uuid"
+  version: "v1.2.0"
+  bazel_name: "com_github_google_uuid"
+  sum: "h1:qJYtXnJRWmpe7m/3XlyhrsLrEURqHRM2kxzoxXqyUDs="
+  semver: "v1.2.0"
 >
 entry: <
   import_path: "github.com/googleapis/gnostic"
@@ -1393,6 +1645,20 @@ entry: <
 >
 entry: <
   import_path: "github.com/hashicorp/golang-lru"
+  version: "v0.5.0"
+  bazel_name: "com_github_hashicorp_golang_lru"
+  sum: "h1:CL2msUPvZTLb5O648aiLNJw3hnBxN2+1Jq8rCOH9wdo="
+  semver: "v0.5.0"
+>
+entry: <
+  import_path: "github.com/hashicorp/golang-lru"
+  version: "v0.5.1"
+  bazel_name: "com_github_hashicorp_golang_lru"
+  sum: "h1:0hERBMJE1eitiLkihrMvRVBYAkpHzc/J3QdDN+dAcgU="
+  semver: "v0.5.1"
+>
+entry: <
+  import_path: "github.com/hashicorp/golang-lru"
   version: "v0.5.3"
   bazel_name: "com_github_hashicorp_golang_lru"
   sum: "h1:YPkqC67at8FYaadspW/6uE0COsBxS2656RLEr8Bppgk="
@@ -1432,6 +1698,13 @@ entry: <
   bazel_name: "com_github_imdario_mergo"
   sum: "h1:Y+UAYTZ7gDEuOfhxKWy+dvb5dRQ6rJjFSdX2HZY1/gI="
   semver: "v0.3.7"
+>
+entry: <
+  import_path: "github.com/imdario/mergo"
+  version: "v0.3.12"
+  bazel_name: "com_github_imdario_mergo"
+  sum: "h1:b6R2BslTbIEToALKP7LxUvijTsNI9TAe80pLWN2g/HU="
+  semver: "v0.3.12"
 >
 entry: <
   import_path: "github.com/imdario/mergo"
@@ -1505,6 +1778,13 @@ entry: <
 >
 entry: <
   import_path: "github.com/json-iterator/go"
+  version: "v1.1.6"
+  bazel_name: "com_github_json_iterator_go"
+  sum: "h1:MrUvLMLTMxbqFJ9kzlvat/rYZqZnW3u4wkLzWTaFwKs="
+  semver: "v1.1.6"
+>
+entry: <
+  import_path: "github.com/json-iterator/go"
   version: "v1.1.9"
   bazel_name: "com_github_json_iterator_go"
   sum: "h1:9yzud/Ht36ygwatGx56VwCZtlI/2AD15T1X2sjSuGns="
@@ -1532,6 +1812,13 @@ entry: <
   semver: "v3.16.0+incompatible"
 >
 entry: <
+  import_path: "github.com/klauspost/compress"
+  version: "v1.11.13"
+  bazel_name: "com_github_klauspost_compress"
+  sum: "h1:eSvu8Tmq6j2psUJqJrLcWH6K3w5Dwc+qipbaA6eVEN4="
+  semver: "v1.11.13"
+>
+entry: <
   import_path: "github.com/koneu/natend"
   version: "v0.0.0-20150829182554-ec0926ea948d"
   bazel_name: "com_github_koneu_natend"
@@ -1541,6 +1828,13 @@ entry: <
 entry: <
   import_path: "github.com/konsorten/go-windows-terminal-sequences"
   version: "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
+  bazel_name: "com_github_konsorten_go_windows_terminal_sequences"
+  sum: "h1:mweAR1A6xJ3oS2pRaGiHgQ4OO8tzTaLawm8vnODuwDk="
+  semver: "v1.0.1"
+>
+entry: <
+  import_path: "github.com/konsorten/go-windows-terminal-sequences"
+  version: "v1.0.1"
   bazel_name: "com_github_konsorten_go_windows_terminal_sequences"
   sum: "h1:mweAR1A6xJ3oS2pRaGiHgQ4OO8tzTaLawm8vnODuwDk="
   semver: "v1.0.1"
@@ -1565,6 +1859,13 @@ entry: <
   bazel_name: "com_github_kr_pretty"
   sum: "h1:s5hAObm+yFO5uHYt5dYjxi2rXrsnmRpJx4OYvIWUaQs="
   semver: "v0.2.0"
+>
+entry: <
+  import_path: "github.com/kr/pretty"
+  version: "v0.2.1"
+  bazel_name: "com_github_kr_pretty"
+  sum: "h1:Fmg33tUaq4/8ym9TJN1x7sLJnHVwhP33CNkpYV/7rwI="
+  semver: "v0.2.1"
 >
 entry: <
   import_path: "github.com/kr/pty"
@@ -1672,6 +1973,13 @@ entry: <
   semver: "v1.0.1"
 >
 entry: <
+  import_path: "github.com/matttproud/golang_protobuf_extensions"
+  version: "v1.0.2-0.20181231171920-c182affec369"
+  bazel_name: "com_github_matttproud_golang_protobuf_extensions"
+  sum: "h1:I0XW9+e1XWDxdcEniV4rQAIOPUGDq67JSCiRCgGCZLI="
+  semver: "v1.0.2-0.20181231171920-c182affec369"
+>
+entry: <
   import_path: "github.com/mdlayher/ethernet"
   version: "0394541c37b7f86a10e0b49492f6d4f605c34163"
   bazel_name: "com_github_mdlayher_ethernet"
@@ -1742,6 +2050,13 @@ entry: <
   semver: "v1.1.4"
 >
 entry: <
+  import_path: "github.com/miekg/pkcs11"
+  version: "v1.0.3"
+  bazel_name: "com_github_miekg_pkcs11"
+  sum: "h1:iMwmD7I5225wv84WxIG/bmxz9AXjWvTWIbM/TYHvWtw="
+  semver: "v1.0.3"
+>
+entry: <
   import_path: "github.com/mindprince/gonvml"
   version: "v0.0.0-20190828220739-9ebdce4bb989"
   bazel_name: "com_github_mindprince_gonvml"
@@ -1770,6 +2085,13 @@ entry: <
   semver: "v1.1.2"
 >
 entry: <
+  import_path: "github.com/moby/locker"
+  version: "v1.0.1"
+  bazel_name: "com_github_moby_locker"
+  sum: "h1:fOXqR41zeveg4fFODix+1Ch4mj/gT0NE1XJbp/epuBg="
+  semver: "v1.0.1"
+>
+entry: <
   import_path: "github.com/moby/sys"
   version: "95fd265abb1e7d346dd00882d49fd717d17317b8"
   bazel_name: "com_github_moby_sys"
@@ -1789,6 +2111,20 @@ entry: <
   bazel_name: "com_github_moby_sys_mountinfo"
   sum: "h1:KIrhRO14+AkwKvG/g2yIpNMOUVZ02xNhOw8KY1WsLOI="
   semver: "v0.1.3"
+>
+entry: <
+  import_path: "github.com/moby/sys/mountinfo"
+  version: "v0.4.1"
+  bazel_name: "com_github_moby_sys_mountinfo"
+  sum: "h1:1O+1cHA1aujwEwwVMa2Xm2l+gIpUHyd3+D+d7LZh1kM="
+  semver: "v0.4.1"
+>
+entry: <
+  import_path: "github.com/moby/sys/symlink"
+  version: "v0.1.0"
+  bazel_name: "com_github_moby_sys_symlink"
+  sum: "h1:MTFZ74KtNI6qQQpuBxU+uKCim4WtOMokr03hCfJcazE="
+  semver: "v0.1.0"
 >
 entry: <
   import_path: "github.com/moby/term"
@@ -1812,8 +2148,29 @@ entry: <
   semver: "v0.0.0-20180306012644-bacd9c7ef1dd"
 >
 entry: <
+  import_path: "github.com/modern-go/concurrent"
+  version: "v0.0.0-20180228061459-e0a39a4cb421"
+  bazel_name: "com_github_modern_go_concurrent"
+  sum: "h1:ZqeYNhU3OHLH3mGKHDcjJRFFRrJa6eAM5H+CtDdOsPc="
+  semver: "v0.0.0-20180228061459-e0a39a4cb421"
+>
+entry: <
+  import_path: "github.com/modern-go/concurrent"
+  version: "v0.0.0-20180306012644-bacd9c7ef1dd"
+  bazel_name: "com_github_modern_go_concurrent"
+  sum: "h1:TRLaZ9cD/w8PVh93nsPXa1VrQ6jlwL5oN8l14QlcNfg="
+  semver: "v0.0.0-20180306012644-bacd9c7ef1dd"
+>
+entry: <
   import_path: "github.com/modern-go/reflect2"
   version: "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
+  bazel_name: "com_github_modern_go_reflect2"
+  sum: "h1:Esafd1046DLDQ0W1YjYsBW+p8U2u7vzgW2SQVmlNazg="
+  semver: "v0.0.0-20180701023420-4b7aa43c6742"
+>
+entry: <
+  import_path: "github.com/modern-go/reflect2"
+  version: "v0.0.0-20180701023420-4b7aa43c6742"
   bazel_name: "com_github_modern_go_reflect2"
   sum: "h1:Esafd1046DLDQ0W1YjYsBW+p8U2u7vzgW2SQVmlNazg="
   semver: "v0.0.0-20180701023420-4b7aa43c6742"
@@ -1966,6 +2323,13 @@ entry: <
   semver: "v1.0.0-rc92"
 >
 entry: <
+  import_path: "github.com/opencontainers/runc"
+  version: "v1.0.2"
+  bazel_name: "com_github_opencontainers_runc"
+  sum: "h1:opHZMaswlyxz1OuGpBE53Dwe4/xF7EZTY0A2L/FpCOg="
+  semver: "v1.0.2"
+>
+entry: <
   import_path: "github.com/opencontainers/runtime-spec"
   version: "237cc4f519e2e8f9b235bacccfa8ef5a84df2875"
   bazel_name: "com_github_opencontainers_runtime-spec"
@@ -1994,6 +2358,13 @@ entry: <
   semver: "v1.0.2-0.20181111125026-1722abf79c2f"
 >
 entry: <
+  import_path: "github.com/opencontainers/runtime-spec"
+  version: "v1.0.3-0.20210326190908-1c3f411f0417"
+  bazel_name: "com_github_opencontainers_runtime_spec"
+  sum: "h1:3snG66yBm59tKhhSPQrQ/0bCrv1LQbKt40LnUPiUxdc="
+  semver: "v1.0.3-0.20210326190908-1c3f411f0417"
+>
+entry: <
   import_path: "github.com/opencontainers/selinux"
   version: "5215b1806f52b1fcc2070a8826c542c9d33cd3cf"
   bazel_name: "com_github_opencontainers_selinux"
@@ -2013,6 +2384,13 @@ entry: <
   bazel_name: "com_github_opencontainers_selinux"
   sum: "h1:+bIAS/Za3q5FTwWym4fTB0vObnfCf3G/NC7K6Jx62mY="
   semver: "v1.6.0"
+>
+entry: <
+  import_path: "github.com/opencontainers/selinux"
+  version: "v1.8.2"
+  bazel_name: "com_github_opencontainers_selinux"
+  sum: "h1:c4ca10UMgRcvZ6h0K4HtS15UaVSBEaE+iln2LVpAuGc="
+  semver: "v1.8.2"
 >
 entry: <
   import_path: "github.com/opentracing/opentracing-go"
@@ -2120,11 +2498,25 @@ entry: <
   semver: "v1.6.0"
 >
 entry: <
+  import_path: "github.com/prometheus/client_golang"
+  version: "v1.7.1"
+  bazel_name: "com_github_prometheus_client_golang"
+  sum: "h1:NTGy1Ja9pByO+xAeH/qiWnLrKtr3hJPNjaVUwnjpdpA="
+  semver: "v1.7.1"
+>
+entry: <
   import_path: "github.com/prometheus/client_model"
   version: "d1d2010b5beead3fa1c5f271a5cf626e40b3ad6e"
   bazel_name: "com_github_prometheus_client_model"
   sum: "h1:ElTg5tNp4DqfV7UQjDqv2+RJlNzsDtvNAWccbItceIE="
   semver: "v0.1.0"
+>
+entry: <
+  import_path: "github.com/prometheus/client_model"
+  version: "v0.0.0-20180712105110-5c3871d89910"
+  bazel_name: "com_github_prometheus_client_model"
+  sum: "h1:idejC8f05m9MGOsuEi1ATq9shN03HrxNkD/luQvxCv8="
+  semver: "v0.0.0-20180712105110-5c3871d89910"
 >
 entry: <
   import_path: "github.com/prometheus/client_model"
@@ -2139,6 +2531,20 @@ entry: <
   bazel_name: "com_github_prometheus_common"
   sum: "h1:L+1lyG48J1zAQXA3RBX/nG/B3gjlHq0zTt2tlbJLyCY="
   semver: "v0.7.0"
+>
+entry: <
+  import_path: "github.com/prometheus/common"
+  version: "v0.0.0-20181113130724-41aa239b4cce"
+  bazel_name: "com_github_prometheus_common"
+  sum: "h1:X0jFYGnHemYDIW6jlc+fSI8f9Cg+jqCnClYP2WgZT/A="
+  semver: "v0.0.0-20181113130724-41aa239b4cce"
+>
+entry: <
+  import_path: "github.com/prometheus/common"
+  version: "v0.10.0"
+  bazel_name: "com_github_prometheus_common"
+  sum: "h1:RyRA7RzGXQZiW+tGMr7sxa85G1z0yOpM1qq5c8lNawc="
+  semver: "v0.10.0"
 >
 entry: <
   import_path: "github.com/prometheus/common"
@@ -2160,6 +2566,13 @@ entry: <
   bazel_name: "com_github_prometheus_procfs"
   sum: "h1:DhHlBtkHWPYi8O2y31JkK0TF+DGM+51OopZjH/Ia5qI="
   semver: "v0.0.11"
+>
+entry: <
+  import_path: "github.com/prometheus/procfs"
+  version: "v0.6.0"
+  bazel_name: "com_github_prometheus_procfs"
+  sum: "h1:mxy4L2jP6qMonqmq+aTtOx1ifVWUgG/TAmntgbh3xv4="
+  semver: "v0.6.0"
 >
 entry: <
   import_path: "github.com/rekby/gpt"
@@ -2281,6 +2694,13 @@ entry: <
   semver: "v1.6.0"
 >
 entry: <
+  import_path: "github.com/sirupsen/logrus"
+  version: "v1.8.1"
+  bazel_name: "com_github_sirupsen_logrus"
+  sum: "h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE="
+  semver: "v1.8.1"
+>
+entry: <
   import_path: "github.com/soheilhy/cmux"
   version: "v0.1.4"
   bazel_name: "com_github_soheilhy_cmux"
@@ -2351,6 +2771,13 @@ entry: <
   semver: "v1.9.0"
 >
 entry: <
+  import_path: "github.com/stefanberger/go-pkcs11uri"
+  version: "v0.0.0-20201008174630-78d3cae3a980"
+  bazel_name: "com_github_stefanberger_go_pkcs11uri"
+  sum: "h1:lIOOHPEbXzO3vnmx2gok1Tfs31Q8GQqKLc8vVqyQq/I="
+  semver: "v0.0.0-20201008174630-78d3cae3a980"
+>
+entry: <
   import_path: "github.com/stretchr/testify"
   version: "221dbe5ed46703ee255b1da0dec05086f5035f62"
   bazel_name: "com_github_stretchr_testify"
@@ -2379,6 +2806,13 @@ entry: <
   semver: "v0.0.0-20180916011248-d98352740cb2"
 >
 entry: <
+  import_path: "github.com/syndtr/gocapability"
+  version: "v0.0.0-20200815063812-42c35b437635"
+  bazel_name: "com_github_syndtr_gocapability"
+  sum: "h1:kdXcSzyDtseVEc4yCz2qF8ZrQvIDBJLl4S1c3GCXmoI="
+  semver: "v0.0.0-20200815063812-42c35b437635"
+>
+entry: <
   import_path: "github.com/tchap/go-patricia"
   version: "666120de432aea38ab06bd5c818f04f4129882c9"
   bazel_name: "com_github_tchap_go_patricia"
@@ -2388,6 +2822,13 @@ entry: <
 entry: <
   import_path: "github.com/tchap/go-patricia"
   version: "v2.2.6"
+  bazel_name: "com_github_tchap_go_patricia"
+  sum: "h1:JvoDL7JSoIP2HDE8AbDH3zC8QBPxmzYe32HHy5yQ+Ck="
+  semver: "v2.2.6+incompatible"
+>
+entry: <
+  import_path: "github.com/tchap/go-patricia"
+  version: "v2.2.6+incompatible"
   bazel_name: "com_github_tchap_go_patricia"
   sum: "h1:JvoDL7JSoIP2HDE8AbDH3zC8QBPxmzYe32HHy5yQ+Ck="
   semver: "v2.2.6+incompatible"
@@ -2533,6 +2974,13 @@ entry: <
   semver: "v1.1.2"
 >
 entry: <
+  import_path: "go.mozilla.org/pkcs7"
+  version: "v0.0.0-20200128120323-432b2356ecb1"
+  bazel_name: "org_mozilla_go_pkcs7"
+  sum: "h1:A/5uWzF44DlIgdm/PQFwfMkW0JX+cIcQi/SwLAmZP5M="
+  semver: "v0.0.0-20200128120323-432b2356ecb1"
+>
+entry: <
   import_path: "go.opencensus.io"
   version: "9c377598961b706d1542bd2d84d538b5094d596e"
   bazel_name: "io_opencensus_go"
@@ -2541,10 +2989,24 @@ entry: <
 >
 entry: <
   import_path: "go.opencensus.io"
+  version: "v0.21.0"
+  bazel_name: "io_opencensus_go"
+  sum: "h1:mU6zScU4U1YAFPHEHYk+3JC4SY7JxgkqS10ZOSyksNg="
+  semver: "v0.21.0"
+>
+entry: <
+  import_path: "go.opencensus.io"
   version: "v0.22.0"
   bazel_name: "io_opencensus_go"
   sum: "h1:C9hSCOW830chIVkdja34wa6Ky+IzWllkUinR+BtRZd4="
   semver: "v0.22.0"
+>
+entry: <
+  import_path: "go.opencensus.io"
+  version: "v0.22.3"
+  bazel_name: "io_opencensus_go"
+  sum: "h1:8sGtKOrtQqkN1bp2AtX+misvLIlOmsEsNd+9NIcPEm8="
+  semver: "v0.22.3"
 >
 entry: <
   import_path: "go.starlark.net"
@@ -2617,6 +3079,20 @@ entry: <
   semver: "v0.0.0-20200220183623-bac4c82f6975"
 >
 entry: <
+  import_path: "golang.org/x/crypto"
+  version: "v0.0.0-20180904163835-0709b304e793"
+  bazel_name: "org_golang_x_crypto"
+  sum: "h1:u+LnwYTOOW7Ukr/fppxEb1Nwz0AtPflrblfvUudpo+I="
+  semver: "v0.0.0-20180904163835-0709b304e793"
+>
+entry: <
+  import_path: "golang.org/x/crypto"
+  version: "v0.0.0-20210322153248-0c34fe9e7dc2"
+  bazel_name: "org_golang_x_crypto"
+  sum: "h1:It14KIkyBFYkHkwZ7k45minvA9aorojkyjGk9KJ5B/w="
+  semver: "v0.0.0-20210322153248-0c34fe9e7dc2"
+>
+entry: <
   import_path: "golang.org/x/mod"
   version: "v0.3.0"
   bazel_name: "org_golang_x_mod"
@@ -2659,11 +3135,32 @@ entry: <
   semver: "v0.0.0-20191202225959-858c2ad4c8b6"
 >
 entry: <
+  import_path: "golang.org/x/oauth2"
+  version: "v0.0.0-20180821212333-d2e6202438be"
+  bazel_name: "org_golang_x_oauth2"
+  sum: "h1:vEDujvNQGv4jgYKudGeI/+DAX4Jffq6hpD55MmoEvKs="
+  semver: "v0.0.0-20180821212333-d2e6202438be"
+>
+entry: <
+  import_path: "golang.org/x/oauth2"
+  version: "v0.0.0-20200107190931-bf48bf16ab8d"
+  bazel_name: "org_golang_x_oauth2"
+  sum: "h1:TzXSXBo42m9gQenoE3b9BGiEpg5IG2JkU5FkPIawgtw="
+  semver: "v0.0.0-20200107190931-bf48bf16ab8d"
+>
+entry: <
   import_path: "golang.org/x/sync"
   version: "42b317875d0fa942474b76e1b46a6060d720ae6e"
   bazel_name: "org_golang_x_sync"
   sum: "h1:Bl/8QSvNqXvPGPGXa2z5xUTmV7VDcZyvRZ+QQXkXTZQ="
   semver: "v0.0.0-20181108010431-42b317875d0f"
+>
+entry: <
+  import_path: "golang.org/x/sync"
+  version: "v0.0.0-20201207232520-09787c993a3a"
+  bazel_name: "org_golang_x_sync"
+  sum: "h1:DcqTD9SDLc+1P/r1EmRBwnVsrOwW+kk2vWf9n+1sGhs="
+  semver: "v0.0.0-20201207232520-09787c993a3a"
 >
 entry: <
   import_path: "golang.org/x/sys"
@@ -2685,6 +3182,13 @@ entry: <
   bazel_name: "org_golang_x_sys"
   sum: "h1:5/PjkGUjvEU5Gl6BxmvKRPpqo2uNMv4rcHBMwzk/st8="
   semver: "v0.0.0-20200622214017-ed371f2e16b4"
+>
+entry: <
+  import_path: "golang.org/x/term"
+  version: "v0.0.0-20201126162022-7de9c90e9dd1"
+  bazel_name: "org_golang_x_term"
+  sum: "h1:v+OssWQX+hTHEmOBgwxdZxK4zHq3yOs8F9J7mk0PY8E="
+  semver: "v0.0.0-20201126162022-7de9c90e9dd1"
 >
 entry: <
   import_path: "golang.org/x/text"
@@ -2738,6 +3242,13 @@ entry: <
 entry: <
   import_path: "google.golang.org/genproto"
   version: "e50cd9704f63023d62cd06a1994b98227fc4d21a"
+  bazel_name: "org_golang_google_genproto"
+  sum: "h1:YzfoEYWbODU5Fbt37+h7X16BWQbad7Q4S6gclTKFXM8="
+  semver: "v0.0.0-20200224152610-e50cd9704f63"
+>
+entry: <
+  import_path: "google.golang.org/genproto"
+  version: "v0.0.0-20200224152610-e50cd9704f63"
   bazel_name: "org_golang_google_genproto"
   sum: "h1:YzfoEYWbODU5Fbt37+h7X16BWQbad7Q4S6gclTKFXM8="
   semver: "v0.0.0-20200224152610-e50cd9704f63"
@@ -2835,10 +3346,24 @@ entry: <
 >
 entry: <
   import_path: "gopkg.in/yaml.v2"
+  version: "v2.0.0-20170812160011-eb3733d160e7"
+  bazel_name: "in_gopkg_yaml_v2"
+  sum: "h1:+t9dhfO+GNOIGJof6kPOAenx7YgrZMTdRPV+EsnPabk="
+  semver: "v2.0.0-20170812160011-eb3733d160e7"
+>
+entry: <
+  import_path: "gopkg.in/yaml.v2"
   version: "v2.2.8"
   bazel_name: "in_gopkg_yaml_v2"
   sum: "h1:obN1ZagJSUGI0Ek/LBmuj4SNLPfIny3KsKFopxRdj10="
   semver: "v2.2.8"
+>
+entry: <
+  import_path: "gopkg.in/yaml.v2"
+  version: "v2.4.0"
+  bazel_name: "in_gopkg_yaml_v2"
+  sum: "h1:D8xgwECY7CYvx+Y2n4sBz93Jn9JRvxdiyyo8CTfuKaY="
+  semver: "v2.4.0"
 >
 entry: <
   import_path: "gotest.tools"
@@ -3205,6 +3730,13 @@ entry: <
   semver: "v0.19.8-rc.0"
 >
 entry: <
+  import_path: "k8s.io/cri-api"
+  version: "v0.20.12"
+  bazel_name: "io_k8s_cri_api"
+  sum: "h1:kPP6EnSTdGb+RNiJDJkPTMpPxTQsdTw4rjLRR5ze5CA="
+  semver: "v0.20.12"
+>
+entry: <
   import_path: "k8s.io/csi-translation-lib"
   version: "kubernetes-1.19.0-alpha.2"
   bazel_name: "io_k8s_csi_translation_lib"
@@ -3280,6 +3812,13 @@ entry: <
   bazel_name: "io_k8s_klog_v2"
   sum: "h1:XRvcwJozkgZ1UQJmfMGpvRthQHOvihEhYtDfAaxMz/A="
   semver: "v2.2.0"
+>
+entry: <
+  import_path: "k8s.io/klog/v2"
+  version: "v2.4.0"
+  bazel_name: "io_k8s_klog_v2"
+  sum: "h1:7+X0fUguPyrKEC4WjH8iGDg3laWgMo5tMnRTIGTTxGQ="
+  semver: "v2.4.0"
 >
 entry: <
   import_path: "k8s.io/kube-aggregator"
@@ -3739,6 +4278,13 @@ entry: <
 entry: <
   import_path: "sigs.k8s.io/yaml"
   version: "fd68e9863619f6ec2fdd8625fe1f02e7c877e480"
+  bazel_name: "io_k8s_sigs_yaml"
+  sum: "h1:4A07+ZFc2wgJwo8YNlQpr1rVlgUDlxXHhPJciaPY5gs="
+  semver: "v1.1.0"
+>
+entry: <
+  import_path: "sigs.k8s.io/yaml"
+  version: "v1.1.0"
   bazel_name: "io_k8s_sigs_yaml"
   sum: "h1:4A07+ZFc2wgJwo8YNlQpr1rVlgUDlxXHhPJciaPY5gs="
   semver: "v1.1.0"

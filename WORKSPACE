@@ -30,10 +30,10 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "7904dbecbaffd068651916dce77ff3437679f9d20e1a7956bff43826e7645fcc",
+    sha256 = "2b1641428dff9018f9e85c0384f03ec6c10660d935b750e3fa1492a281a53b0f",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.25.1/rules_go-v0.25.1.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.25.1/rules_go-v0.25.1.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.29.0/rules_go-v0.29.0.zip",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.29.0/rules_go-v0.29.0.zip",
     ],
 )
 
@@ -43,42 +43,32 @@ http_archive(
     patches = [
         "//third_party/gazelle:add-prepatching.patch",
     ],
-    sha256 = "222e49f034ca7a1d1231422cdb67066b885819885c356673cb1f72f748a3c9d4",
+    sha256 = "de69a09dc70417580aabf20a28619bb3ef60d038470c7cf8442fafcf627c21cb",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.3/bazel-gazelle-v0.22.3.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.3/bazel-gazelle-v0.22.3.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz",
     ],
 )
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 load("@bazel_gazelle//:deps.bzl", "go_repository")
 
-# golang.org/x/sys is overridden by the go_rules protobuf dependency -> declare it first, since
-# we need a newer version of it for the netlink package which would fail to compile otherwise.
-go_repository(
-    name = "org_golang_x_sys",
-    importpath = "golang.org/x/sys",
-    sum = "h1:q9u40nxWT5zRClI/uU9dHCiYGottAg6Nzz4YUQyHxdA=",
-    version = "v0.0.0-20190927073244-c990c680b611",
-)
-
 go_rules_dependencies()
 
 go_register_toolchains(
-    go_version = "1.14",
+    go_version = "1.17.1",
     nogo = "@dev_source_monogon//build/analysis:nogo",
 )
-
-load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
-
-gazelle_dependencies()
-
-# Load Gazelle-generated local dependencies
 
 # gazelle:repository_macro third_party/go/repositories.bzl%go_repositories
 load("//third_party/go:repositories.bzl", "go_repositories")
 
 go_repositories()
+
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+
+# Load Gazelle-generated local dependencies
+gazelle_dependencies()
 
 # Protobuf
 

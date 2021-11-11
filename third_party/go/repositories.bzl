@@ -479,10 +479,6 @@ def go_repositories():
         importpath = "github.com/corverroos/commentwrap",
         version = "v0.0.0-20191204065359-2926638be44c",
         sum = "h1:toeMwwechJKH0iwOoGJLZK6x42Ba9si+816KxqmgFc8=",
-        patches = [
-            "//third_party/go/patches:commentwrap-tool-library.patch",
-        ],
-        patch_args = ["-p1"],
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -901,8 +897,8 @@ def go_repositories():
     go_repository(
         name = "com_github_gofrs_flock",
         importpath = "github.com/gofrs/flock",
-        version = "v0.6.1-0.20180915234121-886344bea079",
-        sum = "h1:JFTFz3HZTGmgMz4E1TabNBNJljROSYgja1b4l50FNVs=",
+        version = "v0.8.0",
+        sum = "h1:MSdYClljsF3PbENUUEx85nkWfJSGfzYI9yEBZOJz6CY=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -1032,11 +1028,12 @@ def go_repositories():
     go_repository(
         name = "com_github_google_gvisor",
         importpath = "github.com/google/gvisor",
-        version = "v0.0.0-20201216082428-b645fcd241a8",
-        sum = "h1:gNssWp0Zg2Ij2OMz4Gi5ciVLnMVGzqfvPOADTN1ou+E=",
+        version = "v0.0.0-20211029210316-b822923b706d",
+        sum = "h1:DLypxrLRMq0P4f96vlutTfJpM5/Y8q6rDafgBU1pxAs=",
         patches = [
             "//third_party/go/patches:gvisor.patch",
             "//third_party/go/patches:gvisor-build-against-newer-runtime-specs.patch",
+            "//third_party/go/patches:gvisor-cgroup-fix.patch",
         ],
         patch_args = ["-p1"],
         build_extra_args = [
@@ -1079,6 +1076,7 @@ def go_repositories():
         importpath = "github.com/googleapis/gnostic",
         version = "v0.4.1",
         sum = "h1:DLJCy1n/vrD4HPjOvYcT8aYQXpPIzoRZONaYwyycI+I=",
+        build_file_proto_mode = "disable",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -1599,10 +1597,6 @@ def go_repositories():
         importpath = "github.com/muesli/reflow",
         version = "v0.0.0-20191128061954-86f094cbed14",
         sum = "h1:99aDTygRy9yEwggATz+ZLrDFRsjRog5BqbAfsr47Ztw=",
-        patches = [
-            "//third_party/go/patches:reflow-tool-library.patch",
-        ],
-        patch_args = ["-p1"],
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -2225,8 +2219,8 @@ def go_repositories():
         version = "v0.3.0",
         sum = "h1:RM4zey1++hCTbCVQfnWeKs9/IEsaBLA8vTkd0WVtmH4=",
         build_extra_args = [
-            "-go_naming_convention=go_default_library",
-            "-go_naming_convention_external=go_default_library",
+            "-go_naming_convention=import_alias",
+            "-go_naming_convention_external=import_alias",
         ],
     )
     go_repository(
@@ -2255,8 +2249,8 @@ def go_repositories():
         version = "v0.0.0-20181108010431-42b317875d0f",
         sum = "h1:Bl/8QSvNqXvPGPGXa2z5xUTmV7VDcZyvRZ+QQXkXTZQ=",
         build_extra_args = [
-            "-go_naming_convention=go_default_library",
-            "-go_naming_convention_external=go_default_library",
+            "-go_naming_convention=import_alias",
+            "-go_naming_convention_external=import_alias",
         ],
     )
     go_repository(
@@ -2707,6 +2701,7 @@ def go_repositories():
         sum = "h1:0GPavEcPKBA0rYl7f6dO0mXYmx7t9RaXD3be2g23Ps4=",
         pre_patches = [
             "//third_party/go/patches:k8s-infra-bzl4-compat.patch",
+            "//third_party/go/patches:k8s-infra-fix-go116.patch",
         ],
         patch_args = ["-p1"],
         build_extra_args = [

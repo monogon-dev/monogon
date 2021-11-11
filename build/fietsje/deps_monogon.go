@@ -39,7 +39,7 @@ func Monogon(shelfPath, repositoriesBzlPath string) error {
 
 	// our own deps, common
 	p.collectOverride("go.uber.org/zap", "v1.15.0")
-	p.collectOverride("golang.org/x/mod", "v0.3.0")
+	p.collectOverride("golang.org/x/mod", "v0.3.0", useImportAliasNaming)
 	p.collectOverride("github.com/spf13/viper", "v1.9.0").use(
 		"gopkg.in/ini.v1",
 		"github.com/subosito/gotenv",
@@ -117,13 +117,7 @@ func Monogon(shelfPath, repositoriesBzlPath string) error {
 
 	// commentwrap is used as a nogo analyzer to stick to a maximum line
 	// length for comments.
-	// We have to patch both it and its only direct dependency to add generated
-	// go_tool_library targets. This is needed as Gazelle doesn't generate them,
-	// because they're a temporary solution to a problem that shouldn't exist soon:
-	// https://github.com/bazelbuild/rules_go/issues/2374
-	p.collect("github.com/corverroos/commentwrap", "2926638be44ce0c6c0ee2471e9b5ad9473c984cd",
-		patches("commentwrap-tool-library.patch"),
-	).with(patches("reflow-tool-library.patch")).use(
+	p.collect("github.com/corverroos/commentwrap", "2926638be44ce0c6c0ee2471e9b5ad9473c984cd").use(
 		"github.com/muesli/reflow",
 	)
 

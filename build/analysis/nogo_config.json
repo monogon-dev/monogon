@@ -1,20 +1,7 @@
 {
   "composites": {
     "exclude_files": {
-      "external/io_k8s_kubernetes/": "third_party",
-      "external/bazel_gazelle/language/go/": "third_party",
-      "external/com_github_golang_protobuf/": "third_party",
-      "external/com_github_google_gvisor/": "third_party",
-      "external/io_k8s_apimachinery/pkg/runtime/serializer/versioning/": "third_party",
-      "external/io_k8s_sigs_structured_merge_diff/": "third_party",
-      "external/io_k8s_client_go/": "third_party",
-      "external/io_k8s_kube_openapi/": "third_party",
-      "external/io_k8s_apiserver/": "third_party",
-      "external/org_golang_x_tools/": "third_party",
-      "external/io_k8s_apiextensions_apiserver/": "third_party",
-      "external/org_golang_x_text/": "third_party",
-      "external/io_bazel_rules_docker/": "third_party",
-      "external/com_github_grpc_ecosystem_grpc_opentracing": "third_party"
+      "external/": "third_party"
     }
   },
   "copylocks": {
@@ -65,7 +52,8 @@
       "external/io_k8s_sigs_structured_merge_diff/": "third_party",
       "external/com_github_go_delve_delve/": "third_party",
       "external/com_github_mailru_easyjson/jlexer/": "third_party",
-      "external/com_github_cilium_ebpf/": "third_party"
+      "external/com_github_cilium_ebpf/": "third_party",
+      "external/org_golang_x_sys": "third_party"
     }
   },
   "unusedresult": {

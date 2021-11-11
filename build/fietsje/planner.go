@@ -209,6 +209,13 @@ func prePatches(patches ...string) buildOpt {
 	}
 }
 
+// useImportAliasNaming instructs Gazelle to name the generated targets in a way
+// which is both compatible with the old go_default_library convention as well
+// as the import convention. See `go_naming_convention=import_alias` in Gazelle.
+func useImportAliasNaming(d *dependency) {
+	d.useImportAliasNaming = true
+}
+
 func forceBazelGeneration(d *dependency) {
 	d.forceBazelGeneration = true
 }

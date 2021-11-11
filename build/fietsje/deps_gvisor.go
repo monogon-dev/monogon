@@ -20,10 +20,11 @@ package fietsje
 
 func depsGVisor(p *planner) {
 	p.collect(
-		"github.com/google/gvisor", "release-20201216.0",
+		"github.com/google/gvisor", "release-20211101.0",
 		patches(
 			"gvisor.patch",
 			"gvisor-build-against-newer-runtime-specs.patch",
+			"gvisor-cgroup-fix.patch",
 		),
 	).use(
 		"github.com/cenkalti/backoff",
