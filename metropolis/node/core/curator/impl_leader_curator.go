@@ -355,3 +355,104 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 
 	return &ipb.RegisterNodeResponse{}, nil
 }
+
+func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeRequest) (*ipb.CommitNodeResponse, error) {
+	// Call is unauthenticated - verify the other side has connected with an
+	// ephemeral certificate. That certificate's pubkey will become the node's
+	// pubkey.
+	pi := rpc.GetPeerInfo(ctx)
+	if pi == nil || pi.Unauthenticated == nil {
+		return nil, status.Error(codes.Unauthenticated, "connection must be established with a self-signed ephemeral certificate")
+	}
+	pubkey := pi.Unauthenticated.SelfSignedPublicKey
+
+	// Doing a read-then-write operation below, take lock.
+	//
+	// MVP: This can lock up the cluster if too many RegisterNode calls get issued,
+	// we should either ratelimit these or remove the need to lock.
+	l.muNodes.Lock()
+	defer l.muNodes.Unlock()
+
+	// Check if there is a node with this pubkey in the cluster.
+	id := identity.NodeID(pubkey)
+	key, err := nodeEtcdPrefix.Key(id)
+	if err != nil {
+		// TODO(issues/85): log err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid node id")
+	}
+
+	// Retrieve the node and act on its current state, either returning early or
+	// mutating it and continuing with the rest of the Commit logic.
+	res, err := l.txnAsLeader(ctx, clientv3.OpGet(key))
+	if err != nil {
+		if rpcErr, ok := rpcError(err); ok {
+			return nil, rpcErr
+		}
+		// TODO(issues/85): log this
+		return nil, status.Errorf(codes.Unavailable, "could not retrieve node %s: %v", id, err)
+	}
+	kvs := res.Responses[0].GetResponseRange().Kvs
+	if len(kvs) != 1 {
+		return nil, status.Errorf(codes.NotFound, "node %s not found", id)
+	}
+	node, err := nodeUnmarshal(kvs[0].Value)
+	if err != nil {
+		// TODO(issues/85): log this
+		return nil, status.Errorf(codes.Unavailable, "could not unmarshal node")
+	}
+	switch node.state {
+	case cpb.NodeState_NODE_STATE_NEW:
+		return nil, status.Error(codes.PermissionDenied, "node is NEW, wait for attestation/approval")
+	case cpb.NodeState_NODE_STATE_DISOWNED:
+		// This node has been since disowned by the cluster for some reason, the
+		// register flow should be aborted.
+		return nil, status.Error(codes.FailedPrecondition, "node is DISOWNED, abort register flow")
+	case cpb.NodeState_NODE_STATE_UP:
+		// This can happen due to a network failure when we already handled a
+		// CommitNode, but we weren't able to respond to the user. CommitNode is
+		// non-idempotent, so just abort, the node should retry from scratch and this
+		// node should be manually disowned/deleted by system owners.
+		return nil, status.Error(codes.FailedPrecondition, "node is already UP, abort register flow")
+	case cpb.NodeState_NODE_STATE_STANDBY:
+		// This is what we want.
+	default:
+		return nil, status.Errorf(codes.Internal, "node is in unknown state: %v", node.state)
+	}
+
+	// Check the given CUK is valid.
+	// TODO(q3k): unify length with localstorage/crypt keySize.
+	if want, got := 32, len(req.ClusterUnlockKey); want != got {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid ClusterUnlockKey length, wanted %d bytes, got %d", want, got)
+	}
+
+	// Generate certificate for node, save new node state, return.
+
+	// If this fails we are safe to let the client retry, as the PKI code is
+	// idempotent.
+	caCertBytes, nodeCertBytes, err := BootstrapNodeCredentials(ctx, l.etcd, pubkey)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not bootstrap node credentials: %v", err)
+	}
+
+	node.state = cpb.NodeState_NODE_STATE_UP
+	node.clusterUnlockKey = req.ClusterUnlockKey
+
+	nodeBytes, err := proto.Marshal(node.proto())
+	if err != nil {
+		// TODO(issues/85): log this
+		return nil, status.Errorf(codes.Unavailable, "could not marshal updated node")
+	}
+	_, err = l.txnAsLeader(ctx, clientv3.OpPut(key, string(nodeBytes)))
+	if err != nil {
+		// TODO(issues/85): log this
+		return nil, status.Error(codes.Unavailable, "could not save updated node")
+	}
+
+	// From this point on, any failure (in the server, or in the network, ...) dooms
+	// the node from making progress in registering, as Commit is non-idempotent.
+
+	return &ipb.CommitNodeResponse{
+		CaCertificate:   caCertBytes,
+		NodeCertificate: nodeCertBytes,
+	}, nil
+}

@@ -144,6 +144,7 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		localNodeID:   nodeCredentials.ID(),
 		otherNodeConn: ocl,
 		otherNodeID:   otherNode.ID(),
+		otherNodePriv: otherNode.TLSCredentials().PrivateKey.(ed25519.PrivateKey),
 		caPubKey:      ephemeral.CA.PublicKey.(ed25519.PublicKey),
 		cancel:        ctxC,
 		etcd:          cl,
@@ -168,6 +169,9 @@ type fakeLeaderData struct {
 	// otherNodeID is the NodeID of some other node present in the curator
 	// state.
 	otherNodeID string
+	// otherNodePriv is the private key of the other node present in the curator
+	// state, ie. the private key for otherNodeID.
+	otherNodePriv ed25519.PrivateKey
 	// caPubKey is the public key of the CA for this cluster.
 	caPubKey ed25519.PublicKey
 	// cancel shuts down the fake leader and all client connections.
@@ -480,58 +484,60 @@ func TestRegistration(t *testing.T) {
 		t.Fatalf("RegisterNode failed: %v", err)
 	}
 
-	// Expect node to now be 'NEW'.
-	res3, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
-	if err != nil {
-		t.Fatalf("GetNodes failed: %v", err)
-	}
-
-	var otherNodePubkey []byte
-	for {
-		node, err := res3.Recv()
+	expectOtherNode := func(state cpb.NodeState) {
+		t.Helper()
+		res, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
 		if err != nil {
-			t.Fatalf("Recv failed: %v", err)
+			t.Fatalf("GetNodes failed: %v", err)
 		}
-		if identity.NodeID(node.Pubkey) != cl.otherNodeID {
-			continue
+
+		for {
+			node, err := res.Recv()
+			if err != nil {
+				t.Fatalf("Recv failed: %v", err)
+			}
+			if identity.NodeID(node.Pubkey) != cl.otherNodeID {
+				continue
+			}
+			if node.State != state {
+				t.Fatalf("Expected node to be %s, got %s", state, node.State)
+			}
+			return
 		}
-		if node.State != cpb.NodeState_NODE_STATE_NEW {
-			t.Fatalf("Expected node to be NEW, is %s", node.State)
-		}
-		otherNodePubkey = node.Pubkey
-		break
 	}
+	otherNodePub := cl.otherNodePriv.Public().(ed25519.PublicKey)
+
+	// Expect node to now be 'NEW'.
+	expectOtherNode(cpb.NodeState_NODE_STATE_NEW)
 
 	// Approve node.
-	_, err = mgmt.ApproveNode(ctx, &apb.ApproveNodeRequest{Pubkey: otherNodePubkey})
+	_, err = mgmt.ApproveNode(ctx, &apb.ApproveNodeRequest{Pubkey: otherNodePub})
 	if err != nil {
 		t.Fatalf("ApproveNode failed: %v", err)
 	}
 
 	// Expect node to be 'STANDBY'.
-	res4, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
-	if err != nil {
-		t.Fatalf("GetNodes failed: %v", err)
-	}
-	for {
-		node, err := res4.Recv()
-		if err != nil {
-			t.Fatalf("Recv failed: %v", err)
-		}
-		if identity.NodeID(node.Pubkey) != cl.otherNodeID {
-			continue
-		}
-		if node.State != cpb.NodeState_NODE_STATE_STANDBY {
-			t.Fatalf("Expected node to be STANDBY, is %s", node.State)
-		}
-		break
-	}
+	expectOtherNode(cpb.NodeState_NODE_STATE_STANDBY)
 
 	// Approve call should be idempotent and not fail when called a second time.
-	_, err = mgmt.ApproveNode(ctx, &apb.ApproveNodeRequest{Pubkey: otherNodePubkey})
+	_, err = mgmt.ApproveNode(ctx, &apb.ApproveNodeRequest{Pubkey: otherNodePub})
 	if err != nil {
 		t.Fatalf("ApproveNode failed: %v", err)
 	}
+
+	// Make 'other node' commit itself into the cluster.
+	_, err = cur.CommitNode(ctx, &ipb.CommitNodeRequest{
+		ClusterUnlockKey: []byte("fakefakefakefakefakefakefakefake"),
+	})
+	if err != nil {
+		t.Fatalf("CommitNode failed: %v", err)
+	}
+
+	// TODO(q3k): once the test cluster's PKI is consistent with the curator's
+	// PKI, test the emitted credentials.
+
+	// Expect node to be 'UP'.
+	expectOtherNode(cpb.NodeState_NODE_STATE_UP)
 }
 
 // TestClusterUpdateNodeStatus exercises the Curator.UpdateNodeStatus RPC by

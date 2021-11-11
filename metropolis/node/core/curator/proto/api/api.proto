@@ -65,6 +65,43 @@ service Curator {
             allow_unauthenticated: true
         };
     }
+
+    // CommitNode is called by nodes that wish to finish registering into
+    // the cluster. They must first call RegisterNode, after which they also
+    // need to be approved by the cluster (currently, this is done by a manager
+    // calling ApproveNode). Then, after performing this call, the node is
+    // considered as a fully functioning member of the cluster, and can begin
+    // assuming roles assigned to it, report its status, and perform other node
+    // functions.
+    //
+    // The node must perform the call using an ephemeral certificate, in the
+    // same way as the RegisterNode call was performed.
+    //
+    // This call will fail if the given node is not in the STANDBY state, ie.
+    // has not yet been approved to join the cluster. It is also _not_
+    // idempotent and cannot be retried. In case of a non-transient failure,
+    // the calling node should block forever and not retry the full registration
+    // process, and instead an administrative intervention (eg. node
+    // registration flow restart) should take care of these cases. This is a
+    // known limiting factor of the API, but allows for tighter security.
+    //
+    // This is the point at which the node submits its Cluster Unlock Key, the
+    // cluster part of its full disk encryption key. This key will be given to
+    // the node whenever it wants to join the cluster again, and the node will
+    // combine it with its locally sealed Node Unlock Key to recover the full
+    // key.
+    //
+    // When the RPC is successful, the curator will return the node's newly
+    // minted node certificate, which can then be used by the node to perform
+    // RPCs acting as this node. This certificate is what the node will use to
+    // perform all further communications with the Curator (until a reboot, in
+    // which case the join flow requires initial communication using an
+    // ephemeral client).
+    rpc CommitNode(CommitNodeRequest) returns (CommitNodeResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            allow_unauthenticated: true
+        };
+    }
 }
 
 // Node is the state and configuration of a node in the cluster.
@@ -159,4 +196,23 @@ message RegisterNodeRequest {
 }
 
 message RegisterNodeResponse {
+}
+
+message CommitNodeRequest {
+    // cluster_unlock_key (CUK) is the cluster part of the local storage full
+    // disk encryption key. The node submits it for safekeeping by the cluster,
+    // and keeps the local part (node unlock key, NUK) local, sealed by TPM.
+    bytes cluster_unlock_key = 1;
+}
+
+message CommitNodeResponse {
+    // ca_certificate is the x509 DER-encoded CA certificate for the cluster.
+    // The node should use this to verify the cluster identity when connecting
+    // to it from this point onward.
+    bytes ca_certificate = 1;
+    // node_certificate is the x509 DER-encoded certificate of the node, freshly
+    // minted by the cluster's curator, signed for the Ed25519 keypair that the
+    // node was connecting with. This certificate should be used by the node for
+    // communication with the cluster from this point onward.
+    bytes node_certificate = 2;
 }

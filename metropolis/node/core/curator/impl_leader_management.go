@@ -160,6 +160,10 @@ func (l *leaderManagement) ApproveNode(ctx context.Context, req *apb.ApproveNode
 	// This should happen automatically, if possible, via hardware attestation
 	// against policy, not manually.
 
+	// Ensure the given key resembles a public key before using it to generate
+	// a node iD. This key is then used to craft an arbitrary etcd path, so
+	// let's do an early check in case the user set something that's obviously
+	// not a public key.
 	if len(req.Pubkey) != ed25519.PublicKeySize {
 		return nil, status.Errorf(codes.InvalidArgument, "pubkey must be %d bytes long", ed25519.PublicKeySize)
 	}
@@ -167,7 +171,7 @@ func (l *leaderManagement) ApproveNode(ctx context.Context, req *apb.ApproveNode
 	l.muNodes.Lock()
 	defer l.muNodes.Unlock()
 
-	// Find node by pubkey/ID.
+	// Find node for this pubkey.
 	id := identity.NodeID(req.Pubkey)
 	key, err := nodeEtcdPrefix.Key(id)
 	if err != nil {
@@ -179,7 +183,7 @@ func (l *leaderManagement) ApproveNode(ctx context.Context, req *apb.ApproveNode
 	}
 	kvs := res.Responses[0].GetResponseRange().Kvs
 	if len(kvs) != 1 {
-		return nil, status.Errorf(codes.NotFound, "node not found")
+		return nil, status.Errorf(codes.NotFound, "node with given pubkey not found")
 	}
 	node, err := nodeUnmarshal(kvs[0].Value)
 	if err != nil {
@@ -197,6 +201,7 @@ func (l *leaderManagement) ApproveNode(ctx context.Context, req *apb.ApproveNode
 		return nil, status.Errorf(codes.FailedPrecondition, "node in state %s cannot be approved", node.state)
 	}
 
+	// Set node to be STANDBY.
 	node.state = cpb.NodeState_NODE_STATE_STANDBY
 	nodeBytes, err := proto.Marshal(node.proto())
 	if err != nil {

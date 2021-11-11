@@ -393,6 +393,15 @@ func (l *listener) RegisterNode(ctx context.Context, req *cpb.RegisterNodeReques
 	return
 }
 
+func (l *listener) CommitNode(ctx context.Context, req *cpb.CommitNodeRequest) (res *cpb.CommitNodeResponse, err error) {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+		var err2 error
+		res, err2 = impl.CommitNode(ctx, req)
+		return err2
+	})
+	return
+}
+
 type managementGetNodesServer struct {
 	grpc.ServerStream
 	ctx context.Context
