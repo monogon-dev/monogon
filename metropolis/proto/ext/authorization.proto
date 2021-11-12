@@ -22,6 +22,7 @@ enum Permission {
     PERMISSION_GET_REGISTER_TICKET = 1;
     PERMISSION_READ_CLUSTER_STATUS = 2;
     PERMISSION_UPDATE_NODE_SELF = 3;
+    PERMISSION_APPROVE_NODE = 4;
 }
 
 // Authorization policy for an RPC method. This message/API does not have the

@@ -3,10 +3,13 @@ package curator
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"sort"
 
+	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/identity"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -150,4 +153,61 @@ func (l *leaderManagement) GetNodes(_ *apb.GetNodesRequest, srv apb.Management_G
 	}
 
 	return nil
+}
+
+func (l *leaderManagement) ApproveNode(ctx context.Context, req *apb.ApproveNodeRequest) (*apb.ApproveNodeResponse, error) {
+	// MVP: check if policy allows for this node to be approved for this cluster.
+	// This should happen automatically, if possible, via hardware attestation
+	// against policy, not manually.
+
+	if len(req.Pubkey) != ed25519.PublicKeySize {
+		return nil, status.Errorf(codes.InvalidArgument, "pubkey must be %d bytes long", ed25519.PublicKeySize)
+	}
+
+	l.muNodes.Lock()
+	defer l.muNodes.Unlock()
+
+	// Find node by pubkey/ID.
+	id := identity.NodeID(req.Pubkey)
+	key, err := nodeEtcdPrefix.Key(id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "pubkey invalid: %v", err)
+	}
+	res, err := l.txnAsLeader(ctx, clientv3.OpGet(key))
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not retrieve node: %v", err)
+	}
+	kvs := res.Responses[0].GetResponseRange().Kvs
+	if len(kvs) != 1 {
+		return nil, status.Errorf(codes.NotFound, "node not found")
+	}
+	node, err := nodeUnmarshal(kvs[0].Value)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not deserialize node: %v", err)
+	}
+
+	// Ensure node is either UP/STANDBY (no-op) or NEW (set to STANDBY).
+	switch node.state {
+	case cpb.NodeState_NODE_STATE_UP, cpb.NodeState_NODE_STATE_STANDBY:
+		// No-op for idempotency.
+		return &apb.ApproveNodeResponse{}, nil
+	case cpb.NodeState_NODE_STATE_NEW:
+		// What we can act on.
+	default:
+		return nil, status.Errorf(codes.FailedPrecondition, "node in state %s cannot be approved", node.state)
+	}
+
+	node.state = cpb.NodeState_NODE_STATE_STANDBY
+	nodeBytes, err := proto.Marshal(node.proto())
+	if err != nil {
+		// TODO(issues/85): log this
+		return nil, status.Errorf(codes.Unavailable, "could not marshal updated node")
+	}
+	_, err = l.txnAsLeader(ctx, clientv3.OpPut(key, string(nodeBytes)))
+	if err != nil {
+		// TODO(issues/85): log this
+		return nil, status.Error(codes.Unavailable, "could not save updated node")
+	}
+
+	return &apb.ApproveNodeResponse{}, nil
 }

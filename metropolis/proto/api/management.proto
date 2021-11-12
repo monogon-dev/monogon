@@ -38,6 +38,28 @@ service Management {
             need: PERMISSION_READ_CLUSTER_STATUS
         };
     }
+
+    // ApproveNode progresses a node's registration process by changing its state
+    // in the cluster from NEW to STANDBY, if not yet STANDBY. This is required
+    // for the node to fully become part of the cluster (ie. have an UP state),
+    // and is required to be called by a manager manually.
+    //
+    // Managers can find out what nodes require approval by performing
+    // a GetNodes call and filtering for nodes in the NEW state. This call is
+    // idempotent and can be executed multiple times, and is a no-op if the node
+    // is already in the STANDBY or even UP states.
+    //
+    // In the future, approval process will be governed by cluster policy, but
+    // currently any node can be approved by a manager, and the manager is
+    // responsible for performing an out-of-band attestation of the node being/
+    // approved (eg. by verifying that the node that is being approved has the
+    // same public key as what the registering node displays in its startup
+    // logs).
+    rpc ApproveNode(ApproveNodeRequest) returns (ApproveNodeResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_APPROVE_NODE
+        };
+    }
 }
 
 message GetRegisterTicketRequest {
@@ -84,4 +106,14 @@ message Node {
     metropolis.proto.common.NodeStatus status = 3;
     // Roles assigned by the cluster. This is always set.
     metropolis.proto.common.NodeRoles roles = 4;
+}
+
+
+message ApproveNodeRequest {
+    // Raw public key of the node being approved, has to correspond to a node
+    // currently in the cluster.
+    bytes pubkey = 1;
+}
+
+message ApproveNodeResponse {
 }

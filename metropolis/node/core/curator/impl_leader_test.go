@@ -435,9 +435,15 @@ func TestWatchNodesInCluster(t *testing.T) {
 	}
 }
 
-// TestRegistration exercises the Management.GetRegisterTicket RPC and
-// Curator.RegisterNode. A node should be able to register itself into a running
-// cluster, and have a NEW state.
+// TestRegistration exercises the node 'Register' (a.k.a. Registration) flow,
+// which is described in the Cluster Lifecycle design document.
+//
+// It starts out with a node that's foreign to the cluster, and performs all
+// the steps required to make that node part of a cluster. It calls into the
+// Curator service as the registering node and the Management service as a
+// cluster manager. The node registered into the cluster is fully fake, ie. is
+// not an actual Metropolis node but instead is fully managed from within the
+// test as a set of credentials.
 func TestRegistration(t *testing.T) {
 	cl := fakeLeader(t)
 	defer cl.cancel()
@@ -472,6 +478,59 @@ func TestRegistration(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("RegisterNode failed: %v", err)
+	}
+
+	// Expect node to now be 'NEW'.
+	res3, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
+	if err != nil {
+		t.Fatalf("GetNodes failed: %v", err)
+	}
+
+	var otherNodePubkey []byte
+	for {
+		node, err := res3.Recv()
+		if err != nil {
+			t.Fatalf("Recv failed: %v", err)
+		}
+		if identity.NodeID(node.Pubkey) != cl.otherNodeID {
+			continue
+		}
+		if node.State != cpb.NodeState_NODE_STATE_NEW {
+			t.Fatalf("Expected node to be NEW, is %s", node.State)
+		}
+		otherNodePubkey = node.Pubkey
+		break
+	}
+
+	// Approve node.
+	_, err = mgmt.ApproveNode(ctx, &apb.ApproveNodeRequest{Pubkey: otherNodePubkey})
+	if err != nil {
+		t.Fatalf("ApproveNode failed: %v", err)
+	}
+
+	// Expect node to be 'STANDBY'.
+	res4, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
+	if err != nil {
+		t.Fatalf("GetNodes failed: %v", err)
+	}
+	for {
+		node, err := res4.Recv()
+		if err != nil {
+			t.Fatalf("Recv failed: %v", err)
+		}
+		if identity.NodeID(node.Pubkey) != cl.otherNodeID {
+			continue
+		}
+		if node.State != cpb.NodeState_NODE_STATE_STANDBY {
+			t.Fatalf("Expected node to be STANDBY, is %s", node.State)
+		}
+		break
+	}
+
+	// Approve call should be idempotent and not fail when called a second time.
+	_, err = mgmt.ApproveNode(ctx, &apb.ApproveNodeRequest{Pubkey: otherNodePubkey})
+	if err != nil {
+		t.Fatalf("ApproveNode failed: %v", err)
 	}
 }
 
@@ -595,53 +654,5 @@ func TestMangementClusterInfo(t *testing.T) {
 	}
 	if want, got := cl.caPubKey, ca.PublicKey.(ed25519.PublicKey); !bytes.Equal(want, got) {
 		t.Fatalf("CaPublicKey mismatch (wanted %s, got %s)", hex.EncodeToString(want), hex.EncodeToString(got))
-	}
-}
-
-// TestRegisterNode is a smoke test for Curator.RegisterNode and
-// Management.GetNodes.
-func TestRegisterNode(t *testing.T) {
-	cl := fakeLeader(t)
-	defer cl.cancel()
-
-	ctx, ctxC := context.WithCancel(context.Background())
-	defer ctxC()
-
-	// Get RegisterTicket.
-	mgmt := apb.NewManagementClient(cl.mgmtConn)
-	resT, err := mgmt.GetRegisterTicket(ctx, &apb.GetRegisterTicketRequest{})
-	if err != nil {
-		t.Fatalf("GetRegisterTicket: %v", err)
-	}
-
-	// Register as other node.
-	curOther := ipb.NewCuratorClient(cl.otherNodeConn)
-	_, err = curOther.RegisterNode(ctx, &ipb.RegisterNodeRequest{RegisterTicket: resT.Ticket})
-	if err != nil {
-		t.Fatalf("RegisterNode: %v", err)
-	}
-
-	// Ensure that the cluster sees the node as NEW via GetNodes.
-	resN, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
-	if err != nil {
-		t.Fatalf("GetNodes: %v", err)
-	}
-	// Receive nodes from GetNodes until we find the node that we just registered.
-	var otherNode *apb.Node
-	for {
-		node, err := resN.Recv()
-		if err != nil {
-			t.Fatalf("GetNodes.Recv: %v", err)
-		}
-
-		id := identity.NodeID(node.Pubkey)
-		if id == cl.otherNodeID {
-			otherNode = node
-			break
-		}
-	}
-	// Ensure that this node is marked as NEW.
-	if want, got := cpb.NodeState_NODE_STATE_NEW, otherNode.State; want != got {
-		t.Fatalf("Newly registerd should have state %s, got %s", want, got)
 	}
 }

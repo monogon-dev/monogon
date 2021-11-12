@@ -415,3 +415,12 @@ func (l *listener) GetNodes(req *apb.GetNodesRequest, srv apb.Management_GetNode
 	}
 	return l.callImpl(srv.Context(), proxy)
 }
+
+func (l *listener) ApproveNode(ctx context.Context, req *apb.ApproveNodeRequest) (res *apb.ApproveNodeResponse, err error) {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+		var err2 error
+		res, err2 = impl.ApproveNode(ctx, req)
+		return err2
+	})
+	return
+}
