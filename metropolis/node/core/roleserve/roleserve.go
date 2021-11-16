@@ -38,7 +38,7 @@ type Config struct {
 	// As both the curator listener and roleserver might restart, this dial function
 	// is needed to possibly re-establish connectivity after a full restart of
 	// either.
-	CuratorDial func(ctx context.Context) (*grpc.ClientConn, error)
+	CuratorDial func() (*grpc.ClientConn, error)
 
 	// StorageRoot is a handle to access all of the Node's storage. This is needed
 	// as the roleserver spawns complex workloads like Kubernetes which need access
@@ -117,7 +117,7 @@ func (w *Watcher) Get(ctx context.Context) (*Status, error) {
 // start/stop subordinate services as the Node's roles change.
 func (s *Service) Run(ctx context.Context) error {
 	supervisor.Logger(ctx).Info("Dialing curator...")
-	conn, err := s.CuratorDial(ctx)
+	conn, err := s.CuratorDial()
 	if err != nil {
 		return fmt.Errorf("could not dial cluster curator: %w", err)
 	}

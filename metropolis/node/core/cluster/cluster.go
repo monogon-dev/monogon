@@ -120,12 +120,17 @@ func (m *Manager) Run(ctx context.Context) error {
 
 	switch inner := params.Cluster.(type) {
 	case *apb.NodeParameters_ClusterBootstrap_:
-		return m.bootstrap(ctx, inner.ClusterBootstrap)
+		err = m.bootstrap(ctx, inner.ClusterBootstrap)
 	case *apb.NodeParameters_ClusterRegister_:
-		return m.register(ctx, inner.ClusterRegister)
+		err = m.register(ctx, inner.ClusterRegister)
 	default:
-		return fmt.Errorf("node parameters misconfigured: neither cluster_bootstrap nor cluster_register set")
+		err = fmt.Errorf("node parameters misconfigured: neither cluster_bootstrap nor cluster_register set")
 	}
+
+	if err == nil {
+		supervisor.Logger(ctx).Info("Cluster enrolment done.")
+	}
+	return err
 }
 
 func (m *Manager) nodeParamsFWCFG(ctx context.Context) (*apb.NodeParameters, error) {

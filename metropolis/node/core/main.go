@@ -161,16 +161,15 @@ func main() {
 		// this.
 
 		var rs *roleserve.Service
-		if status.HasLocalConsensus {
-			// Retrieve namespaced etcd KV clients for the two main direct etcd users:
-			// - Curator
-			// - Kubernetes PKI
-			ckv, err := status.ConsensusClient(cluster.ConsensusUserCurator)
+		if status.Consensus != nil {
+			w := status.Consensus.Watch()
+			supervisor.Logger(ctx).Infof("Waiting for consensus before continuing control plane startup...")
+			st, err := w.GetRunning(ctx)
 			if err != nil {
-				close(trapdoor)
-				return fmt.Errorf("failed to retrieve consensus curator client: %w", err)
+				return fmt.Errorf("while waiting for running consensus: %w", err)
 			}
-			kkv, err := status.ConsensusClient(cluster.ConsensusUserKubernetesPKI)
+			supervisor.Logger(ctx).Infof("Got consensus, continuing control plane startup...")
+			kkv, err := st.KubernetesClient()
 			if err != nil {
 				close(trapdoor)
 				return fmt.Errorf("failed to retrieve consensus kubernetes PKI client: %w", err)
@@ -182,7 +181,7 @@ func main() {
 			// management of the cluster.
 			// In the future, this will only be started on nodes that run etcd.
 			c := curator.New(curator.Config{
-				Etcd:            ckv,
+				Consensus:       status.Consensus,
 				NodeCredentials: status.Credentials,
 				// TODO(q3k): make this configurable?
 				LeaderTTL: time.Second * 5,
@@ -195,7 +194,7 @@ func main() {
 
 			// We are now in a cluster. We can thus access our 'node' object and
 			// start all services that we should be running.
-			logger.Info("Enrolment success, continuing startup.")
+			logger.Info("Control plane running, starting roleserver....")
 
 			// Ensure Kubernetes PKI objects exist in etcd. In the future, this logic will
 			// be implemented in the curator.

@@ -18,6 +18,7 @@ package curator
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
 
 	"go.etcd.io/etcd/clientv3"
@@ -25,9 +26,11 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"source.monogon.dev/metropolis/node/core/consensus"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/pkg/pki"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -74,6 +77,8 @@ type Node struct {
 	// In the future, this will be split into a separate worker and control plane
 	// role.
 	kubernetesWorker *NodeRoleKubernetesWorker
+
+	consensusMember *NodeRoleConsensusMember
 }
 
 // NewNodeForBootstrap creates a brand new node without regard for any other
@@ -85,14 +90,43 @@ func NewNodeForBootstrap(cuk, pubkey []byte) Node {
 		clusterUnlockKey: cuk,
 		pubkey:           pubkey,
 		state:            cpb.NodeState_NODE_STATE_UP,
-		// TODO(q3k): make this configurable.
-		kubernetesWorker: &NodeRoleKubernetesWorker{},
 	}
 }
 
 // NodeRoleKubernetesWorker defines that the Node should be running the
 // Kubernetes control and data plane.
 type NodeRoleKubernetesWorker struct {
+}
+
+// NodeRoleConsensusMember defines that the Node should be running a
+// consensus/etcd instance.
+type NodeRoleConsensusMember struct {
+	// CACertificate, PeerCertificate are the X509 certificates to be used by the
+	// node's etcd member to serve peer traffic.
+	CACertificate, PeerCertificate *x509.Certificate
+	// CRL is an initial certificate revocation list that the etcd member should
+	// start with.
+	//
+	// TODO(q3k): don't store this in etcd like that, instead have the node retrieve
+	// an initial CRL using gRPC/Curator.Watch.
+	CRL *pki.CRL
+
+	// Peers are a list of etcd members that the node's etcd member should attempt
+	// to connect to.
+	//
+	// TODO(q3k): don't store this in etcd like that, instead have this be
+	// dynamically generated at time of retrieval.
+	Peers []NodeRoleConsensusMemberPeer
+}
+
+// NodeRoleConsensusMemberPeer is a name/URL pair pointing to an etcd member's
+// peer listener.
+type NodeRoleConsensusMemberPeer struct {
+	// Name is the name of the etcd member, equal to the Metropolis node's ID that
+	// the etcd member is running on.
+	Name string
+	// URL is a https://host:port string that can be passed to etcd on startup.
+	URL string
 }
 
 // ID returns the name of this node. See NodeID for more information.
@@ -112,6 +146,24 @@ func (n *Node) KubernetesWorker() *NodeRoleKubernetesWorker {
 	}
 	kw := *n.kubernetesWorker
 	return &kw
+}
+
+func (n *Node) EnableKubernetesWorker() {
+	n.kubernetesWorker = &NodeRoleKubernetesWorker{}
+}
+
+func (n *Node) EnableConsensusMember(jc *consensus.JoinCluster) {
+	peers := make([]NodeRoleConsensusMemberPeer, len(jc.ExistingNodes))
+	for i, n := range jc.ExistingNodes {
+		peers[i].Name = n.Name
+		peers[i].URL = n.URL
+	}
+	n.consensusMember = &NodeRoleConsensusMember{
+		CACertificate:   jc.CACertificate,
+		PeerCertificate: jc.NodeCertificate,
+		Peers:           peers,
+		CRL:             jc.InitialCRL,
+	}
 }
 
 var (
@@ -137,6 +189,21 @@ func (n *Node) proto() *ppb.Node {
 	if n.kubernetesWorker != nil {
 		msg.Roles.KubernetesWorker = &cpb.NodeRoles_KubernetesWorker{}
 	}
+	if n.consensusMember != nil {
+		peers := make([]*cpb.NodeRoles_ConsensusMember_Peer, len(n.consensusMember.Peers))
+		for i, p := range n.consensusMember.Peers {
+			peers[i] = &cpb.NodeRoles_ConsensusMember_Peer{
+				Name: p.Name,
+				URL:  p.URL,
+			}
+		}
+		msg.Roles.ConsensusMember = &cpb.NodeRoles_ConsensusMember{
+			CaCertificate:   n.consensusMember.CACertificate.Raw,
+			PeerCertificate: n.consensusMember.PeerCertificate.Raw,
+			InitialCrl:      n.consensusMember.CRL.Raw,
+			Peers:           peers,
+		}
+	}
 	return msg
 }
 
@@ -153,6 +220,36 @@ func nodeUnmarshal(data []byte) (*Node, error) {
 	}
 	if msg.Roles.KubernetesWorker != nil {
 		n.kubernetesWorker = &NodeRoleKubernetesWorker{}
+	}
+	if cm := msg.Roles.ConsensusMember; cm != nil {
+		caCert, err := x509.ParseCertificate(cm.CaCertificate)
+		if err != nil {
+			return nil, fmt.Errorf("could not unmarshal consensus ca certificate: %w", err)
+		}
+		peerCert, err := x509.ParseCertificate(cm.PeerCertificate)
+		if err != nil {
+			return nil, fmt.Errorf("could not unmarshal consensus peer certificate: %w", err)
+		}
+		crl, err := x509.ParseCRL(cm.InitialCrl)
+		if err != nil {
+			return nil, fmt.Errorf("could not unmarshal consensus crl: %w", err)
+		}
+		var peers []NodeRoleConsensusMemberPeer
+		for _, p := range cm.Peers {
+			peers = append(peers, NodeRoleConsensusMemberPeer{
+				Name: p.Name,
+				URL:  p.URL,
+			})
+		}
+		n.consensusMember = &NodeRoleConsensusMember{
+			CACertificate:   caCert,
+			PeerCertificate: peerCert,
+			CRL: &pki.CRL{
+				Raw:  cm.InitialCrl,
+				List: crl,
+			},
+			Peers: peers,
+		}
 	}
 	return n, nil
 }

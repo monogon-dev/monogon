@@ -487,11 +487,16 @@ func (s *Service) selfupdater(ctx context.Context) error {
 			return fmt.Errorf("failed to get status: %w", err)
 		}
 
-		peerURL := st.localPeerURL
-		if _, err := st.cl.MemberUpdate(ctx, st.localMemberID, []string{peerURL}); err != nil {
-			supervisor.Logger(ctx).Warningf("failed to update member: %v", err)
-			time.Sleep(1 * time.Second)
-			continue
+		if st.localPeerURL != "" {
+			supervisor.Logger(ctx).Infof("Updating local peer URL...")
+			peerURL := st.localPeerURL
+			if _, err := st.cl.MemberUpdate(ctx, st.localMemberID, []string{peerURL}); err != nil {
+				supervisor.Logger(ctx).Warningf("failed to update member: %v", err)
+				time.Sleep(1 * time.Second)
+				continue
+			}
+		} else {
+			supervisor.Logger(ctx).Infof("No local peer URL, not updating.")
 		}
 
 		supervisor.Signal(ctx, supervisor.SignalDone)

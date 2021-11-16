@@ -21,10 +21,39 @@ option go_package = "source.monogon.dev/metropolis/proto/common";
 // NodeRoles are the possible roles that a Metropolis Node should run within the
 // cluster. These are configured by the cluster and can be retrieved through the
 // Curator.
+//
+// Fields contained within each individual are publicly available, so while they
+// can be used to carry required data to start up services for a given role,
+// this must not be confidential/private data.
 message NodeRoles {
     message KubernetesWorker {
     }
+    message ConsensusMember {
+        // ca_certificate is a DER-encoded x509 certificate of the etcd
+        // cluster's CA. The member must use this certificate to verify the
+        // identity of the cluster it's connecting to.
+        bytes ca_certificate = 1;
+        // pper_certificate is a DER-encoded x509 certificate of this node's
+        // etcd peer listener. The member must serve member traffic using this
+        // certificate. The private key corresponding to this certificate is
+        // the same as the node's primary private keypair.
+        bytes peer_certificate = 2;
+        // initial_crl is a certificate revocation list that the etcd member
+        // should be started with. After startup, the member will maintain its
+        // own CRL by updating it from its primary storage location, and etcd
+        // value.
+        //
+        // TODO(q3k): don't pass this here, instead pass this over an etcd
+        // watcher and curator.Watch.
+        bytes initial_crl = 3;
+        message Peer {
+            string Name = 1;
+            string URL = 2;
+        }
+        repeated Peer peers = 4;
+    }
     KubernetesWorker kubernetes_worker = 1;
+    ConsensusMember consensus_member = 2;
 }
 
 // NodeState is the state of a Metropolis node from the point of view of the

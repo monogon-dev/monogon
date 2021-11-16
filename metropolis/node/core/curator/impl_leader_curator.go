@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/subtle"
 	"fmt"
+	"net"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -13,6 +14,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event/etcd"
+	"source.monogon.dev/metropolis/pkg/pki"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -225,6 +227,10 @@ func (l *leaderCurator) UpdateNodeStatus(ctx context.Context, req *ipb.UpdateNod
 		return nil, status.Errorf(codes.InvalidArgument, "Status and Status.ExternalAddress must be set")
 	}
 
+	if net.ParseIP(req.Status.ExternalAddress) == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Status.ExternalAddress must be a valid IP address")
+	}
+
 	// As we're performing a node update with two etcd transactions below (one
 	// to retrieve, one to save and upate node), take a local lock to ensure
 	// that we don't have a race between either two UpdateNodeStatus calls or
@@ -363,14 +369,39 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 
 	// If this fails we are safe to let the client retry, as the PKI code is
 	// idempotent.
-	caCertBytes, nodeCertBytes, err := BootstrapNodeCredentials(ctx, l.etcd, pubkey)
+	caCertBytes, err := pkiCA.Ensure(ctx, l.etcd)
 	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not bootstrap node credentials: %v", err)
+		return nil, status.Errorf(codes.Unavailable, "could not get CA certificate: %v", err)
+	}
+	nodeCert := &pki.Certificate{
+		Namespace: &pkiNamespace,
+		Issuer:    pkiCA,
+		Template:  identity.NodeCertificate(node.pubkey),
+		Mode:      pki.CertificateExternal,
+		PublicKey: node.pubkey,
+		Name:      fmt.Sprintf("node-%s", identity.NodeID(pubkey)),
+	}
+	nodeCertBytes, err := nodeCert.Ensure(ctx, l.etcd)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not emit node credentials: %v", err)
+	}
+
+	w := l.consensus.Watch()
+	defer w.Close()
+	st, err := w.GetRunning(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not get running consensus: %v", err)
+	}
+
+	join, err := st.AddNode(ctx, node.pubkey)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not add node: %v", err)
 	}
 
 	node.state = cpb.NodeState_NODE_STATE_UP
 	node.clusterUnlockKey = req.ClusterUnlockKey
-
+	node.EnableConsensusMember(join)
+	node.EnableKubernetesWorker()
 	if err := nodeSave(ctx, l.leadership, node); err != nil {
 		return nil, err
 	}

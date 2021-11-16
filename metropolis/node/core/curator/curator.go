@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
-	"source.monogon.dev/metropolis/node/core/consensus/client"
+	"source.monogon.dev/metropolis/node/core/consensus"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
@@ -36,9 +36,7 @@ type Config struct {
 	// NodeCredentials are the identity credentials for the node that is running
 	// this curator.
 	NodeCredentials *identity.NodeCredentials
-	// Etcd is an etcd client in which all curator storage and leader election
-	// will be kept.
-	Etcd client.Namespaced
+	Consensus       consensus.ServiceHandle
 	// LeaderTTL is the timeout on the lease used to perform leader election.
 	// Any active leader must continue updating its lease at least this often,
 	// or the lease (and leadership) will be lost.
@@ -153,8 +151,19 @@ func (s *Service) elect(ctx context.Context) error {
 		return fmt.Errorf("building lock value failed: %w", err)
 	}
 
+	w := s.config.Consensus.Watch()
+	defer w.Close()
+	st, err := w.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("getting consensus status failed: %w", err)
+	}
+	cl, err := st.CuratorClient()
+	if err != nil {
+		return fmt.Errorf("getting consensus client failed: %w", err)
+	}
+
 	// Establish a lease/session with etcd.
-	session, err := concurrency.NewSession(s.config.Etcd.ThinClient(ctx),
+	session, err := concurrency.NewSession(cl.ThinClient(ctx),
 		concurrency.WithContext(ctx),
 		concurrency.WithTTL(s.ttl))
 	if err != nil {
@@ -256,6 +265,19 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 	}()
 
+	supervisor.Logger(ctx).Infof("Waiting for consensus...")
+	w := s.config.Consensus.Watch()
+	defer w.Close()
+	st, err := w.GetRunning(ctx)
+	if err != nil {
+		return fmt.Errorf("while waiting for consensus: %w", err)
+	}
+	supervisor.Logger(ctx).Infof("Got consensus, starting up...")
+	etcd, err := st.CuratorClient()
+	if err != nil {
+		return fmt.Errorf("while retrieving consensus client: %w", err)
+	}
+
 	// Start listener. This is a gRPC service listening on a local socket,
 	// providing the Curator API to consumers, dispatching to either a locally
 	// running leader, or forwarding to a remotely running leader.
@@ -263,8 +285,9 @@ func (s *Service) Run(ctx context.Context) error {
 		directory:     s.config.Directory,
 		node:          s.config.NodeCredentials,
 		electionWatch: s.electionWatch,
-		etcd:          s.config.Etcd,
 		dispatchC:     make(chan dispatchRequest),
+		consensus:     s.config.Consensus,
+		etcd:          etcd,
 	}
 	if err := supervisor.Run(ctx, "listener", lis.run); err != nil {
 		return fmt.Errorf("when starting listener: %w", err)
@@ -292,7 +315,7 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 }
 
-func (s *Service) DialCluster(ctx context.Context) (*grpc.ClientConn, error) {
+func (s *Service) DialCluster() (*grpc.ClientConn, error) {
 	remote := fmt.Sprintf("unix://%s", s.config.Directory.ClientSocket.FullPath())
 	return rpc.NewNodeClient(remote)
 }

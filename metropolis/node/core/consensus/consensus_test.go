@@ -94,9 +94,9 @@ func TestBootstrap(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
-	cl, err := st.MetropolisClient()
+	cl, err := st.CuratorClient()
 	if err != nil {
-		t.Fatalf("MetropolisClient: %v", err)
+		t.Fatalf("CuratorClient: %v", err)
 	}
 	defer cl.Close()
 
@@ -129,9 +129,9 @@ func TestRestartFromDisk(t *testing.T) {
 	if err != nil {
 		t.Fatalf("status get failed: %v", err)
 	}
-	cl, err := st.MetropolisClient()
+	cl, err := st.CuratorClient()
 	if err != nil {
-		t.Fatalf("MetropolisClient: %v", err)
+		t.Fatalf("CuratorClient: %v", err)
 	}
 	defer cl.Close()
 
@@ -177,9 +177,9 @@ func TestRestartFromDisk(t *testing.T) {
 	if err != nil {
 		t.Fatalf("status get failed: %v", err)
 	}
-	cl, err = st.MetropolisClient()
+	cl, err = st.CuratorClient()
 	if err != nil {
-		t.Fatalf("MetropolisClient: %v", err)
+		t.Fatalf("CuratorClient: %v", err)
 	}
 	defer cl.Close()
 
@@ -224,9 +224,9 @@ func TestJoin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not get status: %v", err)
 	}
-	cl, err := st.MetropolisClient()
+	cl, err := st.CuratorClient()
 	if err != nil {
-		t.Fatalf("MetropolisClient: %v", err)
+		t.Fatalf("CuratorClient: %v", err)
 	}
 	defer cl.Close()
 	if _, err := cl.Put(b.ctx, "/foo", "bar"); err != nil {
@@ -263,9 +263,9 @@ func TestJoin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not get status: %v", err)
 	}
-	cl2, err := st2.MetropolisClient()
+	cl2, err := st2.CuratorClient()
 	if err != nil {
-		t.Fatalf("MetropolisClient: %v", err)
+		t.Fatalf("CuratorClient: %v", err)
 	}
 	defer cl2.Close()
 

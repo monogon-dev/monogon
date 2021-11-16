@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
@@ -37,6 +38,8 @@ type leadership struct {
 	// This lock has to be taken any time such RMW operation takes place when not
 	// additionally guarded using etcd transactions.
 	muNodes sync.Mutex
+
+	consensus consensus.ServiceHandle
 
 	// muRegisterTicket guards changes to the register ticket. Its usage semantics
 	// are the same as for muNodes, as described above.

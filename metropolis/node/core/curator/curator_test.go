@@ -10,7 +10,7 @@ import (
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/integration"
 
-	"source.monogon.dev/metropolis/node/core/consensus/client"
+	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
@@ -88,10 +88,10 @@ func newDut(ctx context.Context, t *testing.T, endpoint string, n *identity.Node
 	}
 
 	svc := New(Config{
-		Etcd:            client.NewLocal(cli),
 		NodeCredentials: n,
 		LeaderTTL:       time.Second,
 		Directory:       &dir,
+		Consensus:       consensus.TestServiceHandle(t, cli),
 	})
 	if err := supervisor.Run(ctx, n.ID(), svc.Run); err != nil {
 		t.Fatalf("Run %s: %v", n.ID(), err)

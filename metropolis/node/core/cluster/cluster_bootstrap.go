@@ -86,7 +86,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 		return fmt.Errorf("when starting consensus: %w", err)
 	}
 
-	var metropolisKV client.Namespaced
+	var ckv client.Namespaced
 	cw := m.consensus.Watch()
 	for {
 		st, err := cw.Get(ctx)
@@ -96,42 +96,20 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 		if !st.Running() {
 			continue
 		}
-		metropolisKV, err = st.MetropolisClient()
+		ckv, err = st.CuratorClient()
 		if err != nil {
 			return fmt.Errorf("when retrieving curator client")
 		}
 		break
 	}
 
-	status := Status{
-		State:             cpb.ClusterState_CLUSTER_STATE_HOME,
-		HasLocalConsensus: true,
-		consensusClient:   metropolisKV,
-		// Credentials are set further down once created through a curator
-		// short-circuit bootstrap function.
-		Credentials: nil,
-	}
-
-	// Short circuit curator into storing the new node.
-	ckv, err := status.ConsensusClient(ConsensusUserCurator)
+	node.EnableKubernetesWorker()
+	caCertBytes, nodeCertBytes, err := curator.BootstrapNodeFinish(ctx, ckv, &node, ownerKey)
 	if err != nil {
-		return fmt.Errorf("when retrieving consensus user for curator: %w", err)
-	}
-
-	if err := curator.BootstrapFinish(ctx, ckv, &node, ownerKey); err != nil {
 		return fmt.Errorf("failed to finish bootstrap: %w", err)
 	}
 
-	// And short-circuit creating the curator CA and node certificate.
-	caCert, nodeCert, err := curator.BootstrapNodeCredentials(ctx, ckv, pub)
-	if err != nil {
-		return fmt.Errorf("failed to bootstrap node credentials: %w", err)
-	}
-
-	// Using the short-circuited credentials from the curator, build our
-	// NodeCredentials. That, and the public part of the credentials
-	// (NodeCertificate) are the primary output of the cluster manager.
-	creds, err := identity.NewNodeCredentials(priv, nodeCert, caCert)
+	creds, err := identity.NewNodeCredentials(priv, nodeCertBytes, caCertBytes)
 	if err != nil {
 		return fmt.Errorf("failed to use newly bootstrapped node credentials: %w", err)
 	}
@@ -146,8 +124,11 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 		return fmt.Errorf("failed to write node credentials: %w", err)
 	}
 
-	status.Credentials = creds
-	m.status.Set(status)
+	m.status.Set(Status{
+		State:       cpb.ClusterState_CLUSTER_STATE_HOME,
+		Consensus:   m.consensus,
+		Credentials: creds,
+	})
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)

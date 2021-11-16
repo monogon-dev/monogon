@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
@@ -51,6 +52,8 @@ type listener struct {
 	// restart on error, this factory-function is used instead of an electionWatcher
 	// directly.
 	electionWatch func() electionWatcher
+
+	consensus consensus.ServiceHandle
 
 	dispatchC chan dispatchRequest
 }
@@ -146,9 +149,10 @@ func (t *activeTarget) switchTo(ctx context.Context, l *listener, status *electi
 		// and a new one with the lock freed) the previous leader will fail on
 		// txnAsLeader due to the leadership being outdated.
 		t.impl = newCuratorLeader(&leadership{
-			lockKey: leader.lockKey,
-			lockRev: leader.lockRev,
-			etcd:    l.etcd,
+			lockKey:   leader.lockKey,
+			lockRev:   leader.lockRev,
+			etcd:      l.etcd,
+			consensus: l.consensus,
 		}, &l.node.Node)
 	} else {
 		supervisor.Logger(ctx).Info("Dispatcher switching over to follower")

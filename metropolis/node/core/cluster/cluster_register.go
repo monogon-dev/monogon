@@ -133,9 +133,8 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 		return fmt.Errorf("NewNodeCredentials failed after receiving certificate from cluster: %w", err)
 	}
 	status := Status{
-		State:             cpb.ClusterState_CLUSTER_STATE_HOME,
-		HasLocalConsensus: false,
-		Credentials:       creds,
+		State:       cpb.ClusterState_CLUSTER_STATE_HOME,
+		Credentials: creds,
 	}
 	m.status.Set(status)
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
