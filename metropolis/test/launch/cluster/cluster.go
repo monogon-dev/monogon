@@ -238,20 +238,28 @@ func copyFile(src, dst string) error {
 // getNodes wraps around Management.GetNodes to return a list of nodes in a
 // cluster.
 func getNodes(ctx context.Context, mgmt apb.ManagementClient) ([]*apb.Node, error) {
-	srvN, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
-	if err != nil {
-		return nil, fmt.Errorf("GetNodes: %w", err)
-	}
 	var res []*apb.Node
-	for {
-		node, err := srvN.Recv()
-		if err == io.EOF {
-			break
-		}
+	bo := backoff.NewExponentialBackOff()
+	err := backoff.Retry(func() error {
+		res = nil
+		srvN, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
 		if err != nil {
-			return nil, fmt.Errorf("GetNodes.Recv: %w", err)
+			return fmt.Errorf("GetNodes: %w", err)
 		}
-		res = append(res, node)
+		for {
+			node, err := srvN.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return fmt.Errorf("GetNodes.Recv: %w", err)
+			}
+			res = append(res, node)
+		}
+		return nil
+	}, bo)
+	if err != nil {
+		return nil, err
 	}
 	return res, nil
 }
@@ -355,6 +363,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 					},
 				},
 			},
+			SerialPort: newPrefixedStdio(0),
 		})
 		done[0] <- err
 	}()
@@ -374,7 +383,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			PortMap:                portMap,
 		}); err != nil {
 			if !errors.Is(err, ctxT.Err()) {
-				log.Printf("Failed to launch nanoswitch: %v", err)
+				log.Fatalf("Failed to launch nanoswitch: %v", err)
 			}
 		}
 	}()
@@ -456,7 +465,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 						},
 					},
 				},
-				SerialPort: os.Stdout,
+				SerialPort: newPrefixedStdio(i),
 			})
 			done[i] <- err
 		}(i)

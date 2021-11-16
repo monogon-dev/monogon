@@ -20,23 +20,16 @@ import (
 	"context"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
 
+	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/launch/cluster"
 )
 
 func main() {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		<-sigs
-		cancel()
-	}()
-	if err := cluster.LaunchNode(ctx, cluster.NodeOptions{
+	ctx := clicontext.WithInterrupt(context.Background())
+	err := cluster.LaunchNode(ctx, cluster.NodeOptions{
 		Ports:      launch.IdentityPortMap(cluster.NodePorts),
 		SerialPort: os.Stdout,
 		NodeParameters: &apb.NodeParameters{
@@ -44,10 +37,8 @@ func main() {
 				ClusterBootstrap: cluster.InsecureClusterBootstrap,
 			},
 		},
-	}); err != nil {
-		if err == ctx.Err() {
-			return
-		}
-		log.Fatalf("Failed to execute: %v\n", err)
+	})
+	if err != nil {
+		log.Fatalf("LaunchNode: %v", err)
 	}
 }

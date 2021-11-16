@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "cluster.go",
         "insecure_key.go",
+        "prefixed_stdio.go",
     ],
     data = [
         "//metropolis/node:image",
@@ -20,6 +21,7 @@ go_library(
         "//metropolis/node:go_default_library",
         "//metropolis/node/core/identity:go_default_library",
         "//metropolis/node/core/rpc:go_default_library",
+        "//metropolis/pkg/logbuffer:go_default_library",
         "//metropolis/proto/api:go_default_library",
         "//metropolis/proto/common:go_default_library",
         "//metropolis/test/launch:go_default_library",

@@ -17,35 +17,23 @@
 package main
 
 import (
-	"fmt"
-	"io"
+	"context"
 	"log"
-	"os"
 
-	"source.monogon.dev/metropolis/pkg/logbuffer"
+	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
+	"source.monogon.dev/metropolis/test/launch/cluster"
 )
 
-// prefixedStdout is a os.Stdout proxy that prefixes every line with a constant
-// prefix. This is used to show logs from two Metropolis nodes without getting
-// them confused.
-// TODO(q3k): move to logging API instead of relying on qemu stdout, and remove
-// this function.
-func prefixedStdout(prefix string) io.ReadWriter {
-	lb := logbuffer.NewLineBuffer(2048, func(l *logbuffer.Line) {
-		fmt.Fprintf(os.Stdout, "%s%s\n", prefix, l.Data)
-	})
-	// Make a ReaderWriter from LineBuffer (a Reader), by combining into an
-	// anonymous struct with a io.MultiReader() (which will always return EOF
-	// on every Read if given no underlying readers).
-	return struct {
-		io.Reader
-		io.Writer
-	}{
-		Reader: io.MultiReader(),
-		Writer: lb,
-	}
-}
-
 func main() {
-	log.Fatal("unimplemented")
+	ctx := clicontext.WithInterrupt(context.Background())
+	cl, err := cluster.LaunchCluster(ctx, cluster.ClusterOptions{
+		NumNodes: 2,
+	})
+	if err != nil {
+		log.Fatalf("LaunchCluster: %v", err)
+	}
+	log.Printf("Launch: Cluster running!")
+
+	<-ctx.Done()
+	cl.Close()
 }
