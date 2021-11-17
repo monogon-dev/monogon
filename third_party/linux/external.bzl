@@ -21,16 +21,13 @@ def linux_external(name, version):
         "5.4.7": "abc9b21d9146d95853dac35f4c4489a0199aff53ee6eee4b0563d1b37079fcc9",
         "5.6": "e342b04a2aa63808ea0ef1baab28fc520bd031ef8cf93d9ee4a31d4058fcb622",
         "5.10.4": "904e396c26e9992a16cd1cc989460171536bed7739bf36049f6eb020ee5d56ec",
+        "5.15.2": "5634033a4981be42d3259f50d5371a2cdc9ace5d9860da67a2879630533ab175",
     }
     http_archive(
         name = name,
         build_file = "//third_party/linux/external:BUILD.repo",
         patch_args = ["-p1"],
         patches = [
-            # Add fsinfo() syscall
-            "//third_party/linux/external:0001-fsinfo-Introduce-a-non-repeating-system-unique-super.patch",
-            "//third_party/linux/external:0002-fsinfo-Add-fsinfo-syscall-to-query-filesystem-inform.patch",
-            "//third_party/linux/external:0003-fsinfo-Allow-retrieval-of-superblock-devname-options.patch",
             "//third_party/linux/external:0001-block-partition-expose-PARTUUID-through-uevent.patch",
         ],
         sha256 = sums[version],

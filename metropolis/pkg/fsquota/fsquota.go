@@ -43,10 +43,6 @@ func SetQuota(path string, maxBytes uint64, maxInodes uint64) error {
 		return err
 	}
 	defer dir.Close()
-	source, err := fsinfoGetSource(dir)
-	if err != nil {
-		return err
-	}
 	var valid uint32
 	if maxBytes > 0 {
 		valid |= quotactl.FlagBLimitsValid
@@ -69,7 +65,7 @@ func SetQuota(path string, maxBytes uint64, maxInodes uint64) error {
 		// kernels setquota interface. Due to the short time window and
 		// infrequent calls this should not be an immediate issue.
 		for {
-			quota, err := quotactl.GetNextQuota(source, quotactl.QuotaTypeProject, lastID)
+			quota, err := quotactl.GetNextQuota(dir, quotactl.QuotaTypeProject, lastID)
 			if err == unix.ENOENT || err == unix.ESRCH {
 				// We have enumerated all quotas, nothing exists here
 				break
@@ -102,7 +98,7 @@ func SetQuota(path string, maxBytes uint64, maxInodes uint64) error {
 	// Always round up to the nearest block size
 	bytesLimitBlocks := uint64(math.Ceil(float64(maxBytes) / float64(1024)))
 
-	return quotactl.SetQuota(source, quotactl.QuotaTypeProject, lastID, &quotactl.Quota{
+	return quotactl.SetQuota(dir, quotactl.QuotaTypeProject, lastID, &quotactl.Quota{
 		BHardLimit: bytesLimitBlocks,
 		BSoftLimit: bytesLimitBlocks,
 		IHardLimit: maxInodes,
@@ -126,10 +122,6 @@ func GetQuota(path string) (*Quota, error) {
 		return nil, err
 	}
 	defer dir.Close()
-	source, err := fsinfoGetSource(dir)
-	if err != nil {
-		return nil, err
-	}
 	attrs, err := fsxattrs.Get(dir)
 	if err != nil {
 		return nil, err
@@ -137,7 +129,7 @@ func GetQuota(path string) (*Quota, error) {
 	if attrs.ProjectID == 0 {
 		return nil, os.ErrNotExist
 	}
-	quota, err := quotactl.GetQuota(source, quotactl.QuotaTypeProject, attrs.ProjectID)
+	quota, err := quotactl.GetQuota(dir, quotactl.QuotaTypeProject, attrs.ProjectID)
 	if err != nil {
 		return nil, err
 	}

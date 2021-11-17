@@ -3,10 +3,7 @@ load("//metropolis/test/ktest:ktest.bzl", "ktest")
 
 go_library(
     name = "go_default_library",
-    srcs = [
-        "fsinfo.go",
-        "fsquota.go",
-    ],
+    srcs = ["fsquota.go"],
     importpath = "source.monogon.dev/metropolis/pkg/fsquota",
     visibility = ["//metropolis:__subpackages__"],
     deps = [

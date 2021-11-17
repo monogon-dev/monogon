@@ -21,6 +21,7 @@ package quotactl
 
 import (
 	"fmt"
+	"os"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -101,16 +102,12 @@ const (
 )
 
 // QuotaOn turns quota accounting and enforcement on
-func QuotaOn(device string, qtype QuotaType, quotaFormat QuotaFormat, quotaFilePath string) error {
-	devArg, err := unix.BytePtrFromString(device)
-	if err != nil {
-		return err
-	}
+func QuotaOn(fd *os.File, qtype QuotaType, quotaFormat QuotaFormat, quotaFilePath string) error {
 	pathArg, err := unix.BytePtrFromString(quotaFilePath)
 	if err != nil {
 		return err
 	}
-	_, _, err = unix.Syscall6(unix.SYS_QUOTACTL, uintptr(Q_QUOTAON|uint(qtype)), uintptr(unsafe.Pointer(devArg)), uintptr(quotaFormat), uintptr(unsafe.Pointer(pathArg)), 0, 0)
+	_, _, err = unix.Syscall6(unix.SYS_QUOTACTL_FD, fd.Fd(), uintptr(Q_QUOTAON|uint(qtype)), uintptr(quotaFormat), uintptr(unsafe.Pointer(pathArg)), 0, 0)
 	if err != unix.Errno(0) {
 		return err
 	}
@@ -118,12 +115,8 @@ func QuotaOn(device string, qtype QuotaType, quotaFormat QuotaFormat, quotaFileP
 }
 
 // QuotaOff turns quotas off
-func QuotaOff(device string, qtype QuotaType) error {
-	devArg, err := unix.BytePtrFromString(device)
-	if err != nil {
-		return err
-	}
-	_, _, err = unix.Syscall6(unix.SYS_QUOTACTL, uintptr(Q_QUOTAOFF|uint(qtype)), uintptr(unsafe.Pointer(devArg)), 0, 0, 0, 0)
+func QuotaOff(fd *os.File, qtype QuotaType) error {
+	_, _, err := unix.Syscall6(unix.SYS_QUOTACTL_FD, fd.Fd(), uintptr(Q_QUOTAOFF|uint(qtype)), 0, 0, 0, 0)
 	if err != unix.Errno(0) {
 		return err
 	}
@@ -131,13 +124,9 @@ func QuotaOff(device string, qtype QuotaType) error {
 }
 
 // GetFmt gets the quota format used on given filesystem
-func GetFmt(device string, qtype QuotaType) (QuotaFormat, error) {
+func GetFmt(fd *os.File, qtype QuotaType) (QuotaFormat, error) {
 	var fmt uint32
-	devArg, err := unix.BytePtrFromString(device)
-	if err != nil {
-		return 0, err
-	}
-	_, _, err = unix.Syscall6(unix.SYS_QUOTACTL, uintptr(Q_GETFMT|uint(qtype)), uintptr(unsafe.Pointer(devArg)), 0, uintptr(unsafe.Pointer(&fmt)), 0, 0)
+	_, _, err := unix.Syscall6(unix.SYS_QUOTACTL_FD, fd.Fd(), uintptr(Q_GETFMT|uint(qtype)), 0, uintptr(unsafe.Pointer(&fmt)), 0, 0)
 	if err != unix.Errno(0) {
 		return 0, err
 	}
@@ -145,13 +134,9 @@ func GetFmt(device string, qtype QuotaType) (QuotaFormat, error) {
 }
 
 // GetInfo gets information about quota files
-func GetInfo(device string, qtype QuotaType) (*DQInfo, error) {
+func GetInfo(fd *os.File, qtype QuotaType) (*DQInfo, error) {
 	var info DQInfo
-	devArg, err := unix.BytePtrFromString(device)
-	if err != nil {
-		return nil, err
-	}
-	_, _, err = unix.Syscall6(unix.SYS_QUOTACTL, uintptr(Q_GETINFO|uint(qtype)), uintptr(unsafe.Pointer(devArg)), 0, uintptr(unsafe.Pointer(&info)), 0, 0)
+	_, _, err := unix.Syscall6(unix.SYS_QUOTACTL_FD, fd.Fd(), uintptr(Q_GETINFO|uint(qtype)), 0, uintptr(unsafe.Pointer(&info)), 0, 0)
 	if err != unix.Errno(0) {
 		return nil, err
 	}
@@ -159,12 +144,8 @@ func GetInfo(device string, qtype QuotaType) (*DQInfo, error) {
 }
 
 // SetInfo sets information about quota files
-func SetInfo(device string, qtype QuotaType, info *DQInfo) error {
-	devArg, err := unix.BytePtrFromString(device)
-	if err != nil {
-		return err
-	}
-	_, _, err = unix.Syscall6(unix.SYS_QUOTACTL, uintptr(Q_SETINFO|uint(qtype)), uintptr(unsafe.Pointer(devArg)), 0, uintptr(unsafe.Pointer(info)), 0, 0)
+func SetInfo(fd *os.File, qtype QuotaType, info *DQInfo) error {
+	_, _, err := unix.Syscall6(unix.SYS_QUOTACTL_FD, fd.Fd(), uintptr(Q_SETINFO|uint(qtype)), 0, uintptr(unsafe.Pointer(info)), 0, 0)
 	if err != unix.Errno(0) {
 		return err
 	}
@@ -172,13 +153,9 @@ func SetInfo(device string, qtype QuotaType, info *DQInfo) error {
 }
 
 // GetQuota gets user quota structure
-func GetQuota(device string, qtype QuotaType, id uint32) (*Quota, error) {
+func GetQuota(fd *os.File, qtype QuotaType, id uint32) (*Quota, error) {
 	var info Quota
-	devArg, err := unix.BytePtrFromString(device)
-	if err != nil {
-		return nil, err
-	}
-	_, _, err = unix.Syscall6(unix.SYS_QUOTACTL, uintptr(Q_GETQUOTA|uint(qtype)), uintptr(unsafe.Pointer(devArg)), uintptr(id), uintptr(unsafe.Pointer(&info)), 0, 0)
+	_, _, err := unix.Syscall6(unix.SYS_QUOTACTL_FD, fd.Fd(), uintptr(Q_GETQUOTA|uint(qtype)), uintptr(id), uintptr(unsafe.Pointer(&info)), 0, 0)
 	if err != unix.Errno(0) {
 		return nil, err
 	}
@@ -186,13 +163,9 @@ func GetQuota(device string, qtype QuotaType, id uint32) (*Quota, error) {
 }
 
 // GetNextQuota gets disk limits and usage > ID
-func GetNextQuota(device string, qtype QuotaType, id uint32) (*NextDQBlk, error) {
+func GetNextQuota(fd *os.File, qtype QuotaType, id uint32) (*NextDQBlk, error) {
 	var info NextDQBlk
-	devArg, err := unix.BytePtrFromString(device)
-	if err != nil {
-		return nil, err
-	}
-	_, _, err = unix.Syscall6(unix.SYS_QUOTACTL, uintptr(Q_GETNEXTQUOTA|uint(qtype)), uintptr(unsafe.Pointer(devArg)), uintptr(id), uintptr(unsafe.Pointer(&info)), 0, 0)
+	_, _, err := unix.Syscall6(unix.SYS_QUOTACTL_FD, fd.Fd(), uintptr(Q_GETNEXTQUOTA|uint(qtype)), uintptr(id), uintptr(unsafe.Pointer(&info)), 0, 0)
 	if err != unix.Errno(0) {
 		return nil, err
 	}
@@ -200,12 +173,8 @@ func GetNextQuota(device string, qtype QuotaType, id uint32) (*NextDQBlk, error)
 }
 
 // SetQuota sets the given quota
-func SetQuota(device string, qtype QuotaType, id uint32, quota *Quota) error {
-	devArg, err := unix.BytePtrFromString(device)
-	if err != nil {
-		return err
-	}
-	_, _, err = unix.Syscall6(unix.SYS_QUOTACTL, uintptr(Q_SETQUOTA|uint(qtype)), uintptr(unsafe.Pointer(devArg)), uintptr(id), uintptr(unsafe.Pointer(quota)), 0, 0)
+func SetQuota(fd *os.File, qtype QuotaType, id uint32, quota *Quota) error {
+	_, _, err := unix.Syscall6(unix.SYS_QUOTACTL_FD, fd.Fd(), uintptr(Q_SETQUOTA|uint(qtype)), uintptr(id), uintptr(unsafe.Pointer(quota)), 0, 0)
 	if err != unix.Errno(0) {
 		return fmt.Errorf("failed to set quota: %w", err)
 	}
@@ -214,13 +183,9 @@ func SetQuota(device string, qtype QuotaType, id uint32, quota *Quota) error {
 
 // Sync syncs disk copy of filesystems quotas. If device is empty it syncs all
 // filesystems.
-func Sync(device string) error {
-	if device != "" {
-		devArg, err := unix.BytePtrFromString(device)
-		if err != nil {
-			return err
-		}
-		_, _, err = unix.Syscall6(unix.SYS_QUOTACTL, uintptr(Q_SYNC), uintptr(unsafe.Pointer(devArg)), 0, 0, 0, 0)
+func Sync(fd *os.File) error {
+	if fd != nil {
+		_, _, err := unix.Syscall6(unix.SYS_QUOTACTL_FD, fd.Fd(), uintptr(Q_SYNC), 0, 0, 0, 0)
 		if err != unix.Errno(0) {
 			return err
 		}
