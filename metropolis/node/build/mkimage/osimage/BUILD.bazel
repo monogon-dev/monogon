@@ -11,5 +11,6 @@ go_library(
         "@com_github_diskfs_go_diskfs//disk:go_default_library",
         "@com_github_diskfs_go_diskfs//filesystem:go_default_library",
         "@com_github_diskfs_go_diskfs//partition/gpt:go_default_library",
+        "@com_github_google_uuid//:go_default_library",
     ],
 )

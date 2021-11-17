@@ -27,6 +27,7 @@ import (
 	"github.com/diskfs/go-diskfs/disk"
 	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/partition/gpt"
+	"github.com/google/uuid"
 
 	"source.monogon.dev/metropolis/pkg/efivarfs"
 )
@@ -372,10 +373,14 @@ func Create(params *Params) (*efivarfs.BootEntry, error) {
 	t, err := diskImg.GetPartitionTable()
 	p := t.GetPartitions()
 	esp := (p[0]).(*gpt.Partition)
+	guid, err := uuid.Parse(esp.GUID)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't parse the GPT GUID: %w", err)
+	}
 	be := efivarfs.BootEntry{
 		Description:     "Metropolis",
 		Path:            EFIPayloadPath,
-		PartitionGUID:   esp.GUID,
+		PartitionGUID:   guid,
 		PartitionNumber: 1,
 		PartitionStart:  esp.Start,
 		PartitionSize:   esp.End - esp.Start + 1,

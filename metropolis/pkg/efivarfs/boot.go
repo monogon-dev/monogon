@@ -26,7 +26,9 @@ package efivarfs
 import (
 	"fmt"
 	"math"
+	"strings"
 
+	"github.com/google/uuid"
 	"golang.org/x/text/transform"
 )
 
@@ -51,7 +53,7 @@ const defaultAttrsByte0 uint8 = 7
 type BootEntry struct {
 	Description     string // eg. "Linux Boot Manager"
 	Path            string // eg. `\EFI\systemd\systemd-bootx64.efi`
-	PartitionGUID   string
+	PartitionGUID   uuid.UUID
 	PartitionNumber uint32 // Starts with 1
 	PartitionStart  uint64 // LBA
 	PartitionSize   uint64 // LBA
@@ -63,7 +65,7 @@ type BootEntry struct {
 // as attributes of an EFI variable) are always set to LOAD_OPTION_ACTIVE.
 func (t *BootEntry) Marshal() ([]byte, error) {
 	if t.Description == "" ||
-		t.PartitionGUID == "00000000-0000-0000-0000-000000000000" ||
+		t.PartitionGUID.String() == "00000000-0000-0000-0000-000000000000" ||
 		t.Path == "" ||
 		t.PartitionNumber == 0 ||
 		t.PartitionStart == 0 ||
@@ -83,7 +85,9 @@ func (t *BootEntry) Marshal() ([]byte, error) {
 	dp = append32(dp, t.PartitionNumber)
 	dp = append64(dp, t.PartitionStart)
 	dp = append64(dp, t.PartitionSize)
-	dp = append(dp, t.PartitionGUID[0:16]...) // Partition Signature
+	// Append the partition GUID in the EFI format.
+	dp = append(dp, MarshalEFIGUID(t.PartitionGUID)...)
+
 	dp = append(dp,
 		0x02, // Partition Format ("GUID Partition Table")
 		0x02, // Signature Type ("GUID signature")
@@ -91,7 +95,8 @@ func (t *BootEntry) Marshal() ([]byte, error) {
 
 	// EFI_LOAD_OPTION.FilePathList[1]
 	enc := Encoding.NewEncoder()
-	path, _, e := transform.Bytes(enc, []byte(t.Path))
+	bsp := strings.ReplaceAll(t.Path, "/", "\\")
+	path, _, e := transform.Bytes(enc, []byte(bsp))
 	if e != nil {
 		return nil, fmt.Errorf("while encoding Path: %v", e)
 	}
