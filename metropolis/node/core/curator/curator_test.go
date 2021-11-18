@@ -296,7 +296,7 @@ func TestLeaderElectionStatus(t *testing.T) {
 	// Wait until we switch leaders
 	dss, err = duts.wait(ctx, func(dss dutSetStatus) bool {
 		// Ensure we've lost leadership on the initial leader.
-		if i, ok := dss[leaderEndpoint]; ok && i.leader != nil {
+		if i, ok := dss[leaderEndpoint]; !ok || i.leader != nil {
 			return false
 		}
 		return len(dss.leaders()) == 1 && len(dss.followers()) == 1
@@ -332,17 +332,30 @@ func TestLeaderElectionStatus(t *testing.T) {
 
 	// Ensure the last node of the cluster (not the current leader and not the
 	// previous leader) is now a follower pointing at the new leader.
-	for endpoint, status := range dss {
-		if endpoint == leaderEndpoint || endpoint == newLeaderEndpoint {
-			continue
+	_, err = duts.wait(ctx, func(dss dutSetStatus) bool {
+		for endpoint, status := range dss {
+			switch endpoint {
+			case leaderEndpoint:
+				// Don't care about the old leader, it's still partitioned off.
+				continue
+			case newLeaderEndpoint:
+				// Must be leader.
+				if status.leader == nil {
+					return false
+				}
+			default:
+				// Other nodes must be following new leader.
+				if status.follower == nil {
+					return false
+				}
+				if status.follower.lock.NodeId != newLeaderNodeID {
+					return false
+				}
+			}
 		}
-		follower := status.follower
-		if follower == nil {
-			t.Errorf("instance %q is not a follower", endpoint)
-			continue
-		}
-		if want, got := newLeaderNodeID, follower.lock.NodeId; want != got {
-			t.Errorf("instance %q sees node id %q as follower, wanted %q", endpoint, want, got)
-		}
+		return true
+	})
+	if err != nil {
+		t.Fatalf("waiting for dut set: %v", err)
 	}
 }
