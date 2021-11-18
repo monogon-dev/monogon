@@ -63,11 +63,9 @@ func runnableBecomesHealthy(healthy, done chan struct{}) Runnable {
 
 		<-ctx.Done()
 
-		go func() {
-			if done != nil {
-				done <- struct{}{}
-			}
-		}()
+		if done != nil {
+			done <- struct{}{}
+		}
 
 		return ctx.Err()
 	}
@@ -95,11 +93,9 @@ func runnableSpawnsMore(healthy, done chan struct{}, levels int) Runnable {
 
 		<-ctx.Done()
 
-		go func() {
-			if done != nil {
-				done <- struct{}{}
-			}
-		}()
+		if done != nil {
+			done <- struct{}{}
+		}
 		return ctx.Err()
 	}
 }
@@ -271,12 +267,7 @@ func TestSimpleFailure(t *testing.T) {
 
 	// Kill off two, one should restart.
 	two.die()
-	s.waitSettleError(ctx, t)
-	select {
-	case <-d1:
-	default:
-		t.Fatalf("runnable 'one' didn't acknowledge cancel")
-	}
+	<-d1
 
 	// And one should start running again.
 	s.waitSettleError(ctx, t)
@@ -318,12 +309,7 @@ func TestDeepFailure(t *testing.T) {
 
 	// Kill off two, one should restart.
 	two.die()
-	s.waitSettleError(ctx, t)
-	select {
-	case <-d1:
-	default:
-		t.Fatalf("runnable 'one' didn't acknowledge cancel")
-	}
+	<-d1
 
 	// And one should start running again.
 	s.waitSettleError(ctx, t)
@@ -365,12 +351,7 @@ func TestPanic(t *testing.T) {
 
 	// Kill off two, one should restart.
 	two.panic()
-	s.waitSettleError(ctx, t)
-	select {
-	case <-d1:
-	default:
-		t.Fatalf("runnable 'one' didn't acknowledge cancel")
-	}
+	<-d1
 
 	// And one should start running again.
 	s.waitSettleError(ctx, t)
