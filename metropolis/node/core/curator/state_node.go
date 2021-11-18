@@ -17,8 +17,12 @@
 package curator
 
 import (
+	"context"
 	"fmt"
 
+	"go.etcd.io/etcd/clientv3"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
@@ -150,4 +154,63 @@ func nodeUnmarshal(data []byte) (*Node, error) {
 		n.kubernetesWorker = &NodeRoleKubernetesWorker{}
 	}
 	return n, nil
+}
+
+var (
+	errNodeNotFound = status.Error(codes.NotFound, "node not found")
+)
+
+// nodeLoad attempts to load a node by ID from etcd, within a given active
+// leadership. All returned errors are gRPC statuses that are safe to return to
+// untrusted callers. If the given node is not found, errNodeNotFound will be
+// returned.
+func nodeLoad(ctx context.Context, l *leadership, id string) (*Node, error) {
+	key, err := nodeEtcdPrefix.Key(id)
+	if err != nil {
+		// TODO(issues/85): log err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid node id")
+	}
+	res, err := l.txnAsLeader(ctx, clientv3.OpGet(key))
+	if err != nil {
+		if rpcErr, ok := rpcError(err); ok {
+			return nil, rpcErr
+		}
+		// TODO(issues/85): log this
+		return nil, status.Errorf(codes.Unavailable, "could not retrieve node %s: %v", id, err)
+	}
+	kvs := res.Responses[0].GetResponseRange().Kvs
+	if len(kvs) != 1 {
+		return nil, errNodeNotFound
+	}
+	node, err := nodeUnmarshal(kvs[0].Value)
+	if err != nil {
+		// TODO(issues/85): log this
+		return nil, status.Errorf(codes.Unavailable, "could not unmarshal node")
+	}
+	return node, nil
+}
+
+// nodeSave attempts to save a node into etcd, within a given active leadership.
+// All returned errors are gRPC statuses that safe to return to untrusted callers.
+func nodeSave(ctx context.Context, l *leadership, n *Node) error {
+	id := n.ID()
+	key, err := nodeEtcdPrefix.Key(id)
+	if err != nil {
+		// TODO(issues/85): log err
+		return status.Errorf(codes.InvalidArgument, "invalid node id")
+	}
+	nodeBytes, err := proto.Marshal(n.proto())
+	if err != nil {
+		// TODO(issues/85): log this
+		return status.Errorf(codes.Unavailable, "could not marshal updated node")
+	}
+	_, err = l.txnAsLeader(ctx, clientv3.OpPut(key, string(nodeBytes)))
+	if err != nil {
+		if rpcErr, ok := rpcError(err); ok {
+			return rpcErr
+		}
+		// TODO(issues/85): log this
+		return status.Error(codes.Unavailable, "could not save updated node")
+	}
+	return nil
 }

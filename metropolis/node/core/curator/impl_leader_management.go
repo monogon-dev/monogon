@@ -6,10 +6,8 @@ import (
 	"crypto/ed25519"
 	"sort"
 
-	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/identity"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -173,21 +171,9 @@ func (l *leaderManagement) ApproveNode(ctx context.Context, req *apb.ApproveNode
 
 	// Find node for this pubkey.
 	id := identity.NodeID(req.Pubkey)
-	key, err := nodeEtcdPrefix.Key(id)
+	node, err := nodeLoad(ctx, l.leadership, id)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "pubkey invalid: %v", err)
-	}
-	res, err := l.txnAsLeader(ctx, clientv3.OpGet(key))
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not retrieve node: %v", err)
-	}
-	kvs := res.Responses[0].GetResponseRange().Kvs
-	if len(kvs) != 1 {
-		return nil, status.Errorf(codes.NotFound, "node with given pubkey not found")
-	}
-	node, err := nodeUnmarshal(kvs[0].Value)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could not deserialize node: %v", err)
+		return nil, err
 	}
 
 	// Ensure node is either UP/STANDBY (no-op) or NEW (set to STANDBY).
@@ -203,15 +189,8 @@ func (l *leaderManagement) ApproveNode(ctx context.Context, req *apb.ApproveNode
 
 	// Set node to be STANDBY.
 	node.state = cpb.NodeState_NODE_STATE_STANDBY
-	nodeBytes, err := proto.Marshal(node.proto())
-	if err != nil {
-		// TODO(issues/85): log this
-		return nil, status.Errorf(codes.Unavailable, "could not marshal updated node")
-	}
-	_, err = l.txnAsLeader(ctx, clientv3.OpPut(key, string(nodeBytes)))
-	if err != nil {
-		// TODO(issues/85): log this
-		return nil, status.Error(codes.Unavailable, "could not save updated node")
+	if err := nodeSave(ctx, l.leadership, node); err != nil {
+		return nil, err
 	}
 
 	return &apb.ApproveNodeResponse{}, nil

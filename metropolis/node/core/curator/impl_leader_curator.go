@@ -5,7 +5,6 @@ import (
 	"crypto/subtle"
 	"fmt"
 
-	"go.etcd.io/etcd/clientv3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -234,38 +233,15 @@ func (l *leaderCurator) UpdateNodeStatus(ctx context.Context, req *ipb.UpdateNod
 	defer l.muNodes.Unlock()
 
 	// Retrieve node ...
-	key, err := nodeEtcdPrefix.Key(id)
+	node, err := nodeLoad(ctx, l.leadership, id)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid node id")
-	}
-	res, err := l.txnAsLeader(ctx, clientv3.OpGet(key))
-	if err != nil {
-		if rpcErr, ok := rpcError(err); ok {
-			return nil, rpcErr
-		}
-		return nil, status.Errorf(codes.Unavailable, "could not retrieve node: %v", err)
-	}
-	kvs := res.Responses[0].GetResponseRange().Kvs
-	if len(kvs) < 1 {
-		return nil, status.Error(codes.NotFound, "no such node")
-	}
-	node, err := nodeUnmarshal(kvs[0].Value)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "failed to unmarshal node: %v", err)
+		return nil, err
 	}
 	// ... update its' status ...
 	node.status = req.Status
 	// ... and save it to etcd.
-	bytes, err := proto.Marshal(node.proto())
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "failed to marshal node: %v", err)
-	}
-	_, err = l.txnAsLeader(ctx, clientv3.OpPut(key, string(bytes)))
-	if err != nil {
-		if rpcErr, ok := rpcError(err); ok {
-			return nil, rpcErr
-		}
-		return nil, status.Errorf(codes.Unavailable, "could not update node: %v", err)
+	if err := nodeSave(ctx, l.leadership, node); err != nil {
+		return nil, err
 	}
 
 	return &ipb.UpdateNodeStatusResponse{}, nil
@@ -302,26 +278,8 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 
 	// Check if there already is a node with this pubkey in the cluster.
 	id := identity.NodeID(pubkey)
-	key, err := nodeEtcdPrefix.Key(id)
-	if err != nil {
-		// TODO(issues/85): log err
-		return nil, status.Errorf(codes.InvalidArgument, "invalid node id")
-	}
-	res, err := l.txnAsLeader(ctx, clientv3.OpGet(key))
-	if err != nil {
-		if rpcErr, ok := rpcError(err); ok {
-			return nil, rpcErr
-		}
-		// TODO(issues/85): log this
-		return nil, status.Errorf(codes.Unavailable, "could not retrieve node %s: %v", id, err)
-	}
-	kvs := res.Responses[0].GetResponseRange().Kvs
-	if len(kvs) > 0 {
-		node, err := nodeUnmarshal(kvs[0].Value)
-		if err != nil {
-			// TODO(issues/85): log this
-			return nil, status.Errorf(codes.Unavailable, "could not unmarshal node")
-		}
+	node, err := nodeLoad(ctx, l.leadership, id)
+	if err == nil {
 		// If the existing node is in the NEW state already, there's nothing to do,
 		// return no error. This can happen in case of spurious retries from the calling
 		// node.
@@ -336,23 +294,18 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 		// TODO(issues/85): log this
 		return nil, status.Errorf(codes.FailedPrecondition, "node already exists in cluster, state %s", node.state.String())
 	}
+	if err != errNodeNotFound {
+		return nil, err
+	}
 
 	// No node exists, create one.
-	node := &Node{
+	node = &Node{
 		pubkey: pubkey,
 		state:  cpb.NodeState_NODE_STATE_NEW,
 	}
-	nodeBytes, err := proto.Marshal(node.proto())
-	if err != nil {
-		// TODO(issues/85): log this
-		return nil, status.Errorf(codes.Unavailable, "could not marshal new node")
+	if err := nodeSave(ctx, l.leadership, node); err != nil {
+		return nil, err
 	}
-	_, err = l.txnAsLeader(ctx, clientv3.OpPut(key, string(nodeBytes)))
-	if err != nil {
-		// TODO(issues/85): log this
-		return nil, status.Error(codes.Unavailable, "could not save new node")
-	}
-
 	return &ipb.RegisterNodeResponse{}, nil
 }
 
@@ -373,33 +326,14 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 	l.muNodes.Lock()
 	defer l.muNodes.Unlock()
 
-	// Check if there is a node with this pubkey in the cluster.
-	id := identity.NodeID(pubkey)
-	key, err := nodeEtcdPrefix.Key(id)
-	if err != nil {
-		// TODO(issues/85): log err
-		return nil, status.Errorf(codes.InvalidArgument, "invalid node id")
-	}
-
 	// Retrieve the node and act on its current state, either returning early or
 	// mutating it and continuing with the rest of the Commit logic.
-	res, err := l.txnAsLeader(ctx, clientv3.OpGet(key))
+	id := identity.NodeID(pubkey)
+	node, err := nodeLoad(ctx, l.leadership, id)
 	if err != nil {
-		if rpcErr, ok := rpcError(err); ok {
-			return nil, rpcErr
-		}
-		// TODO(issues/85): log this
-		return nil, status.Errorf(codes.Unavailable, "could not retrieve node %s: %v", id, err)
+		return nil, err
 	}
-	kvs := res.Responses[0].GetResponseRange().Kvs
-	if len(kvs) != 1 {
-		return nil, status.Errorf(codes.NotFound, "node %s not found", id)
-	}
-	node, err := nodeUnmarshal(kvs[0].Value)
-	if err != nil {
-		// TODO(issues/85): log this
-		return nil, status.Errorf(codes.Unavailable, "could not unmarshal node")
-	}
+
 	switch node.state {
 	case cpb.NodeState_NODE_STATE_NEW:
 		return nil, status.Error(codes.PermissionDenied, "node is NEW, wait for attestation/approval")
@@ -437,15 +371,8 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 	node.state = cpb.NodeState_NODE_STATE_UP
 	node.clusterUnlockKey = req.ClusterUnlockKey
 
-	nodeBytes, err := proto.Marshal(node.proto())
-	if err != nil {
-		// TODO(issues/85): log this
-		return nil, status.Errorf(codes.Unavailable, "could not marshal updated node")
-	}
-	_, err = l.txnAsLeader(ctx, clientv3.OpPut(key, string(nodeBytes)))
-	if err != nil {
-		// TODO(issues/85): log this
-		return nil, status.Error(codes.Unavailable, "could not save updated node")
+	if err := nodeSave(ctx, l.leadership, node); err != nil {
+		return nil, err
 	}
 
 	// From this point on, any failure (in the server, or in the network, ...) dooms
