@@ -25,7 +25,7 @@ main() {
     
     # Rebuild base image purely with no build context (-) ensuring that the
     # builder image does not contain any other data from the repository.
-    podman build -t monogon-builder - < "${dockerfile}"
+    podman build -t gcr.io/monogon-infra/monogon-builder - < "${dockerfile}"
 
     # TODO(serge): stop using pods for the builder, this is a historical artifact.
     podman pod create --name monogon
@@ -114,7 +114,7 @@ main() {
         --name=monogon-dev \
         --net=host \
         "${podman_flags[@]}" \
-        monogon-builder
+        gcr.io/monogon-infra/monogon-builder
 }
 
 main
