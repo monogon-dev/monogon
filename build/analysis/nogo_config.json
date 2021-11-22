@@ -81,5 +81,10 @@
     "exclude_files": {
       "external/": "third_party"
     }
+  },
+  "noioutil": {
+    "exclude_files": {
+      "external/": "third_party"
+    }
   }
 }
