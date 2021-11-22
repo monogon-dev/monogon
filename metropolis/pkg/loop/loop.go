@@ -28,7 +28,6 @@ package loop
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/bits"
 	"os"
 	"sync"
@@ -223,7 +222,7 @@ func (d *Device) Dev() (uint64, error) {
 
 // BackingFilePath returns the path of the backing file
 func (d *Device) BackingFilePath() (string, error) {
-	backingFile, err := ioutil.ReadFile(fmt.Sprintf("/sys/block/loop%d/loop/backing_file", d.num))
+	backingFile, err := os.ReadFile(fmt.Sprintf("/sys/block/loop%d/loop/backing_file", d.num))
 	if err != nil {
 		return "", fmt.Errorf("failed to get backing file path: %w", err)
 	}

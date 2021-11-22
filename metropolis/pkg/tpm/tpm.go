@@ -24,7 +24,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -584,5 +583,5 @@ readLoop:
 // result can be parsed by eventlog.  As this library currently doesn't support
 // extending PCRs it just returns the log as supplied by the EFI interface.
 func GetMeasurementLog() ([]byte, error) {
-	return ioutil.ReadFile("/sys/kernel/security/tpm0/binary_bios_measurements")
+	return os.ReadFile("/sys/kernel/security/tpm0/binary_bios_measurements")
 }

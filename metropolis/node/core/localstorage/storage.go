@@ -53,7 +53,7 @@ type Root struct {
 	// Ephemeral data, used by runtime, stored in tmpfs. Things like sockets,
 	// temporary config files, etc.
 	Ephemeral EphemeralDirectory `dir:"ephemeral"`
-	// FHS-standard /tmp directory, used by ioutil.TempFile.
+	// FHS-standard /tmp directory, used by os.MkdirTemp.
 	Tmp TmpDirectory `dir:"tmp"`
 	// FHS-standard /run directory. Used by various services.
 	Run RunDirectory `dir:"run"`

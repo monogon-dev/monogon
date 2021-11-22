@@ -7,7 +7,7 @@ package fietsje
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 )
 
 // Monogon runs fietsje for all Monogon transitive dependencies.
@@ -134,7 +134,7 @@ func Monogon(shelfPath, repositoriesBzlPath string) error {
 		return fmt.Errorf("could not render deps: %w", err)
 	}
 
-	err = ioutil.WriteFile(repositoriesBzlPath, buf.Bytes(), 0666)
+	err = os.WriteFile(repositoriesBzlPath, buf.Bytes(), 0666)
 	if err != nil {
 		return fmt.Errorf("could not write deps: %w", err)
 	}

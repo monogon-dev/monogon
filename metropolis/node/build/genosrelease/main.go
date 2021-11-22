@@ -23,7 +23,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -40,7 +39,7 @@ var (
 
 func main() {
 	flag.Parse()
-	statusFileContent, err := ioutil.ReadFile(*flagStatusFile)
+	statusFileContent, err := os.ReadFile(*flagStatusFile)
 	if err != nil {
 		fmt.Printf("Failed to open bazel workspace status file: %v\n", err)
 		os.Exit(1)
@@ -73,7 +72,7 @@ func main() {
 		fmt.Printf("Failed to encode os-release file: %v\n", err)
 		os.Exit(1)
 	}
-	if err := ioutil.WriteFile(*flagOutFile, []byte(osReleaseContent), 0644); err != nil {
+	if err := os.WriteFile(*flagOutFile, []byte(osReleaseContent), 0644); err != nil {
 		fmt.Printf("Failed to write os-release file: %v\n", err)
 		os.Exit(1)
 	}

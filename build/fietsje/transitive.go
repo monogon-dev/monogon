@@ -18,7 +18,6 @@ package fietsje
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -61,7 +60,7 @@ func (d *dependency) getTransitiveDeps() (map[string]*dependency, error) {
 
 	read := func(p string) []byte {
 		full := fmt.Sprintf("%s/%s", path, p)
-		data, err := ioutil.ReadFile(full)
+		data, err := os.ReadFile(full)
 		if err != nil {
 			panic(fmt.Sprintf("reading file %q: %v", full, err))
 		}

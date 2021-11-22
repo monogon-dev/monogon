@@ -20,7 +20,7 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -39,7 +39,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		testValue, _ := ioutil.ReadAll(conn)
+		testValue, _ := io.ReadAll(conn)
 		if bytes.Equal(testValue, []byte("test123")) {
 			testResultChan <- true
 		} else {

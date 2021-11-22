@@ -21,7 +21,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"strings"
@@ -142,7 +141,7 @@ func main() {
 	case "kubectl":
 		// Always get a kubeconfig with cluster-admin (group system:masters),
 		// kubectl itself can impersonate
-		kubeconfigFile, err := ioutil.TempFile("", "dbg_kubeconfig")
+		kubeconfigFile, err := os.CreateTemp("", "dbg_kubeconfig")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to create kubeconfig temp file: %v\n", err)
 			os.Exit(1)

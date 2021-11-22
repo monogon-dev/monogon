@@ -3,7 +3,6 @@ package curator
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -79,7 +78,7 @@ func newDut(ctx context.Context, t *testing.T, endpoint string, n *identity.Node
 
 	// Create ephemeral directory for curator and place it into /tmp.
 	dir := localstorage.EphemeralCuratorDirectory{}
-	tmp, err := ioutil.TempDir("/tmp", "curator-test-*")
+	tmp, err := os.MkdirTemp("/tmp", "curator-test-*")
 	if err != nil {
 		t.Fatalf("TempDir: %v", err)
 	}

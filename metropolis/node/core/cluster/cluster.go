@@ -29,7 +29,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sync"
 
 	"google.golang.org/protobuf/proto"
@@ -129,7 +129,7 @@ func (m *Manager) register(ctx context.Context, bootstrap *apb.NodeParameters_Cl
 }
 
 func (m *Manager) nodeParamsFWCFG(ctx context.Context) (*apb.NodeParameters, error) {
-	bytes, err := ioutil.ReadFile("/sys/firmware/qemu_fw_cfg/by_name/dev.monogon.metropolis/parameters.pb/raw")
+	bytes, err := os.ReadFile("/sys/firmware/qemu_fw_cfg/by_name/dev.monogon.metropolis/parameters.pb/raw")
 	if err != nil {
 		return nil, fmt.Errorf("could not read firmware enrolment file: %w", err)
 	}

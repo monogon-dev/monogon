@@ -36,7 +36,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -81,7 +80,7 @@ func main() {
 	// We list all files inside so that we can print them to the user for
 	// debugging purposes if that's not the case.
 	binFiles := make(map[string]bool)
-	files, err := ioutil.ReadDir(gorootBin)
+	files, err := os.ReadDir(gorootBin)
 	if err != nil {
 		log.Fatalf("Could not read dir $GOTOOLWRAP_GOROOT/bin (%q): %v", gorootBin, err)
 	}

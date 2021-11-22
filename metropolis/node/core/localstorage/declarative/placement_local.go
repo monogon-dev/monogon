@@ -18,7 +18,6 @@ package declarative
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sync"
 
@@ -58,7 +57,7 @@ func (f *FSPlacement) Exists() (bool, error) {
 }
 
 func (f *FSPlacement) Read() ([]byte, error) {
-	return ioutil.ReadFile(f.FullPath())
+	return os.ReadFile(f.FullPath())
 }
 
 // Write performs an atomic file write, via a temporary file.
@@ -69,7 +68,7 @@ func (f *FSPlacement) Write(d []byte, mode os.FileMode) error {
 	// TODO(q3k): ensure that these do not collide with an existing sibling file, or generate this suffix randomly.
 	tmp := f.FullPath() + ".__metropolis_tmp"
 	defer os.Remove(tmp)
-	if err := ioutil.WriteFile(tmp, d, mode); err != nil {
+	if err := os.WriteFile(tmp, d, mode); err != nil {
 		return fmt.Errorf("temporary file write failed: %w", err)
 	}
 

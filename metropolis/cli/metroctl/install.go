@@ -4,7 +4,6 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/pem"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -63,14 +62,14 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 		log.Fatalf("Failed to create config directory: %v", err)
 	}
 	var ownerPublicKey ed25519.PublicKey
-	ownerPrivateKeyPEM, err := ioutil.ReadFile(filepath.Join(xdg.ConfigHome, "metroctl/owner-key.pem"))
+	ownerPrivateKeyPEM, err := os.ReadFile(filepath.Join(xdg.ConfigHome, "metroctl/owner-key.pem"))
 	if os.IsNotExist(err) {
 		pub, priv, err := ed25519.GenerateKey(rand.Reader)
 		if err != nil {
 			log.Fatalf("Failed to generate owner private key: %v", err)
 		}
 		pemPriv := pem.EncodeToMemory(&pem.Block{Type: ownerKeyType, Bytes: priv})
-		if err := ioutil.WriteFile(filepath.Join(xdg.ConfigHome, "metroctl/owner-key.pem"), pemPriv, 0600); err != nil {
+		if err := os.WriteFile(filepath.Join(xdg.ConfigHome, "metroctl/owner-key.pem"), pemPriv, 0600); err != nil {
 			log.Fatalf("Failed to store owner private key: %v", err)
 		}
 		ownerPublicKey = pub

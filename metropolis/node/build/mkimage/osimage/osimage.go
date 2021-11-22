@@ -21,7 +21,6 @@ package osimage
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 
 	diskfs "github.com/diskfs/go-diskfs"
@@ -58,7 +57,7 @@ func put(fs filesystem.FileSystem, dst string, src io.Reader) error {
 	// If this is streamed (e.g. using io.Copy) it exposes a bug in diskfs, so
 	// do it in one go.
 	// TODO(mateusz@monogon.tech): Investigate the bug.
-	data, err := ioutil.ReadAll(src)
+	data, err := io.ReadAll(src)
 	if err != nil {
 		return fmt.Errorf("while reading %q: %w", src, err)
 	}

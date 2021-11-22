@@ -18,7 +18,6 @@ package erofs
 
 import (
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -78,14 +77,14 @@ func TestKernelInterop(t *testing.T) {
 				return nil
 			},
 			validate: func(t *testing.T) error {
-				dirInfo, err := ioutil.ReadDir("/test")
+				dirInfo, err := os.ReadDir("/test")
 				if err != nil {
 					t.Fatalf("Failed to read top-level directory: %v", err)
 				}
 				require.Len(t, dirInfo, 1, "more subdirs than expected")
 				require.Equal(t, "subdir", dirInfo[0].Name(), "unexpected subdir")
 				require.True(t, dirInfo[0].IsDir(), "subdir not a directory")
-				subdirInfo, err := ioutil.ReadDir("/test/subdir")
+				subdirInfo, err := os.ReadDir("/test/subdir")
 				assert.NoError(t, err, "cannot read empty subdir")
 				require.Len(t, subdirInfo, 0, "unexpected subdirs in empty directory")
 				return nil
@@ -123,8 +122,8 @@ func TestKernelInterop(t *testing.T) {
 				assert.NoError(t, err, "failed to open test file")
 				defer file.Close()
 				r := io.LimitReader(rand.New(rand.NewSource(0)), 128) // Random but deterministic data
-				expected, _ := ioutil.ReadAll(r)
-				actual, err := ioutil.ReadAll(file)
+				expected, _ := io.ReadAll(r)
+				actual, err := io.ReadAll(file)
 				assert.NoError(t, err, "failed to read test file")
 				assert.Equal(t, expected, actual, "content not identical")
 				return nil
@@ -153,7 +152,7 @@ func TestKernelInterop(t *testing.T) {
 			},
 			validate: func(t *testing.T) error {
 				var stat unix.Stat_t
-				rawContents, err := ioutil.ReadFile("/dev/ram0")
+				rawContents, err := os.ReadFile("/dev/ram0")
 				assert.NoError(t, err, "failed to read test data")
 				log.Printf("%x", rawContents)
 				err = unix.Stat("/test/test.bin", &stat)
@@ -166,8 +165,8 @@ func TestKernelInterop(t *testing.T) {
 				assert.NoError(t, err, "failed to open test file")
 				defer file.Close()
 				r := io.LimitReader(rand.New(rand.NewSource(1)), 6500) // Random but deterministic data
-				expected, _ := ioutil.ReadAll(r)
-				actual, err := ioutil.ReadAll(file)
+				expected, _ := io.ReadAll(r)
+				actual, err := io.ReadAll(file)
 				assert.NoError(t, err, "failed to read test file")
 				assert.Equal(t, expected, actual, "content not identical")
 				return nil
@@ -204,8 +203,8 @@ func TestKernelInterop(t *testing.T) {
 					assert.NoError(t, err, "failed to open test file")
 					defer file.Close()
 					r := io.LimitReader(rand.New(rand.NewSource(int64(i))), 2053) // Random but deterministic data
-					expected, _ := ioutil.ReadAll(r)
-					actual, err := ioutil.ReadAll(file)
+					expected, _ := io.ReadAll(r)
+					actual, err := io.ReadAll(file)
 					assert.NoError(t, err, "failed to read test file")
 					require.Equal(t, expected, actual, "content not identical")
 				}

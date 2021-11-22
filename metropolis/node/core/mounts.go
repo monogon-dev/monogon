@@ -18,7 +18,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -57,7 +56,7 @@ func setupMounts(log logtree.LeveledLogger) error {
 	if err := unix.Mount("tmpfs", "/sys/fs/cgroup", "tmpfs", unix.MS_NOEXEC|unix.MS_NOSUID|unix.MS_NODEV, ""); err != nil {
 		panic(err)
 	}
-	cgroupsRaw, err := ioutil.ReadFile("/proc/cgroups")
+	cgroupsRaw, err := os.ReadFile("/proc/cgroups")
 	if err != nil {
 		panic(err)
 	}

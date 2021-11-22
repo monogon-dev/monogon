@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"syscall"
 	"testing"
@@ -21,7 +20,7 @@ func testParser(l *logbuffer.Line, w LeveledWriter) {
 }
 
 func TestNamedPipeReader(t *testing.T) {
-	dir, err := ioutil.TempDir("/tmp", "metropolis-test-named-pipe-reader")
+	dir, err := os.MkdirTemp("/tmp", "metropolis-test-named-pipe-reader")
 	if err != nil {
 		t.Fatalf("could not create tempdir: %v", err)
 	}

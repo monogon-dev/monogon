@@ -22,7 +22,6 @@ package main
 import (
 	"flag"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -132,7 +131,7 @@ var (
 
 func main() {
 	flag.Parse()
-	specRaw, err := ioutil.ReadFile(*specPath)
+	specRaw, err := os.ReadFile(*specPath)
 	if err != nil {
 		log.Fatalf("failed to open spec: %v", err)
 	}

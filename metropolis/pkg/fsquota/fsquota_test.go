@@ -18,7 +18,6 @@ package fsquota
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"os/exec"
@@ -120,7 +119,7 @@ func TestBasic(t *testing.T) {
 			t.Fatal(err)
 		}
 		sizeFileData := make([]byte, 512*1024)
-		if err := ioutil.WriteFile("/test/readback/512kfile", sizeFileData, 0644); err != nil {
+		if err := os.WriteFile("/test/readback/512kfile", sizeFileData, 0644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -138,7 +137,7 @@ func TestBasic(t *testing.T) {
 
 		// Write 50 inodes for a total of 51 (with the 512K file)
 		for i := 0; i < 50; i++ {
-			if err := ioutil.WriteFile(fmt.Sprintf("/test/readback/ifile%v", i), []byte("test"), 0644); err != nil {
+			if err := os.WriteFile(fmt.Sprintf("/test/readback/ifile%v", i), []byte("test"), 0644); err != nil {
 				t.Fatal(err)
 			}
 		}

@@ -19,7 +19,6 @@ package crypt
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -51,7 +50,7 @@ const (
 // to ESPDevicePath and NodeDataCryptPath respectively. This doesn't fail if it
 // doesn't find the partitions, only if something goes catastrophically wrong.
 func MakeBlockDevices(ctx context.Context) error {
-	blockdevNames, err := ioutil.ReadDir("/sys/class/block")
+	blockdevNames, err := os.ReadDir("/sys/class/block")
 	if err != nil {
 		return fmt.Errorf("failed to read sysfs block class: %w", err)
 	}

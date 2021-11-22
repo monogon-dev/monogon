@@ -19,7 +19,6 @@ package fietsje
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"sort"
@@ -69,7 +68,7 @@ func shelfLoad(path string) (*shelf, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		log.Printf("Creating new shelf file at %q, this run will be slow.", path)
 	} else {
-		data, err = ioutil.ReadFile(path)
+		data, err = os.ReadFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("could not read shelf: %v", err)
 		}
@@ -154,7 +153,7 @@ func (s *shelf) save() error {
 	}
 
 	// And write it out.
-	err = ioutil.WriteFile(s.path, buf.Bytes(), 0644)
+	err = os.WriteFile(s.path, buf.Bytes(), 0644)
 	if err != nil {
 		return fmt.Errorf("could not write shelf: %v", err)
 	}

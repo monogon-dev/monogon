@@ -20,7 +20,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -215,7 +214,7 @@ func writeTracingProperty(name string, value string) error {
 	if !safeTracingPropertyNamesRe.MatchString(name) {
 		return fmt.Errorf("disallowed tracing property name received: \"%v\"", name)
 	}
-	return ioutil.WriteFile("/sys/kernel/tracing/"+name, []byte(value+"\n"), 0)
+	return os.WriteFile("/sys/kernel/tracing/"+name, []byte(value+"\n"), 0)
 }
 
 func (s *debugService) Trace(req *apb.TraceRequest, srv apb.NodeDebugService_TraceServer) error {

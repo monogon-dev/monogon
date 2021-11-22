@@ -20,7 +20,6 @@ import (
 	"archive/tar"
 	"flag"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -39,7 +38,7 @@ var (
 func main() {
 	flag.Parse()
 	var spec spec.Spec
-	specRaw, err := ioutil.ReadFile(*specPath)
+	specRaw, err := os.ReadFile(*specPath)
 	if err != nil {
 		log.Fatalf("failed to open spec file: %v", err)
 	}

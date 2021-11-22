@@ -19,7 +19,6 @@ package watchers
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 )
@@ -67,7 +66,7 @@ func buildConfig(options []taskOption) *config {
 }
 
 func readConfig(filename string) (cfg *config, err error) {
-	b, err := ioutil.ReadFile(filename)
+	b, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed reading file: %w", err)
 	}
@@ -90,7 +89,7 @@ func (cfg *config) atomicWriteFile(filename string) error {
 	// (but not applies) instantly.
 	tmpPath := filename + ".tmp"
 	defer os.Remove(tmpPath)
-	if err := ioutil.WriteFile(tmpPath, []byte(xml.Header+string(b)), 0664); err != nil {
+	if err := os.WriteFile(tmpPath, []byte(xml.Header+string(b)), 0664); err != nil {
 		return fmt.Errorf("failed to write: %w", err)
 	}
 	if err := os.Rename(tmpPath, filename); err != nil {

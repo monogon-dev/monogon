@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/x509"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -44,7 +43,7 @@ func prep(t *testing.T) *boilerplate {
 	// Force usage of /tmp as temp directory root, otherwsie TMPDIR from Bazel
 	// returns a path long enough that socket binds in the localstorage fail
 	// (as socket names are limited to 108 characters).
-	tmp, err := ioutil.TempDir("/tmp", "metropolis-consensus-test")
+	tmp, err := os.MkdirTemp("/tmp", "metropolis-consensus-test")
 	if err != nil {
 		t.Fatal(err)
 	}

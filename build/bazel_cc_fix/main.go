@@ -34,7 +34,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -179,7 +178,7 @@ func findFileInWorkspace(searchPath []string, inclFile string, isGeneratedFile m
 func (m rewriteMetadata) fixIncludesAndGetRefs(filePath string, quoteIncludes, systemIncludes []string, spec *ccfixspec.CCFixSpec, isGeneratedFile map[string]bool) []string {
 	meta, ok := m[filePath]
 	if !ok {
-		cSourceRaw, err := ioutil.ReadFile(filePath)
+		cSourceRaw, err := os.ReadFile(filePath)
 		if err != nil {
 			log.Printf("failed to open source file: %v", err)
 			return nil
@@ -328,7 +327,7 @@ func main() {
 	if err := json.NewDecoder(compilationDBFile).Decode(&compilationDB); err != nil {
 		log.Fatalf("failed to read compilation db: %v", err)
 	}
-	specRaw, err := ioutil.ReadFile(*specPath)
+	specRaw, err := os.ReadFile(*specPath)
 	var spec ccfixspec.CCFixSpec
 	if err := proto.UnmarshalText(string(specRaw), &spec); err != nil {
 		log.Fatalf("failed to load spec: %v", err)

@@ -3,7 +3,7 @@ package curator
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"google.golang.org/grpc/codes"
@@ -29,7 +29,7 @@ func TestListenerSwitch(t *testing.T) {
 	// Force usage of /tmp as temp directory root, otherwsie TMPDIR from Bazel
 	// returns a path long enough that socket binds in the localstorage fail
 	// (as socket names are limited to 108 characters).
-	tmp, err := ioutil.TempDir("/tmp", "curator-test-*")
+	tmp, err := os.MkdirTemp("/tmp", "curator-test-*")
 	if err != nil {
 		t.Fatalf("TempDir: %v", err)
 	}

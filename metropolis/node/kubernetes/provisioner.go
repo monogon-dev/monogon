@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -276,7 +275,7 @@ func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, stora
 		if err := os.Mkdir(volumePath, 0644); err != nil && !os.IsExist(err) {
 			return fmt.Errorf("failed to create volume directory: %w", err)
 		}
-		files, err := ioutil.ReadDir(volumePath)
+		files, err := os.ReadDir(volumePath)
 		if err != nil {
 			return fmt.Errorf("failed to list files in newly-created volume: %w", err)
 		}

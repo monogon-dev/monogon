@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -86,7 +85,7 @@ func LaunchNode(ctx context.Context, options NodeOptions) error {
 	// that we open and pass the name of it to QEMU. Not pinning this crashes both
 	// swtpm and qemu because we run into UNIX socket length limitations (for legacy
 	// reasons 108 chars).
-	tempDir, err := ioutil.TempDir("/tmp", "launch*")
+	tempDir, err := os.MkdirTemp("/tmp", "launch*")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary directory: %w", err)
 	}
@@ -99,7 +98,7 @@ func LaunchNode(ctx context.Context, options NodeOptions) error {
 	if err := os.Mkdir(tpmTargetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create TPM state directory: %w", err)
 	}
-	tpmFiles, err := ioutil.ReadDir(tpmSrcDir)
+	tpmFiles, err := os.ReadDir(tpmSrcDir)
 	if err != nil {
 		return fmt.Errorf("failed to read TPM directory: %w", err)
 	}
@@ -160,7 +159,7 @@ func LaunchNode(ctx context.Context, options NodeOptions) error {
 		if err != nil {
 			return fmt.Errorf("failed to encode node paraeters: %w", err)
 		}
-		if err := ioutil.WriteFile(parametersPath, parametersRaw, 0644); err != nil {
+		if err := os.WriteFile(parametersPath, parametersRaw, 0644); err != nil {
 			return fmt.Errorf("failed to write node parameters: %w", err)
 		}
 		qemuArgs = append(qemuArgs, "-fw_cfg", "name=dev.monogon.metropolis/parameters.pb,file="+parametersPath)

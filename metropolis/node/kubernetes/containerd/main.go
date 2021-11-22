@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -108,7 +107,7 @@ func (s *Service) runPreseed(ctx context.Context) error {
 		return fmt.Errorf("failed to connect to containerd: %w", err)
 	}
 	logger := supervisor.Logger(ctx)
-	preseedNamespaceDirs, err := ioutil.ReadDir(preseedNamespacesDir)
+	preseedNamespaceDirs, err := os.ReadDir(preseedNamespacesDir)
 	if err != nil {
 		return fmt.Errorf("failed to open preseed dir: %w", err)
 	}
@@ -118,7 +117,7 @@ func (s *Service) runPreseed(ctx context.Context) error {
 			continue
 		}
 		namespace := dir.Name()
-		images, err := ioutil.ReadDir(filepath.Join(preseedNamespacesDir, namespace))
+		images, err := os.ReadDir(filepath.Join(preseedNamespacesDir, namespace))
 		if err != nil {
 			return fmt.Errorf("failed to list namespace preseed directory for ns \"%v\": %w", namespace, err)
 		}

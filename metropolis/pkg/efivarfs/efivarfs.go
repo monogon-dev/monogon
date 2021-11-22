@@ -22,7 +22,6 @@ package efivarfs
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,7 +63,7 @@ func ExtractString(contents []byte) (string, error) {
 func ReadLoaderDevicePartUUID() (string, error) {
 	// Read the EFI variable file containing the ESP UUID.
 	espUuidPath := filepath.Join(Path, "LoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f")
-	efiVar, err := ioutil.ReadFile(espUuidPath)
+	efiVar, err := os.ReadFile(espUuidPath)
 	if err != nil {
 		return "", fmt.Errorf("couldn't read the LoaderDevicePartUUID file at %q: %w", espUuidPath, err)
 	}
@@ -98,7 +97,7 @@ func CreateBootEntry(be *BootEntry) (int, error) {
 	if err != nil {
 		return -1, fmt.Errorf("while marshaling the EFI boot entry: %w", err)
 	}
-	if err := ioutil.WriteFile(ep, bem, 0644); err != nil {
+	if err := os.WriteFile(ep, bem, 0644); err != nil {
 		return -1, fmt.Errorf("while creating a boot entry variable: %w", err)
 	}
 	return n, nil
@@ -108,7 +107,7 @@ func CreateBootEntry(be *BootEntry) (int, error) {
 // specified in ord. It may return an io error.
 func SetBootOrder(ord *BootOrder) error {
 	op := filepath.Join(Path, fmt.Sprintf("BootOrder-%s", GlobalGuid))
-	if err := ioutil.WriteFile(op, ord.Marshal(), 0644); err != nil {
+	if err := os.WriteFile(op, ord.Marshal(), 0644); err != nil {
 		return fmt.Errorf("while creating a boot order variable: %w", err)
 	}
 	return nil

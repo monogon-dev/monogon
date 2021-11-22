@@ -21,7 +21,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -78,7 +77,7 @@ func (f *FileArgs) ArgPath(name string, content []byte) string {
 
 	path := filepath.Join(f.path, name)
 
-	if err := ioutil.WriteFile(path, content, 0600); err != nil {
+	if err := os.WriteFile(path, content, 0600); err != nil {
 		f.lastError = err
 		return ""
 	}

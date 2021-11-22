@@ -27,7 +27,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
@@ -136,7 +135,7 @@ func deviceNumberFromString(s string) (uint64, error) {
 func (k *Plugin) Run(ctx context.Context) error {
 	k.logger = supervisor.Logger(ctx)
 
-	l1tfStatus, err := ioutil.ReadFile("/sys/devices/system/cpu/vulnerabilities/l1tf")
+	l1tfStatus, err := os.ReadFile("/sys/devices/system/cpu/vulnerabilities/l1tf")
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to query for CPU vulnerabilities: %v", err)
 	}
@@ -148,7 +147,7 @@ func (k *Plugin) Run(ctx context.Context) error {
 		return nil
 	}
 
-	kvmDevRaw, err := ioutil.ReadFile("/sys/devices/virtual/misc/kvm/dev")
+	kvmDevRaw, err := os.ReadFile("/sys/devices/virtual/misc/kvm/dev")
 	if err != nil {
 		k.logger.Warning("KVM is not available. Check firmware settings and CPU.")
 		supervisor.Signal(ctx, supervisor.SignalHealthy)

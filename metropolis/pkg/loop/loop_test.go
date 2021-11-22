@@ -19,7 +19,6 @@ package loop
 import (
 	"encoding/binary"
 	"io"
-	"io/ioutil"
 	"math"
 	"os"
 	"runtime"
@@ -36,7 +35,7 @@ import (
 // bit unsigned integers) to detect offset correctness. File is always 128KiB
 // large (2^16 * 2 bytes).
 func makeTestFile() *os.File {
-	f, err := ioutil.TempFile("/tmp", "")
+	f, err := os.CreateTemp("/tmp", "")
 	if err != nil {
 		panic(err)
 	}
@@ -183,7 +182,7 @@ func TestResize(t *testing.T) {
 	if os.Getenv("IN_KTEST") != "true" {
 		t.Skip("Not in ktest")
 	}
-	f, err := ioutil.TempFile("/tmp", "")
+	f, err := os.CreateTemp("/tmp", "")
 	assert.NoError(t, err)
 	empty1K := make([]byte, 1024)
 	for i := 0; i < 64; i++ {
