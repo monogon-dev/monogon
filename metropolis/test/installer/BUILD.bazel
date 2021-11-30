@@ -25,5 +25,6 @@ go_library(
         "@com_github_diskfs_go_diskfs//:go_default_library",
         "@com_github_diskfs_go_diskfs//disk:go_default_library",
         "@com_github_diskfs_go_diskfs//partition/gpt:go_default_library",
+        "@io_bazel_rules_go//go/tools/bazel:go_default_library",
     ],
 )
