@@ -185,7 +185,7 @@ func (c *Certificate) ensure(ctx context.Context, kv clientv3.KV) (cert []byte, 
 		}
 	}
 
-	certPath := c.Namespace.etcdPath("%s-cert.der", c.Name)
+	certPath := c.Namespace.etcdPath("issued/%s-cert.der", c.Name)
 
 	// Try loading certificate from etcd.
 	certRes, err := kv.Get(ctx, certPath)
@@ -273,7 +273,7 @@ func (c *Certificate) ensureKey(ctx context.Context, kv clientv3.KV) error {
 	}
 
 	// First, try loading.
-	privPath := c.Namespace.etcdPath("%s-privkey.bin", c.Name)
+	privPath := c.Namespace.etcdPath("keys/%s-privkey.bin", c.Name)
 	privRes, err := kv.Get(ctx, privPath)
 	if err != nil {
 		return fmt.Errorf("failed to get private key from etcd: %w", err)
@@ -305,6 +305,24 @@ func (c *Certificate) ensureKey(ctx context.Context, kv clientv3.KV) error {
 		return fmt.Errorf("failed to write newly generated keypair: %w", err)
 	} else if !res.Succeeded {
 		return fmt.Errorf("key generation transaction failed: concurrent write")
+	}
+
+	crlPath := c.crlPath()
+	emptyCRL, err := c.makeCRL(ctx, kv, nil)
+	if err != nil {
+		return fmt.Errorf("failed to generate empty CRL: %w", err)
+	}
+
+	// Also attempt to emit an empty CRL if one doesn't exist yet.
+	_, err = kv.Txn(ctx).
+		If(
+			clientv3.Compare(clientv3.CreateRevision(crlPath), "=", 0),
+		).
+		Then(
+			clientv3.OpPut(crlPath, string(emptyCRL)),
+		).Commit()
+	if err != nil {
+		return fmt.Errorf("failed to upsert empty CRL")
 	}
 
 	c.PrivateKey = priv

@@ -5,11 +5,15 @@ go_library(
     srcs = [
         "ca.go",
         "certificate.go",
+        "crl.go",
         "x509.go",
     ],
     importpath = "source.monogon.dev/metropolis/pkg/pki",
     visibility = ["//visibility:public"],
     deps = [
+        "//metropolis/node/core/consensus/client:go_default_library",
+        "//metropolis/pkg/event:go_default_library",
+        "//metropolis/pkg/event/etcd:go_default_library",
         "//metropolis/pkg/fileargs:go_default_library",
         "@io_etcd_go_etcd//clientv3:go_default_library",
     ],
@@ -17,7 +21,13 @@ go_library(
 
 go_test(
     name = "go_default_test",
-    srcs = ["certificate_test.go"],
+    srcs = [
+        "certificate_test.go",
+        "crl_test.go",
+    ],
     embed = [":go_default_library"],
-    deps = ["@io_etcd_go_etcd//integration:go_default_library"],
+    deps = [
+        "//metropolis/node/core/consensus/client:go_default_library",
+        "@io_etcd_go_etcd//integration:go_default_library",
+    ],
 )
