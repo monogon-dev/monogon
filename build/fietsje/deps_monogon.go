@@ -124,6 +124,18 @@ func Monogon(shelfPath, repositoriesBzlPath string) error {
 	// Used by metroctl to resolve XDG directories
 	p.collect("github.com/adrg/xdg", "v0.4.0")
 
+	// Used for generating proto docs in //build/proto_docs
+	p.collect("github.com/pseudomuto/protoc-gen-doc", "v1.5.0", patches("protoc-gen-doc-no-gogo.patch")).use(
+		"github.com/Masterminds/sprig",
+		"github.com/Masterminds/semver",
+		"github.com/aokoli/goutils",
+		"github.com/huandu/xstrings",
+	).with(
+		disabledProtoBuild,
+	).use(
+		"github.com/pseudomuto/protokit",
+	)
+
 	// First generate the repositories starlark rule into memory. This is because
 	// rendering will lock all unlocked dependencies, which might take a while. If a
 	// use were to interrupt it now, they would end up with an incomplete

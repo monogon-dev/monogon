@@ -14,7 +14,8 @@
       "external/org_golang_google_protobuf/": "third_party",
       "external/com_github_armon_go_metrics/": "third_party",
       "external/com_github_elazarl_goproxy/": "third_party",
-      "external/com_github_googleapis_gnostic/": "third_party"
+      "external/com_github_googleapis_gnostic/": "third_party",
+      "external/com_github_pseudomuto_protoc_gen_doc": "third_party"
     }
   },
   "lostcancel": {
@@ -36,7 +37,8 @@
       "external/com_github_shirou_gopsutil/": "unreachable",
       "external/io_k8s_apimachinery/": "third_party",
       "external/com_github_hpcloud_tail": "third_party",
-      "external/com_github_flynn_go_shlex": "third_party"
+      "external/com_github_flynn_go_shlex": "third_party",
+      "external/com_github_masterminds_sprig": "third_party"
     }
   },
   "assign": {

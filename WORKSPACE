@@ -53,6 +53,19 @@ http_archive(
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 load("@bazel_gazelle//:deps.bzl", "go_repository")
 
+# Here to override the dep in rules_go with one with our patch
+http_archive(
+    name = "com_github_mwitkow_go_proto_validators",
+    patch_args = ["-p1"],
+    patches = ["//third_party/go/patches:go-proto-validators-default-alias.patch"],
+    sha256 = "d8697f05a2f0eaeb65261b480e1e6035301892d9fc07ed945622f41b12a68142",
+    strip_prefix = "go-proto-validators-0.3.2",
+    urls = [
+        "https://mirror.bazel.build/github.com/mwitkow/go-proto-validators/archive/v0.3.2.zip",
+        "https://github.com/mwitkow/go-proto-validators/archive/v0.3.2.zip",
+    ],
+)
+
 go_rules_dependencies()
 
 go_register_toolchains(

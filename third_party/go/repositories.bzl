@@ -42,6 +42,26 @@ def go_repositories():
         ],
     )
     go_repository(
+        name = "com_github_masterminds_semver",
+        importpath = "github.com/Masterminds/semver",
+        version = "v1.4.2",
+        sum = "h1:WBLTQ37jOCzSLtXNdoo8bNM8876KhNqOKvrlGITgsTc=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
+        name = "com_github_masterminds_sprig",
+        importpath = "github.com/Masterminds/sprig",
+        version = "v2.15.0+incompatible",
+        sum = "h1:0gSxPGWS9PAr7U2NsQ2YQg6juRDINkUyuvbb4b2Xm8w=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
         name = "com_github_microsoft_go_winio",
         importpath = "github.com/Microsoft/go-winio",
         version = "v0.4.14",
@@ -107,6 +127,16 @@ def go_repositories():
         importpath = "github.com/alexflint/go-filemutex",
         version = "v0.0.0-20171022225611-72bdc8eae2ae",
         sum = "h1:AMzIhMUqU3jMrZiTuW0zkYeKlKDAFD+DG20IoO421/Y=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
+        name = "com_github_aokoli_goutils",
+        importpath = "github.com/aokoli/goutils",
+        version = "v1.0.1",
+        sum = "h1:7fpzNGoJ3VA8qcrm++XEE1QUe0mIwNeLa02Nwq7RDkg=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
@@ -1213,6 +1243,16 @@ def go_repositories():
         ],
     )
     go_repository(
+        name = "com_github_huandu_xstrings",
+        importpath = "github.com/huandu/xstrings",
+        version = "v1.0.0",
+        sum = "h1:pO2K/gKgKaat5LdpAhxhluX2GPQMaI3W5FUz/I/UnWk=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
         name = "com_github_imdario_mergo",
         importpath = "github.com/imdario/mergo",
         version = "v0.3.7",
@@ -1820,6 +1860,31 @@ def go_repositories():
         importpath = "github.com/prometheus/procfs",
         version = "v0.0.11",
         sum = "h1:DhHlBtkHWPYi8O2y31JkK0TF+DGM+51OopZjH/Ia5qI=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
+        name = "com_github_pseudomuto_protoc_gen_doc",
+        importpath = "github.com/pseudomuto/protoc-gen-doc",
+        version = "v1.5.0",
+        sum = "h1:pHZp0MEiT68jrZV8js8BS7E9ZEnlSLegoQbbtXj5lfo=",
+        patches = [
+            "//third_party/go/patches:protoc-gen-doc-no-gogo.patch",
+        ],
+        patch_args = ["-p1"],
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
+        name = "com_github_pseudomuto_protokit",
+        importpath = "github.com/pseudomuto/protokit",
+        version = "v0.2.0",
+        sum = "h1:hlnBDcy3YEDXH7kc9gV+NLaN0cDzhDvD1s7Y6FZ8RpM=",
+        build_file_proto_mode = "disable",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",
