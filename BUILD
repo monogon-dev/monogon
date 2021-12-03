@@ -75,6 +75,11 @@ alias(
 )
 
 alias(
+    name = "metroctl",
+    actual = "//metropolis/cli/metroctl:metroctl",
+)
+
+alias(
     name = "goimports",
     actual = "@org_golang_x_tools//cmd/goimports:goimports",
     visibility = ["//visibility:public"],
