@@ -57,7 +57,7 @@ func main() {
 	// Start with the EFI Payload the OS will boot from.
 	p, err := os.Open(efiPayload)
 	if err != nil {
-		log.Fatalf("while opening the EFI payload at %q: %s", efiPayload, err.Error())
+		log.Fatalf("while opening the EFI payload at %q: %v", efiPayload, err)
 	}
 	defer p.Close()
 	cfg.EFIPayload = p
@@ -68,7 +68,7 @@ func main() {
 	if systemImage != "" {
 		img, err := os.Open(systemImage)
 		if err != nil {
-			log.Fatalf("while opening the system image at %q: %s", systemImage, err.Error())
+			log.Fatalf("while opening the system image at %q: %v", systemImage, err)
 		}
 		defer img.Close()
 		cfg.SystemImage = img
@@ -78,7 +78,7 @@ func main() {
 	if nodeParams != "" {
 		np, err := os.Open(nodeParams)
 		if err != nil {
-			log.Fatalf("while opening node parameters at %q: %s", nodeParams, err.Error())
+			log.Fatalf("while opening node parameters at %q: %v", nodeParams, err)
 		}
 		defer np.Close()
 		cfg.NodeParameters = np
@@ -86,6 +86,6 @@ func main() {
 
 	// Write the parametrized OS image.
 	if _, err := osimage.Create(&cfg); err != nil {
-		log.Fatalf("while creating a Metropolis OS image: %s", err.Error())
+		log.Fatalf("while creating a Metropolis OS image: %v", err)
 	}
 }
