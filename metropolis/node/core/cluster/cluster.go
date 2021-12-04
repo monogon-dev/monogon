@@ -27,11 +27,15 @@ package cluster
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"sync"
 
+	"github.com/cenkalti/backoff/v4"
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/consensus"
@@ -143,7 +147,67 @@ func (m *Manager) nodeParamsFWCFG(ctx context.Context) (*apb.NodeParameters, err
 	return &config, nil
 }
 
+// nodeParamsGCPMetadata attempts to retrieve the node parameters from the
+// GCP metadata service. Returns nil if the metadata service is available,
+// but no node parameters are specified.
+func (m *Manager) nodeParamsGCPMetadata(ctx context.Context) (*apb.NodeParameters, error) {
+	const metadataURL = "http://169.254.169.254/computeMetadata/v1/instance/attributes/metropolis-node-params"
+	req, err := http.NewRequestWithContext(ctx, "GET", metadataURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not create request: %w", err)
+	}
+	req.Header.Set("Metadata-Flavor", "Google")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("non-200 status code: %d", resp.StatusCode)
+	}
+	decoded, err := io.ReadAll(base64.NewDecoder(base64.StdEncoding, resp.Body))
+	if err != nil {
+		return nil, fmt.Errorf("cannot decode base64: %w", err)
+	}
+	config := apb.NodeParameters{}
+	err = proto.Unmarshal(decoded, &config)
+	if err != nil {
+		return nil, fmt.Errorf("failed unmarshalling NodeParameters: %w", err)
+	}
+	return &config, nil
+}
+
 func (m *Manager) nodeParams(ctx context.Context) (*apb.NodeParameters, error) {
+	boardName, err := getDMIBoardName()
+	if err != nil {
+		supervisor.Logger(ctx).Warningf("Could not get board name, cannot detect platform: %v", err)
+	}
+	supervisor.Logger(ctx).Infof("Board name: %q", boardName)
+
+	// When running on GCP, attempt to retrieve the node parameters from the
+	// metadata server first. Retry until we get a response, since we need to
+	// wait for the network service to assign an IP address first.
+	if isGCPInstance(boardName) {
+		var params *apb.NodeParameters
+		op := func() error {
+			supervisor.Logger(ctx).Info("Running on GCP, attempting to retrieve node parameters from metadata server")
+			params, err = m.nodeParamsGCPMetadata(ctx)
+			return err
+		}
+		err := backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
+		if err != nil {
+			supervisor.Logger(ctx).Errorf("Failed to retrieve node parameters: %v", err)
+		}
+		if params != nil {
+			supervisor.Logger(ctx).Info("Retrieved parameters from GCP metadata server")
+			return params, nil
+		}
+		supervisor.Logger(ctx).Infof("\"metropolis-node-params\" metadata not found")
+	}
+
 	// Retrieve node parameters from qemu's fwcfg interface or ESP.
 	// TODO(q3k): probably abstract this away and implement per platform/build/...
 	paramsFWCFG, err := m.nodeParamsFWCFG(ctx)
