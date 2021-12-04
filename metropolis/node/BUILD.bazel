@@ -135,6 +135,30 @@ genrule(
     ],
 )
 
+# Create a tar.gz of the image, suitable for importing to GCP as a custom image.
+# (see https://cloud.google.com/compute/docs/import/import-existing-image#create_image_file)
+#
+# We can't use Bazel's "pkg_tar" rule because it insists on adding a "./" prefix to the
+# file name inside the archive, which is not compatible with GCP's importer.
+genrule(
+    name = "image_gcp",
+    srcs = [
+        ":image",
+    ],
+    outs = [
+        "node.tar.gz",
+    ],
+    cmd = """
+    # make it reproducible and fast (it doesn't compress well anyway)
+    export GZIP="--no-name --fast"
+
+    ln -rs $< $(@D)/disk.raw  # GCP insists it be called "disk.raw"
+
+    cd $(@D)
+    tar --format=oldgnu --mtime='1970-01-01' -Sczhf node.tar.gz disk.raw
+    """,
+)
+
 genrule(
     name = "swtpm_data",
     outs = [
