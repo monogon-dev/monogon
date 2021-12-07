@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "install.go",
         "main.go",
+        "takeownership.go",
     ],
     data = [
         "//metropolis/node",
@@ -14,6 +15,9 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//metropolis/cli/metroctl/core:go_default_library",
+        "//metropolis/cli/pkg/context:go_default_library",
+        "//metropolis/node:go_default_library",
+        "//metropolis/node/core/rpc:go_default_library",
         "//metropolis/proto/api:go_default_library",
         "@com_github_adrg_xdg//:go_default_library",
         "@com_github_spf13_cobra//:go_default_library",
