@@ -156,7 +156,7 @@ func TestMain(m *testing.M) {
 		// side effects, it must be just a filename.
 		src string
 	}{
-		{&installerEFIPayload, true, "metropolis/node/installer/kernel.efi"},
+		{&installerEFIPayload, true, "metropolis/test/installer/kernel.efi"},
 		{&testOSBundle, true, "metropolis/test/installer/testos/testos_bundle.zip"},
 		{&installerImage, false, "installer.img"},
 		{&nodeStorage, false, "stor.img"},

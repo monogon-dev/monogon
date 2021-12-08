@@ -1,10 +1,11 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
 
 go_test(
     name = "installer",
     size = "small",
     data = [
-        "//metropolis/node/installer:kernel",
+        ":kernel",
         "//metropolis/test/installer/testos:testos_bundle",
         "//third_party/edk2:firmware",
         "@qemu//:qemu-x86_64-softmmu",
@@ -27,4 +28,12 @@ go_library(
         "@com_github_diskfs_go_diskfs//partition/gpt:go_default_library",
         "@io_bazel_rules_go//go/tools/bazel:go_default_library",
     ],
+)
+
+efi_unified_kernel_image(
+    name = "kernel",
+    cmdline = "loglevel=0 console=ttyS0",
+    initramfs = "//metropolis/node/installer:initramfs",
+    kernel = "//third_party/linux",
+    visibility = ["//visibility:private"],
 )

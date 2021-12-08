@@ -12,7 +12,7 @@ erofs_image(
 
 efi_unified_kernel_image(
     name = "kernel_efi",
-    cmdline = "console=ttyS0 root=PARTLABEL=METROPOLIS-SYSTEM rootfstype=erofs init=/init",
+    cmdline = "loglevel=0 console=ttyS0 root=PARTLABEL=METROPOLIS-SYSTEM rootfstype=erofs init=/init",
     kernel = "//third_party/linux",
 )
 
