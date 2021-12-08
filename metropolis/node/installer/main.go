@@ -23,7 +23,6 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -177,46 +176,63 @@ func initializeSystemPartition(image io.Reader, tgtBlkdev string) error {
 	return nil
 }
 
+// panicf is a replacement for log.panicf that doesn't print the error message
+// before calling panic.
+func panicf(format string, v ...interface{}) {
+	s := fmt.Sprintf(format, v...)
+	panic(s)
+}
+
 func main() {
+	// Reboot on panic after a delay. The error string will have been printed
+	// before recover is called.
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println(r)
+			fmt.Println("The installation could not be finalized. Please reboot to continue.")
+			syscall.Pause()
+		}
+	}()
+
 	// Mount sysfs, devtmpfs and efivarfs.
 	if err := mountPseudoFS(); err != nil {
-		log.Fatalf("while mounting pseudo-filesystems: %v", err)
+		panicf("While mounting pseudo-filesystems: %v", err)
 	}
 	// Read the installer ESP UUID from efivarfs.
 	espUuid, err := efivarfs.ReadLoaderDevicePartUUID()
 	if err != nil {
-		log.Fatalf("while reading the installer ESP UUID: %v", err)
+		panicf("While reading the installer ESP UUID: %v", err)
 	}
 	// Look up the installer partition based on espUuid.
 	espDev, err := sysfs.DeviceByPartUUID(espUuid)
 	espPath := filepath.Join("/dev", espDev)
 	if err != nil {
-		log.Fatalf("while resolving the installer device handle: %v", err)
+		panicf("While resolving the installer device handle: %v", err)
 	}
 	// Mount the installer partition. The installer bundle will be read from it.
 	if err := mountInstallerESP(espPath); err != nil {
-		log.Fatalf("while mounting the installer ESP: %v", err)
+		panicf("While mounting the installer ESP: %v", err)
 	}
 
 	nodeParameters, err := os.Open("/installer/metropolis-installer/nodeparams.pb")
 	if err != nil {
-		log.Fatalf("failed to open node parameters from ESP: %v", err)
+		panicf("Failed to open node parameters from ESP: %v", err)
 	}
 
 	// TODO(lorenz): Replace with proper bundles
 	bundle, err := zip.OpenReader("/installer/metropolis-installer/bundle.bin")
 	if err != nil {
-		log.Fatalf("failed to open node bundle from ESP: %v", err)
+		panicf("Failed to open node bundle from ESP: %v", err)
 	}
 	defer bundle.Close()
 	efiPayload, err := bundle.Open("kernel_efi.efi")
 	if err != nil {
-		log.Fatalf("Cannot open EFI payload in bundle: %v", err)
+		panicf("Cannot open EFI payload in bundle: %v", err)
 	}
 	defer efiPayload.Close()
 	systemImage, err := bundle.Open("rootfs.img")
 	if err != nil {
-		log.Fatalf("Cannot open system image in bundle: %v", err)
+		panicf("Cannot open system image in bundle: %v", err)
 	}
 	defer systemImage.Close()
 
@@ -251,10 +267,10 @@ func main() {
 	// Look for suitable block devices, given the minimum size.
 	blkDevs, err := findInstallableBlockDevices(espDev, minSize)
 	if err != nil {
-		log.Fatal(err)
+		panicf(err.Error())
 	}
 	if len(blkDevs) == 0 {
-		log.Fatal("couldn't find a suitable block device.")
+		panicf("Couldn't find a suitable block device.")
 	}
 	// Set the first suitable block device found as the installation target.
 	tgtBlkdevName := blkDevs[0]
@@ -264,41 +280,41 @@ func main() {
 
 	// Use osimage to partition the target block device and set up its ESP.
 	// Create will return an EFI boot entry on success.
-	log.Printf("Installing to %s\n", tgtBlkdevPath)
+	fmt.Printf("Installing to %s\n", tgtBlkdevPath)
 	be, err := osimage.Create(&installParams)
 	if err != nil {
-		log.Fatalf("while installing: %v", err)
+		panicf("While installing: %v", err)
 	}
 	// The target device's partition table has just been updated. Re-read it to
 	// make the node system partition reachable through /dev.
 	if err := rereadPartitionTable(tgtBlkdevPath); err != nil {
-		log.Fatalf("while re-reading the partition table of %q: %v", tgtBlkdevPath, err)
+		panicf("While re-reading the partition table of %q: %v", tgtBlkdevPath, err)
 	}
 	// Look up the node's system partition path to be later used in the
 	// initialization step. It's always the second partition, right after
 	// the ESP.
 	sysBlkdevName, err := sysfs.PartitionBlockDevice(tgtBlkdevName, 2)
 	if err != nil {
-		log.Fatalf("while looking up the system partition: %v", err)
+		panicf("While looking up the system partition: %v", err)
 	}
 	sysBlkdevPath := filepath.Join("/dev", sysBlkdevName)
 	// Copy the system partition contents.
 	if err := initializeSystemPartition(systemImage, sysBlkdevPath); err != nil {
-		log.Fatalf("while initializing the system partition at %q: %v", sysBlkdevPath, err)
+		panicf("While initializing the system partition at %q: %v", sysBlkdevPath, err)
 	}
 
 	// Create an EFI boot entry for Metropolis.
 	en, err := efivarfs.CreateBootEntry(be)
 	if err != nil {
-		log.Fatalf("while creating a boot entry: %v", err)
+		panicf("While creating a boot entry: %v", err)
 	}
 	// Erase the preexisting boot order, leaving Metropolis as the only option.
 	if err := efivarfs.SetBootOrder(&efivarfs.BootOrder{uint16(en)}); err != nil {
-		log.Fatalf("while adjusting the boot order: %v", err)
+		panicf("While adjusting the boot order: %v", err)
 	}
 
 	// Reboot.
 	unix.Sync()
-	log.Print("Installation completed. Rebooting.")
+	fmt.Println("Installation completed. Rebooting.")
 	unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART)
 }

@@ -84,7 +84,11 @@ func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, e
 
 	// Copy the stdout and stderr output to a single channel of lines so that they
 	// can then be matched against expectedOutput.
-	lineC := make(chan string)
+
+	// Since LineBuffer can write its buffered contents on a deferred Close,
+	// after the reader loop is broken, avoid deadlocks by making lineC a
+	// buffered channel.
+	lineC := make(chan string, 2)
 	outBuffer := logbuffer.NewLineBuffer(1024, func(l *logbuffer.Line) {
 		lineC <- l.Data
 	})
@@ -219,7 +223,7 @@ func TestNoBlockDevices(t *testing.T) {
 	// No block devices are passed to QEMU aside from the install medium. Expect
 	// the installer to fail at the device probe stage rather than attempting to
 	// use the medium as the target device.
-	expectedOutput := "couldn't find a suitable block device"
+	expectedOutput := "Couldn't find a suitable block device"
 	result, err := runQemuWithInstaller(ctx, nil, expectedOutput)
 	if err != nil {
 		t.Error(err.Error())
@@ -242,7 +246,7 @@ func TestBlockDeviceTooSmall(t *testing.T) {
 	}
 
 	// Run QEMU. Expect the installer to fail with a predefined error string.
-	expectedOutput := "couldn't find a suitable block device"
+	expectedOutput := "Couldn't find a suitable block device"
 	result, err := runQemuWithInstaller(ctx, qemuDriveParam(imagePath), expectedOutput)
 	if err != nil {
 		t.Error(err.Error())
