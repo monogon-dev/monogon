@@ -147,6 +147,23 @@ func leaseAddRouter(lease *dhcp4c.Lease, router net.IP) *dhcp4c.Lease {
 	return lease
 }
 
+func leaseAddClasslessRoutes(lease *dhcp4c.Lease, routes ...*dhcpv4.Route) *dhcp4c.Lease {
+	lease.Options.Update(dhcpv4.OptClasslessStaticRoute(routes...))
+	return lease
+}
+
+func mustParseCIDR(cidr string) *net.IPNet {
+	_, n, err := net.ParseCIDR(cidr)
+	if err != nil {
+		panic(err)
+	}
+	// Equality checks don't know about net.IP's canonicalization rules.
+	if n.IP.To4() != nil {
+		n.IP = n.IP.To4()
+	}
+	return n
+}
+
 func TestDefaultRouteCallback(t *testing.T) {
 	if os.Getenv("IN_KTEST") != "true" {
 		t.Skip("Not in ktest")
@@ -255,6 +272,37 @@ func TestDefaultRouteCallback(t *testing.T) {
 				Type:      unix.RTN_UNICAST,
 			}},
 		},
+		{
+			name:          "AddsClasslessStaticRoutes",
+			initialRoutes: []netlink.Route{},
+			oldLease:      nil,
+			newLease: leaseAddClasslessRoutes(
+				// Router should be ignored
+				leaseAddRouter(trivialLeaseFromNet(testNet1), testNet1Router),
+				// P2P/foreign gateway route
+				&dhcpv4.Route{Dest: mustParseCIDR("192.168.42.1/32"), Router: net.IPv4zero},
+				// Standard route over foreign gateway set up by previous route
+				&dhcpv4.Route{Dest: mustParseCIDR("0.0.0.0/0"), Router: net.IPv4(192, 168, 42, 1)},
+			),
+			expectedRoutes: []netlink.Route{{
+				Protocol:  unix.RTPROT_DHCP,
+				Dst:       nil,
+				Gw:        net.IPv4(192, 168, 42, 1).To4(), // Equal() doesn't know about canonicalization
+				Src:       testNet1.IP,
+				Table:     mainRoutingTable,
+				LinkIndex: -1, // Filled in dynamically with test interface
+				Type:      unix.RTN_UNICAST,
+			}, {
+				Protocol:  unix.RTPROT_DHCP,
+				Dst:       mustParseCIDR("192.168.42.1/32"),
+				Gw:        nil,
+				Src:       testNet1.IP,
+				Table:     mainRoutingTable,
+				LinkIndex: -1, // Filled in dynamically with test interface
+				Type:      unix.RTN_UNICAST,
+				Scope:     unix.RT_SCOPE_LINK,
+			}},
+		},
 	}
 	for i, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -300,7 +348,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 				}
 			}
 
-			cb := ManageDefaultRoute(testLink)
+			cb := ManageRoutes(testLink)
 			if err := cb(test.oldLease, test.newLease); err != nil {
 				t.Fatalf("callback returned an error: %v", err)
 			}

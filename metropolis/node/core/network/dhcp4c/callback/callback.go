@@ -111,13 +111,13 @@ func ManageIP(iface netlink.Link) dhcp4c.LeaseCallback {
 	}
 }
 
-// ManageDefaultRoute manages a default route through the first router offered
-// by DHCP. It does nothing if DHCP doesn't provide any routers. It takes
-// ownership of all RTPROTO_DHCP routes on the given interface, so it's not
-// possible to run multiple DHCP clients on the given interface.
-func ManageDefaultRoute(iface netlink.Link) dhcp4c.LeaseCallback {
+// ManageRoutes installs and removes routes according to the current DHCP lease,
+// including the default route (if any).
+// It takes ownership of all RTPROTO_DHCP routes on the given interface, so it's
+// not possible to run multiple DHCP clients on the given interface.
+func ManageRoutes(iface netlink.Link) dhcp4c.LeaseCallback {
 	return func(old, new *dhcp4c.Lease) error {
-		newRouter := new.Router()
+		newRoutes := new.Routes()
 
 		dhcpRoutes, err := netlink.RouteListFiltered(netlink.FAMILY_V4, &netlink.Route{
 			Protocol:  unix.RTPROT_DHCP,
@@ -126,30 +126,45 @@ func ManageDefaultRoute(iface netlink.Link) dhcp4c.LeaseCallback {
 		if err != nil {
 			return fmt.Errorf("netlink failed to list routes: %w", err)
 		}
-		ipv4DefaultRoute := net.IPNet{IP: net.IPv4zero, Mask: net.CIDRMask(0, 32)}
 		for _, route := range dhcpRoutes {
 			// Don't remove routes which can be atomically replaced by
 			// RouteReplace to prevent potential traffic disruptions.
-			if !isIPNetEqual(&ipv4DefaultRoute, route.Dst) && newRouter != nil {
-				continue
+			//
+			// This is O(n^2) but the number of routes is bounded by the size
+			// of a DHCP packet (around 100 routes). Sorting both would be
+			// be marginally faster for large amounts of routes only and in 99%
+			// of cases it's going to be <5 routes.
+			var found bool
+			for _, newRoute := range newRoutes {
+				if isIPNetEqual(newRoute.Dest, route.Dst) {
+					found = true
+					break
+				}
 			}
-			err := netlink.RouteDel(&route)
-			if !os.IsNotExist(err) && err != nil {
-				return fmt.Errorf("failed to delete DHCP route: %w", err)
+			if !found {
+				err := netlink.RouteDel(&route)
+				if !os.IsNotExist(err) && err != nil {
+					return fmt.Errorf("failed to delete DHCP route: %w", err)
+				}
 			}
 		}
 
-		if newRouter != nil {
-			err := netlink.RouteReplace(&netlink.Route{
+		for _, route := range newRoutes {
+			newRoute := netlink.Route{
 				Protocol:  unix.RTPROT_DHCP,
-				Dst:       &ipv4DefaultRoute,
-				Gw:        newRouter,
+				Dst:       route.Dest,
+				Gw:        route.Router,
 				Src:       new.AssignedIP,
 				LinkIndex: iface.Attrs().Index,
 				Scope:     netlink.SCOPE_UNIVERSE,
-			})
+			}
+			// Routes with a non-L3 gateway are link-scoped
+			if route.Router.IsUnspecified() {
+				newRoute.Scope = netlink.SCOPE_LINK
+			}
+			err := netlink.RouteReplace(&newRoute)
 			if err != nil {
-				return fmt.Errorf("failed to add default route via %s: %w", newRouter, err)
+				return fmt.Errorf("failed to add %s: %w", route, err)
 			}
 		}
 		return nil

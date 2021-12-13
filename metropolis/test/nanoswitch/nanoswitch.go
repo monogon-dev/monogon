@@ -299,7 +299,7 @@ func main() {
 				logger.Fatalf("Failed to create DHCP client: %v", err)
 			}
 			dhcpClient.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter}
-			dhcpClient.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(externalLink), dhcpcb.ManageDefaultRoute(externalLink))
+			dhcpClient.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(externalLink), dhcpcb.ManageRoutes(externalLink))
 			supervisor.Run(ctx, "dhcp-client", dhcpClient.Run)
 			if err := os.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1\n"), 0644); err != nil {
 				logger.Fatalf("Failed to write ip forwards: %v", err)
