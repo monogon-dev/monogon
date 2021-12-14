@@ -16,6 +16,7 @@ go_library(
     deps = [
         "//metropolis/cli/metroctl/core:go_default_library",
         "//metropolis/cli/pkg/context:go_default_library",
+        "//metropolis/cli/pkg/datafile:go_default_library",
         "//metropolis/node:go_default_library",
         "//metropolis/node/core/rpc:go_default_library",
         "//metropolis/proto/api:go_default_library",

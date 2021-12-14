@@ -30,6 +30,7 @@ import (
 	"syscall"
 
 	"golang.org/x/sys/unix"
+
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	"source.monogon.dev/metropolis/pkg/efivarfs"
 	"source.monogon.dev/metropolis/pkg/sysfs"
