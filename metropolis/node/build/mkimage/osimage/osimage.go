@@ -42,7 +42,7 @@ const (
 	ESPVolumeLabel = "ESP"
 
 	EFIPayloadPath = "/EFI/BOOT/BOOTx64.EFI"
-	nodeParamsPath = "/EFI/metropolis/parameters.pb"
+	nodeParamsPath = "/metropolis/parameters.pb"
 
 	mib = 1024 * 1024
 )
@@ -87,7 +87,7 @@ func initializeESP(image *disk.Disk, index int, exec, params io.Reader) error {
 	}
 
 	// Create the EFI partition structure.
-	for _, dir := range []string{"/EFI", "/EFI/BOOT", "/EFI/metropolis"} {
+	for _, dir := range []string{"/EFI", "/EFI/BOOT", "/metropolis"} {
 		if err := fs.Mkdir(dir); err != nil {
 			return fmt.Errorf("while creating %q: %w", dir, err)
 		}

@@ -101,7 +101,7 @@ func (m *Manager) Run(ctx context.Context) error {
 	state.oneway = true
 	unlock()
 
-	configuration, err := m.storageRoot.ESP.SealedConfiguration.Unseal()
+	configuration, err := m.storageRoot.ESP.Metropolis.SealedConfiguration.Unseal()
 	if err == nil {
 		supervisor.Logger(ctx).Info("Sealed configuration present. attempting to join cluster")
 		return m.join(ctx, configuration)
@@ -213,7 +213,7 @@ func (m *Manager) nodeParams(ctx context.Context) (*apb.NodeParameters, error) {
 	} else {
 		supervisor.Logger(ctx).Infof("Retrieved node parameters from qemu fwcfg")
 	}
-	paramsESP, err := m.storageRoot.ESP.NodeParameters.Unmarshal()
+	paramsESP, err := m.storageRoot.ESP.Metropolis.NodeParameters.Unmarshal()
 	if err != nil {
 		supervisor.Logger(ctx).Warningf("Could not retrieve node parameters from ESP: %v", err)
 		paramsESP = nil

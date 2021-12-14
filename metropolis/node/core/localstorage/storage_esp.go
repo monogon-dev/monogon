@@ -34,6 +34,14 @@ import (
 // for the system to bootstrap, register into, or join a cluster.
 type ESPDirectory struct {
 	declarative.Directory
+	Metropolis ESPMetropolisDirectory `dir:"metropolis"`
+}
+
+// ESPMetropolisDirectory is the directory inside the EFI System Partition where
+// Metropolis-related data is stored that's not read by EFI itself like
+// bootstrap-related data.
+type ESPMetropolisDirectory struct {
+	declarative.Directory
 	SealedConfiguration ESPSealedConfiguration `file:"sealed_configuration.pb"`
 	NodeParameters      ESPNodeParameters      `file:"parameters.pb"`
 }

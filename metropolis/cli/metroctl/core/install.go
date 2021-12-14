@@ -130,7 +130,7 @@ func MakeInstallerImage(args MakeInstallerImageArgs) error {
 	}
 
 	// Create EFI partition structure.
-	for _, dir := range []string{"/EFI", "/EFI/BOOT", "/EFI/metropolis-installer"} {
+	for _, dir := range []string{"/EFI", "/EFI/BOOT", "/metropolis-installer"} {
 		if err := fs.Mkdir(dir); err != nil {
 			panic(err)
 		}
@@ -146,7 +146,7 @@ func MakeInstallerImage(args MakeInstallerImageArgs) error {
 		return fmt.Errorf("failed to copy installer file: %w", err)
 	}
 	if args.NodeParams != nil {
-		nodeParamsFile, err := fs.OpenFile("/EFI/metropolis-installer/nodeparams.pb", os.O_CREATE|os.O_RDWR)
+		nodeParamsFile, err := fs.OpenFile("/metropolis-installer/nodeparams.pb", os.O_CREATE|os.O_RDWR)
 		if err != nil {
 			panic(err)
 		}
@@ -156,7 +156,7 @@ func MakeInstallerImage(args MakeInstallerImageArgs) error {
 		}
 	}
 	if args.Bundle != nil {
-		bundleFile, err := fs.OpenFile("/EFI/metropolis-installer/bundle.bin", os.O_CREATE|os.O_RDWR)
+		bundleFile, err := fs.OpenFile("/metropolis-installer/bundle.bin", os.O_CREATE|os.O_RDWR)
 		if err != nil {
 			panic(err)
 		}

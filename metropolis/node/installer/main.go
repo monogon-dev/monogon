@@ -197,13 +197,13 @@ func main() {
 		log.Fatalf("while mounting the installer ESP: %v", err)
 	}
 
-	nodeParameters, err := os.Open("/installer/EFI/metropolis-installer/nodeparams.pb")
+	nodeParameters, err := os.Open("/installer/metropolis-installer/nodeparams.pb")
 	if err != nil {
 		log.Fatalf("failed to open node parameters from ESP: %v", err)
 	}
 
 	// TODO(lorenz): Replace with proper bundles
-	bundle, err := zip.OpenReader("/installer/EFI/metropolis-installer/bundle.bin")
+	bundle, err := zip.OpenReader("/installer/metropolis-installer/bundle.bin")
 	if err != nil {
 		log.Fatalf("failed to open node bundle from ESP: %v", err)
 	}
