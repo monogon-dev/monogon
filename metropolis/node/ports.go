@@ -16,6 +16,8 @@
 
 package node
 
+import "strconv"
+
 // Port is a TCP and/or UDP port number reserved for and used by Metropolis
 // node code.
 type Port uint16
@@ -56,4 +58,8 @@ func (p Port) String() string {
 		return "delve"
 	}
 	return "unknown"
+}
+
+func (p Port) PortString() string {
+	return strconv.Itoa(int(p))
 }
