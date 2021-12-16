@@ -12,11 +12,10 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
 
-	apb "source.monogon.dev/metropolis/proto/api"
-
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 var takeownershipCommand = &cobra.Command{
