@@ -1,0 +1,9 @@
+package dut
+
+import (
+	_ "errors"
+
+	_ "source.monogon.dev/lib"
+
+	_ "example.com/extlib" // want `global import group after local import group`
+)

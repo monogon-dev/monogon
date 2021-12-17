@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "classify.go",
+        "importsort.go",
+    ],
+    importpath = "source.monogon.dev/build/analysis/importsort",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/analysis/lib:go_default_library",
+        "@org_golang_x_tools//go/analysis:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["importsort_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":go_default_library"],
+    embedsrcs = [
+        "testdata/README.md",
+        "testdata/example.com/extlib/extlib.notgo",
+        "testdata/example.com/extlib/foo/foo.notgo",
+        "testdata/source.monogon.dev/dut/mixed_in_group.notgo",
+        "testdata/source.monogon.dev/dut/okay.notgo",
+        "testdata/source.monogon.dev/dut/unsorted_group.notgo",
+        "testdata/source.monogon.dev/dut/wrong_group_order.notgo",
+        "testdata/source.monogon.dev/lib/lib.notgo",
+        "testdata/source.monogon.dev/project/a/a.notgo",
+        "testdata/source.monogon.dev/project/b/b.notgo",
+    ],
+    deps = [
+        "//build/toolbase/gotoolchain:go_default_library",
+        "@org_golang_x_tools//go/analysis/analysistest:go_default_library",
+    ],
+)

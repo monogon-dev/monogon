@@ -1,0 +1,16 @@
+package dut
+
+import (
+	_ "errors"
+	_ "math"
+
+	_ "example.com/extlib"
+	// Comments within groups are okay.
+	_ "example.com/extlib/foo"
+
+	_ "source.monogon.dev/lib"
+
+    // Repeated group classes are okay.
+	_ "source.monogon.dev/project/a"
+	_ "source.monogon.dev/project/b"
+)

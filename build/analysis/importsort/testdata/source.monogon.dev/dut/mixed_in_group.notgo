@@ -1,0 +1,8 @@
+package dut
+
+import (
+	_ "errors"
+
+	_ "example.com/extlib" // want `import classes within group are mixed`
+	_ "source.monogon.dev/lib"
+)

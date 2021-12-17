@@ -3,11 +3,11 @@
 package noioutil
 
 import (
-	"go/ast"
 	"strconv"
-	"strings"
 
 	"golang.org/x/tools/go/analysis"
+
+	alib "source.monogon.dev/build/analysis/lib"
 )
 
 var Analyzer = &analysis.Analyzer{
@@ -18,7 +18,7 @@ var Analyzer = &analysis.Analyzer{
 
 func run(p *analysis.Pass) (interface{}, error) {
 	for _, file := range p.Files {
-		if isGeneratedFile(file) {
+		if alib.IsGeneratedFile(file) {
 			continue
 		}
 		for _, i := range file.Imports {
@@ -37,22 +37,4 @@ func run(p *analysis.Pass) (interface{}, error) {
 	}
 
 	return nil, nil
-}
-
-const (
-	genPrefix = "// Code generated"
-	genSuffix = "DO NOT EDIT."
-)
-
-// isGeneratedFile returns true if the file is generated
-// according to https://golang.org/s/generatedcode.
-func isGeneratedFile(file *ast.File) bool {
-	for _, c := range file.Comments {
-		for _, t := range c.List {
-			if strings.HasPrefix(t.Text, genPrefix) && strings.HasSuffix(t.Text, genSuffix) {
-				return true
-			}
-		}
-	}
-	return false
 }

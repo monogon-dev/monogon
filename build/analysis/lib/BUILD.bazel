@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "generated.go",
+        "stdlib_packages.go",
+    ],
+    importpath = "source.monogon.dev/build/analysis/lib",
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "stdlib_packages",
+    outs = ["stdlib_packages.go"],
+    cmd = "$(location //build/analysis/lib/genstd) $@",
+    tools = ["//build/analysis/lib/genstd"],
+)

@@ -1,0 +1,6 @@
+package dut
+
+import (
+	_ "math" // want `imports within group are not sorted`
+	_ "errors"
+)
