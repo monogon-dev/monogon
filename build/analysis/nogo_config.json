@@ -88,5 +88,10 @@
     "exclude_files": {
       "external/": "third_party"
     }
+  },
+  "importsort": {
+    "exclude_files": {
+      "external/": "third_party"
+    }
   }
 }

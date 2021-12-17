@@ -42,5 +42,6 @@ nogo(
         # soft-reflow well.
         "@com_github_corverroos_commentwrap//:go_default_library",
         "//build/analysis/noioutil:go_default_library",
+        "//build/analysis/importsort:go_default_library",
     ],
 )
