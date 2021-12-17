@@ -1,0 +1,152 @@
+Upstream CL: https://go-review.googlesource.com/c/tools/+/321409
+
+From cdd84f3789f3ebbd1c55dc220bbbe4a77ab4024a Mon Sep 17 00:00:00 2001
+From: Moekr <1143757638wlw@gmail.com>
+Date: Thu, 20 May 2021 15:41:17 +0800
+Subject: [PATCH] internal/imports: merge mergeable import groups
+
+Merge two import groups if there is no comments between them.
+This can make import blocks look more pretty.
+
+Fixes golang/go#20818 golang/go#28200
+
+Change-Id: Ic02ca83bd778e6d5b5b3c15292cde4fba6c842a9
+---
+ internal/imports/fix_test.go    | 65 +++++++++++++++++++++++++++++----
+ internal/imports/sortimports.go | 23 ++++++++++--
+ 2 files changed, 77 insertions(+), 11 deletions(-)
+
+diff --git a/internal/imports/fix_test.go b/internal/imports/fix_test.go
+index 005bf96e..5ff84cdd 100644
+--- a/internal/imports/fix_test.go
++++ b/internal/imports/fix_test.go
+@@ -553,7 +553,6 @@ c = fmt.Printf
+ 
+ import (
+ 	"fmt"
+-
+ 	"gu"
+ 
+ 	"manypackages.com/packagea"
+@@ -644,15 +643,11 @@ var _, _, _, _, _ = fmt.Errorf, io.Copy, strings.Contains, renamed_packagea.A, B
+ 
+ import (
+ 	"fmt"
+-
+-	renamed_packagea "manypackages.com/packagea"
+-
+ 	"io"
+-
+-	. "manypackages.com/packageb"
+-
+ 	"strings"
+ 
++	renamed_packagea "manypackages.com/packagea"
++	. "manypackages.com/packageb"
+ 	_ "manypackages.com/packagec"
+ )
+ 
+@@ -1151,6 +1146,62 @@ var _, _ = rand.Read, rand.NewZipf
+ import "math/rand"
+ 
+ var _, _ = rand.Read, rand.NewZipf
++`,
++	},
++	{
++		name: "comment_between_imports_simple",
++		in: `package main
++
++import (
++	_ "foo2"
++	// foo3 has side effects.
++	_ "foo3"
++	_ "foo1"
++)
++`,
++		out: `package main
++
++import (
++	_ "foo2"
++	// foo3 has side effects.
++	_ "foo1"
++	_ "foo3"
++)
++`,
++	},
++	{
++		name: "comment_between_imports_complex",
++		in: `package main
++
++import (
++	_ "foo1" // foo1, "std" package
++	_ "github.com/bar/foo1" // github.com/bar/foo1, third-party package
++	_ "local/foo1" // local/foo1, local package
++
++	_ "appengine"
++
++	_ "foo2"
++	// local/foo3 comment
++	_ "local/foo3"
++	_ "github.com/bar/foo2"
++)
++`,
++		out: `package main
++
++import (
++	_ "foo1" // foo1, "std" package
++	_ "foo2"
++	_ "local/foo1" // local/foo1, local package
++
++	_ "github.com/bar/foo1" // github.com/bar/foo1, third-party package
++
++	_ "appengine"
++
++	// local/foo3 comment
++	_ "local/foo3"
++
++	_ "github.com/bar/foo2"
++)
+ `,
+ 	},
+ }
+diff --git a/internal/imports/sortimports.go b/internal/imports/sortimports.go
+index be8ffa25..25c5ca3f 100644
+--- a/internal/imports/sortimports.go
++++ b/internal/imports/sortimports.go
+@@ -34,14 +34,29 @@ func sortImports(localPrefix string, fset *token.FileSet, f *ast.File) {
+ 			continue
+ 		}
+ 
++		// Find comments.
++		commentLines := make([]int, len(f.Comments))
++		for j, comment := range f.Comments {
++			commentLines[j] = fset.Position(comment.Pos()).Line
++		}
++
+ 		// Identify and sort runs of specs on successive lines.
+ 		i := 0
+ 		specs := d.Specs[:0]
+ 		for j, s := range d.Specs {
+-			if j > i && fset.Position(s.Pos()).Line > 1+fset.Position(d.Specs[j-1].End()).Line {
+-				// j begins a new run.  End this one.
+-				specs = append(specs, sortSpecs(localPrefix, fset, f, d.Specs[i:j])...)
+-				i = j
++			if j > i {
++				curLine, prevLine := fset.Position(s.Pos()).Line, fset.Position(d.Specs[j-1].End()).Line
++				if curLine > 1+prevLine {
++					// j begins a new run.
++					for _, commentLine := range commentLines {
++						if prevLine < commentLine && commentLine < curLine {
++							// End this one if there is a comment before the new one.
++							specs = append(specs, sortSpecs(localPrefix, fset, f, d.Specs[i:j])...)
++							i = j
++							break
++						}
++					}
++				}
+ 			}
+ 		}
+ 		specs = append(specs, sortSpecs(localPrefix, fset, f, d.Specs[i:])...)
+-- 
+2.31.1
+

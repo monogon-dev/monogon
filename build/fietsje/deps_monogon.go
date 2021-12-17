@@ -112,8 +112,9 @@ func Monogon(shelfPath, repositoriesBzlPath string) error {
 		"github.com/opentracing/opentracing-go",
 	)
 
-	// goimports
-	p.collectOverride("golang.org/x/tools", "v0.0.0-20201215171152-6307297f4651")
+	// goimports with import grouping patch
+	// https://go-review.googlesource.com/c/tools/+/321409/
+	p.collectOverride("golang.org/x/tools", "v0.1.2-0.20210518182153-17b346669257", patches("goimports-group-merging.patch"))
 
 	// commentwrap is used as a nogo analyzer to stick to a maximum line
 	// length for comments.

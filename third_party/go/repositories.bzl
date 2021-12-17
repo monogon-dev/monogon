@@ -2351,8 +2351,12 @@ def go_repositories():
     go_repository(
         name = "org_golang_x_tools",
         importpath = "golang.org/x/tools",
-        version = "v0.0.0-20201215171152-6307297f4651",
-        sum = "h1:bdfqbHwYVvhLEIkESR524rqSsmV06Og3Fgz60LE7vZc=",
+        version = "v0.1.2-0.20210518182153-17b346669257",
+        sum = "h1:e7SbNJfMEurLnwdNnaP7LItYhtCPChdiq+j3RwB8YGY=",
+        patches = [
+            "//third_party/go/patches:goimports-group-merging.patch",
+        ],
+        patch_args = ["-p1"],
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",

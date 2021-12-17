@@ -3268,6 +3268,13 @@ entry: <
   semver: "v0.0.0-20201215171152-6307297f4651"
 >
 entry: <
+  import_path: "golang.org/x/tools"
+  version: "v0.1.2-0.20210518182153-17b346669257"
+  bazel_name: "org_golang_x_tools"
+  sum: "h1:e7SbNJfMEurLnwdNnaP7LItYhtCPChdiq+j3RwB8YGY="
+  semver: "v0.1.2-0.20210518182153-17b346669257"
+>
+entry: <
   import_path: "golang.org/x/xerrors"
   version: "v0.0.0-20191204190536-9bdfabe68543"
   bazel_name: "org_golang_x_xerrors"

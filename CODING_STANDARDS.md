@@ -43,3 +43,9 @@ import (
     foo "dev.source.monogon/other/subtree/c"
 )
 ```
+
+A styleguide compliant fork of `goimports` (itself a superset of `gofmt`)  can be built by running:
+
+    $ bazel build //:goimports
+
+The resulting binary can then be copied to anywhere in the filesystem (eg. $HOME/bin/goimports-monogon) and any editor which supports gofmt/goimports integration can be pointed at this tool to automatically reformat files to the required format.
