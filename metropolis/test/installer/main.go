@@ -20,6 +20,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
