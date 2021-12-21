@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc"
 
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/kubernetes"
@@ -51,8 +52,8 @@ type Config struct {
 	// this will probably be provisioned by the Kubernetes workload itself.
 	KPKI *pki.PKI
 
-	// NodeID is the node ID on which the roleserver is running.
-	NodeID string
+	// Node is the node identity on which the roleserver is running.
+	Node *identity.Node
 }
 
 // Service is the roleserver/“Role Server” service. See the package-level
@@ -158,7 +159,7 @@ func (s *Service) Run(ctx context.Context) error {
 func (s *Service) runUpdater(ctx context.Context) error {
 	srv, err := s.curator.Watch(ctx, &cpb.WatchRequest{Kind: &cpb.WatchRequest_NodeInCluster_{
 		NodeInCluster: &cpb.WatchRequest_NodeInCluster{
-			NodeId: s.NodeID,
+			NodeId: s.Node.ID(),
 		},
 	}})
 	if err != nil {
@@ -174,7 +175,7 @@ func (s *Service) runUpdater(ctx context.Context) error {
 		}
 		supervisor.Logger(ctx).Infof("Received node event: %+v", ev)
 		for _, node := range ev.Nodes {
-			if node.Id != s.NodeID {
+			if node.Id != s.Node.ID() {
 				continue
 			}
 			s.kwC <- node

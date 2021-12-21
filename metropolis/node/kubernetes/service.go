@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -29,6 +28,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/network/dns"
@@ -48,6 +48,7 @@ type Config struct {
 	KPKI    *pki.PKI
 	Root    *localstorage.Root
 	Network *network.Service
+	Node    *identity.Node
 }
 
 type Service struct {
@@ -90,11 +91,6 @@ func (s *Service) Run(ctx context.Context) error {
 
 	informerFactory := informers.NewSharedInformerFactory(clientSet, 5*time.Minute)
 
-	hostname, err := os.Hostname()
-	if err != nil {
-		return fmt.Errorf("failed to get hostname: %w", err)
-	}
-
 	// Sub-runnable which starts all parts of Kubernetes that depend on the
 	// machine's external IP address. If it changes, the runnable will exit.
 	// TODO(q3k): test this
@@ -122,7 +118,7 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 
 		kubelet := kubeletService{
-			NodeName:           hostname,
+			NodeName:           s.c.Node.ID(),
 			ClusterDNS:         []net.IP{address},
 			KubeletDirectory:   &s.c.Root.Data.Kubernetes.Kubelet,
 			EphemeralDirectory: &s.c.Root.Ephemeral,
@@ -154,14 +150,14 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 
 	csiProvisioner := csiProvisionerServer{
-		NodeName:         hostname,
+		NodeName:         s.c.Node.ID(),
 		Kubernetes:       clientSet,
 		InformerFactory:  informerFactory,
 		VolumesDirectory: &s.c.Root.Data.Volumes,
 	}
 
 	clusternet := clusternet.Service{
-		NodeName:        hostname,
+		NodeName:        s.c.Node.ID(),
 		Kubernetes:      clientSet,
 		ClusterNet:      s.c.ClusterNet,
 		InformerFactory: informerFactory,

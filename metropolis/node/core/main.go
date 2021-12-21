@@ -203,7 +203,7 @@ func main() {
 				StorageRoot: root,
 				Network:     networkSvc,
 				KPKI:        kpki,
-				NodeID:      status.Credentials.ID(),
+				Node:        &status.Credentials.Node,
 			})
 			if err := supervisor.Run(ctx, "role", rs.Run); err != nil {
 				close(trapdoor)

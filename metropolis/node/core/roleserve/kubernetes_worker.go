@@ -49,6 +49,7 @@ func (s *Service) runKubernetesWorkerLauncher(ctx context.Context) error {
 			KPKI:    s.KPKI,
 			Root:    s.StorageRoot,
 			Network: s.Network,
+			Node:    s.Node,
 		})
 		if err := supervisor.Run(ctx, "run", kubeSvc.Run); err != nil {
 			return fmt.Errorf("failed to start kubernetes service: %w", err)

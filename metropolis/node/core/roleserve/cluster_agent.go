@@ -35,7 +35,7 @@ func (s *Service) runClusterAgent(ctx context.Context) error {
 		supervisor.Logger(ctx).Infof("New external address (%s), submitting update to cluster...", external.String())
 
 		_, err = s.curator.UpdateNodeStatus(ctx, &ipb.UpdateNodeStatusRequest{
-			NodeId: s.NodeID,
+			NodeId: s.Node.ID(),
 			Status: &cpb.NodeStatus{
 				ExternalAddress: external.String(),
 			},
