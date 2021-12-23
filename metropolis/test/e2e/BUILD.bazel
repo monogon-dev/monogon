@@ -9,14 +9,14 @@ go_library(
     importpath = "source.monogon.dev/metropolis/test/e2e",
     visibility = ["//metropolis/test:__subpackages__"],
     deps = [
-        "//metropolis/proto/api:go_default_library",
+        "//metropolis/test/launch/cluster:go_default_library",
         "@io_k8s_api//apps/v1:go_default_library",
         "@io_k8s_api//core/v1:go_default_library",
         "@io_k8s_apimachinery//pkg/api/resource:go_default_library",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
         "@io_k8s_apimachinery//pkg/util/intstr:go_default_library",
         "@io_k8s_client_go//kubernetes:go_default_library",
-        "@io_k8s_client_go//tools/clientcmd:go_default_library",
+        "@io_k8s_client_go//rest:go_default_library",
     ],
 )
 

@@ -114,11 +114,9 @@ func TestE2E(t *testing.T) {
 				return nil
 			})
 		})
-		t.Run("Get Kubernetes Debug Kubeconfig", func(t *testing.T) {
+		t.Run("Get Kubernetes client", func(t *testing.T) {
 			t.Parallel()
-			selfCtx, cancel := context.WithTimeout(ctx, largeTestTimeout)
-			defer cancel()
-			clientSet, err := GetKubeClientSet(selfCtx, cluster.Debug, cluster.Ports[common.KubernetesAPIPort])
+			clientSet, err := GetKubeClientSet(cluster, cluster.Ports[common.KubernetesAPIWrappedPort])
 			if err != nil {
 				t.Fatal(err)
 			}

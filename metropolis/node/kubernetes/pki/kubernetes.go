@@ -76,6 +76,9 @@ const (
 	//   https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/#ca-reusage-and-conflicts
 	AggregationCA    KubeCertificateName = "aggregation-ca"
 	FrontProxyClient KubeCertificateName = "front-proxy-client"
+	// The Metropolis authentication proxy needs to be able to proxy requests
+	// and assert the established identity to the Kubernetes API server.
+	MetropolisAuthProxyClient KubeCertificateName = "metropolis-auth-proxy-client"
 )
 
 const (
@@ -149,6 +152,7 @@ func New(l logtree.LeveledLogger, kv clientv3.KV) *PKI {
 		Mode:      opki.CertificateManaged,
 	}
 	make(AggregationCA, FrontProxyClient, opki.Client("front-proxy-client", nil))
+	make(AggregationCA, MetropolisAuthProxyClient, opki.Client("metropolis-auth-proxy-client", nil))
 
 	return &pki
 }

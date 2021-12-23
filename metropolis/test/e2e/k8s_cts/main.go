@@ -106,7 +106,7 @@ func main() {
 		log.Fatalf("Failed to launch cluster: %v", err)
 	}
 	log.Println("Cluster initialized")
-	clientSet, err := e2e.GetKubeClientSet(ctx, cl.Debug, cl.Ports[common.KubernetesAPIPort])
+	clientSet, err := e2e.GetKubeClientSet(cl, cl.Ports[common.KubernetesAPIWrappedPort])
 	if err != nil {
 		log.Fatalf("Failed to get clientSet: %v", err)
 	}

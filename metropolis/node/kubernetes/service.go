@@ -32,6 +32,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/network/dns"
+	"source.monogon.dev/metropolis/node/kubernetes/authproxy"
 	"source.monogon.dev/metropolis/node/kubernetes/clusternet"
 	"source.monogon.dev/metropolis/node/kubernetes/nfproxy"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
@@ -173,6 +174,11 @@ func (s *Service) Run(ctx context.Context) error {
 		KubeletDirectory: &s.c.Root.Data.Kubernetes.Kubelet,
 	}
 
+	authProxy := authproxy.Service{
+		KPKI: s.c.KPKI,
+		Node: s.c.Node,
+	}
+
 	for _, sub := range []struct {
 		name     string
 		runnable supervisor.Runnable
@@ -185,6 +191,7 @@ func (s *Service) Run(ctx context.Context) error {
 		{"clusternet", clusternet.Run},
 		{"nfproxy", nfproxy.Run},
 		{"kvmdeviceplugin", kvmDevicePlugin.Run},
+		{"authproxy", authProxy.Run},
 	} {
 		err := supervisor.Run(ctx, sub.name, sub.runnable)
 		if err != nil {

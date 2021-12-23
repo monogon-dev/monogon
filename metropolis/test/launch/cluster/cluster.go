@@ -70,6 +70,7 @@ var NodePorts = []node.Port{
 	node.DebugServicePort,
 
 	node.KubernetesAPIPort,
+	node.KubernetesAPIWrappedPort,
 	node.CuratorServicePort,
 	node.DebuggerPort,
 }
@@ -286,6 +287,7 @@ var ClusterPorts = []node.Port{
 	node.DebugServicePort,
 
 	node.KubernetesAPIPort,
+	node.KubernetesAPIWrappedPort,
 }
 
 // ClusterOptions contains all options for launching a Metropolis cluster.

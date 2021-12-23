@@ -28,6 +28,7 @@ var (
 	clusterRolePSPDefault                    = builtinRBACName("psp-default")
 	clusterRoleBindingDefaultPSP             = builtinRBACName("default-psp-for-sa")
 	clusterRoleBindingAPIServerKubeletClient = builtinRBACName("apiserver-kubelet-client")
+	clusterRoleBindingOwnerAdmin             = builtinRBACName("owner-admin")
 )
 
 type resourceClusterRoles struct {
@@ -147,6 +148,28 @@ func (r resourceClusterRoleBindings) Expected() map[string]interface{} {
 					Kind:     "User",
 					// TODO(q3k): describe this name's contract, or unify with whatever creates this.
 					Name: "metropolis:apiserver-kubelet-client",
+				},
+			},
+		},
+		clusterRoleBindingOwnerAdmin: &rbac.ClusterRoleBinding{
+			ObjectMeta: meta.ObjectMeta{
+				Name:   clusterRoleBindingOwnerAdmin,
+				Labels: builtinLabels(nil),
+				Annotations: map[string]string{
+					"kubernetes.io/description": "This binding grants the Metropolis Cluster owner access to the " +
+						"cluster-admin role on Kubernetes.",
+				},
+			},
+			RoleRef: rbac.RoleRef{
+				APIGroup: rbac.GroupName,
+				Kind:     "ClusterRole",
+				Name:     "cluster-admin",
+			},
+			Subjects: []rbac.Subject{
+				{
+					APIGroup: rbac.GroupName,
+					Kind:     "User",
+					Name:     "owner",
 				},
 			},
 		},

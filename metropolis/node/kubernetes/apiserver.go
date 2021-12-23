@@ -109,7 +109,7 @@ func (s *apiserverService) Run(ctx context.Context) error {
 			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: s.aggregationClientCert})),
 		args.FileOpt("--proxy-client-key-file", "aggregation-client-key.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: s.aggregationClientKey})),
-		"--requestheader-allowed-names=front-proxy-client",
+		"--requestheader-allowed-names=front-proxy-client,metropolis-auth-proxy-client",
 		args.FileOpt("--requestheader-client-ca-file", "aggregation-ca.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: s.aggregationCA})),
 		"--requestheader-extra-headers-prefix=X-Remote-Extra-",

@@ -17,10 +17,9 @@
 package e2e
 
 import (
-	"context"
-	"errors"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
-	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -28,44 +27,31 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/rest"
 
-	apb "source.monogon.dev/metropolis/proto/api"
+	"source.monogon.dev/metropolis/test/launch/cluster"
 )
 
-// GetKubeClientSet gets a Kubeconfig from the debug API and creates a K8s
-// ClientSet using it. The identity used has the system:masters group and thus
-// has RBAC access to everything.
-func GetKubeClientSet(ctx context.Context, client apb.NodeDebugServiceClient, port uint16) (kubernetes.Interface, error) {
-	var lastErr = errors.New("context canceled before any operation completed")
-	for {
-		reqT, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
-		res, err := client.GetDebugKubeconfig(reqT, &apb.GetDebugKubeconfigRequest{Id: "debug-user", Groups: []string{"system:masters"}})
-		if err == nil {
-			rawClientConfig, err := clientcmd.NewClientConfigFromBytes([]byte(res.DebugKubeconfig))
-			if err != nil {
-				return nil, err // Invalid Kubeconfigs are immediately fatal
-			}
-
-			clientConfig, err := rawClientConfig.ClientConfig()
-			clientConfig.Host = fmt.Sprintf("localhost:%v", port)
-			clientSet, err := kubernetes.NewForConfig(clientConfig)
-			if err != nil {
-				return nil, err
-			}
-			return clientSet, nil
-		}
-		if err != nil && err == ctx.Err() {
-			return nil, lastErr
-		}
-		lastErr = err
-		select {
-		case <-ctx.Done():
-			return nil, lastErr
-		case <-time.After(1 * time.Second):
-		}
+// GetKubeClientSet gets a Kubernetes client set accessing the Metropolis
+// Kubernetes authenticating proxy using the cluster owner identity.
+// It currently has access to everything (i.e. the cluster-admin role)
+// via the owner-admin binding.
+func GetKubeClientSet(cluster *cluster.Cluster, port uint16) (kubernetes.Interface, error) {
+	pkcs8Key, err := x509.MarshalPKCS8PrivateKey(cluster.Owner.PrivateKey)
+	if err != nil {
+		// We explicitly pass an Ed25519 private key in, so this can't happen
+		panic(err)
 	}
+	var clientConfig = rest.Config{
+		Host: fmt.Sprintf("localhost:%v", port),
+		TLSClientConfig: rest.TLSClientConfig{
+			ServerName: "kubernetes.default.svc.cluster.local",
+			Insecure:   true,
+			CertData:   pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cluster.Owner.Certificate[0]}),
+			KeyData:    pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: pkcs8Key}),
+		},
+	}
+	return kubernetes.NewForConfig(&clientConfig)
 }
 
 // makeTestDeploymentSpec generates a Deployment spec for a single pod running
