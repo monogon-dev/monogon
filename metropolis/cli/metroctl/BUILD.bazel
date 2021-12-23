@@ -3,7 +3,9 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
+        "credentials.go",
         "install.go",
+        "k8scredplugin.go",
         "main.go",
         "takeownership.go",
     ],
@@ -22,6 +24,8 @@ go_library(
         "//metropolis/proto/api:go_default_library",
         "@com_github_adrg_xdg//:go_default_library",
         "@com_github_spf13_cobra//:go_default_library",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
+        "@io_k8s_client_go//pkg/apis/clientauthentication/v1beta1:go_default_library",
     ],
 )
 
