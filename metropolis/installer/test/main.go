@@ -17,7 +17,7 @@
 // This package runs the installer image in a VM provided with an empty block
 // device. It then examines the installer console output and the blok device to
 // determine whether the installation process completed without issue.
-package main
+package installer
 
 import (
 	"bytes"
@@ -167,8 +167,8 @@ func TestMain(m *testing.M) {
 	installerImage = filepath.Join(os.Getenv("TEST_TMPDIR"), "installer.img")
 	nodeStorage = filepath.Join(os.Getenv("TEST_TMPDIR"), "stor.img")
 
-	installer := datafile.MustGet("metropolis/test/installer/kernel.efi")
-	bundle := datafile.MustGet("metropolis/test/installer/testos/testos_bundle.zip")
+	installer := datafile.MustGet("metropolis/installer/test/kernel.efi")
+	bundle := datafile.MustGet("metropolis/installer/test/testos/testos_bundle.zip")
 	iargs := mctl.MakeInstallerImageArgs{
 		Installer:     bytes.NewBuffer(installer),
 		InstallerSize: uint64(len(installer)),

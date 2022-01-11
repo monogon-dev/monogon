@@ -6,7 +6,7 @@ load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "source.monogon.dev/metropolis/node/installer",
+    importpath = "source.monogon.dev/metropolis/installer",
     visibility = ["//visibility:private"],
     deps = [
         "//metropolis/node/build/mkimage/osimage:go_default_library",
@@ -25,9 +25,9 @@ go_binary(
 node_initramfs(
     name = "initramfs",
     files = {
-        "//metropolis/node/installer": "/init",
+        "//metropolis/installer": "/init",
     },
-    visibility = ["//metropolis/test/installer:__pkg__"],
+    visibility = ["//metropolis/installer/test:__pkg__"],
 )
 
 os_release(

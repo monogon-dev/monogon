@@ -25,13 +25,13 @@ pkg_zip(
         ":kernel_efi",
         ":rootfs",
     ],
-    visibility = ["//metropolis/test/installer:__subpackages__"],
+    visibility = ["//metropolis/installer/test:__subpackages__"],
 )
 
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "source.monogon.dev/metropolis/test/installer/testos",
+    importpath = "source.monogon.dev/metropolis/installer/test/testos",
     visibility = ["//visibility:private"],
     deps = ["@org_golang_x_sys//unix:go_default_library"],
 )

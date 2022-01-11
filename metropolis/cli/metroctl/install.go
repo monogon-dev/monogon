@@ -34,7 +34,7 @@ var genusbCmd = &cobra.Command{
 const ownerKeyType = "METROPOLIS INITIAL OWNER PRIVATE KEY"
 
 func doGenUSB(cmd *cobra.Command, args []string) {
-	installer := datafile.MustGet("metropolis/node/installer/kernel.efi")
+	installer := datafile.MustGet("metropolis/installer/kernel.efi")
 	bundle := datafile.MustGet("metropolis/node/node.zip")
 
 	// TODO(lorenz): Have a key management story for this

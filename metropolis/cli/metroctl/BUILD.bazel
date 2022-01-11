@@ -8,8 +8,8 @@ go_library(
         "takeownership.go",
     ],
     data = [
+        "//metropolis/installer:kernel",
         "//metropolis/node",
-        "//metropolis/node/installer:kernel",
     ],
     importpath = "source.monogon.dev/metropolis/cli/metroctl",
     visibility = ["//visibility:private"],

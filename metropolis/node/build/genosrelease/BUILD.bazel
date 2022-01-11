@@ -11,5 +11,8 @@ go_library(
 go_binary(
     name = "genosrelease",
     embed = [":go_default_library"],
-    visibility = ["//metropolis/node:__subpackages__"],
+    visibility = [
+        "//metropolis/installer:__subpackages__",
+        "//metropolis/node:__subpackages__",
+    ],
 )
