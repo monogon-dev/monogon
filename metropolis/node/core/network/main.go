@@ -151,7 +151,7 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 		return fmt.Errorf("failed to create DHCP client on interface %v: %w", iface.Attrs().Name, err)
 	}
 	s.dhcp.VendorClassIdentifier = "dev.monogon.metropolis.node.v1"
-	s.dhcp.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter, dhcpv4.OptionNameServer}
+	s.dhcp.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter, dhcpv4.OptionDomainNameServer, dhcpv4.OptionClasslessStaticRoute}
 	s.dhcp.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(iface), dhcpcb.ManageRoutes(iface), s.statusCallback)
 	err = supervisor.Run(ctx, "dhcp", s.dhcp.Run)
 	if err != nil {
