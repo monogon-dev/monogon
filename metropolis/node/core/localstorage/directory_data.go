@@ -17,6 +17,7 @@
 package localstorage
 
 import (
+	"crypto/rand"
 	"fmt"
 	"os/exec"
 
@@ -72,11 +73,23 @@ func (d *DataDirectory) MountNew(config *ppb.SealedConfiguration) ([]byte, error
 	}
 	d.mounted = true
 
-	nodeUnlockKey, err := tpm.GenerateSafeKey(keySize)
+	var nodeUnlockKey, globalUnlockKey []byte
+	var err error
+	if tpm.IsInitialized() {
+		nodeUnlockKey, err = tpm.GenerateSafeKey(keySize)
+	} else {
+		nodeUnlockKey = make([]byte, keySize)
+		_, err = rand.Read(nodeUnlockKey)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("generating local unlock key: %w", err)
 	}
-	globalUnlockKey, err := tpm.GenerateSafeKey(keySize)
+	if tpm.IsInitialized() {
+		globalUnlockKey, err = tpm.GenerateSafeKey(keySize)
+	} else {
+		globalUnlockKey = make([]byte, keySize)
+		_, err = rand.Read(globalUnlockKey)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("generating global unlock key: %w", err)
 	}

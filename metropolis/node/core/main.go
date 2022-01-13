@@ -90,7 +90,7 @@ func main() {
 	logger.Info("Starting Metropolis node init")
 
 	if err := tpm.Initialize(logger); err != nil {
-		logger.Fatalf("Failed to initialize TPM 2.0: %v", err)
+		logger.Warningf("Failed to initialize TPM 2.0, attempting fallback to untrusted: %v", err)
 	}
 
 	networkSvc := network.New()

@@ -180,6 +180,14 @@ func Initialize(logger logtree.LeveledLogger) error {
 	return nil
 }
 
+// IsInitialized returns true if Initialize was called an at least one
+// TPM 2.0 was found and initialized. Otherwise it returns false.
+func IsInitialized() bool {
+	lock.Lock()
+	defer lock.Unlock()
+	return !(tpm == nil)
+}
+
 // GenerateSafeKey uses two sources of randomness (Kernel & TPM) to generate
 // the key
 func GenerateSafeKey(size uint16) ([]byte, error) {
