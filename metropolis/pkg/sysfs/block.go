@@ -20,6 +20,7 @@
 package sysfs
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -55,6 +56,8 @@ func PartUUIDMap() (map[string]string, error) {
 	return m, nil
 }
 
+var ErrDevNotFound = errors.New("device not found")
+
 // DeviceByPartUUID returns a block device name, given its corresponding
 // partition UUID.
 func DeviceByPartUUID(uuid string) (string, error) {
@@ -65,7 +68,7 @@ func DeviceByPartUUID(uuid string) (string, error) {
 	if bdev, ok := pm[strings.ToLower(uuid)]; ok {
 		return bdev, nil
 	}
-	return "", fmt.Errorf("couldn't find a block device matching the partition UUID %q", uuid)
+	return "", ErrDevNotFound
 }
 
 // ParentBlockDevice transforms the block device name of a partition, eg

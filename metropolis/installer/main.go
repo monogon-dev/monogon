@@ -21,12 +21,14 @@ package main
 
 import (
 	"archive/zip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -203,12 +205,22 @@ func main() {
 	if err != nil {
 		panicf("While reading the installer ESP UUID: %v", err)
 	}
-	// Look up the installer partition based on espUuid.
-	espDev, err := sysfs.DeviceByPartUUID(espUuid)
-	espPath := filepath.Join("/dev", espDev)
-	if err != nil {
-		panicf("While resolving the installer device handle: %v", err)
+	// Wait for up to 30 tries @ 1s (30s) for the ESP to show up
+	var espDev string
+	var retries = 30
+	for {
+		// Look up the installer partition based on espUuid.
+		espDev, err = sysfs.DeviceByPartUUID(espUuid)
+		if err == nil {
+			break
+		} else if errors.Is(err, sysfs.ErrDevNotFound) && retries > 0 {
+			time.Sleep(1 * time.Second)
+			retries--
+		} else {
+			panicf("While resolving the installer device handle: %v", err)
+		}
 	}
+	espPath := filepath.Join("/dev", espDev)
 	// Mount the installer partition. The installer bundle will be read from it.
 	if err := mountInstallerESP(espPath); err != nil {
 		panicf("While mounting the installer ESP: %v", err)

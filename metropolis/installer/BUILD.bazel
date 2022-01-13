@@ -39,6 +39,7 @@ os_release(
 
 efi_unified_kernel_image(
     name = "kernel",
+    cmdline = "console=ttyS0",
     initramfs = ":initramfs",
     kernel = "//third_party/linux",
     os_release = ":installer-release-info",
