@@ -227,14 +227,14 @@ func (l *Lease) DNSServers() DNSServers {
 	}
 	rawServers := dhcpv4.GetIPs(dhcpv4.OptionDomainNameServer, l.Options)
 	var servers DNSServers
-	serversSeenMap := make(map[uint32]struct{})
+	serversSeenMap := make(map[uint32]bool)
 	for _, s := range rawServers {
 		ip4Num := ip4toInt(s)
-		if s.IsGlobalUnicast() || s.IsLinkLocalUnicast() || ip4Num != 0 {
-			if _, ok := serversSeenMap[ip4Num]; ok {
+		if s.IsGlobalUnicast() || s.IsLinkLocalUnicast() {
+			if serversSeenMap[ip4Num] {
 				continue
 			}
-			serversSeenMap[ip4Num] = struct{}{}
+			serversSeenMap[ip4Num] = true
 			servers = append(servers, s)
 		}
 	}
