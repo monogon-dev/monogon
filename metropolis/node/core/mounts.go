@@ -22,14 +22,12 @@ import (
 	"strings"
 
 	"golang.org/x/sys/unix"
-
-	"source.monogon.dev/metropolis/pkg/logtree"
 )
 
 // setupMounts sets up basic mounts like sysfs, procfs, devtmpfs and cgroups.
 // This should be called early during init as a lot of processes depend on this
 // being available.
-func setupMounts(log logtree.LeveledLogger) error {
+func setupMounts() error {
 	// Set up target filesystems.
 	for _, el := range []struct {
 		dir   string

@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"runtime/debug"
@@ -59,27 +60,36 @@ func main() {
 		}
 	}()
 
-	// Set up logger for Metropolis. Currently logs everything to stderr.
-	lt := logtree.New()
-	reader, err := lt.Read("", logtree.WithChildren(), logtree.WithStream())
-	if err != nil {
-		panic(fmt.Errorf("could not set up root log reader: %v", err))
+	// Set up basic mounts (like /dev, /sys...).
+	if err := setupMounts(); err != nil {
+		panic(fmt.Errorf("could not set up basic mounts: %w", err))
 	}
-	go func() {
-		for {
-			p := <-reader.Stream
-			fmt.Fprintf(os.Stderr, "%s\n", p.String())
+
+	// Set up logger for Metropolis. Currently logs everything to /dev/tty0 and
+	// /dev/ttyS0.
+	lt := logtree.New()
+	for _, p := range []string{
+		"/dev/tty0", "/dev/ttyS0",
+	} {
+		f, err := os.OpenFile(p, os.O_WRONLY, 0)
+		if err != nil {
+			continue
 		}
-	}()
+		reader, err := lt.Read("", logtree.WithChildren(), logtree.WithStream())
+		if err != nil {
+			panic(fmt.Errorf("could not set up root log reader: %v", err))
+		}
+		go func(path string, f io.Writer) {
+			fmt.Fprintf(f, "\nMetropolis: this is %s. Verbose node logs follow.\n\n", path)
+			for {
+				p := <-reader.Stream
+				fmt.Fprintf(f, "%s\n", p.String())
+			}
+		}(p, f)
+	}
 
 	// Initial logger. Used until we get to a supervisor.
 	logger := lt.MustLeveledFor("init")
-
-	// Set up basic mounts
-	err = setupMounts(logger)
-	if err != nil {
-		panic(fmt.Errorf("could not set up basic mounts: %w", err))
-	}
 
 	// Linux kernel default is 4096 which is far too low. Raise it to 1M which
 	// is what gVisor suggests.
