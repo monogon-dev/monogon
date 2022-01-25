@@ -30,7 +30,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"source.monogon.dev/metropolis/node/build/mkerofs/fsspec"
+	"source.monogon.dev/metropolis/node/build/fsspec"
 	"source.monogon.dev/metropolis/pkg/erofs"
 )
 
@@ -159,6 +159,10 @@ func main() {
 	for _, symlink := range spec.SymbolicLink {
 		entryRef := fsRoot.pathRef(symlink.Path)
 		entryRef.data.Type = &fsspec.Inode_SymbolicLink{SymbolicLink: symlink}
+	}
+
+	if len(spec.SpecialFile) > 0 {
+		log.Fatalf("special files are currently unimplemented in mkerofs")
 	}
 
 	fs, err := os.Create(*outPath)

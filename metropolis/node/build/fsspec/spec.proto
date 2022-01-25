@@ -16,8 +16,8 @@
 
 syntax = "proto3";
 
-package metropolis.node.build.mkerofs.fsspec;
-option go_package = "source.monogon.dev/metropolis/node/build/mkerofs/fsspec";
+package metropolis.node.build.fsspec;
+option go_package = "source.monogon.dev/metropolis/node/build/fsspec";
 
 // FSSpec is the spec from which a filesystem is generated. It consists of files, directories and symbolic
 // links. Directories are also automatically inferred when required for the placement of files or symbolic
@@ -27,6 +27,7 @@ message FSSpec {
   repeated File file = 1;
   repeated Directory directory = 2;
   repeated SymbolicLink symbolic_link = 3;
+  repeated SpecialFile special_file = 4;
 }
 
 // For internal use only. Represents all supported inodes in a oneof.
@@ -35,6 +36,7 @@ message Inode {
     File file = 1;
     Directory directory = 2;
     SymbolicLink symbolic_link = 3;
+    SpecialFile special_file = 4;
   }
 }
 
@@ -67,4 +69,30 @@ message SymbolicLink {
   string path = 1;
   // The path to which the symbolic link resolves to.
   string target_path = 2;
+}
+
+message SpecialFile {
+  // The path where the special file ends up in the filesystem.
+  string path = 1;
+
+  enum Type {
+    CHARACTER_DEV = 0;
+    BLOCK_DEV = 1;
+    FIFO = 2;
+  }
+
+  // Type of special file.
+  Type type = 2;
+
+  // The major device number of the special file.
+  uint32 major = 3;
+  // The minor number of the special file. Ignored for FIFO-type special files.
+  uint32 minor = 4;
+
+  // Unix permission bits
+  uint32 mode = 5;
+  // Owner uid
+  uint32 uid = 6;
+  // Owner gid
+  uint32 gid = 7;
 }

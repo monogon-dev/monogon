@@ -6,7 +6,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/build/mkerofs",
     visibility = ["//visibility:public"],
     deps = [
-        "//metropolis/node/build/mkerofs/fsspec:go_default_library",
+        "//metropolis/node/build/fsspec:go_default_library",
         "//metropolis/pkg/erofs:go_default_library",
         "@com_github_golang_protobuf//proto:go_default_library",
     ],
