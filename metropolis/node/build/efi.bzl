@@ -4,50 +4,56 @@ See https://systemd.io/BOOT_LOADER_SPECIFICATION/#type-2-efi-unified-kernel-imag
 """
 
 load("//build/toolchain/llvm-efi:transition.bzl", "build_efi_transition")
+load("//metropolis/node/build:def.bzl", "VerityConfig")
 
 def _efi_unified_kernel_image_impl(ctx):
-    out = ctx.actions.declare_file(ctx.attr.name + ".efi")
-
-    toolchain_info = ctx.attr._toolchain[platform_common.ToolchainInfo]
-
-    sections = [
-        dict(name = ".linux", file = ctx.file.kernel, vma = 0x2000000),
-    ]
-
-    if ctx.attr.cmdline != "":
-        cmdline_file = ctx.actions.declare_file("cmdline")
+    # Find the dependency paths to be passed to mkpayload.
+    deps = {
+      "linux": ctx.file.kernel,
+      "initrd": ctx.file.initramfs,
+      "osrel": ctx.file.os_release,
+      "splash": ctx.file.splash,
+      "stub": ctx.file.stub,
+    }
+    # Since cmdline is a string attribute, put it into a file, then append
+    # that file to deps.
+    if ctx.attr.cmdline and ctx.attr.cmdline != "":
+        cmdline = ctx.actions.declare_file("cmdline")
         ctx.actions.write(
-            output = cmdline_file,
+            output = cmdline,
             content = ctx.attr.cmdline,
         )
-        sections.append(dict(name = ".cmdline", file = cmdline_file, vma = 0x30000))
-
-    if ctx.file.initramfs:
-        sections += [dict(name = ".initrd", file = ctx.file.initramfs, vma = 0x5000000)]
-    if ctx.file.os_release:
-        sections += [dict(name = ".osrel", file = ctx.file.os_release, vma = 0x20000)]
-    if ctx.file.splash:
-        sections += [dict(name = ".splash", file = ctx.file.splash, vma = 0x40000)]
-
+        deps["cmdline"] = cmdline
+    # Get the dm-verity target table from VerityConfig provider.
+    if ctx.attr.verity:
+      deps["rootfs_dm_table"] = ctx.attr.verity[VerityConfig].table
+    # Format deps into command line arguments while keeping track of mkpayload
+    # runtime inputs.
     args = []
-    for sec in sections:
-        args.append("--add-section")
-        args.append("{}={}".format(sec["name"], sec["file"].path))
-        args.append("--change-section-vma")
-        args.append("{}={}".format(sec["name"], sec["vma"]))
-
+    inputs = []
+    for name, file in deps.items():
+      if file:
+        args.append("-{}={}".format(name, file.path))
+        inputs.append(file)
+    # Append the output parameter separately, as it doesn't belong with the
+    # runtime inputs.
+    image = ctx.actions.declare_file(ctx.attr.name + ".efi")
+    args.append("-output={}".format(image.path))
+    # Append the objcopy parameter separately, as it's not of File type, and
+    # it does not constitute an input, since it's part of the toolchain.
+    objcopy = ctx.attr._toolchain[platform_common.ToolchainInfo].objcopy_executable
+    args.append("-objcopy={}".format(objcopy))
+    # Run mkpayload.
     ctx.actions.run(
-        mnemonic = "GenEFIKernelImage",
-        progress_message = "Generating EFI unified kernel image",
-        inputs = [ctx.file.stub] + [s["file"] for s in sections],
-        outputs = [out],
-        executable = toolchain_info.objcopy_executable,
-        arguments = args + [
-            ctx.file.stub.path,
-            out.path,
-        ],
+      mnemonic = "GenEFIKernelImage",
+      progress_message = "Generating EFI unified kernel image",
+      inputs = inputs,
+      outputs = [image],
+      executable = ctx.file._mkpayload,
+      arguments = args
     )
-    return [DefaultInfo(files = depset([out]), runfiles = ctx.runfiles(files = [out]))]
+    # Return the unified kernel image file.
+    return [DefaultInfo(files = depset([image]), runfiles = ctx.runfiles(files = [image]))]
 
 efi_unified_kernel_image = rule(
     implementation = _efi_unified_kernel_image_impl,
@@ -81,6 +87,18 @@ efi_unified_kernel_image = rule(
             allow_single_file = True,
             executable = True,
             cfg = build_efi_transition,
+        ),
+        "verity": attr.label(
+            doc = "The DeviceMapper Verity rootfs target table.",
+            allow_single_file = True,
+            providers = [DefaultInfo, VerityConfig],
+        ),
+        "_mkpayload": attr.label(
+            doc = "The mkpayload executable.",
+            default = "//metropolis/node/build/mkpayload",
+            allow_single_file = True,
+            executable = True,
+            cfg = "exec",
         ),
         "_toolchain": attr.label(
             doc = "The toolchain used for objcopy.",

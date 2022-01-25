@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("//metropolis/node/build:def.bzl", "erofs_image")
+load("//metropolis/node/build:def.bzl", "erofs_image", "verity_image")
 load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
@@ -10,10 +10,16 @@ erofs_image(
     },
 )
 
+verity_image(
+    name = "verity_rootfs",
+    source = ":rootfs",
+)
+
 efi_unified_kernel_image(
     name = "kernel_efi",
-    cmdline = "loglevel=0 console=ttyS0 root=PARTLABEL=METROPOLIS-SYSTEM rootfstype=erofs init=/init",
+    cmdline = "loglevel=0 console=ttyS0 init=/init",
     kernel = "//third_party/linux",
+    verity = ":verity_rootfs",
 )
 
 # An intermediary "bundle" format until we finalize the actual bundle format. This is NOT stable until migrated
@@ -23,7 +29,7 @@ pkg_zip(
     name = "testos_bundle",
     srcs = [
         ":kernel_efi",
-        ":rootfs",
+        ":verity_rootfs",
     ],
     visibility = ["//metropolis/installer/test:__subpackages__"],
 )

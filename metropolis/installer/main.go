@@ -242,7 +242,7 @@ func main() {
 		panicf("Cannot open EFI payload in bundle: %v", err)
 	}
 	defer efiPayload.Close()
-	systemImage, err := bundle.Open("rootfs.img")
+	systemImage, err := bundle.Open("verity_rootfs.img")
 	if err != nil {
 		panicf("Cannot open system image in bundle: %v", err)
 	}
