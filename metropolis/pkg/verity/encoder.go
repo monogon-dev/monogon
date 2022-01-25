@@ -305,14 +305,14 @@ type MappingTable struct {
 	// - hash algorithm used
 	// - cryptographic salt used
 	superblock *superblock
-	// dataDevicePath is the filesystem path of the data device used as part
+	// DataDevicePath is the filesystem path of the data device used as part
 	// of the Verity Device Mapper target.
-	dataDevicePath string
-	// hashDevicePath is the filesystem path of the hash device used as part
+	DataDevicePath string
+	// HashDevicePath is the filesystem path of the hash device used as part
 	// of the Verity Device Mapper target.
-	hashDevicePath string
-	// hashStart marks the starting block of the Verity hash tree.
-	hashStart int
+	HashDevicePath string
+	// HashStart marks the starting block of the Verity hash tree.
+	HashStart int64
 	// rootHash stores a cryptographic hash of the top hash tree block.
 	rootHash []byte
 }
@@ -322,12 +322,12 @@ type MappingTable struct {
 func (t *MappingTable) VerityParameterList() []string {
 	return []string{
 		"1",
-		t.dataDevicePath,
-		t.hashDevicePath,
+		t.DataDevicePath,
+		t.HashDevicePath,
 		strconv.FormatUint(uint64(t.superblock.dataBlockSize), 10),
 		strconv.FormatUint(uint64(t.superblock.hashBlockSize), 10),
 		strconv.FormatUint(uint64(t.superblock.dataBlocks), 10),
-		strconv.FormatInt(int64(t.hashStart), 10),
+		strconv.FormatInt(int64(t.HashStart), 10),
 		t.superblock.algorithmName(),
 		hex.EncodeToString(t.rootHash),
 		hex.EncodeToString(t.superblock.salt()),
@@ -445,11 +445,13 @@ func (e *encoder) processDataBuffer(incomplete bool) (uint64, error) {
 // encoder will write to the given io.Writer object.
 // A verity superblock will be written, preceding the hash tree, if
 // writeSb is true.
-func NewEncoder(out io.Writer, writeSb bool) (*encoder, error) {
+func NewEncoder(out io.Writer, dataBlockSize, hashBlockSize uint32, writeSb bool) (*encoder, error) {
 	sb, err := newSuperblock()
 	if err != nil {
 		return nil, fmt.Errorf("while creating a superblock: %w", err)
 	}
+	sb.dataBlockSize = dataBlockSize
+	sb.hashBlockSize = hashBlockSize
 
 	e := encoder{
 		out:     out,
@@ -514,17 +516,19 @@ func (e *encoder) Close() error {
 	}
 
 	// Reset the encoder.
-	e, err = NewEncoder(e.out, e.writeSb)
+	e, err = NewEncoder(e.out, e.sb.dataBlockSize, e.sb.hashBlockSize, e.writeSb)
 	if err != nil {
 		return fmt.Errorf("while resetting an encoder: %w", err)
 	}
 	return nil
 }
 
-// MappingTable returns a string-convertible Verity target mapping table
-// for use with Device Mapper, or an error. Close must be called on the
-// encoder before calling this function.
-func (e *encoder) MappingTable(dataDevicePath, hashDevicePath string) (*MappingTable, error) {
+// MappingTable returns a complete, string-convertible Verity target mapping
+// table for use with Device Mapper, or an error. Close must be called on the
+// encoder before calling this function. dataDevicePath, hashDevicePath, and
+// hashStart parameters are parts of the mapping table. See:
+// https://www.kernel.org/doc/html/latest/admin-guide/device-mapper/verity.html
+func (e *encoder) MappingTable(dataDevicePath, hashDevicePath string, hashStart int64) (*MappingTable, error) {
 	if e.rootHash == nil {
 		if e.bottom.Len() != 0 {
 			return nil, fmt.Errorf("encoder wasn't closed.")
@@ -532,17 +536,15 @@ func (e *encoder) MappingTable(dataDevicePath, hashDevicePath string) (*MappingT
 		return nil, fmt.Errorf("encoder is empty.")
 	}
 
-	var hs int
 	if e.writeSb {
-		// Account for the superblock by setting the hash tree starting block
-		// to 1 instead of 0.
-		hs = 1
+		// Account for the superblock.
+		hashStart += 1
 	}
 	return &MappingTable{
 		superblock:     e.sb,
-		dataDevicePath: dataDevicePath,
-		hashDevicePath: hashDevicePath,
-		hashStart:      hs,
+		DataDevicePath: dataDevicePath,
+		HashDevicePath: hashDevicePath,
+		HashStart:      hashStart,
 		rootHash:       e.rootHash,
 	}, nil
 }

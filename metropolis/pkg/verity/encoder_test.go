@@ -104,8 +104,9 @@ func fillVerityRamdisks(t *testing.T, dataDevPath, hashDevPath string) (*dm.Targ
 	require.NoError(t, err, "while opening the hash device at %s", hashDevPath)
 
 	// Create a Verity encoder, backed with hfd. Configure it to write the
-	// Verity superblock.
-	verityEnc, err := NewEncoder(hfd, true)
+	// Verity superblock. Use 4096-byte blocks.
+	bs := uint32(4096)
+	verityEnc, err := NewEncoder(hfd, bs, bs, true)
 	require.NoError(t, err, "while creating a Verity encoder")
 
 	// Write pseudorandom data both to the Verity-protected data device, and
@@ -124,9 +125,10 @@ func fillVerityRamdisks(t *testing.T, dataDevPath, hashDevPath string) (*dm.Targ
 	err = dfd.Close()
 	require.NoError(t, err, "while closing the data device descriptor")
 
-	// Generate the Verity mapping table based on the encoder state and
-	// device file paths, then return it along with the test data buffer.
-	mt, err := verityEnc.MappingTable(dataDevPath, hashDevPath)
+	// Generate the Verity mapping table based on the encoder state, device
+	// file paths and the metadata starting block, then return it along with
+	// the test data buffer.
+	mt, err := verityEnc.MappingTable(dataDevPath, hashDevPath, 0)
 	require.NoError(t, err, "while building a Verity mapping table")
 	return verityDMTarget(mt), testData
 }

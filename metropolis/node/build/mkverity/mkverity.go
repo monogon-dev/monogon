@@ -24,6 +24,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -32,28 +33,55 @@ import (
 	"source.monogon.dev/metropolis/pkg/verity"
 )
 
-// createHashImage creates a complete dm-verity hash image at
-// hashImagePath. Contents of the file at dataImagePath are accessed
-// read-only, hashed and written to the hash image in the process.
-// The verity superblock is written only if wsb is true.
-// It returns a string-convertible VerityMappingTable, or an error.
-func createHashImage(dataImagePath, hashImagePath string, wsb bool) (*verity.MappingTable, error) {
+// createImage creates a dm-verity target image by combining the input image
+// with Verity metadata. Contents of the data image are copied to the output
+// image. Then, the same contents are verity-encoded and appended to the
+// output image. The verity superblock is written only if wsb is true. It
+// returns either a dm-verity target table, or an error.
+func createImage(dataImagePath, outputImagePath string, wsb bool) (*verity.MappingTable, error) {
+	// Hardcode both the data block size and the hash block size as 4096 bytes.
+	bs := uint32(4096)
+
 	// Open the data image for reading.
 	dataImage, err := os.Open(dataImagePath)
 	if err != nil {
 		return nil, fmt.Errorf("while opening the data image: %w", err)
 	}
 	defer dataImage.Close()
+
+	// Check that the data image is well-formed.
+	ds, err := dataImage.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("while stat-ing the data image: %w", err)
+	}
+	if !ds.Mode().IsRegular() {
+		return nil, fmt.Errorf("the data image must be a regular file")
+	}
+	if ds.Size()%int64(bs) != 0 {
+		return nil, fmt.Errorf("the data image must end on a %d-byte block boundary.", bs)
+	}
+
 	// Create an empty hash image file.
-	hashImage, err := os.OpenFile(hashImagePath, os.O_RDWR|os.O_CREATE, 0644)
+	outputImage, err := os.OpenFile(outputImagePath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
 	if err != nil {
 		return nil, fmt.Errorf("while opening the hash image for writing: %w", err)
 	}
-	defer hashImage.Close()
+	defer outputImage.Close()
 
-	// Write hashImage contents. Start with initializing a verity encoder,
-	// seting hashImage as its output.
-	v, err := verity.NewEncoder(hashImage, wsb)
+	// Copy the input data into the output file, then rewind dataImage to be read
+	// again by the Verity encoder.
+	_, err = io.Copy(outputImage, dataImage)
+	if err != nil {
+		return nil, err
+	}
+	_, err = dataImage.Seek(0, os.SEEK_SET)
+	if err != nil {
+		return nil, err
+	}
+
+	// Write outputImage contents. Start with initializing a verity encoder,
+	// seting outputImage as its output.
+	v, err := verity.NewEncoder(outputImage, bs, bs, wsb)
 	if err != nil {
 		return nil, fmt.Errorf("while initializing a verity encoder: %w", err)
 	}
@@ -68,34 +96,57 @@ func createHashImage(dataImagePath, hashImagePath string, wsb bool) (*verity.Map
 		return nil, fmt.Errorf("while writing the hash image: %w", err)
 	}
 
-	// Return an encoder-generated verity mapping table, containing the salt
-	// and the root hash.
-	mt, err := v.MappingTable(dataImagePath, hashImagePath)
+	// Return an encoder-generated verity mapping table, containing the salt and
+	// the root hash. First, calculate the starting hash block by dividing the
+	// data image size by the encoder data block size.
+	hashStart := ds.Size() / int64(bs)
+	mt, err := v.MappingTable(dataImagePath, outputImagePath, hashStart)
 	if err != nil {
 		return nil, fmt.Errorf("while querying for the mapping table: %w", err)
 	}
 	return mt, nil
 }
 
-// usage prints program usage information.
-func usage(executable string) {
-	fmt.Println("Usage: ", executable, " <data image> <hash image>")
-}
+var (
+	input           = flag.String("input", "", "input disk image (required)")
+	output          = flag.String("output", "", "output disk image with Verity metadata appended (required)")
+	dataDeviceAlias = flag.String("data_alias", "", "data device alias used in the mapping table")
+	hashDeviceAlias = flag.String("hash_alias", "", "hash device alias used in the mapping table")
+	table           = flag.String("table", "", "a file the mapping table will be saved to; disables stdout")
+)
 
 func main() {
-	if len(os.Args) != 3 {
-		usage(os.Args[0])
-		os.Exit(2)
-	}
-	dataImagePath := os.Args[1]
-	hashImagePath := os.Args[2]
+	flag.Parse()
 
-	// Attempt to build a new Verity hash Image at hashImagePath, based on
-	// the data image at dataImagePath. Include the Verity superblock.
-	mt, err := createHashImage(dataImagePath, hashImagePath, true)
+	// Ensure that required parameters were provided before continuing.
+	if *input == "" {
+		log.Fatalf("-input must be set.")
+	}
+	if *output == "" {
+		log.Fatalf("-output must be set.")
+	}
+
+	// Build the image.
+	mt, err := createImage(*input, *output, false)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Print a Device Mapper compatible mapping table.
-	fmt.Println(mt)
+
+	// Patch the device names, if alternatives were provided.
+	if *dataDeviceAlias != "" {
+		mt.DataDevicePath = *dataDeviceAlias
+	}
+	if *hashDeviceAlias != "" {
+		mt.HashDevicePath = *hashDeviceAlias
+	}
+
+	// Print a DeviceMapper target table, or save it to a file, if the table
+	// parameter was specified.
+	if *table != "" {
+		if err := os.WriteFile(*table, []byte(mt.String()), 0644); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		fmt.Println(mt)
+	}
 }
