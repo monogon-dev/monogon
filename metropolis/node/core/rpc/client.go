@@ -13,6 +13,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
 	"source.monogon.dev/metropolis/node/core/identity"
@@ -86,7 +87,10 @@ func NewEphemeralClientTest(listener *bufconn.Listener, private ed25519.PrivateK
 func RetrieveOwnerCertificate(ctx context.Context, aaa apb.AAAClient, private ed25519.PrivateKey) (*tls.Certificate, error) {
 	srv, err := aaa.Escrow(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("when opening Escrow RPC: %w", err)
+		if st, ok := status.FromError(err); ok {
+			return nil, status.Errorf(st.Code(), "Escrow call failed: %s", st.Message())
+		}
+		return nil, err
 	}
 	if err := srv.Send(&apb.EscrowFromClient{
 		Parameters: &apb.EscrowFromClient_Parameters{

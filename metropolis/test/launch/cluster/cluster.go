@@ -24,6 +24,8 @@ import (
 	grpcretry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"go.uber.org/multierr"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node"
@@ -240,7 +242,7 @@ func copyFile(src, dst string) error {
 // cluster.
 func getNodes(ctx context.Context, mgmt apb.ManagementClient) ([]*apb.Node, error) {
 	var res []*apb.Node
-	bo := backoff.NewExponentialBackOff()
+	bo := backoff.WithContext(backoff.NewExponentialBackOff(), ctx)
 	err := backoff.Retry(func() error {
 		res = nil
 		srvN, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
@@ -416,7 +418,12 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	var cert *tls.Certificate
 	err = backoff.Retry(func() error {
 		cert, err = rpc.RetrieveOwnerCertificate(ctxT, aaa, InsecurePrivateKey)
-		return err
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.Unavailable {
+				return err
+			}
+		}
+		return backoff.Permanent(err)
 	}, backoff.WithContext(backoff.NewExponentialBackOff(), ctxT))
 	if err != nil {
 		ctxC()
