@@ -20,8 +20,10 @@ def edk2_external(name):
     new_git_repository(
         name = name,
         build_file = "//third_party/edk2/external:BUILD.repo",
-        commit = "37eef91017ad042035090cae46557f9d6e2d5917",
-        init_submodules = True,
+        commit = "b24306f15daa2ff8510b06702114724b33895d3c",  # stable202202
+        recursive_init_submodules = True,
         remote = "https://github.com/tianocore/edk2",
-        shallow_since = "1567048229 +0800",
+        shallow_since = "1645456780 +0000",
+        patches = ["//third_party/edk2/patches:disable-werror.patch", "//third_party/edk2/patches:remove-brotli-build.patch"],
+        patch_args = ["-p1"],
     )

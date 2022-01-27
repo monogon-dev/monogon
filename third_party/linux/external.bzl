@@ -29,6 +29,7 @@ def linux_external(name, version):
         patch_args = ["-p1"],
         patches = [
             "//third_party/linux/external:0001-block-partition-expose-PARTUUID-through-uevent.patch",
+            "//third_party/linux/external:discard-gnu-note-section.patch",
         ],
         sha256 = sums[version],
         strip_prefix = "linux-" + version,

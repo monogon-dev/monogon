@@ -1,6 +1,12 @@
 genrule(
     name = "firmware",
-    srcs = glob(["**"]),
+    srcs = glob(
+        ["**"],
+        exclude = [
+            "CryptoPkg/Library/OpensslLib/openssl/boringssl/fuzz/*_corpus/**",
+            "CryptoPkg/Library/OpensslLib/openssl/fuzz/corpora/**",
+        ],
+    ),
     outs = [
         "OVMF_CODE.fd",
         "OVMF_VARS.fd",

@@ -251,20 +251,6 @@ efistub_external(
 
 register_toolchains("//:host_python")
 
-# python dependencies. Currently we don't use Python, but some of our deps (ie. gvisor) do expect @pydeps// to exist, even
-# if it's not being used.
-
-load("@rules_python//python:pip.bzl", "pip_import")
-
-pip_import(
-    name = "pydeps",
-    requirements = "//third_party/py:requirements.txt",
-)
-
-load("@pydeps//:requirements.bzl", "pip_install")
-
-pip_install()
-
 # same for gvisor/rules_docker.
 
 http_archive(

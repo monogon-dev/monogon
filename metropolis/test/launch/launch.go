@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/exec"
@@ -148,7 +149,7 @@ type MicroVMOptions struct {
 	// port of the machine It can be set to an existing file descriptor (like
 	// os.Stdout/os.Stderr) or you can use NewSocketPair() to get one end to talk to
 	// from Go.
-	SerialPort *os.File
+	SerialPort io.Writer
 
 	// ExtraChardevs can be used similar to SerialPort, but can contain an arbitrary
 	// number of additional serial ports

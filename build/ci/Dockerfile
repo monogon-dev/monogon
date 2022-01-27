@@ -1,10 +1,11 @@
-FROM fedora:32
+FROM fedora:35
 
 RUN dnf -y upgrade && \
 	dnf -y install \
 	"@Development Tools" \
 	g++ \
 	llvm \
+	clang \
 	lld \
 	libuuid-devel \
 	python3 \
