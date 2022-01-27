@@ -380,7 +380,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	go func() {
 		if err := launch.RunMicroVM(ctxT, &launch.MicroVMOptions{
 			KernelPath:             "metropolis/test/ktest/vmlinux",
-			InitramfsPath:          "metropolis/test/nanoswitch/initramfs.lz4",
+			InitramfsPath:          "metropolis/test/nanoswitch/initramfs.cpio.lz4",
 			ExtraNetworkInterfaces: switchPorts,
 			PortMap:                portMap,
 		}); err != nil {

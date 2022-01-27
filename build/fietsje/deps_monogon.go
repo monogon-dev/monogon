@@ -69,6 +69,8 @@ func Monogon(shelfPath, repositoriesBzlPath string) error {
 		"github.com/ulikunitz/xz",
 	)
 
+	p.collect("github.com/pierrec/lz4/v4", "v4.1.12")
+
 	// Used by //metropolis/build/genosrelease
 	p.collect("github.com/joho/godotenv", "v1.3.0")
 
@@ -136,6 +138,9 @@ func Monogon(shelfPath, repositoriesBzlPath string) error {
 	).use(
 		"github.com/pseudomuto/protokit",
 	)
+
+	// Used by //metropolis/node/build/mkcpio
+	p.collect("github.com/cavaliergopher/cpio", "b4d3577d12deb76a6d52f184acd341f875574785")
 
 	// First generate the repositories starlark rule into memory. This is because
 	// rendering will lock all unlocked dependencies, which might take a while. If a

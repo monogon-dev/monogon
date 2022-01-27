@@ -28,8 +28,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
-
 	"source.monogon.dev/metropolis/node/build/fsspec"
 	"source.monogon.dev/metropolis/pkg/erofs"
 )
@@ -125,20 +123,15 @@ func (s *entrySpec) pathRef(p string) *entrySpec {
 }
 
 var (
-	specPath = flag.String("spec", "", "Path to the filesystem specification (spec.FSSpec)")
-	outPath  = flag.String("out", "", "Output file path")
+	outPath = flag.String("out", "", "Output file path")
 )
 
 func main() {
 	flag.Parse()
-	specRaw, err := os.ReadFile(*specPath)
-	if err != nil {
-		log.Fatalf("failed to open spec: %v", err)
-	}
 
-	var spec fsspec.FSSpec
-	if err := proto.UnmarshalText(string(specRaw), &spec); err != nil {
-		log.Fatalf("failed to parse spec: %v", err)
+	spec, err := fsspec.ReadMergeSpecs(flag.Args())
+	if err != nil {
+		log.Fatalf("failed to load specs: %v", err)
 	}
 
 	var fsRoot = &entrySpec{

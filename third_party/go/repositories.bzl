@@ -203,6 +203,16 @@ def go_repositories():
         ],
     )
     go_repository(
+        name = "com_github_cavaliergopher_cpio",
+        importpath = "github.com/cavaliergopher/cpio",
+        version = "v1.0.0",
+        sum = "h1:r03k5NVg5kuFMbtRnldtwsm/8mt8qmHg/QBl7y/PUiE=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
         name = "com_github_cenkalti_backoff",
         importpath = "github.com/cenkalti/backoff",
         version = "v1.1.1-0.20190506075156-2146c9339422",
@@ -1790,6 +1800,16 @@ def go_repositories():
         importpath = "github.com/pierrec/lz4",
         version = "v2.3.0+incompatible",
         sum = "h1:CZzRn4Ut9GbUkHlQ7jqBXeZQV41ZSKWFc302ZU6lUTk=",
+        build_extra_args = [
+            "-go_naming_convention=go_default_library",
+            "-go_naming_convention_external=go_default_library",
+        ],
+    )
+    go_repository(
+        name = "com_github_pierrec_lz4_v4",
+        importpath = "github.com/pierrec/lz4/v4",
+        version = "v4.1.12",
+        sum = "h1:44l88ehTZAUGW4VlO1QC4zkilL99M6Y9MXNwEs0uzP8=",
         build_extra_args = [
             "-go_naming_convention=go_default_library",
             "-go_naming_convention_external=go_default_library",

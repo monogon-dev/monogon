@@ -10,9 +10,11 @@ proto_library(
 
 go_library(
     name = "go_default_library",
+    srcs = ["utils.go"],
     embed = [":fsspec_go_proto"],
     importpath = "source.monogon.dev/metropolis/node/build/fsspec",
     visibility = ["//visibility:public"],
+    deps = ["@com_github_golang_protobuf//proto:go_default_library"],
 )
 
 go_proto_library(

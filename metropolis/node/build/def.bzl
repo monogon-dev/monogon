@@ -50,219 +50,21 @@ build_static_transition = transition(
     ],
 )
 
-def _node_initramfs_impl(ctx):
-    """
-    Generate an lz4-compressed initramfs based on a label/file list.
-    """
-
-    # Generate config file for gen_init_cpio that describes the initramfs to build.
-    cpio_list_name = ctx.label.name + ".cpio_list"
-    cpio_list = ctx.actions.declare_file(cpio_list_name)
-
-    # Start out with some standard initramfs device files.
-    cpio_list_content = [
-        "dir /dev 0755 0 0",
-        "nod /dev/console 0600 0 0 c 5 1",
-        "nod /dev/null 0644 0 0 c 1 3",
-        "nod /dev/kmsg 0644 0 0 c 1 11",
-        "nod /dev/ptmx 0644 0 0 c 5 2",
-    ]
-
-    # Find all directories that need to be created.
-    directories_needed = []
-    for _, p in ctx.attr.files.items():
-        if not p.startswith("/"):
-            fail("file {} invalid: must begin with /".format(p))
-
-        # Get all intermediate directories on path to file
-        parts = p.split("/")[1:-1]
-        directories_needed.append(parts)
-
-    for _, p in ctx.attr.files_cc.items():
-        if not p.startswith("/"):
-            fail("file {} invalid: must begin with /".format(p))
-
-        # Get all intermediate directories on path to file
-        parts = p.split("/")[1:-1]
-        directories_needed.append(parts)
-
-    # Extend with extra directories defined by user.
-    for p in ctx.attr.extra_dirs:
-        if not p.startswith("/"):
-            fail("directory {} invalid: must begin with /".format(p))
-
-        parts = p.split("/")[1:]
-        directories_needed.append(parts)
-
-    directories = []
-    for parts in directories_needed:
-        # Turn directory parts [usr, local, bin] into successive subpaths [/usr, /usr/local, /usr/local/bin].
-        last = ""
-        for part in parts:
-            last += "/" + part
-
-            # TODO(q3k): this is slow - this should be a set instead, but starlark doesn't implement them.
-            # For the amount of files we're dealing with this doesn't matter, but all stars are pointing towards this
-            # becoming accidentally quadratic at some point in the future.
-            if last not in directories:
-                directories.append(last)
-
-    # Append instructions to create directories.
-    # Serendipitously, the directories should already be in the right order due to us not using a set to create the
-    # list. They might not be in an elegant order (ie, if files [/foo/one/one, /bar, /foo/two/two] are request, the
-    # order will be [/foo, /foo/one, /bar, /foo/two]), but that's fine.
-    for d in directories:
-        cpio_list_content.append("dir {} 0755 0 0".format(d))
-
-    # Append instructions to add files.
-    inputs = []
-    for label, p in ctx.attr.files.items():
-        # Figure out if this is an executable.
-        is_executable = True
-
-        di = label[DefaultInfo]
-        if di.files_to_run.executable == None:
-            # Generated non-executable files will have DefaultInfo.files_to_run.executable == None
-            is_executable = False
-        elif di.files_to_run.executable.is_source:
-            # Source files will have executable.is_source == True
-            is_executable = False
-
-        # Ensure only single output is declared.
-        # If you hit this error, figure out a better logic to find what file you need, maybe looking at providers other
-        # than DefaultInfo.
-        files = di.files.to_list()
-        if len(files) > 1:
-            fail("file {} has more than one output: {}", p, files)
-        src = files[0]
-        inputs.append(src)
-
-        mode = "0755" if is_executable else "0444"
-
-        cpio_list_content.append("file {} {} {} 0 0".format(p, src.path, mode))
-
-    for label, p in ctx.attr.files_cc.items():
-        # Figure out if this is an executable.
-        is_executable = True
-
-        di = label[DefaultInfo]
-        if di.files_to_run.executable == None:
-            # Generated non-executable files will have DefaultInfo.files_to_run.executable == None
-            is_executable = False
-        elif di.files_to_run.executable.is_source:
-            # Source files will have executable.is_source == True
-            is_executable = False
-
-        # Ensure only single output is declared.
-        # If you hit this error, figure out a better logic to find what file you need, maybe looking at providers other
-        # than DefaultInfo.
-        files = di.files.to_list()
-        if len(files) > 1:
-            fail("file {} has more than one output: {}", p, files)
-        src = files[0]
-        inputs.append(src)
-
-        mode = "0755" if is_executable else "0444"
-
-        cpio_list_content.append("file {} {} {} 0 0".format(p, src.path, mode))
-
-    # Write cpio_list.
-    ctx.actions.write(cpio_list, "\n".join(cpio_list_content))
-
-    gen_init_cpio = ctx.executable._gen_init_cpio
-    savestdout = ctx.executable._savestdout
-    lz4 = ctx.executable._lz4
-
-    # Generate 'raw' (uncompressed) initramfs
-    initramfs_raw_name = ctx.label.name
-    initramfs_raw = ctx.actions.declare_file(initramfs_raw_name)
-    ctx.actions.run(
-        outputs = [initramfs_raw],
-        inputs = [cpio_list] + inputs,
-        tools = [savestdout, gen_init_cpio],
-        executable = savestdout,
-        arguments = [initramfs_raw.path, gen_init_cpio.path, cpio_list.path],
-    )
-
-    # Compress raw initramfs using lz4c.
-    initramfs_name = ctx.label.name + ".lz4"
-    initramfs = ctx.actions.declare_file(initramfs_name)
-    ctx.actions.run(
-        outputs = [initramfs],
-        inputs = [initramfs_raw],
-        tools = [savestdout, lz4],
-        executable = lz4.path,
-        arguments = ["-l", initramfs_raw.path, initramfs.path],
-    )
-
-    # TODO(q3k): Document why this is needed
-    return [DefaultInfo(runfiles = ctx.runfiles(files = [initramfs]), files = depset([initramfs]))]
-
-node_initramfs = rule(
-    implementation = _node_initramfs_impl,
-    doc = """
-        Build a node initramfs. The initramfs will contain a basic /dev directory and all the files specified by the
-        `files` attribute. Executable files will have their permissions set to 0755, non-executable files will have
-        their permissions set to 0444. All parent directories will be created with 0755 permissions.
-    """,
-    attrs = {
-        "files": attr.label_keyed_string_dict(
-            mandatory = True,
-            allow_files = True,
-            doc = """
-                Dictionary of Labels to String, placing a given Label's output file in the initramfs at the location
-                specified by the String value. The specified labels must only have a single output.
-            """,
-            # Attach pure transition to ensure all binaries added to the initramfs are pure/static binaries.
-            cfg = build_pure_transition,
-        ),
-        "files_cc": attr.label_keyed_string_dict(
-            allow_files = True,
-            doc = """
-                 Special case of 'files' for compilation targets that need to be built with the musl toolchain like
-                 go_binary targets which need cgo or cc_binary targets.
-            """,
-            # Attach static transition to all files_cc inputs to ensure they are built with musl and static.
-            cfg = build_static_transition,
-        ),
-        "extra_dirs": attr.string_list(
-            default = [],
-            doc = """
-                Extra directories to create. These will be created in addition to all the directories required to
-                contain the files specified in the `files` attribute.
-            """,
-        ),
-
-        # Tools, implicit dependencies.
-        "_gen_init_cpio": attr.label(
-            default = Label("@linux//:gen_init_cpio"),
-            executable = True,
-            cfg = "host",
-        ),
-        "_lz4": attr.label(
-            default = Label("@com_github_lz4_lz4//programs:lz4"),
-            executable = True,
-            cfg = "host",
-        ),
-        "_savestdout": attr.label(
-            default = Label("//build/savestdout"),
-            executable = True,
-            cfg = "host",
-        ),
-
-        # Allow for transitions to be attached to this rule.
-        "_whitelist_function_transition": attr.label(
-            default = "@bazel_tools//tools/whitelists/function_transition_whitelist",
-        ),
+FSSpecInfo = provider(
+    "Provides parts of an FSSpec used to assemble filesystem images",
+    fields = {
+        "spec": "File containing the partial FSSpec as prototext",
+        "referenced": "Files (potentially) referenced by the spec",
     },
 )
 
-def _erofs_image_impl(ctx):
+def _fsspec_core_impl(ctx, tool, output_file, builtin_fsspec):
     """
-    Generate an EROFS filesystem based on a label/file list.
+    _fsspec_core_impl implements the core of an fsspec-based rule. It takes
+    input from the `files`,`files_cc`, `extra_dirs`, `symlinks` and `fsspecs`
+    attributes and calls `tool` with the `-out` parameter pointing to
+    `output_file` and paths to all fsspecs as positional arguments.
     """
-
-    # Generate config file for gen_init_cpio that describes the initramfs to build.
     fs_spec_name = ctx.label.name + ".prototxt"
     fs_spec = ctx.actions.declare_file(fs_spec_name)
 
@@ -307,17 +109,119 @@ def _erofs_image_impl(ctx):
         fs_symlinks.append(struct(path = p, target_path = target))
 
     fs_spec_content = struct(file = fs_files, directory = fs_dirs, symbolic_link = fs_symlinks)
-    ctx.actions.write(fs_spec, fs_spec_content.to_proto())
+    ctx.actions.write(fs_spec, proto.encode_text(fs_spec_content))
 
+    extra_specs = []
+    if builtin_fsspec != None:
+        builtin_fsspec_file = ctx.actions.declare_file(ctx.label.name + "-builtin.prototxt")
+        ctx.actions.write(builtin_fsspec_file, proto.encode_text(builtin_fsspec))
+        extra_specs.append(builtin_fsspec_file)
+
+    for fsspec in ctx.attr.fsspecs:
+        fsspecInfo = fsspec[FSSpecInfo]
+        extra_specs.append(fsspecInfo.spec)
+        for f in fsspecInfo.referenced:
+            inputs.append(f)
+
+    ctx.actions.run(
+        outputs = [output_file],
+        inputs = [fs_spec] + inputs + extra_specs,
+        tools = [tool],
+        executable = tool,
+        arguments = ["-out", output_file.path, fs_spec.path] + [s.path for s in extra_specs],
+    )
+    return
+
+def _node_initramfs_impl(ctx):
+    # At least /dev/console and /dev/null are required to exist for Linux
+    # to properly boot an init inside the initramfs. Here we additionally
+    # include important device nodes like /dev/kmsg and /dev/ptmx which
+    # might need to be available before a proper device manager is launched.
+    builtin_fsspec = struct(special_file = [
+        struct(path = "/dev/console", mode = 0o600, major = 5, minor = 1),
+        struct(path = "/dev/ptmx", mode = 0o644, major = 5, minor = 2),
+        struct(path = "/dev/null", mode = 0o644, major = 1, minor = 3),
+        struct(path = "/dev/kmsg", mode = 0o644, major = 1, minor = 11),
+    ])
+
+    initramfs_name = ctx.label.name + ".cpio.lz4"
+    initramfs = ctx.actions.declare_file(initramfs_name)
+
+    _fsspec_core_impl(ctx, ctx.executable._mkcpio, initramfs, builtin_fsspec)
+
+    # TODO(q3k): Document why this is needed
+    return [DefaultInfo(runfiles = ctx.runfiles(files = [initramfs]), files = depset([initramfs]))]
+
+node_initramfs = rule(
+    implementation = _node_initramfs_impl,
+    doc = """
+        Build a node initramfs. The initramfs will contain a basic /dev directory and all the files specified by the
+        `files` attribute. Executable files will have their permissions set to 0755, non-executable files will have
+        their permissions set to 0444. All parent directories will be created with 0755 permissions.
+    """,
+    attrs = {
+        "files": attr.label_keyed_string_dict(
+            mandatory = True,
+            allow_files = True,
+            doc = """
+                Dictionary of Labels to String, placing a given Label's output file in the initramfs at the location
+                specified by the String value. The specified labels must only have a single output.
+            """,
+            # Attach pure transition to ensure all binaries added to the initramfs are pure/static binaries.
+            cfg = build_pure_transition,
+        ),
+        "files_cc": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = """
+                 Special case of 'files' for compilation targets that need to be built with the musl toolchain like
+                 go_binary targets which need cgo or cc_binary targets.
+            """,
+            # Attach static transition to all files_cc inputs to ensure they are built with musl and static.
+            cfg = build_static_transition,
+        ),
+        "extra_dirs": attr.string_list(
+            default = [],
+            doc = """
+                Extra directories to create. These will be created in addition to all the directories required to
+                contain the files specified in the `files` attribute.
+            """,
+        ),
+        "symlinks": attr.string_dict(
+            default = {},
+            doc = """
+                Symbolic links to create. Similar format as in files and files_cc, so the target of the symlink is the
+                key and the value of it is the location of the symlink itself. Only raw strings are allowed as targets,
+                labels are not permitted. Include the file using files or files_cc, then symlink to its location.
+            """,
+        ),
+        "fsspecs": attr.label_list(
+            default = [],
+            doc = """
+                List of file system specs (metropolis.node.build.fsspec.FSSpec) to also include in the resulting image.
+                These will be merged with all other given attributes.
+            """,
+            providers = [FSSpecInfo],
+        ),
+
+        # Tool
+        "_mkcpio": attr.label(
+            default = Label("//metropolis/node/build/mkcpio"),
+            executable = True,
+            cfg = "exec",
+        ),
+
+        # Allow for transitions to be attached to this rule.
+        "_whitelist_function_transition": attr.label(
+            default = "@bazel_tools//tools/whitelists/function_transition_whitelist",
+        ),
+    },
+)
+
+def _erofs_image_impl(ctx):
     fs_name = ctx.label.name + ".img"
     fs_out = ctx.actions.declare_file(fs_name)
-    ctx.actions.run(
-        outputs = [fs_out],
-        inputs = [fs_spec] + inputs,
-        tools = [ctx.executable._mkerofs],
-        executable = ctx.executable._mkerofs,
-        arguments = ["-out", fs_out.path, "-spec", fs_spec.path],
-    )
+
+    _fsspec_core_impl(ctx, ctx.executable._mkerofs, fs_out, None)
 
     return [DefaultInfo(files = depset([fs_out]))]
 
@@ -363,6 +267,14 @@ erofs_image = rule(
                 labels are not permitted. Include the file using files or files_cc, then symlink to its location.
           """,
         ),
+        "fsspecs": attr.label_list(
+            default = [],
+            doc = """
+                List of file system specs (metropolis.node.build.fsspec.FSSpec) to also include in the resulting image.
+                These will be merged with all other given attributes.
+            """,
+            providers = [FSSpecInfo],
+        ),
 
         # Tools, implicit dependencies.
         "_mkerofs": attr.label(
@@ -381,72 +293,72 @@ erofs_image = rule(
 # VerityConfig is emitted by verity_image, and contains a file enclosing a
 # singular dm-verity target table.
 VerityConfig = provider(
-  "Configuration necessary to mount a single dm-verity target.",
-  fields = {
-    "table": "A file containing the dm-verity target table. See: https://www.kernel.org/doc/html/latest/admin-guide/device-mapper/verity.html",
-  },
+    "Configuration necessary to mount a single dm-verity target.",
+    fields = {
+        "table": "A file containing the dm-verity target table. See: https://www.kernel.org/doc/html/latest/admin-guide/device-mapper/verity.html",
+    },
 )
 
 def _verity_image_impl(ctx):
-  """
-  Create a new file containing the source image data together with the Verity
-  metadata appended to it, and provide an associated DeviceMapper Verity target
-  table in a separate file, through VerityConfig provider.
-  """
+    """
+    Create a new file containing the source image data together with the Verity
+    metadata appended to it, and provide an associated DeviceMapper Verity target
+    table in a separate file, through VerityConfig provider.
+    """
 
-  # Run mkverity.
-  image = ctx.actions.declare_file(ctx.attr.name + ".img")
-  table = ctx.actions.declare_file(ctx.attr.name + ".dmt")
-  ctx.actions.run(
-    mnemonic = "GenVerityImage",
-    progress_message = "Generating a dm-verity image",
-    inputs = [ctx.file.source],
-    outputs = [
-      image,
-      table,
-    ],
-    executable = ctx.file._mkverity,
-    arguments = [
-      "-input=" + ctx.file.source.path,
-      "-output=" + image.path,
-      "-table=" + table.path,
-      "-data_alias=" + ctx.attr.rootfs_partlabel,
-      "-hash_alias=" + ctx.attr.rootfs_partlabel,
-    ]
-  )
-
-  return [
-    DefaultInfo(
-      files=depset([image]),
-      runfiles=ctx.runfiles(files=[image])
-    ),
-    VerityConfig(
-      table = table
+    # Run mkverity.
+    image = ctx.actions.declare_file(ctx.attr.name + ".img")
+    table = ctx.actions.declare_file(ctx.attr.name + ".dmt")
+    ctx.actions.run(
+        mnemonic = "GenVerityImage",
+        progress_message = "Generating a dm-verity image",
+        inputs = [ctx.file.source],
+        outputs = [
+            image,
+            table,
+        ],
+        executable = ctx.file._mkverity,
+        arguments = [
+            "-input=" + ctx.file.source.path,
+            "-output=" + image.path,
+            "-table=" + table.path,
+            "-data_alias=" + ctx.attr.rootfs_partlabel,
+            "-hash_alias=" + ctx.attr.rootfs_partlabel,
+        ],
     )
-  ]
+
+    return [
+        DefaultInfo(
+            files = depset([image]),
+            runfiles = ctx.runfiles(files = [image]),
+        ),
+        VerityConfig(
+            table = table,
+        ),
+    ]
 
 verity_image = rule(
-  implementation = _verity_image_impl,
-  doc = """
+    implementation = _verity_image_impl,
+    doc = """
       Build a dm-verity target image by appending Verity metadata to the source
       image. A corresponding dm-verity target table will be made available
       through VerityConfig provider.
   """,
-  attrs = {
-    "source": attr.label(
-      doc = "A source image.",
-      allow_single_file = True,
-    ),
-    "rootfs_partlabel": attr.string(
-      doc = "GPT partition label of the rootfs to be used with dm-mod.create.",
-      default = "PARTLABEL=METROPOLIS-SYSTEM",
-    ),
-    "_mkverity": attr.label(
-      doc = "The mkverity executable needed to generate the image.",
-      default = "//metropolis/node/build/mkverity",
-      allow_single_file = True,
-      executable = True,
-      cfg = "host",
-    ),
-  },
+    attrs = {
+        "source": attr.label(
+            doc = "A source image.",
+            allow_single_file = True,
+        ),
+        "rootfs_partlabel": attr.string(
+            doc = "GPT partition label of the rootfs to be used with dm-mod.create.",
+            default = "PARTLABEL=METROPOLIS-SYSTEM",
+        ),
+        "_mkverity": attr.label(
+            doc = "The mkverity executable needed to generate the image.",
+            default = "//metropolis/node/build/mkverity",
+            allow_single_file = True,
+            executable = True,
+            cfg = "host",
+        ),
+    },
 )

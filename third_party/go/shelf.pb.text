@@ -230,6 +230,13 @@ entry: <
   semver: "v1.0.5"
 >
 entry: <
+  import_path: "github.com/cavaliergopher/cpio"
+  version: "b4d3577d12deb76a6d52f184acd341f875574785"
+  bazel_name: "com_github_cavaliergopher_cpio"
+  sum: "h1:r03k5NVg5kuFMbtRnldtwsm/8mt8qmHg/QBl7y/PUiE="
+  semver: "v1.0.0"
+>
+entry: <
   import_path: "github.com/cenkalti/backoff"
   version: "v0.0.0-20190506075156-2146c9339422"
   bazel_name: "com_github_cenkalti_backoff"
@@ -2496,6 +2503,13 @@ entry: <
   bazel_name: "com_github_pierrec_lz4"
   sum: "h1:CZzRn4Ut9GbUkHlQ7jqBXeZQV41ZSKWFc302ZU6lUTk="
   semver: "v2.3.0+incompatible"
+>
+entry: <
+  import_path: "github.com/pierrec/lz4/v4"
+  version: "v4.1.12"
+  bazel_name: "com_github_pierrec_lz4_v4"
+  sum: "h1:44l88ehTZAUGW4VlO1QC4zkilL99M6Y9MXNwEs0uzP8="
+  semver: "v4.1.12"
 >
 entry: <
   import_path: "github.com/pkg/errors"

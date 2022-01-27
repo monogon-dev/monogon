@@ -55,7 +55,7 @@ func main() {
 		"-M", "microvm,x-option-roms=off,pic=off,pit=off,rtc=off,isa-serial=off",
 		"-kernel", "metropolis/test/ktest/linux-testing.elf",
 		"-append", "reboot=t console=hvc0 quiet",
-		"-initrd", "metropolis/vm/smoketest/initramfs.lz4",
+		"-initrd", "metropolis/vm/smoketest/initramfs.cpio.lz4",
 		"-device", "virtio-rng-device,max-bytes=1024,period=1000",
 		"-device", "virtio-serial-device,max_ports=16",
 		"-chardev", "stdio,id=con0", "-device", "virtconsole,chardev=con0",
