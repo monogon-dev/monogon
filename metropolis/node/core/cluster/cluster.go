@@ -41,6 +41,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
+	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -58,6 +59,7 @@ type state struct {
 type Manager struct {
 	storageRoot    *localstorage.Root
 	networkService *network.Service
+	roleServer     *roleserve.Service
 	status         memory.Value
 
 	state
@@ -70,10 +72,11 @@ type Manager struct {
 // NewManager creates a new cluster Manager. The given localstorage Root must
 // be places, but not yet started (and will be started as the Manager makes
 // progress). The given network Service must already be running.
-func NewManager(storageRoot *localstorage.Root, networkService *network.Service) *Manager {
+func NewManager(storageRoot *localstorage.Root, networkService *network.Service, rs *roleserve.Service) *Manager {
 	return &Manager{
 		storageRoot:    storageRoot,
 		networkService: networkService,
+		roleServer:     rs,
 
 		state: state{},
 	}

@@ -17,7 +17,6 @@ package hostsfile
 import (
 	"bytes"
 	"context"
-	"crypto/ed25519"
 	"fmt"
 	"net"
 	"sort"
@@ -26,34 +25,23 @@ import (
 	"google.golang.org/grpc"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
-	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
+	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 type Config struct {
-	// NodePublicKey is the local node's public key, used for calculating the local
-	// node's ID/name. This is used instead of passing identity.Node as the
-	// hostsfile service starts very early, earlier than a node might have its' full
-	// identity (which includes cluster certificates), but will have its public key.
-	NodePublicKey ed25519.PublicKey
 	// Network is a handle to the Network service, used to update the hostsfile
 	// service with information about the local node's external IP address.
 	Network *network.Service
 	// Ephemeral is the root of the ephemeral storage of the node, into which the
 	// service will write its managed files.
 	Ephemeral *localstorage.EphemeralDirectory
-	// ClusterDialer is an optional function that the service will call to establish
-	// connectivity to cluster services. If given, the local files will be augmented
-	// with information about all the cluster's nodes (ie. the local node will be
-	// able to resolve all nodes in the cluster by DNS name), otherwise only the
-	// local node's addresse/name will be populated.
-	//
-	// MVP: this should instead be an event value (maybe a roleserver bit?) which
-	// allows the service to access the cluster data gracefully, instead of it
-	// having to be restarted when cluster connectivity becomes available.
-	ClusterDialer ClusterDialer
+
+	// Roleserver is an instance of the roleserver service which will be queried for
+	// ClusterMembership and a Curator client.
+	Roleserver *roleserve.Service
 }
 
 // Service is the hostsfile service instance. See package-level documentation
@@ -109,19 +97,20 @@ func (s *Service) Run(ctx context.Context) error {
 	s.clusterC = make(chan nodeMap)
 	defer close(s.clusterC)
 
-	nodeID := identity.NodeID(s.NodePublicKey)
+	cmw := s.Roleserver.ClusterMembership.Watch()
+	defer cmw.Close()
+	supervisor.Logger(ctx).Infof("Waiting for node ID...")
+	nodeID, err := cmw.GetNodeID(ctx)
+	if err != nil {
+		return err
+	}
+	supervisor.Logger(ctx).Infof("Got node ID, starting...")
 
 	if err := supervisor.Run(ctx, "local", s.runLocal); err != nil {
 		return err
 	}
-
-	if s.ClusterDialer != nil {
-		supervisor.Logger(ctx).Infof("Running with cluster support.")
-		if err := supervisor.Run(ctx, "cluster", s.runCluster); err != nil {
-			return err
-		}
-	} else {
-		supervisor.Logger(ctx).Infof("Running without cluster support, only local node will be present.")
+	if err := supervisor.Run(ctx, "cluster", s.runCluster); err != nil {
+		return err
 	}
 
 	// Immediately update machine-id and hostname, we don't need network addresses
@@ -217,14 +206,24 @@ func (s *Service) runLocal(ctx context.Context) error {
 // reflects the up-to-date view of the cluster returned from the Curator Watch
 // call, including any node deletions.
 func (s *Service) runCluster(ctx context.Context) error {
-	cl, err := s.Config.ClusterDialer(ctx)
-	if err != nil {
-		return fmt.Errorf("cluster dial failed: %w", err)
-	}
-	defer cl.Close()
-	curator := ipb.NewCuratorClient(cl)
+	cmw := s.Roleserver.ClusterMembership.Watch()
+	defer cmw.Close()
 
-	w, err := curator.Watch(ctx, &ipb.WatchRequest{
+	supervisor.Logger(ctx).Infof("Waiting for cluster membership...")
+	cm, err := cmw.GetHome(ctx)
+	if err != nil {
+		return err
+	}
+	supervisor.Logger(ctx).Infof("Got cluster membership, starting...")
+
+	con, err := cm.DialCurator()
+	if err != nil {
+		return err
+	}
+	defer con.Close()
+	cur := ipb.NewCuratorClient(con)
+
+	w, err := cur.Watch(ctx, &ipb.WatchRequest{
 		Kind: &ipb.WatchRequest_NodesInCluster_{
 			NodesInCluster: &ipb.WatchRequest_NodesInCluster{},
 		},

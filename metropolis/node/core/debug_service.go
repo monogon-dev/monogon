@@ -53,20 +53,17 @@ type debugService struct {
 }
 
 func (s *debugService) GetDebugKubeconfig(ctx context.Context, req *apb.GetDebugKubeconfigRequest) (*apb.GetDebugKubeconfigResponse, error) {
-	if s.roleserve == nil {
-		return nil, status.Errorf(codes.Unavailable, "node does not run roleserver/kubernetes")
-	}
-	w := s.roleserve.Watch()
+	w := s.roleserve.KubernetesStatus.Watch()
 	defer w.Close()
 	for {
 		v, err := w.Get(ctx)
 		if err != nil {
-			return nil, status.Errorf(codes.Unavailable, "could not get roleserve status: %v", err)
+			return nil, status.Errorf(codes.Unavailable, "could not get kubernetes status: %v", err)
 		}
-		if v.Kubernetes == nil {
+		if v.Svc == nil {
 			continue
 		}
-		return v.Kubernetes.GetDebugKubeconfig(ctx, req)
+		return v.Svc.GetDebugKubeconfig(ctx, req)
 	}
 }
 

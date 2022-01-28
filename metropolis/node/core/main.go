@@ -23,20 +23,18 @@ import (
 	"net"
 	"os"
 	"runtime/debug"
-	"time"
 
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/cluster"
-	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/node/core/network"
+	"source.monogon.dev/metropolis/node/core/network/hostsfile"
 	"source.monogon.dev/metropolis/node/core/roleserve"
 	timesvc "source.monogon.dev/metropolis/node/core/time"
-	"source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/pkg/tpm"
@@ -139,87 +137,37 @@ func main() {
 			return fmt.Errorf("when starting time: %w", err)
 		}
 
+		// Start the role service. The role service connects to the curator and runs
+		// all node-specific role code (eg. Kubernetes services).
+		//   supervisor.Logger(ctx).Infof("Starting role service...")
+		rs := roleserve.New(roleserve.Config{
+			StorageRoot: root,
+			Network:     networkSvc,
+		})
+		if err := supervisor.Run(ctx, "role", rs.Run); err != nil {
+			close(trapdoor)
+			return fmt.Errorf("failed to start role service: %w", err)
+		}
+
+		// Start the hostsfile service.
+		hostsfileSvc := hostsfile.Service{
+			Config: hostsfile.Config{
+				Roleserver: rs,
+				Network:    networkSvc,
+				Ephemeral:  &root.Ephemeral,
+			},
+		}
+		if err := supervisor.Run(ctx, "hostsfile", hostsfileSvc.Run); err != nil {
+			close(trapdoor)
+			return fmt.Errorf("failed to start hostsfile service: %w", err)
+		}
+
 		// Start cluster manager. This kicks off cluster membership machinery,
 		// which will either start a new cluster, enroll into one or join one.
-		m := cluster.NewManager(root, networkSvc)
+		m := cluster.NewManager(root, networkSvc, rs)
 		if err := supervisor.Run(ctx, "enrolment", m.Run); err != nil {
-			return fmt.Errorf("when starting enrolment: %w", err)
-		}
-
-		// Wait until the node finds a home in the new cluster.
-		watcher := m.Watch()
-		status, err := watcher.GetHome(ctx)
-		if err != nil {
 			close(trapdoor)
-			return fmt.Errorf("new couldn't find home in new cluster, aborting: %w", err)
-		}
-
-		// Currently, only the first node of the cluster runs etcd. That means only that
-		// node can run the curator, kubernetes and roleserver.
-		//
-		// This is a temporary stopgap until we land a roleserver rewrite which fixes
-		// this.
-
-		var rs *roleserve.Service
-		if status.Consensus != nil {
-			w := status.Consensus.Watch()
-			supervisor.Logger(ctx).Infof("Waiting for consensus before continuing control plane startup...")
-			st, err := w.GetRunning(ctx)
-			if err != nil {
-				return fmt.Errorf("while waiting for running consensus: %w", err)
-			}
-			supervisor.Logger(ctx).Infof("Got consensus, continuing control plane startup...")
-			kkv, err := st.KubernetesClient()
-			if err != nil {
-				close(trapdoor)
-				return fmt.Errorf("failed to retrieve consensus kubernetes PKI client: %w", err)
-			}
-
-			// TODO(q3k): restart curator on credentials change?
-
-			// Start cluster curator. The cluster curator is responsible for lifecycle
-			// management of the cluster.
-			// In the future, this will only be started on nodes that run etcd.
-			c := curator.New(curator.Config{
-				Consensus:       status.Consensus,
-				NodeCredentials: status.Credentials,
-				// TODO(q3k): make this configurable?
-				LeaderTTL: time.Second * 5,
-				Directory: &root.Ephemeral.Curator,
-			})
-			if err := supervisor.Run(ctx, "curator", c.Run); err != nil {
-				close(trapdoor)
-				return fmt.Errorf("when starting curator: %w", err)
-			}
-
-			// We are now in a cluster. We can thus access our 'node' object and
-			// start all services that we should be running.
-			logger.Info("Control plane running, starting roleserver....")
-
-			// Ensure Kubernetes PKI objects exist in etcd. In the future, this logic will
-			// be implemented in the curator.
-			kpki := pki.New(lt.MustLeveledFor("pki.kubernetes"), kkv)
-			if err := kpki.EnsureAll(ctx); err != nil {
-				close(trapdoor)
-				return fmt.Errorf("failed to ensure kubernetes PKI present: %w", err)
-			}
-
-			// Start the role service. The role service connects to the curator and runs
-			// all node-specific role code (eg. Kubernetes services).
-			//   supervisor.Logger(ctx).Infof("Starting role service...")
-			rs = roleserve.New(roleserve.Config{
-				CuratorDial: c.DialCluster,
-				StorageRoot: root,
-				Network:     networkSvc,
-				KPKI:        kpki,
-				Node:        &status.Credentials.Node,
-			})
-			if err := supervisor.Run(ctx, "role", rs.Run); err != nil {
-				close(trapdoor)
-				return fmt.Errorf("failed to start role service: %w", err)
-			}
-		} else {
-			logger.Warningf("TODO(q3k): Dummy node - will not run Kubernetes/Curator/Roleserver...")
+			return fmt.Errorf("when starting enrolment: %w", err)
 		}
 
 		// Start the node debug service.

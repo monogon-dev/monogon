@@ -36,6 +36,7 @@ import (
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 
 	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/identity"
 	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/metropolis/test/launch/cluster"
 )
@@ -99,7 +100,7 @@ func TestE2E(t *testing.T) {
 	// It currently tests both a set of OS-level conditions and Kubernetes
 	// Deployments and StatefulSets
 	t.Run("RunGroup", func(t *testing.T) {
-		t.Run("Connect to Curator", func(t *testing.T) {
+		t.Run("Cluster", func(t *testing.T) {
 			testEventual(t, "Retrieving cluster directory sucessful", ctx, 60*time.Second, func(ctx context.Context) error {
 				res, err := cluster.Management.GetClusterInfo(ctx, &apb.GetClusterInfoRequest{})
 				if err != nil {
@@ -111,25 +112,38 @@ func TestE2E(t *testing.T) {
 				if want, got := clusterOptions.NumNodes, len(nodes); want != got {
 					return fmt.Errorf("wanted %d nodes in cluster directory, got %d", want, got)
 				}
+
+				// Ensure the nodes have the expected addresses.
+				addresses := make(map[string]bool)
+				for _, n := range nodes {
+					if len(n.Addresses) != 1 {
+						return fmt.Errorf("node %s has no addresss", identity.NodeID(n.PublicKey))
+					}
+					address := n.Addresses[0].Host
+					addresses[address] = true
+				}
+
+				for _, address := range []string{"10.1.0.2", "10.1.0.3"} {
+					if !addresses[address] {
+						return fmt.Errorf("address %q not found in directory", address)
+					}
+				}
 				return nil
 			})
 		})
-		t.Run("Get Kubernetes client", func(t *testing.T) {
+		t.Run("Kubernetes", func(t *testing.T) {
 			t.Parallel()
 			clientSet, err := GetKubeClientSet(cluster, cluster.Ports[common.KubernetesAPIWrappedPort])
 			if err != nil {
 				t.Fatal(err)
 			}
-			testEventual(t, "Node is registered and ready", ctx, largeTestTimeout, func(ctx context.Context) error {
+			testEventual(t, "Nodes are registered and ready", ctx, largeTestTimeout, func(ctx context.Context) error {
 				nodes, err := clientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 				if err != nil {
 					return err
 				}
-				if len(nodes.Items) < 1 {
-					return errors.New("node not registered")
-				}
-				if len(nodes.Items) > 1 {
-					return errors.New("more than one node registered (but there is only one)")
+				if len(nodes.Items) < 2 {
+					return errors.New("nodes not yet registered")
 				}
 				node := nodes.Items[0]
 				for _, cond := range node.Status.Conditions {

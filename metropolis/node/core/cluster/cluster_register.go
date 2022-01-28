@@ -18,7 +18,6 @@ import (
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
-	cpb "source.monogon.dev/metropolis/proto/common"
 	ppb "source.monogon.dev/metropolis/proto/private"
 )
 
@@ -30,7 +29,7 @@ import (
 // test multiple nodes in a cluster. It does notably not run either
 // etcd/consensus or the curator, which also prevents Kubernetes from running.
 func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_ClusterRegister) error {
-	// Do a validation pass on the provided NodeParameters.Register data, fail early
+	//// Do a validation pass on the provided NodeParameters.Register data, fail early
 	// if it looks invalid.
 	ca, err := x509.ParseCertificate(register.CaCertificate)
 	if err != nil {
@@ -51,7 +50,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 		}
 		for j, add := range node.Addresses {
 			if add.Host == "" || net.ParseIP(add.Host) == nil {
-				return fmt.Errorf("NodeParameters.ClusterDirectory.Nodes[%d].Addresses[%d] invalid: not a parseable address", i, j)
+				return fmt.Errorf("NodeParameters.ClusterDirectory.Nodes[%d].Addresses[%d] (%q) invalid: not a parseable address", i, j, add.Host)
 			}
 		}
 		if len(node.PublicKey) != ed25519.PublicKeySize {
@@ -103,6 +102,14 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 		return fmt.Errorf("could not create ephemeral client to %q: %w", remote, err)
 	}
 	cur := ipb.NewCuratorClient(eph)
+
+	// Register this node.
+	//
+	// MVP: From this point on forward, we have very little resiliency to failure,
+	// we barely scrape by with usage of retry loops. We should break down all the
+	// logic into some sort of state machine where we can atomically make progress
+	// on each of the stages and get rid of the retry loops. The cluster enrolment
+	// code should let us do this quite easily.
 	_, err = cur.RegisterNode(ctx, &ipb.RegisterNodeRequest{
 		RegisterTicket: register.RegisterTicket,
 	})
@@ -132,11 +139,10 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	if err != nil {
 		return fmt.Errorf("NewNodeCredentials failed after receiving certificate from cluster: %w", err)
 	}
-	status := Status{
-		State:       cpb.ClusterState_CLUSTER_STATE_HOME,
-		Credentials: creds,
-	}
-	m.status.Set(status)
+
+	m.roleServer.ProvideRegisterData(*creds, register.ClusterDirectory)
+	// TODO(q3k): save keypair to localstorage
+
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)
 	return nil
