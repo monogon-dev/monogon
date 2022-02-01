@@ -1,6 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("//metropolis/node/build:def.bzl", "erofs_image", "verity_image")
 load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
+load("//metropolis/node/build/fwprune:def.bzl", "fsspec_linux_firmware")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
 go_library(
@@ -19,6 +20,12 @@ config_setting(
     values = {
         "compilation_mode": "dbg",
     },
+)
+
+fsspec_linux_firmware(
+    name = "firmware",
+    firmware_files = ["@linux-firmware//:all_files"],
+    kernel = "//third_party/linux",
 )
 
 erofs_image(
@@ -86,6 +93,7 @@ erofs_image(
         "@xfsprogs//:mkfs": "/bin/mkfs.xfs",
         "@chrony//:chrony": "/time/chrony",
     },
+    fsspecs = [":firmware"],
     symlinks = {
         "/ephemeral/machine-id": "/etc/machine-id",
         "/ephemeral/hosts": "/etc/hosts",

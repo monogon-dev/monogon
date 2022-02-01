@@ -137,6 +137,13 @@ linux_external(
     version = "5.15.2",
 )
 
+load("//third_party/linux-firmware:external.bzl", "linux_firmware_external")
+
+linux_firmware_external(
+    name = "linux-firmware",
+    version = "20211216",
+)
+
 load("//third_party/edk2:external.bzl", "edk2_external")
 
 edk2_external(name = "edk2")
