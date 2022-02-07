@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"source.monogon.dev/metropolis/pkg/logtree"
 )
 
 // waitSettle waits until the supervisor reaches a 'settled' state - ie., one
@@ -531,6 +533,87 @@ func TestResilience(t *testing.T) {
 	}
 	// Make sure 'one' is still okay.
 	oneTest()
+}
+
+// TestSubLoggers exercises the reserved/sub-logger functionality of runnable
+// nodes. It ensures a sub-logger and runnable cannot have colliding names, and
+// that logging actually works.
+func TestSubLoggers(t *testing.T) {
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	errCA := make(chan error)
+	errCB := make(chan error)
+	lt := logtree.New()
+	New(ctx, func(ctx context.Context) error {
+		err := RunGroup(ctx, map[string]Runnable{
+			// foo will first create a sublogger, then attempt to create a
+			// colliding runnable.
+			"foo": func(ctx context.Context) error {
+				sl, err := SubLogger(ctx, "dut")
+				if err != nil {
+					errCA <- fmt.Errorf("creating sub-logger: %w", err)
+					return nil
+				}
+				sl.Infof("hello from foo.dut")
+				err = Run(ctx, "dut", runnableBecomesHealthy(nil, nil))
+				if err == nil {
+					errCA <- fmt.Errorf("creating colliding runnable should have failed")
+					return nil
+				}
+				Signal(ctx, SignalHealthy)
+				Signal(ctx, SignalDone)
+				errCA <- nil
+				return nil
+			},
+		})
+		if err != nil {
+			return err
+		}
+		_, err = SubLogger(ctx, "foo")
+		if err == nil {
+			errCB <- fmt.Errorf("creating collising sub-logger should have failed")
+			return nil
+		}
+		Signal(ctx, SignalHealthy)
+		Signal(ctx, SignalDone)
+		errCB <- nil
+		return nil
+	}, WithPropagatePanic, WithExistingLogtree(lt))
+
+	err := <-errCA
+	if err != nil {
+		t.Fatalf("from root.foo: %v", err)
+	}
+	err = <-errCB
+	if err != nil {
+		t.Fatalf("from root: %v", err)
+	}
+
+	// Now enure that the expected message appears in the logtree.
+	dn := logtree.DN("root.foo.dut")
+	r, err := lt.Read(dn, logtree.WithBacklog(logtree.BacklogAllAvailable))
+	if err != nil {
+		t.Fatalf("logtree read failed: %v", err)
+	}
+	defer r.Close()
+	found := false
+	for _, e := range r.Backlog {
+		if e.DN != dn {
+			continue
+		}
+		if e.Leveled == nil {
+			continue
+		}
+		if e.Leveled.MessagesJoined() != "hello from foo.dut" {
+			continue
+		}
+		found = true
+		break
+	}
+	if !found {
+		t.Fatalf("did not find expected logline in %s", dn)
+	}
 }
 
 func ExampleNew() {

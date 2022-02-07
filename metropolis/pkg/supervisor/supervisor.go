@@ -23,6 +23,7 @@ package supervisor
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"sync"
 
@@ -159,4 +160,30 @@ func RawLogger(ctx context.Context) io.Writer {
 	node, unlock := fromContext(ctx)
 	defer unlock()
 	return node.sup.logtree.MustRawFor(logtree.DN(node.dn()))
+}
+
+// SubLogger returns a LeveledLogger for a given name. The name is used to
+// placed that logger within the logtree hierarchy. For example, if the
+// runnable `root.foo` requests a SubLogger for name `bar`, the returned logger
+// will log to `root.foo.bar` in the logging tree.
+//
+// An error is returned if the given name is invalid or conflicts with a child
+// runnable of the current runnable. In addition, whenever a node uses a
+// sub-logger with a given name, that name also becomes unavailable for use as
+// a child runnable (no runnable and sub-logger may ever log into the same
+// logtree DN).
+func SubLogger(ctx context.Context, name string) (logtree.LeveledLogger, error) {
+	node, unlock := fromContext(ctx)
+	defer unlock()
+
+	if _, ok := node.children[name]; ok {
+		return nil, fmt.Errorf("name %q already in use by child runnable", name)
+	}
+	if !reNodeName.MatchString(name) {
+		return nil, fmt.Errorf("sub-logger name %q is invalid", name)
+	}
+	node.reserved[name] = true
+
+	dn := fmt.Sprintf("%s.%s", node.dn(), name)
+	return node.sup.logtree.LeveledFor(logtree.DN(dn))
 }

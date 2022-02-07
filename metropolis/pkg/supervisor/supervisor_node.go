@@ -43,6 +43,10 @@ type node struct {
 	// Children of this tree. This is represented by a map keyed from child
 	// node names, for easy access.
 	children map[string]*node
+	// Reserved nodes that may not be used as child names. This is currently
+	// used by sub-loggers (see SubLogger function), preventing a sub-logger
+	// name from colliding with a node name.
+	reserved map[string]bool
 	// Supervision groups. Each group is a set of names of children. Sets, and
 	// as such groups, don't overlap between each other. A supervision group
 	// indicates that if any child within that group fails, all others should
@@ -199,6 +203,7 @@ func (n *node) reset() {
 	// Clear children and state
 	n.state = nodeStateNew
 	n.children = make(map[string]*node)
+	n.reserved = make(map[string]bool)
 	n.groups = nil
 
 	// The node is now ready to be scheduled.
@@ -243,6 +248,9 @@ func (n *node) runGroup(runnables map[string]Runnable) error {
 		}
 		if _, ok := n.children[name]; ok {
 			return fmt.Errorf("runnable %q already exists", name)
+		}
+		if _, ok := n.reserved[name]; ok {
+			return fmt.Errorf("runnable %q would shadow reserved name (eg. sub-logger)", name)
 		}
 	}
 
