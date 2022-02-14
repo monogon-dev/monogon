@@ -78,8 +78,10 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 		supervisor.Logger(ctx).Infof("    Node ID: %s, Addresses: %s", id, strings.Join(addresses, ","))
 	}
 
-	// Mount new storage with generated CUK, and save LUK into sealed config proto.
-	state.configuration = &ppb.SealedConfiguration{}
+	// Mount new storage with generated CUK, MountNew will save NUK into sc, to be
+	// saved into the ESP after successful registration.
+	var sc ppb.SealedConfiguration
+	state.configuration = &sc
 	supervisor.Logger(ctx).Infof("Registering: mounting new storage...")
 	cuk, err := m.storageRoot.Data.MountNew(state.configuration)
 	if err != nil {
@@ -139,9 +141,16 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	if err != nil {
 		return fmt.Errorf("NewNodeCredentials failed after receiving certificate from cluster: %w", err)
 	}
-
 	m.roleServer.ProvideRegisterData(*creds, register.ClusterDirectory)
-	// TODO(q3k): save keypair to localstorage
+
+	// Save NUK
+	if err = m.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc); err != nil {
+		return fmt.Errorf("failed to seal and write configuration: %w", err)
+	}
+	// Save Node Credentials
+	if err = m.storageRoot.Data.Node.Credentials.WriteAll(certBytes, priv, caCertBytes); err != nil {
+		return fmt.Errorf("while writing node credentials: %w", err)
+	}
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)

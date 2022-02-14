@@ -86,6 +86,28 @@ func (e *ESPNodeParameters) Unmarshal() (*apb.NodeParameters, error) {
 	return &config, nil
 }
 
+func (e *ESPSealedConfiguration) SealSecureBoot(c *ppb.SealedConfiguration) error {
+	bytes, err := proto.Marshal(c)
+	if err != nil {
+		return fmt.Errorf("while marshaling: %w", err)
+	}
+
+	// Use Secure Boot PCRs to seal the configuration.
+	// See: TCG PC Client Platform Firmware Profile Specification v1.05,
+	//      table 3.3.4.1
+	// See: https://trustedcomputinggroup.org/wp-content/uploads/
+	//      TCG_PCClient_PFP_r1p05_v22_02dec2020.pdf
+	bytes, err = tpm.Seal(bytes, tpm.SecureBootPCRs)
+	if err != nil {
+		return fmt.Errorf("while using tpm: %w", err)
+	}
+
+	if err := e.Write(bytes, 0644); err != nil {
+		return fmt.Errorf("while writing: %w", err)
+	}
+	return nil
+}
+
 func (e *ESPSealedConfiguration) Unseal() (*ppb.SealedConfiguration, error) {
 	bytes, err := e.Read()
 	if err != nil {
