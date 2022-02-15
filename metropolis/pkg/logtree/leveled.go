@@ -62,6 +62,19 @@ type LeveledLogger interface {
 	// given verbosity level was active at that time, and as such should not be a long-
 	// lived object in programs. This construct is further refered to as 'V-logs'.
 	V(level VerbosityLevel) VerboseLeveledLogger
+
+	// WithAddedStackDepth returns the same LeveledLogger, but adjusted with an
+	// additional 'extra stack depth' which will be used to skip a given number of
+	// stack/call frames when determining the location where the error originated.
+	// For example, WithStackDepth(1) will return a logger that will skip one
+	// stack/call frame. Then, with function foo() calling function helper() which
+	// in turns call l.Infof(), the log line will be emitted with the call site of
+	// helper() within foo(), instead of the default behaviour of logging the
+	// call site of Infof() within helper().
+	//
+	// This is useful for functions which somehow wrap loggers in helper functions,
+	// for example to expose a slightly different API.
+	WithAddedStackDepth(depth int) LeveledLogger
 }
 
 // VerbosityLevel is a verbosity level defined for V-logs. This can be changed

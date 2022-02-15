@@ -48,14 +48,14 @@ import (
 // the code handles the edge case of parsing a line from the end of a previous
 // year at the beginning of the next).
 func KLogParser(logger LeveledLogger) io.WriteCloser {
-	n, ok := logger.(*node)
+	p, ok := logger.(*leveledPublisher)
 	if !ok {
 		// Fail fast, as this is a programming error.
-		panic("Expected *node in LeveledLogger from supervisor")
+		panic("Expected *leveledPublisher in LeveledLogger from supervisor")
 	}
 
 	k := &klogParser{
-		n: n,
+		publisher: p,
 	}
 	// klog seems to have no line length limit. Let's assume some sane sort of default.
 	k.buffer = logbuffer.NewLineBuffer(1024, k.consumeLine)
@@ -63,8 +63,8 @@ func KLogParser(logger LeveledLogger) io.WriteCloser {
 }
 
 type klogParser struct {
-	n      *node
-	buffer *logbuffer.LineBuffer
+	publisher *leveledPublisher
+	buffer    *logbuffer.LineBuffer
 }
 
 func (k *klogParser) Write(p []byte) (n int, err error) {
@@ -84,17 +84,17 @@ func (k *klogParser) consumeLine(l *logbuffer.Line) {
 	if p == nil {
 		// We could instead emit that line as a raw log - however, this would lead to
 		// interleaving raw logging and leveled logging.
-		k.n.Errorf("Invalid klog line: %s", l.Data)
+		k.publisher.Errorf("Invalid klog line: %s", l.Data)
 	}
 	// TODO(q3k): should this be exposed as an API on LeveledLogger? How much should
 	// we permit library users to 'fake' logs? This would also permit us to get rid
 	// of the type assertion in KLogParser().
 	e := &entry{
-		origin:  k.n.dn,
+		origin:  k.publisher.node.dn,
 		leveled: p,
 	}
-	k.n.tree.journal.append(e)
-	k.n.tree.journal.notify(e)
+	k.publisher.node.tree.journal.append(e)
+	k.publisher.node.tree.journal.notify(e)
 }
 
 var (

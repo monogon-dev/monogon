@@ -209,3 +209,31 @@ func TestSeverity(t *testing.T) {
 		t.Fatalf("wanted entry %q, got %q", want, got)
 	}
 }
+
+func TestAddedStackDepth(t *testing.T) {
+	tree := New()
+	helper := func(msg string) {
+		tree.MustLeveledFor("main").WithAddedStackDepth(1).Infof("oh no: %s", msg)
+	}
+
+	// The next three lines are tested to be next to each other.
+	helper("it failed")
+	tree.MustLeveledFor("main").Infof("something else")
+
+	reader, err := tree.Read("main", WithBacklog(BacklogAllAvailable))
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	if want, got := 2, len(reader.Backlog); want != got {
+		t.Fatalf("wanted %d entries, got %d", want, got)
+	}
+	if want, got := "oh no: it failed", reader.Backlog[0].Leveled.MessagesJoined(); want != got {
+		t.Errorf("wanted entry %q, got %q", want, got)
+	}
+	if want, got := "something else", reader.Backlog[1].Leveled.MessagesJoined(); want != got {
+		t.Errorf("wanted entry %q, got %q", want, got)
+	}
+	if first, second := reader.Backlog[0].Leveled.line, reader.Backlog[1].Leveled.line; first+1 != second {
+		t.Errorf("first entry at %d, second at %d, wanted one after the other", first, second)
+	}
+}
