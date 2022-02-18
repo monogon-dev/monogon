@@ -187,3 +187,14 @@ func SubLogger(ctx context.Context, name string) (logtree.LeveledLogger, error) 
 	dn := fmt.Sprintf("%s.%s", node.dn(), name)
 	return node.sup.logtree.LeveledFor(logtree.DN(dn))
 }
+
+// MustSubLogger is a wrapper around SubLogger which panics on error. Errors
+// should only happen due to invalid names, so as long as the given name is
+// compile-time constant and valid, this function is safe to use.
+func MustSubLogger(ctx context.Context, name string) logtree.LeveledLogger {
+	l, err := SubLogger(ctx, name)
+	if err != nil {
+		panic(err)
+	}
+	return l
+}

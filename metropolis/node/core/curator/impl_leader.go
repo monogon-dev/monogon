@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"go.etcd.io/etcd/clientv3"
@@ -12,6 +13,7 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/node/core/identity"
+	"source.monogon.dev/metropolis/node/core/rpc"
 )
 
 // leadership represents the curator leader's ability to perform actions as a
@@ -50,15 +52,32 @@ var (
 // txnAsLeader performs an etcd transaction guarded by continued leadership.
 // lostLeadership will be returned as an error in case the leadership is lost.
 func (l *leadership) txnAsLeader(ctx context.Context, ops ...clientv3.Op) (*clientv3.TxnResponse, error) {
+	var opsStr []string
+	for _, op := range ops {
+		opstr := "unk"
+		switch {
+		case op.IsGet():
+			opstr = "get"
+		case op.IsDelete():
+			opstr = "delete"
+		case op.IsPut():
+			opstr = "put"
+		}
+		opsStr = append(opsStr, fmt.Sprintf("%s: %s", opstr, op.KeyBytes()))
+	}
+	rpc.Trace(ctx).Printf("txnAsLeader(%s)...", strings.Join(opsStr, ","))
 	resp, err := l.etcd.Txn(ctx).If(
 		clientv3.Compare(clientv3.CreateRevision(l.lockKey), "=", l.lockRev),
 	).Then(ops...).Commit()
 	if err != nil {
+		rpc.Trace(ctx).Printf("txnAsLeader(...): failed: %v", err)
 		return nil, fmt.Errorf("when running leader transaction: %w", err)
 	}
 	if !resp.Succeeded {
+		rpc.Trace(ctx).Printf("txnAsLeader(...): rejected (lost leadership)")
 		return nil, lostLeadership
 	}
+	rpc.Trace(ctx).Printf("txnAsLeader(...): ok")
 	return resp, nil
 }
 

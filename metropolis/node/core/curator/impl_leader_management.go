@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"source.monogon.dev/metropolis/node/core/identity"
+	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
@@ -72,7 +73,7 @@ func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClust
 	for _, kv := range kvs {
 		node, err := nodeUnmarshal(kv.Value)
 		if err != nil {
-			// TODO(issues/85): log this
+			rpc.Trace(ctx).Printf("Unmarshalling node %q failed: %v", kv.Value, err)
 			continue
 		}
 		if node.state != cpb.NodeState_NODE_STATE_UP {
@@ -130,7 +131,7 @@ func (l *leaderManagement) GetNodes(_ *apb.GetNodesRequest, srv apb.Management_G
 	for _, kv := range kvs {
 		node, err := nodeUnmarshal(kv.Value)
 		if err != nil {
-			// TODO(issues/85): log this
+			rpc.Trace(ctx).Printf("Unmarshalling node %q failed: %v", kv.Value, err)
 			continue
 		}
 

@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
+	"source.monogon.dev/metropolis/node/core/rpc"
 )
 
 // ensureRegisterTicket returns the cluster's current RegisterTicket, creating
@@ -17,6 +18,8 @@ import (
 func (l *leadership) ensureRegisterTicket(ctx context.Context) ([]byte, error) {
 	l.muRegisterTicket.Lock()
 	defer l.muRegisterTicket.Unlock()
+
+	rpc.Trace(ctx).Printf("ensureRegisterTicket()...")
 
 	// Retrieve existing ticket, if any.
 	res, err := l.txnAsLeader(ctx, clientv3.OpGet(registerTicketEtcdPath))
@@ -26,6 +29,7 @@ func (l *leadership) ensureRegisterTicket(ctx context.Context) ([]byte, error) {
 	kvs := res.Responses[0].GetResponseRange().Kvs
 	if len(kvs) > 0 {
 		// Ticket already generated, return.
+		rpc.Trace(ctx).Printf("ensureRegisterTicket(): ticket already exists")
 		return kvs[0].Value, nil
 	}
 
@@ -47,6 +51,8 @@ func (l *leadership) ensureRegisterTicket(ctx context.Context) ([]byte, error) {
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "could not save new ticket: %v", err)
 	}
+
+	rpc.Trace(ctx).Printf("ensureRegisterTicket(): generated and saved new ticket")
 
 	return ticketBytes, nil
 }

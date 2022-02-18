@@ -72,7 +72,7 @@ func (l *leaderCurator) watchNodeInCluster(nic *ipb.WatchRequest_NodeInCluster, 
 			if rpcErr, ok := rpcError(err); ok {
 				return rpcErr
 			}
-			// TODO(issues/85): log err
+			rpc.Trace(ctx).Printf("etcd watch failed: %v", err)
 			return status.Error(codes.Unavailable, "internal error")
 		}
 
@@ -105,7 +105,7 @@ func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, 
 			break
 		}
 		if err != nil {
-			// TODO(issues/85): log err
+			rpc.Trace(ctx).Printf("etcd watch failed (initial fetch): %v", err)
 			return status.Error(codes.Unavailable, "internal error during initial fetch")
 		}
 		nodeKV := v.(nodeAtID)
@@ -143,7 +143,7 @@ func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, 
 	for {
 		v, err := w.Get(ctx)
 		if err != nil {
-			// TODO(issues/85): log err
+			rpc.Trace(ctx).Printf("etcd watch failed (update): %v", err)
 			return status.Errorf(codes.Unavailable, "internal error during update")
 		}
 		we := &ipb.WatchEvent{}
@@ -261,7 +261,7 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 	// valid.
 	wantTicket, err := l.ensureRegisterTicket(ctx)
 	if err != nil {
-		// TODO(issues/85): log err
+		rpc.Trace(ctx).Printf("could not ensure register ticket: %v", err)
 		return nil, status.Error(codes.Unavailable, "could not retrieve register ticket")
 	}
 	gotTicket := req.RegisterTicket
@@ -291,7 +291,7 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 		// cluster, it should have access to the status of the node without danger of
 		// leaking data about other nodes.
 		//
-		// TODO(issues/85): log this
+		rpc.Trace(ctx).Printf("node %s already exists in cluster, failing", id)
 		return nil, status.Errorf(codes.FailedPrecondition, "node already exists in cluster, state %s", node.state.String())
 	}
 	if err != errNodeNotFound {

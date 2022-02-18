@@ -27,6 +27,7 @@ import (
 
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
+	"source.monogon.dev/metropolis/node/core/rpc"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -165,6 +166,7 @@ var (
 // untrusted callers. If the given node is not found, errNodeNotFound will be
 // returned.
 func nodeLoad(ctx context.Context, l *leadership, id string) (*Node, error) {
+	rpc.Trace(ctx).Printf("loadNode(%s)...", id)
 	key, err := nodeEtcdPrefix.Key(id)
 	if err != nil {
 		// TODO(issues/85): log err
@@ -179,6 +181,7 @@ func nodeLoad(ctx context.Context, l *leadership, id string) (*Node, error) {
 		return nil, status.Errorf(codes.Unavailable, "could not retrieve node %s: %v", id, err)
 	}
 	kvs := res.Responses[0].GetResponseRange().Kvs
+	rpc.Trace(ctx).Printf("loadNode(%s): %d KVs", id, len(kvs))
 	if len(kvs) != 1 {
 		return nil, errNodeNotFound
 	}
@@ -187,6 +190,7 @@ func nodeLoad(ctx context.Context, l *leadership, id string) (*Node, error) {
 		// TODO(issues/85): log this
 		return nil, status.Errorf(codes.Unavailable, "could not unmarshal node")
 	}
+	rpc.Trace(ctx).Printf("loadNode(%s): unmarshal ok", id)
 	return node, nil
 }
 
@@ -194,6 +198,7 @@ func nodeLoad(ctx context.Context, l *leadership, id string) (*Node, error) {
 // All returned errors are gRPC statuses that safe to return to untrusted callers.
 func nodeSave(ctx context.Context, l *leadership, n *Node) error {
 	id := n.ID()
+	rpc.Trace(ctx).Printf("nodeSave(%s)...", id)
 	key, err := nodeEtcdPrefix.Key(id)
 	if err != nil {
 		// TODO(issues/85): log err
@@ -212,5 +217,6 @@ func nodeSave(ctx context.Context, l *leadership, n *Node) error {
 		// TODO(issues/85): log this
 		return status.Error(codes.Unavailable, "could not save updated node")
 	}
+	rpc.Trace(ctx).Printf("nodeSave(%s): write ok", id)
 	return nil
 }
