@@ -2,16 +2,31 @@ package rpc
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"sort"
+	"strings"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"source.monogon.dev/metropolis/node/core/identity"
 	epb "source.monogon.dev/metropolis/proto/ext"
 )
 
 type Permissions map[epb.Permission]bool
+
+func (p Permissions) String() string {
+	var res []string
+
+	for k, _ := range p {
+		res = append(res, k.String())
+	}
+
+	sort.Strings(res)
+	return strings.Join(res, ", ")
+}
 
 // PeerInfo represents the Metropolis-level information about the remote side
 // of a gRPC RPC, ie. about the calling client in server handlers and about the
@@ -98,6 +113,22 @@ func (p *PeerInfo) CheckPermissions(need Permissions) error {
 	}
 
 	return fmt.Errorf("invalid PeerInfo: neither Unauthenticated, User nor Node is set")
+}
+
+func (p *PeerInfo) String() string {
+	if p == nil {
+		return "nil"
+	}
+	switch {
+	case p.Node != nil:
+		return fmt.Sprintf("node: %s, %s", identity.NodeID(p.Node.PublicKey), p.Node.Permissions)
+	case p.User != nil:
+		return fmt.Sprintf("user: %s", p.User.Identity)
+	case p.Unauthenticated != nil:
+		return fmt.Sprintf("unauthenticated: pubkey %s", hex.EncodeToString(p.Unauthenticated.SelfSignedPublicKey))
+	default:
+		return "invalid"
+	}
 }
 
 type peerInfoKeyType string
