@@ -218,7 +218,7 @@ func (l *listener) run(ctx context.Context) error {
 		}
 		defer lisLocal.Close()
 
-		runnable := supervisor.GRPCServer(ls.SetupLocalGRPC(l), lisLocal, true)
+		runnable := supervisor.GRPCServer(ls.SetupLocalGRPC(nil, l), lisLocal, true)
 		return runnable(ctx)
 	})
 	if err != nil {
@@ -232,7 +232,7 @@ func (l *listener) run(ctx context.Context) error {
 		}
 		defer lisExternal.Close()
 
-		runnable := supervisor.GRPCServer(es.SetupExternalGRPC(l), lisExternal, true)
+		runnable := supervisor.GRPCServer(es.SetupExternalGRPC(nil, l), lisExternal, true)
 		return runnable(ctx)
 	})
 	if err != nil {

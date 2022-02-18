@@ -14,6 +14,7 @@ import (
 
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
+	"source.monogon.dev/metropolis/pkg/logtree"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
@@ -41,34 +42,10 @@ type authenticationStrategy interface {
 	getPeerInfoUnauthenticated(ctx context.Context) (*PeerInfo, error)
 }
 
-// stream implements the gRPC StreamInterceptor interface for use with
-// grpc.NewServer, based on an authenticationStrategy.
-func streamInterceptor(a authenticationStrategy) grpc.StreamServerInterceptor {
-	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		pi, err := check(ss.Context(), a, info.FullMethod)
-		if err != nil {
-			return err
-		}
-		return handler(srv, pi.serverStream(ss))
-	}
-}
-
-// unaryInterceptor implements the gRPC UnaryInterceptor interface for use with
-// grpc.NewServer, based on an authenticationStrategy.
-func unaryInterceptor(a authenticationStrategy) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		pi, err := check(ctx, a, info.FullMethod)
-		if err != nil {
-			return nil, err
-		}
-		return handler(pi.apply(ctx), req)
-	}
-}
-
-// check is called by the unary and server interceptors to perform
+// authenticationCheck is called by the unary and server interceptors to perform
 // authentication and authorization checks for a given RPC, calling the
 // serverInterceptors' authenticate function if needed.
-func check(ctx context.Context, a authenticationStrategy, methodName string) (*PeerInfo, error) {
+func authenticationCheck(ctx context.Context, a authenticationStrategy, methodName string) (*PeerInfo, error) {
 	mi, err := getMethodInfo(methodName)
 	if err != nil {
 		return nil, err
@@ -113,7 +90,7 @@ type ExternalServerSecurity struct {
 // metropolis.proto.ext.authorization options and authenticate/authorize
 // incoming connections. It also runs the gRPC server with the correct TLS
 // settings for authenticating itself to callers.
-func (l *ExternalServerSecurity) SetupExternalGRPC(impls ClusterExternalServices) *grpc.Server {
+func (l *ExternalServerSecurity) SetupExternalGRPC(logger logtree.LeveledLogger, impls ClusterExternalServices) *grpc.Server {
 	externalCreds := credentials.NewTLS(&tls.Config{
 		Certificates: []tls.Certificate{l.NodeCredentials.TLSCredentials()},
 		ClientAuth:   tls.RequestClientCert,
@@ -121,8 +98,8 @@ func (l *ExternalServerSecurity) SetupExternalGRPC(impls ClusterExternalServices
 
 	s := grpc.NewServer(
 		grpc.Creds(externalCreds),
-		grpc.UnaryInterceptor(unaryInterceptor(l)),
-		grpc.StreamInterceptor(streamInterceptor(l)),
+		grpc.UnaryInterceptor(unaryInterceptor(logger, l)),
+		grpc.StreamInterceptor(streamInterceptor(logger, l)),
 	)
 	cpb.RegisterCuratorServer(s, impls)
 	apb.RegisterAAAServer(s, impls)
@@ -237,10 +214,10 @@ type LocalServerSecurity struct {
 // SetupLocalGRPC returns a grpc.Server ready to listen on a local domain socket
 // and serve the Curator service. All incoming RPCs will be authenticated as
 // originating from the node for which LocalServerSecurity has been configured.
-func (l *LocalServerSecurity) SetupLocalGRPC(impls ClusterInternalServices) *grpc.Server {
+func (l *LocalServerSecurity) SetupLocalGRPC(logger logtree.LeveledLogger, impls ClusterInternalServices) *grpc.Server {
 	s := grpc.NewServer(
-		grpc.UnaryInterceptor(unaryInterceptor(l)),
-		grpc.StreamInterceptor(streamInterceptor(l)),
+		grpc.UnaryInterceptor(unaryInterceptor(logger, l)),
+		grpc.StreamInterceptor(streamInterceptor(logger, l)),
 	)
 	cpb.RegisterCuratorServer(s, impls)
 	return s

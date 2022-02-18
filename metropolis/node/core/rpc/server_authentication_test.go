@@ -41,7 +41,7 @@ func TestExternalServerSecurity(t *testing.T) {
 	}
 
 	impl := &testImplementation{}
-	srv := ss.SetupExternalGRPC(impl)
+	srv := ss.SetupExternalGRPC(nil, impl)
 	lis := bufconn.Listen(1024 * 1024)
 	go func() {
 		if err := srv.Serve(lis); err != nil {
@@ -123,7 +123,7 @@ func TestLocalServerSecurity(t *testing.T) {
 	}
 
 	impl := &testImplementation{}
-	srv := ls.SetupLocalGRPC(impl)
+	srv := ls.SetupLocalGRPC(nil, impl)
 	lis := bufconn.Listen(1024 * 1024)
 	go func() {
 		if err := srv.Serve(lis); err != nil {

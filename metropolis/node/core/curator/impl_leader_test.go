@@ -89,8 +89,8 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	}
 	// Create a curator gRPC server which performs authentication as per the created
 	// listenerSecurity and is backed by the created leader.
-	externalSrv := externalSec.SetupExternalGRPC(leader)
-	localSrv := localSec.SetupLocalGRPC(leader)
+	externalSrv := externalSec.SetupExternalGRPC(nil, leader)
+	localSrv := localSec.SetupLocalGRPC(nil, leader)
 	// The gRPC server will listen on an internal 'loopback' buffer.
 	externalLis := bufconn.Listen(1024 * 1024)
 	localLis := bufconn.Listen(1024 * 1024)
