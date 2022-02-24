@@ -9,12 +9,13 @@ load("//metropolis/node/build:def.bzl", "VerityConfig")
 def _efi_unified_kernel_image_impl(ctx):
     # Find the dependency paths to be passed to mkpayload.
     deps = {
-      "linux": ctx.file.kernel,
-      "initrd": ctx.file.initramfs,
-      "osrel": ctx.file.os_release,
-      "splash": ctx.file.splash,
-      "stub": ctx.file.stub,
+        "linux": ctx.file.kernel,
+        "initrd": ctx.file.initramfs,
+        "osrel": ctx.file.os_release,
+        "splash": ctx.file.splash,
+        "stub": ctx.file.stub,
     }
+
     # Since cmdline is a string attribute, put it into a file, then append
     # that file to deps.
     if ctx.attr.cmdline and ctx.attr.cmdline != "":
@@ -24,34 +25,40 @@ def _efi_unified_kernel_image_impl(ctx):
             content = ctx.attr.cmdline,
         )
         deps["cmdline"] = cmdline
+
     # Get the dm-verity target table from VerityConfig provider.
     if ctx.attr.verity:
-      deps["rootfs_dm_table"] = ctx.attr.verity[VerityConfig].table
+        deps["rootfs_dm_table"] = ctx.attr.verity[VerityConfig].table
+
     # Format deps into command line arguments while keeping track of mkpayload
     # runtime inputs.
     args = []
     inputs = []
     for name, file in deps.items():
-      if file:
-        args.append("-{}={}".format(name, file.path))
-        inputs.append(file)
+        if file:
+            args.append("-{}={}".format(name, file.path))
+            inputs.append(file)
+
     # Append the output parameter separately, as it doesn't belong with the
     # runtime inputs.
     image = ctx.actions.declare_file(ctx.attr.name + ".efi")
     args.append("-output={}".format(image.path))
+
     # Append the objcopy parameter separately, as it's not of File type, and
     # it does not constitute an input, since it's part of the toolchain.
     objcopy = ctx.attr._toolchain[platform_common.ToolchainInfo].objcopy_executable
     args.append("-objcopy={}".format(objcopy))
+
     # Run mkpayload.
     ctx.actions.run(
-      mnemonic = "GenEFIKernelImage",
-      progress_message = "Generating EFI unified kernel image",
-      inputs = inputs,
-      outputs = [image],
-      executable = ctx.file._mkpayload,
-      arguments = args
+        mnemonic = "GenEFIKernelImage",
+        progress_message = "Generating EFI unified kernel image",
+        inputs = inputs,
+        outputs = [image],
+        executable = ctx.file._mkpayload,
+        arguments = args,
     )
+
     # Return the unified kernel image file.
     return [DefaultInfo(files = depset([image]), runfiles = ctx.runfiles(files = [image]))]
 
