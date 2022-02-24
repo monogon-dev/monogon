@@ -40,7 +40,10 @@ os_release(
 efi_unified_kernel_image(
     name = "kernel",
     cmdline = "console=ttyS0,115200 console=tty0 quiet",
-    initrd = [":initramfs"],
+    initrd = [
+        "//metropolis/node:ucode",
+        ":initramfs",
+    ],
     kernel = "//third_party/linux",
     os_release = ":installer-release-info",
     visibility = ["//visibility:public"],
