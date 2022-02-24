@@ -22,11 +22,26 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
 )
+
+type stringList []string
+
+func (l *stringList) String() string {
+	if l == nil {
+		return ""
+	}
+	return strings.Join(*l, ", ")
+}
+
+func (l *stringList) Set(value string) error {
+	*l = append(*l, value)
+	return nil
+}
 
 var (
 	// sections contains VMAs and source files of the payload PE sections. The
@@ -46,6 +61,7 @@ var (
 		"cmdline": {"a file containting additional kernel command line parameters", "0x30000", false, nil},
 		"splash":  {"a splash screen image in BMP format", "0x40000", false, nil},
 	}
+	initrdList      stringList
 	objcopy         = flag.String("objcopy", "", "objcopy executable")
 	stub            = flag.String("stub", "", "the EFI stub executable")
 	output          = flag.String("output", "", "objcopy output")
@@ -53,8 +69,12 @@ var (
 )
 
 func main() {
+	flag.Var(&initrdList, "initrd", "Path to initramfs, can be given multiple times")
 	// Register parameters related to the EFI payload sections, then parse the flags.
 	for k, v := range sections {
+		if k == "initrd" { // initrd is special because it accepts multiple payloads
+			continue
+		}
 		v.file = flag.String(k, "", v.descr)
 		sections[k] = v
 	}
@@ -112,6 +132,30 @@ func main() {
 
 		*sections["cmdline"].file = out.Name()
 	}
+
+	var initrdPath string
+	if len(initrdList) > 0 {
+		initrd, err := os.CreateTemp(".", "initrd")
+		if err != nil {
+			log.Fatalf("Failed to create temporary initrd: %v", err)
+		}
+		defer os.Remove(initrd.Name())
+		for _, initrdPath := range initrdList {
+			initrdSrc, err := os.Open(initrdPath)
+			if err != nil {
+				log.Fatalf("Failed to open initrd file: %v", err)
+			}
+			if _, err := io.Copy(initrd, initrdSrc); err != nil {
+				initrdSrc.Close()
+				log.Fatalf("Failed concatinating initrd: %v", err)
+			}
+			initrdSrc.Close()
+		}
+		initrdPath = initrd.Name()
+	}
+	sec := sections["initrd"]
+	sec.file = &initrdPath
+	sections["initrd"] = sec
 
 	// Execute objcopy
 	var args []string

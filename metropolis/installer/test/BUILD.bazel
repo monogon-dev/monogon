@@ -34,7 +34,7 @@ go_library(
 efi_unified_kernel_image(
     name = "kernel",
     cmdline = "loglevel=0 console=ttyS0",
-    initramfs = "//metropolis/installer:initramfs",
+    initrd = ["//metropolis/installer:initramfs"],
     kernel = "//third_party/linux",
     visibility = ["//visibility:private"],
 )

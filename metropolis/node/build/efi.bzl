@@ -10,7 +10,6 @@ def _efi_unified_kernel_image_impl(ctx):
     # Find the dependency paths to be passed to mkpayload.
     deps = {
         "linux": ctx.file.kernel,
-        "initrd": ctx.file.initramfs,
         "osrel": ctx.file.os_release,
         "splash": ctx.file.splash,
         "stub": ctx.file.stub,
@@ -38,6 +37,10 @@ def _efi_unified_kernel_image_impl(ctx):
         if file:
             args.append("-{}={}".format(name, file.path))
             inputs.append(file)
+
+    for file in ctx.files.initrd:
+        args.append("-initrd={}".format(file.path))
+        inputs.append(file)
 
     # Append the output parameter separately, as it doesn't belong with the
     # runtime inputs.
@@ -73,9 +76,27 @@ efi_unified_kernel_image = rule(
         "cmdline": attr.string(
             doc = "The kernel commandline to be embedded.",
         ),
-        "initramfs": attr.label(
-            doc = "The initramfs to be embedded.",
-            allow_single_file = True,
+        "initrd": attr.label_list(
+            doc = """
+                List of payloads to concatenate and supply as the initrd parameter to Linux when it boots.
+                The name stems from the time Linux booted from an initial ram disk (initrd), but it's now
+                a catch-all for a bunch of different larger payload for early Linux initialization.
+
+                In Linux 5.15 this can first contain an arbitrary amount of uncompressed cpio archives
+                with directories being optional which is accessed by earlycpio. This is used for both
+                early microcode loading and ACPI table overrides. This can then be followed by an arbitrary
+                amount of compressed cpio archives (even with different compression methods) which will
+                together make up the initramfs. The initramfs is only booted into if it contains either
+                /init or whatever file is specified as init= in cmdline. Technically depending on kernel
+                flags you might be able to supply an actual initrd, i.e. an image of a disk loaded into
+                RAM, but that has been deprecated for nearly 2 decades and should really not be used.
+
+                For kernels designed to run on physical machines this should at least contain microcode,
+                optionally followed by a compressed initramfs. For kernels only used in virtualized
+                setups the microcode can be left out and if no initramfs is needed this option can
+                be omitted completely.
+                """,
+            allow_files = True,
         ),
         "os_release": attr.label(
             doc = """
