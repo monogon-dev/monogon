@@ -2,6 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("//metropolis/node/build:def.bzl", "erofs_image", "verity_image")
 load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
 load("//metropolis/node/build/fwprune:def.bzl", "fsspec_linux_firmware")
+load("//metropolis/node/build/mkucode:def.bzl", "cpio_ucode")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
 go_library(
@@ -26,6 +27,15 @@ fsspec_linux_firmware(
     name = "firmware",
     firmware_files = ["@linux-firmware//:all_files"],
     kernel = "//third_party/linux",
+)
+
+cpio_ucode(
+    name = "ucode",
+    ucode = {
+        "@linux-firmware//:amd_ucode": "AuthenticAMD",
+        "@intel_ucode//:fam6h": "GenuineIntel",
+    },
+    visibility = ["//metropolis:__subpackages__"],
 )
 
 erofs_image(

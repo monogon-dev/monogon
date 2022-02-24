@@ -144,6 +144,13 @@ linux_firmware_external(
     version = "20211216",
 )
 
+load("//third_party/intel_ucode:external.bzl", "intel_ucode_external")
+
+intel_ucode_external(
+    name = "intel_ucode",
+    version = "20220207",
+)
+
 load("//third_party/edk2:external.bzl", "edk2_external")
 
 edk2_external(name = "edk2")

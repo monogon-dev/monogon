@@ -4,7 +4,10 @@ def linux_firmware_external(name, version):
     sums = {
         "20211216": "c0f735dd232c22d41ce4d23a050a8d6efe3b6b8cbf9d0a636af5f9df66a619a3",
     }
-    all_content = """filegroup(name = "all_files", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
+    all_content = """
+filegroup(name = "all_files", srcs = glob(["**"]), visibility = ["//visibility:public"])
+filegroup(name = "amd_ucode", srcs = glob(["amd-ucode/*.bin"]), visibility = ["//visibility:public"])
+    """
 
     http_archive(
         name = name,
