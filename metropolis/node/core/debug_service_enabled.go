@@ -47,6 +47,8 @@ const (
 // it does nothing.
 func runDebugService(ctx context.Context, rs *roleserve.Service, lt *logtree.LogTree, root *localstorage.Root) error {
 	// This code is included in the debug build, so start the debug service.
+	supervisor.Logger(ctx).Warningf("YOU ARE RUNNING A DEBUG VERSION OF METROPOLIS. THIS IS UNSAFE.")
+	supervisor.Logger(ctx).Warningf("ANYONE WITH ACCESS TO THE MANAGEMENT ADDRESS OF THIS NODE CAN FULLY TAKE OVER THE CLUSTER, WITHOUT AUTHENTICATING.")
 	supervisor.Logger(ctx).Infof("Starting debug service...")
 	dbg := &debugService{
 		roleserve:       rs,
