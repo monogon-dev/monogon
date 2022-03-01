@@ -4,12 +4,17 @@ go_library(
     name = "go_default_library",
     # keep
     srcs = [
-        "debug_service.go",
         "main.go",
         "mounts.go",
     ] + select({
-        "//metropolis/node:debug_build": ["delve_enabled.go"],
-        "//conditions:default": ["delve_disabled.go"],
+        "//metropolis/node:debug_build": [
+            "debug_service_enabled.go",
+            "delve_enabled.go",
+        ],
+        "//conditions:default": [
+            "debug_service_disabled.go",
+            "delve_disabled.go",
+        ],
     }),
     importpath = "source.monogon.dev/metropolis/node/core",
     visibility = ["//visibility:private"],

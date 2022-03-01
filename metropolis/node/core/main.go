@@ -20,14 +20,11 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"runtime/debug"
 
 	"golang.org/x/sys/unix"
-	"google.golang.org/grpc"
 
-	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/cluster"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
@@ -38,7 +35,6 @@ import (
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/pkg/tpm"
-	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 func main() {
@@ -170,22 +166,8 @@ func main() {
 			return fmt.Errorf("when starting enrolment: %w", err)
 		}
 
-		// Start the node debug service.
-		supervisor.Logger(ctx).Infof("Starting debug service...")
-		dbg := &debugService{
-			roleserve:       rs,
-			logtree:         lt,
-			traceLock:       make(chan struct{}, 1),
-			ephemeralVolume: &root.Ephemeral.Containerd,
-		}
-		dbgSrv := grpc.NewServer()
-		apb.RegisterNodeDebugServiceServer(dbgSrv, dbg)
-		dbgLis, err := net.Listen("tcp", fmt.Sprintf(":%d", common.DebugServicePort))
-		if err != nil {
-			return fmt.Errorf("failed to listen on debug service: %w", err)
-		}
-		if err := supervisor.Run(ctx, "debug", supervisor.GRPCServer(dbgSrv, dbgLis, false)); err != nil {
-			return fmt.Errorf("failed to start debug service: %w", err)
+		if err := runDebugService(ctx, rs, lt, root); err != nil {
+			return fmt.Errorf("when starting debug service: %w", err)
 		}
 
 		supervisor.Signal(ctx, supervisor.SignalHealthy)

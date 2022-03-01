@@ -20,24 +20,51 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"regexp"
 	"strings"
 
 	ctr "github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 const (
 	logFilterMax = 1000
 )
+
+// runDebugService runs the debug service if this is a debug build. Otherwise
+// it does nothing.
+func runDebugService(ctx context.Context, rs *roleserve.Service, lt *logtree.LogTree, root *localstorage.Root) error {
+	// This code is included in the debug build, so start the debug service.
+	supervisor.Logger(ctx).Infof("Starting debug service...")
+	dbg := &debugService{
+		roleserve:       rs,
+		logtree:         lt,
+		traceLock:       make(chan struct{}, 1),
+		ephemeralVolume: &root.Ephemeral.Containerd,
+	}
+	dbgSrv := grpc.NewServer()
+	apb.RegisterNodeDebugServiceServer(dbgSrv, dbg)
+	dbgLis, err := net.Listen("tcp", fmt.Sprintf(":%d", common.DebugServicePort))
+	if err != nil {
+		return fmt.Errorf("failed to listen on debug service: %w", err)
+	}
+	if err := supervisor.Run(ctx, "debug", supervisor.GRPCServer(dbgSrv, dbgLis, false)); err != nil {
+		return fmt.Errorf("failed to start debug service: %w", err)
+	}
+	return nil
+}
 
 // debugService implements the Metropolis node debug API.
 type debugService struct {
