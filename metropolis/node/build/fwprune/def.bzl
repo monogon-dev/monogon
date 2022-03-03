@@ -13,10 +13,10 @@ def _fsspec_linux_firmware(ctx):
 
     ctx.actions.run(
         outputs = [fsspec_out],
-        inputs = [fwlist, modinfo] + ctx.files.firmware_files,
+        inputs = [fwlist, modinfo, ctx.file.metadata] + ctx.files.firmware_files,
         tools = [ctx.executable._fwprune],
         executable = ctx.executable._fwprune,
-        arguments = [modinfo.path, fwlist.path, fsspec_out.path],
+        arguments = [modinfo.path, fwlist.path, ctx.file.metadata.path, fsspec_out.path],
     )
 
     return [DefaultInfo(files = depset([fsspec_out])), FSSpecInfo(spec = fsspec_out, referenced = ctx.files.firmware_files)]
@@ -34,6 +34,14 @@ fsspec_linux_firmware = rule(
             doc = """
                List of firmware files. Generally at least a filegroup of the linux-firmware repository should
                be in here.
+            """,
+        ),
+        "metadata": attr.label(
+            mandatory = True,
+            allow_single_file = True,
+            doc = """
+                The metadata file for the Linux firmware. Currently this is the WHENCE file at the root of the
+                linux-firmware repository. Used for resolving additional links.
             """,
         ),
         "kernel": attr.label(

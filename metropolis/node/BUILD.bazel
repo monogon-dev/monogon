@@ -27,6 +27,7 @@ fsspec_linux_firmware(
     name = "firmware",
     firmware_files = ["@linux-firmware//:all_files"],
     kernel = "//third_party/linux",
+    metadata = "@linux-firmware//:metadata",
 )
 
 cpio_ucode(
