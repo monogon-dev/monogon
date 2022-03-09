@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
+	"sort"
 	"time"
 )
 
@@ -81,7 +82,8 @@ func (s *supervisor) processor(ctx context.Context) {
 		case <-ctx.Done():
 			s.ilogger.Infof("supervisor processor exiting: %v", ctx.Err())
 			s.processKill()
-			s.ilogger.Info("supervisor exited")
+			s.ilogger.Info("supervisor exited, starting liquidator to clean up remaining runnables...")
+			go s.liquidator()
 			return
 		case <-gc.C:
 			if !clean {
@@ -113,6 +115,84 @@ func (s *supervisor) processor(ctx context.Context) {
 			}
 		}
 	}
+}
+
+// The liquidator is a context-free goroutine which the supervisor starts after
+// its context has been canceled. Its job is to take over listening on the
+// processing channels that the supervisor processor would usually listen on,
+// and implement the minimum amount of logic required to mark existing runnables
+// as DEAD.
+//
+// It exits when all runnables have exited one way or another, and the
+// supervision tree is well and truly dead. This will also be reflected by
+// liveRunnables returning an empty list.
+func (s *supervisor) liquidator() {
+	for {
+		select {
+		case r := <-s.pReq:
+			switch {
+			case r.schedule != nil:
+				s.ilogger.Infof("liquidator: refusing to schedule %s", r.schedule.dn)
+				s.mu.Lock()
+				n := s.nodeByDN(r.schedule.dn)
+				n.state = nodeStateDead
+				s.mu.Unlock()
+			case r.died != nil:
+				s.ilogger.Infof("liquidator: %s exited", r.died.dn)
+				s.mu.Lock()
+				n := s.nodeByDN(r.died.dn)
+				n.state = nodeStateDead
+				s.mu.Unlock()
+			}
+		}
+		live := s.liveRunnables()
+		if len(live) == 0 {
+			s.ilogger.Infof("liquidator: complete, all runnables dead or done")
+			return
+		}
+	}
+}
+
+// liveRunnables returns a list of runnable DNs that aren't DONE/DEAD. This is
+// used by the liquidator to figure out when its job is done, and by the
+// TestHarness to know when to unblock the test cleanup function.
+func (s *supervisor) liveRunnables() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	// DFS through supervision tree, making not of live (non-DONE/DEAD runnables).
+	var live []string
+	seen := make(map[string]bool)
+	q := []*node{s.root}
+	for {
+		if len(q) == 0 {
+			break
+		}
+
+		// Pop from DFS queue.
+		el := q[0]
+		q = q[1:]
+
+		// Skip already visited runnables (this shouldn't happen because the supervision
+		// tree is, well, a tree - but better stay safe than get stuck in a loop).
+		eldn := el.dn()
+		if seen[eldn] {
+			continue
+		}
+		seen[eldn] = true
+
+		if el.state != nodeStateDead && el.state != nodeStateDone {
+			live = append(live, eldn)
+		}
+
+		// Recurse.
+		for _, child := range el.children {
+			q = append(q, child)
+		}
+	}
+
+	sort.Strings(live)
+	return live
 }
 
 // processKill cancels all nodes in the supervision tree. This is only called

@@ -19,7 +19,10 @@ package supervisor
 import (
 	"context"
 	"errors"
+	"log"
+	"sort"
 	"testing"
+	"time"
 
 	"source.monogon.dev/metropolis/pkg/logtree"
 )
@@ -32,9 +35,10 @@ import (
 // error, the harness will throw a test error, but will not abort the test.
 //
 // The harness also returns a context cancel function that can be used to
-// terminate the started supervisor early.  Regardless of manual cancellation,
+// terminate the started supervisor early. Regardless of manual cancellation,
 // the supervisor will always be terminated up at the end of the test/benchmark
-// it's running in.
+// it's running in. The supervision tree will also be cleaned up and the test
+// will block until all runnables have exited.
 //
 // The second returned value is the logtree used by this supervisor. It can be
 // used to assert some log messages are emitted in tests that exercise some
@@ -43,12 +47,11 @@ func TestHarness(t *testing.T, r func(ctx context.Context) error) (context.Cance
 	t.Helper()
 
 	ctx, ctxC := context.WithCancel(context.Background())
-	t.Cleanup(ctxC)
 
 	lt := logtree.New()
 	logtree.PipeAllToStderr(t, lt)
 
-	New(ctx, func(ctx context.Context) error {
+	sup := New(ctx, func(ctx context.Context) error {
 		Logger(ctx).Infof("Starting test %s...", t.Name())
 		if err := r(ctx); err != nil && !errors.Is(err, ctx.Err()) {
 			t.Errorf("Supervised runnable in harness returned error: %v", err)
@@ -56,5 +59,31 @@ func TestHarness(t *testing.T, r func(ctx context.Context) error) (context.Cance
 		}
 		return nil
 	}, WithExistingLogtree(lt))
+
+	t.Cleanup(func() {
+		log.Printf("supervisor.TestHarness: Canceling context...")
+		ctxC()
+		log.Printf("supervisor.TestHarness: Waiting for supervisor runnables to die...")
+		timeoutNag := time.Now().Add(5 * time.Second)
+
+		for {
+			live := sup.liveRunnables()
+			if len(live) == 0 {
+				log.Printf("supervisor.TestHarness: All done.")
+				return
+			}
+
+			if time.Now().After(timeoutNag) {
+				timeoutNag = time.Now().Add(5 * time.Second)
+				sort.Strings(live)
+				log.Printf("supervisor.TestHarness: Still live:")
+				for _, l := range live {
+					log.Printf("supervisor.TestHarness: - %s", l)
+				}
+			}
+
+			time.Sleep(time.Second)
+		}
+	})
 	return ctxC, lt
 }
