@@ -14,16 +14,13 @@ import "metropolis/proto/ext/authorization.proto";
 // that run a consensus server (etcd). Every instance either serves traffic
 // directly (if it is the leader) or passes all RPCs over to the current
 // leader.
-// The curator listens on gRPC over a local UNIX domain socket accessible to the
-// rest of the node code, and on a node's port over TLS with a certificate
-// issued by the Cluster CA.
+// The curator listens on gRPC on all network interfaces at a well known port,
+// with access encrypted and authenticated by TLS using certificates issued by
+// the Cluster CA.
 //
 // The curator is a privileged service, and performs per-RPC authorization based
-// on the identity of the client:
-//  - When serving traffic locally over a UNIX domain socket, the service
-//    attaches the identity of this node to the RPCs.
-//  - When serving over public gRPC, cluster authentication is required and gRPC
-//    client identity will be tied to the RPCs.
+// on the identity of the client, which is determined by the client certificate
+// supplied over TLS.
 //
 // TODO(q3k): implement and document public Cluster gRPC.
 // TODO(q3k): implement and document cluster auth for nodes and escrowed user

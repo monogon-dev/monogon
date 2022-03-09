@@ -27,8 +27,8 @@ import (
 )
 
 // fakeLeader creates a curatorLeader without any underlying leader election, in
-// its own etcd namespace. It starts public and local gRPC listeners and returns
-// clients to them.
+// its own etcd namespace. It starts the gRPC listener and returns clients to
+// it, from the point of view of the local node and some other external node.
 //
 // The gRPC listeners are replicated to behave as when running the Curator
 // within Metropolis, so all calls performed will be authenticated and encrypted
@@ -110,12 +110,9 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		t.Fatalf("could not generate unknown node keypair: %v", err)
 	}
 
-	// Create security interceptors for both gRPC listeners.
+	// Create security interceptors for gRPC listener.
 	externalSec := &rpc.ExternalServerSecurity{
 		NodeCredentials: nodeCredentials,
-	}
-	localSec := &rpc.LocalServerSecurity{
-		Node: &nodeCredentials.Node,
 	}
 
 	// Build a curator leader object. This implements methods that will be
@@ -130,17 +127,10 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	// Create a curator gRPC server which performs authentication as per the created
 	// listenerSecurity and is backed by the created leader.
 	externalSrv := externalSec.SetupExternalGRPC(nil, leader)
-	localSrv := localSec.SetupLocalGRPC(nil, leader)
 	// The gRPC server will listen on an internal 'loopback' buffer.
 	externalLis := bufconn.Listen(1024 * 1024)
-	localLis := bufconn.Listen(1024 * 1024)
 	go func() {
 		if err := externalSrv.Serve(externalLis); err != nil {
-			t.Fatalf("GRPC serve failed: %v", err)
-		}
-	}()
-	go func() {
-		if err := localSrv.Serve(localLis); err != nil {
 			t.Fatalf("GRPC serve failed: %v", err)
 		}
 	}()
@@ -149,7 +139,6 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	go func() {
 		<-ctx.Done()
 		externalSrv.Stop()
-		localSrv.Stop()
 	}()
 
 	// Create an authenticated manager gRPC client.
@@ -158,12 +147,11 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		t.Fatalf("Dialing external GRPC failed: %v", err)
 	}
 
-	// Create a locally authenticated node gRPC client.
-	lcl, err := rpc.NewNodeClientTest(localLis)
+	// Create an ephemeral node gRPC client for the local node.
+	lcl, err := rpc.NewAuthenticatedClientTest(externalLis, nodeCredentials.TLSCredentials(), nodeCredentials.ClusterCA())
 	if err != nil {
-		t.Fatalf("Dialing local GRPC failed: %v", err)
+		t.Fatalf("Dialing external GRPC failed: %v", err)
 	}
-
 	// Create an ephemeral node gRPC client for the 'other node'.
 	ocl, err := rpc.NewEphemeralClientTest(externalLis, otherPriv, nodeCredentials.ClusterCA())
 	if err != nil {

@@ -3,14 +3,11 @@ package curator
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -24,20 +21,6 @@ import (
 // It does not test the gRPC listener socket itself and the actual
 // implementations - that is deferred to curator functionality tests.
 func TestListenerSwitch(t *testing.T) {
-	// Create ephemeral directory for curator and place it into /tmp.
-	dir := localstorage.EphemeralCuratorDirectory{}
-	// Force usage of /tmp as temp directory root, otherwsie TMPDIR from Bazel
-	// returns a path long enough that socket binds in the localstorage fail
-	// (as socket names are limited to 108 characters).
-	tmp, err := os.MkdirTemp("/tmp", "curator-test-*")
-	if err != nil {
-		t.Fatalf("TempDir: %v", err)
-	}
-	err = declarative.PlaceFS(&dir, tmp)
-	if err != nil {
-		t.Fatalf("PlaceFS: %v", err)
-	}
-
 	// Create test event value.
 	var val memory.Value
 
@@ -46,8 +29,7 @@ func TestListenerSwitch(t *testing.T) {
 
 	// Create DUT listener.
 	l := &listener{
-		etcd:      nil,
-		directory: &dir,
+		etcd: nil,
 		electionWatch: func() electionWatcher {
 			return electionWatcher{
 				Watcher: val.Watch(),
@@ -81,7 +63,7 @@ func TestListenerSwitch(t *testing.T) {
 		})
 	}()
 	ctxRC()
-	err = <-errC
+	err := <-errC
 	if err == nil || !errors.Is(err, context.Canceled) {
 		t.Fatalf("callImpl context should have returned context error, got %v", err)
 	}

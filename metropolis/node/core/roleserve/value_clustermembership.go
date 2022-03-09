@@ -10,7 +10,6 @@ import (
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
-	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event"
@@ -33,9 +32,6 @@ import (
 // but also accesses it to pass over information about already known remote
 // curators and to get the local node's identity.
 type ClusterMembership struct {
-	// localCurator is set by the Control Plane Worker when this node runs control
-	// plane services.
-	localCurator *curator.Service
 	// localConsensus is set by the Control Plane Worker when this node runs control
 	// plane services.
 	localConsensus *consensus.Service
@@ -115,7 +111,7 @@ func (c *ClusterMembershipWatcher) GetHome(ctx context.Context) (*ClusterMembers
 		if cm.credentials == nil {
 			continue
 		}
-		if cm.localCurator == nil && cm.remoteCurators == nil {
+		if cm.remoteCurators == nil {
 			continue
 		}
 		return cm, nil
@@ -133,14 +129,10 @@ func (c *ClusterMembershipWatcher) GetHome(ctx context.Context) (*ClusterMembers
 // perform a GetHome/DialCurator process on any gRPC error. A smarter
 // load-balancing/re-dialing client will be implemented in the future.
 func (m *ClusterMembership) DialCurator() (*grpc.ClientConn, error) {
-	if m.localCurator != nil {
-		return m.localCurator.DialCluster()
-	}
-
 	// Dial first curator.
 	// TODO(q3k): load balance
 	if m.remoteCurators == nil || len(m.remoteCurators.Nodes) < 1 {
-		return nil, fmt.Errorf("no local or remote curators available")
+		return nil, fmt.Errorf("no curators available")
 	}
 	host := m.remoteCurators.Nodes[0].Addresses[0].Host
 	addr := net.JoinHostPort(host, common.CuratorServicePort.PortString())

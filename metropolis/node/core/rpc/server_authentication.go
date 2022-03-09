@@ -18,8 +18,12 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
-// authenticationStrategy is implemented by {Local,External}ServerSecurity to
-// share logic between the two implementations.
+// authenticationStrategy is implemented by ExternalServerSecurity. Historically
+// it has also been implemented by LocalServerSecurity (listening on a local
+// domain socket), but this implementation has since been removed.
+//
+// TODO(q3k): simplify this code and remove this interface now that there's only
+// ExternalServerSecurity.
 type authenticationStrategy interface {
 	// getPeerInfo will be called by the stream and unary gRPC server interceptors
 	// to authenticate incoming gRPC calls. It's given the gRPC context of the call
@@ -193,53 +197,4 @@ func getPeerCertificate(ctx context.Context) (*x509.Certificate, error) {
 	}
 
 	return cert, nil
-}
-
-// LocalServerSecurity are the security options of an RPC server that will run
-// the Curator service over a local domain socket. When set up using
-// LocalServerSecurity, all incoming RPCs will be authenticated as coming from
-// the node that this service is running on.
-//
-// It implements authenticationStrategy.
-type LocalServerSecurity struct {
-	// Node for which the gRPC server will authenticate all incoming requests as
-	// originating from.
-	Node *identity.Node
-
-	// nodePermissions is used by tests to inject the permissions available to a
-	// node. When not set, it defaults to the global nodePermissions map.
-	nodePermissions Permissions
-}
-
-// SetupLocalGRPC returns a grpc.Server ready to listen on a local domain socket
-// and serve the Curator service. All incoming RPCs will be authenticated as
-// originating from the node for which LocalServerSecurity has been configured.
-func (l *LocalServerSecurity) SetupLocalGRPC(logger logtree.LeveledLogger, impls ClusterInternalServices) *grpc.Server {
-	s := grpc.NewServer(
-		grpc.UnaryInterceptor(unaryInterceptor(logger, l)),
-		grpc.StreamInterceptor(streamInterceptor(logger, l)),
-	)
-	cpb.RegisterCuratorServer(s, impls)
-	return s
-}
-
-func (l *LocalServerSecurity) getPeerInfo(_ context.Context) (*PeerInfo, error) {
-	// Local connections are always node connections.
-	np := l.nodePermissions
-	if np == nil {
-		np = nodePermissions
-	}
-	return &PeerInfo{
-		Node: &PeerInfoNode{
-			PublicKey:   l.Node.PublicKey(),
-			Permissions: np,
-		},
-	}, nil
-}
-
-func (l *LocalServerSecurity) getPeerInfoUnauthenticated(_ context.Context) (*PeerInfo, error) {
-	// This shouldn't happen - why would we call unauthenticated methods locally?
-	// This can be implemented, but doesn't really make sense. For now, assume this
-	// is a programming error. This can be changed if needed.
-	return nil, status.Errorf(codes.Unauthenticated, "unauthenticated methods not supported over local connections")
 }

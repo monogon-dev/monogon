@@ -1,6 +1,7 @@
 package roleserve
 
 import (
+	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/x509"
@@ -337,12 +338,33 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				directory = startup.existingMembership.remoteCurators
 			}
 
+			// Ensure this node is present in the cluster directory.
+			if directory == nil {
+				directory = &cpb.ClusterDirectory{}
+			}
+			missing := true
+			for _, n := range directory.Nodes {
+				if bytes.Equal(n.PublicKey, creds.PublicKey()) {
+					missing = false
+					break
+				}
+			}
+			if missing {
+				directory.Nodes = append(directory.Nodes, &cpb.ClusterDirectory_Node{
+					PublicKey: creds.PublicKey(),
+					Addresses: []*cpb.ClusterDirectory_Node_Address{
+						{
+							Host: "127.0.0.1",
+						},
+					},
+				})
+			}
+
 			// Start curator.
 			cur := curator.New(curator.Config{
 				NodeCredentials: creds,
 				Consensus:       con,
 				LeaderTTL:       10 * time.Second,
-				Directory:       &s.storageRoot.Ephemeral.Curator,
 			})
 			if err := supervisor.Run(ctx, "curator", cur.Run); err != nil {
 				return fmt.Errorf("failed to start curator: %w", err)
@@ -354,7 +376,6 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 			// We now have a locally running ControlPlane. Reflect that in a new
 			// ClusterMembership.
 			s.clusterMembership.set(&ClusterMembership{
-				localCurator:   cur,
 				localConsensus: con,
 				credentials:    creds,
 				remoteCurators: directory,

@@ -12,8 +12,6 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
@@ -76,30 +74,17 @@ func newDut(ctx context.Context, t *testing.T, endpoint string, n *identity.Node
 		t.Fatalf("clientv3.New: %v", err)
 	}
 
-	// Create ephemeral directory for curator and place it into /tmp.
-	dir := localstorage.EphemeralCuratorDirectory{}
-	tmp, err := os.MkdirTemp("/tmp", "curator-test-*")
-	if err != nil {
-		t.Fatalf("TempDir: %v", err)
-	}
-	err = declarative.PlaceFS(&dir, tmp)
-	if err != nil {
-		t.Fatalf("PlaceFS: %v", err)
-	}
-
 	svc := New(Config{
 		NodeCredentials: n,
 		LeaderTTL:       time.Second,
-		Directory:       &dir,
 		Consensus:       consensus.TestServiceHandle(t, cli),
 	})
 	if err := supervisor.Run(ctx, n.ID(), svc.Run); err != nil {
 		t.Fatalf("Run %s: %v", n.ID(), err)
 	}
 	return &dut{
-		endpoint:  endpoint,
-		instance:  svc,
-		temporary: tmp,
+		endpoint: endpoint,
+		instance: svc,
 	}
 }
 

@@ -4,9 +4,11 @@
 // The Curator is implemented as a leader-elected service. Instances of the
 // service are running colocated with all nodes that run a consensus (etcd)
 // server.
-// Each instance listens locally over gRPC for requests from code running on the
-// same node, and publicly over gRPC for traffic from other nodes (eg. ones that
-// do not run an instance of the Curator) and external users.
+//
+// Each instance listens on all network interfaces, for requests both from the
+// code running on the same node, for traffic from other nodes (eg. ones that do
+// not run an instance of the Curator) and from external users.
+//
 // The curator leader keeps its state fully in etcd. Followers forward all
 // requests to the active leader.
 package curator
@@ -18,14 +20,11 @@ import (
 	"time"
 
 	"go.etcd.io/etcd/clientv3/concurrency"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/consensus"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -44,9 +43,6 @@ type Config struct {
 	// resiliency against short network partitions.
 	// A value less or equal to zero will default to 60 seconds.
 	LeaderTTL time.Duration
-	// Directory is the curator ephemeral directory in which the curator will
-	// store its local domain socket for connections from the node.
-	Directory *localstorage.EphemeralCuratorDirectory
 }
 
 // Service is the Curator service. See the package-level documentation for more
@@ -278,11 +274,10 @@ func (s *Service) Run(ctx context.Context) error {
 		return fmt.Errorf("while retrieving consensus client: %w", err)
 	}
 
-	// Start listener. This is a gRPC service listening on a local socket,
-	// providing the Curator API to consumers, dispatching to either a locally
-	// running leader, or forwarding to a remotely running leader.
+	// Start listener. This is a gRPC service listening on all interfaces, providing
+	// the Curator API to consumers, dispatching to either a locally running leader,
+	// or forwarding to a remotely running leader.
 	lis := listener{
-		directory:     s.config.Directory,
 		node:          s.config.NodeCredentials,
 		electionWatch: s.electionWatch,
 		dispatchC:     make(chan dispatchRequest),
@@ -313,9 +308,4 @@ func (s *Service) Run(ctx context.Context) error {
 		supervisor.Logger(ctx).Infof("Curator election round done: %v", err)
 		supervisor.Logger(ctx).Info("Curator election restarting...")
 	}
-}
-
-func (s *Service) DialCluster() (*grpc.ClientConn, error) {
-	remote := fmt.Sprintf("unix://%s", s.config.Directory.ClientSocket.FullPath())
-	return rpc.NewNodeClient(remote)
 }

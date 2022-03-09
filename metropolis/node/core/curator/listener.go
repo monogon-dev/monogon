@@ -15,7 +15,6 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/combinectx"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -44,9 +43,6 @@ type listener struct {
 	// etcd is a client to the locally running consensus (etcd) server which is used
 	// both for storing lock/leader election status and actual Curator data.
 	etcd client.Namespaced
-	// directory is the ephemeral directory in which the local gRPC socket will
-	// be available for node-local consumers.
-	directory *localstorage.EphemeralCuratorDirectory
 	// electionWatch is a function that returns an active electionWatcher for the
 	// listener to use when determining local leadership. As the listener may
 	// restart on error, this factory-function is used instead of an electionWatcher
@@ -90,6 +86,8 @@ func (l *listener) dispatcher(ctx context.Context) error {
 		// Respond to requests and status updates.
 		for {
 			select {
+			case <-ctx.Done():
+				return
 			case r := <-l.dispatchC:
 				// Handle request.
 				r.resC <- listenerTarget{
@@ -211,25 +209,8 @@ func (l *listener) run(ctx context.Context) error {
 	es := rpc.ExternalServerSecurity{
 		NodeCredentials: l.node,
 	}
-	ls := rpc.LocalServerSecurity{
-		Node: &l.node.Node,
-	}
 
-	err := supervisor.Run(ctx, "local", func(ctx context.Context) error {
-		lisLocal, err := net.ListenUnix("unix", &net.UnixAddr{Name: l.directory.ClientSocket.FullPath(), Net: "unix"})
-		if err != nil {
-			return fmt.Errorf("failed to listen: %w", err)
-		}
-		defer lisLocal.Close()
-
-		runnable := supervisor.GRPCServer(ls.SetupLocalGRPC(supervisor.MustSubLogger(ctx, "rpc"), l), lisLocal, true)
-		return runnable(ctx)
-	})
-	if err != nil {
-		return fmt.Errorf("while starting local gRPC listener: %w", err)
-	}
-
-	err = supervisor.Run(ctx, "external", func(ctx context.Context) error {
+	err := supervisor.Run(ctx, "external", func(ctx context.Context) error {
 		lisExternal, err := net.Listen("tcp", fmt.Sprintf(":%d", node.CuratorServicePort))
 		if err != nil {
 			return fmt.Errorf("failed to listen on external curator socket: %w", err)
