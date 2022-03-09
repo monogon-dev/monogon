@@ -8,7 +8,6 @@ go_library(
         "peerinfo.go",
         "server.go",
         "server_authentication.go",
-        "server_interceptors.go",
         "testhelpers.go",
         "trace.go",
     ],

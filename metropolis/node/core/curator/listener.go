@@ -124,7 +124,7 @@ type activeTarget struct {
 	// context cancel function for ctx, or nil if ctx is nil.
 	ctxC *context.CancelFunc
 	// active Curator implementation, or nil if not yet set up.
-	impl rpc.ClusterExternalServices
+	impl rpc.ClusterServices
 }
 
 // switchTo switches the activeTarget over to a Curator implementation as per
@@ -172,7 +172,7 @@ type listenerTarget struct {
 	ctx context.Context
 	// impl is the CuratorServer implementation to which RPCs should be directed
 	// according to the dispatcher.
-	impl rpc.ClusterExternalServices
+	impl rpc.ClusterServices
 }
 
 // dispatch contacts the dispatcher to retrieve an up-to-date listenerTarget.
@@ -206,7 +206,7 @@ func (l *listener) run(ctx context.Context) error {
 		return fmt.Errorf("when starting dispatcher: %w", err)
 	}
 
-	es := rpc.ExternalServerSecurity{
+	sec := rpc.ServerSecurity{
 		NodeCredentials: l.node,
 	}
 
@@ -217,7 +217,7 @@ func (l *listener) run(ctx context.Context) error {
 		}
 		defer lisExternal.Close()
 
-		runnable := supervisor.GRPCServer(es.SetupExternalGRPC(supervisor.MustSubLogger(ctx, "rpc"), l), lisExternal, true)
+		runnable := supervisor.GRPCServer(sec.SetupExternalGRPC(supervisor.MustSubLogger(ctx, "rpc"), l), lisExternal, true)
 		return runnable(ctx)
 	})
 	if err != nil {
@@ -243,7 +243,7 @@ func (l *listener) run(ctx context.Context) error {
 // returned are either returned directly or converted to an UNAVAILABLE status
 // if the error is as a result of the context being canceled due to the
 // implementation switching.
-type implOperation func(ctx context.Context, impl rpc.ClusterExternalServices) error
+type implOperation func(ctx context.Context, impl rpc.ClusterServices) error
 
 // callImpl gets the newest listenerTarget from the dispatcher, combines the
 // given context with the context of the listenerTarget implementation and calls
@@ -303,7 +303,7 @@ func (c *curatorWatchServer) Send(m *cpb.WatchEvent) error {
 }
 
 func (l *listener) Watch(req *cpb.WatchRequest, srv cpb.Curator_WatchServer) error {
-	proxy := func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+	proxy := func(ctx context.Context, impl rpc.ClusterServices) error {
 		return impl.Watch(req, &curatorWatchServer{
 			ServerStream: srv,
 			ctx:          ctx,
@@ -334,7 +334,7 @@ func (m *aaaEscrowServer) Recv() (*apb.EscrowFromClient, error) {
 }
 
 func (l *listener) Escrow(srv apb.AAA_EscrowServer) error {
-	return l.callImpl(srv.Context(), func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+	return l.callImpl(srv.Context(), func(ctx context.Context, impl rpc.ClusterServices) error {
 		return impl.Escrow(&aaaEscrowServer{
 			ServerStream: srv,
 			ctx:          ctx,
@@ -343,7 +343,7 @@ func (l *listener) Escrow(srv apb.AAA_EscrowServer) error {
 }
 
 func (l *listener) GetRegisterTicket(ctx context.Context, req *apb.GetRegisterTicketRequest) (res *apb.GetRegisterTicketResponse, err error) {
-	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterServices) error {
 		var err2 error
 		res, err2 = impl.GetRegisterTicket(ctx, req)
 		return err2
@@ -352,7 +352,7 @@ func (l *listener) GetRegisterTicket(ctx context.Context, req *apb.GetRegisterTi
 }
 
 func (l *listener) UpdateNodeStatus(ctx context.Context, req *cpb.UpdateNodeStatusRequest) (res *cpb.UpdateNodeStatusResponse, err error) {
-	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterServices) error {
 		var err2 error
 		res, err2 = impl.UpdateNodeStatus(ctx, req)
 		return err2
@@ -361,7 +361,7 @@ func (l *listener) UpdateNodeStatus(ctx context.Context, req *cpb.UpdateNodeStat
 }
 
 func (l *listener) GetClusterInfo(ctx context.Context, req *apb.GetClusterInfoRequest) (res *apb.GetClusterInfoResponse, err error) {
-	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterServices) error {
 		var err2 error
 		res, err2 = impl.GetClusterInfo(ctx, req)
 		return err2
@@ -370,7 +370,7 @@ func (l *listener) GetClusterInfo(ctx context.Context, req *apb.GetClusterInfoRe
 }
 
 func (l *listener) RegisterNode(ctx context.Context, req *cpb.RegisterNodeRequest) (res *cpb.RegisterNodeResponse, err error) {
-	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterServices) error {
 		var err2 error
 		res, err2 = impl.RegisterNode(ctx, req)
 		return err2
@@ -379,7 +379,7 @@ func (l *listener) RegisterNode(ctx context.Context, req *cpb.RegisterNodeReques
 }
 
 func (l *listener) CommitNode(ctx context.Context, req *cpb.CommitNodeRequest) (res *cpb.CommitNodeResponse, err error) {
-	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterServices) error {
 		var err2 error
 		res, err2 = impl.CommitNode(ctx, req)
 		return err2
@@ -401,7 +401,7 @@ func (s *managementGetNodesServer) Send(m *apb.Node) error {
 }
 
 func (l *listener) GetNodes(req *apb.GetNodesRequest, srv apb.Management_GetNodesServer) error {
-	proxy := func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+	proxy := func(ctx context.Context, impl rpc.ClusterServices) error {
 		return impl.GetNodes(req, &managementGetNodesServer{
 			ServerStream: srv,
 			ctx:          ctx,
@@ -411,7 +411,7 @@ func (l *listener) GetNodes(req *apb.GetNodesRequest, srv apb.Management_GetNode
 }
 
 func (l *listener) ApproveNode(ctx context.Context, req *apb.ApproveNodeRequest) (res *apb.ApproveNodeResponse, err error) {
-	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterServices) error {
 		var err2 error
 		res, err2 = impl.ApproveNode(ctx, req)
 		return err2

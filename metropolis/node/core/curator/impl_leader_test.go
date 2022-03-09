@@ -111,7 +111,7 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	}
 
 	// Create security interceptors for gRPC listener.
-	externalSec := &rpc.ExternalServerSecurity{
+	sec := &rpc.ServerSecurity{
 		NodeCredentials: nodeCredentials,
 	}
 
@@ -125,8 +125,8 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	}, &nodeCredentials.Node)
 
 	// Create a curator gRPC server which performs authentication as per the created
-	// listenerSecurity and is backed by the created leader.
-	externalSrv := externalSec.SetupExternalGRPC(nil, leader)
+	// ServerSecurity and is backed by the created leader.
+	externalSrv := sec.SetupExternalGRPC(nil, leader)
 	// The gRPC server will listen on an internal 'loopback' buffer.
 	externalLis := bufconn.Listen(1024 * 1024)
 	go func() {

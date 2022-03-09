@@ -16,23 +16,11 @@ var (
 	}
 )
 
-// ClusterExternalServices is the interface containing all gRPC services that a
-// Metropolis Cluster implements on its external interface. With the current
-// implementation of Metropolis, this is all implemented by the Curator.
-type ClusterExternalServices interface {
+// ClusterServices is the interface containing all gRPC services that a
+// Metropolis Cluster implements. With the current implementation of Metropolis,
+// this is all implemented by the Curator.
+type ClusterServices interface {
 	cpb.CuratorServer
 	apb.AAAServer
 	apb.ManagementServer
-}
-
-// ClusterInternalServices is the interface containing all gRPC services that a
-// Metropolis Cluster implements on its internal interface. Currently this is
-// just the Curator service.
-type ClusterInternalServices interface {
-	cpb.CuratorServer
-}
-
-type ClusterServices interface {
-	ClusterExternalServices
-	ClusterInternalServices
 }

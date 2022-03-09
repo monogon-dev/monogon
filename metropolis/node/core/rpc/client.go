@@ -132,19 +132,8 @@ func NewAuthenticatedClient(remote string, cert tls.Certificate, ca *x509.Certif
 	return grpc.Dial(remote, opts...)
 }
 
-func NewNodeClient(remote string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
-	opts = append(opts, grpc.WithInsecure())
-	return grpc.Dial(remote, opts...)
-}
-
 func NewAuthenticatedClientTest(listener *bufconn.Listener, cert tls.Certificate, ca *x509.Certificate) (*grpc.ClientConn, error) {
 	return NewAuthenticatedClient("local", cert, ca, grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
-		return listener.Dial()
-	}))
-}
-
-func NewNodeClientTest(listener *bufconn.Listener) (*grpc.ClientConn, error) {
-	return NewNodeClient("local", grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
 		return listener.Dial()
 	}))
 }

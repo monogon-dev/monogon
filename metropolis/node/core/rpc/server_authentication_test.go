@@ -35,7 +35,7 @@ func TestExternalServerSecurity(t *testing.T) {
 	for k, v := range nodePermissions {
 		permissions[k] = v
 	}
-	ss := ExternalServerSecurity{
+	ss := ServerSecurity{
 		NodeCredentials: eph.Nodes[0],
 		nodePermissions: permissions,
 	}

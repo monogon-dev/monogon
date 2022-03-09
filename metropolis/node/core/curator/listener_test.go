@@ -57,7 +57,7 @@ func TestListenerSwitch(t *testing.T) {
 	// Check that canceling the request unblocks a pending dispatched call.
 	errC := make(chan error)
 	go func() {
-		errC <- l.callImpl(ctxR, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+		errC <- l.callImpl(ctxR, func(ctx context.Context, impl rpc.ClusterServices) error {
 			<-ctx.Done()
 			return ctx.Err()
 		})
@@ -71,7 +71,7 @@ func TestListenerSwitch(t *testing.T) {
 	// Check that switching implementations unblocks a pending dispatched call.
 	scheduledC := make(chan struct{})
 	go func() {
-		errC <- l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterExternalServices) error {
+		errC <- l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterServices) error {
 			close(scheduledC)
 			<-ctx.Done()
 			return ctx.Err()

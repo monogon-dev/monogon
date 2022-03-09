@@ -18,64 +18,11 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
-// authenticationStrategy is implemented by ExternalServerSecurity. Historically
-// it has also been implemented by LocalServerSecurity (listening on a local
-// domain socket), but this implementation has since been removed.
-//
-// TODO(q3k): simplify this code and remove this interface now that there's only
-// ExternalServerSecurity.
-type authenticationStrategy interface {
-	// getPeerInfo will be called by the stream and unary gRPC server interceptors
-	// to authenticate incoming gRPC calls. It's given the gRPC context of the call
-	// (therefore allowing access to information about the underlying gRPC
-	// transport), and should return a PeerInfo structure describing the
-	// authenticated other end of the connection, or a gRPC status if the other
-	// side could not be successfully authenticated.
-	//
-	// The returned PeerInfo will then be used to perform authorization checks based
-	// on the configured authentication of a given gRPC method, as described by the
-	// metropolis.proto.ext.authorization extension. The same PeerInfo will then be
-	// available to the gRPC handler for this method by retrieving it from the
-	// context (via GetPeerInfo).
-	getPeerInfo(ctx context.Context) (*PeerInfo, error)
-
-	// getPeerInfoUnauthenticated is an equivalent to getPeerInfo, but called by the
-	// interceptors when a method is marked as 'unauthenticated'. The implementation
-	// should return a PeerInfo containing Unauthenticated, potentially populating
-	// it with UnauthenticatedPublicKey if such a public key could be retrieved.
-	getPeerInfoUnauthenticated(ctx context.Context) (*PeerInfo, error)
-}
-
-// authenticationCheck is called by the unary and server interceptors to perform
-// authentication and authorization checks for a given RPC, calling the
-// serverInterceptors' authenticate function if needed.
-func authenticationCheck(ctx context.Context, a authenticationStrategy, methodName string) (*PeerInfo, error) {
-	mi, err := getMethodInfo(methodName)
-	if err != nil {
-		return nil, err
-	}
-
-	if mi.unauthenticated {
-		return a.getPeerInfoUnauthenticated(ctx)
-	}
-
-	pi, err := a.getPeerInfo(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := pi.CheckPermissions(mi.need); err != nil {
-		return nil, err
-	}
-	return pi, nil
-}
-
 // ServerSecurity are the security options of a RPC server that will run
 // ClusterServices on a Metropolis node. It contains all the data for the
 // server implementation to authenticate itself to the clients and authenticate
 // and authorize clients connecting to it.
-//
-// It implements authenticationStrategy.
-type ExternalServerSecurity struct {
+type ServerSecurity struct {
 	// NodeCredentials which will be used to run the gRPC server, and whose CA
 	// certificate will be used to authenticate incoming requests.
 	NodeCredentials *identity.NodeCredentials
@@ -85,47 +32,143 @@ type ExternalServerSecurity struct {
 	nodePermissions Permissions
 }
 
-// SetupExternalGRPC returns a grpc.Server ready to listen and serve all external
-// gRPC APIs that the cluster server implementation should run, with all calls
-// being authenticated and authorized based on the data in ServerSecurity. The
+// SetupExternalGRPC returns a grpc.Server ready to listen and serve all gRPC
+// services that the cluster server implementation should run, with all calls
+// authenticated and authorized based on the data in ServerSecurity. The
 // argument 'impls' is the object implementing the gRPC APIs.
 //
-// This effectively configures gRPC interceptors that verify
+// Under the hood, this configures gRPC interceptors that verify
 // metropolis.proto.ext.authorization options and authenticate/authorize
 // incoming connections. It also runs the gRPC server with the correct TLS
 // settings for authenticating itself to callers.
-func (l *ExternalServerSecurity) SetupExternalGRPC(logger logtree.LeveledLogger, impls ClusterExternalServices) *grpc.Server {
+func (s *ServerSecurity) SetupExternalGRPC(logger logtree.LeveledLogger, impls ClusterServices) *grpc.Server {
 	externalCreds := credentials.NewTLS(&tls.Config{
-		Certificates: []tls.Certificate{l.NodeCredentials.TLSCredentials()},
+		Certificates: []tls.Certificate{s.NodeCredentials.TLSCredentials()},
 		ClientAuth:   tls.RequestClientCert,
 	})
 
-	s := grpc.NewServer(
+	srv := grpc.NewServer(
 		grpc.Creds(externalCreds),
-		grpc.UnaryInterceptor(unaryInterceptor(logger, l)),
-		grpc.StreamInterceptor(streamInterceptor(logger, l)),
+		grpc.UnaryInterceptor(s.unaryInterceptor(logger)),
+		grpc.StreamInterceptor(s.streamInterceptor(logger)),
 	)
-	cpb.RegisterCuratorServer(s, impls)
-	apb.RegisterAAAServer(s, impls)
-	apb.RegisterManagementServer(s, impls)
-	return s
+	cpb.RegisterCuratorServer(srv, impls)
+	apb.RegisterAAAServer(srv, impls)
+	apb.RegisterManagementServer(srv, impls)
+	return srv
 }
 
-func (l *ExternalServerSecurity) getPeerInfo(ctx context.Context) (*PeerInfo, error) {
+// streamInterceptor returns a gRPC StreamInterceptor interface for use with
+// grpc.NewServer. It's applied to gRPC servers started within Metropolis,
+// notably to the Curator.
+func (s *ServerSecurity) streamInterceptor(logger logtree.LeveledLogger) grpc.StreamServerInterceptor {
+	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		var span *logtreeSpan
+		if logger != nil {
+			span = newLogtreeSpan(logger)
+			span.Printf("RPC invoked: streaming request: %s", info.FullMethod)
+			ss = &spanServerStream{
+				ServerStream: ss,
+				span:         span,
+			}
+		}
+
+		pi, err := s.authenticationCheck(ss.Context(), info.FullMethod)
+		if err != nil {
+			if s != nil {
+				span.Printf("RPC send: authentication failed: %v", err)
+			}
+			return err
+		}
+		if span != nil {
+			span.Printf("RPC peerInfo: %s", pi.String())
+		}
+
+		return handler(srv, pi.serverStream(ss))
+	}
+}
+
+// unaryInterceptor returns a gRPC UnaryInterceptor interface for use with
+// grpc.NewServer. It's applied to gRPC servers started within Metropolis,
+// notably to the Curator.
+func (s *ServerSecurity) unaryInterceptor(logger logtree.LeveledLogger) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		// Inject span if we have a logger.
+		if logger != nil {
+			ctx = contextWithSpan(ctx, newLogtreeSpan(logger))
+		}
+
+		Trace(ctx).Printf("RPC invoked: unary request: %s", info.FullMethod)
+
+		// Perform authentication check and inject PeerInfo.
+		pi, err := s.authenticationCheck(ctx, info.FullMethod)
+		if err != nil {
+			Trace(ctx).Printf("RPC send: authentication failed: %v", err)
+			return nil, err
+		}
+		ctx = pi.apply(ctx)
+
+		// Log authentication information.
+		Trace(ctx).Printf("RPC peerInfo: %s", pi.String())
+
+		// Call underlying handler.
+		resp, err = handler(ctx, req)
+
+		// Log result into span.
+		if err != nil {
+			Trace(ctx).Printf("RPC send: error: %v", err)
+		} else {
+			Trace(ctx).Printf("RPC send: ok, %s", protoMessagePretty(resp))
+		}
+		return
+	}
+}
+
+// authenticationCheck is called by the unary and server interceptors to perform
+// authentication and authorization checks for a given RPC.
+func (s *ServerSecurity) authenticationCheck(ctx context.Context, methodName string) (*PeerInfo, error) {
+	mi, err := getMethodInfo(methodName)
+	if err != nil {
+		return nil, err
+	}
+
+	if mi.unauthenticated {
+		return s.getPeerInfoUnauthenticated(ctx)
+	}
+
+	pi, err := s.getPeerInfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := pi.CheckPermissions(mi.need); err != nil {
+		return nil, err
+	}
+	return pi, nil
+}
+
+// getPeerInfo is be called by authenticationCheck to authenticate incoming gRPC
+// calls. It returns PeerInfo structure describing the authenticated other end
+// of the connection, or a gRPC status if the other side could not be
+// successfully authenticated.
+//
+// The returned PeerInfo can then be used to perform authorization checks based
+// on the configured authentication of a given gRPC method, as described by the
+// metropolis.proto.ext.authorization extension.
+func (s *ServerSecurity) getPeerInfo(ctx context.Context) (*PeerInfo, error) {
 	cert, err := getPeerCertificate(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Ensure that the certificate is signed by the cluster CA.
-	if err := cert.CheckSignatureFrom(l.NodeCredentials.ClusterCA()); err != nil {
+	if err := cert.CheckSignatureFrom(s.NodeCredentials.ClusterCA()); err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "certificate not signed by cluster CA: %v", err)
 	}
 
-	nodepk, errNode := identity.VerifyNodeInCluster(cert, l.NodeCredentials.ClusterCA())
+	nodepk, errNode := identity.VerifyNodeInCluster(cert, s.NodeCredentials.ClusterCA())
 	if errNode == nil {
 		// This is a Metropolis node.
-		np := l.nodePermissions
+		np := s.nodePermissions
 		if np == nil {
 			np = nodePermissions
 		}
@@ -137,7 +180,7 @@ func (l *ExternalServerSecurity) getPeerInfo(ctx context.Context) (*PeerInfo, er
 		}, nil
 	}
 
-	userid, errUser := identity.VerifyUserInCluster(cert, l.NodeCredentials.ClusterCA())
+	userid, errUser := identity.VerifyUserInCluster(cert, s.NodeCredentials.ClusterCA())
 	if errUser == nil {
 		// This is a Metropolis user/manager.
 		return &PeerInfo{
@@ -151,7 +194,11 @@ func (l *ExternalServerSecurity) getPeerInfo(ctx context.Context) (*PeerInfo, er
 	return nil, status.Errorf(codes.Unauthenticated, "presented certificate is neither user certificate (%v) nor node certificate (%v)", errUser, errNode)
 }
 
-func (l *ExternalServerSecurity) getPeerInfoUnauthenticated(ctx context.Context) (*PeerInfo, error) {
+// getPeerInfoUnauthenticated is an equivalent to getPeerInfo, but called when a
+// method is marked as 'unauthenticated'. The implementation should return a
+// PeerInfo containing Unauthenticated, potentially populating it with
+// UnauthenticatedPublicKey if such a public key could be retrieved.
+func (s *ServerSecurity) getPeerInfoUnauthenticated(ctx context.Context) (*PeerInfo, error) {
 	res := PeerInfo{
 		Unauthenticated: &PeerInfoUnauthenticated{},
 	}
