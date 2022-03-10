@@ -31,16 +31,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
-	tpmpb "github.com/google/go-tpm-tools/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/google/go-tpm-tools/tpm2tools"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpmutil"
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/sysfs"
+	tpmpb "source.monogon.dev/metropolis/pkg/tpm/proto"
 )
 
 var (
@@ -226,22 +227,39 @@ func GenerateSafeKey(size uint16) ([]byte, error) {
 // Seal seals sensitive data and only allows access if the current platform
 // configuration in matches the one the data was sealed on.
 func Seal(data []byte, pcrs []int) ([]byte, error) {
+	// Generate a key and use secretbox to encrypt and authenticate the actual
+	// payload as go-tpm2 uses a raw seal operation limiting payload size to
+	// 128 bytes which is insufficient.
+	boxKey, err := GenerateSafeKey(32)
+	if err != nil {
+		return []byte{}, fmt.Errorf("failed to generate boxKey: %w", err)
+	}
 	lock.Lock()
 	defer lock.Unlock()
-	if tpm == nil {
-		return []byte{}, ErrNotInitialized
-	}
 	srk, err := tpm2tools.StorageRootKeyRSA(tpm.device)
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "failed to load TPM SRK")
 	}
 	defer srk.Close()
-	sealedKey, err := srk.Seal(pcrs, data)
-	sealedKeyRaw, err := proto.Marshal(sealedKey)
+	var boxKeyArr [32]byte
+	copy(boxKeyArr[:], boxKey)
+	// Nonce is not used as we're generating a new boxKey for every operation,
+	// therefore we can just leave it all-zero.
+	var unusedNonce [24]byte
+	encryptedData := secretbox.Seal(nil, data, &unusedNonce, &boxKeyArr)
+	sealedKey, err := srk.Seal(pcrs, boxKey)
+	if err != nil {
+		return []byte{}, fmt.Errorf("failed to seal boxKey: %w", err)
+	}
+	sealedBytes := tpmpb.ExtendedSealedBytes{
+		SealedKey:        sealedKey,
+		EncryptedPayload: encryptedData,
+	}
+	rawSealedBytes, err := proto.Marshal(&sealedBytes)
 	if err != nil {
 		return []byte{}, errors.Wrapf(err, "failed to marshal sealed data")
 	}
-	return sealedKeyRaw, nil
+	return rawSealedBytes, nil
 }
 
 // Unseal unseals sensitive data if the current platform configuration allows
@@ -258,21 +276,31 @@ func Unseal(data []byte) ([]byte, error) {
 	}
 	defer srk.Close()
 
-	var sealedKey tpmpb.SealedBytes
-	if err := proto.Unmarshal(data, &sealedKey); err != nil {
-		return []byte{}, errors.Wrap(err, "failed to decode sealed data")
+	var sealedBytes tpmpb.ExtendedSealedBytes
+	if err := proto.Unmarshal(data, &sealedBytes); err != nil {
+		return []byte{}, errors.Wrap(err, "failed to unmarshal sealed data")
 	}
 	// Logging this for auditing purposes
 	pcrList := []string{}
-	for _, pcr := range sealedKey.Pcrs {
+	for _, pcr := range sealedBytes.SealedKey.Pcrs {
 		pcrList = append(pcrList, string(pcr))
 	}
-	tpm.logger.Infof("Attempting to unseal data protected with PCRs %s", strings.Join(pcrList, ","))
-	unsealedData, err := srk.Unseal(&sealedKey)
+	tpm.logger.Infof("Attempting to unseal key protected with PCRs %s", strings.Join(pcrList, ","))
+	unsealedKey, err := srk.Unseal(sealedBytes.SealedKey)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to unseal data")
+		return []byte{}, errors.Wrap(err, "failed to unseal key")
 	}
-	return unsealedData, nil
+	var key [32]byte
+	if len(unsealedKey) != len(key) {
+		return []byte{}, fmt.Errorf("unsealed key has wrong length: expected %v bytes, got %v", len(key), len(unsealedKey))
+	}
+	copy(key[:], unsealedKey)
+	var unusedNonce [24]byte
+	payload, ok := secretbox.Open(nil, sealedBytes.EncryptedPayload, &unusedNonce, &key)
+	if !ok {
+		return []byte{}, errors.New("payload box cannot be opened")
+	}
+	return payload, nil
 }
 
 // Standard AK template for RSA2048 non-duplicatable restricted signing for
