@@ -40,11 +40,11 @@ func parseManifest(path string) (map[string]string, error) {
 	return manifest, nil
 }
 
-// resolveRunfile tries to resolve a workspace-relative file path into an
+// ResolveRunfile tries to resolve a workspace-relative file path into an
 // absolute path with the use of bazel runfiles, through either the original
 // Bazel/Go runfile integration or a wrapper that also supports running from
 // outside `bazel run`.
-func resolveRunfile(path string) (string, error) {
+func ResolveRunfile(path string) (string, error) {
 	var errEx error
 	ep, err := os.Executable()
 	if err == nil {
@@ -80,7 +80,7 @@ func resolveRunfile(path string) (string, error) {
 // runfiles, including for cases when executables are running outside `bazel
 // run`.
 func Get(path string) ([]byte, error) {
-	rfpath, err := resolveRunfile(path)
+	rfpath, err := ResolveRunfile(path)
 	if err != nil {
 		return nil, err
 	}
