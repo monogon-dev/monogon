@@ -33,7 +33,7 @@ Internals
 
 The toolchain is implemented in the following way:
 
-1. `//build/toolchain/musl-host-gcc/sysroot` is used to build `//build/toolchain/musl-host-gcc/sysroot.tar.xz` which is a tarball that contains all include and binary library files for building against musl for Metropolis nodes (x86\_64 / k8) - thes are musl headers, musl libraries, and linux headers. This tarball is commited to source control.
+1. `//build/toolchain/musl-host-gcc/sysroot` is used to build `//build/toolchain/musl-host-gcc/sysroot.tar.xz` which is a tarball that contains all include and binary library files for building against musl for Metropolis nodes (x86\_64 / k8) - these are musl headers, musl libraries, and linux headers. This tarball is committed to source control.
 1. When building a target that uses the toolchain, the `sysroot.tar.xz` tarball is extracted into an external repository `@musl_sysroot`, via `sysroot.bzl` and `sysroot_repository.bzl`.
 1. A toolchain config is built using `//build/toolchain:cc_toolchain_config.bzl`, which points at `gcc-wrapper.sh` as its gcc entrypoint. `gcc-wrapper.sh` expects to be able to call the host gcc with `musl.spec`.
 1. A toolchain is built in `//build/toolchain/musl-host-gcc:musl_host_cc_suite`, which uses the previously mentioned config, and builds it to contain `gcc-wrapper.sh`, `musl.spec`, and the sysroot tarball.
