@@ -8,13 +8,10 @@ import (
 	"crypto/x509"
 	"fmt"
 	"math/big"
-	"net"
 	"time"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/test/bufconn"
 
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/pkg/pki"
@@ -40,19 +37,23 @@ func verifyClusterCertificate(ca *x509.Certificate) verifyPeerCertificate {
 	}
 }
 
-// NewEphemeralClient dials a cluster's services using just a self-signed
-// certificate and can be used to then escrow real cluster credentials for the
-// owner.
+// NewEphemeralCredentials returns gRPC TransportCredentials that can be used to
+// dial a cluster without authenticating with a certificate, but instead
+// authenticating by proving the possession of a private key, via an ephemeral
+// self-signed certificate.
 //
-// These self-signed certificates are used by clients connecting to the cluster
-// which want to prove ownership of an ED25519 keypair but don't have any
-// 'real' client certificate (yet). Current users include users of AAA.Escrow
-// and new nodes Registering into the Cluster.
+// Currently these credentials are used in two flows:
+//
+//   1. Registration of nodes into a cluster, after which a node receives a proper
+//      node certificate
+//
+//   2. Escrow of initial owner credentials into a proper manager
+//      certificate
 //
 // If 'ca' is given, the remote side will be cryptographically verified to be a
 // node that's part of the cluster represented by the ca. Otherwise, no
 // verification is performed and this function is unsafe.
-func NewEphemeralClient(remote string, private ed25519.PrivateKey, ca *x509.Certificate, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+func NewEphemeralCredentials(private ed25519.PrivateKey, ca *x509.Certificate) (credentials.TransportCredentials, error) {
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		NotBefore:    time.Now(),
@@ -70,13 +71,25 @@ func NewEphemeralClient(remote string, private ed25519.PrivateKey, ca *x509.Cert
 		Certificate: [][]byte{certificateBytes},
 		PrivateKey:  private,
 	}
-	return NewAuthenticatedClient(remote, certificate, ca, opts...)
+	return NewAuthenticatedCredentials(certificate, ca), nil
 }
 
-func NewEphemeralClientTest(listener *bufconn.Listener, private ed25519.PrivateKey, ca *x509.Certificate) (*grpc.ClientConn, error) {
-	return NewEphemeralClient("local", private, ca, grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
-		return listener.Dial()
-	}))
+// NewAuthenticatedCredentials returns gRPC TransportCredentials that can be
+// used to dial a cluster with a given TLS certificate (from node or manager
+// credentials).
+//
+// If 'ca' is given, the remote side will be cryptographically verified to be a
+// node that's part of the cluster represented by the ca. Otherwise, no
+// verification is performed and this function is unsafe.
+func NewAuthenticatedCredentials(cert tls.Certificate, ca *x509.Certificate) credentials.TransportCredentials {
+	config := &tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		InsecureSkipVerify: true,
+	}
+	if ca != nil {
+		config.VerifyPeerCertificate = verifyClusterCertificate(ca)
+	}
+	return credentials.NewTLS(config)
 }
 
 // RetrieveOwnerCertificates uses AAA.Escrow to retrieve a cluster manager
@@ -112,28 +125,4 @@ func RetrieveOwnerCertificate(ctx context.Context, aaa apb.AAAClient, private ed
 		Certificate: [][]byte{resp.EmittedCertificate},
 		PrivateKey:  private,
 	}, nil
-}
-
-// NewAuthenticatedClient dials a cluster's services using the given TLS
-// credentials (either user or node credentials).
-//
-// If 'ca' is given, the remote side will be cryptographically verified to be a
-// node that's part of the cluster represented by the ca. Otherwise, no
-// verification is performed and this function is unsafe.
-func NewAuthenticatedClient(remote string, cert tls.Certificate, ca *x509.Certificate, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
-	config := &tls.Config{
-		Certificates:       []tls.Certificate{cert},
-		InsecureSkipVerify: true,
-	}
-	if ca != nil {
-		config.VerifyPeerCertificate = verifyClusterCertificate(ca)
-	}
-	opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(config)))
-	return grpc.Dial(remote, opts...)
-}
-
-func NewAuthenticatedClientTest(listener *bufconn.Listener, cert tls.Certificate, ca *x509.Certificate) (*grpc.ClientConn, error) {
-	return NewAuthenticatedClient("local", cert, ca, grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
-		return listener.Dial()
-	}))
 }

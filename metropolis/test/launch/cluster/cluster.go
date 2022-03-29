@@ -405,10 +405,15 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 
 	// Dial external service.
 	remote := fmt.Sprintf("localhost:%v", portMap[node.CuratorServicePort])
-	initClient, err := rpc.NewEphemeralClient(remote, InsecurePrivateKey, nil)
+	initCreds, err := rpc.NewEphemeralCredentials(InsecurePrivateKey, nil)
 	if err != nil {
 		ctxC()
-		return nil, fmt.Errorf("NewInitialClient: %w", err)
+		return nil, fmt.Errorf("NewEphemeralCredentials: %w", err)
+	}
+	initClient, err := grpc.Dial(remote, grpc.WithTransportCredentials(initCreds))
+	if err != nil {
+		ctxC()
+		return nil, fmt.Errorf("dialing with ephemeral credentials failed: %w", err)
 	}
 
 	// Retrieve owner certificate - this can take a while because the node is still
@@ -432,10 +437,11 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	log.Printf("Cluster: retrieved owner certificate.")
 
 	// Build authenticated owner client to new node.
-	authClient, err := rpc.NewAuthenticatedClient(remote, *cert, nil)
+	authCreds := rpc.NewAuthenticatedCredentials(*cert, nil)
+	authClient, err := grpc.Dial(remote, grpc.WithTransportCredentials(authCreds))
 	if err != nil {
 		ctxC()
-		return nil, fmt.Errorf("NewAuthenticatedClient: %w", err)
+		return nil, fmt.Errorf("dialing with owner credentials failed: %w", err)
 	}
 	mgmt := apb.NewManagementClient(authClient)
 

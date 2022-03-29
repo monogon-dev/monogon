@@ -11,6 +11,7 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/node"
@@ -49,7 +50,11 @@ func doTakeOwnership(cmd *cobra.Command, args []string) {
 	}
 	ownerPrivateKey := ed25519.PrivateKey(block.Bytes)
 
-	client, err := rpc.NewEphemeralClient(net.JoinHostPort(args[0], node.CuratorServicePort.PortString()), ownerPrivateKey, nil)
+	ephCreds, err := rpc.NewEphemeralCredentials(ownerPrivateKey, nil)
+	if err != nil {
+		log.Fatalf("Failed to create ephemeral credentials: %v", err)
+	}
+	client, err := grpc.Dial(net.JoinHostPort(args[0], node.CuratorServicePort.PortString()), grpc.WithTransportCredentials(ephCreds))
 	if err != nil {
 		log.Fatalf("Failed to create client to given node address: %v", err)
 	}

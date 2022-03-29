@@ -136,7 +136,8 @@ func (m *ClusterMembership) DialCurator() (*grpc.ClientConn, error) {
 	}
 	host := m.remoteCurators.Nodes[0].Addresses[0].Host
 	addr := net.JoinHostPort(host, common.CuratorServicePort.PortString())
-	return rpc.NewAuthenticatedClient(addr, m.credentials.TLSCredentials(), m.credentials.ClusterCA())
+	creds := rpc.NewAuthenticatedCredentials(m.credentials.TLSCredentials(), m.credentials.ClusterCA())
+	return grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 }
 
 func (m *ClusterMembership) NodePubkey() ed25519.PublicKey {

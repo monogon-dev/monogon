@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"net"
 	"testing"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
@@ -51,10 +53,16 @@ func TestExternalServerSecurity(t *testing.T) {
 	defer lis.Close()
 	defer srv.Stop()
 
+	withLocalDialer := grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
+		return lis.Dial()
+	})
+
 	// Authenticate as manager externally, ensure that GetRegisterTicket runs.
-	cl, err := NewAuthenticatedClientTest(lis, eph.Manager, eph.CA)
+	cl, err := grpc.Dial("local",
+		grpc.WithTransportCredentials(NewAuthenticatedCredentials(eph.Manager, eph.CA)),
+		withLocalDialer)
 	if err != nil {
-		t.Fatalf("NewAuthenticatedClient: %v", err)
+		t.Fatalf("Dial: %v", err)
 	}
 	defer cl.Close()
 	mgmt := apb.NewManagementClient(cl)
@@ -65,9 +73,11 @@ func TestExternalServerSecurity(t *testing.T) {
 
 	// Authenticate as node externally, ensure that GetRegisterTicket is refused
 	// (this is because nodes miss the GET_REGISTER_TICKET permissions).
-	cl, err = NewAuthenticatedClientTest(lis, eph.Nodes[0].TLSCredentials(), eph.CA)
+	cl, err = grpc.Dial("local",
+		grpc.WithTransportCredentials(NewAuthenticatedCredentials(eph.Nodes[0].TLSCredentials(), eph.CA)),
+		withLocalDialer)
 	if err != nil {
-		t.Fatalf("NewAuthenticatedClient: %v", err)
+		t.Fatalf("Dial: %v", err)
 	}
 	defer cl.Close()
 	mgmt = apb.NewManagementClient(cl)
@@ -91,9 +101,14 @@ func TestExternalServerSecurity(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GenerateKey: %v", err)
 	}
-	cl, err = NewEphemeralClientTest(lis, sk, eph.CA)
+
+	ephCreds, err := NewEphemeralCredentials(sk, eph.CA)
 	if err != nil {
-		t.Fatalf("NewEphemeralClient: %v", err)
+		t.Fatalf("NewEphemeralCredentials: %v", err)
+	}
+	cl, err = grpc.Dial("local", grpc.WithTransportCredentials(ephCreds), withLocalDialer)
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
 	}
 	defer cl.Close()
 	mgmt = apb.NewManagementClient(cl)

@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/grpc"
+
 	"source.monogon.dev/metropolis/node"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
@@ -99,7 +101,11 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	// MVP: this should be properly client-side loadbalanced.
 	remote := register.ClusterDirectory.Nodes[0].Addresses[0].Host
 	remote = net.JoinHostPort(remote, strconv.Itoa(int(node.CuratorServicePort)))
-	eph, err := rpc.NewEphemeralClient(remote, priv, ca)
+	ephCreds, err := rpc.NewEphemeralCredentials(priv, ca)
+	if err != nil {
+		return fmt.Errorf("could not create ephemeral credentials: %w", err)
+	}
+	eph, err := grpc.Dial(remote, grpc.WithTransportCredentials(ephCreds))
 	if err != nil {
 		return fmt.Errorf("could not create ephemeral client to %q: %w", remote, err)
 	}

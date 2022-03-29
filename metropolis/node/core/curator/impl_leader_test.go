@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
+	"net"
 	"testing"
 
 	"go.etcd.io/etcd/integration"
@@ -141,19 +142,30 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		externalSrv.Stop()
 	}()
 
+	withLocalDialer := grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
+		return externalLis.Dial()
+	})
+	ca := nodeCredentials.ClusterCA()
+
 	// Create an authenticated manager gRPC client.
-	mcl, err := rpc.NewAuthenticatedClientTest(externalLis, ownerCreds, nodeCredentials.ClusterCA())
+	mcl, err := grpc.Dial("local", withLocalDialer, grpc.WithTransportCredentials(rpc.NewAuthenticatedCredentials(ownerCreds, ca)))
 	if err != nil {
 		t.Fatalf("Dialing external GRPC failed: %v", err)
 	}
 
-	// Create an ephemeral node gRPC client for the local node.
-	lcl, err := rpc.NewAuthenticatedClientTest(externalLis, nodeCredentials.TLSCredentials(), nodeCredentials.ClusterCA())
+	// Create a node gRPC client for the local node.
+	lcl, err := grpc.Dial("local", withLocalDialer,
+		grpc.WithTransportCredentials(rpc.NewAuthenticatedCredentials(nodeCredentials.TLSCredentials(), ca)))
 	if err != nil {
 		t.Fatalf("Dialing external GRPC failed: %v", err)
 	}
+
 	// Create an ephemeral node gRPC client for the 'other node'.
-	ocl, err := rpc.NewEphemeralClientTest(externalLis, otherPriv, nodeCredentials.ClusterCA())
+	otherEphCreds, err := rpc.NewEphemeralCredentials(otherPriv, ca)
+	if err != nil {
+		t.Fatalf("NewEphemeralCredentials: %v", err)
+	}
+	ocl, err := grpc.Dial("local", withLocalDialer, grpc.WithTransportCredentials(otherEphCreds))
 	if err != nil {
 		t.Fatalf("Dialing external GRPC failed: %v", err)
 	}
