@@ -1,13 +1,13 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "launch-multi2_lib",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/test/launch/cli/launch-multi2",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/cli/pkg/context:go_default_library",
-        "//metropolis/test/launch/cluster:go_default_library",
+        "//metropolis/cli/pkg/context",
+        "//metropolis/test/launch/cluster",
     ],
 )
 
@@ -21,6 +21,6 @@ go_binary(
         "//third_party/edk2:firmware",
         "@com_github_bonzini_qboot//:qboot-bin",
     ],
-    embed = [":go_default_library"],
+    embed = [":launch-multi2_lib"],
     visibility = ["//:__pkg__"],
 )

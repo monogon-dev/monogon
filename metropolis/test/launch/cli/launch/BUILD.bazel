@@ -1,15 +1,15 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "launch_lib",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/test/launch/cli/launch",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/cli/pkg/context:go_default_library",
-        "//metropolis/proto/api:go_default_library",
-        "//metropolis/test/launch:go_default_library",
-        "//metropolis/test/launch/cluster:go_default_library",
+        "//metropolis/cli/pkg/context",
+        "//metropolis/proto/api",
+        "//metropolis/test/launch",
+        "//metropolis/test/launch/cluster",
     ],
 )
 
@@ -20,6 +20,6 @@ go_binary(
         "//metropolis/node:swtpm_data",
         "//third_party/edk2:firmware",
     ],
-    embed = [":go_default_library"],
+    embed = [":launch_lib"],
     visibility = ["//:__pkg__"],
 )

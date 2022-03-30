@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"go.etcd.io/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // etcdPrefix is the location of some data in etcd, with each data element keyed

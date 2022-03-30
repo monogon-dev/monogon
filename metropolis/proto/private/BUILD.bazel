@@ -16,7 +16,7 @@ go_proto_library(
 )
 
 go_library(
-    name = "go_default_library",
+    name = "private",
     embed = [":private_go_proto"],
     importpath = "source.monogon.dev/metropolis/proto/private",
     visibility = ["//metropolis:__subpackages__"],

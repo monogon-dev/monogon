@@ -128,6 +128,7 @@ func TestAssignedIPCallback(t *testing.T) {
 			// Associate dynamically-generated interface name for later comparison
 			for i := range test.expectedAddrs {
 				test.expectedAddrs[i].Label = testLink.Name
+				test.expectedAddrs[i].LinkIndex = testLink.Index
 			}
 			cb := ManageIP(testLink)
 			if err := cb(test.oldLease, test.newLease); err != nil {

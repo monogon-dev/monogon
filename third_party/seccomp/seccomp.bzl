@@ -53,11 +53,11 @@ template_file(
     name = "seccomp.h",
     src = "include/seccomp.h.in",
     substitutions = {
-        # Irrelevant for Bazel. Just look at WORKSPACE.
-        # Make it obviously invalid so nobody is mislead.
-        "@VERSION_MAJOR@": "0",
-        "@VERSION_MINOR@": "0",
-        "@VERSION_MICRO@": "0",
+        # Known dependencies relying on this version information:
+        # - @com_github_seccomp_libseccomp_golang//:libseccomp-golang
+        "@VERSION_MAJOR@": "2",
+        "@VERSION_MINOR@": "5",
+        "@VERSION_MICRO@": "1",
     },
     visibility = ["//visibility:public"],
 )

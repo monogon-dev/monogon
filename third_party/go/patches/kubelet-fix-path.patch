@@ -1,0 +1,25 @@
+From 500aace7a0bf5904c740e14ad18cd073df080d37 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Wed, 16 Mar 2022 18:05:54 +0100
+Subject: [PATCH] Change device plugin path
+
+---
+ pkg/apis/deviceplugin/v1beta1/constants.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pkg/apis/deviceplugin/v1beta1/constants.go b/pkg/apis/deviceplugin/v1beta1/constants.go
+index 3bed214..30f06fe 100644
+--- a/pkg/apis/deviceplugin/v1beta1/constants.go
++++ b/pkg/apis/deviceplugin/v1beta1/constants.go
+@@ -27,7 +27,7 @@ const (
+ 	// DevicePluginPath is the folder the Device Plugin is expecting sockets to be on
+ 	// Only privileged pods have access to this path
+ 	// Note: Placeholder until we find a "standard path"
+-	DevicePluginPath = "/var/lib/kubelet/device-plugins/"
++	DevicePluginPath = "/data/kubernetes/kubelet/device-plugins/"
+ 	// KubeletSocket is the path of the Kubelet registry socket
+ 	KubeletSocket = DevicePluginPath + "kubelet.sock"
+ 
+-- 
+2.25.1
+

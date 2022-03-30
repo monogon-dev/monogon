@@ -1,15 +1,15 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "containerd",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/node/kubernetes/containerd",
     visibility = ["//metropolis/node/core:__subpackages__"],
     deps = [
-        "//metropolis/node/core/localstorage:go_default_library",
-        "//metropolis/pkg/supervisor:go_default_library",
-        "@com_github_containerd_containerd//:go_default_library",
-        "@com_github_containerd_containerd//namespaces:go_default_library",
+        "//metropolis/node/core/localstorage",
+        "//metropolis/pkg/supervisor",
+        "@com_github_containerd_containerd//:containerd",
+        "@com_github_containerd_containerd//namespaces",
     ],
 )
 

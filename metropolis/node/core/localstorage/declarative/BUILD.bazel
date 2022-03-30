@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "declarative",
     srcs = [
         "declarative.go",
         "placement.go",
@@ -9,5 +9,5 @@ go_library(
     ],
     importpath = "source.monogon.dev/metropolis/node/core/localstorage/declarative",
     visibility = ["//metropolis/node:__subpackages__"],
-    deps = ["@org_golang_x_sys//unix:go_default_library"],
+    deps = ["@org_golang_x_sys//unix"],
 )

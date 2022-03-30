@@ -2,8 +2,7 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 load("@io_bazel_rules_go//go:def.bzl", "go_path")
 
 # gazelle:prefix source.monogon.dev
-# gazelle:go_naming_convention go_default_library
-# gazelle:go_naming_convention_external go_default_library
+# gazelle:go_naming_convention import
 gazelle(name = "gazelle")
 
 alias(

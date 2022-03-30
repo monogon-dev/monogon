@@ -11,7 +11,7 @@ import (
 	"net"
 	"testing"
 
-	"go.etcd.io/etcd/integration"
+	"go.etcd.io/etcd/tests/v3/integration"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
@@ -44,13 +44,14 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	ctx, ctxC := context.WithCancel(context.Background())
 
 	// Start a single-node etcd cluster.
-	cluster := integration.NewClusterV3(nil, &integration.ClusterConfig{
+	integration.BeforeTest(t)
+	cluster := integration.NewClusterV3(t, &integration.ClusterConfig{
 		Size: 1,
 	})
 	// Terminate the etcd cluster on context cancel.
 	go func() {
 		<-ctx.Done()
-		cluster.Terminate(nil)
+		cluster.Terminate(t)
 	}()
 
 	// Create etcd client to test cluster.

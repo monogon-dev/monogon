@@ -1,0 +1,114 @@
+From bf861ce45721791336b617a44844613bb74c677a Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Tue, 22 Mar 2022 00:52:48 +0100
+Subject: [PATCH] containerd 1.6 compatibility
+
+---
+ pkg/shim/proc/exec.go     |  2 +-
+ pkg/shim/proc/init.go     |  2 +-
+ pkg/shim/service.go       | 17 +++++++++--------
+ pkg/shim/service_linux.go |  2 +-
+ 4 files changed, 12 insertions(+), 11 deletions(-)
+
+diff --git a/pkg/shim/proc/exec.go b/pkg/shim/proc/exec.go
+index da2e21598..d0d14dd24 100644
+--- a/pkg/shim/proc/exec.go
++++ b/pkg/shim/proc/exec.go
+@@ -238,7 +238,7 @@ func (e *execProcess) start(ctx context.Context) error {
+ 		if err != nil {
+ 			return fmt.Errorf("failed to retrieve console master: %w", err)
+ 		}
+-		if e.console, err = e.parent.Platform.CopyConsole(ctx, console, e.stdio.Stdin, e.stdio.Stdout, e.stdio.Stderr, &e.wg); err != nil {
++		if e.console, err = e.parent.Platform.CopyConsole(ctx, console, e.id, e.stdio.Stdin, e.stdio.Stdout, e.stdio.Stderr, &e.wg); err != nil {
+ 			return fmt.Errorf("failed to start console copy: %w", err)
+ 		}
+ 	} else if !e.stdio.IsNull() {
+diff --git a/pkg/shim/proc/init.go b/pkg/shim/proc/init.go
+index 6bf090813..76df1101a 100644
+--- a/pkg/shim/proc/init.go
++++ b/pkg/shim/proc/init.go
+@@ -152,7 +152,7 @@ func (p *Init) Create(ctx context.Context, r *CreateConfig) (err error) {
+ 		if err != nil {
+ 			return fmt.Errorf("failed to retrieve console master: %w", err)
+ 		}
+-		console, err = p.Platform.CopyConsole(ctx, console, r.Stdin, r.Stdout, r.Stderr, &p.wg)
++		console, err = p.Platform.CopyConsole(ctx, console, r.ID, r.Stdin, r.Stdout, r.Stderr, &p.wg)
+ 		if err != nil {
+ 			return fmt.Errorf("failed to start console copy: %w", err)
+ 		}
+diff --git a/pkg/shim/service.go b/pkg/shim/service.go
+index 68966afdf..772168052 100644
+--- a/pkg/shim/service.go
++++ b/pkg/shim/service.go
+@@ -50,7 +50,7 @@ import (
+ 	"github.com/sirupsen/logrus"
+ 	"golang.org/x/sys/unix"
+ 	"gvisor.dev/gvisor/pkg/cleanup"
+-	"gvisor.dev/gvisor/pkg/shim/runtimeoptions/v14"
++	v14 "gvisor.dev/gvisor/pkg/shim/runtimeoptions/v14"
+ 
+ 	"gvisor.dev/gvisor/pkg/shim/proc"
+ 	"gvisor.dev/gvisor/pkg/shim/runsc"
+@@ -189,7 +189,7 @@ type service struct {
+ 	shimAddress string
+ }
+ 
+-func (s *service) newCommand(ctx context.Context, containerdBinary, containerdAddress string) (*exec.Cmd, error) {
++func (s *service) newCommand(ctx context.Context, id, containerdBinary, containerdAddress string) (*exec.Cmd, error) {
+ 	ns, err := namespaces.NamespaceRequired(ctx)
+ 	if err != nil {
+ 		return nil, err
+@@ -204,6 +204,7 @@ func (s *service) newCommand(ctx context.Context, containerdBinary, containerdAd
+ 	}
+ 	args := []string{
+ 		"-namespace", ns,
++		"-id", id,
+ 		"-address", containerdAddress,
+ 		"-publish-binary", containerdBinary,
+ 	}
+@@ -219,14 +220,14 @@ func (s *service) newCommand(ctx context.Context, containerdBinary, containerdAd
+ 	return cmd, nil
+ }
+ 
+-func (s *service) StartShim(ctx context.Context, id, containerdBinary, containerdAddress, containerdTTRPCAddress string) (string, error) {
+-	log.L.Debugf("StartShim, id: %s, binary: %q, address: %q", id, containerdBinary, containerdAddress)
++func (s *service) StartShim(ctx context.Context, opts shim.StartOpts) (string, error) {
++	log.L.Debugf("StartShim, id: %s, binary: %q, address: %q", opts.ID, opts.ContainerdBinary, opts.Address)
+ 
+-	cmd, err := s.newCommand(ctx, containerdBinary, containerdAddress)
++	cmd, err := s.newCommand(ctx, opts.ID, opts.ContainerdBinary, opts.Address)
+ 	if err != nil {
+ 		return "", err
+ 	}
+-	address, err := shim.SocketAddress(ctx, containerdAddress, id)
++	address, err := shim.SocketAddress(ctx, opts.Address, opts.ID)
+ 	if err != nil {
+ 		return "", err
+ 	}
+@@ -280,8 +281,8 @@ func (s *service) StartShim(ctx context.Context, id, containerdBinary, container
+ 	if err := shim.WriteAddress(shimAddressPath, address); err != nil {
+ 		return "", err
+ 	}
+-	if err := shim.SetScore(cmd.Process.Pid); err != nil {
+-		return "", fmt.Errorf("failed to set OOM Score on shim: %w", err)
++	if err := shim.AdjustOOMScore(cmd.Process.Pid); err != nil {
++		return "", fmt.Errorf("failed to adjust OOM score for shim: %w", err)
+ 	}
+ 	cu.Release()
+ 	return address, nil
+diff --git a/pkg/shim/service_linux.go b/pkg/shim/service_linux.go
+index fb2f8b062..52c82ca90 100644
+--- a/pkg/shim/service_linux.go
++++ b/pkg/shim/service_linux.go
+@@ -33,7 +33,7 @@ type linuxPlatform struct {
+ 	epoller *console.Epoller
+ }
+ 
+-func (p *linuxPlatform) CopyConsole(ctx context.Context, console console.Console, stdin, stdout, stderr string, wg *sync.WaitGroup) (console.Console, error) {
++func (p *linuxPlatform) CopyConsole(ctx context.Context, console console.Console, id, stdin, stdout, stderr string, wg *sync.WaitGroup) (console.Console, error) {
+ 	if p.epoller == nil {
+ 		return nil, fmt.Errorf("uninitialized epoller")
+ 	}
+-- 
+2.25.1
+

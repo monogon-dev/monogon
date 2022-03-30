@@ -3,16 +3,16 @@ load("//metropolis/node/build/kconfig-patcher:kconfig-patcher.bzl", "kconfig_pat
 load("//third_party/linux:def.bzl", "linux_image")
 
 go_library(
-    name = "go_default_library",
+    name = "ktest_lib",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/test/ktest",
     visibility = ["//visibility:private"],
-    deps = ["//metropolis/test/launch:go_default_library"],
+    deps = ["//metropolis/test/launch"],
 )
 
 go_binary(
     name = "ktest",
-    embed = [":go_default_library"],
+    embed = [":ktest_lib"],
     pure = "on",
     visibility = ["//metropolis:__subpackages__"],
 )

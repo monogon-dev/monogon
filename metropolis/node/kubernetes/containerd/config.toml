@@ -58,6 +58,7 @@ oom_score = 0
     systemd_cgroup = false
     enable_tls_streaming = false
     ignore_image_defined_volumes = true
+    netns_mounts_under_state_dir = true
     max_container_log_line_size = 16384
     disable_cgroup = false
     disable_apparmor = true

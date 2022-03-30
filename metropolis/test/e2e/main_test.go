@@ -265,7 +265,7 @@ func TestE2E(t *testing.T) {
 						Containers: []corev1.Container{{
 							Name:            "preseed-test-1",
 							ImagePullPolicy: corev1.PullNever,
-							Image:           "bazel/metropolis/test/e2e/preseedtest:preseedtest",
+							Image:           "bazel/metropolis/test/e2e/preseedtest:preseedtest_image",
 						}},
 						RestartPolicy: corev1.RestartPolicyNever,
 					},

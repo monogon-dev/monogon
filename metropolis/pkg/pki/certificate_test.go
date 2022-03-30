@@ -8,17 +8,20 @@ import (
 	"crypto/x509"
 	"testing"
 
-	"go.etcd.io/etcd/integration"
+	"go.etcd.io/etcd/client/pkg/v3/testutil"
+	"go.etcd.io/etcd/tests/v3/integration"
 )
 
 // TestManaged ensures Managed Certificates work, including re-ensuring
 // certificates with the same data and issuing subordinate certificates.
 func TestManaged(t *testing.T) {
-	cluster := integration.NewClusterV3(nil, &integration.ClusterConfig{
+	tb, cancel := testutil.NewTestingTBProthesis("pki-managed")
+	defer cancel()
+	cluster := integration.NewClusterV3(tb, &integration.ClusterConfig{
 		Size: 1,
 	})
 	cl := cluster.Client(0)
-	defer cluster.Terminate(nil)
+	defer cluster.Terminate(tb)
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
 	ns := Namespaced("/test-managed/")
@@ -100,11 +103,13 @@ func TestManaged(t *testing.T) {
 // re-Ensuring certificates with the same public key, and attempting to re-issue
 // the same certificate with a different public key (which should fail).
 func TestExternal(t *testing.T) {
-	cluster := integration.NewClusterV3(nil, &integration.ClusterConfig{
+	tb, cancel := testutil.NewTestingTBProthesis("pki-managed")
+	defer cancel()
+	cluster := integration.NewClusterV3(tb, &integration.ClusterConfig{
 		Size: 1,
 	})
 	cl := cluster.Client(0)
-	defer cluster.Terminate(nil)
+	defer cluster.Terminate(tb)
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
 	ns := Namespaced("/test-external/")

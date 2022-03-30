@@ -2,25 +2,25 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 load("//metropolis/test/ktest:ktest.bzl", "ktest")
 
 go_library(
-    name = "go_default_library",
+    name = "fsquota",
     srcs = ["fsquota.go"],
     importpath = "source.monogon.dev/metropolis/pkg/fsquota",
     visibility = ["//metropolis:__subpackages__"],
     deps = [
-        "//metropolis/pkg/fsquota/fsxattrs:go_default_library",
-        "//metropolis/pkg/fsquota/quotactl:go_default_library",
-        "@org_golang_x_sys//unix:go_default_library",
+        "//metropolis/pkg/fsquota/fsxattrs",
+        "//metropolis/pkg/fsquota/quotactl",
+        "@org_golang_x_sys//unix",
     ],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "fsquota_test",
     srcs = ["fsquota_test.go"],
-    embed = [":go_default_library"],
+    embed = [":fsquota"],
     pure = "on",
     deps = [
-        "@com_github_stretchr_testify//require:go_default_library",
-        "@org_golang_x_sys//unix:go_default_library",
+        "@com_github_stretchr_testify//require",
+        "@org_golang_x_sys//unix",
     ],
 )
 
@@ -29,5 +29,5 @@ ktest(
     files_cc = {
         "@xfsprogs//:mkfs": "/mkfs.xfs",
     },
-    tester = ":go_default_test",
+    tester = ":fsquota_test",
 )

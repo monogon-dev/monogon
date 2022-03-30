@@ -1,34 +1,18 @@
-Copyright 2020 The Monogon Project Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-
-From 2cb763552e2e386928e6c2211c4fb056b9ca7971 Mon Sep 17 00:00:00 2001
-From: Serge Bazanski <serge@nexantic.com>
-Date: Thu, 14 Jan 2021 16:30:32 +0100
+From bf6362aa01dd00c82996dcabfb1cb20d7919c552 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@nexantic.com>
+Date: Wed, 22 Jul 2020 09:46:56 +0200
 Subject: [PATCH] Add support for prepatching
-Company: nexantic GmbH
 
 ---
  internal/go_repository.bzl | 14 +++++++++++---
  1 file changed, 11 insertions(+), 3 deletions(-)
 
 diff --git a/internal/go_repository.bzl b/internal/go_repository.bzl
-index 7f87ed1..a0ef36d 100644
+index 9928fa8..a3af13d 100644
 --- a/internal/go_repository.bzl
 +++ b/internal/go_repository.bzl
-@@ -130,6 +130,8 @@ def _go_repository_impl(ctx):
-         if result.stderr:
+@@ -213,6 +213,8 @@ def _go_repository_impl(ctx):
+         if ctx.attr.debug_mode and result.stderr:
              print("fetch_repo: " + result.stderr)
  
 +    patch(ctx, True)
@@ -36,19 +20,19 @@ index 7f87ed1..a0ef36d 100644
      # Repositories are fetched. Determine if build file generation is needed.
      build_file_names = ctx.attr.build_file_name.split(",")
      existing_build_file = ""
-@@ -263,6 +265,10 @@ go_repository = repository_rule(
-         "build_config": attr.label(default = "@bazel_gazelle_go_repository_config//:WORKSPACE"),
-         "build_directives": attr.string_list(default = []),
+@@ -474,6 +476,10 @@ go_repository = repository_rule(
+             Gazelle directives.""",
+         ),
  
 +        # Patches to apply before running gazelle.
 +        "pre_patches": attr.label_list(),
 +        "pre_patch_cmds": attr.string_list(default = []),
 +
          # Patches to apply after running gazelle.
-         "patches": attr.label_list(),
-         "patch_tool": attr.string(default = "patch"),
-@@ -273,10 +279,11 @@ go_repository = repository_rule(
- """See repository.rst#go-repository for full documentation."""
+         "patches": attr.label_list(
+             doc = "A list of patches to apply to the repository after gazelle runs.",
+@@ -504,10 +510,11 @@ go_repository = repository_rule(
+ """See repository.md#go-repository for full documentation."""
  
  # Copied from @bazel_tools//tools/build_defs/repo:utils.bzl
 -def patch(ctx):
@@ -61,7 +45,7 @@ index 7f87ed1..a0ef36d 100644
          command = "{patchtool} {patch_args} < {patchfile}".format(
              patchtool = ctx.attr.patch_tool,
              patchfile = ctx.path(patchfile),
-@@ -289,7 +296,8 @@ def patch(ctx):
+@@ -520,7 +527,8 @@ def patch(ctx):
          if st.return_code:
              fail("Error applying patch %s:\n%s%s" %
                   (str(patchfile), st.stderr, st.stdout))
@@ -72,5 +56,5 @@ index 7f87ed1..a0ef36d 100644
          if st.return_code:
              fail("Error applying patch command %s:\n%s%s" %
 -- 
-2.26.2
+2.25.1
 

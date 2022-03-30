@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "supervisor",
     srcs = [
         "supervisor.go",
         "supervisor_node.go",
@@ -12,15 +12,15 @@ go_library(
     importpath = "source.monogon.dev/metropolis/pkg/supervisor",
     visibility = ["//metropolis:__subpackages__"],
     deps = [
-        "//metropolis/pkg/logtree:go_default_library",
-        "@com_github_cenkalti_backoff_v4//:go_default_library",
+        "//metropolis/pkg/logtree",
+        "@com_github_cenkalti_backoff_v4//:backoff",
         "@org_golang_google_grpc//:go_default_library",
     ],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "supervisor_test",
     srcs = ["supervisor_test.go"],
-    embed = [":go_default_library"],
-    deps = ["//metropolis/pkg/logtree:go_default_library"],
+    embed = [":supervisor"],
+    deps = ["//metropolis/pkg/logtree"],
 )

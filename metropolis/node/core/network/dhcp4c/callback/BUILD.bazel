@@ -2,7 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 load("//metropolis/test/ktest:ktest.bzl", "ktest")
 
 go_library(
-    name = "go_default_library",
+    name = "callback",
     srcs = ["callback.go"],
     importpath = "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback",
     visibility = [
@@ -11,27 +11,27 @@ go_library(
         "//metropolis/test/nanoswitch:__subpackages__",
     ],
     deps = [
-        "//metropolis/node/core/network/dhcp4c:go_default_library",
-        "@com_github_insomniacslk_dhcp//dhcpv4:go_default_library",
-        "@com_github_vishvananda_netlink//:go_default_library",
-        "@org_golang_x_sys//unix:go_default_library",
+        "//metropolis/node/core/network/dhcp4c",
+        "@com_github_insomniacslk_dhcp//dhcpv4",
+        "@com_github_vishvananda_netlink//:netlink",
+        "@org_golang_x_sys//unix",
     ],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "callback_test",
     srcs = ["callback_test.go"],
-    embed = [":go_default_library"],
+    embed = [":callback"],
     pure = "on",
     deps = [
-        "//metropolis/node/core/network/dhcp4c:go_default_library",
-        "@com_github_insomniacslk_dhcp//dhcpv4:go_default_library",
-        "@com_github_stretchr_testify//require:go_default_library",
-        "@com_github_vishvananda_netlink//:go_default_library",
-        "@org_golang_x_sys//unix:go_default_library",
+        "//metropolis/node/core/network/dhcp4c",
+        "@com_github_insomniacslk_dhcp//dhcpv4",
+        "@com_github_stretchr_testify//require",
+        "@com_github_vishvananda_netlink//:netlink",
+        "@org_golang_x_sys//unix",
     ],
 )
 
 ktest(
-    tester = ":go_default_test",
+    tester = ":callback_test",
 )

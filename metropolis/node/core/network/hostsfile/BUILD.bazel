@@ -1,17 +1,17 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "hostsfile",
     srcs = ["hostsfile.go"],
     importpath = "source.monogon.dev/metropolis/node/core/network/hostsfile",
     visibility = ["//visibility:public"],
     deps = [
-        "//metropolis/node/core/curator/proto/api:go_default_library",
-        "//metropolis/node/core/localstorage:go_default_library",
-        "//metropolis/node/core/network:go_default_library",
-        "//metropolis/node/core/roleserve:go_default_library",
-        "//metropolis/pkg/supervisor:go_default_library",
+        "//metropolis/node/core/curator/proto/api",
+        "//metropolis/node/core/localstorage",
+        "//metropolis/node/core/network",
+        "//metropolis/node/core/roleserve",
+        "//metropolis/pkg/supervisor",
         "@org_golang_google_grpc//:go_default_library",
-        "@org_golang_x_sys//unix:go_default_library",
+        "@org_golang_x_sys//unix",
     ],
 )

@@ -25,14 +25,6 @@ func Monogon(shelfPath, repositoriesBzlPath string) error {
 		shelf: shelf,
 	}
 
-	// Currently can't bump past v1.30.0, as that removes the old balancer.Picker API
-	// that go-etcd depends upon. See https://github.com/etcd-io/etcd/pull/12398 .
-	p.collect(
-		"google.golang.org/grpc", "v1.29.1",
-	).use(
-		"golang.org/x/text",
-	)
-
 	depsKubernetes(p)
 	depsContainerd(p)
 	depsGVisor(p)

@@ -16,7 +16,7 @@ go_proto_library(
 )
 
 go_library(
-    name = "go_default_library",
+    name = "spec",
     embed = [":spec_go_proto"],
     importpath = "source.monogon.dev/build/static_binary_tarball/spec",
     visibility = ["//visibility:public"],

@@ -1,0 +1,11 @@
+diff -urN b/pkg/proc/internal/ebpf/BUILD.bazel c/pkg/proc/internal/ebpf/BUILD.bazel
+--- b/pkg/proc/internal/ebpf/BUILD.bazel  2022-01-14 23:29:02.948089761 +0000
++++ c/pkg/proc/internal/ebpf/BUILD.bazel  2022-01-14 23:13:52.964810803 +0000
+@@ -7,6 +7,7 @@
+         "helpers.go",
+         "helpers_disabled.go",
+         "trace_bpfel_x86.go",
++        "bpf/include/function_vals.bpf.h",
+     ],
+     cgo = True,
+     embedsrcs = select({

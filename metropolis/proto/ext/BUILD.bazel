@@ -17,7 +17,7 @@ go_proto_library(
 )
 
 go_library(
-    name = "go_default_library",
+    name = "ext",
     embed = [":ext_go_proto"],
     importpath = "source.monogon.dev/metropolis/proto/ext",
     visibility = ["//visibility:public"],

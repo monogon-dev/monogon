@@ -6,7 +6,7 @@ load("//metropolis/node/build/mkucode:def.bzl", "cpio_ucode")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
 go_library(
-    name = "go_default_library",
+    name = "node",
     srcs = [
         "ids.go",
         "ports.go",
@@ -70,8 +70,8 @@ erofs_image(
         "@com_github_coredns_coredns//:coredns": "/kubernetes/bin/coredns",
 
         # runsc/gVisor
-        "@com_github_google_gvisor//runsc": "/containerd/bin/runsc",
-        "@com_github_google_gvisor//shim:containerd-shim-runsc-v1": "/containerd/bin/containerd-shim-runsc-v1",
+        "@dev_gvisor_gvisor//runsc": "/containerd/bin/runsc",
+        "@dev_gvisor_gvisor//shim": "/containerd/bin/containerd-shim-runsc-v1",
 
         # runc (runtime in files_cc because of cgo)
         "@com_github_containerd_containerd//cmd/containerd-shim-runc-v2": "/containerd/bin/containerd-shim-runc-v2",
@@ -85,8 +85,7 @@ erofs_image(
         "//metropolis/node/kubernetes/containerd:cnispec.gojson": "/containerd/conf/cnispec.gojson",
 
         # Containerd preseed bundles
-        "//metropolis/test/e2e/preseedtest:preseedtest.tar": "/containerd/preseed/k8s.io/preseedtest.tar",
-        "//metropolis/test/e2e/k8s_cts:k8s_cts_image.tar": "/containerd/preseed/k8s.io/k8s_cts.tar",
+        "//metropolis/test/e2e/preseedtest:preseedtest_image.tar": "/containerd/preseed/k8s.io/preseedtest.tar",
         "//metropolis/vm/smoketest:smoketest_container.tar": "/containerd/preseed/k8s.io/smoketest.tar",
 
         # CNI Plugins
@@ -129,7 +128,7 @@ efi_unified_kernel_image(
 # to the actual bundle format.
 # TODO(lorenz): Replace this
 pkg_zip(
-    name = "node",
+    name = "bundle",
     srcs = [
         ":kernel_efi",
         ":verity_rootfs",

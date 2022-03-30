@@ -2,15 +2,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@io_bazel_rules_docker//go:image.bzl", "go_image")
 
 go_library(
-    name = "go_default_library",
+    name = "preseedtest",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/test/e2e/preseedtest",
     visibility = ["//visibility:private"],
 )
 
 go_image(
-    name = "preseedtest",
-    embed = [":go_default_library"],
+    name = "preseedtest_image",
+    embed = [":preseedtest"],
     pure = "on",
     visibility = ["//metropolis/node:__pkg__"],
 )

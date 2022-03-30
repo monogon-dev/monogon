@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 
-	"go.etcd.io/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (
@@ -56,6 +56,10 @@ func (c *unimplementedAuth) AuthEnable(ctx context.Context) (*clientv3.AuthEnabl
 }
 
 func (c *unimplementedAuth) AuthDisable(ctx context.Context) (*clientv3.AuthDisableResponse, error) {
+	panic(UnimplementedInNamespaced)
+}
+
+func (c *unimplementedAuth) AuthStatus(ctx context.Context) (*clientv3.AuthStatusResponse, error) {
 	panic(UnimplementedInNamespaced)
 }
 

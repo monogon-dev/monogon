@@ -17,6 +17,8 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 def seccomp_external(name, version):
+    # NOTE: Remember to update seccomp.bzl's seccomp.h template rule
+    # with the correct version.
     sums = {
         "2.5.1": "76ad54e31d143b39a99083564045212a965e026a1010a742edd793d26d699829",
     }

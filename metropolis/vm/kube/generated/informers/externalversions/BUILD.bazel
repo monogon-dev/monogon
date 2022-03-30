@@ -13,13 +13,13 @@ go_kubernetes_library(
     bundle = "//metropolis/vm/kube/generated:bundle",
     importpath = "source.monogon.dev/metropolis/vm/kube/generated/informers/externalversions",
     deps = [
-        "//metropolis/vm/kube/apis/vm/v1alpha1:go_default_library",
+        "//metropolis/vm/kube/apis/vm/v1alpha1",
         "//metropolis/vm/kube/generated/clientset/versioned:go_default_library",
         "//metropolis/vm/kube/generated/informers/externalversions/internalinterfaces:go_default_library",
         "//metropolis/vm/kube/generated/informers/externalversions/vm:go_default_library",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
-        "@io_k8s_apimachinery//pkg/runtime:go_default_library",
-        "@io_k8s_apimachinery//pkg/runtime/schema:go_default_library",
-        "@io_k8s_client_go//tools/cache:go_default_library",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_apimachinery//pkg/runtime",
+        "@io_k8s_apimachinery//pkg/runtime/schema",
+        "@io_k8s_client_go//tools/cache",
     ],
 )

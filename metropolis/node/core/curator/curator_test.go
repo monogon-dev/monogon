@@ -2,13 +2,15 @@ package curator
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"testing"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/integration"
+	"go.etcd.io/etcd/client/pkg/v3/testutil"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/tests/v3/integration"
 
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/identity"
@@ -29,14 +31,21 @@ func TestMain(m *testing.M) {
 		Size:                 3,
 		GRPCKeepAliveMinTime: time.Millisecond,
 	}
-	cluster = integration.NewClusterV3(nil, &cfg)
+	t, cancel := testutil.NewTestingTBProthesis("curator")
+	defer cancel()
+
+	flag.Parse()
+
+	integration.BeforeTest(t)
+
+	cluster = integration.NewClusterV3(t, &cfg)
 	endpoints = make([]string, 3)
 	for i := range endpoints {
 		endpoints[i] = cluster.Client(i).Endpoints()[0]
 	}
 
 	v := m.Run()
-	cluster.Terminate(nil)
+	cluster.Terminate(t)
 	os.Exit(v)
 }
 

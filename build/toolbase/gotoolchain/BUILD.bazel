@@ -12,14 +12,14 @@ toolchain_library(
 
 # keep
 go_library(
-    name = "go_default_library",
+    name = "gotoolchain",
     embed = [":toolchain_library"],
     importpath = "source.monogon.dev/build/toolbase/gotoolchain",
     visibility = ["//visibility:public"],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "gotoolchain_test",
     srcs = ["toolchain_test.go"],
-    embed = [":go_default_library"],  # keep
+    embed = [":gotoolchain"],  # keep
 )

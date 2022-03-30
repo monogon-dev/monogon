@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "pki",
     srcs = [
         "ca.go",
         "certificate.go",
@@ -11,23 +11,24 @@ go_library(
     importpath = "source.monogon.dev/metropolis/pkg/pki",
     visibility = ["//visibility:public"],
     deps = [
-        "//metropolis/node/core/consensus/client:go_default_library",
-        "//metropolis/pkg/event:go_default_library",
-        "//metropolis/pkg/event/etcd:go_default_library",
-        "//metropolis/pkg/fileargs:go_default_library",
-        "@io_etcd_go_etcd//clientv3:go_default_library",
+        "//metropolis/node/core/consensus/client",
+        "//metropolis/pkg/event",
+        "//metropolis/pkg/event/etcd",
+        "//metropolis/pkg/fileargs",
+        "@io_etcd_go_etcd_client_v3//:client",
     ],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "pki_test",
     srcs = [
         "certificate_test.go",
         "crl_test.go",
     ],
-    embed = [":go_default_library"],
+    embed = [":pki"],
     deps = [
-        "//metropolis/node/core/consensus/client:go_default_library",
-        "@io_etcd_go_etcd//integration:go_default_library",
+        "//metropolis/node/core/consensus/client",
+        "@io_etcd_go_etcd_client_pkg_v3//testutil",
+        "@io_etcd_go_etcd_tests_v3//integration",
     ],
 )

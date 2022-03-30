@@ -1,22 +1,22 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "logbuffer",
     srcs = [
         "linebuffer.go",
         "logbuffer.go",
     ],
     importpath = "source.monogon.dev/metropolis/pkg/logbuffer",
     visibility = ["//metropolis:__subpackages__"],
-    deps = ["//metropolis/proto/api:go_default_library"],
+    deps = ["//metropolis/proto/api"],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "logbuffer_test",
     srcs = [
         "linebuffer_test.go",
         "logbuffer_test.go",
     ],
-    embed = [":go_default_library"],
-    deps = ["@com_github_stretchr_testify//require:go_default_library"],
+    embed = [":logbuffer"],
+    deps = ["@com_github_stretchr_testify//require"],
 )

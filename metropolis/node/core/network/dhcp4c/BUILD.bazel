@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "dhcp4c",
     srcs = [
         "dhcpc.go",
         "doc.go",
@@ -14,26 +14,26 @@ go_library(
         "//metropolis/test/nanoswitch:__subpackages__",
     ],
     deps = [
-        "//metropolis/node/core/network/dhcp4c/transport:go_default_library",
-        "//metropolis/pkg/supervisor:go_default_library",
-        "@com_github_cenkalti_backoff_v4//:go_default_library",
-        "@com_github_insomniacslk_dhcp//dhcpv4:go_default_library",
-        "@com_github_insomniacslk_dhcp//iana:go_default_library",
+        "//metropolis/node/core/network/dhcp4c/transport",
+        "//metropolis/pkg/supervisor",
+        "@com_github_cenkalti_backoff_v4//:backoff",
+        "@com_github_insomniacslk_dhcp//dhcpv4",
+        "@com_github_insomniacslk_dhcp//iana",
     ],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "dhcp4c_test",
     srcs = [
         "dhcpc_test.go",
         "lease_test.go",
     ],
-    embed = [":go_default_library"],
+    embed = [":dhcp4c"],
     pure = "on",
     deps = [
-        "//metropolis/node/core/network/dhcp4c/transport:go_default_library",
-        "@com_github_cenkalti_backoff_v4//:go_default_library",
-        "@com_github_insomniacslk_dhcp//dhcpv4:go_default_library",
-        "@com_github_stretchr_testify//assert:go_default_library",
+        "//metropolis/node/core/network/dhcp4c/transport",
+        "@com_github_cenkalti_backoff_v4//:backoff",
+        "@com_github_insomniacslk_dhcp//dhcpv4",
+        "@com_github_stretchr_testify//assert",
     ],
 )

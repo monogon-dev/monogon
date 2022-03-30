@@ -3,6 +3,7 @@ package etcd
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,9 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes"
-	"go.etcd.io/etcd/integration"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
+	"go.etcd.io/etcd/client/pkg/v3/testutil"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/tests/v3/integration"
 	"google.golang.org/grpc/codes"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
@@ -31,14 +33,18 @@ func TestMain(m *testing.M) {
 		Size:                 3,
 		GRPCKeepAliveMinTime: time.Millisecond,
 	}
-	cluster = integration.NewClusterV3(nil, &cfg)
+	tb, cancel := testutil.NewTestingTBProthesis("curator")
+	defer cancel()
+	flag.Parse()
+	integration.BeforeTest(tb)
+	cluster = integration.NewClusterV3(tb, &cfg)
 	endpoints = make([]string, 3)
 	for i := range endpoints {
 		endpoints[i] = cluster.Client(i).Endpoints()[0]
 	}
 
 	v := m.Run()
-	cluster.Terminate(nil)
+	cluster.Terminate(tb)
 	os.Exit(v)
 }
 

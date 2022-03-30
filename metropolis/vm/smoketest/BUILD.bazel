@@ -4,7 +4,7 @@ load("//metropolis/node/build:def.bzl", "node_initramfs")
 load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
 
 go_library(
-    name = "go_default_library",
+    name = "smoketest_lib",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/vm/smoketest",
     visibility = ["//visibility:private"],
@@ -24,7 +24,7 @@ go_binary(
         "//metropolis/test/ktest:linux-testing",
         "@qemu//:qemu-x86_64-softmmu",
     ],
-    embed = [":go_default_library"],
+    embed = [":smoketest_lib"],
     visibility = ["//visibility:public"],
 )
 

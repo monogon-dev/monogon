@@ -32,7 +32,7 @@ import (
 	"fmt"
 	"net"
 
-	"go.etcd.io/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"k8s.io/client-go/tools/clientcmd"
 	configapi "k8s.io/client-go/tools/clientcmd/api"
 

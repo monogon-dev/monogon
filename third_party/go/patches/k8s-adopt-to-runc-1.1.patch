@@ -1,0 +1,168 @@
+From 1564b39d0fbeac776a0d92236a0ca0c7cbdc6c5c Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Mon, 21 Mar 2022 15:21:25 +0100
+Subject: [PATCH 2/2] Adopt to API breakage in runc 1.1.0
+
+---
+ pkg/kubelet/cm/cgroup_manager_linux.go                | 11 ++++++-----
+ pkg/kubelet/cm/container_manager_linux.go             |  4 ++--
+ pkg/kubelet/cm/qos_container_manager_linux.go         |  4 ++--
+ pkg/kubelet/dockershim/cm/container_manager_linux.go  |  2 +-
+ .../kuberuntime/kuberuntime_container_linux.go        |  4 ++--
+ .../kuberuntime/kuberuntime_container_linux_test.go   |  6 +++---
+ 6 files changed, 16 insertions(+), 15 deletions(-)
+
+diff --git a/pkg/kubelet/cm/cgroup_manager_linux.go b/pkg/kubelet/cm/cgroup_manager_linux.go
+index 230173690d5..4bd50db5050 100644
+--- a/pkg/kubelet/cm/cgroup_manager_linux.go
++++ b/pkg/kubelet/cm/cgroup_manager_linux.go
+@@ -27,6 +27,7 @@ import (
+ 	"sync"
+ 	"time"
+ 
++	"github.com/opencontainers/runc/libcontainer/cgroups"
+ 	libcontainercgroups "github.com/opencontainers/runc/libcontainer/cgroups"
+ 	cgroupfs "github.com/opencontainers/runc/libcontainer/cgroups/fs"
+ 	cgroupfs2 "github.com/opencontainers/runc/libcontainer/cgroups/fs2"
+@@ -150,18 +151,18 @@ func (l *libcontainerAdapter) newManager(cgroups *libcontainerconfigs.Cgroup, pa
+ 	switch l.cgroupManagerType {
+ 	case libcontainerCgroupfs:
+ 		if libcontainercgroups.IsCgroup2UnifiedMode() {
+-			return cgroupfs2.NewManager(cgroups, paths["memory"], false)
++			return cgroupfs2.NewManager(cgroups, paths["memory"])
+ 		}
+-		return cgroupfs.NewManager(cgroups, paths, false), nil
++		return cgroupfs.NewManager(cgroups, paths)
+ 	case libcontainerSystemd:
+ 		// this means you asked systemd to manage cgroups, but systemd was not on the host, so all you can do is panic...
+ 		if !cgroupsystemd.IsRunningSystemd() {
+ 			panic("systemd cgroup manager not available")
+ 		}
+ 		if libcontainercgroups.IsCgroup2UnifiedMode() {
+-			return cgroupsystemd.NewUnifiedManager(cgroups, paths["memory"], false), nil
++			return cgroupsystemd.NewUnifiedManager(cgroups, paths["memory"])
+ 		}
+-		return cgroupsystemd.NewLegacyManager(cgroups, paths), nil
++		return cgroupsystemd.NewLegacyManager(cgroups, paths)
+ 	}
+ 	return nil, fmt.Errorf("invalid cgroup manager configuration")
+ }
+@@ -420,7 +421,7 @@ func (m *cgroupManagerImpl) toResources(resourceConfig *ResourceConfig) *libcont
+ 		pageSizes.Insert(sizeString)
+ 	}
+ 	// for each page size omitted, limit to 0
+-	for _, pageSize := range cgroupfs.HugePageSizes {
++	for _, pageSize := range cgroups.HugePageSizes() {
+ 		if pageSizes.Has(pageSize) {
+ 			continue
+ 		}
+diff --git a/pkg/kubelet/cm/container_manager_linux.go b/pkg/kubelet/cm/container_manager_linux.go
+index 3892bae081d..4c79f212ab5 100644
+--- a/pkg/kubelet/cm/container_manager_linux.go
++++ b/pkg/kubelet/cm/container_manager_linux.go
+@@ -401,10 +401,10 @@ func createManager(containerName string) (cgroups.Manager, error) {
+ 	}
+ 
+ 	if cgroups.IsCgroup2UnifiedMode() {
+-		return cgroupfs2.NewManager(cg, "", false)
++		return cgroupfs2.NewManager(cg, "")
+ 
+ 	}
+-	return cgroupfs.NewManager(cg, nil, false), nil
++	return cgroupfs.NewManager(cg, nil)
+ }
+ 
+ type KernelTunableBehavior string
+diff --git a/pkg/kubelet/cm/qos_container_manager_linux.go b/pkg/kubelet/cm/qos_container_manager_linux.go
+index bb79109b141..d0a78db2483 100644
+--- a/pkg/kubelet/cm/qos_container_manager_linux.go
++++ b/pkg/kubelet/cm/qos_container_manager_linux.go
+@@ -28,8 +28,8 @@ import (
+ 	"k8s.io/apimachinery/pkg/util/wait"
+ 
+ 	units "github.com/docker/go-units"
++	"github.com/opencontainers/runc/libcontainer/cgroups"
+ 	libcontainercgroups "github.com/opencontainers/runc/libcontainer/cgroups"
+-	cgroupfs "github.com/opencontainers/runc/libcontainer/cgroups/fs"
+ 	v1 "k8s.io/api/core/v1"
+ 	utilfeature "k8s.io/apiserver/pkg/util/feature"
+ 	"k8s.io/kubernetes/pkg/api/v1/resource"
+@@ -147,7 +147,7 @@ func (m *qosContainerManagerImpl) Start(getNodeAllocatable func() v1.ResourceLis
+ // setHugePagesUnbounded ensures hugetlb is effectively unbounded
+ func (m *qosContainerManagerImpl) setHugePagesUnbounded(cgroupConfig *CgroupConfig) error {
+ 	hugePageLimit := map[int64]int64{}
+-	for _, pageSize := range cgroupfs.HugePageSizes {
++	for _, pageSize := range cgroups.HugePageSizes() {
+ 		pageSizeBytes, err := units.RAMInBytes(pageSize)
+ 		if err != nil {
+ 			return err
+diff --git a/pkg/kubelet/dockershim/cm/container_manager_linux.go b/pkg/kubelet/dockershim/cm/container_manager_linux.go
+index 759e27f26c5..93d6c51ac00 100644
+--- a/pkg/kubelet/dockershim/cm/container_manager_linux.go
++++ b/pkg/kubelet/dockershim/cm/container_manager_linux.go
+@@ -129,7 +129,7 @@ func createCgroupManager(name string) (cgroups.Manager, error) {
+ 			SkipDevices: true,
+ 		},
+ 	}
+-	return cgroupfs.NewManager(cg, nil, false), nil
++	return cgroupfs.NewManager(cg, nil)
+ }
+ 
+ // getMemoryCapacity returns the memory capacity on the machine in bytes.
+diff --git a/pkg/kubelet/kuberuntime/kuberuntime_container_linux.go b/pkg/kubelet/kuberuntime/kuberuntime_container_linux.go
+index 6cb9e54729e..fd922f07c7c 100644
+--- a/pkg/kubelet/kuberuntime/kuberuntime_container_linux.go
++++ b/pkg/kubelet/kuberuntime/kuberuntime_container_linux.go
+@@ -23,8 +23,8 @@ import (
+ 	"strconv"
+ 	"time"
+ 
++	"github.com/opencontainers/runc/libcontainer/cgroups"
+ 	libcontainercgroups "github.com/opencontainers/runc/libcontainer/cgroups"
+-	cgroupfs "github.com/opencontainers/runc/libcontainer/cgroups/fs"
+ 	v1 "k8s.io/api/core/v1"
+ 	"k8s.io/apimachinery/pkg/api/resource"
+ 	utilfeature "k8s.io/apiserver/pkg/util/feature"
+@@ -170,7 +170,7 @@ func GetHugepageLimitsFromResources(resources v1.ResourceRequirements) []*runtim
+ 	var hugepageLimits []*runtimeapi.HugepageLimit
+ 
+ 	// For each page size, limit to 0.
+-	for _, pageSize := range cgroupfs.HugePageSizes {
++	for _, pageSize := range cgroups.HugePageSizes() {
+ 		hugepageLimits = append(hugepageLimits, &runtimeapi.HugepageLimit{
+ 			PageSize: pageSize,
+ 			Limit:    uint64(0),
+diff --git a/pkg/kubelet/kuberuntime/kuberuntime_container_linux_test.go b/pkg/kubelet/kuberuntime/kuberuntime_container_linux_test.go
+index 46817e00fb0..f166adc6fe1 100644
+--- a/pkg/kubelet/kuberuntime/kuberuntime_container_linux_test.go
++++ b/pkg/kubelet/kuberuntime/kuberuntime_container_linux_test.go
+@@ -25,7 +25,7 @@ import (
+ 	"testing"
+ 
+ 	"github.com/google/go-cmp/cmp"
+-	cgroupfs "github.com/opencontainers/runc/libcontainer/cgroups/fs"
++	"github.com/opencontainers/runc/libcontainer/cgroups"
+ 	"github.com/stretchr/testify/assert"
+ 	v1 "k8s.io/api/core/v1"
+ 	"k8s.io/apimachinery/pkg/api/resource"
+@@ -366,7 +366,7 @@ func TestGetHugepageLimitsFromResources(t *testing.T) {
+ 	var baseHugepage []*runtimeapi.HugepageLimit
+ 
+ 	// For each page size, limit to 0.
+-	for _, pageSize := range cgroupfs.HugePageSizes {
++	for _, pageSize := range cgroups.HugePageSizes() {
+ 		baseHugepage = append(baseHugepage, &runtimeapi.HugepageLimit{
+ 			PageSize: pageSize,
+ 			Limit:    uint64(0),
+@@ -481,7 +481,7 @@ func TestGetHugepageLimitsFromResources(t *testing.T) {
+ 		machineHugepageSupport := true
+ 		for _, hugepageLimit := range test.expected {
+ 			hugepageSupport := false
+-			for _, pageSize := range cgroupfs.HugePageSizes {
++			for _, pageSize := range cgroups.HugePageSizes() {
+ 				if pageSize == hugepageLimit.PageSize {
+ 					hugepageSupport = true
+ 					break
+-- 
+2.25.1
+

@@ -41,7 +41,7 @@ nogo(
         # 'standard' 80 characters long, as prose within comment blocks does not
         # soft-reflow well.
         "@com_github_corverroos_commentwrap//:go_default_library",
-        "//build/analysis/noioutil:go_default_library",
-        "//build/analysis/importsort:go_default_library",
+        "//build/analysis/noioutil",
+        "//build/analysis/importsort",
     ],
 )

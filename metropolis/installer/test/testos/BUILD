@@ -35,15 +35,15 @@ pkg_zip(
 )
 
 go_library(
-    name = "go_default_library",
+    name = "testos_lib",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/installer/test/testos",
     visibility = ["//visibility:private"],
-    deps = ["@org_golang_x_sys//unix:go_default_library"],
+    deps = ["@org_golang_x_sys//unix"],
 )
 
 go_binary(
     name = "testos",
-    embed = [":go_default_library"],
+    embed = [":testos_lib"],
     visibility = ["//visibility:public"],
 )

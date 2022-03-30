@@ -79,7 +79,7 @@ func makeTestDeploymentSpec(name string) *appsv1.Deployment {
 							// TODO(phab/T793): Build and preseed our own container images
 							Image: "nginx:alpine",
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{Port: intstr.FromInt(80)},
 								},
 							},
@@ -123,7 +123,7 @@ func makeTestStatefulSet(name string, volumeMode corev1.PersistentVolumeMode) *a
 							Name:  "test",
 							Image: "nginx:alpine",
 							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
+								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{Port: intstr.FromInt(80)},
 								},
 							},

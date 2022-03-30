@@ -2,7 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_binary(
     name = "mkverity",
-    embed = [":go_default_library"],
+    embed = [":mkverity_lib"],
     visibility = [
         "//metropolis/installer/test/testos:__pkg__",
         "//metropolis/node:__pkg__",
@@ -10,9 +10,9 @@ go_binary(
 )
 
 go_library(
-    name = "go_default_library",
+    name = "mkverity_lib",
     srcs = ["mkverity.go"],
     importpath = "source.monogon.dev/metropolis/node/build/mkverity",
     visibility = ["//visibility:private"],
-    deps = ["//metropolis/pkg/verity:go_default_library"],
+    deps = ["//metropolis/pkg/verity"],
 )

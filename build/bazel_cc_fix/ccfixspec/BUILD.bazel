@@ -16,7 +16,7 @@ go_proto_library(
 )
 
 go_library(
-    name = "go_default_library",
+    name = "ccfixspec",
     embed = [":build_bazel_cc_fix_ccfixspec_go_proto"],
     importpath = "source.monogon.dev/build/bazel_cc_fix/ccfixspec",
     visibility = ["//visibility:public"],

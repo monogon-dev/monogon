@@ -30,10 +30,10 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "2b1641428dff9018f9e85c0384f03ec6c10660d935b750e3fa1492a281a53b0f",
+    sha256 = "f2dcd210c7095febe54b804bb1cd3a58fe8435a909db2ec04e31542631cf715c",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.29.0/rules_go-v0.29.0.zip",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.29.0/rules_go-v0.29.0.zip",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.31.0/rules_go-v0.31.0.zip",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.31.0/rules_go-v0.31.0.zip",
     ],
 )
 
@@ -43,28 +43,30 @@ http_archive(
     patches = [
         "//third_party/gazelle:add-prepatching.patch",
     ],
-    sha256 = "de69a09dc70417580aabf20a28619bb3ef60d038470c7cf8442fafcf627c21cb",
+    sha256 = "5982e5463f171da99e3bdaeff8c0f48283a7a5f396ec5282910b9e8a49c0dd7e",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.25.0/bazel-gazelle-v0.25.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.25.0/bazel-gazelle-v0.25.0.tar.gz",
     ],
 )
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
-load("@bazel_gazelle//:deps.bzl", "go_repository")
 
-# Here to override the dep in rules_go with one with our patch
-http_archive(
-    name = "com_github_mwitkow_go_proto_validators",
-    patch_args = ["-p1"],
-    patches = ["//third_party/go/patches:go-proto-validators-default-alias.patch"],
-    sha256 = "d8697f05a2f0eaeb65261b480e1e6035301892d9fc07ed945622f41b12a68142",
-    strip_prefix = "go-proto-validators-0.3.2",
+# Temporary Kubernetes patch which is considered too big for the repository.
+# TODO(lorenz): instead of pregenerating this, generate this at build time
+http_file(
+    name = "monogon_k8s_pregenerate_openapi_patch",
+    downloaded_file_path = "file",  # This is used in a workspace rule, path needs to match package
+    sha256 = "7d87d265f3d7127ce5b19f0461f59861c725bcd5675e27bba64f1cf654900443",
     urls = [
-        "https://mirror.bazel.build/github.com/mwitkow/go-proto-validators/archive/v0.3.2.zip",
-        "https://github.com/mwitkow/go-proto-validators/archive/v0.3.2.zip",
+        "https://storage.googleapis.com/monogon-infra-public/monogon-k8s-pregenerate-openapi.patch",
     ],
 )
+
+load("//third_party/go:repositories.bzl", "go_repositories")
+
+# gazelle:repository_macro third_party/go/repositories.bzl%go_repositories
+go_repositories()
 
 go_rules_dependencies()
 
@@ -72,11 +74,6 @@ go_register_toolchains(
     go_version = "1.17.1",
     nogo = "@dev_source_monogon//build/analysis:nogo",
 )
-
-# gazelle:repository_macro third_party/go/repositories.bzl%go_repositories
-load("//third_party/go:repositories.bzl", "go_repositories")
-
-go_repositories()
 
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 

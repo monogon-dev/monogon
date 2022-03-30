@@ -1,0 +1,43 @@
+From 26ac5a008b349b77288d29cc483ea5d6129f298c Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Wed, 16 Mar 2022 18:35:44 +0100
+Subject: [PATCH] Disable tracing for otel compatibility
+
+---
+ cmd/containerd/builtins.go     | 1 -
+ cmd/containerd/command/main.go | 2 --
+ 2 files changed, 3 deletions(-)
+
+diff --git a/cmd/containerd/builtins.go b/cmd/containerd/builtins.go
+index 8c6f1fe86..dd8b1d3d9 100644
+--- a/cmd/containerd/builtins.go
++++ b/cmd/containerd/builtins.go
+@@ -36,5 +36,4 @@ import (
+ 	_ "github.com/containerd/containerd/services/snapshots"
+ 	_ "github.com/containerd/containerd/services/tasks"
+ 	_ "github.com/containerd/containerd/services/version"
+-	_ "github.com/containerd/containerd/tracing/plugin"
+ )
+diff --git a/cmd/containerd/command/main.go b/cmd/containerd/command/main.go
+index f549e08a3..dfde3599e 100644
+--- a/cmd/containerd/command/main.go
++++ b/cmd/containerd/command/main.go
+@@ -35,7 +35,6 @@ import (
+ 	"github.com/containerd/containerd/services/server"
+ 	srvconfig "github.com/containerd/containerd/services/server/config"
+ 	"github.com/containerd/containerd/sys"
+-	"github.com/containerd/containerd/tracing"
+ 	"github.com/containerd/containerd/version"
+ 	"github.com/sirupsen/logrus"
+ 	"github.com/urfave/cli"
+@@ -370,7 +369,6 @@ func setLogFormat(config *srvconfig.Config) error {
+ }
+ 
+ func setLogHooks() {
+-	logrus.StandardLogger().AddHook(tracing.NewLogrusHook())
+ }
+ 
+ func dumpStacks(writeToFile bool) {
+-- 
+2.25.1
+

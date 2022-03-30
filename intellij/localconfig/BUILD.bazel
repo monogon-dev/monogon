@@ -1,15 +1,15 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "localconfig_lib",
     srcs = ["localconfig.go"],
     importpath = "source.monogon.dev/intellij/localconfig",
     visibility = ["//visibility:private"],
-    deps = ["//intellij/localconfig/watchers:go_default_library"],
+    deps = ["//intellij/localconfig/watchers"],
 )
 
 go_binary(
     name = "localconfig",
-    embed = [":go_default_library"],
+    embed = [":localconfig_lib"],
     visibility = ["//visibility:public"],
 )

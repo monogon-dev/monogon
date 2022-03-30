@@ -1,18 +1,18 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "identity",
     srcs = [
         "certificates.go",
         "identity.go",
     ],
     importpath = "source.monogon.dev/metropolis/node/core/identity",
     visibility = ["//visibility:public"],
-    deps = ["//metropolis/node/core/localstorage:go_default_library"],
+    deps = ["//metropolis/node/core/localstorage"],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "identity_test",
     srcs = ["certificates_test.go"],
-    embed = [":go_default_library"],
+    embed = [":identity"],
 )

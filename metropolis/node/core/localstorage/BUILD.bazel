@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "localstorage",
     srcs = [
         "directory_data.go",
         "directory_pki.go",
@@ -12,19 +12,19 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/localstorage",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = [
-        "//metropolis/node/core/localstorage/crypt:go_default_library",
-        "//metropolis/node/core/localstorage/declarative:go_default_library",
-        "//metropolis/pkg/tpm:go_default_library",
-        "//metropolis/proto/api:go_default_library",
-        "//metropolis/proto/private:go_default_library",
-        "@org_golang_google_protobuf//proto:go_default_library",
-        "@org_golang_x_sys//unix:go_default_library",
+        "//metropolis/node/core/localstorage/crypt",
+        "//metropolis/node/core/localstorage/declarative",
+        "//metropolis/pkg/tpm",
+        "//metropolis/proto/api",
+        "//metropolis/proto/private",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_x_sys//unix",
     ],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "localstorage_test",
     srcs = ["storage_test.go"],
-    embed = [":go_default_library"],
-    deps = ["//metropolis/node/core/localstorage/declarative:go_default_library"],
+    embed = [":localstorage"],
+    deps = ["//metropolis/node/core/localstorage/declarative"],
 )

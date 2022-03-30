@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "metroctl_lib",
     srcs = [
         "credentials.go",
         "install.go",
@@ -11,27 +11,27 @@ go_library(
     ],
     data = [
         "//metropolis/installer:kernel",
-        "//metropolis/node",
+        "//metropolis/node:bundle",
     ],
     importpath = "source.monogon.dev/metropolis/cli/metroctl",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/cli/metroctl/core:go_default_library",
-        "//metropolis/cli/pkg/context:go_default_library",
-        "//metropolis/cli/pkg/datafile:go_default_library",
-        "//metropolis/node:go_default_library",
-        "//metropolis/node/core/rpc:go_default_library",
-        "//metropolis/proto/api:go_default_library",
-        "@com_github_adrg_xdg//:go_default_library",
-        "@com_github_spf13_cobra//:go_default_library",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
-        "@io_k8s_client_go//pkg/apis/clientauthentication/v1beta1:go_default_library",
+        "//metropolis/cli/metroctl/core",
+        "//metropolis/cli/pkg/context",
+        "//metropolis/cli/pkg/datafile",
+        "//metropolis/node",
+        "//metropolis/node/core/rpc",
+        "//metropolis/proto/api",
+        "@com_github_adrg_xdg//:xdg",
+        "@com_github_spf13_cobra//:cobra",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_client_go//pkg/apis/clientauthentication/v1beta1",
         "@org_golang_google_grpc//:go_default_library",
     ],
 )
 
 go_binary(
     name = "metroctl",
-    embed = [":go_default_library"],
+    embed = [":metroctl_lib"],
     visibility = ["//visibility:public"],
 )

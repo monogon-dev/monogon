@@ -1,0 +1,66 @@
+From a799a94b7b67b21d1eecfe66dbe264ef3e276cd3 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Wed, 30 Mar 2022 15:48:23 +0200
+Subject: [PATCH] Fix proto file paths
+
+---
+ proto/0001-Fix-proto-file-paths.patch | 23 +++++++++++++++++++++++
+ proto/{ => attest}/attest.proto       |  2 +-
+ proto/{ => tpm}/tpm.proto             |  0
+ 3 files changed, 24 insertions(+), 1 deletion(-)
+ create mode 100644 proto/0001-Fix-proto-file-paths.patch
+ rename proto/{ => attest}/attest.proto (99%)
+ rename proto/{ => tpm}/tpm.proto (100%)
+
+diff --git a/proto/0001-Fix-proto-file-paths.patch b/proto/0001-Fix-proto-file-paths.patch
+new file mode 100644
+index 0000000..22e3b45
+--- /dev/null
++++ b/proto/0001-Fix-proto-file-paths.patch
+@@ -0,0 +1,23 @@
++From ba5bf5ac1e0b3d92e8f19a0feb2307515c0e2baf Mon Sep 17 00:00:00 2001
++From: Lorenz Brun <lorenz@monogon.tech>
++Date: Wed, 30 Mar 2022 15:48:23 +0200
++Subject: [PATCH] Fix proto file paths
++
++---
++ proto/{ => attest}/attest.proto | 0
++ proto/{ => tpm}/tpm.proto       | 0
++ 2 files changed, 0 insertions(+), 0 deletions(-)
++ rename proto/{ => attest}/attest.proto (100%)
++ rename proto/{ => tpm}/tpm.proto (100%)
++
++diff --git a/proto/attest.proto b/proto/attest/attest.proto
++similarity index 100%
++rename from proto/attest.proto
++rename to proto/attest/attest.proto
++diff --git a/proto/tpm.proto b/proto/tpm/tpm.proto
++similarity index 100%
++rename from proto/tpm.proto
++rename to proto/tpm/tpm.proto
++-- 
++2.25.1
++
+diff --git a/proto/attest.proto b/proto/attest/attest.proto
+similarity index 99%
+rename from proto/attest.proto
+rename to proto/attest/attest.proto
+index fbaf5bd..7960297 100644
+--- a/proto/attest.proto
++++ b/proto/attest/attest.proto
+@@ -3,7 +3,7 @@ syntax = "proto3";
+ package attest;
+ option go_package = "github.com/google/go-tpm-tools/proto/attest";
+ 
+-import "tpm.proto";
++import "proto/tpm/tpm.proto";
+ 
+ // Information uniquely identifying a GCE instance. Can be used to create an
+ // instance URL, which can then be used with GCE APIs. Formatted like:
+diff --git a/proto/tpm.proto b/proto/tpm/tpm.proto
+similarity index 100%
+rename from proto/tpm.proto
+rename to proto/tpm/tpm.proto
+-- 
+2.25.1
+

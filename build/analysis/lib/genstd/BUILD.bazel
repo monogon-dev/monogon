@@ -1,18 +1,18 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "genstd_lib",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/build/analysis/lib/genstd",
     visibility = ["//visibility:private"],
     deps = [
-        "//build/toolbase/gotoolchain:go_default_library",
-        "@org_golang_x_tools//go/packages:go_default_library",
+        "//build/toolbase/gotoolchain",
+        "@org_golang_x_tools//go/packages",
     ],
 )
 
 go_binary(
     name = "genstd",
-    embed = [":go_default_library"],
+    embed = [":genstd_lib"],
     visibility = ["//visibility:public"],
 )

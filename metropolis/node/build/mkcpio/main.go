@@ -174,7 +174,7 @@ func main() {
 			inF.Close()
 		case *fsspec.Directory:
 			if err := cpioWriter.WriteHeader(&cpio.Header{
-				Mode: cpio.FileMode(i.Mode) | cpio.ModeDir,
+				Mode: cpio.FileMode(i.Mode) | cpio.TypeDir,
 				Name: strings.TrimPrefix(i.Path, "/"),
 			}); err != nil {
 				log.Fatalf("Failed to write cpio header for directory %q: %v", i.Path, err)
@@ -182,7 +182,7 @@ func main() {
 		case *fsspec.SymbolicLink:
 			if err := cpioWriter.WriteHeader(&cpio.Header{
 				// Symlinks are 0777 by definition (from man 7 symlink on Linux)
-				Mode:     0777 | cpio.ModeSymlink,
+				Mode:     0777 | cpio.TypeSymlink,
 				Name:     strings.TrimPrefix(i.Path, "/"),
 				Linkname: i.TargetPath,
 			}); err != nil {
@@ -192,11 +192,11 @@ func main() {
 			mode := cpio.FileMode(i.Mode)
 			switch i.Type {
 			case fsspec.SpecialFile_CHARACTER_DEV:
-				mode |= cpio.ModeCharDevice
+				mode |= cpio.TypeChar
 			case fsspec.SpecialFile_BLOCK_DEV:
-				mode |= cpio.ModeDevice
+				mode |= cpio.TypeBlock
 			case fsspec.SpecialFile_FIFO:
-				mode |= cpio.ModeNamedPipe
+				mode |= cpio.TypeFifo
 			}
 
 			if err := cpioWriter.WriteHeader(&cpio.Header{

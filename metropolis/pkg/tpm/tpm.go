@@ -32,7 +32,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/google/go-tpm-tools/tpm2tools"
+	tpm2tools "github.com/google/go-tpm-tools/client"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpmutil"
 	"github.com/pkg/errors"
@@ -247,7 +247,7 @@ func Seal(data []byte, pcrs []int) ([]byte, error) {
 	// therefore we can just leave it all-zero.
 	var unusedNonce [24]byte
 	encryptedData := secretbox.Seal(nil, data, &unusedNonce, &boxKeyArr)
-	sealedKey, err := srk.Seal(pcrs, boxKey)
+	sealedKey, err := srk.Seal(boxKey, tpm2tools.SealOpts{Current: tpm2.PCRSelection{Hash: tpm2.AlgSHA256, PCRs: pcrs}})
 	if err != nil {
 		return []byte{}, fmt.Errorf("failed to seal boxKey: %w", err)
 	}
@@ -286,7 +286,7 @@ func Unseal(data []byte) ([]byte, error) {
 		pcrList = append(pcrList, string(pcr))
 	}
 	tpm.logger.Infof("Attempting to unseal key protected with PCRs %s", strings.Join(pcrList, ","))
-	unsealedKey, err := srk.Unseal(sealedBytes.SealedKey)
+	unsealedKey, err := srk.Unseal(sealedBytes.SealedKey, tpm2tools.UnsealOpts{})
 	if err != nil {
 		return []byte{}, errors.Wrap(err, "failed to unseal key")
 	}
@@ -460,7 +460,7 @@ func SolveAKChallenge(credBlob, secretChallenge []byte) ([]byte, error) {
 	}
 	defer tpm2.FlushContext(tpm.device, endorsementSession)
 
-	_, err = tpm2.PolicySecret(tpm.device, tpm2.HandleEndorsement, tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}, endorsementSession, nil, nil, nil, 0)
+	_, _, err = tpm2.PolicySecret(tpm.device, tpm2.HandleEndorsement, tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}, endorsementSession, nil, nil, nil, 0)
 	if err != nil {
 		return []byte{}, fmt.Errorf("failed to make a policy secret session: %w", err)
 	}

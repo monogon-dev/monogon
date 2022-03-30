@@ -1,19 +1,19 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "mkucode_lib",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/node/build/mkucode",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/node/build/mkucode/spec:go_default_library",
-        "@com_github_cavaliergopher_cpio//:go_default_library",
-        "@org_golang_google_protobuf//encoding/prototext:go_default_library",
+        "//metropolis/node/build/mkucode/spec",
+        "@com_github_cavaliergopher_cpio//:cpio",
+        "@org_golang_google_protobuf//encoding/prototext",
     ],
 )
 
 go_binary(
     name = "mkucode",
-    embed = [":go_default_library"],
+    embed = [":mkucode_lib"],
     visibility = ["//visibility:public"],
 )

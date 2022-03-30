@@ -16,7 +16,7 @@ go_proto_library(
 )
 
 go_library(
-    name = "go_default_library",
+    name = "proto",
     embed = [":proto_go_proto"],
     importpath = "source.monogon.dev/build/fietsje/proto",
     visibility = ["//visibility:public"],

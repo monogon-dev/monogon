@@ -15,6 +15,6 @@ go_kubernetes_resource_bundle(
 go_path(
     name = "go_path",
     deps = [
-        "//metropolis/vm/kube/apis/vm/v1alpha1:go_default_library",
+        "//metropolis/vm/kube/apis/vm/v1alpha1",
     ],
 )

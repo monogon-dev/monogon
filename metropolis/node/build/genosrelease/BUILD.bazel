@@ -1,16 +1,16 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "genosrelease_lib",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/node/build/genosrelease",
     visibility = ["//visibility:private"],
-    deps = ["@com_github_joho_godotenv//:go_default_library"],
+    deps = ["@com_github_joho_godotenv//:godotenv"],
 )
 
 go_binary(
     name = "genosrelease",
-    embed = [":go_default_library"],
+    embed = [":genosrelease_lib"],
     visibility = [
         "//metropolis/installer:__subpackages__",
         "//metropolis/node:__subpackages__",

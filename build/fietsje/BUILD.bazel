@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "fietsje",
     srcs = [
         "dependency.go",
         "deps_containerd.go",
@@ -17,10 +17,10 @@ go_library(
     importpath = "source.monogon.dev/build/fietsje",
     visibility = ["//build:__subpackages__"],
     deps = [
-        "//build/fietsje/proto:go_default_library",
+        "//build/fietsje/proto",
         "@bazel_gazelle//label:go_default_library",
         "@com_github_golang_protobuf//proto:go_default_library",
-        "@org_golang_x_mod//modfile:go_default_library",
+        "@org_golang_x_mod//modfile",
     ],
 )
 

@@ -1,0 +1,10 @@
+--- a/libcontainer/seccomp/patchbpf/BUILD.bazel	2022-03-24 20:12:34.325421847 +0100
++++ b/libcontainer/seccomp/patchbpf/BUILD.bazel	2022-03-24 20:12:59.777602881 +0100
+@@ -7,6 +7,7 @@
+         "enosys_unsupported.go",
+     ],
+     cgo = True,
++    cdeps = ["@seccomp"],
+     importpath = "github.com/opencontainers/runc/libcontainer/seccomp/patchbpf",
+     visibility = ["//visibility:public"],
+     deps = select({

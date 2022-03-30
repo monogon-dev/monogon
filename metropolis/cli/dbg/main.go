@@ -26,12 +26,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
-	cliflag "k8s.io/component-base/cli/flag"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/component-base/cli"
+	"k8s.io/kubectl/pkg/cmd"
 	"k8s.io/kubectl/pkg/cmd/plugin"
-	"k8s.io/kubectl/pkg/util/logs"
-	"k8s.io/kubernetes/pkg/kubectl/cmd"
+	"k8s.io/kubectl/pkg/cmd/util"
 
 	"source.monogon.dev/metropolis/pkg/logtree"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -168,14 +168,15 @@ func main() {
 		//   https://github.com/kubernetes/kubernetes/blob/master/cmd/kubectl/kubectl.go
 		os.Setenv("KUBECONFIG", kubeconfigFile.Name())
 		rand.Seed(time.Now().UnixNano())
-		pflag.CommandLine.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)
-		pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-		logs.InitLogs()
-		defer logs.FlushLogs()
-		command := cmd.NewDefaultKubectlCommandWithArgs(cmd.NewDefaultPluginHandler(plugin.ValidPluginFilenamePrefixes), os.Args[2:], os.Stdin, os.Stdout, os.Stderr)
-		command.SetArgs(os.Args[2:])
-		if err := command.Execute(); err != nil {
-			os.Exit(1)
+		command := cmd.NewDefaultKubectlCommandWithArgs(cmd.KubectlOptions{
+			PluginHandler: cmd.NewDefaultPluginHandler(plugin.ValidPluginFilenamePrefixes),
+			Arguments:     os.Args[2:],
+			ConfigFlags:   genericclioptions.NewConfigFlags(true).WithDiscoveryBurst(300).WithDiscoveryQPS(50.0),
+			IOStreams:     genericclioptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr},
+		})
+		if err := cli.RunNoErrOutput(command); err != nil {
+			// Pretty-print the error and exit with an error.
+			util.CheckErr(err)
 		}
 	case "trace":
 		traceCmd.Parse(os.Args[2:])

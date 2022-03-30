@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "logtree",
     srcs = [
         "doc.go",
         "journal.go",
@@ -19,18 +19,18 @@ go_library(
     importpath = "source.monogon.dev/metropolis/pkg/logtree",
     visibility = ["//metropolis:__subpackages__"],
     deps = [
-        "//metropolis/pkg/logbuffer:go_default_library",
-        "//metropolis/proto/api:go_default_library",
+        "//metropolis/pkg/logbuffer",
+        "//metropolis/proto/api",
     ],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "logtree_test",
     srcs = [
         "journal_test.go",
         "klog_test.go",
         "logtree_test.go",
     ],
-    embed = [":go_default_library"],
-    deps = ["@com_github_google_go_cmp//cmp:go_default_library"],
+    embed = [":logtree"],
+    deps = ["@com_github_google_go_cmp//cmp"],
 )

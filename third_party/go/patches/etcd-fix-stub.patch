@@ -1,0 +1,9 @@
+--- a/grpc_testing/stub_server.go
++++ b/grpc_testing/stub_server.go
+@@ -86,5 +86,5 @@ func (d dummyStubServer) UnaryCall(context.Context, *testpb.SimpleRequest) (*tes
+ // NewDummyStubServer creates a simple test server that serves Unary calls with
+ // responses with the given payload.
+ func NewDummyStubServer(body []byte) *StubServer {
+-	return New(dummyStubServer{body: body})
++	return New(&dummyStubServer{body: body})
+ }

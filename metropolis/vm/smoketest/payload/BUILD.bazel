@@ -1,15 +1,15 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "payload_lib",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/vm/smoketest/payload",
     visibility = ["//visibility:private"],
-    deps = ["@org_golang_x_sys//unix:go_default_library"],
+    deps = ["@org_golang_x_sys//unix"],
 )
 
 go_binary(
     name = "payload",
-    embed = [":go_default_library"],
+    embed = [":payload_lib"],
     visibility = ["//visibility:public"],
 )

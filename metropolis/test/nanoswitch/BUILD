@@ -2,29 +2,29 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("//metropolis/node/build:def.bzl", "node_initramfs")
 
 go_library(
-    name = "go_default_library",
+    name = "nanoswitch_lib",
     srcs = ["nanoswitch.go"],
     importpath = "source.monogon.dev/metropolis/test/nanoswitch",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/node:go_default_library",
-        "//metropolis/node/core/network/dhcp4c:go_default_library",
-        "//metropolis/node/core/network/dhcp4c/callback:go_default_library",
-        "//metropolis/pkg/logtree:go_default_library",
-        "//metropolis/pkg/supervisor:go_default_library",
-        "//metropolis/test/launch:go_default_library",
-        "@com_github_google_nftables//:go_default_library",
-        "@com_github_google_nftables//expr:go_default_library",
-        "@com_github_insomniacslk_dhcp//dhcpv4:go_default_library",
-        "@com_github_insomniacslk_dhcp//dhcpv4/server4:go_default_library",
-        "@com_github_vishvananda_netlink//:go_default_library",
-        "@org_golang_x_sys//unix:go_default_library",
+        "//metropolis/node",
+        "//metropolis/node/core/network/dhcp4c",
+        "//metropolis/node/core/network/dhcp4c/callback",
+        "//metropolis/pkg/logtree",
+        "//metropolis/pkg/supervisor",
+        "//metropolis/test/launch",
+        "@com_github_google_nftables//:nftables",
+        "@com_github_google_nftables//expr",
+        "@com_github_insomniacslk_dhcp//dhcpv4",
+        "@com_github_insomniacslk_dhcp//dhcpv4/server4",
+        "@com_github_vishvananda_netlink//:netlink",
+        "@org_golang_x_sys//unix",
     ],
 )
 
 go_binary(
     name = "nanoswitch",
-    embed = [":go_default_library"],
+    embed = [":nanoswitch_lib"],
     pure = "on",
     visibility = ["//visibility:private"],
 )

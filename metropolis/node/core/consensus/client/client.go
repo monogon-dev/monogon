@@ -25,8 +25,8 @@ import (
 	"fmt"
 	"strings"
 
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/clientv3/namespace"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/namespace"
 )
 
 // Namespaced etcd/consensus client. Each Namespaced client allows access to a

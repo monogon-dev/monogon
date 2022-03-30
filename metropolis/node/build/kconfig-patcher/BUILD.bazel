@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "kconfig-patcher_lib",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/node/build/kconfig-patcher",
     visibility = ["//visibility:private"],
@@ -9,7 +9,7 @@ go_library(
 
 go_binary(
     name = "kconfig-patcher",
-    embed = [":go_default_library"],
+    embed = [":kconfig-patcher_lib"],
     visibility = [
         "//metropolis/node:__pkg__",
         "//metropolis/test/ktest:__pkg__",
@@ -17,7 +17,7 @@ go_binary(
 )
 
 go_test(
-    name = "go_default_test",
+    name = "kconfig-patcher_test",
     srcs = ["main_test.go"],
-    embed = [":go_default_library"],
+    embed = [":kconfig-patcher_lib"],
 )

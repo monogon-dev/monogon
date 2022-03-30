@@ -1,0 +1,83 @@
+From a0f8916f104566a2538a70153c016de7c5d9f304 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Wed, 16 Mar 2022 18:54:11 +0100
+Subject: [PATCH] Use conventional import path for antlr
+
+---
+ WORKSPACE              | 9 +++++----
+ checker/BUILD.bazel    | 2 +-
+ parser/BUILD.bazel     | 4 ++--
+ parser/gen/BUILD.bazel | 2 +-
+ 4 files changed, 9 insertions(+), 8 deletions(-)
+
+diff --git a/WORKSPACE b/WORKSPACE
+index 4238e7a..b62cf15 100644
+--- a/WORKSPACE
++++ b/WORKSPACE
+@@ -99,11 +99,12 @@ go_repository(
+     version = "v0.3.2",
+ )
+ 
+-# Antlr deps to pickup golang concurrency fixes 4/30/2020
++# Antlr deps
+ go_repository(
+-    name = "com_github_antlr",
+-    commit = "621b933c7a7f01c67ae9de15103151fa0f9d6d90",
+-    importpath = "github.com/antlr/antlr4",
++    name = "com_github_antlr_antlr4_runtime_go_antlr",
++    importpath = "github.com/antlr/antlr4/runtime/Go/antlr",
++    sum = "h1:zvkJv+9Pxm1nnEMcKnShREt4qtduHKz4iw4AB4ul0Ao=",
++    version = "v0.0.0-20220209173558-ad29539cd2e9",
+ )
+ 
+ # CEL Spec deps
+diff --git a/checker/BUILD.bazel b/checker/BUILD.bazel
+index 2ef326b..bec40b6 100644
+--- a/checker/BUILD.bazel
++++ b/checker/BUILD.bazel
+@@ -54,7 +54,7 @@ go_test(
+         "//test:go_default_library",
+         "//test/proto2pb:go_default_library",
+         "//test/proto3pb:go_default_library",
+-        "@com_github_antlr//runtime/Go/antlr:go_default_library",
++        "@com_github_antlr_antlr4_runtime_go_antlr//:go_default_library",
+         "@org_golang_google_protobuf//proto:go_default_library",
+     ],
+ )
+diff --git a/parser/BUILD.bazel b/parser/BUILD.bazel
+index a1917b4..b76e6e4 100644
+--- a/parser/BUILD.bazel
++++ b/parser/BUILD.bazel
+@@ -23,7 +23,7 @@ go_library(
+         "//common/operators:go_default_library",
+         "//common/runes:go_default_library",
+         "//parser/gen:go_default_library",
+-        "@com_github_antlr//runtime/Go/antlr:go_default_library",
++        "@com_github_antlr_antlr4_runtime_go_antlr//:go_default_library",
+         "@org_golang_google_genproto//googleapis/api/expr/v1alpha1:go_default_library",
+         "@org_golang_google_protobuf//proto:go_default_library",
+         "@org_golang_google_protobuf//types/known/structpb:go_default_library",
+@@ -45,7 +45,7 @@ go_test(
+         "//common/debug:go_default_library",
+         "//parser/gen:go_default_library",
+         "//test:go_default_library",
+-        "@com_github_antlr//runtime/Go/antlr:go_default_library",
++        "@com_github_antlr_antlr4_runtime_go_antlr//:go_default_library",
+         "@org_golang_google_protobuf//proto:go_default_library",
+     ],
+ )
+diff --git a/parser/gen/BUILD.bazel b/parser/gen/BUILD.bazel
+index 78e0432..2271131 100644
+--- a/parser/gen/BUILD.bazel
++++ b/parser/gen/BUILD.bazel
+@@ -21,6 +21,6 @@ go_library(
+     ],
+     importpath = "github.com/google/cel-go/parser/gen",
+     deps = [
+-        "@com_github_antlr//runtime/Go/antlr:go_default_library",
++        "@com_github_antlr_antlr4_runtime_go_antlr//:go_default_library",
+     ],
+ )
+-- 
+2.25.1
+

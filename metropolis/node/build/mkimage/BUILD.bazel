@@ -1,15 +1,15 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "mkimage_lib",
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/node/build/mkimage",
     visibility = ["//visibility:private"],
-    deps = ["//metropolis/node/build/mkimage/osimage:go_default_library"],
+    deps = ["//metropolis/node/build/mkimage/osimage"],
 )
 
 go_binary(
     name = "mkimage",
-    embed = [":go_default_library"],
+    embed = [":mkimage_lib"],
     visibility = ["//metropolis/node:__pkg__"],
 )

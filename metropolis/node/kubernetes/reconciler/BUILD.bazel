@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "reconciler",
     srcs = [
         "reconciler.go",
         "resources_csi.go",
@@ -13,26 +13,26 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/kubernetes/reconciler",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = [
-        "//metropolis/pkg/supervisor:go_default_library",
-        "@io_k8s_api//core/v1:go_default_library",
-        "@io_k8s_api//node/v1beta1:go_default_library",
-        "@io_k8s_api//policy/v1beta1:go_default_library",
-        "@io_k8s_api//rbac/v1:go_default_library",
-        "@io_k8s_api//storage/v1:go_default_library",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
-        "@io_k8s_client_go//kubernetes:go_default_library",
+        "//metropolis/pkg/supervisor",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_api//node/v1beta1",
+        "@io_k8s_api//policy/v1beta1",
+        "@io_k8s_api//rbac/v1:rbac",
+        "@io_k8s_api//storage/v1:storage",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_client_go//kubernetes",
     ],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "reconciler_test",
     srcs = ["reconciler_test.go"],
-    embed = [":go_default_library"],
+    embed = [":reconciler"],
     deps = [
-        "@io_k8s_api//node/v1beta1:go_default_library",
-        "@io_k8s_api//policy/v1beta1:go_default_library",
-        "@io_k8s_api//rbac/v1:go_default_library",
-        "@io_k8s_api//storage/v1:go_default_library",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
+        "@io_k8s_api//node/v1beta1",
+        "@io_k8s_api//policy/v1beta1",
+        "@io_k8s_api//rbac/v1:rbac",
+        "@io_k8s_api//storage/v1:storage",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
     ],
 )

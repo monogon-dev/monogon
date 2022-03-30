@@ -6,39 +6,17 @@
   },
   "copylocks": {
     "exclude_files": {
-      "external/io_k8s_kubernetes/": "third_party",
-      "external/com_github_google_gvisor/": "third_party",
-      "external/io_k8s_sigs_structured_merge_diff/": "third_party",
-      "external/io_k8s_component_base/": "third_party",
-      "external/io_k8s_apiserver/": "third_party",
-      "external/org_golang_google_protobuf/": "third_party",
-      "external/com_github_armon_go_metrics/": "third_party",
-      "external/com_github_elazarl_goproxy/": "third_party",
-      "external/com_github_googleapis_gnostic/": "third_party",
-      "external/com_github_pseudomuto_protoc_gen_doc": "third_party"
+      "external/": "third_party"
     }
   },
   "lostcancel": {
     "exclude_files": {
-      "external/com_github_golang_protobuf/": "third_party",
-      "external/com_github_grpc_ecosystem_grpc_gateway/runtime/": "third_party",
-      "external/io_k8s_kubernetes/": "third_party",
-      "external/com_github_denisenkom_go_mssqldb/": "third_party"
+      "external/": "third_party"
     }
   },
   "unreachable": {
     "exclude_files": {
-      "external/io_k8s_kubernetes/": "third_party",
-      "external/bazel_gazelle/pathtools": "third_party",
-      "external/com_github_magiconair_properties": "third_party",
-      "external/com_github_ghodss_yaml": "third_party",
-      "external/io_k8s_kubectl": "third_party",
-      "external/org_golang_google_protobuf/": "third_party",
-      "external/com_github_shirou_gopsutil/": "unreachable",
-      "external/io_k8s_apimachinery/": "third_party",
-      "external/com_github_hpcloud_tail": "third_party",
-      "external/com_github_flynn_go_shlex": "third_party",
-      "external/com_github_masterminds_sprig": "third_party"
+      "external/": "third_party"
     }
   },
   "assign": {
@@ -50,12 +28,13 @@
     "exclude_files": {
       "external/com_github_modern_go_reflect2/": "third_party",
       "sqlite3.*go": "third_party",
-      "external/com_github_google_gvisor/": "third_party",
+      "external/dev_gvisor_gvisor/": "third_party",
       "external/io_k8s_sigs_structured_merge_diff/": "third_party",
       "external/com_github_go_delve_delve/": "third_party",
       "external/com_github_mailru_easyjson/jlexer/": "third_party",
       "external/com_github_cilium_ebpf/": "third_party",
-      "external/org_golang_x_sys": "third_party"
+      "external/org_golang_x_sys": "third_party",
+      "external/net_starlark_go": "third_party"
     }
   },
   "unusedresult": {
@@ -73,10 +52,7 @@
   },
   "printf": {
     "exclude_files": {
-      "external/io_k8s_kubernetes/": "third_party",
-      "external/runc/vendor/github.com/vishvananda/netlink": "third_party",
-      "external/com_github_google_gvisor/": "third_party",
-      "external/com_github_sbezverk_nfproxy/": "third_party"
+      "external/": "third_party"
     }
   },
   "commentwrap": {

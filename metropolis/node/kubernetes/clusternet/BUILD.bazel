@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "clusternet",
     srcs = [
         "clusternet.go",
         "netlink_compat.go",
@@ -9,19 +9,19 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/kubernetes/clusternet",
     visibility = ["//metropolis/node/kubernetes:__subpackages__"],
     deps = [
-        "//metropolis/node:go_default_library",
-        "//metropolis/node/core/localstorage:go_default_library",
-        "//metropolis/pkg/jsonpatch:go_default_library",
-        "//metropolis/pkg/logtree:go_default_library",
-        "//metropolis/pkg/supervisor:go_default_library",
-        "@com_github_vishvananda_netlink//:go_default_library",
-        "@com_zx2c4_golang_wireguard_wgctrl//:go_default_library",
-        "@com_zx2c4_golang_wireguard_wgctrl//wgtypes:go_default_library",
-        "@io_k8s_api//core/v1:go_default_library",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
-        "@io_k8s_apimachinery//pkg/types:go_default_library",
-        "@io_k8s_client_go//informers:go_default_library",
-        "@io_k8s_client_go//kubernetes:go_default_library",
-        "@io_k8s_client_go//tools/cache:go_default_library",
+        "//metropolis/node",
+        "//metropolis/node/core/localstorage",
+        "//metropolis/pkg/jsonpatch",
+        "//metropolis/pkg/logtree",
+        "//metropolis/pkg/supervisor",
+        "@com_github_vishvananda_netlink//:netlink",
+        "@com_zx2c4_golang_wireguard_wgctrl//:wgctrl",
+        "@com_zx2c4_golang_wireguard_wgctrl//wgtypes",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_apimachinery//pkg/types",
+        "@io_k8s_client_go//informers",
+        "@io_k8s_client_go//kubernetes",
+        "@io_k8s_client_go//tools/cache",
     ],
 )

@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
-    name = "go_default_library",
+    name = "e2e",
     srcs = [
         "kubernetes_helpers.go",
         "utils.go",
@@ -9,19 +9,19 @@ go_library(
     importpath = "source.monogon.dev/metropolis/test/e2e",
     visibility = ["//metropolis/test:__subpackages__"],
     deps = [
-        "//metropolis/test/launch/cluster:go_default_library",
-        "@io_k8s_api//apps/v1:go_default_library",
-        "@io_k8s_api//core/v1:go_default_library",
-        "@io_k8s_apimachinery//pkg/api/resource:go_default_library",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
-        "@io_k8s_apimachinery//pkg/util/intstr:go_default_library",
-        "@io_k8s_client_go//kubernetes:go_default_library",
-        "@io_k8s_client_go//rest:go_default_library",
+        "//metropolis/test/launch/cluster",
+        "@io_k8s_api//apps/v1:apps",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/api/resource",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_apimachinery//pkg/util/intstr",
+        "@io_k8s_client_go//kubernetes",
+        "@io_k8s_client_go//rest",
     ],
 )
 
 go_test(
-    name = "go_default_test",
+    name = "e2e_test",
     size = "large",
     srcs = ["main_test.go"],
     data = [
@@ -29,16 +29,16 @@ go_test(
         "//metropolis/node:swtpm_data",
         "//third_party/edk2:firmware",
     ],
-    embed = [":go_default_library"],
+    embed = [":e2e"],
     rundir = ".",
     deps = [
-        "//metropolis/node:go_default_library",
-        "//metropolis/node/core/identity:go_default_library",
-        "//metropolis/proto/api:go_default_library",
-        "//metropolis/test/launch/cluster:go_default_library",
-        "@io_k8s_api//core/v1:go_default_library",
-        "@io_k8s_apimachinery//pkg/api/resource:go_default_library",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
-        "@io_k8s_kubernetes//pkg/api/v1/pod:go_default_library",
+        "//metropolis/node",
+        "//metropolis/node/core/identity",
+        "//metropolis/proto/api",
+        "//metropolis/test/launch/cluster",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/api/resource",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_kubernetes//pkg/api/v1/pod",
     ],
 )

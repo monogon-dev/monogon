@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/cenkalti/backoff/v4"
-	"go.etcd.io/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/pkg/event"

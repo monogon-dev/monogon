@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "go_default_library",
+    name = "crypt",
     # keep
     srcs = [
         "blockdev.go",
@@ -12,9 +12,9 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/localstorage/crypt",
     visibility = ["//metropolis/node/core/localstorage:__subpackages__"],
     deps = [
-        "//metropolis/pkg/devicemapper:go_default_library",
-        "//metropolis/pkg/sysfs:go_default_library",
-        "@com_github_rekby_gpt//:go_default_library",
-        "@org_golang_x_sys//unix:go_default_library",
+        "//metropolis/pkg/devicemapper",
+        "//metropolis/pkg/sysfs",
+        "@com_github_rekby_gpt//:gpt",
+        "@org_golang_x_sys//unix",
     ],
 )

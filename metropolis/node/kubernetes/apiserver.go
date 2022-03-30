@@ -97,7 +97,6 @@ func (s *apiserverService) Run(ctx context.Context) error {
 			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: s.idCA})),
 		"--enable-admission-plugins=NodeRestriction,PodSecurityPolicy",
 		"--enable-aggregator-routing=true",
-		"--insecure-port=0",
 		fmt.Sprintf("--secure-port=%d", common.KubernetesAPIPort),
 		fmt.Sprintf("--etcd-servers=unix:///%s:0", s.EphemeralConsensusDirectory.ClientSocket.FullPath()),
 		args.FileOpt("--kubelet-client-certificate", "kubelet-client-cert.pem",
@@ -117,6 +116,9 @@ func (s *apiserverService) Run(ctx context.Context) error {
 		"--requestheader-username-headers=X-Remote-User",
 		args.FileOpt("--service-account-key-file", "service-account-pubkey.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: s.serviceAccountPrivKey})),
+		args.FileOpt("--service-account-signing-key-file", "service-account-signing-key.pem",
+			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: s.serviceAccountPrivKey})),
+		"--service-account-issuer", "https://metropolis.internal", // TODO: Figure out federation
 		fmt.Sprintf("--service-cluster-ip-range=%v", s.ServiceIPRange.String()),
 		args.FileOpt("--tls-cert-file", "server-cert.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: s.serverCert})),

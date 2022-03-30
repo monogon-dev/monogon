@@ -24,13 +24,13 @@ go_proto_library(
     proto = ":api_proto",
     visibility = ["//visibility:public"],
     deps = [
-        "//metropolis/proto/common:go_default_library",
-        "//metropolis/proto/ext:go_default_library",
+        "//metropolis/proto/common",
+        "//metropolis/proto/ext",
     ],
 )
 
 go_library(
-    name = "go_default_library",
+    name = "api",
     embed = [":api_go_proto"],
     importpath = "source.monogon.dev/metropolis/proto/api",
     visibility = ["//visibility:public"],
