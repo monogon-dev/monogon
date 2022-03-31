@@ -67,11 +67,16 @@ func (s *Service) Run(ctx context.Context) error {
 		return err
 	}
 
-	proxy := httputil.NewSingleHostReverseProxy(&url.URL{
-		Host:   net.JoinHostPort("localhost", node.KubernetesAPIPort.PortString()),
+	internalAPIServer := net.JoinHostPort("localhost", node.KubernetesAPIPort.PortString())
+	standardProxy := httputil.NewSingleHostReverseProxy(&url.URL{
 		Scheme: "https",
+		Host:   internalAPIServer,
 	})
-	proxy.Transport = &http.Transport{
+	noHTTP2Proxy := httputil.NewSingleHostReverseProxy(&url.URL{
+		Scheme: "https",
+		Host:   internalAPIServer,
+	})
+	transport := &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
@@ -87,7 +92,12 @@ func (s *Service) Run(ctx context.Context) error {
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
-	proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
+	standardProxy.Transport = transport
+	noHTTP2Transport := transport.Clone()
+	noHTTP2Transport.ForceAttemptHTTP2 = false
+	noHTTP2Transport.TLSClientConfig.NextProtos = []string{"http/1.1"}
+	noHTTP2Proxy.Transport = noHTTP2Transport
+	errorHandler := func(w http.ResponseWriter, req *http.Request, err error) {
 		logger.Infof("Proxy error: %v", err)
 		respondWithK8sStatus(w, &metav1.Status{
 			Status:  metav1.StatusFailure,
@@ -96,6 +106,8 @@ func (s *Service) Run(ctx context.Context) error {
 			Message: "authproxy could not reach apiserver",
 		})
 	}
+	standardProxy.ErrorHandler = errorHandler
+	noHTTP2Proxy.ErrorHandler = errorHandler
 
 	serverCert, err := s.getTLSCert(ctx, pki.APIServer)
 	if err != nil {
@@ -130,6 +142,13 @@ func (s *Service) Run(ctx context.Context) error {
 				})
 				return
 			}
+			proxyToUse := standardProxy
+			// Kubernetes wants to use SPDY but using SPDY with HTTP/2 is unsupported.
+			// SPDY should be removed from K8s, this is tracked in
+			// https://github.com/kubernetes/kubernetes/issues/7452
+			if strings.HasPrefix(strings.ToLower(req.Header.Get("Upgrade")), "spdy/") {
+				proxyToUse = noHTTP2Proxy
+			}
 			// Clone the request as otherwise modifying it is not allowed
 			newReq := req.Clone(req.Context())
 			// Drop any X-Remote headers to prevent injection
@@ -141,7 +160,7 @@ func (s *Service) Run(ctx context.Context) error {
 			newReq.Header.Set("X-Remote-User", clientIdentity)
 			newReq.Header.Set("X-Remote-Group", "")
 
-			proxy.ServeHTTP(rw, newReq)
+			proxyToUse.ServeHTTP(rw, newReq)
 		}),
 	}
 	go server.ListenAndServeTLS("", "")
