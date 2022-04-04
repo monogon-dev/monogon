@@ -30,6 +30,7 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/grpc"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,6 +38,7 @@ import (
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/identity"
+	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/metropolis/test/launch/cluster"
 )
@@ -96,13 +98,23 @@ func TestE2E(t *testing.T) {
 
 	log.Printf("E2E: Cluster running, starting tests...")
 
+	// Dial first node's curator.
+	creds := rpc.NewAuthenticatedCredentials(cluster.Owner, nil)
+	remote := net.JoinHostPort(cluster.NodeIDs[0], common.CuratorServicePort.PortString())
+	cl, err := grpc.Dial(remote, grpc.WithContextDialer(cluster.DialNode), grpc.WithTransportCredentials(creds))
+	if err != nil {
+		t.Fatalf("failed to dial first node's curator: %v", err)
+	}
+	defer cl.Close()
+	mgmt := apb.NewManagementClient(cl)
+
 	// This exists to keep the parent around while all the children race.
 	// It currently tests both a set of OS-level conditions and Kubernetes
 	// Deployments and StatefulSets
 	t.Run("RunGroup", func(t *testing.T) {
 		t.Run("Cluster", func(t *testing.T) {
 			testEventual(t, "Retrieving cluster directory sucessful", ctx, 60*time.Second, func(ctx context.Context) error {
-				res, err := cluster.Management.GetClusterInfo(ctx, &apb.GetClusterInfoRequest{})
+				res, err := mgmt.GetClusterInfo(ctx, &apb.GetClusterInfoRequest{})
 				if err != nil {
 					return fmt.Errorf("GetClusterInfo: %w", err)
 				}
@@ -133,7 +145,8 @@ func TestE2E(t *testing.T) {
 		})
 		t.Run("Kubernetes", func(t *testing.T) {
 			t.Parallel()
-			clientSet, err := GetKubeClientSet(cluster, cluster.Ports[common.KubernetesAPIWrappedPort])
+			// TODO(q3k): use SOCKS proxy.
+			clientSet, err := GetKubeClientSet(cluster, cluster.Ports[uint16(common.KubernetesAPIWrappedPort)])
 			if err != nil {
 				t.Fatal(err)
 			}

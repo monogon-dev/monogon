@@ -20,7 +20,10 @@
 // served by a built-in DHCP server. Traffic from that network to the
 // SLIRP/external network is SNATed as the host-side SLIRP ignores routed
 // packets.
-// It also has built-in userspace proxying support for debugging.
+//
+// It also has built-in userspace proxying support for accessing the first
+// node's services, as well as a SOCKS proxy to access all nodes within the
+// network.
 package main
 
 import (
@@ -312,6 +315,7 @@ func main() {
 		supervisor.Run(ctx, "proxy-dbg1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.DebugServicePort))
 		supervisor.Run(ctx, "proxy-k8s-api1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.KubernetesAPIPort))
 		supervisor.Run(ctx, "proxy-k8s-api-wrapped1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.KubernetesAPIWrappedPort))
+		supervisor.Run(ctx, "socks", runSOCKSProxy)
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
 		supervisor.Signal(ctx, supervisor.SignalDone)
 		return nil

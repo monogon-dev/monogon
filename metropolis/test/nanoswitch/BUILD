@@ -3,7 +3,10 @@ load("//metropolis/node/build:def.bzl", "node_initramfs")
 
 go_library(
     name = "nanoswitch_lib",
-    srcs = ["nanoswitch.go"],
+    srcs = [
+        "nanoswitch.go",
+        "socks.go",
+    ],
     importpath = "source.monogon.dev/metropolis/test/nanoswitch",
     visibility = ["//visibility:private"],
     deps = [
@@ -11,6 +14,7 @@ go_library(
         "//metropolis/node/core/network/dhcp4c",
         "//metropolis/node/core/network/dhcp4c/callback",
         "//metropolis/pkg/logtree",
+        "//metropolis/pkg/socksproxy",
         "//metropolis/pkg/supervisor",
         "//metropolis/test/launch",
         "@com_github_google_nftables//:nftables",

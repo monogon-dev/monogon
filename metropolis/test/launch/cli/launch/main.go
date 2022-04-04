@@ -28,9 +28,13 @@ import (
 )
 
 func main() {
+	var ports []uint16
+	for _, p := range cluster.NodePorts {
+		ports = append(ports, uint16(p))
+	}
 	ctx := clicontext.WithInterrupt(context.Background())
 	err := cluster.LaunchNode(ctx, cluster.NodeOptions{
-		Ports:      launch.IdentityPortMap(cluster.NodePorts),
+		Ports:      launch.IdentityPortMap(ports),
 		SerialPort: os.Stdout,
 		NodeParameters: &apb.NodeParameters{
 			Cluster: &apb.NodeParameters_ClusterBootstrap_{

@@ -31,9 +31,7 @@ import (
 	"syscall"
 
 	"golang.org/x/sys/unix"
-	"google.golang.org/grpc"
 
-	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/pkg/freeport"
 )
 
@@ -59,7 +57,7 @@ func (value QemuValue) ToOption(name string) string {
 
 // PortMap represents where VM ports are mapped to on the host. It maps from the VM
 // port number to the host port number.
-type PortMap map[node.Port]uint16
+type PortMap map[uint16]uint16
 
 // ToQemuForwards generates QEMU hostfwd values (https://qemu.weilnetz.de/doc/qemu-
 // doc.html#:~:text=hostfwd=) for all mapped ports.
@@ -71,24 +69,10 @@ func (p PortMap) ToQemuForwards() []string {
 	return hostfwdOptions
 }
 
-// DialGRPC creates a gRPC client for a VM port that's forwarded/mapped to the
-// host. The given port is automatically resolved to the host-mapped port.
-func (p PortMap) DialGRPC(port node.Port, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
-	mappedPort, ok := p[port]
-	if !ok {
-		return nil, fmt.Errorf("cannot dial port: port %d is not mapped/forwarded", port)
-	}
-	grpcClient, err := grpc.Dial(fmt.Sprintf("localhost:%d", mappedPort), opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial port %d: %w", port, err)
-	}
-	return grpcClient, nil
-}
-
 // IdentityPortMap returns a port map where each given port is mapped onto itself
 // on the host. This is mainly useful for development against Metropolis. The dbg
 // command requires this mapping.
-func IdentityPortMap(ports []node.Port) PortMap {
+func IdentityPortMap(ports []uint16) PortMap {
 	portMap := make(PortMap)
 	for _, port := range ports {
 		portMap[port] = uint16(port)
@@ -101,7 +85,7 @@ func IdentityPortMap(ports []node.Port) PortMap {
 // multiple instances of Metropolis nodes might be running. Please call this
 // function for each Launch command separately and as close to it as possible since
 // it cannot guarantee that the ports will remain free.
-func ConflictFreePortMap(ports []node.Port) (PortMap, error) {
+func ConflictFreePortMap(ports []uint16) (PortMap, error) {
 	portMap := make(PortMap)
 	for _, port := range ports {
 		mappedPort, listenCloser, err := freeport.AllocateTCPPort()

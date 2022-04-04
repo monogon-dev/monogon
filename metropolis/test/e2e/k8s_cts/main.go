@@ -106,7 +106,8 @@ func main() {
 		log.Fatalf("Failed to launch cluster: %v", err)
 	}
 	log.Println("Cluster initialized")
-	clientSet, err := e2e.GetKubeClientSet(cl, cl.Ports[common.KubernetesAPIWrappedPort])
+	// TODO(q3k): use SOCKS proxy instead.
+	clientSet, err := e2e.GetKubeClientSet(cl, cl.Ports[uint16(common.KubernetesAPIWrappedPort)])
 	if err != nil {
 		log.Fatalf("Failed to get clientSet: %v", err)
 	}
