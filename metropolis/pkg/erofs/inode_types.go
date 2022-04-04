@@ -114,7 +114,7 @@ func (c *CharacterDevice) inode() *inodeCompact {
 	return i
 }
 
-// CharacterDevice represents a Unix block device inode with major and minor
+// BlockDevice represents a Unix block device inode with major and minor
 // numbers.
 type BlockDevice struct {
 	Base

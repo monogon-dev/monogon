@@ -130,6 +130,38 @@ func TestKernelInterop(t *testing.T) {
 			},
 		},
 		{
+			name: "Chardev",
+			setup: func(w *Writer) error {
+				if err := w.Create(".", &Directory{
+					Base:     Base{GID: 123, UID: 123, Permissions: 0755},
+					Children: []string{"ttyS0"},
+				}); err != nil {
+					return err
+				}
+				err := w.Create("ttyS0", &CharacterDevice{
+					Base:  Base{GID: 0, UID: 0, Permissions: 0600},
+					Major: 4,
+					Minor: 64,
+				})
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+			validate: func(t *testing.T) error {
+				var stat unix.Statx_t
+				err := unix.Statx(0, "/test/ttyS0", 0, unix.STATX_ALL, &stat)
+				assert.NoError(t, err, "failed to statx file")
+				require.EqualValues(t, 0, stat.Uid, "wrong Uid")
+				require.EqualValues(t, 0, stat.Gid, "wrong Gid")
+				require.EqualValues(t, 0600, stat.Mode&^unix.S_IFMT, "wrong mode")
+				require.EqualValues(t, unix.S_IFCHR, stat.Mode&unix.S_IFMT, "wrong file type")
+				require.EqualValues(t, 4, stat.Rdev_major, "wrong dev major")
+				require.EqualValues(t, 64, stat.Rdev_minor, "wrong dev minor")
+				return nil
+			},
+		},
+		{
 			name: "LargeFile",
 			setup: func(w *Writer) error {
 				if err := w.Create(".", &Directory{
