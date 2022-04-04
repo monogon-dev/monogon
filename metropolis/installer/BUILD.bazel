@@ -27,6 +27,9 @@ node_initramfs(
     files = {
         "//metropolis/installer": "/init",
     },
+    fsspecs = [
+        "//metropolis/node/build:earlydev.fsspec",
+    ],
     visibility = ["//metropolis/installer/test:__pkg__"],
 )
 

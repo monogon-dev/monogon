@@ -37,5 +37,8 @@ node_initramfs(
         # CA Certificate bundle
         "@cacerts//file": "/etc/ssl/cert.pem",
     },
+    fsspecs = [
+        "//metropolis/node/build:earlydev.fsspec",
+    ],
     visibility = ["//metropolis/test:__subpackages__"],
 )

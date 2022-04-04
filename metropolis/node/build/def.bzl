@@ -58,12 +58,12 @@ FSSpecInfo = provider(
     },
 )
 
-def _fsspec_core_impl(ctx, tool, output_file, builtin_fsspec):
+def _fsspec_core_impl(ctx, tool, output_file):
     """
     _fsspec_core_impl implements the core of an fsspec-based rule. It takes
-    input from the `files`,`files_cc`, `extra_dirs`, `symlinks` and `fsspecs`
-    attributes and calls `tool` with the `-out` parameter pointing to
-    `output_file` and paths to all fsspecs as positional arguments.
+    input from the `files`,`files_cc`, `symlinks` and `fsspecs` attributes
+    and calls `tool` with the `-out` parameter pointing to `output_file`
+    and paths to all fsspecs as positional arguments.
     """
     fs_spec_name = ctx.label.name + ".prototxt"
     fs_spec = ctx.actions.declare_file(fs_spec_name)
@@ -97,31 +97,27 @@ def _fsspec_core_impl(ctx, tool, output_file, builtin_fsspec):
         mode = 0o555 if is_executable else 0o444
         fs_files.append(struct(path = p, source_path = src.path, mode = mode, uid = 0, gid = 0))
 
-    fs_dirs = []
-    for p in ctx.attr.extra_dirs:
-        if not p.startswith("/"):
-            fail("directory {} invalid: must begin with /".format(p))
-
-        fs_dirs.append(struct(path = p, mode = 0o555, uid = 0, gid = 0))
-
     fs_symlinks = []
     for target, p in ctx.attr.symlinks.items():
         fs_symlinks.append(struct(path = p, target_path = target))
 
-    fs_spec_content = struct(file = fs_files, directory = fs_dirs, symbolic_link = fs_symlinks)
+    fs_spec_content = struct(file = fs_files, directory = [], symbolic_link = fs_symlinks)
     ctx.actions.write(fs_spec, proto.encode_text(fs_spec_content))
 
     extra_specs = []
-    if builtin_fsspec != None:
-        builtin_fsspec_file = ctx.actions.declare_file(ctx.label.name + "-builtin.prototxt")
-        ctx.actions.write(builtin_fsspec_file, proto.encode_text(builtin_fsspec))
-        extra_specs.append(builtin_fsspec_file)
 
     for fsspec in ctx.attr.fsspecs:
+        # Skip files-as-fsspecs.
+        if FSSpecInfo not in fsspec:
+            continue
         fsspecInfo = fsspec[FSSpecInfo]
         extra_specs.append(fsspecInfo.spec)
         for f in fsspecInfo.referenced:
             inputs.append(f)
+
+    for file in ctx.files.fsspecs:
+        # Raw .fsspec prototext. No referenced data allowed.
+        extra_specs.append(file)
 
     ctx.actions.run(
         outputs = [output_file],
@@ -133,21 +129,10 @@ def _fsspec_core_impl(ctx, tool, output_file, builtin_fsspec):
     return
 
 def _node_initramfs_impl(ctx):
-    # At least /dev/console and /dev/null are required to exist for Linux
-    # to properly boot an init inside the initramfs. Here we additionally
-    # include important device nodes like /dev/kmsg and /dev/ptmx which
-    # might need to be available before a proper device manager is launched.
-    builtin_fsspec = struct(special_file = [
-        struct(path = "/dev/console", mode = 0o600, major = 5, minor = 1),
-        struct(path = "/dev/ptmx", mode = 0o644, major = 5, minor = 2),
-        struct(path = "/dev/null", mode = 0o644, major = 1, minor = 3),
-        struct(path = "/dev/kmsg", mode = 0o644, major = 1, minor = 11),
-    ])
-
     initramfs_name = ctx.label.name + ".cpio.lz4"
     initramfs = ctx.actions.declare_file(initramfs_name)
 
-    _fsspec_core_impl(ctx, ctx.executable._mkcpio, initramfs, builtin_fsspec)
+    _fsspec_core_impl(ctx, ctx.executable._mkcpio, initramfs)
 
     # TODO(q3k): Document why this is needed
     return [DefaultInfo(runfiles = ctx.runfiles(files = [initramfs]), files = depset([initramfs]))]
@@ -179,13 +164,6 @@ node_initramfs = rule(
             # Attach static transition to all files_cc inputs to ensure they are built with musl and static.
             cfg = build_static_transition,
         ),
-        "extra_dirs": attr.string_list(
-            default = [],
-            doc = """
-                Extra directories to create. These will be created in addition to all the directories required to
-                contain the files specified in the `files` attribute.
-            """,
-        ),
         "symlinks": attr.string_dict(
             default = {},
             doc = """
@@ -201,6 +179,7 @@ node_initramfs = rule(
                 These will be merged with all other given attributes.
             """,
             providers = [FSSpecInfo],
+            allow_files = True,
         ),
 
         # Tool
@@ -221,7 +200,7 @@ def _erofs_image_impl(ctx):
     fs_name = ctx.label.name + ".img"
     fs_out = ctx.actions.declare_file(fs_name)
 
-    _fsspec_core_impl(ctx, ctx.executable._mkerofs, fs_out, None)
+    _fsspec_core_impl(ctx, ctx.executable._mkerofs, fs_out)
 
     return [DefaultInfo(files = depset([fs_out]))]
 
@@ -252,13 +231,6 @@ erofs_image = rule(
             # Attach static transition to all files_cc inputs to ensure they are built with musl and static.
             cfg = build_static_transition,
         ),
-        "extra_dirs": attr.string_list(
-            default = [],
-            doc = """
-                Extra directories to create. These will be created in addition to all the directories required to
-                contain the files specified in the `files` attribute.
-            """,
-        ),
         "symlinks": attr.string_dict(
             default = {},
             doc = """
@@ -274,6 +246,7 @@ erofs_image = rule(
                 These will be merged with all other given attributes.
             """,
             providers = [FSSpecInfo],
+            allow_files = True,
         ),
 
         # Tools, implicit dependencies.

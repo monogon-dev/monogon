@@ -29,6 +29,9 @@ def _dict_union(x, y):
 def ktest(tester, cmdline = "", files = {}, files_cc = {}):
     node_initramfs(
         name = "test_initramfs",
+        fsspecs = [
+            "//metropolis/node/build:earlydev.fsspec",
+        ],
         files = _dict_union({
             "//metropolis/test/ktest/init": "/init",
             tester: "/tester",

@@ -41,18 +41,6 @@ cpio_ucode(
 
 erofs_image(
     name = "rootfs",
-    extra_dirs = [
-        "/kubernetes/conf/flexvolume-plugins",
-        "/containerd/plugins",
-        "/sys",
-        "/proc",
-        "/dev",
-        "/esp",
-        "/tmp",
-        "/run",
-        "/ephemeral",
-        "/data",
-    ],
     files = {
         "//metropolis/node/core": "/core",
 
@@ -103,7 +91,11 @@ erofs_image(
         "@xfsprogs//:mkfs": "/bin/mkfs.xfs",
         "@chrony//:chrony": "/time/chrony",
     },
-    fsspecs = [":firmware"],
+    fsspecs = [
+        ":erofs-layout.fsspec",
+        "//metropolis/node/build:earlydev.fsspec",
+        ":firmware",
+    ],
     symlinks = {
         "/ephemeral/machine-id": "/etc/machine-id",
         "/ephemeral/hosts": "/etc/hosts",

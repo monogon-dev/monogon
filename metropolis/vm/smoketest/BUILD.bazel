@@ -15,6 +15,9 @@ node_initramfs(
     files = {
         "//metropolis/vm/smoketest/payload": "/init",
     },
+    fsspecs = [
+        "//metropolis/node/build:earlydev.fsspec",
+    ],
 )
 
 go_binary(

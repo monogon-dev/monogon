@@ -21,6 +21,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -88,6 +89,34 @@ func (spec *entrySpec) writeRecursive(w *erofs.Writer, pathname string) {
 		if err != nil {
 			log.Fatalf("failed to create symbolic link: %s", err)
 		}
+	case *fsspec.Inode_SpecialFile:
+		err := fmt.Errorf("unimplemented special file type %s", inode.SpecialFile.Type)
+		base := erofs.Base{
+			Permissions: uint16(inode.SpecialFile.Mode),
+			UID:         uint16(inode.SpecialFile.Uid),
+			GID:         uint16(inode.SpecialFile.Gid),
+		}
+		switch inode.SpecialFile.Type {
+		case fsspec.SpecialFile_FIFO:
+			err = w.Create(pathname, &erofs.FIFO{
+				Base: base,
+			})
+		case fsspec.SpecialFile_CHARACTER_DEV:
+			err = w.Create(pathname, &erofs.CharacterDevice{
+				Base:  base,
+				Major: inode.SpecialFile.Major,
+				Minor: inode.SpecialFile.Minor,
+			})
+		case fsspec.SpecialFile_BLOCK_DEV:
+			err = w.Create(pathname, &erofs.BlockDevice{
+				Base:  base,
+				Major: inode.SpecialFile.Major,
+				Minor: inode.SpecialFile.Minor,
+			})
+		}
+		if err != nil {
+			log.Fatalf("failed to make special file: %v", err)
+		}
 	}
 }
 
@@ -154,8 +183,9 @@ func main() {
 		entryRef.data.Type = &fsspec.Inode_SymbolicLink{SymbolicLink: symlink}
 	}
 
-	if len(spec.SpecialFile) > 0 {
-		log.Fatalf("special files are currently unimplemented in mkerofs")
+	for _, specialFile := range spec.SpecialFile {
+		entryRef := fsRoot.pathRef(specialFile.Path)
+		entryRef.data.Type = &fsspec.Inode_SpecialFile{SpecialFile: specialFile}
 	}
 
 	fs, err := os.Create(*outPath)

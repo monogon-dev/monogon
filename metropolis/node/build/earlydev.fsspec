@@ -1,0 +1,48 @@
+# Critical /dev files which should be present as early as possible, ie. be baked
+# into filesystem images.
+
+# At least /dev/console and /dev/null are required to exist for Linux
+# to properly boot an init. Here we additionally include important device nodes
+# like /dev/kmsg and /dev/ptmx which might need to be available before a proper
+# device manager (ie. devtmpfs) is launched.
+special_file <
+    path: "/dev/console"
+    type: CHARACTER_DEV
+    major: 1 minor: 1
+    mode: 0600 uid: 0 gid: 0
+>
+special_file <
+    path: "/dev/ptmx"
+    type: CHARACTER_DEV
+    major: 5 minor: 2
+    mode: 0644 uid: 0 gid: 0
+>
+special_file <
+    path: "/dev/null"
+    type: CHARACTER_DEV
+    major: 1 minor: 3
+    mode: 0644 uid: 0 gid: 0
+>
+special_file <
+    path: "/dev/kmsg"
+    type: CHARACTER_DEV
+    major: 1 minor: 11
+    mode: 0644 uid: 0 gid: 0
+>
+
+
+# Metropolis core logs to /dev/ttyS0 and /dev/tty0 by default, we want
+# these to also be present before devtmpfs is mounted so that minit can
+# log there, too.
+special_file <
+    path: "/dev/tty0"
+    type: CHARACTER_DEV
+    major: 4 minor: 0
+    mode: 0600 uid: 0 gid: 0
+>
+special_file <
+    path: "/dev/ttyS0"
+    type: CHARACTER_DEV
+    major: 4 minor: 64
+    mode: 0660 uid: 0 gid: 0
+>

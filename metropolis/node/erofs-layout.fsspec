@@ -1,0 +1,42 @@
+# Directory layout of Metropolis node rootfs (on erofs).
+
+directory <
+    path: "/kubernetes/conf/flexvolume-plugins"
+    mode: 0555 uid: 0 gid: 0
+>
+directory <
+    path: "/containerd/plugins"
+    mode: 0555 uid: 0 gid: 0
+>
+directory <
+    path: "/sys"
+    mode: 0555 uid: 0 gid: 0
+>
+directory <
+    path: "/proc"
+    mode: 0555 uid: 0 gid: 0
+>
+directory <
+    path: "/dev"
+    mode: 0555 uid: 0 gid: 0
+>
+directory <
+    path: "/esp"
+    mode: 0555 uid: 0 gid: 0
+>
+directory <
+    path: "/tmp"
+    mode: 0555 uid: 0 gid: 0
+>
+directory <
+    path: "/run"
+    mode: 0555 uid: 0 gid: 0
+>
+directory <
+    path: "/ephemeral"
+    mode: 0555 uid: 0 gid: 0
+>
+directory <
+    path: "/data"
+    mode: 0555 uid: 0 gid: 0
+>
