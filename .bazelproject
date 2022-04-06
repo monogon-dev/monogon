@@ -28,7 +28,6 @@ import_run_configurations:
   intellij/run/e2e_test_in_dbg_mode.xml
   intellij/run/e2e_test_in_dbg_mode_with_dlv.xml
 
-  intellij/run/Run__fietsje.xml
   intellij/run/Run__gazelle.xml
 
   intellij/run/Run_all_tests.xml

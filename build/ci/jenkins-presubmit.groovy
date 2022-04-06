@@ -45,7 +45,7 @@ pipeline {
                         gerritCheck checks: ['jenkins:gazelle': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
                         echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe bazel run //:gazelle -- update-repos -from_file=go.mod -to_macro=third_party/go/repositories.bzl%go_repositories -prune"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe bazel run //:gazelle-update-repos"
                         sh "JENKINS_NODE_COOKIE=dontKillMe bazel run //:gazelle -- update"
 
                         script {
@@ -56,7 +56,7 @@ pipeline {
                                     Unclean working directory after running gazelle.
                                     Please run:
 
-                                       \$ bazel run //:gazelle -- update-repos -from_file=go.mod -to_macro=third_party/go/repositories.bzl%go_repositories -prune
+                                       \$ bazel run //:gazelle-update-repos
                                        \$ bazel run //:gazelle -- update
 
                                     In your git checkout and amend the resulting diff to this changelist.

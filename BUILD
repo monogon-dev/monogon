@@ -5,9 +5,14 @@ load("@io_bazel_rules_go//go:def.bzl", "go_path")
 # gazelle:go_naming_convention import
 gazelle(name = "gazelle")
 
-alias(
-    name = "fietsje",
-    actual = "//build/fietsje/cmd",
+gazelle(
+    name = "gazelle-update-repos",
+    args = [
+        "-from_file=go.mod",
+        "-to_macro=third_party/go/repositories.bzl%go_repositories",
+        "-prune",
+    ],
+    command = "update-repos",
 )
 
 # Shortcut for the Go SDK
