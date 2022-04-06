@@ -36,7 +36,7 @@ Add a Go dependency to your code, then:
     $ go mod tidy
     $ bazel run //:gazelle-update-repos
 
-NOTE: currently the first part (`go mod tidy`) doesn't work without performing some in-place symlinking in the repository. TODO(lorenz): document this
+All generated sources (eg. protobuf stubs) that are usually built by Bazel are invisible to go(mod)-based tooling. To get around this, we place `gomod-generated-placeholder.go` files in package directories that would otherwise contain generated files. These are ignored by Gazelle (and thus by Bazel builds) but not by go(mod)-based tooling.
 
 Regenerating BUILDfiles
 -----------------------

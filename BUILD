@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_path")
 
 # gazelle:prefix source.monogon.dev
 # gazelle:go_naming_convention import
+# gazelle:exclude **/gomod-generated-placeholder.go
 gazelle(name = "gazelle")
 
 gazelle(
