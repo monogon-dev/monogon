@@ -654,17 +654,16 @@ func TestDecoder(t *testing.T) {
 	wantError("foo")
 	wantValue("18", 18)
 	wantError("10")
-	wantError("10")
 	wantValue("27", 27)
 	wantValue("36", 36)
 
 	for i, want := range wantList {
 		q := <-queue
 		if want == nil && q.err == nil {
-			t.Errorf("Case %d: wanted error, got no error and value %d", i, q.val)
+			t.Fatalf("Case %d: wanted error, got no error and value %d", i, q.val)
 		}
 		if want != nil && (*want) != q.val {
-			t.Errorf("Case %d: wanted value %d, got error %v and value %d", i, *want, q.err, q.val)
+			t.Fatalf("Case %d: wanted value %d, got error %v and value %d", i, *want, q.err, q.val)
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package etcd
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -108,15 +109,10 @@ func (e *Value) Watch() event.Watcher {
 		ctx:  ctx,
 		ctxC: ctxC,
 
+		current: make(map[string][]byte),
+
 		getSem: make(chan struct{}, 1),
 	}
-}
-
-// keyValue is an intermediate type used to keep etcd values in the watcher's
-// backlog.
-type keyValue struct {
-	key   []byte
-	value []byte
 }
 
 type watcher struct {
@@ -132,13 +128,23 @@ type watcher struct {
 	// error if concurrent access is attempted.
 	getSem chan struct{}
 
-	// backlogged is a list of (key, value) pairs retrieved from etcd but not yet
-	// returned via Get. These items are not a replay of all the updates from etcd,
-	// but are already compacted to deduplicate updates to the same object (ie., if
-	// the update stream from etcd is for keys A, B, and A, the backlogged list will
+	// backlogged is a list of keys retrieved from etcd but not yet returned via
+	// Get. These items are not a replay of all the updates from etcd, but are
+	// already compacted to deduplicate updates to the same object (ie., if the
+	// update stream from etcd is for keys A, B, and A, the backlogged list will
 	// only contain one update for A and B each, with the first update for A being
 	// discarded upon arrival of the second update).
-	backlogged []*keyValue
+	//
+	// The keys are an index into the current map, which contains the values
+	// retrieved, including ones that have already been returned via Get. This
+	// persistence allows us to deduplicate spurious updates to the user, in which
+	// etcd returned a new revision of a key, but the data stayed the same.
+	backlogged [][]byte
+	// current map, keyed from etcd key into etcd value at said key. This map
+	// persists alongside an etcd connection, permitting deduplication of spurious
+	// etcd updates even across multiple Get calls.
+	current map[string][]byte
+
 	// prev is the etcd store revision of a previously completed etcd Get/Watch
 	// call, used to resume a Watch call in case of failures.
 	prev *int64
@@ -193,11 +199,10 @@ func (w *watcher) setup(ctx context.Context) error {
 		w.prev = &get.Header.Revision
 
 		w.backlogged = nil
+		w.current = make(map[string][]byte)
 		for _, kv := range get.Kvs {
-			w.backlogged = append(w.backlogged, &keyValue{
-				key:   kv.Key,
-				value: kv.Value,
-			})
+			w.backlogged = append(w.backlogged, kv.Key)
+			w.current[string(kv.Key)] = kv.Value
 		}
 		return nil
 
@@ -273,11 +278,6 @@ func (w *watcher) backfill(ctx context.Context) error {
 		//
 		// TODO(q3k): this could be stored in the watcher state to not waste time on
 		// each update, but it's good enough for now.
-		lastUpdate := make(map[string]*keyValue)
-		for _, kv := range w.backlogged {
-			kv := kv
-			lastUpdate[string(kv.key)] = kv
-		}
 		for _, ev := range resp.Events {
 			var value []byte
 			switch ev.Type {
@@ -289,15 +289,11 @@ func (w *watcher) backfill(ctx context.Context) error {
 			}
 
 			keyS := string(ev.Kv.Key)
-			prev := lastUpdate[keyS]
-			if prev == nil {
-				kv := &keyValue{
-					key: ev.Kv.Key,
-				}
-				w.backlogged = append(w.backlogged, kv)
-				prev = kv
+			prev := w.current[keyS]
+			if !bytes.Equal(prev, value) {
+				w.backlogged = append(w.backlogged, ev.Kv.Key)
+				w.current[keyS] = value
 			}
-			prev.value = value
 		}
 
 		// Still nothing in backlog? Keep trying.
@@ -413,14 +409,16 @@ func (w *watcher) Get(ctx context.Context, opts ...event.GetOption) (interface{}
 		if len(w.backlogged) != 1 {
 			panic("multiple keys in nonranged value")
 		}
-		kv := w.backlogged[0]
+		k := w.backlogged[0]
+		v := w.current[string(k)]
 		w.backlogged = nil
-		return w.decoder(kv.key, kv.value)
+		return w.decoder(k, v)
 	} else {
 		// For ranged queries, pop one ranged query off the backlog.
-		kv := w.backlogged[0]
+		k := w.backlogged[0]
+		v := w.current[string(k)]
 		w.backlogged = w.backlogged[1:]
-		return w.decoder(kv.key, kv.value)
+		return w.decoder(k, v)
 	}
 }
 
