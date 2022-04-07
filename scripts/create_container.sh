@@ -107,6 +107,7 @@ main() {
     podman run -it -d \
         -v $(pwd):$(pwd):z \
         -w $(pwd) \
+        --tmpfs=/tmp \
         --volume="${bazel_root}:${bazel_root}" \
         --device /dev/kvm \
         --privileged \
