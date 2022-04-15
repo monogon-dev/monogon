@@ -25,7 +25,9 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/pkg/tpm"
+
 	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 	ppb "source.monogon.dev/metropolis/proto/private"
 )
 
@@ -44,6 +46,7 @@ type ESPMetropolisDirectory struct {
 	declarative.Directory
 	SealedConfiguration ESPSealedConfiguration `file:"sealed_configuration.pb"`
 	NodeParameters      ESPNodeParameters      `file:"parameters.pb"`
+	ClusterDirectory    ESPClusterDirectory    `file:"cluster_directory.pb"`
 }
 
 // ESPSealedConfiguration is a TPM sealed serialized
@@ -60,12 +63,21 @@ type ESPNodeParameters struct {
 	declarative.File
 }
 
+// ESPClusterDirectory is a serialized common.ClusterDirectory protobuf. It
+// contains a list of endpoints a registered node might connect to when joining
+// a cluster.
+type ESPClusterDirectory struct {
+	declarative.File
+}
+
 var (
 	ErrNoSealed            = errors.New("no sealed configuration exists")
 	ErrSealedUnavailable   = errors.New("sealed configuration temporary unavailable")
 	ErrSealedCorrupted     = errors.New("sealed configuration corrupted")
 	ErrNoParameters        = errors.New("no parameters found")
 	ErrParametersCorrupted = errors.New("parameters corrupted")
+	ErrNoDirectory         = errors.New("no cluster directory found")
+	ErrDirectoryCorrupted  = errors.New("cluster directory corrupted")
 )
 
 func (e *ESPNodeParameters) Unmarshal() (*apb.NodeParameters, error) {
@@ -84,6 +96,23 @@ func (e *ESPNodeParameters) Unmarshal() (*apb.NodeParameters, error) {
 	}
 
 	return &config, nil
+}
+
+func (e *ESPClusterDirectory) Unmarshal() (*cpb.ClusterDirectory, error) {
+	bytes, err := e.Read()
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrNoDirectory
+		}
+		return nil, fmt.Errorf("%w: when reading: %v", ErrNoDirectory, err)
+	}
+
+	dir := cpb.ClusterDirectory{}
+	err = proto.Unmarshal(bytes, &dir)
+	if err != nil {
+		return nil, fmt.Errorf("%w: when unmarshaling: %v", ErrDirectoryCorrupted, err)
+	}
+	return &dir, nil
 }
 
 func (e *ESPSealedConfiguration) SealSecureBoot(c *ppb.SealedConfiguration) error {
