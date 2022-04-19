@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <linux/reboot.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,24 +29,66 @@
 
 void handle_signal(pid_t child_pid, int signum);
 
+#define NUM_CONSOLES 3
+FILE *consoles[NUM_CONSOLES] = {};
+
+// open_consoles populates the consoles array with FILE pointers to opened
+// character devices that should receive log messages. Some of these pointers
+// are likely to be null, meaning that particular console is not available.
+void open_consoles() {
+    consoles[0] = fopen("/dev/console", "w");
+    consoles[1] = fopen("/dev/tty0", "w");
+    consoles[2] = fopen("/dev/ttyS0", "w");
+
+    // Set all open consoles to be line-buffered.
+    for (int i = 0; i < NUM_CONSOLES; i++) {
+        if (consoles[i] == NULL) {
+            continue;
+        }
+        setvbuf(consoles[i], NULL, _IOLBF, BUFSIZ);
+    }
+
+    // TODO(q3k): disable hardware and software flow control on TTYs. This
+    // shouldn't be necessary on our current platform, but should be ensured
+    // regardless, to make sure we never block writing to any console.
+}
+
+// cprintf emits a format string to all opened consoles.
+void cprintf(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+
+    for (int i = 0; i < NUM_CONSOLES; i++) {
+        FILE *console = consoles[i];
+        if (console == NULL) {
+            continue;
+        }
+        vfprintf(console, fmt, args);
+    }
+
+    va_end(args);
+}
+
 int main() {
     // Block all signals. We'll unblock them in the child.
     sigset_t all_signals;
     sigfillset(&all_signals);
     sigprocmask(SIG_BLOCK, &all_signals, NULL);
 
+    open_consoles();
+
     // Say hello.
-    fprintf(stderr,
+    cprintf(
         "\n"
         "  Metropolis Cluster Operating System\n"
-        "  Copyright 2020-2021 The Monogon Project Authors\n"
+        "  Copyright 2020-2022 The Monogon Project Authors\n"
         "\n"
     );
 
 
     pid_t pid = fork();
     if (pid < 0) {
-        fprintf(stderr, "fork(): %s\n", strerror(errno));
+        cprintf("fork(): %s\n", strerror(errno));
         return 1;
     }
 
@@ -53,7 +96,7 @@ int main() {
         // In the child. Unblock all signals.
         sigprocmask(SIG_UNBLOCK, &all_signals, NULL);
         if (setsid() == -1) {
-            fprintf(stderr, "setsid: %s\n", strerror(errno));
+            cprintf("setsid: %s\n", strerror(errno));
             return 1;
         }
 
@@ -63,7 +106,7 @@ int main() {
             NULL,
         };
         execvp(argv[0], argv);
-        fprintf(stderr, "execvpe(/core) failed: %s\n", strerror(errno));
+        cprintf("execvpe(/core) failed: %s\n", strerror(errno));
         return 1;
     }
 
@@ -111,21 +154,21 @@ void handle_signal(pid_t child_pid, int signum) {
         } else {
             // Something unexpected happened. Attempt to handle this gracefully,
             // but complain.
-            fprintf(stderr, "child status not EXITED nor SIGNALED: %d\n", status);
+            cprintf("child status not EXITED nor SIGNALED: %d\n", status);
             exit_status = 1;
         }
     }
 
     // Direct child exited, let's also exit.
     if (exit_status >= 0) {
-        fprintf(stderr, "\n  Metropolis core exited with status: %d\n", exit_status);
+        cprintf("\n  Metropolis core exited with status: %d\n", exit_status);
         sync();
         if (exit_status != 0) {
-            fprintf(stderr, "  Disks synced, rebooting in 30 seconds...\n", exit_status);
+            cprintf("  Disks synced, rebooting in 30 seconds...\n", exit_status);
             sleep(30);
-            fprintf(stderr, "  Rebooting...\n\n", exit_status);
+            cprintf("  Rebooting...\n\n", exit_status);
         } else {
-            fprintf(stderr, "  Disks synced, rebooting...\n\n");
+            cprintf("  Disks synced, rebooting...\n\n");
         }
         reboot(LINUX_REBOOT_CMD_RESTART);
     }
