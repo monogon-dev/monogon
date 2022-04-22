@@ -28,12 +28,27 @@ import (
 )
 
 func main() {
+	// Create the launch directory.
+	ld, err := os.MkdirTemp(os.Getenv("TEST_TMPDIR"), "node_state*")
+	if err != nil {
+		log.Fatalf("couldn't create a launch directory: %v", err)
+	}
+	defer os.RemoveAll(ld)
+	// Create the socket directory. Since using TEST_TMPDIR will often result in
+	// paths too long to place UNIX sockets at, we'll use the LSB temporary
+	// directory.
+	sd, err := os.MkdirTemp("/tmp", "node_sock*")
+	if err != nil {
+		log.Fatalf("couldn't create a socket directory: %v", err)
+	}
+	defer os.RemoveAll(sd)
+
 	var ports []uint16
 	for _, p := range cluster.NodePorts {
 		ports = append(ports, uint16(p))
 	}
 	ctx := clicontext.WithInterrupt(context.Background())
-	err := cluster.LaunchNode(ctx, cluster.NodeOptions{
+	err = cluster.LaunchNode(ctx, ld, sd, &cluster.NodeOptions{
 		Ports:      launch.IdentityPortMap(ports),
 		SerialPort: os.Stdout,
 		NodeParameters: &apb.NodeParameters{

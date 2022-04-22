@@ -18,6 +18,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/test/launch/cluster",
     visibility = ["//visibility:public"],
     deps = [
+        "//metropolis/cli/pkg/datafile",
         "//metropolis/node",
         "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",

@@ -142,6 +142,13 @@ func TestE2E(t *testing.T) {
 				}
 				return nil
 			})
+			testEventual(t, "Node rejoin successful", ctx, 60*time.Second, func(ctx context.Context) error {
+				// Ensure nodes rejoin the cluster after a reboot by reboting the 1st node.
+				if err := cluster.RebootNode(ctx, 1); err != nil {
+					return fmt.Errorf("while rebooting a node: %w", err)
+				}
+				return nil
+			})
 		})
 		t.Run("Kubernetes", func(t *testing.T) {
 			t.Parallel()
