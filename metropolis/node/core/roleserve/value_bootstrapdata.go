@@ -13,9 +13,11 @@ import (
 // the control plane logic to go into bootstrap mode and bring up a control
 // plane from scratch.
 type bootstrapData struct {
-	nodePrivateKey   ed25519.PrivateKey
-	clusterUnlockKey []byte
-	initialOwnerKey  []byte
+	nodePrivateKey     ed25519.PrivateKey
+	clusterUnlockKey   []byte
+	nodeUnlockKey      []byte
+	initialOwnerKey    []byte
+	nodePrivateJoinKey ed25519.PrivateKey
 }
 
 type bootstrapDataValue struct {

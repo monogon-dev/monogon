@@ -67,4 +67,10 @@ message SealedConfiguration {
     // the data partition. The NUK and CUK are generated on bootstrap and
     // registration.
     bytes node_unlock_key = 1;
+    // join_key is an ED25519 private key generated during registration. The
+    // public part is shared with Curator to authenticate the join procedure.
+    bytes join_key = 2;
+    // cluster_ca is the X509 CA certificate of the cluster set during
+    // registration and used by nodes joining the cluster.
+    bytes cluster_ca = 3;
 }

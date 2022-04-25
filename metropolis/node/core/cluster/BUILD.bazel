@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "cluster.go",
         "cluster_bootstrap.go",
+        "cluster_join.go",
         "cluster_register.go",
         "platform.go",
     ],
@@ -22,9 +23,11 @@ go_library(
         "//metropolis/pkg/event/memory",
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/api",
+        "//metropolis/proto/common",
         "//metropolis/proto/private",
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_protobuf//proto",
+        "@org_golang_x_sys//unix",
     ],
 )

@@ -2,6 +2,7 @@ package curator
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/subtle"
 	"fmt"
 	"net"
@@ -265,8 +266,10 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 	}
 	pubkey := pi.Unauthenticated.SelfSignedPublicKey
 
-	// TODO(mateusz@monogon.tech): check req.JoinKey length once Join Flow is
-	// implemented on the client side.
+	// Check the Join Key size.
+	if want, got := ed25519.PublicKeySize, len(req.JoinKey); want != got {
+		return nil, status.Errorf(codes.InvalidArgument, "join_key must be set and be %d bytes long", want)
+	}
 
 	// Verify that call contains a RegisterTicket and that this RegisterTicket is
 	// valid.

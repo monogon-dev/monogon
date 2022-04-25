@@ -118,18 +118,28 @@ func New(c Config) *Service {
 	return s
 }
 
-func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk []byte) {
+func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk, jkey []byte) {
 	s.ClusterMembership.set(&ClusterMembership{
 		pubkey: privkey.Public().(ed25519.PublicKey),
 	})
 	s.bootstrapData.set(&bootstrapData{
-		nodePrivateKey:   privkey,
-		initialOwnerKey:  iok,
-		clusterUnlockKey: cuk,
+		nodePrivateKey:     privkey,
+		initialOwnerKey:    iok,
+		clusterUnlockKey:   cuk,
+		nodeUnlockKey:      nuk,
+		nodePrivateJoinKey: jkey,
 	})
 }
 
 func (s *Service) ProvideRegisterData(credentials identity.NodeCredentials, directory *cpb.ClusterDirectory) {
+	s.ClusterMembership.set(&ClusterMembership{
+		remoteCurators: directory,
+		credentials:    &credentials,
+		pubkey:         credentials.PublicKey(),
+	})
+}
+
+func (s *Service) ProvideJoinData(credentials identity.NodeCredentials, directory *cpb.ClusterDirectory) {
 	s.ClusterMembership.set(&ClusterMembership{
 		remoteCurators: directory,
 		credentials:    &credentials,

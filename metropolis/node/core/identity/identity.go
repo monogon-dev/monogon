@@ -124,6 +124,35 @@ func (n *NodeCredentials) Save(d *localstorage.PKIDirectory) error {
 	return nil
 }
 
+// Read initializes NodeCredentials' contents with the data stored in the
+// PKIDirectory d. It may return an I/O error, or a parsing error.
+func (n *NodeCredentials) Read(d *localstorage.PKIDirectory) error {
+	if car, err := d.CACertificate.Read(); err != nil {
+		return fmt.Errorf("while reading CA certificate: %w", err)
+	} else {
+		cert, err := x509.ParseCertificate(car)
+		if err != nil {
+			return fmt.Errorf("while parsing CA certificate: %w", err)
+		}
+		n.ca = cert
+	}
+	if nr, err := d.Certificate.Read(); err != nil {
+		return fmt.Errorf("while reading node certificate: %w", err)
+	} else {
+		cert, err := x509.ParseCertificate(nr)
+		if err != nil {
+			return fmt.Errorf("while parsing node certificate: %w", err)
+		}
+		n.node = cert
+	}
+	if npr, err := d.Key.Read(); err != nil {
+		return fmt.Errorf("while reading node private key: %w", err)
+	} else {
+		n.private = npr
+	}
+	return nil
+}
+
 // NodeIDBare returns the `{pubkeyHash}` part of the node ID.
 func NodeIDBare(pub []byte) string {
 	return hex.EncodeToString(pub[:16])

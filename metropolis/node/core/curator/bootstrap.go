@@ -105,14 +105,20 @@ func BootstrapNodeFinish(ctx context.Context, etcd client.Namespaced, node *Node
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to marshal initial owner: %w", err)
 	}
+	joinKeyPath, err := node.etcdJoinKeyPath()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get join key: %w", err)
+	}
 
 	// We don't care about the result's success - this is idempotent.
 	_, err = etcd.Txn(ctx).If(
 		clientv3.Compare(clientv3.CreateRevision(nodePath), "=", 0),
 		clientv3.Compare(clientv3.CreateRevision(initialOwnerEtcdPath), "=", 0),
+		clientv3.Compare(clientv3.CreateRevision(joinKeyPath), "=", 0),
 	).Then(
 		clientv3.OpPut(nodePath, string(nodeRaw)),
 		clientv3.OpPut(initialOwnerEtcdPath, string(ownerRaw)),
+		clientv3.OpPut(joinKeyPath, node.ID()),
 	).Commit()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to store initial cluster state: %w", err)

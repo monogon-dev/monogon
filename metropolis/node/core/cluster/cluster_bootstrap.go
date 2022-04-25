@@ -43,6 +43,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	if err != nil {
 		return fmt.Errorf("could not make and mount data partition: %w", err)
 	}
+	nuk := state.configuration.NodeUnlockKey
 
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -50,7 +51,13 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	}
 	supervisor.Logger(ctx).Infof("Bootstrapping: node public key: %s", hex.EncodeToString([]byte(pub)))
 
-	m.roleServer.ProvideBootstrapData(priv, ownerKey, cuk)
+	jpub, jpriv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return fmt.Errorf("could not generate join keypair: %w", err)
+	}
+	supervisor.Logger(ctx).Infof("Bootstrapping: node public join key: %s", hex.EncodeToString([]byte(jpub)))
+
+	m.roleServer.ProvideBootstrapData(priv, ownerKey, cuk, nuk, jpriv)
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)

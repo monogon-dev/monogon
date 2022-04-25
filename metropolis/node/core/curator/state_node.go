@@ -91,10 +91,11 @@ type Node struct {
 // cluster state.
 //
 // This can only be used by the cluster bootstrap logic.
-func NewNodeForBootstrap(cuk, pubkey []byte) Node {
+func NewNodeForBootstrap(cuk, pubkey, jpub []byte) Node {
 	return Node{
 		clusterUnlockKey: cuk,
 		pubkey:           pubkey,
+		jkey:             jpub,
 		state:            cpb.NodeState_NODE_STATE_UP,
 	}
 }
@@ -325,27 +326,22 @@ func nodeSave(ctx context.Context, l *leadership, n *Node) error {
 		return status.Errorf(codes.Unavailable, "could not marshal updated node")
 	}
 	ons := clientv3.OpPut(nkey, string(nodeBytes))
-	ops := []clientv3.Op{ons}
 
 	// Build an etcd operation to map the node's Join Key into its ID for use in
-	// Join Flow, if jkey is set. Once Join Flow is implemented on the client
-	// side, this operation will become mandatory.
-	if n.jkey != nil {
-		jkey, err := n.etcdJoinKeyPath()
-		if err != nil {
-			// This should never happen.
-			rpc.Trace(ctx).Printf("invalid join key representation: %v", err)
-			return status.Errorf(codes.InvalidArgument, "invalid join key representation")
-		}
-		// TODO(mateusz@monogon.tech): ensure that if the join key index already
-		// exists, it points to the node we're saving. Refuse to save/update the
-		// node if it doesn't.
-		oks := clientv3.OpPut(jkey, id)
-		ops = append(ops, oks)
+	// Join Flow.
+	jkey, err := n.etcdJoinKeyPath()
+	if err != nil {
+		// This should never happen.
+		rpc.Trace(ctx).Printf("invalid join key representation: %v", err)
+		return status.Errorf(codes.InvalidArgument, "invalid join key representation")
 	}
+	// TODO(mateusz@monogon.tech): ensure that if the join key index already
+	// exists, it points to the node we're saving. Refuse to save/update the
+	// node if it doesn't.
+	oks := clientv3.OpPut(jkey, id)
 
-	// Execute one or both operations atomically.
-	_, err = l.txnAsLeader(ctx, ops...)
+	// Execute both operations atomically.
+	_, err = l.txnAsLeader(ctx, ons, oks)
 	if err != nil {
 		if rpcErr, ok := rpcError(err); ok {
 			return rpcErr

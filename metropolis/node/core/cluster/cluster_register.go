@@ -8,13 +8,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
-	"strconv"
-	"strings"
 	"time"
 
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 
-	"source.monogon.dev/metropolis/node"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
@@ -71,14 +70,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	supervisor.Logger(ctx).Infof("  Cluster CA public key: %s", hex.EncodeToString(ca.PublicKey.(ed25519.PublicKey)))
 	supervisor.Logger(ctx).Infof("  Register Ticket: %s", hex.EncodeToString(register.RegisterTicket))
 	supervisor.Logger(ctx).Infof("  Directory:")
-	for _, node := range register.ClusterDirectory.Nodes {
-		id := identity.NodeID(node.PublicKey)
-		var addresses []string
-		for _, add := range node.Addresses {
-			addresses = append(addresses, add.Host)
-		}
-		supervisor.Logger(ctx).Infof("    Node ID: %s, Addresses: %s", id, strings.Join(addresses, ","))
-	}
+	logClusterDirectory(ctx, register.ClusterDirectory)
 
 	// Mount new storage with generated CUK, MountNew will save NUK into sc, to be
 	// saved into the ESP after successful registration.
@@ -97,19 +89,28 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	supervisor.Logger(ctx).Infof("Registering: node public key: %s", hex.EncodeToString([]byte(pub)))
 
 	// Attempt to connect to first node in cluster directory and to call Register.
-	//
-	// MVP: this should be properly client-side loadbalanced.
-	remote := register.ClusterDirectory.Nodes[0].Addresses[0].Host
-	remote = net.JoinHostPort(remote, strconv.Itoa(int(node.CuratorServicePort)))
+	r, err := curatorRemote(register.ClusterDirectory)
+	if err != nil {
+		return fmt.Errorf("while picking a Curator endpoint: %w", err)
+	}
 	ephCreds, err := rpc.NewEphemeralCredentials(priv, ca)
 	if err != nil {
 		return fmt.Errorf("could not create ephemeral credentials: %w", err)
 	}
-	eph, err := grpc.Dial(remote, grpc.WithTransportCredentials(ephCreds))
+	eph, err := grpc.Dial(r, grpc.WithTransportCredentials(ephCreds))
 	if err != nil {
-		return fmt.Errorf("could not create ephemeral client to %q: %w", remote, err)
+		return fmt.Errorf("could not create ephemeral client to %q: %w", r, err)
 	}
 	cur := ipb.NewCuratorClient(eph)
+
+	// Generate Join Credentials. The private key will be stored in
+	// SealedConfiguration only if RegisterNode succeeds.
+	jpub, jpriv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return fmt.Errorf("could not generate join keypair: %w", err)
+	}
+	sc.JoinKey = jpriv
+	supervisor.Logger(ctx).Infof("Registering: join public key: %s", hex.EncodeToString([]byte(jpub)))
 
 	// Register this node.
 	//
@@ -120,6 +121,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	// code should let us do this quite easily.
 	_, err = cur.RegisterNode(ctx, &ipb.RegisterNodeRequest{
 		RegisterTicket: register.RegisterTicket,
+		JoinKey:        jpub,
 	})
 	if err != nil {
 		return fmt.Errorf("register call failed: %w", err)
@@ -149,14 +151,25 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	}
 	m.roleServer.ProvideRegisterData(*creds, register.ClusterDirectory)
 
-	// Save NUK
-	if err = m.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc); err != nil {
-		return fmt.Errorf("failed to seal and write configuration: %w", err)
-	}
 	// Save Node Credentials
-	if err = m.storageRoot.Data.Node.Credentials.WriteAll(certBytes, priv, caCertBytes); err != nil {
-		return fmt.Errorf("while writing node credentials: %w", err)
+	if err = creds.Save(&m.storageRoot.Data.Node.Credentials); err != nil {
+		return fmt.Errorf("while saving node credentials: %w", err)
 	}
+	// Save the Cluster Directory into the ESP.
+	cdirRaw, err := proto.Marshal(register.ClusterDirectory)
+	if err != nil {
+		return fmt.Errorf("couldn't marshal ClusterDirectory: %w", err)
+	}
+	if err = m.storageRoot.ESP.Metropolis.ClusterDirectory.Write(cdirRaw, 0644); err != nil {
+		return err
+	}
+	// Include the Cluster CA in Sealed Configuration.
+	sc.ClusterCa = register.CaCertificate
+	// Save Cluster CA, NUK and Join Credentials into Sealed Configuration.
+	if err = m.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc); err != nil {
+		return err
+	}
+	unix.Sync()
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)

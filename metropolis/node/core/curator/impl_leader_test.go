@@ -67,12 +67,18 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	}
 	lockRev := res.Header.Revision
 
+	// Generate the node's public join key to be used in the bootstrap process.
+	nodeJoinPub, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("could not generate node join keypair: %v", err)
+	}
+
 	// Build cluster PKI with first node, replicating the cluster bootstrap process.
 	nodePub, nodePriv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatalf("could not generate node keypair: %v", err)
 	}
-	cNode := NewNodeForBootstrap(nil, nodePub)
+	cNode := NewNodeForBootstrap(nil, nodePub, nodeJoinPub)
 	caCertBytes, nodeCertBytes, err := BootstrapNodeFinish(ctx, curEtcd, &cNode, nil)
 	if err != nil {
 		t.Fatalf("could not finish node bootstrap: %v", err)

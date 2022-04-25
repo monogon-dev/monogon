@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/sys/unix"
+	"google.golang.org/protobuf/proto"
+
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/identity"
@@ -16,6 +19,7 @@ import (
 	"source.monogon.dev/metropolis/pkg/pki"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	ppb "source.monogon.dev/metropolis/proto/private"
 )
 
 // workerControlPlane is the Control Plane Worker, responsible for maintaining a
@@ -281,6 +285,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 			// and a previously used cluster directory to be passed over to the new
 			// ClusterMembership, if any.
 			var creds *identity.NodeCredentials
+			var caCert []byte
 			var directory *cpb.ClusterDirectory
 			if b := startup.bootstrap; b != nil {
 				supervisor.Logger(ctx).Infof("Bootstrapping control plane. Waiting for consensus...")
@@ -304,9 +309,13 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				// curator startup.
 				//
 				// TODO(q3k): collapse the curator bootstrap shenanigans into a single function.
-				n := curator.NewNodeForBootstrap(b.clusterUnlockKey, b.nodePrivateKey.Public().(ed25519.PublicKey))
+				npub := b.nodePrivateKey.Public().(ed25519.PublicKey)
+				jpub := b.nodePrivateJoinKey.Public().(ed25519.PublicKey)
+				n := curator.NewNodeForBootstrap(b.clusterUnlockKey, npub, jpub)
 				n.EnableKubernetesWorker()
-				caCert, nodeCert, err := curator.BootstrapNodeFinish(ctx, ckv, &n, b.initialOwnerKey)
+
+				var nodeCert []byte
+				caCert, nodeCert, err = curator.BootstrapNodeFinish(ctx, ckv, &n, b.initialOwnerKey)
 				if err != nil {
 					return fmt.Errorf("while bootstrapping node: %w", err)
 				}
@@ -358,6 +367,34 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 						},
 					},
 				})
+			}
+
+			// Save this node's credentials, cluster directory and configuration as
+			// part of the control plane bootstrap process.
+			if b := startup.bootstrap; b != nil && caCert != nil {
+				if err = creds.Save(&s.storageRoot.Data.Node.Credentials); err != nil {
+					return fmt.Errorf("while saving node credentials: %w", err)
+				}
+
+				cdirRaw, err := proto.Marshal(directory)
+				if err != nil {
+					return fmt.Errorf("couldn't marshal ClusterDirectory: %w", err)
+				}
+				if err = s.storageRoot.ESP.Metropolis.ClusterDirectory.Write(cdirRaw, 0644); err != nil {
+					return err
+				}
+
+				sc := ppb.SealedConfiguration{
+					NodeUnlockKey: b.nodeUnlockKey,
+					JoinKey:       b.nodePrivateJoinKey,
+					ClusterCa:     caCert,
+				}
+				if err = s.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc); err != nil {
+					return err
+				}
+
+				supervisor.Logger(ctx).Infof("Saved bootstrapped node's credentials.")
+				unix.Sync()
 			}
 
 			// Start curator.
