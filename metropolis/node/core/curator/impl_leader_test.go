@@ -119,12 +119,13 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 
 	// Build a curator leader object. This implements methods that will be
 	// exercised by tests.
-	leader := newCuratorLeader(&leadership{
+	leadership := &leadership{
 		lockKey:   lockKey,
 		lockRev:   lockRev,
 		etcd:      curEtcd,
 		consensus: consensus.TestServiceHandle(t, cluster.Client(0)),
-	}, &nodeCredentials.Node)
+	}
+	leader := newCuratorLeader(leadership, &nodeCredentials.Node)
 
 	// Create a curator gRPC server which performs authentication as per the created
 	// ServerSecurity and is backed by the created leader.
@@ -179,6 +180,8 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	}()
 
 	return fakeLeaderData{
+		l:             leadership,
+		curatorLis:    externalLis,
 		mgmtConn:      mcl,
 		localNodeConn: lcl,
 		localNodeID:   nodeCredentials.ID(),
@@ -194,6 +197,11 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 // fakeLeaderData is returned by fakeLeader and contains information about the
 // newly created leader and connections to its gRPC listeners.
 type fakeLeaderData struct {
+	// l is a type internal to Curator, representing its ability to perform
+	// actions as a leader.
+	l *leadership
+	// curatorLis is a listener intended for Node connections.
+	curatorLis *bufconn.Listener
 	// mgmtConn is a gRPC connection to the leader's public gRPC interface,
 	// authenticated as a cluster manager.
 	mgmtConn grpc.ClientConnInterface
@@ -514,10 +522,17 @@ func TestRegistration(t *testing.T) {
 		t.Errorf("Unexpected ticket change between calls")
 	}
 
+	// Generate the node's public join key to be used in the bootstrap process.
+	nodeJoinPub, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("could not generate node join keypair: %v", err)
+	}
+
 	// Register 'other node' into cluster.
 	cur := ipb.NewCuratorClient(cl.otherNodeConn)
 	_, err = cur.RegisterNode(ctx, &ipb.RegisterNodeRequest{
 		RegisterTicket: res1.Ticket,
+		JoinKey:        nodeJoinPub,
 	})
 	if err != nil {
 		t.Fatalf("RegisterNode failed: %v", err)
@@ -577,6 +592,60 @@ func TestRegistration(t *testing.T) {
 
 	// Expect node to be 'UP'.
 	expectOtherNode(cpb.NodeState_NODE_STATE_UP)
+}
+
+// TestJoin exercises Join Flow, as described in "Cluster Lifecycle" design
+// document, assuming the node has already completed Register Flow.
+func TestJoin(t *testing.T) {
+	cl := fakeLeader(t)
+	defer cl.cancel()
+
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	// Build the test node and save it into etcd.
+	npub, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("could not generate node keypair: %v", err)
+	}
+	jpub, jpriv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("could not generate join keypair: %v", err)
+	}
+	cuk := []byte("fakefakefakefakefakefakefakefake")
+	node := Node{
+		clusterUnlockKey: cuk,
+		pubkey:           npub,
+		jkey:             jpub,
+		state:            cpb.NodeState_NODE_STATE_UP,
+	}
+	if err := nodeSave(ctx, cl.l, &node); err != nil {
+		t.Fatalf("nodeSave failed: %v", err)
+	}
+
+	// Connect to Curator using the node's Join Credentials, as opposed to the
+	// node keypair, then join the cluster.
+	withLocalDialer := grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
+		return cl.curatorLis.Dial()
+	})
+	ephCreds, err := rpc.NewEphemeralCredentials(jpriv, cl.ca)
+	if err != nil {
+		t.Fatalf("NewEphemeralCredentials: %v", err)
+	}
+	eph, err := grpc.Dial("local", withLocalDialer, grpc.WithTransportCredentials(ephCreds))
+	if err != nil {
+		t.Fatalf("Dialing external GRPC failed: %v", err)
+	}
+	cur := ipb.NewCuratorClient(eph)
+	jr, err := cur.JoinNode(ctx, &ipb.JoinNodeRequest{})
+	if err != nil {
+		t.Fatalf("JoinNode failed: %v", err)
+	}
+
+	// Compare the received CUK with the one we started out with.
+	if bytes.Compare(cuk, jr.ClusterUnlockKey) != 0 {
+		t.Fatal("JoinNode returned an invalid CUK.")
+	}
 }
 
 // TestClusterUpdateNodeStatus exercises the Curator.UpdateNodeStatus RPC by

@@ -91,7 +91,7 @@ func BootstrapNodeFinish(ctx context.Context, etcd client.Namespaced, node *Node
 		InitialCRL:      crl,
 	})
 
-	nodePath, err := node.etcdPath()
+	nodePath, err := node.etcdNodePath()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get node key: %w", err)
 	}

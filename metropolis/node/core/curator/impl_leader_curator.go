@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"fmt"
 	"net"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -245,6 +246,7 @@ func (l *leaderCurator) UpdateNodeStatus(ctx context.Context, req *ipb.UpdateNod
 	}
 	// ... update its' status ...
 	node.status = req.Status
+	node.status.Timestamp = time.Now().UnixNano()
 	// ... and save it to etcd.
 	if err := nodeSave(ctx, l.leadership, node); err != nil {
 		return nil, err
@@ -262,6 +264,9 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 		return nil, status.Error(codes.Unauthenticated, "connection must be established with a self-signed ephemeral certificate")
 	}
 	pubkey := pi.Unauthenticated.SelfSignedPublicKey
+
+	// TODO(mateusz@monogon.tech): check req.JoinKey length once Join Flow is
+	// implemented on the client side.
 
 	// Verify that call contains a RegisterTicket and that this RegisterTicket is
 	// valid.
@@ -307,6 +312,7 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 	// No node exists, create one.
 	node = &Node{
 		pubkey: pubkey,
+		jkey:   req.JoinKey,
 		state:  cpb.NodeState_NODE_STATE_NEW,
 	}
 	if err := nodeSave(ctx, l.leadership, node); err != nil {
@@ -412,5 +418,41 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 	return &ipb.CommitNodeResponse{
 		CaCertificate:   caCertBytes,
 		NodeCertificate: nodeCertBytes,
+	}, nil
+}
+
+func (l *leaderCurator) JoinNode(ctx context.Context, req *ipb.JoinNodeRequest) (*ipb.JoinNodeResponse, error) {
+	// Gather peer information.
+	pi := rpc.GetPeerInfo(ctx)
+	if pi == nil || pi.Unauthenticated == nil {
+		return nil, status.Error(codes.PermissionDenied, "connection must be established with a self-signed ephemeral certificate")
+	}
+	// The node will attempt to connect using its Join Key. jkey will contain
+	// its public part.
+	jkey := pi.Unauthenticated.SelfSignedPublicKey
+
+	// Take the lock to prevent data races during the next step.
+	l.muNodes.Lock()
+	defer l.muNodes.Unlock()
+
+	// Resolve the Node ID using Join Key, then use the ID to load node
+	// information from etcd.
+	id, err := nodeIdByJoinKey(ctx, l.leadership, jkey)
+	if err != nil {
+		return nil, err
+	}
+	node, err := nodeLoad(ctx, l.leadership, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Don't progress further unless the node is already UP.
+	if node.state != cpb.NodeState_NODE_STATE_UP {
+		return nil, status.Errorf(codes.FailedPrecondition, "node isn't UP, cannot join")
+	}
+
+	// Return the Node's CUK, completing the Join Flow.
+	return &ipb.JoinNodeResponse{
+		ClusterUnlockKey: node.clusterUnlockKey,
 	}, nil
 }

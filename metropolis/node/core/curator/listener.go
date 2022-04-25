@@ -387,6 +387,15 @@ func (l *listener) CommitNode(ctx context.Context, req *cpb.CommitNodeRequest) (
 	return
 }
 
+func (l *listener) JoinNode(ctx context.Context, req *cpb.JoinNodeRequest) (res *cpb.JoinNodeResponse, err error) {
+	err = l.callImpl(ctx, func(ctx context.Context, impl rpc.ClusterServices) error {
+		var err2 error
+		res, err2 = impl.JoinNode(ctx, req)
+		return err2
+	})
+	return
+}
+
 type managementGetNodesServer struct {
 	grpc.ServerStream
 	ctx context.Context

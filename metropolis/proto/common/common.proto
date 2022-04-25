@@ -132,6 +132,9 @@ message NodeStatus {
     // listening for gRPC, and role-specific services like etcd and
     // Kubernetes).
     string external_address = 1;
+    // timestamp is an epoch number associated with the last status update.
+    // It's set with a nanosecond granularity.
+    int64 timestamp = 2;
 }
 
 // The Cluster Directory is information about the network addressing of nodes

@@ -99,6 +99,22 @@ service Curator {
             allow_unauthenticated: true
         };
     }
+
+    // JoinNode is called by nodes (re)joining the cluster. Register Flow must
+    // be completed beforehand (see: CommitNode). This call will fail if the
+    // calling node is not in the UP state. This call is idempotent, and as
+    // such it can be retried.
+    //
+    // JoinNode is authenticated in the transport layer with a Join Key passed
+    // to Curator in an earlier RegisterNode call.
+    //
+    // Upon success, the node will receive its Cluster Unlock Key, enabling it
+    // to mount encrypted storage after combining with Node Unlock Key.
+    rpc JoinNode(JoinNodeRequest) returns (JoinNodeResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            allow_unauthenticated: true
+        };
+    }
 }
 
 // Node is the state and configuration of a node in the cluster.
@@ -190,6 +206,9 @@ message RegisterNodeRequest {
     // node by a cluster operator in NodeParameters, and it retrieved by an
     // operator from a running cluster via Management.GetRegisterTicket.
     bytes register_ticket = 1;
+    // join_key is an ED25519 public key generated during registration. It's
+    // shared with Curator to authenticate the join procedure later on.
+    bytes join_key = 2;
 }
 
 message RegisterNodeResponse {
@@ -212,4 +231,14 @@ message CommitNodeResponse {
     // node was connecting with. This certificate should be used by the node for
     // communication with the cluster from this point onward.
     bytes node_certificate = 2;
+}
+
+message JoinNodeRequest {
+}
+
+message JoinNodeResponse {
+    // cluster_unlock_key (CUK) is the key submitted by the node through
+    // CommitNodeRequest, and returned in this message after authenticating
+    // with Join Credentials.
+    bytes cluster_unlock_key = 1;
 }
