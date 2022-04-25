@@ -56,7 +56,6 @@ func runScheduler(config schedulerConfig) supervisor.Runnable {
 		defer args.Close()
 		cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kube-scheduler",
 			args.FileOpt("--kubeconfig", "kubeconfig", config.kubeConfig),
-			"--port=0", // Kill insecure serving
 			args.FileOpt("--tls-cert-file", "server-cert.pem",
 				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.serverCert})),
 			args.FileOpt("--tls-private-key-file", "server-key.pem",
