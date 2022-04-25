@@ -280,7 +280,6 @@ func (s *Service) Run(ctx context.Context) error {
 	lis := listener{
 		node:          s.config.NodeCredentials,
 		electionWatch: s.electionWatch,
-		dispatchC:     make(chan dispatchRequest),
 		consensus:     s.config.Consensus,
 		etcd:          etcd,
 	}
