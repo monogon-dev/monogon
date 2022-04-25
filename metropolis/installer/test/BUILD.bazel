@@ -3,7 +3,7 @@ load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
 
 go_test(
     name = "installer",
-    size = "small",
+    size = "medium",
     data = [
         ":kernel",
         "//metropolis/installer/test/testos:testos_bundle",
