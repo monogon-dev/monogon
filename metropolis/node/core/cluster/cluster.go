@@ -42,7 +42,6 @@ import (
 
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
-	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/roleserve"
@@ -257,12 +256,11 @@ func (m *Manager) nodeParams(ctx context.Context) (*apb.NodeParameters, error) {
 // logClusterDirectory verbosely logs the whole Cluster Directory passed to it.
 func logClusterDirectory(ctx context.Context, cd *cpb.ClusterDirectory) {
 	for _, node := range cd.Nodes {
-		id := identity.NodeID(node.PublicKey)
 		var addresses []string
 		for _, add := range node.Addresses {
 			addresses = append(addresses, add.Host)
 		}
-		supervisor.Logger(ctx).Infof("    Node ID: %s, Addresses: %s", id, strings.Join(addresses, ","))
+		supervisor.Logger(ctx).Infof("    Addresses: %s", strings.Join(addresses, ","))
 	}
 }
 

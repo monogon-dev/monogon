@@ -59,6 +59,14 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 		}
 	}
 
+	// Strip the initial ClusterDirectory of any node public keys that might have
+	// been included, as it can't be relied on beyond providing cluster endpoint
+	// addresses, considering its untrusted origin (ESP). This explicitly enforces
+	// suggested usage described in ClusterDirectory's protofile.
+	for i, _ := range register.ClusterDirectory.Nodes {
+		register.ClusterDirectory.Nodes[i].PublicKey = nil
+	}
+
 	// Validation passed, let's take the state lock and start working on registering
 	// us into the cluster.
 
