@@ -11,7 +11,9 @@ go_library(
         "//metropolis/node/core/network",
         "//metropolis/node/core/roleserve",
         "//metropolis/pkg/supervisor",
+        "//metropolis/proto/common",
         "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_protobuf//proto",
         "@org_golang_x_sys//unix",
     ],
 )

@@ -6,6 +6,8 @@
 // 2. The local node's name is written into /etc/machine-id.
 // 3. The local node's name is set as the UNIX hostname of the machine (via the
 //    sethostname call).
+// 4. The local node's ClusterDirectory is updated with the same set of
+//    addresses as the one used in /etc/hosts.
 //
 // The hostsfile Service can start up in two modes: with cluster connectivity
 // and without cluster connectivity. Without cluster connectivity, only
@@ -23,12 +25,14 @@ import (
 
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 type Config struct {
@@ -38,6 +42,8 @@ type Config struct {
 	// Ephemeral is the root of the ephemeral storage of the node, into which the
 	// service will write its managed files.
 	Ephemeral *localstorage.EphemeralDirectory
+	// ESP is the root of the node's EFI System Partition.
+	ESP *localstorage.ESPDirectory
 
 	// Roleserver is an instance of the roleserver service which will be queried for
 	// ClusterMembership and a Curator client.
@@ -61,8 +67,17 @@ type Service struct {
 
 type ClusterDialer func(ctx context.Context) (*grpc.ClientConn, error)
 
+// nodeInfo contains all of a single node's data needed to build its entry in
+// either hostsfile or ClusterDirectory.
+type nodeInfo struct {
+	// address is the node's IP address.
+	address string
+	// local is true if address belongs to the local node.
+	local bool
+}
+
 // nodeMap is a map from node ID (effectively DNS name) to node IP address.
-type nodeMap map[string]string
+type nodeMap map[string]nodeInfo
 
 // hosts generates a complete /etc/hosts file based on the contents of the
 // nodeMap. Apart from the addresses in the nodeMap, entries for localhost
@@ -81,7 +96,7 @@ func (m nodeMap) hosts(ctx context.Context) []byte {
 		[]byte("::1 localhost"),
 	}
 	for _, nid := range nodeIdsSorted {
-		addr := m[nid]
+		addr := m[nid].address
 		line := fmt.Sprintf("%s %s", addr, nid)
 		supervisor.Logger(ctx).Infof("Hosts entry: %s", line)
 		lines = append(lines, []byte(line))
@@ -89,6 +104,28 @@ func (m nodeMap) hosts(ctx context.Context) []byte {
 	lines = append(lines, []byte(""))
 
 	return bytes.Join(lines, []byte("\n"))
+}
+
+// clusterDirectory builds a ClusterDirectory based on nodeMap contents. If m
+// is empty, an empty ClusterDirectory is returned.
+func (m nodeMap) clusterDirectory(ctx context.Context) *cpb.ClusterDirectory {
+	var directory cpb.ClusterDirectory
+	for _, ni := range m {
+		// Skip local addresses.
+		if ni.local {
+			continue
+		}
+
+		supervisor.Logger(ctx).Infof("ClusterDirectory entry: %s", ni.address)
+		addresses := []*cpb.ClusterDirectory_Node_Address{
+			{Host: ni.address},
+		}
+		node := &cpb.ClusterDirectory_Node{
+			Addresses: addresses,
+		}
+		directory.Nodes = append(directory.Nodes, node)
+	}
+	return &directory
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -137,11 +174,14 @@ func (s *Service) Run(ctx context.Context) error {
 			return ctx.Err()
 		case u := <-s.localC:
 			// Ignore spurious updates.
-			if nodes[nodeID] == u {
+			if nodes[nodeID].address == u {
 				break
 			}
 			supervisor.Logger(ctx).Infof("Got new local address: %s", u)
-			nodes[nodeID] = u
+			nodes[nodeID] = nodeInfo{
+				address: u,
+				local:   true,
+			}
 			changed = true
 		case u := <-s.clusterC:
 			// Loop through the nodeMap from the cluster subrunnable, making note of what
@@ -152,18 +192,18 @@ func (s *Service) Run(ctx context.Context) error {
 			// drained/disowned.
 			//
 			// MVP: we should at least log removed nodes.
-			for id, addr := range u {
+			for id, info := range u {
 				// We're not interested in what the cluster thinks about our local node, as that
 				// might be outdated (eg. when we haven't yet reported a new local address to
 				// the cluster).
 				if id == nodeID {
 					continue
 				}
-				if nodes[id] == addr {
+				if nodes[id].address == info.address {
 					continue
 				}
-				supervisor.Logger(ctx).Infof("Got new cluster address: %s is %s", id, addr)
-				nodes[id] = addr
+				supervisor.Logger(ctx).Infof("Got new cluster address: %s is %s", id, info.address)
+				nodes[id] = info
 				changed = true
 			}
 		}
@@ -182,6 +222,17 @@ func (s *Service) Run(ctx context.Context) error {
 			supervisor.Logger(ctx).Errorf("Failed to self-resolve %q: %v", nodeID, err)
 		}
 
+		// Update this node's ClusterDirectory.
+		supervisor.Logger(ctx).Info("Updating ClusterDirectory.")
+		cd := nodes.clusterDirectory(ctx)
+		cdirRaw, err := proto.Marshal(cd)
+		if err != nil {
+			return fmt.Errorf("couldn't marshal ClusterDirectory: %w", err)
+		}
+		if err = s.ESP.Metropolis.ClusterDirectory.Write(cdirRaw, 0644); err != nil {
+			return err
+		}
+		unix.Sync()
 	}
 }
 
@@ -242,7 +293,10 @@ func (s *Service) runCluster(ctx context.Context) error {
 			if n.Status == nil || n.Status.ExternalAddress == "" {
 				continue
 			}
-			nodes[n.Id] = n.Status.ExternalAddress
+			nodes[n.Id] = nodeInfo{
+				address: n.Status.ExternalAddress,
+				local:   false,
+			}
 		}
 		for _, t := range ev.NodeTombstones {
 			delete(nodes, t.NodeId)

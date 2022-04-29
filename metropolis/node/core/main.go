@@ -151,6 +151,7 @@ func main() {
 				Roleserver: rs,
 				Network:    networkSvc,
 				Ephemeral:  &root.Ephemeral,
+				ESP:        &root.ESP,
 			},
 		}
 		if err := supervisor.Run(ctx, "hostsfile", hostsfileSvc.Run); err != nil {
