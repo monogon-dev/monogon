@@ -39,7 +39,7 @@ func (r *Root) Start(ctx context.Context) error {
 		return fmt.Errorf("MakeBlockDevices: %w", err)
 	}
 
-	if err := unix.Mount(crypt.ESPDevicePath, r.ESP.FullPath(), "vfat", unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_SYNC, ""); err != nil {
+	if err := unix.Mount(crypt.ESPDevicePath, r.ESP.FullPath(), "vfat", unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_SYNCHRONOUS, ""); err != nil {
 		return fmt.Errorf("mounting ESP partition: %w", err)
 	}
 
