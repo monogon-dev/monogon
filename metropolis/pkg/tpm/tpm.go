@@ -280,6 +280,9 @@ func Unseal(data []byte) ([]byte, error) {
 	if err := proto.Unmarshal(data, &sealedBytes); err != nil {
 		return []byte{}, errors.Wrap(err, "failed to unmarshal sealed data")
 	}
+	if sealedBytes.SealedKey == nil {
+		return []byte{}, fmt.Errorf("sealed data structure is invalid: no sealed key")
+	}
 	// Logging this for auditing purposes
 	pcrList := []string{}
 	for _, pcr := range sealedBytes.SealedKey.Pcrs {
