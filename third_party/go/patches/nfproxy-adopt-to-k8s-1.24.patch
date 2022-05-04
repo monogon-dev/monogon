@@ -1,0 +1,25 @@
+From 243792d1686cba86669bda9bc2c905cb9cd73a0c Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Wed, 4 May 2022 18:37:45 +0200
+Subject: [PATCH] Adopt to renamed function in K8s 1.24
+
+---
+ pkg/proxy/service.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pkg/proxy/service.go b/pkg/proxy/service.go
+index 9cc10b7..bcf926c 100644
+--- a/pkg/proxy/service.go
++++ b/pkg/proxy/service.go
+@@ -152,7 +152,7 @@ func newServiceInfo(port *v1.ServicePort, service *v1.Service, baseInfo *BaseSer
+ 
+ func newBaseServiceInfo(port *v1.ServicePort, service *v1.Service) *BaseServiceInfo {
+ 	onlyNodeLocalEndpoints := false
+-	if apiservice.RequestsOnlyLocalTraffic(service) {
++	if apiservice.ExternalPolicyLocal(service) {
+ 		onlyNodeLocalEndpoints = true
+ 	}
+ 	var stickyMaxAgeSeconds int
+-- 
+2.25.1
+

@@ -1,8 +1,10 @@
-From 86ef097e120745353232555f1d87382cac5ce2f0 Mon Sep 17 00:00:00 2001
-From: Lorenz Brun <lorenz@monogon.tech>
+From 2e9547d93456722db9e4336ea0b2ab8dfc3f2ade Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@brun.one>
 Date: Mon, 21 Mar 2022 16:11:14 +0100
-Subject: [PATCH] Fix googleapis import paths
+Subject: [PATCH 2/2] Fix googleapis import paths
 
+Generated using this sed expression:
+s#@org_golang_google_genproto//googleapis/#@go_googleapis//google/#
 ---
  cel/BUILD.bazel               |  4 ++--
  checker/BUILD.bazel           |  2 +-
@@ -10,7 +12,7 @@ Subject: [PATCH] Fix googleapis import paths
  common/BUILD.bazel            |  2 +-
  common/containers/BUILD.bazel |  4 ++--
  common/debug/BUILD.bazel      |  2 +-
- common/types/BUILD.bazel      |  4 ++--
+ common/types/BUILD.bazel      |  6 +++---
  common/types/pb/BUILD.bazel   |  2 +-
  common/types/ref/BUILD.bazel  |  2 +-
  ext/BUILD.bazel               |  2 +-
@@ -18,13 +20,13 @@ Subject: [PATCH] Fix googleapis import paths
  parser/BUILD.bazel            |  2 +-
  server/BUILD.bazel            | 12 ++++++------
  test/BUILD.bazel              |  2 +-
- 14 files changed, 23 insertions(+), 23 deletions(-)
+ 14 files changed, 24 insertions(+), 24 deletions(-)
 
 diff --git a/cel/BUILD.bazel b/cel/BUILD.bazel
-index aed8274..6a5b8f2 100644
+index b43beed..aabc323 100644
 --- a/cel/BUILD.bazel
 +++ b/cel/BUILD.bazel
-@@ -27,7 +27,7 @@ go_library(
+@@ -28,7 +28,7 @@ go_library(
          "//interpreter:go_default_library",
          "//interpreter/functions:go_default_library",
          "//parser:go_default_library",
@@ -33,19 +35,21 @@ index aed8274..6a5b8f2 100644
          "@org_golang_google_protobuf//proto:go_default_library",
          "@org_golang_google_protobuf//reflect/protodesc:go_default_library",
          "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
-@@ -59,6 +59,6 @@ go_test(
+@@ -64,8 +64,8 @@ go_test(
+         "//test:go_default_library",
          "//test/proto2pb:go_default_library",
          "//test/proto3pb:go_default_library",
++        "@go_googleapis//google/api/expr/v1alpha1:expr_go_proto",
          "@io_bazel_rules_go//proto/wkt:descriptor_go_proto",
 -        "@org_golang_google_genproto//googleapis/api/expr/v1alpha1:go_default_library",
-+        "@go_googleapis//google/api/expr/v1alpha1:expr_go_proto",
+         "@org_golang_google_protobuf//types/known/structpb:go_default_library",
      ],
  )
 diff --git a/checker/BUILD.bazel b/checker/BUILD.bazel
-index 0f6e469..0873707 100644
+index bec40b6..1deaba7 100644
 --- a/checker/BUILD.bazel
 +++ b/checker/BUILD.bazel
-@@ -28,7 +28,7 @@ go_library(
+@@ -30,7 +30,7 @@ go_library(
          "//common/types/pb:go_default_library",
          "//common/types/ref:go_default_library",
          "//parser:go_default_library",
@@ -55,7 +59,7 @@ index 0f6e469..0873707 100644
          "@org_golang_google_protobuf//types/known/emptypb:go_default_library",
          "@org_golang_google_protobuf//types/known/structpb:go_default_library",
 diff --git a/checker/decls/BUILD.bazel b/checker/decls/BUILD.bazel
-index 5a24f1d..9c6bfbc 100644
+index 5a24f1d..de067ae 100644
 --- a/checker/decls/BUILD.bazel
 +++ b/checker/decls/BUILD.bazel
 @@ -13,7 +13,7 @@ go_library(
@@ -68,10 +72,10 @@ index 5a24f1d..9c6bfbc 100644
          "@org_golang_google_protobuf//types/known/structpb:go_default_library",
      ],
 diff --git a/common/BUILD.bazel b/common/BUILD.bazel
-index 9e4ad65..d306934 100644
+index a0058ae..3c1b00b 100644
 --- a/common/BUILD.bazel
 +++ b/common/BUILD.bazel
-@@ -16,7 +16,7 @@ go_library(
+@@ -17,7 +17,7 @@ go_library(
      importpath = "github.com/google/cel-go/common",
      deps = [
          "//common/runes:go_default_library",
@@ -81,7 +85,7 @@ index 9e4ad65..d306934 100644
      ],
  )
 diff --git a/common/containers/BUILD.bazel b/common/containers/BUILD.bazel
-index 18142d9..3c45794 100644
+index 18142d9..7ab7767 100644
 --- a/common/containers/BUILD.bazel
 +++ b/common/containers/BUILD.bazel
 @@ -12,7 +12,7 @@ go_library(
@@ -102,7 +106,7 @@ index 18142d9..3c45794 100644
      ],
  )
 diff --git a/common/debug/BUILD.bazel b/common/debug/BUILD.bazel
-index cf5c5d2..6db7f55 100644
+index cf5c5d2..07e48fe 100644
 --- a/common/debug/BUILD.bazel
 +++ b/common/debug/BUILD.bazel
 @@ -13,6 +13,6 @@ go_library(
@@ -114,19 +118,21 @@ index cf5c5d2..6db7f55 100644
      ],
  )
 diff --git a/common/types/BUILD.bazel b/common/types/BUILD.bazel
-index 32789f5..e3970fd 100644
+index 1f77c86..1847312 100644
 --- a/common/types/BUILD.bazel
 +++ b/common/types/BUILD.bazel
-@@ -37,7 +37,7 @@ go_library(
+@@ -38,8 +38,8 @@ go_library(
          "//common/types/ref:go_default_library",
          "//common/types/traits:go_default_library",
          "@com_github_stoewer_go_strcase//:go_default_library",
 -        "@org_golang_google_genproto//googleapis/api/expr/v1alpha1:go_default_library",
+-        "@org_golang_google_genproto//googleapis/rpc/status:go_default_library",
 +        "@go_googleapis//google/api/expr/v1alpha1:expr_go_proto",
++        "@go_googleapis//google/rpc:status_go_proto",
+         "@org_golang_google_grpc//codes:go_default_library",
+         "@org_golang_google_grpc//status:go_default_library",
          "@org_golang_google_protobuf//encoding/protojson:go_default_library",
-         "@org_golang_google_protobuf//proto:go_default_library",
-         "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
-@@ -75,7 +75,7 @@ go_test(
+@@ -79,7 +79,7 @@ go_test(
          "//common/types/ref:go_default_library",
          "//test:go_default_library",
          "//test/proto3pb:test_all_types_go_proto",
@@ -136,20 +142,20 @@ index 32789f5..e3970fd 100644
          "@org_golang_google_protobuf//types/known/anypb:go_default_library",
          "@org_golang_google_protobuf//types/known/durationpb:go_default_library",
 diff --git a/common/types/pb/BUILD.bazel b/common/types/pb/BUILD.bazel
-index b0c79a7..37cd0a7 100644
+index f23ac9c..fc142f4 100644
 --- a/common/types/pb/BUILD.bazel
 +++ b/common/types/pb/BUILD.bazel
-@@ -16,7 +16,7 @@ go_library(
+@@ -17,7 +17,7 @@ go_library(
      ],
      importpath = "github.com/google/cel-go/common/types/pb",
      deps = [
 -        "@org_golang_google_genproto//googleapis/api/expr/v1alpha1:go_default_library",
 +        "@go_googleapis//google/api/expr/v1alpha1:expr_go_proto",
+         "@org_golang_google_protobuf//encoding/protowire:go_default_library",
          "@org_golang_google_protobuf//proto:go_default_library",
          "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
-         "@org_golang_google_protobuf//reflect/protoregistry:go_default_library",
 diff --git a/common/types/ref/BUILD.bazel b/common/types/ref/BUILD.bazel
-index 1d0f468..9243b47 100644
+index 1d0f468..73e84b3 100644
 --- a/common/types/ref/BUILD.bazel
 +++ b/common/types/ref/BUILD.bazel
 @@ -13,7 +13,7 @@ go_library(
@@ -162,12 +168,12 @@ index 1d0f468..9243b47 100644
          "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
      ],
 diff --git a/ext/BUILD.bazel b/ext/BUILD.bazel
-index 2b98ad3..68a9d72 100644
+index 582a79a..1d186f8 100644
 --- a/ext/BUILD.bazel
 +++ b/ext/BUILD.bazel
-@@ -19,7 +19,7 @@ go_library(
-         "//common/types:go_default_library",
+@@ -20,7 +20,7 @@ go_library(
          "//common/types/ref:go_default_library",
+         "//common/types/traits:go_default_library",
          "//interpreter/functions:go_default_library",
 -        "@org_golang_google_genproto//googleapis/api/expr/v1alpha1:go_default_library",
 +        "@go_googleapis//google/api/expr/v1alpha1:expr_go_proto",
@@ -175,10 +181,10 @@ index 2b98ad3..68a9d72 100644
  )
  
 diff --git a/interpreter/BUILD.bazel b/interpreter/BUILD.bazel
-index 2f4079f..6b30db8 100644
+index 04a3ec7..5a31467 100644
 --- a/interpreter/BUILD.bazel
 +++ b/interpreter/BUILD.bazel
-@@ -30,7 +30,7 @@ go_library(
+@@ -32,7 +32,7 @@ go_library(
          "//common/types/ref:go_default_library",
          "//common/types/traits:go_default_library",
          "//interpreter/functions:go_default_library",
@@ -187,7 +193,7 @@ index 2f4079f..6b30db8 100644
          "@org_golang_google_protobuf//proto:go_default_library",
          "@org_golang_google_protobuf//types/known/durationpb:go_default_library",
          "@org_golang_google_protobuf//types/known/structpb:go_default_library",
-@@ -63,7 +63,7 @@ go_test(
+@@ -65,7 +65,7 @@ go_test(
          "//test:go_default_library",
          "//test/proto2pb:go_default_library",
          "//test/proto3pb:go_default_library",
@@ -197,7 +203,7 @@ index 2f4079f..6b30db8 100644
          "@org_golang_google_protobuf//types/known/anypb:go_default_library",
      ],
 diff --git a/parser/BUILD.bazel b/parser/BUILD.bazel
-index b76e6e4..c098fe6 100644
+index b76e6e4..3ff9ba3 100644
 --- a/parser/BUILD.bazel
 +++ b/parser/BUILD.bazel
 @@ -24,7 +24,7 @@ go_library(
@@ -210,11 +216,11 @@ index b76e6e4..c098fe6 100644
          "@org_golang_google_protobuf//types/known/structpb:go_default_library",
      ],
 diff --git a/server/BUILD.bazel b/server/BUILD.bazel
-index 7174aa9..a4d9ff6 100644
+index 4629ca4..fddf409 100644
 --- a/server/BUILD.bazel
 +++ b/server/BUILD.bazel
-@@ -19,9 +19,9 @@ go_library(
-         "//common/types/traits:go_default_library",
+@@ -18,9 +18,9 @@ go_library(
+         "//common/types/ref:go_default_library",
          "@com_google_cel_spec//proto/test/v1/proto2:test_all_types_go_proto",
          "@com_google_cel_spec//proto/test/v1/proto3:test_all_types_go_proto",
 -        "@org_golang_google_genproto//googleapis/api/expr/conformance/v1alpha1:go_default_library",
@@ -222,11 +228,11 @@ index 7174aa9..a4d9ff6 100644
 -        "@org_golang_google_genproto//googleapis/rpc/status:go_default_library",
 +        "@go_googleapis//google/api/expr/conformance/v1alpha1:conformance_go_proto",
 +        "@go_googleapis//google/api/expr/v1alpha1:expr_go_proto",
-+        "@go_googleapis//google/rpc/status:status_go_proto",
++        "@go_googleapis//google/rpc:status_go_proto",
          "@org_golang_google_grpc//codes:go_default_library",
          "@org_golang_google_grpc//status:go_default_library",
          "@org_golang_google_protobuf//proto:go_default_library",
-@@ -44,8 +44,8 @@ go_test(
+@@ -41,8 +41,8 @@ go_test(
          "//common/operators:go_default_library",
          "//test:go_default_library",
          "@com_google_cel_spec//tools/celrpc:go_default_library",
@@ -235,14 +241,14 @@ index 7174aa9..a4d9ff6 100644
 -        "@org_golang_google_genproto//googleapis/rpc/status:go_default_library",
 +        "@go_googleapis//google/api/expr/conformance/v1alpha1:conformance_go_proto",
 +        "@go_googleapis//google/api/expr/v1alpha1:expr_go_proto",
-+        "@go_googleapis//google/rpc/status:status_go_proto",
++        "@go_googleapis//google/rpc:status_go_proto",
      ],
  )
 diff --git a/test/BUILD.bazel b/test/BUILD.bazel
-index 0d39c70..3b8c460 100644
+index 057beaa..233dad7 100644
 --- a/test/BUILD.bazel
 +++ b/test/BUILD.bazel
-@@ -20,7 +20,7 @@ go_library(
+@@ -21,7 +21,7 @@ go_library(
      importpath = "github.com/google/cel-go/test",
      deps = [
          "//common/operators:go_default_library",

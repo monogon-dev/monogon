@@ -1,7 +1,7 @@
-From e3b5a31bff00c89fc95f85212bf0943d46692616 Mon Sep 17 00:00:00 2001
+From 9f2b5274f50a7e4d5ae096e549c0c16addcc447b Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@brun.one>
 Date: Tue, 17 Mar 2020 21:41:08 +0100
-Subject: [PATCH 2/2] Add a native volume metrics implementation
+Subject: [PATCH 2/5] Add a native volume metrics implementation
 
 ---
  pkg/volume/metrics_native.go      | 101 +++++++++++++++++++++++++++++

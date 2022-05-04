@@ -1,21 +1,21 @@
-From b2d875981cec8eda9c041f858004f613ea928895 Mon Sep 17 00:00:00 2001
+From 6b4af308e9b420c146983ddb031fd80be0a15ec9 Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
 Date: Wed, 16 Mar 2022 18:10:09 +0100
-Subject: [PATCH] Drop legacy log path
+Subject: [PATCH 3/5] Drop legacy log path
 
 ---
- pkg/kubelet/kubelet.go                        |  7 ----
- .../kuberuntime/kuberuntime_container.go      | 32 ---------------
- pkg/kubelet/kuberuntime/kuberuntime_gc.go     | 39 -------------------
+ pkg/kubelet/kubelet.go                        |  7 ---
+ .../kuberuntime/kuberuntime_container.go      | 36 ---------------
+ pkg/kubelet/kuberuntime/kuberuntime_gc.go     | 46 -------------------
  pkg/kubelet/runonce.go                        |  8 ----
- test/e2e_node/log_path_test.go                | 18 ---------
- 5 files changed, 104 deletions(-)
+ test/e2e_node/log_path_test.go                | 18 --------
+ 5 files changed, 115 deletions(-)
 
 diff --git a/pkg/kubelet/kubelet.go b/pkg/kubelet/kubelet.go
-index 2013c871a60..c3fd4221544 100644
+index 01e9c49c6f1..895fa86fb7e 100644
 --- a/pkg/kubelet/kubelet.go
 +++ b/pkg/kubelet/kubelet.go
-@@ -1379,13 +1379,6 @@ func (kl *Kubelet) initializeModules() error {
+@@ -1326,13 +1326,6 @@ func (kl *Kubelet) initializeModules() error {
  		return err
  	}
  
@@ -30,10 +30,10 @@ index 2013c871a60..c3fd4221544 100644
  	kl.imageManager.Start()
  
 diff --git a/pkg/kubelet/kuberuntime/kuberuntime_container.go b/pkg/kubelet/kuberuntime/kuberuntime_container.go
-index 9c762ac309e..d1148cc7de5 100644
+index 680eab7a56e..52210adb35d 100644
 --- a/pkg/kubelet/kuberuntime/kuberuntime_container.go
 +++ b/pkg/kubelet/kuberuntime/kuberuntime_container.go
-@@ -254,25 +254,6 @@ func (m *kubeGenericRuntimeManager) startContainer(podSandboxID string, podSandb
+@@ -255,25 +255,6 @@ func (m *kubeGenericRuntimeManager) startContainer(podSandboxID string, podSandb
  	}
  	m.recordContainerEvent(pod, container, containerID, v1.EventTypeNormal, events.StartedContainer, fmt.Sprintf("Started container %s", container.Name))
  
@@ -59,13 +59,17 @@ index 9c762ac309e..d1148cc7de5 100644
  	// Step 4: execute the post start hook.
  	if container.Lifecycle != nil && container.Lifecycle.PostStart != nil {
  		kubeContainerID := kubecontainer.ContainerID{
-@@ -967,19 +948,6 @@ func (m *kubeGenericRuntimeManager) removeContainerLog(containerID string) error
+@@ -970,23 +951,6 @@ func (m *kubeGenericRuntimeManager) removeContainerLog(containerID string) error
  		return err
  	}
  
--	status, err := m.runtimeService.ContainerStatus(containerID)
+-	resp, err := m.runtimeService.ContainerStatus(containerID, false)
 -	if err != nil {
 -		return fmt.Errorf("failed to get container status %q: %v", containerID, err)
+-	}
+-	status := resp.GetStatus()
+-	if status == nil {
+-		return remote.ErrContainerStatusNil
 -	}
 -	// Remove the legacy container log symlink.
 -	// TODO(random-liu): Remove this after cluster logging supports CRI container log path.
@@ -80,7 +84,7 @@ index 9c762ac309e..d1148cc7de5 100644
  }
  
 diff --git a/pkg/kubelet/kuberuntime/kuberuntime_gc.go b/pkg/kubelet/kuberuntime/kuberuntime_gc.go
-index 610026661b7..a09dec91fbb 100644
+index a72691bfcfc..a09dec91fbb 100644
 --- a/pkg/kubelet/kuberuntime/kuberuntime_gc.go
 +++ b/pkg/kubelet/kuberuntime/kuberuntime_gc.go
 @@ -18,7 +18,6 @@ package kuberuntime
@@ -91,7 +95,7 @@ index 610026661b7..a09dec91fbb 100644
  	"path/filepath"
  	"sort"
  	"time"
-@@ -347,44 +346,6 @@ func (cgc *containerGC) evictPodLogsDirectories(allSourcesReady bool) error {
+@@ -347,51 +346,6 @@ func (cgc *containerGC) evictPodLogsDirectories(allSourcesReady bool) error {
  			}
  		}
  	}
@@ -102,25 +106,32 @@ index 610026661b7..a09dec91fbb 100644
 -	for _, logSymlink := range logSymlinks {
 -		if _, err := osInterface.Stat(logSymlink); os.IsNotExist(err) {
 -			if containerID, err := getContainerIDFromLegacyLogSymlink(logSymlink); err == nil {
--				status, err := cgc.manager.runtimeService.ContainerStatus(containerID)
+-				resp, err := cgc.manager.runtimeService.ContainerStatus(containerID, false)
 -				if err != nil {
 -					// TODO: we should handle container not found (i.e. container was deleted) case differently
 -					// once https://github.com/kubernetes/kubernetes/issues/63336 is resolved
 -					klog.InfoS("Error getting ContainerStatus for containerID", "containerID", containerID, "err", err)
--				} else if status.State != runtimeapi.ContainerState_CONTAINER_EXITED {
--					// Here is how container log rotation works (see containerLogManager#rotateLatestLog):
--					//
--					// 1. rename current log to rotated log file whose filename contains current timestamp (fmt.Sprintf("%s.%s", log, timestamp))
--					// 2. reopen the container log
--					// 3. if #2 fails, rename rotated log file back to container log
--					//
--					// There is small but indeterministic amount of time during which log file doesn't exist (between steps #1 and #2, between #1 and #3).
--					// Hence the symlink may be deemed unhealthy during that period.
--					// See https://github.com/kubernetes/kubernetes/issues/52172
--					//
--					// We only remove unhealthy symlink for dead containers
--					klog.V(5).InfoS("Container is still running, not removing symlink", "containerID", containerID, "path", logSymlink)
--					continue
+-				} else {
+-					status := resp.GetStatus()
+-					if status == nil {
+-						klog.V(4).InfoS("Container status is nil")
+-						continue
+-					}
+-					if status.State != runtimeapi.ContainerState_CONTAINER_EXITED {
+-						// Here is how container log rotation works (see containerLogManager#rotateLatestLog):
+-						//
+-						// 1. rename current log to rotated log file whose filename contains current timestamp (fmt.Sprintf("%s.%s", log, timestamp))
+-						// 2. reopen the container log
+-						// 3. if #2 fails, rename rotated log file back to container log
+-						//
+-						// There is small but indeterministic amount of time during which log file doesn't exist (between steps #1 and #2, between #1 and #3).
+-						// Hence the symlink may be deemed unhealthy during that period.
+-						// See https://github.com/kubernetes/kubernetes/issues/52172
+-						//
+-						// We only remove unhealthy symlink for dead containers
+-						klog.V(5).InfoS("Container is still running, not removing symlink", "containerID", containerID, "path", logSymlink)
+-						continue
+-					}
 -				}
 -			} else {
 -				klog.V(4).InfoS("Unable to obtain container ID", "err", err)
@@ -137,7 +148,7 @@ index 610026661b7..a09dec91fbb 100644
  }
  
 diff --git a/pkg/kubelet/runonce.go b/pkg/kubelet/runonce.go
-index 19b8a4f6a7b..2f0aad713e3 100644
+index 00f3022af5a..99d1c8b6a8d 100644
 --- a/pkg/kubelet/runonce.go
 +++ b/pkg/kubelet/runonce.go
 @@ -19,7 +19,6 @@ package kubelet
@@ -163,7 +174,7 @@ index 19b8a4f6a7b..2f0aad713e3 100644
  	case u := <-updates:
  		klog.InfoS("Processing manifest with pods", "numPods", len(u.Pods))
 diff --git a/test/e2e_node/log_path_test.go b/test/e2e_node/log_path_test.go
-index cfdd9823cb1..35f3b7be465 100644
+index cdbc2b6d8ae..3535a81822f 100644
 --- a/test/e2e_node/log_path_test.go
 +++ b/test/e2e_node/log_path_test.go
 @@ -22,8 +22,6 @@ import (
@@ -174,8 +185,8 @@ index cfdd9823cb1..35f3b7be465 100644
 -	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
  	"k8s.io/kubernetes/test/e2e/framework"
  	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
- 	e2eskipper "k8s.io/kubernetes/test/e2e/framework/skipper"
-@@ -144,22 +142,6 @@ var _ = SIGDescribe("ContainerLogPath [NodeConformance]", func() {
+ 	admissionapi "k8s.io/pod-security-admission/api"
+@@ -122,22 +120,6 @@ var _ = SIGDescribe("ContainerLogPath [NodeConformance]", func() {
  				err := createAndWaitPod(makeLogPod(logPodName, logString))
  				framework.ExpectNoError(err, "Failed waiting for pod: %s to enter success state", logPodName)
  			})

@@ -1,11 +1,13 @@
-From b0b42e86e834a1d02fe83f7be3663d19f6a1ee80 Mon Sep 17 00:00:00 2001
+From 322bdb419f24764af677762536064b1944bf67df Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
 Date: Thu, 17 Mar 2022 16:56:29 +0100
-Subject: [PATCH] Fix for semver breakage in go-jose
+Subject: [PATCH 4/4] Fix for semver breakage in go-jose
 
 ---
- pkg/serviceaccount/claims.go | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ pkg/serviceaccount/claims.go               |  4 +--
+ pkg/serviceaccount/claims_test.go          | 40 +++++++++++-----------
+ test/integration/auth/svcaccttoken_test.go |  6 ++--
+ 3 files changed, 25 insertions(+), 25 deletions(-)
 
 diff --git a/pkg/serviceaccount/claims.go b/pkg/serviceaccount/claims.go
 index 1e1475c779f..06620f7a420 100644
@@ -29,6 +31,129 @@ index 1e1475c779f..06620f7a420 100644
  		if nowTime.After(warnafter.Time()) {
  			secondsAfterWarn := nowTime.Unix() - warnafter.Time().Unix()
  			auditInfo := fmt.Sprintf("subject: %s, seconds after warning threshold: %d", public.Subject, secondsAfterWarn)
+diff --git a/pkg/serviceaccount/claims_test.go b/pkg/serviceaccount/claims_test.go
+index 2e968f60335..a0b5a595c2f 100644
+--- a/pkg/serviceaccount/claims_test.go
++++ b/pkg/serviceaccount/claims_test.go
+@@ -85,9 +85,9 @@ func TestClaims(t *testing.T) {
+ 
+ 			sc: &jwt.Claims{
+ 				Subject:   "system:serviceaccount:myns:mysvcacct",
+-				IssuedAt:  jwt.NumericDate(1514764800),
+-				NotBefore: jwt.NumericDate(1514764800),
+-				Expiry:    jwt.NumericDate(1514764800),
++				IssuedAt:  jwt.NewNumericDate(time.Unix(1514764800, 0)),
++				NotBefore: jwt.NewNumericDate(time.Unix(1514764800, 0)),
++				Expiry:    jwt.NewNumericDate(time.Unix(1514764800, 0)),
+ 			},
+ 			pc: &privateClaims{
+ 				Kubernetes: kubernetes{
+@@ -107,9 +107,9 @@ func TestClaims(t *testing.T) {
+ 
+ 			sc: &jwt.Claims{
+ 				Subject:   "system:serviceaccount:myns:mysvcacct",
+-				IssuedAt:  jwt.NumericDate(1514764800),
+-				NotBefore: jwt.NumericDate(1514764800),
+-				Expiry:    jwt.NumericDate(1514764800 + 100),
++				IssuedAt:  jwt.NewNumericDate(time.Unix(1514764800, 0)),
++				NotBefore: jwt.NewNumericDate(time.Unix(1514764800, 0)),
++				Expiry:    jwt.NewNumericDate(time.Unix(1514764800+100, 0)),
+ 			},
+ 			pc: &privateClaims{
+ 				Kubernetes: kubernetes{
+@@ -130,9 +130,9 @@ func TestClaims(t *testing.T) {
+ 			sc: &jwt.Claims{
+ 				Subject:   "system:serviceaccount:myns:mysvcacct",
+ 				Audience:  []string{"1"},
+-				IssuedAt:  jwt.NumericDate(1514764800),
+-				NotBefore: jwt.NumericDate(1514764800),
+-				Expiry:    jwt.NumericDate(1514764800 + 100),
++				IssuedAt:  jwt.NewNumericDate(time.Unix(1514764800, 0)),
++				NotBefore: jwt.NewNumericDate(time.Unix(1514764800, 0)),
++				Expiry:    jwt.NewNumericDate(time.Unix(1514764800+100, 0)),
+ 			},
+ 			pc: &privateClaims{
+ 				Kubernetes: kubernetes{
+@@ -152,9 +152,9 @@ func TestClaims(t *testing.T) {
+ 			sc: &jwt.Claims{
+ 				Subject:   "system:serviceaccount:myns:mysvcacct",
+ 				Audience:  []string{"1", "2"},
+-				IssuedAt:  jwt.NumericDate(1514764800),
+-				NotBefore: jwt.NumericDate(1514764800),
+-				Expiry:    jwt.NumericDate(1514764800 + 100),
++				IssuedAt:  jwt.NewNumericDate(time.Unix(1514764800, 0)),
++				NotBefore: jwt.NewNumericDate(time.Unix(1514764800, 0)),
++				Expiry:    jwt.NewNumericDate(time.Unix(1514764800+100, 0)),
+ 			},
+ 			pc: &privateClaims{
+ 				Kubernetes: kubernetes{
+@@ -175,16 +175,16 @@ func TestClaims(t *testing.T) {
+ 
+ 			sc: &jwt.Claims{
+ 				Subject:   "system:serviceaccount:myns:mysvcacct",
+-				IssuedAt:  jwt.NumericDate(1514764800),
+-				NotBefore: jwt.NumericDate(1514764800),
+-				Expiry:    jwt.NumericDate(1514764800 + 60*60*24),
++				IssuedAt:  jwt.NewNumericDate(time.Unix(1514764800, 0)),
++				NotBefore: jwt.NewNumericDate(time.Unix(1514764800, 0)),
++				Expiry:    jwt.NewNumericDate(time.Unix(1514764800+60*60*24, 0)),
+ 			},
+ 			pc: &privateClaims{
+ 				Kubernetes: kubernetes{
+ 					Namespace: "myns",
+ 					Svcacct:   ref{Name: "mysvcacct", UID: "mysvcacct-uid"},
+ 					Pod:       &ref{Name: "mypod", UID: "mypod-uid"},
+-					WarnAfter: jwt.NumericDate(1514764800 + 60*60),
++					WarnAfter: jwt.NewNumericDate(time.Unix(1514764800+60*60, 0)),
+ 				},
+ 			},
+ 		},
+@@ -223,8 +223,8 @@ type claimTestCase struct {
+ 	name      string
+ 	getter    ServiceAccountTokenGetter
+ 	private   *privateClaims
+-	expiry    jwt.NumericDate
+-	notBefore jwt.NumericDate
++	expiry    *jwt.NumericDate
++	notBefore *jwt.NumericDate
+ 	expectErr string
+ }
+ 
+@@ -365,8 +365,8 @@ func TestValidatePrivateClaims(t *testing.T) {
+ 	for _, tc := range testcases {
+ 		t.Run(tc.name, func(t *testing.T) {
+ 			v := &validator{tc.getter}
+-			expiry := jwt.NumericDate(nowUnix)
+-			if tc.expiry != 0 {
++			expiry := jwt.NewNumericDate(time.Unix(nowUnix, 0))
++			if tc.expiry != nil {
+ 				expiry = tc.expiry
+ 			}
+ 			_, err := v.Validate(context.Background(), "", &jwt.Claims{Expiry: expiry, NotBefore: tc.notBefore}, tc.private)
+diff --git a/test/integration/auth/svcaccttoken_test.go b/test/integration/auth/svcaccttoken_test.go
+index c02511b43b2..89fb66ee44e 100644
+--- a/test/integration/auth/svcaccttoken_test.go
++++ b/test/integration/auth/svcaccttoken_test.go
+@@ -482,16 +482,16 @@ func TestServiceAccountTokenCreate(t *testing.T) {
+ 			t.Fatalf("error parsing warnafter: %v", err)
+ 		}
+ 
+-		if exp < int64(actualExpiry)-leeway || exp > int64(actualExpiry)+leeway {
++		if exp < int64(*actualExpiry)-leeway || exp > int64(*actualExpiry)+leeway {
+ 			t.Errorf("unexpected token exp %d, should within range of %d +- %d seconds", exp, actualExpiry, leeway)
+ 		}
+-		if warnafter < int64(assumedExpiry)-leeway || warnafter > int64(assumedExpiry)+leeway {
++		if warnafter < int64(*assumedExpiry)-leeway || warnafter > int64(*assumedExpiry)+leeway {
+ 			t.Errorf("unexpected token warnafter %d, should within range of %d +- %d seconds", warnafter, assumedExpiry, leeway)
+ 		}
+ 
+ 		checkExpiration(t, treq, requestExp)
+ 		expStatus := treq.Status.ExpirationTimestamp.Time.Unix()
+-		if expStatus < int64(assumedExpiry)-leeway || warnafter > int64(assumedExpiry)+leeway {
++		if expStatus < int64(*assumedExpiry)-leeway || warnafter > int64(*assumedExpiry)+leeway {
+ 			t.Errorf("unexpected expiration returned in tokenrequest status %d, should within range of %d +- %d seconds", expStatus, assumedExpiry, leeway)
+ 		}
+ 	})
 -- 
 2.25.1
 
