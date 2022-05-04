@@ -77,7 +77,7 @@ func CryptMap(name string, baseName string, encryptionKey []byte) error {
 		devicemapper.Target{
 			Length:     integritySectors,
 			Type:       "crypt",
-			Parameters: []string{"capi:gcm(aes)-random", hex.EncodeToString(encryptionKey), "0", integrityDevName, "0", "1", "integrity:28:aead"},
+			Parameters: []string{"capi:gcm(aes)-random", hex.EncodeToString(encryptionKey), "0", integrityDevName, "0", "1", "integrity:28:aead", "no_read_workqueue", "no_write_workqueue"},
 		},
 	})
 	if err != nil {
