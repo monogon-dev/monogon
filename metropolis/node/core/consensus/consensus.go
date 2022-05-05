@@ -189,7 +189,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 	// Create selfupdater, which will perform a one-shot update of this member's
 	// peer address in etcd.
-	if err := supervisor.Run(ctx, "selfupadater", s.selfupdater); err != nil {
+	if err := supervisor.Run(ctx, "selfupdater", s.selfupdater); err != nil {
 		return fmt.Errorf("when starting selfupdater: %w", err)
 	}
 
