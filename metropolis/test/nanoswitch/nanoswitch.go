@@ -71,6 +71,10 @@ func defaultLeaseOptions(reply *dhcpv4.DHCPv4) {
 func runDHCPServer(link netlink.Link) supervisor.Runnable {
 	currentIP := net.IP{10, 1, 0, 1}
 
+	// Map from stringified MAC address to IP address, allowing handing out the
+	// same IP to a given MAC on re-discovery.
+	leases := make(map[string]net.IP)
+
 	return func(ctx context.Context) error {
 		laddr := net.UDPAddr{
 			IP:   net.IPv4(0, 0, 0, 0),
@@ -92,9 +96,16 @@ func runDHCPServer(link netlink.Link) supervisor.Runnable {
 			case dhcpv4.MessageTypeDiscover:
 				reply.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeOffer))
 				defaultLeaseOptions(reply)
-				currentIP[3]++ // Works only because it's a /24
-				reply.YourIPAddr = currentIP
-				supervisor.Logger(ctx).Infof("Replying with DHCP IP %s", reply.YourIPAddr.String())
+				hwaddr := m.ClientHWAddr.String()
+				// Either hand out already allocated address from leases, or allocate new.
+				if ip, ok := leases[hwaddr]; ok {
+					reply.YourIPAddr = ip
+				} else {
+					leases[hwaddr] = currentIP
+					reply.YourIPAddr = currentIP
+					currentIP[3]++ // Works only because it's a /24
+				}
+				supervisor.Logger(ctx).Infof("Replying with DHCP IP %s to %s", reply.YourIPAddr.String(), hwaddr)
 			case dhcpv4.MessageTypeRequest:
 				reply.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
 				defaultLeaseOptions(reply)
