@@ -117,8 +117,8 @@ def go_repositories():
     go_repository(
         name = "com_github_antlr_antlr4_runtime_go_antlr",
         importpath = "github.com/antlr/antlr4/runtime/Go/antlr",
-        sum = "h1:GCzyKMDDjSGnlpl3clrdAK7I1AaVoaiKDOYkUzChZzg=",
-        version = "v0.0.0-20210826220005-b48c857c3a0e",
+        sum = "h1:ue9pVfIcP+QMEjfgo/Ez4ZjNZfonGgR6NgjMaJMu1Cg=",
+        version = "v0.0.0-20220418222510-f25a4f6275ed",
     )
 
     go_repository(
@@ -1649,15 +1649,15 @@ def go_repositories():
     )
     go_repository(
         name = "com_github_google_cel_go",
+        # Gazelle needs to regenerate the upstream build files due to a
+        # mismatch in how the Google APIs repository is canonically called.
+        # See https://github.com/bazelbuild/rules_go/issues/1986 for more
+        # details.
+        build_file_generation = "on",
         build_naming_convention = "go_default_library",
         importpath = "github.com/google/cel-go",
-        patch_args = ["-p1"],
-        pre_patches = [
-            "//third_party/go/patches:cel-fix-antlr.patch",
-            "//third_party/go/patches:cel-fix-googleapis.patch",
-        ],
-        sum = "h1:MQBGSZGnDwh7T/un+mzGKOMz3x+4E/GDPprWjDL+1Jg=",
-        version = "v0.10.1",
+        sum = "h1:wWOnKmLxALl3l9Av221MfIOWRiR01sDVljzg6LZ6Zn0=",
+        version = "v0.11.4",
     )
     go_repository(
         name = "com_github_google_cel_spec",
@@ -4921,8 +4921,8 @@ def go_repositories():
     go_repository(
         name = "org_golang_google_genproto",
         importpath = "google.golang.org/genproto",
-        sum = "h1:gMjH4zLGs9m+dGzR7qHCHaXMOwsJHJKKkHtyXhtOrJk=",
-        version = "v0.0.0-20220429170224-98d788798c3e",
+        sum = "h1:hrbNEivu7Zn1pxvHk6MBrq9iE22woVILTHqexqBxe6I=",
+        version = "v0.0.0-20220502173005-c8bf987b8c21",
     )
     go_repository(
         name = "org_golang_google_grpc",
