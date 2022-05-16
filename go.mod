@@ -67,7 +67,7 @@ require (
 	github.com/container-storage-interface/spec v1.5.0
 	github.com/containerd/containerd v1.6.1
 	github.com/containernetworking/plugins v1.0.1
-	github.com/coredns/coredns v1.9.1
+	github.com/coredns/coredns v1.9.2
 	github.com/corverroos/commentwrap v0.0.0-20191204065359-2926638be44c
 	github.com/diskfs/go-diskfs v1.2.0
 	github.com/go-delve/delve v1.8.2
