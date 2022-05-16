@@ -139,11 +139,14 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 
 	// Create a curator gRPC server which performs authentication as per the created
 	// ServerSecurity and is backed by the created leader.
-	externalSrv := sec.SetupExternalGRPC(nil, leader)
+	srv := grpc.NewServer(sec.GRPCOptions(nil)...)
+	ipb.RegisterCuratorServer(srv, leader)
+	apb.RegisterAAAServer(srv, leader)
+	apb.RegisterManagementServer(srv, leader)
 	// The gRPC server will listen on an internal 'loopback' buffer.
 	externalLis := bufconn.Listen(1024 * 1024)
 	go func() {
-		if err := externalSrv.Serve(externalLis); err != nil {
+		if err := srv.Serve(externalLis); err != nil {
 			t.Fatalf("GRPC serve failed: %v", err)
 		}
 	}()
@@ -151,7 +154,7 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	// Stop the gRPC server on context cancel.
 	go func() {
 		<-ctx.Done()
-		externalSrv.Stop()
+		srv.Stop()
 	}()
 
 	withLocalDialer := grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {

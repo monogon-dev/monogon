@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"net"
 
+	"google.golang.org/grpc"
+
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
+	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 // listener is the curator runnable responsible for listening for gRPC
@@ -83,7 +87,13 @@ func (l *listener) run(ctx context.Context) error {
 			etcd:      l.etcd,
 			consensus: l.consensus,
 		}, &l.node.Node)
-		runnable := supervisor.GRPCServer(sec.SetupExternalGRPC(supervisor.MustSubLogger(ctx, "rpc"), leader), lis, true)
+		logger := supervisor.MustSubLogger(ctx, "rpc")
+		srv := grpc.NewServer(sec.GRPCOptions(logger)...)
+		cpb.RegisterCuratorServer(srv, leader)
+		apb.RegisterAAAServer(srv, leader)
+		apb.RegisterManagementServer(srv, leader)
+		runnable := supervisor.GRPCServer(srv, lis, true)
+
 		if err := supervisor.Run(ctx, "server", runnable); err != nil {
 			return fmt.Errorf("could not run server: %w", err)
 		}
@@ -98,15 +108,18 @@ func (l *listener) run(ctx context.Context) error {
 			}
 		}
 	case st.follower != nil && st.follower.lock != nil:
-		supervisor.Logger(ctx).Infof("This curator is a follower (leader is %q), starting proxy.", st.follower.lock.NodeId)
+		supervisor.Logger(ctx).Infof("This curator is a follower (leader is %q), starting minimal implementation.", st.follower.lock.NodeId)
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", node.CuratorServicePort))
 		if err != nil {
 			return fmt.Errorf("failed to listen on curator socket: %w", err)
 		}
 		defer lis.Close()
 
-		follower := &curatorFollower{}
-		runnable := supervisor.GRPCServer(sec.SetupExternalGRPC(supervisor.MustSubLogger(ctx, "rpc"), follower), lis, true)
+		logger := supervisor.MustSubLogger(ctx, "rpc")
+		srv := grpc.NewServer(sec.GRPCOptions(logger)...)
+		// Note: curatorFollower not created nor registered. All RPCs will respond with
+		// 'Unimplemented'.
+		runnable := supervisor.GRPCServer(srv, lis, true)
 		if err := supervisor.Run(ctx, "server", runnable); err != nil {
 			return fmt.Errorf("could not run server: %w", err)
 		}

@@ -43,7 +43,10 @@ func TestExternalServerSecurity(t *testing.T) {
 	}
 
 	impl := &testImplementation{}
-	srv := ss.SetupExternalGRPC(nil, impl)
+	srv := grpc.NewServer(ss.GRPCOptions(nil)...)
+	cpb.RegisterCuratorServer(srv, impl)
+	apb.RegisterManagementServer(srv, impl)
+	apb.RegisterAAAServer(srv, impl)
 	lis := bufconn.Listen(1024 * 1024)
 	go func() {
 		if err := srv.Serve(lis); err != nil {

@@ -12,10 +12,8 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
-	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/pkg/logtree"
-	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 // ServerSecurity are the security options of a RPC server that will run
@@ -32,30 +30,24 @@ type ServerSecurity struct {
 	nodePermissions Permissions
 }
 
-// SetupExternalGRPC returns a grpc.Server ready to listen and serve all gRPC
-// services that the cluster server implementation should run, with all calls
-// authenticated and authorized based on the data in ServerSecurity. The
-// argument 'impls' is the object implementing the gRPC APIs.
+// GRPCOptions returns a list of gRPC ServerOptions used to run a Metropolis
+// gRPC server with security and logging middleware enabled.
 //
 // Under the hood, this configures gRPC interceptors that verify
 // metropolis.proto.ext.authorization options and authenticate/authorize
 // incoming connections. It also runs the gRPC server with the correct TLS
 // settings for authenticating itself to callers.
-func (s *ServerSecurity) SetupExternalGRPC(logger logtree.LeveledLogger, impls ClusterServices) *grpc.Server {
+func (s *ServerSecurity) GRPCOptions(logger logtree.LeveledLogger) []grpc.ServerOption {
 	externalCreds := credentials.NewTLS(&tls.Config{
 		Certificates: []tls.Certificate{s.NodeCredentials.TLSCredentials()},
 		ClientAuth:   tls.RequestClientCert,
 	})
 
-	srv := grpc.NewServer(
+	return []grpc.ServerOption{
 		grpc.Creds(externalCreds),
 		grpc.UnaryInterceptor(s.unaryInterceptor(logger)),
 		grpc.StreamInterceptor(s.streamInterceptor(logger)),
-	)
-	cpb.RegisterCuratorServer(srv, impls)
-	apb.RegisterAAAServer(srv, impls)
-	apb.RegisterManagementServer(srv, impls)
-	return srv
+	}
 }
 
 // streamInterceptor returns a gRPC StreamInterceptor interface for use with

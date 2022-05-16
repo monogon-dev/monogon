@@ -90,7 +90,10 @@ func TestResolverSimple(t *testing.T) {
 		ss := ServerSecurity{
 			NodeCredentials: eph.Nodes[i],
 		}
-		servers[i] = ss.SetupExternalGRPC(nil, impls[i])
+		servers[i] = grpc.NewServer(ss.GRPCOptions(nil)...)
+		ipb.RegisterCuratorServer(servers[i], impls[i])
+		apb.RegisterAAAServer(servers[i], impls[i])
+		apb.RegisterManagementServer(servers[i], impls[i])
 		go func() {
 			if err := servers[i].Serve(listeners[i]); err != nil {
 				t.Fatalf("GRPC serve failed: %v", err)
