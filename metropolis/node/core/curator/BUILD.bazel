@@ -64,7 +64,6 @@ go_test(
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/api",
         "//metropolis/proto/common",
-        "@io_etcd_go_etcd_client_pkg_v3//testutil",
         "@io_etcd_go_etcd_client_v3//:client",
         "@io_etcd_go_etcd_tests_v3//integration",
         "@org_golang_google_grpc//:go_default_library",

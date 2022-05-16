@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 	tb, cancel := testutil.NewTestingTBProthesis("curator")
 	defer cancel()
 	flag.Parse()
-	integration.BeforeTest(tb)
+	integration.BeforeTestExternal(tb)
 	cluster = integration.NewClusterV3(tb, &cfg)
 	endpoints = make([]string, 3)
 	for i := range endpoints {

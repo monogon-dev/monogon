@@ -44,15 +44,17 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	ctx, ctxC := context.WithCancel(context.Background())
 
 	// Start a single-node etcd cluster.
-	integration.BeforeTest(t)
+	integration.BeforeTestExternal(t)
 	cluster := integration.NewClusterV3(t, &integration.ClusterConfig{
 		Size: 1,
 	})
-	// Terminate the etcd cluster on context cancel.
-	go func() {
-		<-ctx.Done()
+	// Clean up the etcd cluster and cancel the context on test end. We don't just
+	// use a context because we need the cluster to terminate synchronously before
+	// another test is ran.
+	t.Cleanup(func() {
+		ctxC()
 		cluster.Terminate(t)
-	}()
+	})
 
 	// Create etcd client to test cluster.
 	curEtcd, _ := client.NewLocal(cluster.Client(0)).Sub("curator")
@@ -195,7 +197,6 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		otherNodeID:   identity.NodeID(otherPub),
 		otherNodePriv: otherPriv,
 		ca:            nodeCredentials.ClusterCA(),
-		cancel:        ctxC,
 		etcd:          curEtcd,
 	}
 }
@@ -227,8 +228,6 @@ type fakeLeaderData struct {
 	// state, ie. the private key for otherNodeID.
 	otherNodePriv ed25519.PrivateKey
 	ca            *x509.Certificate
-	// cancel shuts down the fake leader and all client connections.
-	cancel context.CancelFunc
 	// etcd contains a low-level connection to the curator K/V store, which can be
 	// used to perform low-level changes to the store in tests.
 	etcd client.Namespaced
@@ -238,7 +237,6 @@ type fakeLeaderData struct {
 // through updates, to its deletion.
 func TestWatchNodeInCluster(t *testing.T) {
 	cl := fakeLeader(t)
-	defer cl.cancel()
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
 
@@ -351,7 +349,6 @@ func TestWatchNodeInCluster(t *testing.T) {
 // through updates, to not deletion.
 func TestWatchNodesInCluster(t *testing.T) {
 	cl := fakeLeader(t)
-	defer cl.cancel()
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
 
@@ -503,7 +500,6 @@ func TestWatchNodesInCluster(t *testing.T) {
 // test as a set of credentials.
 func TestRegistration(t *testing.T) {
 	cl := fakeLeader(t)
-	defer cl.cancel()
 
 	mgmt := apb.NewManagementClient(cl.mgmtConn)
 
@@ -604,7 +600,6 @@ func TestRegistration(t *testing.T) {
 // document, assuming the node has already completed Register Flow.
 func TestJoin(t *testing.T) {
 	cl := fakeLeader(t)
-	defer cl.cancel()
 
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
@@ -659,7 +654,6 @@ func TestJoin(t *testing.T) {
 // events.
 func TestClusterUpdateNodeStatus(t *testing.T) {
 	cl := fakeLeader(t)
-	defer cl.cancel()
 
 	curator := ipb.NewCuratorClient(cl.localNodeConn)
 
@@ -728,7 +722,6 @@ func TestClusterUpdateNodeStatus(t *testing.T) {
 // TestManagementClusterInfo exercises GetClusterInfo after setting a status.
 func TestManagementClusterInfo(t *testing.T) {
 	cl := fakeLeader(t)
-	defer cl.cancel()
 
 	mgmt := apb.NewManagementClient(cl.mgmtConn)
 	curator := ipb.NewCuratorClient(cl.localNodeConn)

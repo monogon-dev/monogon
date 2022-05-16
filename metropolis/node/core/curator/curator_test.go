@@ -2,13 +2,11 @@ package curator
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
 	"testing"
 	"time"
 
-	"go.etcd.io/etcd/client/pkg/v3/testutil"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/tests/v3/integration"
 
@@ -24,30 +22,6 @@ var (
 	// endpoints is a list of the three etcd members that make up the cluster above.
 	endpoints []string
 )
-
-// TestMain brings up a 3 node etcd cluster for tests to use.
-func TestMain(m *testing.M) {
-	cfg := integration.ClusterConfig{
-		Size:                 3,
-		GRPCKeepAliveMinTime: time.Millisecond,
-	}
-	t, cancel := testutil.NewTestingTBProthesis("curator")
-	defer cancel()
-
-	flag.Parse()
-
-	integration.BeforeTest(t)
-
-	cluster = integration.NewClusterV3(t, &cfg)
-	endpoints = make([]string, 3)
-	for i := range endpoints {
-		endpoints[i] = cluster.Client(i).Endpoints()[0]
-	}
-
-	v := m.Run()
-	cluster.Terminate(t)
-	os.Exit(v)
-}
 
 // dut is the design under test harness - in this case, a curator instance.
 type dut struct {
@@ -201,7 +175,22 @@ func (s dutSet) wait(ctx context.Context, f func(s dutSetStatus) bool) (dutSetSt
 // re-election.
 func TestLeaderElectionStatus(t *testing.T) {
 	ctx, ctxC := context.WithCancel(context.Background())
-	defer ctxC()
+	cfg := integration.ClusterConfig{
+		Size:                 3,
+		GRPCKeepAliveMinTime: time.Millisecond,
+	}
+	integration.BeforeTestExternal(t)
+	cluster = integration.NewClusterV3(t, &cfg)
+	t.Cleanup(func() {
+		ctxC()
+		cluster.Terminate(t)
+		cluster = nil
+		endpoints = nil
+	})
+	endpoints = make([]string, 3)
+	for i := range endpoints {
+		endpoints[i] = cluster.Client(i).Endpoints()[0]
+	}
 
 	// Map from endpoint name to etcd member list index. Alongside with the
 	// endpoints list, this is used to quickly look up endpoint<->member_num. Since
