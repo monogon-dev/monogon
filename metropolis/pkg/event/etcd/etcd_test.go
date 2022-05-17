@@ -363,6 +363,16 @@ func TestCancelOnGet(t *testing.T) {
 	// operations will now hang.
 	tc.setEndpoints(0)
 	cluster.Members[0].InjectPartition(t, cluster.Members[1], cluster.Members[2])
+	// Let raft timeouts expire so that the leader is aware a partition has occurred
+	// and stops serving data if it is not part of a quorum anymore.
+	//
+	// Otherwise, if Member[0] was the leader, there will be a window of opportunity
+	// during which it will continue to serve read data even though it has been
+	// partitioned off. This is an effect of how etcd handles linearizable reads:
+	// they go through the leader, but do not go through raft.
+	//
+	// The value is the default etcd leader timeout (1s) + some wiggle room.
+	time.Sleep(time.Second + time.Millisecond*100)
 
 	// Perform the initial Get(), which should attempt to retrieve a KV entry from
 	// the etcd service. This should hang. Unfortunately, there's no easy way to do
