@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"net"
 	"testing"
+	"time"
 
 	"go.etcd.io/etcd/tests/v3/integration"
 	"google.golang.org/grpc"
@@ -717,6 +718,106 @@ func TestClusterUpdateNodeStatus(t *testing.T) {
 	if err == nil {
 		t.Errorf("UpdateNodeStatus for other node (%q vs local %q) succeeded, should have failed", cl.localNodeID, cl.otherNodeID)
 	}
+}
+
+// TestClusterHeartbeat exercises curator.Heartbeat and mgmt.GetNodes RPCs by
+// verifying proper node health transitions as affected by leadership changes
+// and timely arrival of node heartbeat updates.
+func TestClusterHeartbeat(t *testing.T) {
+	cl := fakeLeader(t)
+
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	curator := ipb.NewCuratorClient(cl.localNodeConn)
+	mgmt := apb.NewManagementClient(cl.mgmtConn)
+
+	// expectNode is a helper function that fails if health of the node, as
+	// returned by mgmt.GetNodes call, does not match its argument.
+	expectNode := func(id string, health apb.Node_Health) {
+		t.Helper()
+		res, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
+		if err != nil {
+			t.Fatalf("GetNodes failed: %v", err)
+		}
+
+		for {
+			node, err := res.Recv()
+			if err != nil {
+				t.Fatalf("Recv failed: %v", err)
+			}
+			if id != identity.NodeID(node.Pubkey) {
+				continue
+			}
+			if node.Health != health {
+				t.Fatalf("Expected node to be %s, got %s.", health, node.Health)
+			}
+			return
+		}
+	}
+
+	// Test case: the node is UP, and the curator leader has just been elected,
+	// with no recorded node heartbeats. In this case the node's health is
+	// UNKNOWN, since it wasn't given enough time to submit a single heartbeat.
+	cl.l.ls.startTs = time.Now()
+	expectNode(cl.localNodeID, apb.Node_UNKNOWN)
+
+	// Let's turn the clock forward a bit. In this case the node is still UP,
+	// but the current leadership has been assumed more than HeartbeatTimeout
+	// ago. If no heartbeats arrived during this period, the node is timing out.
+	cl.l.ls.startTs = cl.l.ls.startTs.Add(-HeartbeatTimeout)
+	expectNode(cl.localNodeID, apb.Node_HEARTBEAT_TIMEOUT)
+
+	// Now we'll simulate the node sending a couple of heartbeats. The node is
+	// expected to be HEALTHY after the first of them arrives.
+	stream, err := curator.Heartbeat(ctx)
+	if err != nil {
+		t.Fatalf("While initializing heartbeat stream: %v", err)
+	}
+	for i := 0; i < 3; i++ {
+		if err := stream.Send(&ipb.HeartbeatUpdateRequest{}); err != nil {
+			t.Fatalf("While sending a heartbeat: %v", err)
+		}
+
+		_, err := stream.Recv()
+		if err != nil {
+			t.Fatalf("While receiving a heartbeat reply: %v", err)
+		}
+
+		expectNode(cl.localNodeID, apb.Node_HEALTHY)
+	}
+
+	// This case tests timing out from a healthy state. The passage of time is
+	// simulated by an adjustment of curator leader's timestamp entry
+	// corresponding to the tested node's ID.
+	smv, _ := cl.l.ls.heartbeatTimestamps.Load(cl.localNodeID)
+	lts := smv.(time.Time)
+	lts = lts.Add(-HeartbeatTimeout)
+	cl.l.ls.heartbeatTimestamps.Store(cl.localNodeID, lts)
+	expectNode(cl.localNodeID, apb.Node_HEARTBEAT_TIMEOUT)
+
+	// This case verifies that health of non-UP nodes is assessed to be UNKNOWN,
+	// regardless of leadership tenure, since only UP nodes are capable of
+	// sending heartbeats.
+	npub, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("could not generate node keypair: %v", err)
+	}
+	jpub, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("could not generate join keypair: %v", err)
+	}
+	cuk := []byte("fakefakefakefakefakefakefakefake")
+	node := Node{
+		clusterUnlockKey: cuk,
+		pubkey:           npub,
+		jkey:             jpub,
+		state:            cpb.NodeState_NODE_STATE_NEW,
+	}
+	if err := nodeSave(ctx, cl.l, &node); err != nil {
+		t.Fatalf("nodeSave failed: %v", err)
+	}
+	expectNode(identity.NodeID(npub), apb.Node_UNKNOWN)
 }
 
 // TestManagementClusterInfo exercises GetClusterInfo after setting a status.

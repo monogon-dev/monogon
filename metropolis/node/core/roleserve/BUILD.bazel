@@ -9,6 +9,7 @@ go_library(
         "value_kubernetes.go",
         "value_node.go",
         "worker_controlplane.go",
+        "worker_heartbeat.go",
         "worker_kubernetes.go",
         "worker_rolefetch.go",
         "worker_statuspush.go",

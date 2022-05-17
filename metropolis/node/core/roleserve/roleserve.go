@@ -75,6 +75,7 @@ type Service struct {
 
 	controlPlane *workerControlPlane
 	statusPush   *workerStatusPush
+	heartbeat    *workerHeartbeat
 	kubernetes   *workerKubernetes
 	rolefetch    *workerRoleFetch
 }
@@ -94,6 +95,12 @@ func New(c Config) *Service {
 	}
 
 	s.statusPush = &workerStatusPush{
+		network: s.Network,
+
+		clusterMembership: &s.ClusterMembership,
+	}
+
+	s.heartbeat = &workerHeartbeat{
 		network: s.Network,
 
 		clusterMembership: &s.ClusterMembership,
@@ -153,6 +160,7 @@ func (s *Service) Run(ctx context.Context) error {
 	supervisor.Run(ctx, "controlplane", s.controlPlane.run)
 	supervisor.Run(ctx, "kubernetes", s.kubernetes.run)
 	supervisor.Run(ctx, "statuspush", s.statusPush.run)
+	supervisor.Run(ctx, "heartbeat", s.heartbeat.run)
 	supervisor.Run(ctx, "rolefetch", s.rolefetch.run)
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 

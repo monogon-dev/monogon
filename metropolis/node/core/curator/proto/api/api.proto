@@ -52,6 +52,14 @@ service Curator {
         };
     }
 
+    // Heartbeat is used by nodes to periodicall update their heartbeat
+    // timestamps within the current Curator leader.
+    rpc Heartbeat(stream HeartbeatUpdateRequest) returns (stream HeartbeatUpdateResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_UPDATE_NODE_SELF
+        };
+    }
+
     // RegisterNode is called by nodes that wish to begin registering into the
     // cluster. This will created a 'New' node in the cluster state.
     rpc RegisterNode(RegisterNodeRequest) returns (RegisterNodeResponse) {
@@ -198,6 +206,12 @@ message UpdateNodeStatusRequest {
 }
 
 message UpdateNodeStatusResponse {
+}
+
+message HeartbeatUpdateRequest {
+}
+
+message HeartbeatUpdateResponse {
 }
 
 message RegisterNodeRequest {

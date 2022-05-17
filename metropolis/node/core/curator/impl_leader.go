@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc/codes"
@@ -16,6 +17,19 @@ import (
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 )
+
+// leaderState is the transient state of the Curator leader. All the
+// information kept inside is lost whenever another leader is elected.
+type leaderState struct {
+	// heartbeatTimestamps maps node IDs to monotonic clock timestamps matching
+	// the last corresponding node heartbeats received by the current Curator
+	// leader.
+	heartbeatTimestamps sync.Map
+
+	// startTs is a local monotonic clock timestamp associated with this node's
+	// assumption of Curator leadership.
+	startTs time.Time
+}
 
 // leadership represents the curator leader's ability to perform actions as a
 // leader. It is available to all services implemented by the leader.
@@ -44,6 +58,9 @@ type leadership struct {
 	// muRegisterTicket guards changes to the register ticket. Its usage semantics
 	// are the same as for muNodes, as described above.
 	muRegisterTicket sync.Mutex
+
+	// ls contains the current leader's non-persistent local state.
+	ls leaderState
 }
 
 var (
@@ -113,6 +130,9 @@ type curatorLeader struct {
 }
 
 func newCuratorLeader(l *leadership, node *identity.Node) *curatorLeader {
+	// Mark the start of this leader's tenure.
+	l.ls.startTs = time.Now()
+
 	return &curatorLeader{
 		leaderCurator{leadership: l},
 		leaderAAA{leadership: l},

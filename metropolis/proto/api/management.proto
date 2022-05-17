@@ -106,8 +106,28 @@ message Node {
     metropolis.proto.common.NodeStatus status = 3;
     // Roles assigned by the cluster. This is always set.
     metropolis.proto.common.NodeRoles roles = 4;
-}
 
+    // Health describes node's health as seen from the cluster perspective.
+    enum Health {
+      INVALID = 0;
+      // UNKNOWN is used whenever there were no heartbeats received from a
+      // given node AND too little time has passed since last Curator leader
+      // election to know whether the node is actually timing out. UNKNOWN
+      // is also returned for nodes which NodeState does not equal
+      // NODE_STATE_UP.
+      UNKNOWN = 1;
+      // HEALTHY describes nodes that have sent a heartbeat recently.
+      HEALTHY = 2;
+      // HEARTBEAT_TIMEOUT describes nodes that have not sent a heartbeat in
+      // the interval specified by curator.HeartbeatTimeout.
+      HEARTBEAT_TIMEOUT = 3;
+    }
+    Health health = 5;
+    // heartbeat_timestamp is the duration since the last of the node's
+    // heartbeats was received, expressed in nanoseconds. It equals zero if no
+    // heartbeats were received.
+    int64 heartbeat_timestamp = 6;
+}
 
 message ApproveNodeRequest {
     // Raw public key of the node being approved, has to correspond to a node

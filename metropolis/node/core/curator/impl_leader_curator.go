@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"crypto/subtle"
 	"fmt"
+	"io"
 	"net"
 	"time"
 
@@ -254,6 +255,35 @@ func (l *leaderCurator) UpdateNodeStatus(ctx context.Context, req *ipb.UpdateNod
 	}
 
 	return &ipb.UpdateNodeStatusResponse{}, nil
+}
+
+func (l *leaderCurator) Heartbeat(stream ipb.Curator_HeartbeatServer) error {
+	// Ensure that the given node_id matches the calling node. We currently
+	// only allow for direct self-reporting of status by nodes.
+	ctx := stream.Context()
+	pi := rpc.GetPeerInfo(ctx)
+	if pi == nil || pi.Node == nil {
+		return status.Error(codes.PermissionDenied, "only nodes can send heartbeats")
+	}
+	id := identity.NodeID(pi.Node.PublicKey)
+
+	for {
+		_, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		// Update the node's timestamp within the local Curator state.
+		l.ls.heartbeatTimestamps.Store(id, time.Now())
+
+		rsp := &ipb.HeartbeatUpdateResponse{}
+		if err := stream.Send(rsp); err != nil {
+			return err
+		}
+	}
 }
 
 func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeRequest) (*ipb.RegisterNodeResponse, error) {

@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -146,6 +147,40 @@ func TestE2E(t *testing.T) {
 				// Ensure nodes rejoin the cluster after a reboot by reboting the 1st node.
 				if err := cluster.RebootNode(ctx, 1); err != nil {
 					return fmt.Errorf("while rebooting a node: %w", err)
+				}
+				return nil
+			})
+			testEventual(t, "Heartbeat test successful", ctx, 60*time.Second, func(ctx context.Context) error {
+				// Ensure all cluster nodes are capable of sending heartbeat updates.
+				// This test assumes the expected count of nodes is already present in
+				// the cluster.
+				for {
+					srvN, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
+					if err != nil {
+						return fmt.Errorf("GetNodes: %w", err)
+					}
+
+					// Count the unhealthy nodes.
+					var unhealthy int
+					for {
+						node, err := srvN.Recv()
+						if err == io.EOF {
+							break
+						}
+						if err != nil {
+							return fmt.Errorf("GetNodes.Recv: %w", err)
+						}
+
+						if node.Health != apb.Node_HEALTHY {
+							unhealthy++
+						}
+					}
+
+					// If all nodes tested in this iteration are healthy, the test has
+					// been passed.
+					if unhealthy == 0 {
+						break
+					}
 				}
 				return nil
 			})

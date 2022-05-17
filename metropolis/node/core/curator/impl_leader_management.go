@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"sort"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -37,6 +38,14 @@ const (
 	// to be manually copied by humans, so the relatively overkill size also doesn't
 	// impact usability.
 	registerTicketSize = 32
+
+	// HeartbeatPeriod is the duration between consecutive heartbeat update
+	// messages sent by the node.
+	HeartbeatInterval = time.Second * 5
+
+	// HeartbeatTimeout is the duration after which a node is considered to be
+	// timing out, given no recent heartbeat updates were received by the leader.
+	HeartbeatTimeout = HeartbeatInterval * 2
 )
 
 const (
@@ -111,6 +120,50 @@ func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClust
 	}, nil
 }
 
+// nodeHeartbeatTimestamp returns the node nid's last heartbeat timestamp, as
+// seen from the Curator leader's perspective. If no heartbeats were received
+// from the node, a zero time.Time value is returned.
+func (l *leaderManagement) nodeHeartbeatTimestamp(nid string) time.Time {
+	smv, ok := l.ls.heartbeatTimestamps.Load(nid)
+	if ok {
+		return smv.(time.Time)
+	}
+	return time.Time{}
+}
+
+// nodeHealth returns the node's health, along with the duration since last
+// heartbeat was received, given a current timestamp.
+func (l *leaderManagement) nodeHealth(node *Node, now time.Time) (apb.Node_Health, time.Duration) {
+  // Get the last received node heartbeat's timestamp.
+	nid := identity.NodeID(node.pubkey)
+	nts := l.nodeHeartbeatTimestamp(nid)
+	// lhb is the duration since the last heartbeat was received.
+	lhb := now.Sub(nts)
+	// Determine the node's health based on the heartbeat timestamp.
+	var nh apb.Node_Health
+	if node.state == cpb.NodeState_NODE_STATE_UP {
+		// Only UP nodes can send heartbeats.
+		switch {
+		// If no heartbeats were received, but the leadership has only just
+		// started, the node's health is unknown.
+		case nts.IsZero() && (now.Sub(l.ls.startTs) < HeartbeatTimeout):
+			nh = apb.Node_UNKNOWN
+		// If the leader had received heartbeats from the node, but the last
+		// heartbeat is stale, the node is timing out.
+		case lhb > HeartbeatTimeout:
+			nh = apb.Node_HEARTBEAT_TIMEOUT
+		// Otherwise, the node can be declared healthy.
+		default:
+			nh = apb.Node_HEALTHY
+		}
+	} else {
+		// Since node isn't UP, its health is unknown. Non-UP nodes can't access
+		// the heartbeat RPC.
+		nh = apb.Node_UNKNOWN
+	}
+	return nh, lhb
+}
+
 // GetNodes implements Management.GetNodes, which returns a list of nodes from
 // the point of view of the cluster.
 func (l *leaderManagement) GetNodes(_ *apb.GetNodesRequest, srv apb.Management_GetNodesServer) error {
@@ -124,6 +177,10 @@ func (l *leaderManagement) GetNodes(_ *apb.GetNodesRequest, srv apb.Management_G
 	if err != nil {
 		return status.Errorf(codes.Unavailable, "could not retrieve list of nodes: %v", err)
 	}
+
+	// Get a singular monotonic timestamp to reference node heartbeat timestamps
+	// against.
+	now := time.Now()
 
 	// Convert etcd data into proto nodes, send one streaming response for each
 	// node.
@@ -141,11 +198,16 @@ func (l *leaderManagement) GetNodes(_ *apb.GetNodesRequest, srv apb.Management_G
 			roles.KubernetesWorker = &cpb.NodeRoles_KubernetesWorker{}
 		}
 
+		// Assess the node's health.
+		health, lhb := l.nodeHealth(node, now)
+
 		if err := srv.Send(&apb.Node{
-			Pubkey: node.pubkey,
-			State:  node.state,
-			Status: node.status,
-			Roles:  roles,
+			Pubkey:             node.pubkey,
+			State:              node.state,
+			Status:             node.status,
+			Roles:              roles,
+			HeartbeatTimestamp: lhb.Nanoseconds(),
+			Health:             health,
 		}); err != nil {
 			return err
 		}
