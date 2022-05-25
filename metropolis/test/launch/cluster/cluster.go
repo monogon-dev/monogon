@@ -623,6 +623,9 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	log.Printf("Cluster: Starting node %d...", 1)
 	go func() {
 		err := LaunchNode(ctxT, ld, sd, &nodeOpts[0])
+		if err != nil {
+			log.Printf("Node %d finished with an error: %v", 1, err)
+		}
 		done[0] <- err
 	}()
 
@@ -736,6 +739,9 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		log.Printf("Cluster: Starting node %d...", i+1)
 		go func(i int) {
 			err := LaunchNode(ctxT, ld, sd, &nodeOpts[i])
+			if err != nil {
+				log.Printf("Node %d finished with an error: %v", i, err)
+			}
 			done[i] <- err
 		}(i)
 		var newNode *apb.Node
@@ -858,6 +864,9 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 	log.Printf("Cluster: restarting node %d (%s).", idx, id)
 	go func(n int) {
 		err := LaunchNode(c.ctxT, c.launchDir, c.socketDir, &c.nodeOpts[n])
+		if err != nil {
+			log.Printf("Node %d finished with an error: %v", n, err)
+		}
 		c.nodesDone[n] <- err
 	}(idx)
 
