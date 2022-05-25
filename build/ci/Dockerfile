@@ -32,10 +32,11 @@ RUN dnf -y upgrade && \
 	nc \
 	python-unversioned-command \
 	openssl-devel \
-	java-11-openjdk-headless
+	java-11-openjdk-headless \
+	tini
 
 
-# (java-11-openjdk-headless is required for the Jenkins CI agent)
+# (java-11-openjdk-headless and tini are required for the Jenkins CI agent)
 
 
 # Create CI build user. This is not used by scripts/bin/bazel, but instead only
