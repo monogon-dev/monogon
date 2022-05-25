@@ -113,6 +113,8 @@ func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, e
 			return false, ctx.Err()
 		case line := <-lineC:
 			if strings.Contains(line, expectedOutput) {
+				qemuCmd.Process.Kill()
+				qemuCmd.Wait()
 				return true, nil
 			}
 		}
@@ -312,6 +314,7 @@ func TestInstall(t *testing.T) {
 	if err := checkEspContents(storage); err != nil {
 		t.Error(err.Error())
 	}
+	storage.File.Close()
 	// Run QEMU again. Expect TestOS to launch successfully.
 	expectedOutput = "_TESTOS_LAUNCH_SUCCESS_"
 	result, err = runQemu(ctx, qemuDriveParam(storagePath), expectedOutput)
