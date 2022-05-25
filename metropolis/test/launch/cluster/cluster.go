@@ -290,6 +290,22 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 		return fmt.Errorf("failed to start TPM emulator: %w", err)
 	}
 
+	// Wait for the socket to be created by the TPM emulator before launching
+	// QEMU.
+	for {
+		_, err := os.Stat(tpmSocketPath)
+		if err == nil {
+			break
+		}
+		if err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("while stat-ing TPM socket path: %w", err)
+		}
+		if err := tpmCtx.Err(); err != nil {
+			return fmt.Errorf("while waiting for the TPM socket: %w", err)
+		}
+		time.Sleep(time.Millisecond * 100)
+	}
+
 	// Start the main qemu binary
 	systemCmd := exec.CommandContext(options.Runtime.ctxT, "qemu-system-x86_64", qemuArgs...)
 	if options.ConnectToSocket != nil {
