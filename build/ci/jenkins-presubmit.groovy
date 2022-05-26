@@ -74,6 +74,15 @@ pipeline {
                     }
                 }
             }
+
+            post {
+                success {
+                    gerritReview labels: [Verified: 1]
+                }
+                unsuccessful {
+                    gerritReview labels: [Verified: -1]
+                }
+            }
         }
     }
 }
