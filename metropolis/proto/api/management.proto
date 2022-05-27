@@ -83,6 +83,13 @@ message GetClusterInfoResponse {
 }
 
 message GetNodesRequest {
+    // filter is a CEL expression used to limit the count of GetNodes results.
+    // Each processed node protobuf message is exposed to the filter as
+    // "node" variable, while related state and health enum constants are
+    // anchored in the root namespace, eg. NODE_STATE_UP, or HEARTBEAT_TIMEOUT.
+    // A node is returned each time the expression is evaluated as true. If
+    // empty, all nodes are returned.
+    string filter = 1;
 }
 
 // Node in a Metropolis cluster, streamed by Management.GetNodes. For each node

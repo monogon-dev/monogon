@@ -134,7 +134,7 @@ func (l *leaderManagement) nodeHeartbeatTimestamp(nid string) time.Time {
 // nodeHealth returns the node's health, along with the duration since last
 // heartbeat was received, given a current timestamp.
 func (l *leaderManagement) nodeHealth(node *Node, now time.Time) (apb.Node_Health, time.Duration) {
-  // Get the last received node heartbeat's timestamp.
+	// Get the last received node heartbeat's timestamp.
 	nid := identity.NodeID(node.pubkey)
 	nts := l.nodeHeartbeatTimestamp(nid)
 	// lhb is the duration since the last heartbeat was received.
@@ -166,7 +166,7 @@ func (l *leaderManagement) nodeHealth(node *Node, now time.Time) (apb.Node_Healt
 
 // GetNodes implements Management.GetNodes, which returns a list of nodes from
 // the point of view of the cluster.
-func (l *leaderManagement) GetNodes(_ *apb.GetNodesRequest, srv apb.Management_GetNodesServer) error {
+func (l *leaderManagement) GetNodes(req *apb.GetNodesRequest, srv apb.Management_GetNodesServer) error {
 	ctx := srv.Context()
 
 	l.muNodes.Lock()
@@ -176,6 +176,12 @@ func (l *leaderManagement) GetNodes(_ *apb.GetNodesRequest, srv apb.Management_G
 	res, err := l.txnAsLeader(ctx, nodeEtcdPrefix.Range())
 	if err != nil {
 		return status.Errorf(codes.Unavailable, "could not retrieve list of nodes: %v", err)
+	}
+
+	// Create a CEL filter program, to be used in the reply loop below.
+	filter, err := buildNodeFilter(ctx, req.Filter)
+	if err != nil {
+		return err
 	}
 
 	// Get a singular monotonic timestamp to reference node heartbeat timestamps
@@ -201,18 +207,33 @@ func (l *leaderManagement) GetNodes(_ *apb.GetNodesRequest, srv apb.Management_G
 		// Assess the node's health.
 		health, lhb := l.nodeHealth(node, now)
 
-		if err := srv.Send(&apb.Node{
-			Pubkey:             node.pubkey,
-			State:              node.state,
-			Status:             node.status,
-			Roles:              roles,
+		entry := apb.Node{
+			Pubkey: node.pubkey,
+			State:  node.state,
+			Status: node.status,
+			Roles:  roles,
+			// TODO(mateusz@monogon.tech): update the API to use protobuf Duration
+			// message, in order to facilitate filter expressions like
+			// 'node.HeartbeatTimestamp > duration("30s")'.
+			// TODO(mateusz@monogon.tech): change HeartbeatTimestamp proto field
+			// name to TimeSinceHeartbeat, since it's not really a timestamp.
 			HeartbeatTimestamp: lhb.Nanoseconds(),
 			Health:             health,
-		}); err != nil {
+		}
+
+		// Evaluate the filter expression for this node. Send the node, if it's
+		// kept by the filter.
+		keep, err := filter(ctx, &entry)
+		if err != nil {
+			return err
+		}
+		if !keep {
+			continue
+		}
+		if err := srv.Send(&entry); err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 

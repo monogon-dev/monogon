@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
+	"io"
 	"net"
 	"testing"
 	"time"
@@ -868,5 +869,104 @@ func TestManagementClusterInfo(t *testing.T) {
 	}
 	if want, got := cl.ca.PublicKey.(ed25519.PublicKey), ca.PublicKey.(ed25519.PublicKey); !bytes.Equal(want, got) {
 		t.Fatalf("CaPublicKey mismatch (wanted %s, got %s)", hex.EncodeToString(want), hex.EncodeToString(got))
+	}
+}
+
+// TestGetNodes exercises management.GetNodes call.
+func TestGetNodes(t *testing.T) {
+	cl := fakeLeader(t)
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	// putNode creates a new node within the cluster, given its initial state.
+	putNode := func(state cpb.NodeState) *Node {
+		npub, _, err := ed25519.GenerateKey(rand.Reader)
+		if err != nil {
+			t.Fatalf("could not generate node keypair: %v", err)
+		}
+		jpub, _, err := ed25519.GenerateKey(rand.Reader)
+		if err != nil {
+			t.Fatalf("could not generate join keypair: %v", err)
+		}
+		cuk := []byte("fakefakefakefakefakefakefakefake")
+		node := &Node{
+			clusterUnlockKey: cuk,
+			pubkey:           npub,
+			jkey:             jpub,
+			state:            state,
+		}
+		if err := nodeSave(ctx, cl.l, node); err != nil {
+			t.Fatalf("nodeSave failed: %v", err)
+		}
+		return node
+	}
+
+	mgmt := apb.NewManagementClient(cl.mgmtConn)
+
+	// getNodes calls mgmt.GetNodes, given a CEL filter expression as
+	// an argument.
+	getNodes := func(filter string) []*apb.Node {
+		var nodes []*apb.Node
+
+		res, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{
+			Filter: filter,
+		})
+		if err != nil {
+			t.Fatalf("GetNodes failed: %v", err)
+		}
+
+		for {
+			node, err := res.Recv()
+			if err != nil && err != io.EOF {
+				t.Fatalf("Recv failed: %v", err)
+			}
+			if err == io.EOF {
+				break
+			}
+			nodes = append(nodes, node)
+		}
+		return nodes
+	}
+
+	// exists returns true, if node n exists within nodes returned by getNodes.
+	exists := func(n *Node, nodes []*apb.Node) bool {
+		for _, e := range nodes {
+			if bytes.Equal(e.Pubkey, n.pubkey) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Create additional nodes, to be used in test cases below.
+	var nodes []*Node
+	nodes = append(nodes, putNode(cpb.NodeState_NODE_STATE_NEW))
+	nodes = append(nodes, putNode(cpb.NodeState_NODE_STATE_UP))
+	nodes = append(nodes, putNode(cpb.NodeState_NODE_STATE_UP))
+
+	// Call mgmt.GetNodes without a filter expression. The result r should contain
+	// all existing nodes.
+	r := getNodes("")
+	if !exists(nodes[0], r) {
+		t.Fatalf("a node is missing in management.GetNodes result.")
+	}
+	if len(r) < len(nodes) {
+		t.Fatalf("management.GetNodes didn't return expected node count.")
+	}
+
+	// mgmt.GetNodes, provided with the below expression, should return all nodes
+	// which state matches NODE_STATE_UP.
+	r = getNodes("node.state == NODE_STATE_UP")
+	// Hence, the second and third node both should be included in the query
+	// result.
+	if !exists(nodes[1], r) {
+		t.Fatalf("a node is missing in management.GetNodes result.")
+	}
+	if !exists(nodes[2], r) {
+		t.Fatalf("a node is missing in management.GetNodes result.")
+	}
+	// ...but not the first node.
+	if exists(nodes[0], r) {
+		t.Fatalf("management.GetNodes didn't filter out an undesired node.")
 	}
 }
