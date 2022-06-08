@@ -1,3 +1,8 @@
+# Enable strict_action_env (use static PATH and do not inherit environment variables).
+# This avoids unnecessary cache invalidations.
+build --incompatible_strict_action_env=true
+
+# Build resources
 startup --batch_cpu_scheduling --io_nice_level 7
 build --jobs 12 --local_ram_resources=HOST_RAM*0.5
 test --jobs 12 --test_output=errors
