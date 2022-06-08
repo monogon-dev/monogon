@@ -47,12 +47,12 @@ After running the first sync, everything should now resolve in the IDE, includin
 
 Launch the node:
 
-    scripts/bin/bazel run //:launch
+    scripts/bin/bazel run //:launch -c dbg
     
 Run a kubectl command:
 
-    scripts/bin/bazel run //metropolis/cli/dbg -- kubectl describe
+    scripts/bin/bazel run //metropolis/cli/dbg -c dbg -- kubectl describe
  
 Run tests:
 
-    scripts/bin/bazel test //...
+    scripts/bin/bazel test -c dbg //...
