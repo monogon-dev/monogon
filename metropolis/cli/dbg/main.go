@@ -139,6 +139,9 @@ func main() {
 			}
 		}
 	case "kubectl":
+		// Pop "kubectl" arg (the k8s cli library internally parses os.Args).
+		os.Args = os.Args[1:]
+
 		// Always get a kubeconfig with cluster-admin (group system:masters),
 		// kubectl itself can impersonate
 		kubeconfigFile, err := os.CreateTemp("", "dbg_kubeconfig")
