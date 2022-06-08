@@ -76,6 +76,11 @@ type Status struct {
 	// stopped is set to true if the underlying service has been stopped or hasn't
 	// yet been started.
 	stopped bool
+
+	// noClusterMemberManagement disables etcd cluster member management in
+	// UpdateNodeRoles. This is currently necessary in order to test the call,
+	// due to limitations of the test harness.
+	noClusterMemberManagement bool
 }
 
 // Running returns true if this status represents a running consensus service
@@ -188,7 +193,7 @@ func (s *Status) AddNode(ctx context.Context, pk ed25519.PublicKey, opts ...*Add
 		return nil, fmt.Errorf("could not retrieve initial CRL: %w", err)
 	}
 
-	if !newExists {
+	if !newExists && !s.noClusterMemberManagement {
 		addr := fmt.Sprintf("https://%s", net.JoinHostPort(name, strconv.Itoa(port)))
 		if _, err := s.cl.MemberAddAsLearner(ctx, []string{addr}); err != nil {
 			return nil, fmt.Errorf("could not add new member as learner: %w", err)

@@ -159,6 +159,10 @@ func (n *Node) EnableKubernetesWorker() {
 	n.kubernetesWorker = &NodeRoleKubernetesWorker{}
 }
 
+func (n *Node) DisableKubernetesWorker() {
+	n.kubernetesWorker = nil
+}
+
 func (n *Node) EnableConsensusMember(jc *consensus.JoinCluster) {
 	peers := make([]NodeRoleConsensusMemberPeer, len(jc.ExistingNodes))
 	for i, n := range jc.ExistingNodes {
@@ -171,6 +175,10 @@ func (n *Node) EnableConsensusMember(jc *consensus.JoinCluster) {
 		Peers:           peers,
 		CRL:             jc.InitialCRL,
 	}
+}
+
+func (n *Node) DisableConsensusMember() {
+	n.consensusMember = nil
 }
 
 var (

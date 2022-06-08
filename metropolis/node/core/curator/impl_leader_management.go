@@ -282,3 +282,65 @@ func (l *leaderManagement) ApproveNode(ctx context.Context, req *apb.ApproveNode
 
 	return &apb.ApproveNodeResponse{}, nil
 }
+
+// UpdateNodeRoles implements Management.UpdateNodeRoles, which in addition to
+// adjusting the affected node's representation within the cluster, can also
+// trigger the addition of a new etcd learner node.
+func (l *leaderManagement) UpdateNodeRoles(ctx context.Context, req *apb.UpdateNodeRolesRequest) (*apb.UpdateNodeRolesResponse, error) {
+	if len(req.Pubkey) != ed25519.PublicKeySize {
+		return nil, status.Errorf(codes.InvalidArgument, "pubkey must be %d bytes long", ed25519.PublicKeySize)
+	}
+
+	// Take l.muNodes before modifying the node.
+	l.muNodes.Lock()
+	defer l.muNodes.Unlock()
+
+	// Find the node matching the requested public key.
+	id := identity.NodeID(req.Pubkey)
+	node, err := nodeLoad(ctx, l.leadership, id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "while loading node %s: %v", id, err)
+	}
+
+	// Adjust each role, if a corresponding value is set within the request. Do
+	// nothing, if the role is already matches the requested value.
+
+	if req.ConsensusMember != nil {
+		if *req.ConsensusMember {
+			// Add a new etcd learner node.
+			w := l.consensus.Watch()
+			defer w.Close()
+
+			st, err := w.GetRunning(ctx)
+			if err != nil {
+				return nil, status.Errorf(codes.Unavailable, "could not get running consensus: %v", err)
+			}
+
+			join, err := st.AddNode(ctx, node.pubkey)
+			if err != nil {
+				return nil, status.Errorf(codes.Unavailable, "could not add node: %v", err)
+			}
+
+			// Modify the node's state to reflect the change.
+			node.EnableConsensusMember(join)
+		} else {
+			node.DisableConsensusMember()
+		}
+	}
+
+	if req.KubernetesWorker != nil {
+		if *req.KubernetesWorker {
+			if node.consensusMember == nil {
+				return nil, status.Errorf(codes.InvalidArgument, "could not set role: Kubernetes worker nodes must also be consensus members.")
+			}
+			node.EnableKubernetesWorker()
+		} else {
+			node.DisableKubernetesWorker()
+		}
+	}
+
+	if err := nodeSave(ctx, l.leadership, node); err != nil {
+		return nil, err
+	}
+	return &apb.UpdateNodeRolesResponse{}, nil
+}

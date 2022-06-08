@@ -235,6 +235,58 @@ type fakeLeaderData struct {
 	etcd client.Namespaced
 }
 
+// putNode is a helper function that creates a new node within the cluster,
+// given its initial state.
+func putNode(t *testing.T, ctx context.Context, l *leadership, state cpb.NodeState) *Node {
+	t.Helper()
+
+	npub, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("could not generate node keypair: %v", err)
+	}
+	jpub, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("could not generate join keypair: %v", err)
+	}
+	cuk := []byte("fakefakefakefakefakefakefakefake")
+	node := &Node{
+		clusterUnlockKey: cuk,
+		pubkey:           npub,
+		jkey:             jpub,
+		state:            state,
+	}
+	if err := nodeSave(ctx, l, node); err != nil {
+		t.Fatalf("nodeSave failed: %v", err)
+	}
+	return node
+}
+
+// getNodes wraps management.GetNodes, given a CEL filter expression as
+// the request payload.
+func getNodes(t *testing.T, ctx context.Context, mgmt apb.ManagementClient, filter string) []*apb.Node {
+	t.Helper()
+
+	res, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{
+		Filter: filter,
+	})
+	if err != nil {
+		t.Fatalf("GetNodes failed: %v", err)
+	}
+
+	var nodes []*apb.Node
+	for {
+		node, err := res.Recv()
+		if err != nil && err != io.EOF {
+			t.Fatalf("Recv failed: %v", err)
+		}
+		if err == io.EOF {
+			break
+		}
+		nodes = append(nodes, node)
+	}
+	return nodes
+}
+
 // TestWatchNodeInCluster exercises a NodeInCluster Watch, from node creation,
 // through updates, to its deletion.
 func TestWatchNodeInCluster(t *testing.T) {
@@ -878,55 +930,7 @@ func TestGetNodes(t *testing.T) {
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
 
-	// putNode creates a new node within the cluster, given its initial state.
-	putNode := func(state cpb.NodeState) *Node {
-		npub, _, err := ed25519.GenerateKey(rand.Reader)
-		if err != nil {
-			t.Fatalf("could not generate node keypair: %v", err)
-		}
-		jpub, _, err := ed25519.GenerateKey(rand.Reader)
-		if err != nil {
-			t.Fatalf("could not generate join keypair: %v", err)
-		}
-		cuk := []byte("fakefakefakefakefakefakefakefake")
-		node := &Node{
-			clusterUnlockKey: cuk,
-			pubkey:           npub,
-			jkey:             jpub,
-			state:            state,
-		}
-		if err := nodeSave(ctx, cl.l, node); err != nil {
-			t.Fatalf("nodeSave failed: %v", err)
-		}
-		return node
-	}
-
 	mgmt := apb.NewManagementClient(cl.mgmtConn)
-
-	// getNodes calls mgmt.GetNodes, given a CEL filter expression as
-	// an argument.
-	getNodes := func(filter string) []*apb.Node {
-		var nodes []*apb.Node
-
-		res, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{
-			Filter: filter,
-		})
-		if err != nil {
-			t.Fatalf("GetNodes failed: %v", err)
-		}
-
-		for {
-			node, err := res.Recv()
-			if err != nil && err != io.EOF {
-				t.Fatalf("Recv failed: %v", err)
-			}
-			if err == io.EOF {
-				break
-			}
-			nodes = append(nodes, node)
-		}
-		return nodes
-	}
 
 	// exists returns true, if node n exists within nodes returned by getNodes.
 	exists := func(n *Node, nodes []*apb.Node) bool {
@@ -940,13 +944,13 @@ func TestGetNodes(t *testing.T) {
 
 	// Create additional nodes, to be used in test cases below.
 	var nodes []*Node
-	nodes = append(nodes, putNode(cpb.NodeState_NODE_STATE_NEW))
-	nodes = append(nodes, putNode(cpb.NodeState_NODE_STATE_UP))
-	nodes = append(nodes, putNode(cpb.NodeState_NODE_STATE_UP))
+	nodes = append(nodes, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_NEW))
+	nodes = append(nodes, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_UP))
+	nodes = append(nodes, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_UP))
 
 	// Call mgmt.GetNodes without a filter expression. The result r should contain
 	// all existing nodes.
-	r := getNodes("")
+	r := getNodes(t, ctx, mgmt, "")
 	if !exists(nodes[0], r) {
 		t.Fatalf("a node is missing in management.GetNodes result.")
 	}
@@ -956,7 +960,7 @@ func TestGetNodes(t *testing.T) {
 
 	// mgmt.GetNodes, provided with the below expression, should return all nodes
 	// which state matches NODE_STATE_UP.
-	r = getNodes("node.state == NODE_STATE_UP")
+	r = getNodes(t, ctx, mgmt, "node.state == NODE_STATE_UP")
 	// Hence, the second and third node both should be included in the query
 	// result.
 	if !exists(nodes[1], r) {
@@ -968,5 +972,103 @@ func TestGetNodes(t *testing.T) {
 	// ...but not the first node.
 	if exists(nodes[0], r) {
 		t.Fatalf("management.GetNodes didn't filter out an undesired node.")
+	}
+}
+
+// TestUpdateNodeRoles exercises management.UpdateNodeRoles by running it
+// against some newly created nodes, and verifying the effect by examining
+// results delivered by a subsequent call to management.GetNodes.
+func TestUpdateNodeRoles(t *testing.T) {
+	cl := fakeLeader(t)
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	// Create the test nodes.
+	var tn []*Node
+	tn = append(tn, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_UP))
+	tn = append(tn, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_UP))
+	tn = append(tn, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_UP))
+
+	// Define the test payloads. Each role is optional, and will be updated
+	// only if it's not nil, and its value differs from the current state.
+	opt := func(v bool) *bool { return &v }
+	ue := []*apb.UpdateNodeRolesRequest{
+		&apb.UpdateNodeRolesRequest{
+			Pubkey:           tn[0].pubkey,
+			KubernetesWorker: opt(false),
+			ConsensusMember:  opt(false),
+		},
+		&apb.UpdateNodeRolesRequest{
+			Pubkey:           tn[1].pubkey,
+			KubernetesWorker: opt(false),
+			ConsensusMember:  opt(true),
+		},
+		&apb.UpdateNodeRolesRequest{
+			Pubkey:           tn[2].pubkey,
+			KubernetesWorker: opt(true),
+			ConsensusMember:  opt(true),
+		},
+		&apb.UpdateNodeRolesRequest{
+			Pubkey:           tn[2].pubkey,
+			KubernetesWorker: nil,
+			ConsensusMember:  nil,
+		},
+	}
+
+	// The following UpdateNodeRoles requests rely on noClusterMemberManagement
+	// being set in the running consensus Status. (see: consensus/testhelpers.go)
+	// Normally, adding another ConsensusMember would result in a creation of
+	// another etcd learner. Since the cluster can accomodate only one learner
+	// at a time, UpdateNodeRoles would block.
+
+	// Run all the request payloads defined in ue, with an expectation of all of
+	// them succeeding.
+	mgmt := apb.NewManagementClient(cl.mgmtConn)
+	for _, e := range ue {
+		_, err := mgmt.UpdateNodeRoles(ctx, e)
+		if err != nil {
+			t.Fatalf("management.UpdateNodeRoles: %v", err)
+		}
+	}
+
+	// Verify that node roles have indeed been updated.
+	cn := getNodes(t, ctx, mgmt, "")
+	for i, e := range ue {
+		for _, n := range cn {
+			if bytes.Equal(n.Pubkey, e.Pubkey) {
+				if e.KubernetesWorker != nil {
+					if *e.KubernetesWorker != (n.Roles.KubernetesWorker != nil) {
+						t.Fatalf("KubernetesWorker role mismatch (node %d/%d).", i+1, len(ue))
+					}
+				}
+				if e.ConsensusMember != nil {
+					if *e.ConsensusMember != (n.Roles.ConsensusMember != nil) {
+						t.Fatalf("ConsensusMember role mismatch (node %d/%d).", i+1, len(ue))
+					}
+				}
+			}
+		}
+	}
+
+	// Try running a request containing a contradictory set of roles. A cluster
+	// node currently can't be a KubernetesWorker if it's not a ConsensusMember
+	// as well.
+	uf := []*apb.UpdateNodeRolesRequest{
+		&apb.UpdateNodeRolesRequest{
+			Pubkey:           tn[0].pubkey,
+			KubernetesWorker: opt(true),
+			ConsensusMember:  opt(false),
+		},
+		&apb.UpdateNodeRolesRequest{
+			Pubkey:           tn[0].pubkey,
+			KubernetesWorker: opt(true),
+			ConsensusMember:  nil,
+		},
+	}
+	for _, e := range uf {
+		_, err := mgmt.UpdateNodeRoles(ctx, e)
+		if err == nil {
+			t.Fatalf("expected an error from management.UpdateNodeRoles, got nil.")
+		}
 	}
 }
