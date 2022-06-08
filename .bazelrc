@@ -31,3 +31,6 @@ build --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
 
 # Load CI bazelrc if present.
 try-import %workspace%/ci.bazelrc
+
+# Load custom per-user settings.
+try-import %workspace%/.bazelrc.user

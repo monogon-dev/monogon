@@ -2,3 +2,4 @@ bazel-*
 *swp
 .idea
 .ijwb
+.bazelrc.user
