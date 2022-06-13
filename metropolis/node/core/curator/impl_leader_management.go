@@ -203,6 +203,9 @@ func (l *leaderManagement) GetNodes(req *apb.GetNodesRequest, srv apb.Management
 		if node.kubernetesWorker != nil {
 			roles.KubernetesWorker = &cpb.NodeRoles_KubernetesWorker{}
 		}
+		if node.consensusMember != nil {
+			roles.ConsensusMember = &cpb.NodeRoles_ConsensusMember{}
+		}
 
 		// Assess the node's health.
 		health, lhb := l.nodeHealth(node, now)
