@@ -218,9 +218,7 @@ func (l *leaderManagement) GetNodes(req *apb.GetNodesRequest, srv apb.Management
 			// TODO(mateusz@monogon.tech): update the API to use protobuf Duration
 			// message, in order to facilitate filter expressions like
 			// 'node.HeartbeatTimestamp > duration("30s")'.
-			// TODO(mateusz@monogon.tech): change HeartbeatTimestamp proto field
-			// name to TimeSinceHeartbeat, since it's not really a timestamp.
-			HeartbeatTimestamp: lhb.Nanoseconds(),
+			TimeSinceHeartbeat: lhb.Nanoseconds(),
 			Health:             health,
 		}
 
