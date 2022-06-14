@@ -132,6 +132,9 @@ func main() {
 		if err := supervisor.Run(ctx, "time", timeSvc.Run); err != nil {
 			return fmt.Errorf("when starting time: %w", err)
 		}
+		if err := supervisor.Run(ctx, "pstore", dumpAndCleanPstore); err != nil {
+			return fmt.Errorf("when starting pstore: %w", err)
+		}
 
 		// Start the role service. The role service connects to the curator and runs
 		// all node-specific role code (eg. Kubernetes services).

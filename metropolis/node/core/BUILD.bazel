@@ -6,6 +6,7 @@ go_library(
     srcs = [
         "main.go",
         "mounts.go",
+        "pstore.go",
     ] + select({
         "//metropolis/node:debug_build": [
             "debug_service_enabled.go",
@@ -28,6 +29,7 @@ go_library(
         "//metropolis/node/core/roleserve",
         "//metropolis/node/core/time",
         "//metropolis/pkg/logtree",
+        "//metropolis/pkg/pstore",
         "//metropolis/pkg/supervisor",
         "//metropolis/pkg/tpm",
         "//metropolis/proto/api",
