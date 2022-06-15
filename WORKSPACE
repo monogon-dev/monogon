@@ -52,17 +52,6 @@ http_archive(
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 
-# Temporary Kubernetes patch which is considered too big for the repository.
-# TODO(lorenz): instead of pregenerating this, generate this at build time
-http_file(
-    name = "monogon_k8s_pregenerate_openapi_patch",
-    downloaded_file_path = "file",  # This is used in a workspace rule, path needs to match package
-    sha256 = "7d87d265f3d7127ce5b19f0461f59861c725bcd5675e27bba64f1cf654900443",
-    urls = [
-        "https://storage.googleapis.com/monogon-infra-public/monogon-k8s-pregenerate-openapi.patch",
-    ],
-)
-
 load("//third_party/go:repositories.bzl", "go_repositories")
 
 # gazelle:repository_macro third_party/go/repositories.bzl%go_repositories
