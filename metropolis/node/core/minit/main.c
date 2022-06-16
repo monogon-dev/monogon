@@ -157,19 +157,18 @@ void handle_signal(pid_t child_pid, int signum) {
             cprintf("child status not EXITED nor SIGNALED: %d\n", status);
             exit_status = 1;
         }
-    }
 
-    // Direct child exited, let's also exit.
-    if (exit_status >= 0) {
-        cprintf("\n  Metropolis core exited with status: %d\n", exit_status);
-        sync();
-        if (exit_status != 0) {
-            cprintf("  Disks synced, rebooting in 30 seconds...\n", exit_status);
-            sleep(30);
-            cprintf("  Rebooting...\n\n", exit_status);
-        } else {
+        // Direct child exited, let's also exit.
+        if (exit_status >= 0) {
+            if (exit_status == 0) {
+                reboot(LINUX_REBOOT_CMD_RESTART);
+                return;
+            }
+            cprintf("\n Metropolis encountered an uncorrectable error and this node must be restarted.\n");
+            cprintf("core exit status: %d\n", exit_status);
+            sync();
             cprintf("  Disks synced, rebooting...\n\n");
+            reboot(LINUX_REBOOT_CMD_RESTART);
         }
-        reboot(LINUX_REBOOT_CMD_RESTART);
     }
 }

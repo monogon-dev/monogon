@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"runtime/debug"
 
 	"golang.org/x/sys/unix"
 
@@ -38,22 +37,6 @@ import (
 )
 
 func main() {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Fprintf(os.Stderr, "\n\n")
-			fmt.Fprintf(os.Stderr, "  Metropolis encountered an uncorrectable error and this node must be restarted.\n")
-			fmt.Fprintf(os.Stderr, "  Core panicked: %v\n\n", r)
-			debug.PrintStack()
-		}
-		unix.Sync()
-		// TODO(lorenz): Switch this to Reboot when init panics are less likely.
-		if err := unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF); err != nil {
-			// Best effort, nothing we can do if this fails except printing the error to the
-			// console.
-			panic(fmt.Sprintf("failed to halt node: %v\n", err))
-		}
-	}()
-
 	// Set up basic mounts (like /dev, /sys...).
 	if err := setupMounts(); err != nil {
 		panic(fmt.Errorf("could not set up basic mounts: %w", err))
@@ -81,6 +64,8 @@ func main() {
 			}
 		}(p, f)
 	}
+	// Initialize persistent panic handler early
+	initPanicHandler(lt)
 
 	// Initial logger. Used until we get to a supervisor.
 	logger := lt.MustLeveledFor("init")

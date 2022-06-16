@@ -6,6 +6,7 @@ go_library(
     srcs = [
         "main.go",
         "mounts.go",
+        "panichandler.go",
         "pstore.go",
     ] + select({
         "//metropolis/node:debug_build": [
