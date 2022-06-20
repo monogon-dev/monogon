@@ -1006,6 +1006,28 @@ func TestGetNodes(t *testing.T) {
 	if exists(in, wnr) {
 		t.Fatalf("management.GetNodes returned a node which isn't a Kubernetes worker.")
 	}
+
+	// Exercise duration-based filtering. Start with setting up node and
+	// leadership timestamps much like in TestClusterHeartbeat.
+	tsn := putNode(t, ctx, cl.l, func(n *Node) { n.state = cpb.NodeState_NODE_STATE_UP })
+	nid := identity.NodeID(tsn.pubkey)
+	// Last of node's tsn heartbeats were received 5 seconds ago,
+	cl.l.ls.heartbeatTimestamps.Store(nid, time.Now().Add(-5*time.Second))
+	// ...while the current leader's tenure started 15 seconds ago.
+	cl.l.ls.startTs = time.Now().Add(-15 * time.Second)
+
+	// Get all nodes that sent their last heartbeat between 4 and 6 seconds ago.
+	// Node tsn should be among the results.
+	tsr := getNodes(t, ctx, mgmt, "node.time_since_heartbeat < duration('6s') && node.time_since_heartbeat > duration('4s')")
+	if !exists(tsn, tsr) {
+		t.Fatalf("node was filtered out where it shouldn't be")
+	}
+	// Now, get all nodes that sent their last heartbeat more than 7 seconds ago.
+	// In this case, node tsn should be filtered out.
+	tsr = getNodes(t, ctx, mgmt, "node.time_since_heartbeat > duration('7s')")
+	if exists(tsn, tsr) {
+		t.Fatalf("node wasn't filtered out where it should be")
+	}
 }
 
 // TestUpdateNodeRoles exercises management.UpdateNodeRoles by running it

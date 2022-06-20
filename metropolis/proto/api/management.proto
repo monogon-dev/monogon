@@ -2,6 +2,8 @@ syntax = "proto3";
 package metropolis.proto.api;
 option go_package = "source.monogon.dev/metropolis/proto/api";
 
+import "google/protobuf/duration.proto";
+
 import "metropolis/proto/common/common.proto";
 import "metropolis/proto/ext/authorization.proto";
 
@@ -140,7 +142,7 @@ message Node {
     // time_since_heartbeat is the duration since the last of the node's
     // heartbeats was received, expressed in nanoseconds. It is only valid with
     // the health status of either HEALTHY or HEARTBEAT_TIMEOUT.
-    int64 time_since_heartbeat = 6;
+    google.protobuf.Duration time_since_heartbeat = 6;
 }
 
 message ApproveNodeRequest {
