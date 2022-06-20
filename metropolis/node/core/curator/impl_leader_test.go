@@ -249,9 +249,10 @@ type fakeLeaderData struct {
 	etcd client.Namespaced
 }
 
-// putNode is a helper function that creates a new node within the cluster,
-// given its initial state.
-func putNode(t *testing.T, ctx context.Context, l *leadership, state cpb.NodeState) *Node {
+// putNode is a helper function that creates a new node within the cluster. The
+// new node will have its Cluster Unlock Key, Public Key and Join Key set. A
+// non-nil mut can further mutate the node before it's saved.
+func putNode(t *testing.T, ctx context.Context, l *leadership, mut func(*Node)) *Node {
 	t.Helper()
 
 	npub, _, err := ed25519.GenerateKey(rand.Reader)
@@ -267,7 +268,9 @@ func putNode(t *testing.T, ctx context.Context, l *leadership, state cpb.NodeSta
 		clusterUnlockKey: cuk,
 		pubkey:           npub,
 		jkey:             jpub,
-		state:            state,
+	}
+	if mut != nil {
+		mut(node)
 	}
 	if err := nodeSave(ctx, l, node); err != nil {
 		t.Fatalf("nodeSave failed: %v", err)
@@ -958,34 +961,50 @@ func TestGetNodes(t *testing.T) {
 
 	// Create additional nodes, to be used in test cases below.
 	var nodes []*Node
-	nodes = append(nodes, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_NEW))
-	nodes = append(nodes, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_UP))
-	nodes = append(nodes, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_UP))
+	nodes = append(nodes, putNode(t, ctx, cl.l, func(n *Node) { n.state = cpb.NodeState_NODE_STATE_NEW }))
+	nodes = append(nodes, putNode(t, ctx, cl.l, func(n *Node) { n.state = cpb.NodeState_NODE_STATE_UP }))
+	nodes = append(nodes, putNode(t, ctx, cl.l, func(n *Node) { n.state = cpb.NodeState_NODE_STATE_UP }))
 
 	// Call mgmt.GetNodes without a filter expression. The result r should contain
 	// all existing nodes.
-	r := getNodes(t, ctx, mgmt, "")
-	if !exists(nodes[0], r) {
+	an := getNodes(t, ctx, mgmt, "")
+	if !exists(nodes[0], an) {
 		t.Fatalf("a node is missing in management.GetNodes result.")
 	}
-	if len(r) < len(nodes) {
+	if len(an) < len(nodes) {
 		t.Fatalf("management.GetNodes didn't return expected node count.")
 	}
 
 	// mgmt.GetNodes, provided with the below expression, should return all nodes
-	// which state matches NODE_STATE_UP.
-	r = getNodes(t, ctx, mgmt, "node.state == NODE_STATE_UP")
+	// for which state matches NODE_STATE_UP.
+	upn := getNodes(t, ctx, mgmt, "node.state == NODE_STATE_UP")
 	// Hence, the second and third node both should be included in the query
 	// result.
-	if !exists(nodes[1], r) {
+	if !exists(nodes[1], upn) {
 		t.Fatalf("a node is missing in management.GetNodes result.")
 	}
-	if !exists(nodes[2], r) {
+	if !exists(nodes[2], upn) {
 		t.Fatalf("a node is missing in management.GetNodes result.")
 	}
 	// ...but not the first node.
-	if exists(nodes[0], r) {
+	if exists(nodes[0], upn) {
 		t.Fatalf("management.GetNodes didn't filter out an undesired node.")
+	}
+
+	// Since node roles are protobuf messages, their presence needs to be tested
+	// with the "has" macro.
+	kwn := putNode(t, ctx, cl.l, func(n *Node) {
+		n.kubernetesWorker = &NodeRoleKubernetesWorker{}
+	})
+	in := putNode(t, ctx, cl.l, func(n *Node) {
+		n.kubernetesWorker = nil
+	})
+	wnr := getNodes(t, ctx, mgmt, "has(node.roles.kubernetes_worker)")
+	if !exists(kwn, wnr) {
+		t.Fatalf("management.GetNodes didn't return the Kubernetes worker node.")
+	}
+	if exists(in, wnr) {
+		t.Fatalf("management.GetNodes returned a node which isn't a Kubernetes worker.")
 	}
 }
 
@@ -999,9 +1018,9 @@ func TestUpdateNodeRoles(t *testing.T) {
 
 	// Create the test nodes.
 	var tn []*Node
-	tn = append(tn, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_UP))
-	tn = append(tn, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_UP))
-	tn = append(tn, putNode(t, ctx, cl.l, cpb.NodeState_NODE_STATE_UP))
+	tn = append(tn, putNode(t, ctx, cl.l, func(n *Node) { n.state = cpb.NodeState_NODE_STATE_UP }))
+	tn = append(tn, putNode(t, ctx, cl.l, func(n *Node) { n.state = cpb.NodeState_NODE_STATE_UP }))
+	tn = append(tn, putNode(t, ctx, cl.l, func(n *Node) { n.state = cpb.NodeState_NODE_STATE_UP }))
 
 	// Define the test payloads. Each role is optional, and will be updated
 	// only if it's not nil, and its value differs from the current state.
