@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
+	"time"
 
 	"google.golang.org/grpc"
 
@@ -53,9 +54,14 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 
 	// Join the cluster and use the newly obtained CUK to mount the data
 	// partition.
-	jr, err := cur.JoinNode(ctx, &ipb.JoinNodeRequest{})
-	if err != nil {
-		return fmt.Errorf("join call failed: %w", err)
+	var jr *ipb.JoinNodeResponse
+	for {
+		jr, err = cur.JoinNode(ctx, &ipb.JoinNodeRequest{})
+		if err == nil {
+			break
+		}
+		supervisor.Logger(ctx).Warningf("JoinNode call failed, retrying: %v", err)
+		time.Sleep(time.Second)
 	}
 	if err := m.storageRoot.Data.MountExisting(sc, jr.ClusterUnlockKey); err != nil {
 		return fmt.Errorf("while mounting Data: %w", err)
