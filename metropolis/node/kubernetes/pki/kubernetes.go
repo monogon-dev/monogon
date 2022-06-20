@@ -100,7 +100,7 @@ type PKI struct {
 	Certificates map[KubeCertificateName]*opki.Certificate
 }
 
-func New(l logtree.LeveledLogger, kv clientv3.KV) *PKI {
+func New(l logtree.LeveledLogger, kv clientv3.KV, clusterDomain string) *PKI {
 	pki := PKI{
 		namespace:    opki.Namespaced(etcdPrefix),
 		logger:       l,
@@ -130,8 +130,7 @@ func New(l logtree.LeveledLogger, kv clientv3.KV) *PKI {
 			"kubernetes",
 			"kubernetes.default",
 			"kubernetes.default.svc",
-			"kubernetes.default.svc.cluster",
-			"kubernetes.default.svc.cluster.local",
+			"kubernetes.default.svc." + clusterDomain,
 			"localhost",
 		},
 		// TODO(q3k): add service network internal apiserver address

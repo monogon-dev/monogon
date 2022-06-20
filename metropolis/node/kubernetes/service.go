@@ -45,6 +45,7 @@ import (
 type Config struct {
 	ServiceIPRange net.IPNet
 	ClusterNet     net.IPNet
+	ClusterDomain  string
 
 	KPKI    *pki.PKI
 	Root    *localstorage.Root
@@ -121,6 +122,7 @@ func (s *Service) Run(ctx context.Context) error {
 		kubelet := kubeletService{
 			NodeName:           s.c.Node.ID(),
 			ClusterDNS:         []net.IP{address},
+			ClusterDomain:      s.c.ClusterDomain,
 			KubeletDirectory:   &s.c.Root.Data.Kubernetes.Kubelet,
 			EphemeralDirectory: &s.c.Root.Ephemeral,
 			KPKI:               s.c.KPKI,
@@ -200,7 +202,7 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 
 	supervisor.Logger(ctx).Info("Registering K8s CoreDNS")
-	clusterDNSDirective := dns.NewKubernetesDirective("cluster.local", masterKubeconfig)
+	clusterDNSDirective := dns.NewKubernetesDirective(s.c.ClusterDomain, masterKubeconfig)
 	s.c.Network.ConfigureDNS(clusterDNSDirective)
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)

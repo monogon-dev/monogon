@@ -166,8 +166,12 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			return fmt.Errorf("failed to start containerd service: %w", err)
 		}
 
+		// TODO(lorenz): Align this with the global cluster domain once it
+		// exists.
+		clusterDomain := "cluster.local"
+
 		// Start building Kubernetes service...
-		pki := kpki.New(supervisor.Logger(ctx), kkv)
+		pki := kpki.New(supervisor.Logger(ctx), kkv, clusterDomain)
 
 		kubeSvc := kubernetes.New(kubernetes.Config{
 			Node: &d.membership.credentials.Node,
@@ -182,9 +186,10 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 				// That's a /16.
 				Mask: net.IPMask{0xff, 0xff, 0x00, 0x00},
 			},
-			KPKI:    pki,
-			Root:    s.storageRoot,
-			Network: s.network,
+			ClusterDomain: clusterDomain,
+			KPKI:          pki,
+			Root:          s.storageRoot,
+			Network:       s.network,
 		})
 		// Start Kubernetes.
 		if err := supervisor.Run(ctx, "kubernetes", kubeSvc.Run); err != nil {

@@ -45,7 +45,7 @@ func GetKubeClientSet(cluster *cluster.Cluster, port uint16) (kubernetes.Interfa
 	var clientConfig = rest.Config{
 		Host: fmt.Sprintf("localhost:%v", port),
 		TLSClientConfig: rest.TLSClientConfig{
-			ServerName: "kubernetes.default.svc.cluster.local",
+			ServerName: "kubernetes.default.svc",
 			Insecure:   true,
 			CertData:   pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cluster.Owner.Certificate[0]}),
 			KeyData:    pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: pkcs8Key}),

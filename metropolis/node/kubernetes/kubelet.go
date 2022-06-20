@@ -38,6 +38,7 @@ import (
 type kubeletService struct {
 	NodeName           string
 	ClusterDNS         []net.IP
+	ClusterDomain      string
 	KubeletDirectory   *localstorage.DataKubernetesKubeletDirectory
 	EphemeralDirectory *localstorage.EphemeralDirectory
 	Output             io.Writer
@@ -92,7 +93,7 @@ func (s *kubeletService) configure() *kubeletconfig.KubeletConfiguration {
 			},
 		},
 		// TODO(q3k): move reconciler.False to a generic package, fix the following references.
-		ClusterDomain:                "cluster.local", // cluster.local is hardcoded in the certificate too currently
+		ClusterDomain:                s.ClusterDomain,
 		EnableControllerAttachDetach: reconciler.False(),
 		HairpinMode:                  "none",
 		MakeIPTablesUtilChains:       reconciler.False(), // We don't have iptables
