@@ -12,10 +12,6 @@ import (
 // keeps the pstore from overflowing the generally limited storage it has.
 func dumpAndCleanPstore(ctx context.Context) error {
 	logger := supervisor.Logger(ctx)
-	// Retrying this is extremely unlikely to result in any change and is most
-	// likely just going to generate large amounts of useless logs obscuring
-	// errors.
-	supervisor.Signal(ctx, supervisor.SignalDone)
 	dumps, err := pstore.GetKmsgDumps()
 	if err != nil {
 		logger.Errorf("Failed to recover logs from pstore: %v", err)
@@ -31,5 +27,10 @@ func dumpAndCleanPstore(ctx context.Context) error {
 	if cleanErr != nil {
 		logger.Errorf("Failed to clear pstore: %v", err)
 	}
+	// Retrying this is extremely unlikely to result in any change and is most
+	// likely just going to generate large amounts of useless logs obscuring
+	// errors.
+	supervisor.Signal(ctx, supervisor.SignalHealthy)
+	supervisor.Signal(ctx, supervisor.SignalDone)
 	return nil
 }
