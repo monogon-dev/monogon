@@ -69,7 +69,7 @@ func defaultLeaseOptions(reply *dhcpv4.DHCPv4) {
 // hardcoded, a wrapping bump allocator for the IPs, 30 second lease timeout
 // and no support for DHCP collision detection.
 func runDHCPServer(link netlink.Link) supervisor.Runnable {
-	currentIP := net.IP{10, 1, 0, 1}
+	currentIP := net.IP{10, 1, 0, 2}
 
 	// Map from stringified MAC address to IP address, allowing handing out the
 	// same IP to a given MAC on re-discovery.
@@ -101,8 +101,8 @@ func runDHCPServer(link netlink.Link) supervisor.Runnable {
 				if ip, ok := leases[hwaddr]; ok {
 					reply.YourIPAddr = ip
 				} else {
-					leases[hwaddr] = currentIP
-					reply.YourIPAddr = currentIP
+					leases[hwaddr] = net.ParseIP(currentIP.String())
+					reply.YourIPAddr = leases[hwaddr]
 					currentIP[3]++ // Works only because it's a /24
 				}
 				supervisor.Logger(ctx).Infof("Replying with DHCP IP %s to %s", reply.YourIPAddr.String(), hwaddr)
