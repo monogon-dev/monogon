@@ -152,7 +152,12 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 	}
 	s.dhcp.VendorClassIdentifier = "dev.monogon.metropolis.node.v1"
 	s.dhcp.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter, dhcpv4.OptionDomainNameServer, dhcpv4.OptionClasslessStaticRoute}
-	s.dhcp.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(iface), dhcpcb.ManageRoutes(iface), s.statusCallback)
+	s.dhcp.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(iface), dhcpcb.ManageRoutes(iface), s.statusCallback, func(old, new *dhcp4c.Lease) error {
+		if old == nil || !old.AssignedIP.Equal(new.AssignedIP) {
+			supervisor.Logger(ctx).Infof("New DHCP address: %s", new.AssignedIP.String())
+		}
+		return nil
+	})
 	err = supervisor.Run(ctx, "dhcp", s.dhcp.Run)
 	if err != nil {
 		return err
@@ -281,6 +286,7 @@ func (s *Service) runInterfaces(ctx context.Context) error {
 		if err := s.useInterface(ctx, link); err != nil {
 			return fmt.Errorf("failed to bring up link %s: %w", link.Attrs().Name, err)
 		}
+		logger.Infof("Network service using interface %s", link.Attrs().HardwareAddr.String())
 	}
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
