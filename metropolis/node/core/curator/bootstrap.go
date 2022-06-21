@@ -2,13 +2,11 @@ package curator
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/protobuf/proto"
 
-	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
@@ -63,33 +61,6 @@ func BootstrapNodeFinish(ctx context.Context, etcd client.Namespaced, node *Node
 		err = fmt.Errorf("when ensuring node cert: %w", err)
 		return
 	}
-
-	nodeCertX509, err := x509.ParseCertificate(nodeCertBytes)
-	if err != nil {
-		err = fmt.Errorf("when parsing node cert: %w", err)
-		return
-	}
-
-	caCertX509, err := x509.ParseCertificate(caCertBytes)
-	if err != nil {
-		err = fmt.Errorf("when parsing CA cert: %w", err)
-		return
-	}
-
-	w := pkiCA.WatchCRL(etcd)
-	defer w.Close()
-	crl, err := w.Get(ctx)
-	if err != nil {
-		err = fmt.Errorf("when retreiving CRL: %w", err)
-		return
-	}
-
-	node.EnableConsensusMember(&consensus.JoinCluster{
-		CACertificate:   caCertX509,
-		NodeCertificate: nodeCertX509,
-		ExistingNodes:   nil,
-		InitialCRL:      crl,
-	})
 
 	nodePath, err := node.etcdNodePath()
 	if err != nil {

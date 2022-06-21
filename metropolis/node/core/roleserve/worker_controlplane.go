@@ -192,7 +192,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 
 				// Otherwise, try to interpret node roles if available.
 				if lr != nil && cm != nil {
-					supervisor.Logger(ctx).Infof("Using role assigned by cluter...")
+					supervisor.Logger(ctx).Infof("Using role assigned by cluster...")
 					role := lr.ConsensusMember
 					if role == nil {
 						supervisor.Logger(ctx).Infof("Not a control plane node.")
@@ -311,7 +311,16 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				// TODO(q3k): collapse the curator bootstrap shenanigans into a single function.
 				npub := b.nodePrivateKey.Public().(ed25519.PublicKey)
 				jpub := b.nodePrivateJoinKey.Public().(ed25519.PublicKey)
+
 				n := curator.NewNodeForBootstrap(b.clusterUnlockKey, npub, jpub)
+
+				// The first node always runs consensus.
+				join, err := st.AddNode(ctx, npub)
+				if err != nil {
+					return fmt.Errorf("when retrieving node join data from consensus: %w", err)
+				}
+
+				n.EnableConsensusMember(join)
 				n.EnableKubernetesWorker()
 
 				var nodeCert []byte
