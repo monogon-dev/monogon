@@ -188,6 +188,7 @@ func (s *Status) AddNode(ctx context.Context, pk ed25519.PublicKey, opts ...*Add
 	}
 
 	crlW := s.ca.WatchCRL(clPKI)
+	defer crlW.Close()
 	crl, err := crlW.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve initial CRL: %w", err)
