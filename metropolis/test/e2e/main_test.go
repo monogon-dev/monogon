@@ -42,6 +42,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/metropolis/test/launch/cluster"
+	"source.monogon.dev/metropolis/test/util"
 )
 
 const (
@@ -114,7 +115,7 @@ func TestE2E(t *testing.T) {
 	// Deployments and StatefulSets
 	t.Run("RunGroup", func(t *testing.T) {
 		t.Run("Cluster", func(t *testing.T) {
-			testEventual(t, "Retrieving cluster directory sucessful", ctx, 60*time.Second, func(ctx context.Context) error {
+			util.TestEventual(t, "Retrieving cluster directory sucessful", ctx, 60*time.Second, func(ctx context.Context) error {
 				res, err := mgmt.GetClusterInfo(ctx, &apb.GetClusterInfoRequest{})
 				if err != nil {
 					return fmt.Errorf("GetClusterInfo: %w", err)
@@ -143,14 +144,14 @@ func TestE2E(t *testing.T) {
 				}
 				return nil
 			})
-			testEventual(t, "Node rejoin successful", ctx, 60*time.Second, func(ctx context.Context) error {
+			util.TestEventual(t, "Node rejoin successful", ctx, 60*time.Second, func(ctx context.Context) error {
 				// Ensure nodes rejoin the cluster after a reboot by reboting the 1st node.
 				if err := cluster.RebootNode(ctx, 1); err != nil {
 					return fmt.Errorf("while rebooting a node: %w", err)
 				}
 				return nil
 			})
-			testEventual(t, "Heartbeat test successful", ctx, 60*time.Second, func(ctx context.Context) error {
+			util.TestEventual(t, "Heartbeat test successful", ctx, 60*time.Second, func(ctx context.Context) error {
 				// Ensure all cluster nodes are capable of sending heartbeat updates.
 				// This test assumes the expected count of nodes is already present in
 				// the cluster.
@@ -192,7 +193,7 @@ func TestE2E(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			testEventual(t, "Nodes are registered and ready", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Nodes are registered and ready", ctx, largeTestTimeout, func(ctx context.Context) error {
 				nodes, err := clientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 				if err != nil {
 					return err
@@ -211,11 +212,11 @@ func TestE2E(t *testing.T) {
 				}
 				return nil
 			})
-			testEventual(t, "Simple deployment", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Simple deployment", ctx, largeTestTimeout, func(ctx context.Context) error {
 				_, err := clientSet.AppsV1().Deployments("default").Create(ctx, makeTestDeploymentSpec("test-deploy-1"), metav1.CreateOptions{})
 				return err
 			})
-			testEventual(t, "Simple deployment is running", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Simple deployment is running", ctx, largeTestTimeout, func(ctx context.Context) error {
 				res, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{LabelSelector: "name=test-deploy-1"})
 				if err != nil {
 					return err
@@ -234,14 +235,14 @@ func TestE2E(t *testing.T) {
 					return fmt.Errorf("pod is not ready: %v", events.Items[0].Message)
 				}
 			})
-			testEventual(t, "Simple deployment with runc", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Simple deployment with runc", ctx, largeTestTimeout, func(ctx context.Context) error {
 				deployment := makeTestDeploymentSpec("test-deploy-2")
 				var runcStr = "runc"
 				deployment.Spec.Template.Spec.RuntimeClassName = &runcStr
 				_, err := clientSet.AppsV1().Deployments("default").Create(ctx, deployment, metav1.CreateOptions{})
 				return err
 			})
-			testEventual(t, "Simple deployment is running on runc", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Simple deployment is running on runc", ctx, largeTestTimeout, func(ctx context.Context) error {
 				res, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{LabelSelector: "name=test-deploy-2"})
 				if err != nil {
 					return err
@@ -265,11 +266,11 @@ func TestE2E(t *testing.T) {
 					return fmt.Errorf("pod is not ready: %v", errorMsg.String())
 				}
 			})
-			testEventual(t, "Simple StatefulSet with PVC", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Simple StatefulSet with PVC", ctx, largeTestTimeout, func(ctx context.Context) error {
 				_, err := clientSet.AppsV1().StatefulSets("default").Create(ctx, makeTestStatefulSet("test-statefulset-1", corev1.PersistentVolumeFilesystem), metav1.CreateOptions{})
 				return err
 			})
-			testEventual(t, "Simple StatefulSet with PVC is running", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Simple StatefulSet with PVC is running", ctx, largeTestTimeout, func(ctx context.Context) error {
 				res, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{LabelSelector: "name=test-statefulset-1"})
 				if err != nil {
 					return err
@@ -288,11 +289,11 @@ func TestE2E(t *testing.T) {
 					return fmt.Errorf("pod is not ready: %v", events.Items[0].Message)
 				}
 			})
-			testEventual(t, "Simple StatefulSet with Block PVC", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Simple StatefulSet with Block PVC", ctx, largeTestTimeout, func(ctx context.Context) error {
 				_, err := clientSet.AppsV1().StatefulSets("default").Create(ctx, makeTestStatefulSet("test-statefulset-2", corev1.PersistentVolumeBlock), metav1.CreateOptions{})
 				return err
 			})
-			testEventual(t, "Simple StatefulSet with Block PVC is running", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Simple StatefulSet with Block PVC is running", ctx, largeTestTimeout, func(ctx context.Context) error {
 				res, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{LabelSelector: "name=test-statefulset-2"})
 				if err != nil {
 					return err
@@ -311,7 +312,7 @@ func TestE2E(t *testing.T) {
 					return fmt.Errorf("pod is not ready: %v", events.Items[0].Message)
 				}
 			})
-			testEventual(t, "Pod with preseeded image", ctx, smallTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Pod with preseeded image", ctx, smallTestTimeout, func(ctx context.Context) error {
 				_, err := clientSet.CoreV1().Pods("default").Create(ctx, &corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "preseed-test-1",
@@ -327,7 +328,7 @@ func TestE2E(t *testing.T) {
 				}, metav1.CreateOptions{})
 				return err
 			})
-			testEventual(t, "Pod with preseeded image is completed", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Pod with preseeded image is completed", ctx, largeTestTimeout, func(ctx context.Context) error {
 				pod, err := clientSet.CoreV1().Pods("default").Get(ctx, "preseed-test-1", metav1.GetOptions{})
 				if err != nil {
 					return fmt.Errorf("failed to get pod: %w", err)
@@ -343,7 +344,7 @@ func TestE2E(t *testing.T) {
 				}
 			})
 			if os.Getenv("HAVE_NESTED_KVM") != "" {
-				testEventual(t, "Pod for KVM/QEMU smoke test", ctx, smallTestTimeout, func(ctx context.Context) error {
+				util.TestEventual(t, "Pod for KVM/QEMU smoke test", ctx, smallTestTimeout, func(ctx context.Context) error {
 					runcRuntimeClass := "runc"
 					_, err := clientSet.CoreV1().Pods("default").Create(ctx, &corev1.Pod{
 						ObjectMeta: metav1.ObjectMeta{
@@ -366,7 +367,7 @@ func TestE2E(t *testing.T) {
 					}, metav1.CreateOptions{})
 					return err
 				})
-				testEventual(t, "KVM/QEMU smoke test completion", ctx, smallTestTimeout, func(ctx context.Context) error {
+				util.TestEventual(t, "KVM/QEMU smoke test completion", ctx, smallTestTimeout, func(ctx context.Context) error {
 					pod, err := clientSet.CoreV1().Pods("default").Get(ctx, "vm-smoketest", metav1.GetOptions{})
 					if err != nil {
 						return fmt.Errorf("failed to get pod: %w", err)
