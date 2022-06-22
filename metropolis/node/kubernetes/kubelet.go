@@ -98,6 +98,7 @@ func (s *kubeletService) configure() *kubeletconfig.KubeletConfiguration {
 		HairpinMode:                  "none",
 		MakeIPTablesUtilChains:       reconciler.False(), // We don't have iptables
 		FailSwapOn:                   reconciler.False(), // Our kernel doesn't have swap enabled which breaks Kubelet's detection
+		CgroupRoot:                   "/",
 		KubeReserved: map[string]string{
 			"cpu":    "200m",
 			"memory": "300Mi",
@@ -126,7 +127,6 @@ func (s *kubeletService) Run(ctx context.Context) error {
 	}
 	cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kubelet",
 		fargs.FileOpt("--config", "config.json", configRaw),
-		"--container-runtime=remote",
 		fmt.Sprintf("--container-runtime-endpoint=unix://%s", s.EphemeralDirectory.Containerd.ClientSocket.FullPath()),
 		fmt.Sprintf("--kubeconfig=%s", s.mountKubeconfigPath),
 		fmt.Sprintf("--root-dir=%s", s.KubeletDirectory.FullPath()),
