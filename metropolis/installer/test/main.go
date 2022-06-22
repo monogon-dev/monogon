@@ -23,12 +23,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"syscall"
 	"testing"
 
@@ -39,7 +36,7 @@ import (
 	mctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
-	"source.monogon.dev/metropolis/pkg/logbuffer"
+	"source.monogon.dev/metropolis/pkg/cmd"
 	"source.monogon.dev/metropolis/proto/api"
 )
 
@@ -54,14 +51,13 @@ var (
 	nodeStorage string
 )
 
-// runQemu starts a QEMU process and waits until it either finishes or the given
-// expectedOutput appears in a line emitted to stdout or stderr. It returns true
-// if it was found, false otherwise.
+// runQemu starts a new QEMU process, expecting the given output to appear
+// in any line printed. It returns true, if the expected string was found,
+// and false otherwise.
 //
-// The qemu process will be killed when the context cancels or the function
-// exits.
+// QEMU is killed shortly after the string is found, or when the context is
+// cancelled.
 func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, error) {
-	// Prepare the default parameter list.
 	defaultArgs := []string{
 		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults",
 		"-m", "512",
@@ -72,53 +68,8 @@ func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, e
 		"-serial", "stdio",
 		"-no-reboot",
 	}
-
-	// Make a sub-context to ensure that qemu exits when this function is done.
-	ctxQ, ctxC := context.WithCancel(ctx)
-	defer ctxC()
-
-	// Join the parameter lists and prepare the Qemu command, but don't run it
-	// just yet.
 	qemuArgs := append(defaultArgs, args...)
-	qemuCmd := exec.CommandContext(ctxQ, "external/qemu/qemu-x86_64-softmmu", qemuArgs...)
-
-	// Copy the stdout and stderr output to a single channel of lines so that they
-	// can then be matched against expectedOutput.
-
-	// Since LineBuffer can write its buffered contents on a deferred Close,
-	// after the reader loop is broken, avoid deadlocks by making lineC a
-	// buffered channel.
-	lineC := make(chan string, 2)
-	outBuffer := logbuffer.NewLineBuffer(1024, func(l *logbuffer.Line) {
-		lineC <- l.Data
-	})
-	defer outBuffer.Close()
-	errBuffer := logbuffer.NewLineBuffer(1024, func(l *logbuffer.Line) {
-		lineC <- l.Data
-	})
-	defer errBuffer.Close()
-
-	// Tee std{out,err} into the linebuffers above and the process' std{out,err}, to
-	// allow easier debugging.
-	qemuCmd.Stdout = io.MultiWriter(os.Stdout, outBuffer)
-	qemuCmd.Stderr = io.MultiWriter(os.Stderr, errBuffer)
-	if err := qemuCmd.Start(); err != nil {
-		return false, fmt.Errorf("couldn't start QEMU: %w", err)
-	}
-
-	// Try matching against expectedOutput and return the result.
-	for {
-		select {
-		case <-ctx.Done():
-			return false, ctx.Err()
-		case line := <-lineC:
-			if strings.Contains(line, expectedOutput) {
-				qemuCmd.Process.Kill()
-				qemuCmd.Wait()
-				return true, nil
-			}
-		}
-	}
+	return cmd.RunCommand(ctx, "external/qemu/qemu-x86_64-softmmu", qemuArgs, expectedOutput)
 }
 
 // runQemuWithInstaller runs the Metropolis Installer in a qemu, performing the

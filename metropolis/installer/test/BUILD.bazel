@@ -23,7 +23,7 @@ go_library(
         "//metropolis/cli/metroctl/core",
         "//metropolis/cli/pkg/datafile",
         "//metropolis/node/build/mkimage/osimage",
-        "//metropolis/pkg/logbuffer",
+        "//metropolis/pkg/cmd",
         "//metropolis/proto/api",
         "@com_github_diskfs_go_diskfs//:go-diskfs",
         "@com_github_diskfs_go_diskfs//disk",
