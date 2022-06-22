@@ -658,6 +658,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			InitramfsPath:          "metropolis/test/nanoswitch/initramfs.cpio.lz4",
 			ExtraNetworkInterfaces: switchPorts,
 			PortMap:                portMap,
+			SerialPort:             newPrefixedStdio(99),
 		}); err != nil {
 			if !errors.Is(err, ctxT.Err()) {
 				log.Fatalf("Failed to launch nanoswitch: %v", err)
