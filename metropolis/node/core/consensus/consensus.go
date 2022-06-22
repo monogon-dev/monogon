@@ -197,6 +197,7 @@ func (s *Service) Run(ctx context.Context) error {
 	ppki := s.config.Data.PeerPKI
 	jc := s.config.JoinCluster
 	if jc != nil {
+		supervisor.Logger(ctx).Info("JoinCluster set, writing PPKI data to disk...")
 		// For nodes that join an existing cluster, or re-join it, always write whatever
 		// we've been given on startup.
 		if err := ppki.WriteAll(jc.NodeCertificate.Raw, s.config.NodePrivateKey, jc.CACertificate.Raw); err != nil {
@@ -217,6 +218,7 @@ func (s *Service) Run(ctx context.Context) error {
 			return fmt.Errorf("when checking for PKI file absence: %w", err)
 		}
 		if absent {
+			supervisor.Logger(ctx).Info("PKI data absent, bootstrapping.")
 			if err := s.bootstrap(ctx, fifoPath); err != nil {
 				return fmt.Errorf("bootstrap failed: %w", err)
 			}
