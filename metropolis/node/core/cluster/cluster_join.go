@@ -6,8 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
-	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"google.golang.org/grpc"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
@@ -55,14 +55,17 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 	// Join the cluster and use the newly obtained CUK to mount the data
 	// partition.
 	var jr *ipb.JoinNodeResponse
-	for {
+	bo := backoff.NewExponentialBackOff()
+	bo.MaxElapsedTime = 0
+	backoff.Retry(func() error {
 		jr, err = cur.JoinNode(ctx, &ipb.JoinNodeRequest{})
-		if err == nil {
-			break
+		if err != nil {
+			supervisor.Logger(ctx).Warningf("Join failed: %v", err)
+			// This is never used.
+			return fmt.Errorf("join call failed")
 		}
-		supervisor.Logger(ctx).Warningf("JoinNode call failed, retrying: %v", err)
-		time.Sleep(time.Second)
-	}
+		return nil
+	}, bo)
 	if err := m.storageRoot.Data.MountExisting(sc, jr.ClusterUnlockKey); err != nil {
 		return fmt.Errorf("while mounting Data: %w", err)
 	}
