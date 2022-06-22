@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	common "source.monogon.dev/metropolis/node"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
@@ -488,4 +489,33 @@ func (l *leaderCurator) JoinNode(ctx context.Context, req *ipb.JoinNodeRequest) 
 	return &ipb.JoinNodeResponse{
 		ClusterUnlockKey: node.clusterUnlockKey,
 	}, nil
+}
+
+func (l *leaderCurator) GetCurrentLeader(_ *ipb.GetCurrentLeaderRequest, srv ipb.CuratorLocal_GetCurrentLeaderServer) error {
+	ctx := srv.Context()
+
+	// We're the leader.
+	node, err := nodeLoad(ctx, l.leadership, l.leaderID)
+	if err != nil {
+		rpc.Trace(ctx).Printf("nodeLoad(%q) failed: %v", l.leaderID, err)
+		return status.Errorf(codes.Unavailable, "failed to load leader node")
+	}
+	host := ""
+	if node.status != nil && node.status.ExternalAddress != "" {
+		host = node.status.ExternalAddress
+	}
+
+	err = srv.Send(&ipb.GetCurrentLeaderResponse{
+		LeaderNodeId: l.leaderID,
+		LeaderHost:   host,
+		LeaderPort:   int32(common.CuratorServicePort),
+		ThisNodeId:   l.leaderID,
+	})
+	if err != nil {
+		return err
+	}
+
+	<-ctx.Done()
+	rpc.Trace(ctx).Printf("Interrupting due to context cancellation")
+	return nil
 }

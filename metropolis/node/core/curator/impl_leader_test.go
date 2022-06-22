@@ -18,12 +18,14 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
 
+	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/pki"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -83,6 +85,10 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		t.Fatalf("could not generate node keypair: %v", err)
 	}
 	cNode := NewNodeForBootstrap(nil, nodePub, nodeJoinPub)
+
+	// Here we would enable the leader node's roles. But for tests, we don't enable
+	// any.
+
 	caCertBytes, nodeCertBytes, err := BootstrapNodeFinish(ctx, curEtcd, &cNode, nil)
 	if err != nil {
 		t.Fatalf("could not finish node bootstrap: %v", err)
@@ -132,15 +138,20 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	leadership := &leadership{
 		lockKey:   lockKey,
 		lockRev:   lockRev,
+		leaderID:  identity.NodeID(nodePub),
 		etcd:      curEtcd,
 		consensus: consensus.TestServiceHandle(t, cluster.Client(0)),
 	}
 	leader := newCuratorLeader(leadership, &nodeCredentials.Node)
 
+	lt := logtree.New()
+	logtree.PipeAllToStderr(t, lt)
+
 	// Create a curator gRPC server which performs authentication as per the created
 	// ServerSecurity and is backed by the created leader.
-	srv := grpc.NewServer(sec.GRPCOptions(nil)...)
+	srv := grpc.NewServer(sec.GRPCOptions(lt.MustLeveledFor("leader"))...)
 	ipb.RegisterCuratorServer(srv, leader)
+	ipb.RegisterCuratorLocalServer(srv, leader)
 	apb.RegisterAAAServer(srv, leader)
 	apb.RegisterManagementServer(srv, leader)
 	// The gRPC server will listen on an internal 'loopback' buffer.
@@ -1073,5 +1084,32 @@ func TestUpdateNodeRoles(t *testing.T) {
 		if err == nil {
 			t.Fatalf("expected an error from management.UpdateNodeRoles, got nil.")
 		}
+	}
+}
+
+// TestGetCurrentLeader ensures that a leader responds with its own information
+// when asked for information about the current leader.
+func TestGetCurrentLeader(t *testing.T) {
+	cl := fakeLeader(t)
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	curl := ipb.NewCuratorLocalClient(cl.localNodeConn)
+	srv, err := curl.GetCurrentLeader(ctx, &ipb.GetCurrentLeaderRequest{})
+	if err != nil {
+		t.Fatalf("GetCurrentLeader: %v", err)
+	}
+	res, err := srv.Recv()
+	if err != nil {
+		t.Fatalf("GetCurrentLeader.Recv: %v", err)
+	}
+	if want, got := cl.localNodeID, res.LeaderNodeId; want != got {
+		t.Errorf("Wanted leader node ID %q, got %q", want, got)
+	}
+	if want, got := cl.localNodeID, res.ThisNodeId; want != got {
+		t.Errorf("Wanted local node ID %q, got %q", want, got)
+	}
+	if want, got := int32(common.CuratorServicePort), res.LeaderPort; want != got {
+		t.Errorf("Wanted leader port %d, got %d", want, got)
 	}
 }

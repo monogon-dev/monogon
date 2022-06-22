@@ -40,6 +40,9 @@ type leadership struct {
 	// in combination with lockKey to ensure all mutations/reads performed to etcd
 	// succeed only if this leader election is still current.
 	lockRev int64
+	// leaderID is the node ID of this curator's node, ie. the one acting as a
+	// curator leader.
+	leaderID string
 	// etcd is the etcd client in which curator data and leader election state is
 	// stored.
 	etcd client.Namespaced

@@ -11,9 +11,9 @@ import "metropolis/proto/ext/authorization.proto";
 // and internal services to get cluster state and and get/mutate cluster
 // configuration.
 // It is currently implemented as a leader-elected service running on all nodes
-// that run a consensus server (etcd). Every instance either serves traffic
-// directly (if it is the leader) or passes all RPCs over to the current
-// leader.
+// that run a consensus server (etcd). Only the elected leader will serve this
+// service.
+//
 // The curator listens on gRPC on all network interfaces at a well known port,
 // with access encrypted and authenticated by TLS using certificates issued by
 // the Cluster CA.
@@ -21,10 +21,6 @@ import "metropolis/proto/ext/authorization.proto";
 // The curator is a privileged service, and performs per-RPC authorization based
 // on the identity of the client, which is determined by the client certificate
 // supplied over TLS.
-//
-// TODO(q3k): implement and document public Cluster gRPC.
-// TODO(q3k): implement and document cluster auth for nodes and escrowed user
-// keys.
 service Curator {
     // Watch returns a stream of updates concerning some part of the cluster
     // managed by the curator, and is the main way in which node code responds
@@ -255,4 +251,48 @@ message JoinNodeResponse {
     // CommitNodeRequest, and returned in this message after authenticating
     // with Join Credentials.
     bytes cluster_unlock_key = 1;
+}
+
+// CuratorLocal is served by both the Curator leader and followers, and returns
+// data pertinent to the local node or the leader election status of the
+// Curator. Most importantly, it can be used to retrieve the current Curator
+// leader.
+service CuratorLocal {
+    // GetCurrentLeader returns the leader known to the contacted curator.
+    // An error will be returned if no leader can be established.
+    //
+    // This is a streaming call so that clients can wait on any changes, instead
+    // of polling repeatedly. The server will either reply with new leader
+    // information (if available) or close the stream (if not) as early as it's
+    // aware of a leadership change.
+    rpc GetCurrentLeader(GetCurrentLeaderRequest) returns (stream GetCurrentLeaderResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            // This call pretty much needs to be public, as it's used in early
+            // connections to figure out what curator to connect to. This might
+            // be a node which hasn't yet joined a cluster (thereby not having
+            // cluster credentials), or it might be a user which hasn't yet
+            // authenticated fully into the cluster.
+            allow_unauthenticated: true
+        };
+    }
+}
+
+message GetCurrentLeaderRequest {
+}
+
+message GetCurrentLeaderResponse {
+    // leader_node_id is the leader's (as seen by the responding node) Node ID.
+    string leader_node_id = 1;
+    // leader_host is the host/IP address at which the leader node's curator
+    // is listening.
+    //
+    // This can be zero/empty if the leader has not yet reported its external
+    // address to the cluster.
+    //
+    // TODO(q3k): guarantee this being always non-zero
+    string leader_host = 2;
+    // leader_port is the port at which the leader node's curator is listening.
+    int32 leader_port = 3;
+    // this_node_id is the Node ID of the node which sent this response.
+    string this_node_id = 4;
 }

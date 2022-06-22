@@ -59,8 +59,11 @@ type listenerTarget struct {
 	impl rpc.ClusterServices
 }
 
-// run is the listener runnable. It listens on gRPC sockets and serves RPCs.
+// run is the listener runnable. It listens on the Curator's gRPC socket, either
+// by starting a leader or follower instance.
 func (l *listener) run(ctx context.Context) error {
+	// First, figure out what we're ought to be running by watching the election and
+	// waiting for a result.
 	w := l.electionWatch()
 	supervisor.Logger(ctx).Infof("Waiting for election status...")
 	st, err := w.get(ctx)
@@ -68,72 +71,104 @@ func (l *listener) run(ctx context.Context) error {
 		return fmt.Errorf("could not get election status: %w", err)
 	}
 
+	// Short circuit a possible situation in which we're a follower of an unknown
+	// leader, or neither a follower nor a leader.
+	if (st.leader == nil && st.follower == nil) || (st.follower != nil && st.follower.lock == nil) {
+		return fmt.Errorf("curator is neither leader nor follower - this is likely transient, restarting listener now")
+	}
+
+	if st.leader != nil && st.follower != nil {
+		// This indicates a serious programming error. Let's catch it explicitly.
+		panic("curator listener is supposed to run both as leader and follower")
+	}
+
 	sec := rpc.ServerSecurity{
 		NodeCredentials: l.node,
 	}
 
+	// Prepare a gRPC server and listener.
+	logger := supervisor.MustSubLogger(ctx, "rpc")
+	srv := grpc.NewServer(sec.GRPCOptions(logger)...)
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", node.CuratorServicePort))
+	if err != nil {
+		return fmt.Errorf("failed to listen on curator socket: %w", err)
+	}
+	defer lis.Close()
+
+	// Depending on the election status, register either a leader or a follower to
+	// the gRPC server.
 	switch {
 	case st.leader != nil:
-		supervisor.Logger(ctx).Infof("This curator is a leader, starting listener.")
-		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", node.CuratorServicePort))
-		if err != nil {
-			return fmt.Errorf("failed to listen on curator socket: %w", err)
-		}
-		defer lis.Close()
+		supervisor.Logger(ctx).Infof("This curator is a leader.")
 
+		// Create a leader instance and serve it over gRPC.
 		leader := newCuratorLeader(&leadership{
 			lockKey:   st.leader.lockKey,
 			lockRev:   st.leader.lockRev,
+			leaderID:  l.node.ID(),
 			etcd:      l.etcd,
 			consensus: l.consensus,
 		}, &l.node.Node)
-		logger := supervisor.MustSubLogger(ctx, "rpc")
-		srv := grpc.NewServer(sec.GRPCOptions(logger)...)
+
 		cpb.RegisterCuratorServer(srv, leader)
+		cpb.RegisterCuratorLocalServer(srv, leader)
 		apb.RegisterAAAServer(srv, leader)
 		apb.RegisterManagementServer(srv, leader)
-		runnable := supervisor.GRPCServer(srv, lis, true)
+	case st.follower != nil:
+		supervisor.Logger(ctx).Infof("This curator is a follower (leader is %q), starting minimal implementation.", st.follower.lock.NodeId)
 
-		if err := supervisor.Run(ctx, "server", runnable); err != nil {
-			return fmt.Errorf("could not run server: %w", err)
+		// Create a follower instance and serve it over gRPC.
+		follower := &curatorFollower{
+			lock:       st.follower.lock,
+			etcd:       l.etcd,
+			followerID: l.node.ID(),
 		}
-		supervisor.Signal(ctx, supervisor.SignalHealthy)
+		cpb.RegisterCuratorLocalServer(srv, follower)
+	}
+
+	// Start running the server as a runnable, stopping whenever this runnable exits
+	// (on leadership change) or crashes. It's set to not be terminated gracefully
+	// because:
+	//  1. Followers should notify (by closing) clients about a leadership change as
+	//     early as possible,
+	//  2. Any long-running leadership calls will start failing anyway as the
+	//     leadership has been lost.
+	runnable := supervisor.GRPCServer(srv, lis, false)
+	if err := supervisor.Run(ctx, "server", runnable); err != nil {
+		return fmt.Errorf("could not run server: %w", err)
+	}
+	supervisor.Signal(ctx, supervisor.SignalHealthy)
+
+	// Act upon any leadership changes. This depends on whether we were running a
+	// leader or a follower.
+	switch {
+	case st.leader != nil:
+		supervisor.Logger(ctx).Infof("Leader running until leadership lost.")
 		for {
-			st, err := w.get(ctx)
+			nst, err := w.get(ctx)
 			if err != nil {
 				return fmt.Errorf("getting election status after starting listener failed, bailing just in case: %w", err)
 			}
-			if st.leader == nil {
+			if nst.leader == nil {
 				return fmt.Errorf("this curator stopped being a leader, quitting")
 			}
 		}
-	case st.follower != nil && st.follower.lock != nil:
-		supervisor.Logger(ctx).Infof("This curator is a follower (leader is %q), starting minimal implementation.", st.follower.lock.NodeId)
-		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", node.CuratorServicePort))
-		if err != nil {
-			return fmt.Errorf("failed to listen on curator socket: %w", err)
-		}
-		defer lis.Close()
-
-		logger := supervisor.MustSubLogger(ctx, "rpc")
-		srv := grpc.NewServer(sec.GRPCOptions(logger)...)
-		// Note: curatorFollower not created nor registered. All RPCs will respond with
-		// 'Unimplemented'.
-		runnable := supervisor.GRPCServer(srv, lis, true)
-		if err := supervisor.Run(ctx, "server", runnable); err != nil {
-			return fmt.Errorf("could not run server: %w", err)
-		}
-		supervisor.Signal(ctx, supervisor.SignalHealthy)
+	case st.follower != nil:
+		supervisor.Logger(ctx).Infof("Follower running until leadership change.")
 		for {
-			st, err := w.get(ctx)
+			nst, err := w.get(ctx)
 			if err != nil {
 				return fmt.Errorf("getting election status after starting listener failed, bailing just in case: %w", err)
 			}
-			if st.follower == nil {
+			if nst.follower == nil {
 				return fmt.Errorf("this curator stopped being a follower, quitting")
+			}
+			if nst.follower.lock.NodeId != st.follower.lock.NodeId {
+				// TODO(q3k): don't restart then, just update the server's lock
+				return fmt.Errorf("leader changed from %q to %q, quitting", st.follower.lock.NodeId, nst.follower.lock.NodeId)
 			}
 		}
 	default:
-		return fmt.Errorf("curator is neither leader nor follower - this is likely transient, restarting listener now")
+		panic("unreachable")
 	}
 }
