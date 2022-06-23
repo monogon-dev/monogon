@@ -25,6 +25,7 @@ go_library(
         "//metropolis/node/core/localstorage",
         "//metropolis/node/core/network",
         "//metropolis/node/core/rpc",
+        "//metropolis/node/core/rpc/resolver",
         "//metropolis/node/kubernetes",
         "//metropolis/node/kubernetes/containerd",
         "//metropolis/node/kubernetes/pki",

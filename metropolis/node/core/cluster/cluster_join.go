@@ -13,6 +13,7 @@ import (
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	ppb "source.monogon.dev/metropolis/proto/private"
@@ -37,18 +38,33 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 	supervisor.Logger(ctx).Infof("  Directory:")
 	logClusterDirectory(ctx, cd)
 
-	// Attempt to connect to the first node in the cluster directory.
-	r, err := curatorRemote(cd)
-	if err != nil {
-		return fmt.Errorf("while picking a Curator endpoint: %w", err)
+	// Build resolver used by the join process, authenticating with join
+	// credentials. Once the join is complete, the rolesever will start its own
+	// long-term resolver.
+	r := resolver.New(ctx)
+	r.SetLogger(func(f string, args ...interface{}) {
+		supervisor.Logger(ctx).WithAddedStackDepth(1).Infof(f, args...)
+	})
+	addedNodes := 0
+	for _, node := range cd.Nodes {
+		if len(node.Addresses) == 0 {
+			continue
+		}
+		// MVP: handle curators at non-default ports
+		r.AddEndpoint(resolver.NodeAtAddressWithDefaultPort(node.Addresses[0].Host))
+		addedNodes += 1
 	}
+	if addedNodes == 0 {
+		return fmt.Errorf("no remote node available, cannot join cluster")
+	}
+
 	ephCreds, err := rpc.NewEphemeralCredentials(jpriv, ca)
 	if err != nil {
 		return fmt.Errorf("could not create ephemeral credentials: %w", err)
 	}
-	eph, err := grpc.Dial(r, grpc.WithTransportCredentials(ephCreds))
+	eph, err := grpc.Dial(resolver.MetropolisControlAddress, grpc.WithTransportCredentials(ephCreds), grpc.WithResolvers(r))
 	if err != nil {
-		return fmt.Errorf("could not create ephemeral client to %q: %w", r, err)
+		return fmt.Errorf("could not dial cluster with join credentials: %w", err)
 	}
 	cur := ipb.NewCuratorClient(eph)
 

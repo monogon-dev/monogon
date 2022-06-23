@@ -17,6 +17,7 @@ import (
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
 	ppb "source.monogon.dev/metropolis/proto/private"
@@ -96,18 +97,33 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	}
 	supervisor.Logger(ctx).Infof("Registering: node public key: %s", hex.EncodeToString([]byte(pub)))
 
-	// Attempt to connect to first node in cluster directory and to call Register.
-	r, err := curatorRemote(register.ClusterDirectory)
-	if err != nil {
-		return fmt.Errorf("while picking a Curator endpoint: %w", err)
+	// Build resolver used by the register process, authenticating with ephemeral
+	// credentials. Once the join is complete, the rolesever will start its own
+	// long-term resolver.
+	r := resolver.New(ctx)
+	r.SetLogger(func(f string, args ...interface{}) {
+		supervisor.Logger(ctx).WithAddedStackDepth(1).Infof(f, args...)
+	})
+	addedNodes := 0
+	for _, node := range register.ClusterDirectory.Nodes {
+		if len(node.Addresses) == 0 {
+			continue
+		}
+		// MVP: handle curators at non-default ports
+		r.AddEndpoint(resolver.NodeAtAddressWithDefaultPort(node.Addresses[0].Host))
+		addedNodes += 1
 	}
+	if addedNodes == 0 {
+		return fmt.Errorf("no remote node available, cannot register into cluster")
+	}
+
 	ephCreds, err := rpc.NewEphemeralCredentials(priv, ca)
 	if err != nil {
 		return fmt.Errorf("could not create ephemeral credentials: %w", err)
 	}
-	eph, err := grpc.Dial(r, grpc.WithTransportCredentials(ephCreds))
+	eph, err := grpc.Dial(resolver.MetropolisControlAddress, grpc.WithTransportCredentials(ephCreds), grpc.WithResolvers(r))
 	if err != nil {
-		return fmt.Errorf("could not create ephemeral client to %q: %w", r, err)
+		return fmt.Errorf("could not dial cluster with ephemeral credentials: %w", err)
 	}
 	cur := ipb.NewCuratorClient(eph)
 

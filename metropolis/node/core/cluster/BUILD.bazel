@@ -12,7 +12,6 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/cluster",
     visibility = ["//metropolis/node/core:__subpackages__"],
     deps = [
-        "//metropolis/node",
         "//metropolis/node/core/consensus",
         "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/identity",
@@ -20,6 +19,7 @@ go_library(
         "//metropolis/node/core/network",
         "//metropolis/node/core/roleserve",
         "//metropolis/node/core/rpc",
+        "//metropolis/node/core/rpc/resolver",
         "//metropolis/pkg/event/memory",
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/api",

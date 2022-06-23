@@ -31,7 +31,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -40,7 +39,6 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"google.golang.org/protobuf/proto"
 
-	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
@@ -262,20 +260,4 @@ func logClusterDirectory(ctx context.Context, cd *cpb.ClusterDirectory) {
 		}
 		supervisor.Logger(ctx).Infof("    Addresses: %s", strings.Join(addresses, ","))
 	}
-}
-
-// curatorRemote returns a host:port pair pointing at one of the cluster's
-// available Curator endpoints. It will return an empty string, and an error,
-// if the cluster directory is empty.
-// TODO(issues/117): use dynamic cluster client instead
-func curatorRemote(cd *cpb.ClusterDirectory) (string, error) {
-	if len(cd.Nodes) == 0 {
-		return "", fmt.Errorf("the Cluster Directory is empty.")
-	}
-	n := cd.Nodes[0]
-	if len(n.Addresses) == 0 {
-		return "", fmt.Errorf("the first node in the Cluster Directory doesn't have an associated Address.")
-	}
-	r := n.Addresses[0].Host
-	return net.JoinHostPort(r, node.CuratorServicePort.PortString()), nil
 }

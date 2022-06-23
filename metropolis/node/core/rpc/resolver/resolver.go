@@ -118,6 +118,12 @@ func NodeWithDefaultPort(id string) (*NodeEndpoint, error) {
 	return NodeByHostPort(id, uint16(common.CuratorServicePort)), nil
 }
 
+// NodeAtAddressWithDefaultPort returns a NodeEndpoint referencing the default
+// control plane port (the Curator port) of a node at a given address.
+func NodeAtAddressWithDefaultPort(host string) *NodeEndpoint {
+	return NodeByHostPort(host, uint16(common.CuratorServicePort))
+}
+
 // NodeByHostPort returns a NodeEndpoint for a fully specified host + port pair.
 // The host can either be a hostname or an IP address.
 func NodeByHostPort(host string, port uint16) *NodeEndpoint {

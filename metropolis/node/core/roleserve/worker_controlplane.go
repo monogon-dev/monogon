@@ -15,6 +15,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/pki"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -48,6 +49,8 @@ type workerControlPlane struct {
 	clusterMembership *ClusterMembershipValue
 	// localRoles will be read.
 	localRoles *localRolesValue
+	// resolver will be read and used to populate ClusterMembership.
+	resolver *resolver.Resolver
 }
 
 // controlPlaneStartup is used internally to provide a reduced (as in MapReduce)
@@ -427,6 +430,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				credentials:    creds,
 				remoteCurators: directory,
 				pubkey:         creds.PublicKey(),
+				resolver:       s.resolver,
 			})
 		}
 

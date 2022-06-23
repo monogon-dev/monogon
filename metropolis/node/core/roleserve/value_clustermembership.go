@@ -3,8 +3,6 @@ package roleserve
 import (
 	"context"
 	"crypto/ed25519"
-	"fmt"
-	"net"
 
 	"google.golang.org/grpc"
 
@@ -13,6 +11,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -50,6 +49,8 @@ type ClusterMembership struct {
 	credentials *identity.NodeCredentials
 	// pubkey is the public key of the local node, and is always set.
 	pubkey ed25519.PublicKey
+	// resolver will be used to dial the cluster via DialCurator().
+	resolver *resolver.Resolver
 }
 
 type ClusterMembershipValue struct {
@@ -120,26 +121,26 @@ func (c *ClusterMembershipWatcher) GetHome(ctx context.Context) (*ClusterMembers
 	}
 }
 
-// DialCurator returns an authenticated gRPC client connection to the Curator,
-// either local or remote. No load balancing will be performed across local and
-// remote curators, so if the local node starts running a local curator but old
-// connections are still used, they will continue to target only remote
-// curators. Same goes for local consensus being turned down - however, in this
-// case, calls will error out and the client can be redialed on errors.
-//
-// It is thus recommended to only use DialCurator in short-lived contexts, and
-// perform a GetHome/DialCurator process on any gRPC error. A smarter
-// load-balancing/re-dialing client will be implemented in the future.
+// DialCurator returns an authenticated gRPC client connection to the Curator
+// using the long-lived roleserver cluster resolver. RPCs will automatically be
+// forwarded to the current control plane leader, and this gRPC client
+// connection can be used long-term by callers.
 func (m *ClusterMembership) DialCurator() (*grpc.ClientConn, error) {
-	// Dial first curator.
-	// TODO(q3k): load balance
-	if m.remoteCurators == nil || len(m.remoteCurators.Nodes) < 1 {
-		return nil, fmt.Errorf("no curators available")
+	// Always make sure the resolver has fresh data about curators, both local and
+	// remote. This would be better done only when ClusterMembership is set() with
+	// new data, but that would require a bit of a refactor.
+	//
+	// TODO(q3k): take care of the above, possibly when the roleserver is made more generic.
+	if m.localConsensus != nil {
+		m.resolver.AddEndpoint(resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 	}
-	host := m.remoteCurators.Nodes[0].Addresses[0].Host
-	addr := net.JoinHostPort(host, common.CuratorServicePort.PortString())
+	for _, n := range m.remoteCurators.Nodes {
+		for _, addr := range n.Addresses {
+			m.resolver.AddEndpoint(resolver.NodeByHostPort(addr.Host, uint16(common.CuratorServicePort)))
+		}
+	}
 	creds := rpc.NewAuthenticatedCredentials(m.credentials.TLSCredentials(), m.credentials.ClusterCA())
-	return grpc.Dial(addr, grpc.WithTransportCredentials(creds))
+	return grpc.Dial(resolver.MetropolisControlAddress, grpc.WithTransportCredentials(creds), grpc.WithResolvers(m.resolver))
 }
 
 func (m *ClusterMembership) NodePubkey() ed25519.PublicKey {
