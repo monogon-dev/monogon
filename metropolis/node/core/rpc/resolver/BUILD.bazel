@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "resolver",
+    srcs = [
+        "processor.go",
+        "resolver.go",
+        "watcher.go",
+    ],
+    importpath = "source.monogon.dev/metropolis/node/core/rpc/resolver",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node",
+        "//metropolis/node/core/curator/proto/api",
+        "//metropolis/proto/common",
+        "@com_github_cenkalti_backoff_v4//:backoff",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//resolver",
+    ],
+)
+
+go_test(
+    name = "resolver_test",
+    srcs = ["resolver_test.go"],
+    embed = [":resolver"],
+    deps = [
+        "//metropolis/node/core/curator/proto/api",
+        "//metropolis/node/core/rpc",
+        "//metropolis/proto/api",
+        "//metropolis/proto/common",
+        "@com_github_cenkalti_backoff_v4//:backoff",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//credentials",
+    ],
+)
