@@ -407,7 +407,7 @@ func (w *watcher) Get(ctx context.Context, opts ...event.GetOption) (interface{}
 	if !ranged {
 		// For non-ranged queries, drain backlog fully.
 		if len(w.backlogged) != 1 {
-			panic("multiple keys in nonranged value")
+			panic(fmt.Sprintf("multiple keys in nonranged value: %v", w.backlogged))
 		}
 		k := w.backlogged[0]
 		v := w.current[string(k)]
