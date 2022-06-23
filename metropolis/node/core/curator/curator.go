@@ -291,7 +291,7 @@ func (s *Service) Run(ctx context.Context) error {
 	// but allows us to explicitly log the used TTL.
 	s.ttl = int(s.config.LeaderTTL.Seconds())
 	if s.ttl <= 0 {
-		s.ttl = 60
+		s.ttl = 10
 	}
 	supervisor.Logger(ctx).Infof("Curator starting on prefix %q with lease TTL of %d seconds...", electionPrefix, s.ttl)
 
