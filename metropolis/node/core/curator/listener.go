@@ -48,17 +48,6 @@ type listener struct {
 	consensus consensus.ServiceHandle
 }
 
-// listenerTarget is where the listener should forward a given curator RPC. This
-// is provided by the listener dispatcher on request (on 'dispatch').
-type listenerTarget struct {
-	// ctx is the context representing the lifetime of the given impl. It will be
-	// canceled when that implementation switches over to a different one.
-	ctx context.Context
-	// impl is the CuratorServer implementation to which RPCs should be directed
-	// according to the dispatcher.
-	impl rpc.ClusterServices
-}
-
 // run is the listener runnable. It listens on the Curator's gRPC socket, either
 // by starting a leader or follower instance.
 func (l *listener) run(ctx context.Context) error {

@@ -1,8 +1,6 @@
 package rpc
 
 import (
-	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
-	apb "source.monogon.dev/metropolis/proto/api"
 	epb "source.monogon.dev/metropolis/proto/ext"
 )
 
@@ -15,12 +13,3 @@ var (
 		epb.Permission_PERMISSION_UPDATE_NODE_SELF:    true,
 	}
 )
-
-// ClusterServices is the interface containing all gRPC services that a
-// Metropolis Cluster implements. With the current implementation of Metropolis,
-// this is all implemented by the Curator.
-type ClusterServices interface {
-	cpb.CuratorServer
-	apb.AAAServer
-	apb.ManagementServer
-}

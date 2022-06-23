@@ -17,7 +17,7 @@ import (
 )
 
 // ServerSecurity are the security options of a RPC server that will run
-// ClusterServices on a Metropolis node. It contains all the data for the
+// cluster services on a Metropolis node. It contains all the data for the
 // server implementation to authenticate itself to the clients and authenticate
 // and authorize clients connecting to it.
 type ServerSecurity struct {

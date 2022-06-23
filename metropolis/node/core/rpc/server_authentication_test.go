@@ -17,8 +17,8 @@ import (
 	epb "source.monogon.dev/metropolis/proto/ext"
 )
 
-// testImplementations implements ClusterServices by returning 'unimplementd'
-// for every RPC call.
+// testImplementations implements a subset of test cluster services by returning
+// 'unimplemented' for every RPC call.
 type testImplementation struct {
 	cpb.UnimplementedCuratorServer
 	apb.UnimplementedAAAServer
