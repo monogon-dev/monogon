@@ -30,9 +30,9 @@ import (
 
 	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	"source.monogon.dev/metropolis/node"
-	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	"source.monogon.dev/metropolis/test/launch"
@@ -168,13 +168,27 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 	}, nil
 }
 
-// curatorClient returns an authenticated owner connection to a Curator
+// CuratorClient returns an authenticated owner connection to a Curator
 // instance within Cluster c, or nil together with an error.
-func (c *Cluster) curatorClient() (*grpc.ClientConn, error) {
+func (c *Cluster) CuratorClient() (*grpc.ClientConn, error) {
 	if c.authClient == nil {
 		authCreds := rpc.NewAuthenticatedCredentials(c.Owner, nil)
-		remote := net.JoinHostPort(c.NodeIDs[0], common.CuratorServicePort.PortString())
-		authClient, err := grpc.Dial(remote, grpc.WithTransportCredentials(authCreds), grpc.WithContextDialer(c.DialNode))
+		r := resolver.New(c.ctxT)
+		r.SetLogger(func(f string, args ...interface{}) {
+			log.Printf("Cluster: client resolver: %s", fmt.Sprintf(f, args...))
+		})
+		for _, n := range c.NodeIDs {
+			ep, err := resolver.NodeWithDefaultPort(n)
+			if err != nil {
+				return nil, fmt.Errorf("could not add node %q by DNS: %v", n, err)
+			}
+			r.AddEndpoint(ep)
+		}
+		authClient, err := grpc.Dial(resolver.MetropolisControlAddress,
+			grpc.WithTransportCredentials(authCreds),
+			grpc.WithResolvers(r),
+			grpc.WithContextDialer(c.DialNode),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("dialing with owner credentials failed: %w", err)
 		}
@@ -531,13 +545,14 @@ func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certif
 		cert, err = rpc.RetrieveOwnerCertificate(ctx, aaa, InsecurePrivateKey)
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unavailable {
+				log.Printf("Cluster: cluster UNAVAILABLE: %v", st.Message())
 				return err
 			}
 		}
 		return backoff.Permanent(err)
 	}, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("couldn't retrieve owner certificate: %w", err)
 	}
 	log.Printf("Cluster: retrieved owner certificate.")
 
@@ -707,10 +722,10 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	// Now start the rest of the nodes and register them into the cluster.
 
 	// Get an authenticated owner client within the cluster.
-	curC, err := cluster.curatorClient()
+	curC, err := cluster.CuratorClient()
 	if err != nil {
 		ctxC()
-		return nil, fmt.Errorf("curatorClient: %w", err)
+		return nil, fmt.Errorf("CuratorClient: %w", err)
 	}
 	mgmt := apb.NewManagementClient(curC)
 
@@ -845,7 +860,7 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 	id := c.NodeIDs[idx]
 
 	// Get an authenticated owner client within the cluster.
-	curC, err := c.curatorClient()
+	curC, err := c.CuratorClient()
 	if err != nil {
 		return err
 	}
@@ -891,8 +906,10 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 	for {
 		cs, err := getNode(ctx, mgmt, id)
 		if err != nil {
+			log.Printf("Cluster: node get error: %v", err)
 			return err
 		}
+		log.Printf("Cluster: node status: %+v", cs)
 		if cs.Status == nil {
 			continue
 		}

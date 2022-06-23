@@ -22,6 +22,7 @@ go_library(
         "//metropolis/node",
         "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
+        "//metropolis/node/core/rpc/resolver",
         "//metropolis/pkg/logbuffer",
         "//metropolis/proto/api",
         "//metropolis/proto/common",
