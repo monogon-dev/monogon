@@ -10,6 +10,7 @@ import (
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
+	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event"
@@ -32,9 +33,10 @@ import (
 // but also accesses it to pass over information about already known remote
 // curators and to get the local node's identity.
 type ClusterMembership struct {
-	// localConsensus is set by the Control Plane Worker when this node runs control
-	// plane services.
+	// localConsensus and localCurator are set by the Control Plane Worker when this
+	// node runs control plane services.
 	localConsensus *consensus.Service
+	localCurator   *curator.Service
 	// remoteCurators gets set by Cluster Enrolment code when Registering into a
 	// cluster and gets propagated by the Control Plane Worker to maintain
 	// connectivity to external Curators regardless of local curator health.

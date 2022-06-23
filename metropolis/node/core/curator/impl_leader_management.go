@@ -212,10 +212,10 @@ func (l *leaderManagement) GetNodes(req *apb.GetNodesRequest, srv apb.Management
 		health, lhb := l.nodeHealth(node, now)
 
 		entry := apb.Node{
-			Pubkey: node.pubkey,
-			State:  node.state,
-			Status: node.status,
-			Roles:  roles,
+			Pubkey:             node.pubkey,
+			State:              node.state,
+			Status:             node.status,
+			Roles:              roles,
 			TimeSinceHeartbeat: dpb.New(lhb),
 			Health:             health,
 		}

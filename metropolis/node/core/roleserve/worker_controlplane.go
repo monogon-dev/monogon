@@ -423,6 +423,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 			// ClusterMembership.
 			s.clusterMembership.set(&ClusterMembership{
 				localConsensus: con,
+				localCurator:   cur,
 				credentials:    creds,
 				remoteCurators: directory,
 				pubkey:         creds.PublicKey(),

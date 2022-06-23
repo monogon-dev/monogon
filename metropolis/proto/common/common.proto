@@ -132,6 +132,13 @@ message NodeStatus {
     // listening for gRPC, and role-specific services like etcd and
     // Kubernetes).
     string external_address = 1;
+    // running_curator contains information about the curator service running
+    // on this node, or is nil if the service is not running.
+    message RunningCurator {
+        // port is the TCP port on which the curator is listening.
+        int32 port = 1;
+    }
+    RunningCurator running_curator = 3;
     // timestamp is an epoch number associated with the last status update.
     // It's set with a nanosecond granularity.
     int64 timestamp = 2;

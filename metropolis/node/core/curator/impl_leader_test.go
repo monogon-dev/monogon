@@ -370,6 +370,9 @@ func TestWatchNodeInCluster(t *testing.T) {
 	// Update node status. This should trigger an update from the watcher.
 	fakeNode.Status = &cpb.NodeStatus{
 		ExternalAddress: "203.0.113.42",
+		RunningCurator: &cpb.NodeStatus_RunningCurator{
+			Port: 1234,
+		},
 	}
 	fakeNodeInit, err = proto.Marshal(fakeNode)
 	if err != nil {
@@ -392,8 +395,15 @@ func TestWatchNodeInCluster(t *testing.T) {
 		if want, got := fakeNodeID, n.Id; want != got {
 			t.Errorf("wanted node %q, got %q", want, got)
 		}
-		if want := "203.0.113.42"; n.Status == nil || n.Status.ExternalAddress != want {
-			t.Errorf("wanted status with ip address %q, got %v", want, n.Status)
+		if n.Status == nil {
+			t.Errorf("node status is nil")
+		} else {
+			if want := "203.0.113.42"; n.Status.ExternalAddress != want {
+				t.Errorf("wanted status with ip address %q, got %v", want, n.Status)
+			}
+			if want := int32(1234); n.Status.RunningCurator == nil || n.Status.RunningCurator.Port != want {
+				t.Errorf("wanted running curator with port %d, got %d", want, n.Status.RunningCurator.Port)
+			}
 		}
 	}
 
