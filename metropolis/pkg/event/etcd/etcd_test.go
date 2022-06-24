@@ -163,7 +163,7 @@ func expect(t *testing.T, w event.Watcher, value string) {
 	}
 
 	if got, want := string(got.([]byte)), value; got != want {
-		t.Errorf("Got value %q, wanted %q", want, got)
+		t.Errorf("Wanted value %q, got %q", want, got)
 	}
 }
 

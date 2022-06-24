@@ -278,6 +278,15 @@ func (w *watcher) backfill(ctx context.Context) error {
 		//
 		// TODO(q3k): this could be stored in the watcher state to not waste time on
 		// each update, but it's good enough for now.
+
+		// Prepare a set of keys that already exist in the backlog. This will be used
+		// to make sure we don't duplicate backlog entries while maintaining a stable
+		// backlog order.
+		seen := make(map[string]bool)
+		for _, k := range w.backlogged {
+			seen[string(k)] = true
+		}
+
 		for _, ev := range resp.Events {
 			var value []byte
 			switch ev.Type {
@@ -290,10 +299,19 @@ func (w *watcher) backfill(ctx context.Context) error {
 
 			keyS := string(ev.Kv.Key)
 			prev := w.current[keyS]
-			if !bytes.Equal(prev, value) {
-				w.backlogged = append(w.backlogged, ev.Kv.Key)
-				w.current[keyS] = value
+			// Short-circuit and skip updates with the same content as already present.
+			// These are sometimes emitted by etcd.
+			if bytes.Equal(prev, value) {
+				continue
 			}
+
+			// Only insert to backlog if not yet present, but maintain order.
+			if !seen[string(ev.Kv.Key)] {
+				w.backlogged = append(w.backlogged, ev.Kv.Key)
+				seen[string(ev.Kv.Key)] = true
+			}
+			// Regardless of backlog list, always update the key to its newest value.
+			w.current[keyS] = value
 		}
 
 		// Still nothing in backlog? Keep trying.
