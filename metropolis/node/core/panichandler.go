@@ -23,8 +23,8 @@ import (
 //go:linkname overrideWrite runtime.overrideWrite
 var overrideWrite func(fd uintptr, p unsafe.Pointer, n int32) int32
 
-// Contains the file into which runtime logs and crashes are written.
-var runtimeFd os.File
+// Contains the files into which runtime logs and crashes are written.
+var runtimeFds []int
 
 // This is essentially a reimplementation of the assembly function
 // runtime.write1, just with a hardcoded file descriptor and using the assembly
@@ -32,20 +32,33 @@ var runtimeFd os.File
 // and needing an implementation for every architecture.
 //go:nosplit
 func runtimeWrite(fd uintptr, p unsafe.Pointer, n int32) int32 {
-	_, _, err := unix.RawSyscall(unix.SYS_WRITE, runtimeFd.Fd(), uintptr(p), uintptr(n))
-	if err != 0 {
+	// Only redirect writes to stderr.
+	if fd != 2 {
+		a, _, err := unix.RawSyscall(unix.SYS_WRITE, fd, uintptr(p), uintptr(n))
+		if err == 0 {
+			return int32(a)
+		}
 		return int32(err)
 	}
-	// Also write to original FD
-	_, _, err = unix.RawSyscall(unix.SYS_WRITE, fd, uintptr(p), uintptr(n))
+	// Write to the runtime panic FDs.
+	for _, f := range runtimeFds {
+		_, _, _ = unix.RawSyscall(unix.SYS_WRITE, uintptr(f), uintptr(p), uintptr(n))
+	}
+
+	// Finally, write to original FD
+	a, _, err := unix.RawSyscall(unix.SYS_WRITE, fd, uintptr(p), uintptr(n))
+	if err == 0 {
+		return int32(a)
+	}
 	return int32(err)
 }
 
 const runtimeLogPath = "/esp/core_runtime.log"
 
-func initPanicHandler(lt *logtree.LogTree) {
+func initPanicHandler(lt *logtree.LogTree, consoles []string) {
 	rl := lt.MustRawFor("panichandler")
 	l := lt.MustLeveledFor("panichandler")
+
 	runtimeLogFile, err := os.Open(runtimeLogPath)
 	if err != nil && !os.IsNotExist(err) {
 		l.Errorf("Failed to open runtimeLogFile: %v", err)
@@ -60,25 +73,23 @@ func initPanicHandler(lt *logtree.LogTree) {
 		}
 	}
 
-	file, err := os.Create(runtimeLogPath)
+	// Setup ESP file.
+	fd, err := unix.Open(runtimeLogPath, os.O_CREATE|os.O_WRONLY, 0)
 	if err != nil {
-		l.Errorf("Failed to open core runtime log file: %w", err)
+		l.Errorf("Failed to open core runtime log file: %v", err)
 		l.Warningf("Continuing without persistent panic storage.")
-		return
+	} else {
+		runtimeFds = append(runtimeFds, fd)
 	}
-	runtimeFd = *file
-	// Make sure the Fd is in blocking mode. Go's runtime opens all FDs in non-
-	// blocking mode by default and switches them back once you get a reference
-	// to the raw file descriptor to not break existing code. This switching
-	// back is done on the first Fd() call and involves calls into the runtime
-	// scheduler as it issues non-raw syscalls. Calling Fd() here makes sure
-	// that these calls happen in a sane environment before any actual panic.
-	// After this Fd() performs only memory accesses which is safe even when
-	// panicing the runtime.
-	// Keeping the raw fd is not possible as Go's runtime would eventually
-	// garbage-collect the backing os.File and close it, so we must keep around
-	// the actual os.File.
-	_ = runtimeFd.Fd()
+
+	for _, s := range consoles {
+		fd, err := unix.Open(s, os.O_WRONLY, 0)
+		if err == nil {
+			runtimeFds = append(runtimeFds, fd)
+			l.Infof("Panic console: %s", s)
+		}
+	}
+
 	// This could cause a data race if the runtime crashed while we're
 	// initializing the crash handler, but there is no locking infrastructure
 	// for this so we have to take that risk.

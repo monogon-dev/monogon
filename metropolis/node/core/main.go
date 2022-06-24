@@ -45,10 +45,9 @@ func main() {
 
 	// Set up logger for Metropolis. Currently logs everything to /dev/tty0 and
 	// /dev/ttyS0.
+	consoles := []string{"/dev/tty0", "/dev/ttyS0"}
 	lt := logtree.New()
-	for _, p := range []string{
-		"/dev/tty0", "/dev/ttyS0",
-	} {
+	for _, p := range consoles {
 		f, err := os.OpenFile(p, os.O_WRONLY, 0)
 		if err != nil {
 			continue
@@ -66,7 +65,7 @@ func main() {
 		}(p, f)
 	}
 	// Initialize persistent panic handler early
-	initPanicHandler(lt)
+	initPanicHandler(lt, consoles)
 
 	// Initial logger. Used until we get to a supervisor.
 	logger := lt.MustLeveledFor("init")
