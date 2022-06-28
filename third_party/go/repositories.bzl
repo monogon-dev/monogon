@@ -789,8 +789,8 @@ def go_repositories():
         pre_patches = [
             "//third_party/go/patches:containerd-no-tracing.patch",
         ],
-        sum = "h1:oa2uY0/0G+JX4X7hpGCYvkp9FjUancz56kSNnb1sG3o=",
-        version = "v1.6.1",
+        sum = "h1:xJNPhbrmz8xAMDNoVjHy9YHtWwEQNS+CDkcIRh7t8Y0=",
+        version = "v1.6.6",
     )
     go_repository(
         name = "com_github_containerd_continuity",
@@ -807,8 +807,8 @@ def go_repositories():
     go_repository(
         name = "com_github_containerd_go_cni",
         importpath = "github.com/containerd/go-cni",
-        sum = "h1:t0MQwrtM96SH71Md8tH0uKrVE9v+jxkDTbvFSm3B9VE=",
-        version = "v1.1.3",
+        sum = "h1:el5WPymG5nRRLQF1EfB97FWob4Tdc8INg8RZMaXWZlo=",
+        version = "v1.1.6",
     )
     go_repository(
         name = "com_github_containerd_go_runc",
@@ -819,8 +819,8 @@ def go_repositories():
     go_repository(
         name = "com_github_containerd_imgcrypt",
         importpath = "github.com/containerd/imgcrypt",
-        sum = "h1:69UKRsA3Q/lAwo2eDzWshdjimqhmprrWXfNtBeO0fBc=",
-        version = "v1.1.3",
+        sum = "h1:iKTstFebwy3Ak5UF0RHSeuCTahC5OIrPJa6vjMAM81s=",
+        version = "v1.1.4",
     )
     go_repository(
         name = "com_github_containerd_nri",
@@ -862,20 +862,20 @@ def go_repositories():
         patches = [
             "//third_party/go/patches:cni-fix-cachepath.patch",
         ],
-        sum = "h1:9OIL/sZmMYDBe+G8svzILAlulUpaDTUjeAbtH/JNLBo=",
-        version = "v1.0.1",
+        sum = "h1:ky20T7c0MvKvbMOwS/FrlbNwjEoqJEUUYfsL4b0mc4k=",
+        version = "v1.1.1",
     )
     go_repository(
         name = "com_github_containernetworking_plugins",
         importpath = "github.com/containernetworking/plugins",
-        sum = "h1:wwCfYbTCj5FC0EJgyzyjTXmqysOiJE9r712Z+2KVZAk=",
-        version = "v1.0.1",
+        sum = "h1:+AGfFigZ5TiQH00vhR8qPeSatj53eNGz0C1d3wVYlHE=",
+        version = "v1.1.1",
     )
     go_repository(
         name = "com_github_containers_ocicrypt",
         importpath = "github.com/containers/ocicrypt",
-        sum = "h1:Ez+GAMP/4GLix5Ywo/fL7O0nY771gsBIigiqUm1aXz0=",
-        version = "v1.1.2",
+        sum = "h1:uMxn2wTb4nDR7GqG3rnZSfpJXqWURfzZ7nKydzIeKpA=",
+        version = "v1.1.3",
     )
     go_repository(
         name = "com_github_coredns_caddy",
@@ -1735,6 +1735,13 @@ def go_repositories():
         version = "v1.8.0",
     )
     go_repository(
+        name = "com_github_go_task_slim_sprig",
+        importpath = "github.com/go-task/slim-sprig",
+        sum = "h1:p104kn46Q8WdvHunIJ9dAyjPVtrBPhSr3KT2yUst43I=",
+        version = "v0.0.0-20210107165309-348f09dbbbc0",
+    )
+
+    go_repository(
         name = "com_github_go_test_deep",
         importpath = "github.com/go-test/deep",
         sum = "h1:onZX1rnHT3Wv6cqNgYyFOOlgVKJrksuCMCRvJStbMYw=",
@@ -2548,8 +2555,8 @@ def go_repositories():
     go_repository(
         name = "com_github_j_keck_arping",
         importpath = "github.com/j-keck/arping",
-        sum = "h1:hlLhuXgQkzIJTZuhMigvG/CuSkaspeaD9hRDk2zuiMI=",
-        version = "v1.0.2",
+        sum = "h1:742eGXur0715JMq73aD95/FU0XpVKXqNuTnEfXsLOYQ=",
+        version = "v0.0.0-20160618110441-2cf9dc699c56",
     )
     go_repository(
         name = "com_github_jackc_chunkreader",
@@ -3242,8 +3249,8 @@ def go_repositories():
         name = "com_github_microsoft_hcsshim",
         build_file_proto_mode = "disable",
         importpath = "github.com/Microsoft/hcsshim",
-        sum = "h1:wB06W5aYFfUB3IvootYAY2WnOmIdgPGfqSI6tufQNnY=",
-        version = "v0.9.2",
+        sum = "h1:k371PzBuRrz2b+ebGuI2nVgVhgsVX60jMfSw80NECxo=",
+        version = "v0.9.3",
     )
     go_repository(
         name = "com_github_microsoft_hcsshim_test",
@@ -3261,8 +3268,8 @@ def go_repositories():
     go_repository(
         name = "com_github_miekg_pkcs11",
         importpath = "github.com/miekg/pkcs11",
-        sum = "h1:iMwmD7I5225wv84WxIG/bmxz9AXjWvTWIbM/TYHvWtw=",
-        version = "v1.0.3",
+        sum = "h1:Ugu9pdy6vAYku5DEpVWVFPYnzV+bxB+iRdbuFSu7TvU=",
+        version = "v1.1.1",
     )
     go_repository(
         name = "com_github_mikioh_ipaddr",
@@ -3524,6 +3531,13 @@ def go_repositories():
         version = "v1.0.47",
     )
     go_repository(
+        name = "com_github_networkplumbing_go_nft",
+        importpath = "github.com/networkplumbing/go-nft",
+        sum = "h1:eKapmyVUt/3VGfhYaDos5yeprm+LPt881UeksmKKZHY=",
+        version = "v0.2.0",
+    )
+
+    go_repository(
         name = "com_github_niemeyer_pretty",
         importpath = "github.com/niemeyer/pretty",
         sum = "h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=",
@@ -3538,8 +3552,8 @@ def go_repositories():
     go_repository(
         name = "com_github_nxadm_tail",
         importpath = "github.com/nxadm/tail",
-        sum = "h1:DQuhQpB1tVlglWS2hLQ5OV6B5r8aGxSrPc5Qo6uTN78=",
-        version = "v1.4.4",
+        sum = "h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=",
+        version = "v1.4.8",
     )
 
     go_repository(
@@ -3588,10 +3602,17 @@ def go_repositories():
         version = "v1.14.2",
     )
     go_repository(
+        name = "com_github_onsi_ginkgo_v2",
+        importpath = "github.com/onsi/ginkgo/v2",
+        sum = "h1:e/3Cwtogj0HA+25nMP1jCMDIf8RtRYbGwGGuBIFztkc=",
+        version = "v2.1.3",
+    )
+
+    go_repository(
         name = "com_github_onsi_gomega",
         importpath = "github.com/onsi/gomega",
-        sum = "h1:6gjqkI8iiRHMvdccRJM8rVKjCWk6ZIm6FTm3ddIe4/c=",
-        version = "v1.16.0",
+        sum = "h1:9Luw4uT5HTjHTN8+aNcSThgH1vdXnmdJ8xIfZ4wyTRE=",
+        version = "v1.17.0",
     )
     go_repository(
         name = "com_github_op_go_logging",
@@ -3609,8 +3630,8 @@ def go_repositories():
     go_repository(
         name = "com_github_opencontainers_image_spec",
         importpath = "github.com/opencontainers/image-spec",
-        sum = "h1:9yCKha/T5XdGtO0q9Q9a6T5NUCsTn/DrBg0D7ufOcFM=",
-        version = "v1.0.2",
+        sum = "h1:rc3tiVYb5z54aKaDfakKn0dDjIyPpTtszkjuMzyt7ec=",
+        version = "v1.0.3-0.20211202183452-c5a74bcca799",
     )
     go_repository(
         name = "com_github_opencontainers_runc",
@@ -3620,8 +3641,8 @@ def go_repositories():
         patches = [
             "//third_party/go/patches:runc-add-cdeps.patch",
         ],
-        sum = "h1:PJ9DSs2sVwE0iVr++pAHE6QkS9tzcVWozlPifdwMgrU=",
-        version = "v1.1.1",
+        sum = "h1:vIXrkId+0/J2Ymu2m7VjGvbSlAId9XNRPhn2p4b+d8w=",
+        version = "v1.1.3",
     )
     go_repository(
         name = "com_github_opencontainers_runtime_spec",
@@ -3639,8 +3660,8 @@ def go_repositories():
     go_repository(
         name = "com_github_opencontainers_selinux",
         importpath = "github.com/opencontainers/selinux",
-        sum = "h1:rAiKF8hTcgLI3w0DHm6i0ylVVcOrlgR1kK99DRLDhyU=",
-        version = "v1.10.0",
+        sum = "h1:09LIPVRP3uuZGQvgR+SgMSNBd1Eb3vlRbGqQpoHsF8w=",
+        version = "v1.10.1",
     )
 
     go_repository(
