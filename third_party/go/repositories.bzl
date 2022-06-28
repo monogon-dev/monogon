@@ -4078,8 +4078,8 @@ def go_repositories():
         patches = [
             "//third_party/go/patches:libseccomp.patch",
         ],
-        sum = "h1:58EBmR2dMNL2n/FnbQewK3D14nXr0V9CObDSvMJLq+Y=",
-        version = "v0.9.2-0.20210429002308-3879420cc921",
+        sum = "h1:RpforrEYXWkmGwJHIGnLZ3tTWStkjVVstwzNGqxX2Ds=",
+        version = "v0.9.2-0.20220502022130-f33da4d89646",
     )
     go_repository(
         name = "com_github_segmentio_kafka_go",
@@ -5034,8 +5034,8 @@ def go_repositories():
     go_repository(
         name = "io_etcd_go_etcd_client_v2",
         importpath = "go.etcd.io/etcd/client/v2",
-        sum = "h1:ymrVwTkefuqA/rPkSW7/B4ApijbPVefRumkY+stNfS0=",
-        version = "v2.305.2",
+        sum = "h1:Dcx3/MYyfKcPNLpR4VVQUP5KgYrBeJtktBwEKkw08Ao=",
+        version = "v2.305.4",
     )
     go_repository(
         name = "io_etcd_go_etcd_client_v3",
@@ -5052,8 +5052,8 @@ def go_repositories():
     go_repository(
         name = "io_etcd_go_etcd_etcdutl_v3",
         importpath = "go.etcd.io/etcd/etcdutl/v3",
-        sum = "h1:XDNv2bGD6Ylz3Gb9lIGV/IYLk1bwTvyCIi1EI4hyyqo=",
-        version = "v3.5.2",
+        sum = "h1:TeQGkpXMGnQ+Tgn/dB5yuADyeSZatehBBy6XXSxnO7U=",
+        version = "v3.5.4",
     )
     go_repository(
         name = "io_etcd_go_etcd_pkg_v3",
@@ -5062,28 +5062,28 @@ def go_repositories():
         pre_patches = [
             "//third_party/go/patches:etcd-fix-stub.patch",
         ],
-        sum = "h1:YZUojdoPhOyl5QILYnR8LTUbbNefu/sV4ma+ZMr2tto=",
-        version = "v3.5.2",
+        sum = "h1:V5Dvl7S39ZDwjkKqJG2BfXgxZ3QREqqKifWQgIw5IM0=",
+        version = "v3.5.4",
     )
     go_repository(
         name = "io_etcd_go_etcd_raft_v3",
         build_file_proto_mode = "disable",
         importpath = "go.etcd.io/etcd/raft/v3",
-        sum = "h1:uCC37qOXqBvKqTGHGyhASsaCsnTuJugl1GvneJNwHWo=",
-        version = "v3.5.2",
+        sum = "h1:YGrnAgRfgXloBNuqa+oBI/aRZMcK/1GS6trJePJ/Gqc=",
+        version = "v3.5.4",
     )
     go_repository(
         name = "io_etcd_go_etcd_server_v3",
         build_file_proto_mode = "disable",
         importpath = "go.etcd.io/etcd/server/v3",
-        sum = "h1:B6ytJvS4Fmt8nkjzS2/8POf4tuPhFMluE0lWd4dx/7U=",
-        version = "v3.5.2",
+        sum = "h1:CMAZd0g8Bn5NRhynW6pKhc4FRg41/0QYy3d7aNm9874=",
+        version = "v3.5.4",
     )
     go_repository(
         name = "io_etcd_go_etcd_tests_v3",
         importpath = "go.etcd.io/etcd/tests/v3",
-        sum = "h1:uk7/uMGVebpBDl+roivowHt6gJ5Fnqwik3syDkoSKdo=",
-        version = "v3.5.2",
+        sum = "h1:wiYG8vbDwZO2UatQE9Z3GIv2z52jGg5DvEkTDXm090c=",
+        version = "v3.5.4",
     )
     go_repository(
         name = "io_etcd_go_etcd_v3",
