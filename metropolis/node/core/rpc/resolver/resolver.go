@@ -11,6 +11,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 
 	common "source.monogon.dev/metropolis/node"
 	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
@@ -209,7 +210,12 @@ func (r *Resolver) runCuratorUpdater(ctx context.Context, opts []grpc.DialOption
 	bo.MaxInterval = 10 * time.Second
 
 	return backoff.RetryNotify(func() error {
-		opts = append(opts, grpc.WithResolvers(r))
+		// Use a keepalive to make sure we time out fast if the node we're connecting to
+		// partitions.
+		opts = append(opts, grpc.WithResolvers(r), grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:    10 * time.Second,
+			Timeout: 5 * time.Second,
+		}))
 		cl, err := grpc.Dial(MetropolisControlAddress, opts...)
 		if err != nil {
 			// This generally shouldn't happen.
@@ -301,6 +307,15 @@ func (r *Resolver) runLeaderUpdater(ctx context.Context, opts []grpc.DialOption)
 // successful. This is used by retry logic to figure out whether to wait before
 // retrying or not.
 func (r *Resolver) watchLeaderVia(ctx context.Context, via string, opts []grpc.DialOption) bool {
+	// Use a keepalive to make sure we time out fast if the node we're connecting to
+	// partitions. This is particularly critical for the leader updater, as we want
+	// to know as early as possible that this happened, so that we can move over to
+	// another node.
+	opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
+		Time:                10 * time.Second,
+		Timeout:             5 * time.Second,
+		PermitWithoutStream: true,
+	}))
 	cl, err := grpc.Dial(via, opts...)
 	if err != nil {
 		r.logger("WATCHLEADER: dialing %s failed: %v", via, err)
