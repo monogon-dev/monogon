@@ -173,10 +173,9 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 func (c *Cluster) CuratorClient() (*grpc.ClientConn, error) {
 	if c.authClient == nil {
 		authCreds := rpc.NewAuthenticatedCredentials(c.Owner, nil)
-		r := resolver.New(c.ctxT)
-		r.SetLogger(func(f string, args ...interface{}) {
+		r := resolver.New(c.ctxT, resolver.WithLogger(func(f string, args ...interface{}) {
 			log.Printf("Cluster: client resolver: %s", fmt.Sprintf(f, args...))
-		})
+		}))
 		for _, n := range c.NodeIDs {
 			ep, err := resolver.NodeWithDefaultPort(n)
 			if err != nil {

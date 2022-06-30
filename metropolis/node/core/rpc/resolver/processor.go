@@ -175,7 +175,9 @@ func (r *Resolver) run(ctx context.Context) error {
 		case req.ds != nil:
 			// Dial options Set
 			if !running {
-				go r.runCuratorUpdater(ctx, req.ds.options)
+				if !r.noCuratorUpdater {
+					go r.runCuratorUpdater(ctx, req.ds.options)
+				}
 				go r.runLeaderUpdater(ctx, req.ds.options)
 			}
 			running = true

@@ -81,25 +81,47 @@ type Resolver struct {
 	// debug logs from the running ClusterResolver, subordinate watchers and
 	// updaters.
 	logger func(f string, args ...interface{})
-}
 
-// SetLogger configures a given function as the logger of the resolver. The
-// function should take a printf-style format string and arguments.
-func (r *Resolver) SetLogger(logger func(f string, args ...interface{})) {
-	r.logger = logger
+	// noCuratorUpdater makes the resolver not run a curator updater. This is used
+	// in one-shot resolvers which are given an ahead-of-time list of curators to
+	// attempt to contact, eg. joining and registering nodes.
+	noCuratorUpdater bool
 }
 
 // New starts a new Resolver, ready to be used as a gRPC via WithResolvers.
 // However, it needs to be populated with at least one endpoint first (via
 // AddEndpoint).
-func New(ctx context.Context) *Resolver {
+func New(ctx context.Context, opts ...ResolverOption) *Resolver {
 	r := &Resolver{
 		reqC:   make(chan *request),
 		ctx:    ctx,
 		logger: func(string, ...interface{}) {},
 	}
+	for _, opt := range opts {
+		opt(r)
+	}
 	go r.run(ctx)
 	return r
+}
+
+// ResolverOptions are passed to a Resolver being created.
+type ResolverOption func(r *Resolver)
+
+// WithLogger configures a given function as the logger of the resolver. The
+// function should take a printf-style format string and arguments.
+func WithLogger(logger func(f string, args ...interface{})) ResolverOption {
+	return func(r *Resolver) {
+		r.logger = logger
+	}
+}
+
+// WithoutCuratorUpdater configures the Resolver to not attmept to update
+// curators from the cluster. This is useful in one-shot resolvers, eg.
+// unauthenticated ones.
+func WithoutCuratorUpdater() ResolverOption {
+	return func(r *Resolver) {
+		r.noCuratorUpdater = true
+	}
 }
 
 // NodeEndpoint is the gRPC endpoint (host+port) of a Metropolis control plane

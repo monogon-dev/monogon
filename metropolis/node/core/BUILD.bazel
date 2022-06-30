@@ -28,6 +28,7 @@ go_library(
         "//metropolis/node/core/network",
         "//metropolis/node/core/network/hostsfile",
         "//metropolis/node/core/roleserve",
+        "//metropolis/node/core/rpc/resolver",
         "//metropolis/node/core/time",
         "//metropolis/pkg/logtree",
         "//metropolis/pkg/pstore",

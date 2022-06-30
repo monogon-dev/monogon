@@ -63,6 +63,12 @@ type Config struct {
 
 	// Network is a handle to the network service, used by workloads.
 	Network *network.Service
+
+	// resolver is the main, long-lived, authenticated cluster resolver that is used
+	// for all subsequent gRPC calls by the subordinates of the roleserver. It is
+	// created early in the roleserver lifecycle, and is seeded with node
+	// information as the first subordinate runs DialCurator().
+	Resolver *resolver.Resolver
 }
 
 // Service is the roleserver/“Role Server” service. See the package-level
@@ -80,23 +86,12 @@ type Service struct {
 	heartbeat    *workerHeartbeat
 	kubernetes   *workerKubernetes
 	rolefetch    *workerRoleFetch
-
-	// resolver is the main, long-lived, authenticated cluster resolver that is used
-	// for all subsequent gRPC calls by the subordinates of the roleserver. It is
-	// created early in the roleserver lifecycle, and is seeded with node
-	// information as the first subordinate runs DialCurator().
-	resolver *resolver.Resolver
 }
 
 // New creates a Role Server services from a Config.
 func New(c Config) *Service {
-	// Run the resolver forever in the background, making sure to keep it as
-	// long-lived as possible.
-	rctx := context.Background()
-
 	s := &Service{
-		Config:   c,
-		resolver: resolver.New(rctx),
+		Config: c,
 	}
 	s.controlPlane = &workerControlPlane{
 		storageRoot: s.StorageRoot,
@@ -104,7 +99,7 @@ func New(c Config) *Service {
 		bootstrapData:     &s.bootstrapData,
 		clusterMembership: &s.ClusterMembership,
 		localRoles:        &s.localRoles,
-		resolver:          s.resolver,
+		resolver:          s.Resolver,
 	}
 
 	s.statusPush = &workerStatusPush{
@@ -144,11 +139,11 @@ func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk
 
 	// This is the first time we have the node ID, tell the resolver that it's
 	// available on the loopback interface.
-	s.resolver.AddOverride(nid, resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
+	s.Resolver.AddOverride(nid, resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 
 	s.ClusterMembership.set(&ClusterMembership{
 		pubkey:   pubkey,
-		resolver: s.resolver,
+		resolver: s.Resolver,
 	})
 	s.bootstrapData.set(&bootstrapData{
 		nodePrivateKey:     privkey,
@@ -162,36 +157,32 @@ func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk
 func (s *Service) ProvideRegisterData(credentials identity.NodeCredentials, directory *cpb.ClusterDirectory) {
 	// This is the first time we have the node ID, tell the resolver that it's
 	// available on the loopback interface.
-	s.resolver.AddOverride(credentials.ID(), resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
+	s.Resolver.AddOverride(credentials.ID(), resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 
 	s.ClusterMembership.set(&ClusterMembership{
 		remoteCurators: directory,
 		credentials:    &credentials,
 		pubkey:         credentials.PublicKey(),
-		resolver:       s.resolver,
+		resolver:       s.Resolver,
 	})
 }
 
 func (s *Service) ProvideJoinData(credentials identity.NodeCredentials, directory *cpb.ClusterDirectory) {
 	// This is the first time we have the node ID, tell the resolver that it's
 	// available on the loopback interface.
-	s.resolver.AddOverride(credentials.ID(), resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
+	s.Resolver.AddOverride(credentials.ID(), resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 
 	s.ClusterMembership.set(&ClusterMembership{
 		remoteCurators: directory,
 		credentials:    &credentials,
 		pubkey:         credentials.PublicKey(),
-		resolver:       s.resolver,
+		resolver:       s.Resolver,
 	})
 }
 
 // Run the Role Server service, which uses intermediary workload launchers to
 // start/stop subordinate services as the Node's roles change.
 func (s *Service) Run(ctx context.Context) error {
-	s.resolver.SetLogger(func(f string, args ...interface{}) {
-		supervisor.Logger(ctx).WithAddedStackDepth(2).Infof(f, args...)
-	})
-
 	supervisor.Run(ctx, "controlplane", s.controlPlane.run)
 	supervisor.Run(ctx, "kubernetes", s.kubernetes.run)
 	supervisor.Run(ctx, "statuspush", s.statusPush.run)

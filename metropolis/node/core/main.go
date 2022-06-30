@@ -30,6 +30,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/network/hostsfile"
 	"source.monogon.dev/metropolis/node/core/roleserve"
+	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	timesvc "source.monogon.dev/metropolis/node/core/time"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -102,6 +103,11 @@ func main() {
 	// Make context for supervisor. We cancel it when we reach the trapdoor.
 	ctxS, ctxC := context.WithCancel(context.Background())
 
+	// Make node-wide cluster resolver.
+	res := resolver.New(ctxS, resolver.WithLogger(func(f string, args ...interface{}) {
+		lt.MustLeveledFor("resolver").WithAddedStackDepth(1).Infof(f, args...)
+	}))
+
 	// Start root initialization code as a supervisor one-shot runnable. This
 	// means waiting for the network, starting the cluster manager, and then
 	// starting all services related to the node's roles.
@@ -127,6 +133,7 @@ func main() {
 		rs := roleserve.New(roleserve.Config{
 			StorageRoot: root,
 			Network:     networkSvc,
+			Resolver:    res,
 		})
 		if err := supervisor.Run(ctx, "role", rs.Run); err != nil {
 			close(trapdoor)

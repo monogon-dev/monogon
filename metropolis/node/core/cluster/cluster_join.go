@@ -41,10 +41,11 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 	// Build resolver used by the join process, authenticating with join
 	// credentials. Once the join is complete, the rolesever will start its own
 	// long-term resolver.
-	r := resolver.New(ctx)
-	r.SetLogger(func(f string, args ...interface{}) {
+	rctx, rctxC := context.WithCancel(ctx)
+	defer rctxC()
+	r := resolver.New(rctx, resolver.WithoutCuratorUpdater(), resolver.WithLogger(func(f string, args ...interface{}) {
 		supervisor.Logger(ctx).WithAddedStackDepth(1).Infof(f, args...)
-	})
+	}))
 	addedNodes := 0
 	for _, node := range cd.Nodes {
 		if len(node.Addresses) == 0 {

@@ -100,10 +100,11 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	// Build resolver used by the register process, authenticating with ephemeral
 	// credentials. Once the join is complete, the rolesever will start its own
 	// long-term resolver.
-	r := resolver.New(ctx)
-	r.SetLogger(func(f string, args ...interface{}) {
+	rctx, rctxC := context.WithCancel(ctx)
+	defer rctxC()
+	r := resolver.New(rctx, resolver.WithoutCuratorUpdater(), resolver.WithLogger(func(f string, args ...interface{}) {
 		supervisor.Logger(ctx).WithAddedStackDepth(1).Infof(f, args...)
-	})
+	}))
 	addedNodes := 0
 	for _, node := range register.ClusterDirectory.Nodes {
 		if len(node.Addresses) == 0 {
