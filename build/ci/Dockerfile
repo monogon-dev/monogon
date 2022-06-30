@@ -33,11 +33,13 @@ RUN dnf -y upgrade && \
 	python-unversioned-command \
 	openssl-devel \
 	java-11-openjdk-headless \
+	dotnet-runtime-5.0 \
+	jq \
 	tini
 
 
 # (java-11-openjdk-headless and tini are required for the Jenkins CI agent)
-
+# (dotnet-runtime-5.0 and jq are required for the GitHub Actions runner)
 
 # Create CI build user. This is not used by scripts/bin/bazel, but instead only
 # used by CI infrastructure to run build agents as.
