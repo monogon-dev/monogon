@@ -37,7 +37,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	ownerKey := bootstrap.OwnerPublicKey
 	state.configuration = &ppb.SealedConfiguration{}
 
-	// Mount new storage with generated CUK, and save LUK into sealed config proto.
+	// Mount new storage with generated CUK, and save NUK into sealed config proto.
 	supervisor.Logger(ctx).Infof("Bootstrapping: mounting new storage...")
 	cuk, err := m.storageRoot.Data.MountNew(state.configuration)
 	if err != nil {

@@ -64,7 +64,7 @@ enum NodeState {
     // NEW: the node has established a first contact with the cluster and
     // intends to register into it. The node's identity has not been verified
     // and no hardware attestation of the new node was performed.
-    // The node has generated a CUK/LUK and set up storage encrypted with the
+    // The node has generated a CUK/NUK and set up storage encrypted with the
     // combination of both keys.
     // The node has generated a private/public keypair, and that keypair has
     // been used to contact the already running Cluster.

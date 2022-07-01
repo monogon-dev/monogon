@@ -54,7 +54,7 @@ When booting, a Node needs to become part of a cluster (by either Bootstrapping 
 '-------------------'           | Seals/Unseals
          | Mounts               v
          |           .---------------------.        .------------------------.
-         | .---------| Node Encryption Key |        |    Running Cluster     |
+         | .---------|   Node Unlock Key   |        |    Running Cluster     |
          |/          '---------------------'        |------------------------|
          | .----------------------------------------| Cluster Encryption Key |
          |/                                         |       (per node)       |
