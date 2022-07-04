@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"crypto/ed25519"
 	"crypto/rand"
+	_ "embed"
 	"encoding/pem"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,14 +20,16 @@ import (
 )
 
 var installCmd = &cobra.Command{
-	Short: "Contains subcommands to install Metropolis over different mediums.",
+	Short: "Contains subcommands to install Metropolis via different media.",
 	Use:   "install",
 }
+
+var bundlePath = installCmd.PersistentFlags().StringP("bundle", "b", "", "Path to the Metropolis bundle to be installed")
 
 var genusbCmd = &cobra.Command{
 	Use:     "genusb target",
 	Short:   "Generates a Metropolis installer disk or image.",
-	Example: "metroctl install genusb /dev/sdx",
+	Example: "metroctl install --bundle=metropolis-v0.1.zip genusb /dev/sdx",
 	Args:    cobra.ExactArgs(1), // One positional argument: the target
 	Run:     doGenUSB,
 }
@@ -33,9 +37,33 @@ var genusbCmd = &cobra.Command{
 // A PEM block type for a Metropolis initial owner private key
 const ownerKeyType = "METROPOLIS INITIAL OWNER PRIVATE KEY"
 
+//go:embed metropolis/installer/kernel.efi
+var installer []byte
+
 func doGenUSB(cmd *cobra.Command, args []string) {
-	installer := datafile.MustGet("metropolis/installer/kernel.efi")
-	bundle := datafile.MustGet("metropolis/node/node.zip")
+	var bundleReader io.Reader
+	var bundleSize uint64
+	if bundlePath == nil || *bundlePath == "" {
+		// Attempt Bazel runfile bundle if not explicitly set
+		bundle, err := datafile.Get("metropolis/node/bundle.zip")
+		if err != nil {
+			log.Fatalf("No bundle specified and fallback to runfiles failed: %v", err)
+		}
+		bundleReader = bytes.NewReader(bundle)
+		bundleSize = uint64(len(bundle))
+	} else {
+		// Load bundle from specified path
+		bundle, err := os.Open(*bundlePath)
+		if err != nil {
+			log.Fatalf("Failed to open specified bundle: %v", err)
+		}
+		bundleStat, err := bundle.Stat()
+		if err != nil {
+			log.Fatalf("Failed to stat specified bundle: %v", err)
+		}
+		bundleReader = bundle
+		bundleSize = uint64(bundleStat.Size())
+	}
 
 	// TODO(lorenz): Have a key management story for this
 	if err := os.MkdirAll(filepath.Join(xdg.ConfigHome, "metroctl"), 0700); err != nil {
@@ -83,11 +111,11 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 
 	installerImageArgs := core.MakeInstallerImageArgs{
 		TargetPath:    args[0],
-		Installer:     bytes.NewBuffer(installer),
+		Installer:     bytes.NewReader(installer),
 		InstallerSize: uint64(len(installer)),
 		NodeParams:    params,
-		Bundle:        bytes.NewBuffer(bundle),
-		BundleSize:    uint64(len(bundle)),
+		Bundle:        bundleReader,
+		BundleSize:    bundleSize,
 	}
 
 	log.Printf("Generating installer image (this can take a while, see issues/92).")

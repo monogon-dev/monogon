@@ -10,8 +10,10 @@ go_library(
         "takeownership.go",
     ],
     data = [
-        "//metropolis/installer:kernel",
         "//metropolis/node:bundle",
+    ],
+    embedsrcs = [
+        "//metropolis/installer:kernel",  #keep
     ],
     importpath = "source.monogon.dev/metropolis/cli/metroctl",
     visibility = ["//visibility:private"],
