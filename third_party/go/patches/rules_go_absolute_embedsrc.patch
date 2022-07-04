@@ -1,0 +1,20 @@
+This adds support for workspace-relative Go embeds.
+
+diff --git a/go/tools/builders/compilepkg.go b/go/tools/builders/compilepkg.go
+index 09e3ef6e..4623f803 100644
+--- a/go/tools/builders/compilepkg.go
++++ b/go/tools/builders/compilepkg.go
+@@ -379,6 +379,13 @@ func compileArchive(
+ 			}
+ 		}
+ 	}
++	// Sort by length descenting to not get wrong roots
++	sort.Slice(embedRoots, func(i, j int) bool {
++		return len(embedRoots[i]) > len(embedRoots[j])
++	})
++	for _, root := range embedRoots {
++		embedRootDirs = append(embedRootDirs, abs(root))
++	}
+ 	embedcfgPath, err := buildEmbedcfgFile(srcs.goSrcs, embedSrcs, embedRootDirs, workDir)
+ 	if err != nil {
+ 		return err
