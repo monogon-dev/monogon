@@ -67,7 +67,7 @@ func issueCertificate(req *Certificate, ca *x509.Certificate, caKey ed25519.Priv
 	// Set the AuthorityKeyID to the SKID of the signing certificate (or self,
 	// if self-signing).
 	if ca != nil {
-		req.Template.AuthorityKeyId = ca.AuthorityKeyId
+		req.Template.AuthorityKeyId = ca.SubjectKeyId
 	} else {
 		req.Template.AuthorityKeyId = req.Template.SubjectKeyId
 		ca = &req.Template
