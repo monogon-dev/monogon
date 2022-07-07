@@ -17,7 +17,7 @@ And either:
 First, you'll need *metroctl*, the command line utility for working with Metropolis clusters.
 You can get it from GitHub Releases (https://github.com/monogon-dev/monogon/releases) with
 ```shell
-curl -L -o metroctl https://github.com/monogon-dev/monogon/releases/download/v0.1/metroctl
+curl -L -o metroctl https://github.com/monogon-dev/monogon/releases/download/metropolis-v0.1/metroctl
 chmod +x metroctl
 ```
 Optionally you can move the file to a location in PATH, like /usr/local/bin or ~/bin/.
@@ -27,7 +27,7 @@ Optionally you can move the file to a location in PATH, like /usr/local/bin or ~
 To install Metropolis, you'll need a *bundle*. A *bundle* contains all resources to install or update a Metropolis node.
 You can get a prebuilt bundle from GitHub Releases with
 ```shell
-curl -L -o bundle.zip https://github.com/monogon-dev/monogon/releases/download/v0.1/bundle.zip
+curl -L -o bundle.zip https://github.com/monogon-dev/monogon/releases/download/metropolis-v0.1/bundle.zip
 ```
 
 ## Installation
