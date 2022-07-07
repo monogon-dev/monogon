@@ -6,7 +6,7 @@ set -o nounset
 set -o pipefail
 
 # TODO: Figure out how to version Metropolis
-METROPOLIS_VERSION=1.0.0-dev
+METROPOLIS_VERSION=0.1
 
 KUBERNETES_gitTreeState="clean"
 if [ ! -z "$(git status --porcelain)" ]; then
