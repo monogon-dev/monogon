@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "metroctl_lib",
     srcs = [
+        "approve.go",
         "credentials.go",
         "install.go",
         "k8scredplugin.go",
@@ -23,6 +24,7 @@ go_library(
         "//metropolis/cli/pkg/context",
         "//metropolis/cli/pkg/datafile",
         "//metropolis/node",
+        "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
         "//metropolis/node/core/rpc/resolver",
         "//metropolis/proto/api",
