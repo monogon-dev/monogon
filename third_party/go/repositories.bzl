@@ -5320,8 +5320,8 @@ def go_repositories():
             "//third_party/go/patches:k8s-drop-legacy-log-path.patch",
             "//third_party/go/patches:k8s-jose-semver-fix.patch",
         ],
-        sum = "h1:9qRjlCuMjooyFTXLxduMBT+MZSdROWa3idI1AXZirVs=",
-        version = "v1.24.0",
+        sum = "h1:AyjtHzSysliKR04Km91njmk2yaKmOa3ZISQZCIGUnVI=",
+        version = "v1.24.2",
     )
     go_repository(
         name = "io_k8s_legacy_cloud_providers",

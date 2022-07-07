@@ -16,7 +16,7 @@ fi
 # TODO(q3k): unify with //third_party/go/repsitories.bzl.
 KUBERNETES_gitMajor="1"
 KUBERNETES_gitMinor="24"
-KUBERNETES_gitVersion="v1.24.0+mngn"
+KUBERNETES_gitVersion="v1.24.2+mngn"
 
 cat <<EOF
 KUBERNETES_gitCommit $(git rev-parse "HEAD^{commit}")
