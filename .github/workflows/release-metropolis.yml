@@ -2,7 +2,7 @@ name: Publish release artifacts and docs for new tags
 on:
   push:
     tags:
-      - "v*"
+      - "metropolis-v*"
 jobs:
   publish:
     runs-on: gha-trusted
