@@ -68,7 +68,7 @@ func doApprove(cmd *cobra.Command, args []string) {
 		log.Fatal("Please provide at least one cluster endpoint using the --endpoint parameter.")
 	}
 	ctx := clicontext.WithInterrupt(context.Background())
-	cc, err := dialCluster(ctx, opkey, ocert, "", flags.clusterEndpoints)
+	cc, err := dialCluster(ctx, opkey, ocert, flags.proxyAddr, flags.clusterEndpoints)
 	if err != nil {
 		log.Fatalf("While dialing the cluster: %v", err)
 	}

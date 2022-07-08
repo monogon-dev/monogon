@@ -129,7 +129,7 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 		if len(flags.clusterEndpoints) == 0 {
 			log.Fatal("At least one cluster endpoint is required while generating non-bootstrap installer images.")
 		}
-		cc, err := dialCluster(ctx, opkey, ocert, "", flags.clusterEndpoints)
+		cc, err := dialCluster(ctx, opkey, ocert, flags.proxyAddr, flags.clusterEndpoints)
 		if err != nil {
 			log.Fatalf("While dialing the cluster: %v", err)
 		}
