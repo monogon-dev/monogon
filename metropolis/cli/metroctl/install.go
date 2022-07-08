@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
@@ -76,21 +75,21 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 	ctx := clicontext.WithInterrupt(context.Background())
 
 	// TODO(lorenz): Have a key management story for this
-	if err := os.MkdirAll(filepath.Join(xdg.ConfigHome, "metroctl"), 0700); err != nil {
+	if err := os.MkdirAll(flags.configPath, 0700); err != nil && !os.IsExist(err) {
 		log.Fatalf("Failed to create config directory: %v", err)
 	}
 
 	var params *api.NodeParameters
 	if bootstrap {
 		var ownerPublicKey ed25519.PublicKey
-		ownerPrivateKeyPEM, err := os.ReadFile(filepath.Join(xdg.ConfigHome, "metroctl/owner-key.pem"))
+		ownerPrivateKeyPEM, err := os.ReadFile(filepath.Join(flags.configPath, "owner-key.pem"))
 		if os.IsNotExist(err) {
 			pub, priv, err := ed25519.GenerateKey(rand.Reader)
 			if err != nil {
 				log.Fatalf("Failed to generate owner private key: %v", err)
 			}
 			pemPriv := pem.EncodeToMemory(&pem.Block{Type: ownerKeyType, Bytes: priv})
-			if err := os.WriteFile(filepath.Join(xdg.ConfigHome, "metroctl/owner-key.pem"), pemPriv, 0600); err != nil {
+			if err := os.WriteFile(filepath.Join(flags.configPath, "owner-key.pem"), pemPriv, 0600); err != nil {
 				log.Fatalf("Failed to store owner private key: %v", err)
 			}
 			ownerPublicKey = pub

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"path/filepath"
+
+	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +19,8 @@ type metroctlFlags struct {
 	clusterEndpoints []string
 	// proxyAddr is a SOCKS5 proxy address the cluster will be accessed through.
 	proxyAddr string
+	// configPath overrides the default XDG config path
+	configPath string
 }
 
 var flags metroctlFlags
@@ -23,6 +28,7 @@ var flags metroctlFlags
 func init() {
 	rootCmd.PersistentFlags().StringArrayVar(&flags.clusterEndpoints, "endpoints", nil, "A list of the target cluster's endpoints.")
 	rootCmd.PersistentFlags().StringVar(&flags.proxyAddr, "proxy", "", "SOCKS5 proxy address")
+	rootCmd.PersistentFlags().StringVar(&flags.configPath, "config", filepath.Join(xdg.ConfigHome, "metroctl"), "An alternative cluster config path")
 }
 
 func main() {

@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/adrg/xdg"
 )
 
 var noCredentialsError = errors.New("owner certificate or key does not exist")
@@ -17,7 +15,7 @@ var noCredentialsError = errors.New("owner certificate or key does not exist")
 // getCredentials returns Metropolis credentials (if any) from the current
 // metroctl config directory.
 func getCredentials() (cert *x509.Certificate, key ed25519.PrivateKey, err error) {
-	ownerPrivateKeyPEM, err := os.ReadFile(filepath.Join(xdg.ConfigHome, "metroctl/owner-key.pem"))
+	ownerPrivateKeyPEM, err := os.ReadFile(filepath.Join(flags.configPath, "owner-key.pem"))
 	if os.IsNotExist(err) {
 		return nil, nil, noCredentialsError
 	} else if err != nil {
@@ -34,7 +32,7 @@ func getCredentials() (cert *x509.Certificate, key ed25519.PrivateKey, err error
 		return nil, nil, errors.New("owner-key.pem contains a non-Ed25519 key")
 	}
 	key = block.Bytes
-	ownerCertPEM, err := os.ReadFile(filepath.Join(xdg.ConfigHome, "metroctl/owner.pem"))
+	ownerCertPEM, err := os.ReadFile(filepath.Join(flags.configPath, "owner.pem"))
 	if os.IsNotExist(err) {
 		return nil, nil, noCredentialsError
 	} else if err != nil {

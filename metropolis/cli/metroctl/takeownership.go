@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	clientauthentication "k8s.io/client-go/pkg/apis/clientauthentication/v1"
@@ -41,7 +40,7 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 	clusterEp := flags.clusterEndpoints[0]
 
 	ctx := clicontext.WithInterrupt(context.Background())
-	ownerPrivateKeyPEM, err := os.ReadFile(filepath.Join(xdg.ConfigHome, "metroctl/owner-key.pem"))
+	ownerPrivateKeyPEM, err := os.ReadFile(filepath.Join(flags.configPath, "owner-key.pem"))
 	if os.IsNotExist(err) {
 		log.Fatalf("Owner key does not exist. takeownership needs to be executed on the same system that has previously installed the cluster using metroctl install.")
 	} else if err != nil {
@@ -77,7 +76,7 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 		Type:  "CERTIFICATE",
 		Bytes: ownerCert.Certificate[0],
 	}
-	if err := os.WriteFile(filepath.Join(xdg.ConfigHome, "metroctl/owner.pem"), pem.EncodeToMemory(&ownerCertPEM), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(flags.configPath, "owner.pem"), pem.EncodeToMemory(&ownerCertPEM), 0644); err != nil {
 		log.Printf("Failed to store retrieved owner certificate: %v", err)
 		log.Fatalln("Sorry, the cluster has been lost as taking ownership cannot be repeated. Fix the reason the file couldn't be written and reinstall the node.")
 	}
