@@ -912,7 +912,7 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 		if cs.Status == nil {
 			continue
 		}
-		if cs.Status.Timestamp > is.Status.Timestamp {
+		if cs.Status.Timestamp.AsTime().Sub(is.Status.Timestamp.AsTime()) > 0 {
 			break
 		}
 		time.Sleep(time.Second)

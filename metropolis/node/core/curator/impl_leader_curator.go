@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	tpb "google.golang.org/protobuf/types/known/timestamppb"
 
 	common "source.monogon.dev/metropolis/node"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
@@ -249,7 +250,7 @@ func (l *leaderCurator) UpdateNodeStatus(ctx context.Context, req *ipb.UpdateNod
 	}
 	// ... update its' status ...
 	node.status = req.Status
-	node.status.Timestamp = time.Now().UnixNano()
+	node.status.Timestamp = tpb.Now()
 	// ... and save it to etcd.
 	if err := nodeSave(ctx, l.leadership, node); err != nil {
 		return nil, err
