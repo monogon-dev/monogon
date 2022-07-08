@@ -18,6 +18,8 @@ syntax = "proto3";
 package metropolis.proto.api;
 option go_package = "source.monogon.dev/metropolis/proto/api";
 
+import "google/protobuf/timestamp.proto";
+
 // NodeDebugService exposes debug and testing endpoints that allow introspection into a running Metropolis node.
 // It is not authenticated and will be disabled in production. It is currently consumed by metropolis/cli/dbg and
 // by tests.
@@ -145,7 +147,7 @@ message GetLogsResponse {
 message LogEntry {
     message Leveled {
         repeated string lines = 1;
-        int64 timestamp = 2;
+        google.protobuf.Timestamp timestamp = 2;
         LeveledLogSeverity severity = 3;
         string location = 4;
     }

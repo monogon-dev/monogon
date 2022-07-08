@@ -22,6 +22,8 @@ import (
 	"strings"
 	"time"
 
+	tpb "google.golang.org/protobuf/types/known/timestamppb"
+
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
@@ -114,7 +116,7 @@ func (p *LeveledPayload) Severity() Severity { return p.severity }
 func (p *LeveledPayload) Proto() *apb.LogEntry_Leveled {
 	return &apb.LogEntry_Leveled{
 		Lines:     p.Messages(),
-		Timestamp: p.Timestamp().UnixNano(),
+		Timestamp: tpb.New(p.Timestamp()),
 		Severity:  p.Severity().ToProto(),
 		Location:  p.Location(),
 	}
@@ -137,7 +139,7 @@ func LeveledPayloadFromProto(p *apb.LogEntry_Leveled) (*LeveledPayload, error) {
 	}
 	return &LeveledPayload{
 		messages:  p.Lines,
-		timestamp: time.Unix(0, p.Timestamp),
+		timestamp: p.Timestamp.AsTime(),
 		severity:  severity,
 		file:      file,
 		line:      line,
