@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_test(
+    name = "metroctl_test",
+    srcs = ["test.go"],
+    data = [
+        "//metropolis/cli/metroctl",
+        "//metropolis/node:image",
+        "//metropolis/node:swtpm_data",
+        "//third_party/edk2:firmware",
+    ],
+    rundir = ".",
+    deps = [
+        "//metropolis/cli/pkg/datafile",
+        "//metropolis/node",
+        "//metropolis/pkg/cmd",
+        "//metropolis/test/launch/cluster",
+        "//metropolis/test/util",
+    ],
+)
+
+go_library(
+    name = "test_lib",
+    srcs = ["test.go"],
+    importpath = "source.monogon.dev/metropolis/cli/metroctl/test",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//metropolis/cli/pkg/datafile",
+        "//metropolis/pkg/cmd",
+        "//metropolis/test/launch/cluster",
+        "//metropolis/test/util",
+    ],
+)
