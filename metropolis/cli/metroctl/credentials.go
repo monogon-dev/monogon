@@ -12,33 +12,43 @@ import (
 
 var noCredentialsError = errors.New("owner certificate or key does not exist")
 
-// getCredentials returns Metropolis credentials (if any) from the current
+// getOwnerKey returns the cluster owner's key, if one exists, from the current
 // metroctl config directory.
-func getCredentials() (cert *x509.Certificate, key ed25519.PrivateKey, err error) {
+func getOwnerKey() (ed25519.PrivateKey, error) {
 	ownerPrivateKeyPEM, err := os.ReadFile(filepath.Join(flags.configPath, "owner-key.pem"))
 	if os.IsNotExist(err) {
-		return nil, nil, noCredentialsError
+		return nil, noCredentialsError
 	} else if err != nil {
-		return nil, nil, fmt.Errorf("failed to load owner private key: %w", err)
+		return nil, fmt.Errorf("failed to load owner private key: %w", err)
 	}
 	block, _ := pem.Decode(ownerPrivateKeyPEM)
 	if block == nil {
-		return nil, nil, errors.New("owner-key.pem contains invalid PEM armoring")
+		return nil, errors.New("owner-key.pem contains invalid PEM armoring")
 	}
 	if block.Type != ownerKeyType {
-		return nil, nil, fmt.Errorf("owner-key.pem contains a PEM block that's not a %v", ownerKeyType)
+		return nil, fmt.Errorf("owner-key.pem contains a PEM block that's not a %v", ownerKeyType)
 	}
 	if len(block.Bytes) != ed25519.PrivateKeySize {
-		return nil, nil, errors.New("owner-key.pem contains a non-Ed25519 key")
+		return nil, errors.New("owner-key.pem contains a non-Ed25519 key")
 	}
-	key = block.Bytes
+	return block.Bytes, nil
+}
+
+// getCredentials returns Metropolis credentials (if any) from the current
+// metroctl config directory.
+func getCredentials() (cert *x509.Certificate, key ed25519.PrivateKey, err error) {
+	key, err = getOwnerKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	ownerCertPEM, err := os.ReadFile(filepath.Join(flags.configPath, "owner.pem"))
 	if os.IsNotExist(err) {
 		return nil, nil, noCredentialsError
 	} else if err != nil {
 		return nil, nil, fmt.Errorf("failed to load owner certificate: %w", err)
 	}
-	block, _ = pem.Decode(ownerCertPEM)
+	block, _ := pem.Decode(ownerCertPEM)
 	if block == nil {
 		return nil, nil, errors.New("owner.pem contains invalid PEM armoring")
 	}

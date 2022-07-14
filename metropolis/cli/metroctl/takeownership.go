@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/ed25519"
 	"encoding/pem"
 	"log"
 	"net"
@@ -11,7 +10,6 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
 	clientauthentication "k8s.io/client-go/pkg/apis/clientauthentication/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	clientapi "k8s.io/client-go/tools/clientcmd/api"
@@ -37,38 +35,24 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 	if len(flags.clusterEndpoints) != 1 {
 		log.Fatalf("takeownership requires a single cluster endpoint to be provided with the --endpoints parameter.")
 	}
-	clusterEp := flags.clusterEndpoints[0]
 
-	ctx := clicontext.WithInterrupt(context.Background())
-	ownerPrivateKeyPEM, err := os.ReadFile(filepath.Join(flags.configPath, "owner-key.pem"))
-	if os.IsNotExist(err) {
+	// Retrieve the cluster owner's private key, and use it to construct
+	// ephemeral credentials. Then, dial the cluster.
+	opk, err := getOwnerKey()
+	if err == noCredentialsError {
 		log.Fatalf("Owner key does not exist. takeownership needs to be executed on the same system that has previously installed the cluster using metroctl install.")
-	} else if err != nil {
-		log.Fatalf("Failed to load owner private key: %v", err)
 	}
-	block, _ := pem.Decode(ownerPrivateKeyPEM)
-	if block == nil {
-		log.Fatalf("owner-key.pem contains invalid PEM")
+	if err != nil {
+		log.Fatalf("Couldn't get owner's key: %v", err)
 	}
-	if block.Type != ownerKeyType {
-		log.Fatalf("owner-key.pem contains a PEM block that's not a %v", ownerKeyType)
+	ctx := clicontext.WithInterrupt(context.Background())
+	cc, err := dialCluster(ctx, opk, nil, flags.proxyAddr, flags.clusterEndpoints)
+	if err != nil {
+		log.Fatalf("While dialing the cluster: %v", err)
 	}
-	if len(block.Bytes) != ed25519.PrivateKeySize {
-		log.Fatal("owner-key.pem contains non-Ed25519 key")
-	}
-	ownerPrivateKey := ed25519.PrivateKey(block.Bytes)
+	aaa := apb.NewAAAClient(cc)
 
-	ephCreds, err := rpc.NewEphemeralCredentials(ownerPrivateKey, nil)
-	if err != nil {
-		log.Fatalf("Failed to create ephemeral credentials: %v", err)
-	}
-	client, err := grpc.Dial(net.JoinHostPort(clusterEp, node.CuratorServicePort.PortString()), grpc.WithTransportCredentials(ephCreds))
-	if err != nil {
-		log.Fatalf("Failed to create client to given node address: %v", err)
-	}
-	defer client.Close()
-	aaa := apb.NewAAAClient(client)
-	ownerCert, err := rpc.RetrieveOwnerCertificate(ctx, aaa, ownerPrivateKey)
+	ownerCert, err := rpc.RetrieveOwnerCertificate(ctx, aaa, opk)
 	if err != nil {
 		log.Fatalf("Failed to retrive owner certificate from cluster: %v", err)
 	}
@@ -115,8 +99,10 @@ change users.metropolis.exec.command to the required path (or just metroctl if u
 	config.Clusters["metropolis"] = &clientapi.Cluster{
 		// MVP: This is insecure, but making this work would be wasted effort
 		// as all of it will be replaced by the identity system.
+		// TODO(issues/144): adjust cluster endpoints once have functioning roles
+		// implemented.
 		InsecureSkipTLSVerify: true,
-		Server:                "https://" + net.JoinHostPort(clusterEp, node.KubernetesAPIWrappedPort.PortString()),
+		Server:                "https://" + net.JoinHostPort(flags.clusterEndpoints[0], node.KubernetesAPIWrappedPort.PortString()),
 	}
 
 	config.Contexts["metropolis"] = &clientapi.Context{
