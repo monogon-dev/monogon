@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"log"
 	"net"
 
 	"golang.org/x/net/proxy"
@@ -58,7 +59,15 @@ func dialCluster(ctx context.Context, opkey ed25519.PrivateKey, ocert *x509.Cert
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
 	}
 
-	r := resolver.New(ctx)
+	var resolverOpts []resolver.ResolverOption
+	if flags.verbose {
+		l := func(f string, args ...interface{}) {
+			log.Printf("resolver: " + f, args...)
+		}
+		resolverOpts = append(resolverOpts, resolver.WithLogger(l))
+	}
+	r := resolver.New(ctx, resolverOpts...)
+
 	for _, ep := range clusterEndpoints {
 		r.AddEndpoint(resolver.NodeByHostPort(ep, uint16(node.CuratorServicePort)))
 	}

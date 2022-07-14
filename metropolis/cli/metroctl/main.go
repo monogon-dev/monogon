@@ -21,6 +21,9 @@ type metroctlFlags struct {
 	proxyAddr string
 	// configPath overrides the default XDG config path
 	configPath string
+	// verbose, if set, will make this utility log additional runtime
+	// information.
+	verbose bool
 }
 
 var flags metroctlFlags
@@ -29,6 +32,7 @@ func init() {
 	rootCmd.PersistentFlags().StringArrayVar(&flags.clusterEndpoints, "endpoints", nil, "A list of the target cluster's endpoints.")
 	rootCmd.PersistentFlags().StringVar(&flags.proxyAddr, "proxy", "", "SOCKS5 proxy address")
 	rootCmd.PersistentFlags().StringVar(&flags.configPath, "config", filepath.Join(xdg.ConfigHome, "metroctl"), "An alternative cluster config path")
+	rootCmd.PersistentFlags().BoolVar(&flags.verbose, "verbose", false, "Log additional runtime information")
 }
 
 func main() {
