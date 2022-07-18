@@ -19,6 +19,7 @@ package crypt
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"syscall"
@@ -49,6 +50,10 @@ func readDataSectors(path string) (uint64, error) {
 // cryptMap maps an encrypted device (node) at baseName to a
 // decrypted device at /dev/$name using the given encryptionKey
 func CryptMap(name string, baseName string, encryptionKey []byte) error {
+	return cryptMap(name, baseName, encryptionKey, true)
+}
+
+func cryptMap(name string, baseName string, encryptionKey []byte, enableJournal bool) error {
 	integritySectors, err := readDataSectors(baseName)
 	if err != nil {
 		return fmt.Errorf("failed to read the number of usable sectors on the integrity device: %w", err)
@@ -56,11 +61,15 @@ func CryptMap(name string, baseName string, encryptionKey []byte) error {
 
 	integrityDevName := fmt.Sprintf("/dev/%v-integrity", name)
 	integrityDMName := fmt.Sprintf("%v-integrity", name)
+	mode := "D"
+	if enableJournal {
+		mode = "J"
+	}
 	integrityDev, err := devicemapper.CreateActiveDevice(integrityDMName, false, []devicemapper.Target{
 		devicemapper.Target{
 			Length:     integritySectors,
 			Type:       "integrity",
-			Parameters: []string{baseName, "0", "28", "J", "1", "journal_sectors:1024"},
+			Parameters: []string{baseName, "0", "28", mode, "1", "journal_sectors:1024"},
 		},
 	})
 	if err != nil {
@@ -96,6 +105,25 @@ func CryptMap(name string, baseName string, encryptionKey []byte) error {
 	return nil
 }
 
+func cryptUnmap(name string, baseName string) error {
+	integrityDevName := fmt.Sprintf("/dev/%v-integrity", name)
+	if err := unix.Unlink(integrityDevName); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to delete integrity device inode: %w", err)
+	}
+	cryptDevName := fmt.Sprintf("/dev/%v", name)
+	if err := unix.Unlink(cryptDevName); err != nil {
+		return fmt.Errorf("failed to delete crypt device inode: %w", err)
+	}
+	integrityDMName := fmt.Sprintf("%v-integrity", name)
+	if err := devicemapper.RemoveDevice(name); err != nil && !errors.Is(err, unix.ENOENT) {
+		return fmt.Errorf("failed to remove dm-crypt device: %w", err)
+	}
+	if err := devicemapper.RemoveDevice(integrityDMName); err != nil && !errors.Is(err, unix.ENOENT) {
+		return fmt.Errorf("failed to remove dm-integrity device: %w", err)
+	}
+	return nil
+}
+
 // cryptInit initializes a new encrypted block device. This can take a long
 // time since all bytes on the mapped block device need to be zeroed.
 func CryptInit(name, baseName string, encryptionKey []byte) error {
@@ -125,7 +153,11 @@ func CryptInit(name, baseName string, encryptionKey []byte) error {
 		return fmt.Errorf("failed to remove discovery integrity device: %w", err)
 	}
 
-	if err := CryptMap(name, baseName, encryptionKey); err != nil {
+	// First, map the device without journal. Zeroing with journal is extremely
+	// slow as it transforms sequential IO into random IO and also consumes
+	// twice the write operations. This is fine as if we abort here we'll
+	// reinitialize the whole device so the reliability is of no concern.
+	if err := cryptMap(name, baseName, encryptionKey, false); err != nil {
 		return err
 	}
 
@@ -135,7 +167,7 @@ func CryptInit(name, baseName string, encryptionKey []byte) error {
 	}
 	defer blkdev.Close()
 	blockSize, err := unix.IoctlGetUint32(int(blkdev.Fd()), unix.BLKSSZGET)
-	zeroedBuf := make([]byte, blockSize*100) // Make it faster
+	zeroedBuf := make([]byte, blockSize*256) // Make it faster
 	for {
 		_, err := blkdev.Write(zeroedBuf)
 		if e, ok := err.(*os.PathError); ok && e.Err == syscall.ENOSPC {
@@ -145,5 +177,16 @@ func CryptInit(name, baseName string, encryptionKey []byte) error {
 			return fmt.Errorf("failed to zero-initalize new encrypted device: %w", err)
 		}
 	}
+	blkdev.Close()
+
+	// Now, unmap the non-journaled device and remap it with journaling for
+	// further use.
+	if err := cryptUnmap(name, baseName); err != nil {
+		return fmt.Errorf("failed to unmap temporary encrypted block device: %w", err)
+	}
+	if err := cryptMap(name, baseName, encryptionKey, true); err != nil {
+		return fmt.Errorf("failed to map initialized encrypted device: %w", err)
+	}
+
 	return nil
 }
