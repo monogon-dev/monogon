@@ -30,11 +30,11 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "685052b498b6ddfe562ca7a97736741d87916fe536623afb7da2824c0211c369",
     patch_args = ["-p1"],
     patches = [
-      "//third_party/go/patches:rules_go_absolute_embedsrc.patch",
+        "//third_party/go/patches:rules_go_absolute_embedsrc.patch",
     ],
+    sha256 = "685052b498b6ddfe562ca7a97736741d87916fe536623afb7da2824c0211c369",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.33.0/rules_go-v0.33.0.zip",
         "https://github.com/bazelbuild/rules_go/releases/download/v0.33.0/rules_go-v0.33.0.zip",
@@ -55,7 +55,6 @@ http_archive(
 )
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
-
 load("//third_party/go:repositories.bzl", "go_repositories")
 
 # gazelle:repository_macro third_party/go/repositories.bzl%go_repositories
@@ -297,6 +296,13 @@ http_archive(
     sha256 = "a643b2486fbee57b969659d408984094ca9afa1a048317dd3f5d3022e47213e8",
     strip_prefix = "qboot-a5300c4949b8d4de2d34bedfaed66793f48ec948",
     urls = ["https://github.com/bonzini/qboot/archive/a5300c4949b8d4de2d34bedfaed66793f48ec948.tar.gz"],
+)
+
+load("//third_party/dosfstools:external.bzl", "dosfstools_external")
+
+dosfstools_external(
+    name = "com_github_dosfstools_dosfstools",
+    version = "c888797b1d84ffbb949f147e3116e8bfb2e145a7",
 )
 
 # Load musl toolchain Metropolis sysroot tarball into external repository.
