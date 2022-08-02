@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 
 	"github.com/spf13/cobra"
 
+	"source.monogon.dev/metropolis/cli/metroctl/core"
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/proto/api"
@@ -24,29 +24,6 @@ func init() {
 	rootCmd.AddCommand(approveCmd)
 }
 
-// getNewNodes returns all nodes pending approval within the cluster.
-func getNewNodes(ctx context.Context, mgmt api.ManagementClient) ([]*api.Node, error) {
-	resN, err := mgmt.GetNodes(ctx, &api.GetNodesRequest{
-		Filter: "node.state == NODE_STATE_NEW",
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var nodes []*api.Node
-	for {
-		node, err := resN.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		nodes = append(nodes, node)
-	}
-	return nodes, nil
-}
-
 // nodeById returns the node matching id, if it exists within nodes.
 func nodeById(nodes []*api.Node, id string) *api.Node {
 	for _, n := range nodes {
@@ -58,26 +35,14 @@ func nodeById(nodes []*api.Node, id string) *api.Node {
 }
 
 func doApprove(cmd *cobra.Command, args []string) {
-	// Collect credentials, validate command parameters, and try dialing the
-	// cluster.
-	ocert, opkey, err := getCredentials()
-	if err == noCredentialsError {
-		log.Fatalf("You have to take ownership of the cluster first: %v", err)
-	}
-	if len(flags.clusterEndpoints) == 0 {
-		log.Fatal("Please provide at least one cluster endpoint using the --endpoint parameter.")
-	}
-	ctx := clicontext.WithInterrupt(context.Background())
-	cc, err := dialCluster(ctx, opkey, ocert, flags.proxyAddr, flags.clusterEndpoints)
-	if err != nil {
-		log.Fatalf("While dialing the cluster: %v", err)
-	}
+	cc := dialAuthenticated()
 	mgmt := api.NewManagementClient(cc)
 
 	// Get a list of all nodes pending approval by calling Management.GetNodes.
 	// We need this list regardless of whether we're actually approving nodes, or
 	// just listing them.
-	nodes, err := getNewNodes(ctx, mgmt)
+	ctx := clicontext.WithInterrupt(context.Background())
+	nodes, err := core.GetNodes(ctx, mgmt, "node.state == NODE_STATE_NEW")
 	if err != nil {
 		log.Fatalf("While fetching a list of nodes pending approval: %v", err)
 	}

@@ -118,20 +118,7 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 			},
 		}
 	} else {
-		ocert, opkey, err := getCredentials()
-		if err == noCredentialsError {
-			log.Fatalf("In order to create a non-bootstrap node installer, you have to take ownership of the cluster first: %v", err)
-		}
-		if err != nil {
-			log.Fatalf("While retrieving owner credentials: %v", err)
-		}
-		if len(flags.clusterEndpoints) == 0 {
-			log.Fatal("At least one cluster endpoint is required while generating non-bootstrap installer images.")
-		}
-		cc, err := dialCluster(ctx, opkey, ocert, flags.proxyAddr, flags.clusterEndpoints)
-		if err != nil {
-			log.Fatalf("While dialing the cluster: %v", err)
-		}
+		cc := dialAuthenticated()
 		mgmt := api.NewManagementClient(cc)
 		resT, err := mgmt.GetRegisterTicket(ctx, &api.GetRegisterTicketRequest{})
 		if err != nil {

@@ -2,80 +2,30 @@ package main
 
 import (
 	"context"
-	"crypto/ed25519"
-	"crypto/tls"
-	"crypto/x509"
-	"fmt"
 	"log"
-	"net"
 
-	"golang.org/x/net/proxy"
 	"google.golang.org/grpc"
 
-	"source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/node/core/rpc"
-	"source.monogon.dev/metropolis/node/core/rpc/resolver"
+	"source.monogon.dev/metropolis/cli/metroctl/core"
+	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 )
 
-// dialCluster dials the cluster control address. The owner certificate, and
-// proxy address parameters are optional and can be left nil, and empty,
-// respectively. At least one cluster endpoint must be provided. A missing
-// owner certificate will result in a connection that is authenticated with
-// ephemeral credentials, restricting the available API surface. proxyAddr
-// must point at a SOCKS5 endpoint.
-func dialCluster(ctx context.Context, opkey ed25519.PrivateKey, ocert *x509.Certificate, proxyAddr string, clusterEndpoints []string) (*grpc.ClientConn, error) {
-	var dialOpts []grpc.DialOption
-
-	if opkey == nil {
-		return nil, fmt.Errorf("an owner's private key must be provided")
-	}
-	if len(clusterEndpoints) == 0 {
-		return nil, fmt.Errorf("at least one cluster endpoint must be provided")
+func dialAuthenticated() *grpc.ClientConn {
+	if len(flags.clusterEndpoints) == 0 {
+		log.Fatal("Please provide at least one cluster endpoint using the --endpoint parameter.")
 	}
 
-	if proxyAddr != "" {
-		socksDialer, err := proxy.SOCKS5("tcp", proxyAddr, nil, proxy.Direct)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build a SOCKS dialer: %v", err)
-		}
-		grpcd := func(_ context.Context, addr string) (net.Conn, error) {
-			return socksDialer.Dial("tcp", addr)
-		}
-		dialOpts = append(dialOpts, grpc.WithContextDialer(grpcd))
+	// Collect credentials, validate command parameters, and try dialing the
+	// cluster.
+	ocert, opkey, err := getCredentials()
+	if err == noCredentialsError {
+		log.Fatalf("You have to take ownership of the cluster first: %v", err)
 	}
 
-	if ocert == nil {
-		creds, err := rpc.NewEphemeralCredentials(opkey, nil)
-		if err != nil {
-			return nil, fmt.Errorf("while building ephemeral credentials: %v", err)
-		}
-		dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
-	} else {
-		tlsc := tls.Certificate{
-			Certificate: [][]byte{ocert.Raw},
-			PrivateKey:  opkey,
-		}
-		creds := rpc.NewAuthenticatedCredentials(tlsc, nil)
-		dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
-	}
-
-	var resolverOpts []resolver.ResolverOption
-	if flags.verbose {
-		l := func(f string, args ...interface{}) {
-			log.Printf("resolver: " + f, args...)
-		}
-		resolverOpts = append(resolverOpts, resolver.WithLogger(l))
-	}
-	r := resolver.New(ctx, resolverOpts...)
-
-	for _, ep := range clusterEndpoints {
-		r.AddEndpoint(resolver.NodeByHostPort(ep, uint16(node.CuratorServicePort)))
-	}
-	dialOpts = append(dialOpts, grpc.WithResolvers(r))
-
-	c, err := grpc.Dial(resolver.MetropolisControlAddress, dialOpts...)
+	ctx := clicontext.WithInterrupt(context.Background())
+	cc, err := core.DialCluster(ctx, opkey, ocert, flags.proxyAddr, flags.clusterEndpoints, rpcLogger)
 	if err != nil {
-		return nil, fmt.Errorf("could not dial: %v", err)
+		log.Fatalf("While dialing the cluster: %v", err)
 	}
-	return c, nil
+	return cc
 }

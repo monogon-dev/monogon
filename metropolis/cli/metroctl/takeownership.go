@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientapi "k8s.io/client-go/tools/clientcmd/api"
 
+	"source.monogon.dev/metropolis/cli/metroctl/core"
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/rpc"
@@ -46,7 +47,7 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 		log.Fatalf("Couldn't get owner's key: %v", err)
 	}
 	ctx := clicontext.WithInterrupt(context.Background())
-	cc, err := dialCluster(ctx, opk, nil, flags.proxyAddr, flags.clusterEndpoints)
+	cc, err := core.DialCluster(ctx, opk, nil, flags.proxyAddr, flags.clusterEndpoints, rpcLogger)
 	if err != nil {
 		log.Fatalf("While dialing the cluster: %v", err)
 	}

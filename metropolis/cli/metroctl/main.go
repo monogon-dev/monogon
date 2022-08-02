@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"path/filepath"
 
 	"github.com/adrg/xdg"
@@ -33,6 +34,14 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flags.proxyAddr, "proxy", "", "SOCKS5 proxy address")
 	rootCmd.PersistentFlags().StringVar(&flags.configPath, "config", filepath.Join(xdg.ConfigHome, "metroctl"), "An alternative cluster config path")
 	rootCmd.PersistentFlags().BoolVar(&flags.verbose, "verbose", false, "Log additional runtime information")
+}
+
+// rpcLogger passes through the cluster resolver logs, if "--verbose" flag was
+// used.
+func rpcLogger(f string, args ...interface{}) {
+	if flags.verbose {
+		log.Printf("resolver: " + f, args...)
+	}
 }
 
 func main() {

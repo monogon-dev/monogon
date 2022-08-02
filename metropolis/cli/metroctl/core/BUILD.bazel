@@ -5,15 +5,21 @@ go_library(
     srcs = [
         "core.go",
         "install.go",
+        "rpc.go",
     ],
     importpath = "source.monogon.dev/metropolis/cli/metroctl/core",
     visibility = ["//visibility:public"],
     deps = [
+        "//metropolis/node",
+        "//metropolis/node/core/rpc",
+        "//metropolis/node/core/rpc/resolver",
         "//metropolis/proto/api",
         "@com_github_diskfs_go_diskfs//:go-diskfs",
         "@com_github_diskfs_go_diskfs//disk",
         "@com_github_diskfs_go_diskfs//filesystem",
         "@com_github_diskfs_go_diskfs//partition/gpt",
+        "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_protobuf//proto",
+        "@org_golang_x_net//proxy",
     ],
 )
