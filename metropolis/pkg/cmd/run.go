@@ -14,12 +14,12 @@ import (
 )
 
 // RunCommand starts a new process and waits until either its completion, or
-// appearance of expectedOutput in any line emitted by it. It returns true, if
-// expectedOutput was found, and false otherwise.
+// until the supplied predicate function returns true. The function is called
+// for each line produced by the new process.
 //
 // The process will be killed both in the event the context is cancelled, and
 // when expectedOutput is found.
-func RunCommand(ctx context.Context, path string, args []string, expectedOutput string) (bool, error) {
+func RunCommand(ctx context.Context, path string, args []string, pf func(string) bool) (bool, error) {
 	// Make a sub-context to ensure the process exits when this function is done.
 	ctx, ctxC := context.WithCancel(ctx)
 	defer ctxC()
@@ -56,11 +56,21 @@ func RunCommand(ctx context.Context, path string, args []string, expectedOutput 
 		case <-ctx.Done():
 			return false, ctx.Err()
 		case line := <-lineC:
-			if strings.Contains(line, expectedOutput) {
+			if pf(line) {
 				cmd.Process.Kill()
 				cmd.Wait()
 				return true, nil
 			}
 		}
+	}
+}
+
+// TerminateIfFound creates RunCommand predicates that instantly terminate
+// program execution in the event the given string is found in any line
+// produced. RunCommand will return true, if the string searched for was found,
+// and false otherwise.
+func TerminateIfFound(needle string) func(string) bool {
+	return func(haystack string) bool {
+		return strings.Contains(haystack, needle)
 	}
 }

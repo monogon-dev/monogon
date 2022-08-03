@@ -69,7 +69,8 @@ func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, e
 		"-no-reboot",
 	}
 	qemuArgs := append(defaultArgs, args...)
-	return cmd.RunCommand(ctx, "external/qemu/qemu-x86_64-softmmu", qemuArgs, expectedOutput)
+	pf := cmd.TerminateIfFound(expectedOutput)
+	return cmd.RunCommand(ctx, "external/qemu/qemu-x86_64-softmmu", qemuArgs, pf)
 }
 
 // runQemuWithInstaller runs the Metropolis Installer in a qemu, performing the

@@ -25,7 +25,8 @@ func expectMetroctl(t *testing.T, ctx context.Context, args []string, expect str
 	}
 
 	log.Printf("$ metroctl %s", strings.Join(args, " "))
-	found, err := cmd.RunCommand(ctx, path, args, expect)
+	// Terminate metroctl as soon as the expected output is found.
+	found, err := cmd.RunCommand(ctx, path, args, cmd.TerminateIfFound(expect))
 	if err != nil {
 		return fmt.Errorf("while running metroctl: %v", err)
 	}
