@@ -35,13 +35,13 @@ func nodeById(nodes []*api.Node, id string) *api.Node {
 }
 
 func doApprove(cmd *cobra.Command, args []string) {
-	cc := dialAuthenticated()
+	ctx := clicontext.WithInterrupt(context.Background())
+	cc := dialAuthenticated(ctx)
 	mgmt := api.NewManagementClient(cc)
 
 	// Get a list of all nodes pending approval by calling Management.GetNodes.
 	// We need this list regardless of whether we're actually approving nodes, or
 	// just listing them.
-	ctx := clicontext.WithInterrupt(context.Background())
 	nodes, err := core.GetNodes(ctx, mgmt, "node.state == NODE_STATE_NEW")
 	if err != nil {
 		log.Fatalf("While fetching a list of nodes pending approval: %v", err)

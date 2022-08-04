@@ -5,9 +5,12 @@ go_library(
     srcs = [
         "approve.go",
         "credentials.go",
+        "format.go",
         "install.go",
         "k8scredplugin.go",
+        "list.go",
         "main.go",
+        "node.go",
         "rpc.go",
         "takeownership.go",
     ],

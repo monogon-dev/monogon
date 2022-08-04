@@ -16,22 +16,49 @@ import (
 	"source.monogon.dev/metropolis/test/util"
 )
 
-func expectMetroctl(t *testing.T, ctx context.Context, args []string, expect string) error {
+// mctlExpectOutput returns true in the event the expected string is found in
+// metroctl output, and false otherwise.
+func mctlExpectOutput(t *testing.T, ctx context.Context, args []string, expect string) (bool, error) {
 	t.Helper()
 
 	path, err := datafile.ResolveRunfile("metropolis/cli/metroctl/metroctl_/metroctl")
 	if err != nil {
-		return fmt.Errorf("couldn't resolve metroctl binary: %v", err)
+		return false, fmt.Errorf("couldn't resolve metroctl binary: %v", err)
 	}
 
 	log.Printf("$ metroctl %s", strings.Join(args, " "))
 	// Terminate metroctl as soon as the expected output is found.
 	found, err := cmd.RunCommand(ctx, path, args, cmd.TerminateIfFound(expect))
 	if err != nil {
-		return fmt.Errorf("while running metroctl: %v", err)
+		return false, fmt.Errorf("while running metroctl: %v", err)
+	}
+	return found, nil
+}
+
+// mctlFailIfMissing will return a non-nil error value either if the expected
+// output string s is missing in metroctl output, or in case metroctl can't be
+// launched.
+func mctlFailIfMissing(t *testing.T, ctx context.Context, args []string, s string) error {
+	found, err := mctlExpectOutput(t, ctx, args, s)
+	if err != nil {
+		return err
 	}
 	if !found {
-		return fmt.Errorf("expected string wasn't found while running metroctl.")
+		return fmt.Errorf("expected output is missing: \"%s\"", s)
+	}
+	return nil
+}
+
+// mctlFailIfFound will return a non-nil error value either if the expected
+// output string s is found in metroctl output, or in case metroctl can't be
+// launched.
+func mctlFailIfFound(t *testing.T, ctx context.Context, args []string, s string) error {
+	found, err := mctlExpectOutput(t, ctx, args, s)
+	if err != nil {
+		return err
+	}
+	if found {
+		return fmt.Errorf("unexpected output was found: \"%s\"", s)
 	}
 	return nil
 }
@@ -86,10 +113,74 @@ func TestMetroctl(t *testing.T) {
 			args = append(args, commonOpts...)
 			args = append(args, endpointOpts[0])
 			args = append(args, "takeownership")
-			return expectMetroctl(t, ctx, args, "Successfully retrieved owner credentials")
+			return mctlFailIfMissing(t, ctx, args, "Successfully retrieved owner credentials")
 		})
 	})
 	if !st {
 		t.Fatalf("metroctl: Couldn't get cluster ownership.")
 	}
+	t.Run("list", func(t *testing.T) {
+		util.TestEventual(t, "metroctl list", ctx, 10*time.Second, func(ctx context.Context) error {
+			var args []string
+			args = append(args, commonOpts...)
+			args = append(args, endpointOpts...)
+			args = append(args, "node", "list")
+			// Expect both node IDs to show up in the results.
+			if err := mctlFailIfMissing(t, ctx, args, cl.NodeIDs[0]); err != nil {
+				return err
+			}
+			return mctlFailIfMissing(t, ctx, args, cl.NodeIDs[1])
+		})
+	})
+	t.Run("list [nodeID]", func(t *testing.T) {
+		util.TestEventual(t, "metroctl list [nodeID]", ctx, 10*time.Second, func(ctx context.Context) error {
+			var args []string
+			args = append(args, commonOpts...)
+			args = append(args, endpointOpts...)
+			args = append(args, "node", "list", cl.NodeIDs[1])
+			// Expect just the supplied node IDs to show up in the results.
+			if err := mctlFailIfFound(t, ctx, args, cl.NodeIDs[0]); err != nil {
+				return err
+			}
+			return mctlFailIfMissing(t, ctx, args, cl.NodeIDs[1])
+		})
+	})
+	t.Run("list --output", func(t *testing.T) {
+		util.TestEventual(t, "metroctl list --output", ctx, 10*time.Second, func(ctx context.Context) error {
+			var args []string
+			args = append(args, commonOpts...)
+			args = append(args, endpointOpts...)
+			args = append(args, "node", "list", "--output", "list.txt")
+			// In this case metroctl should write its output to a file rather than stdout.
+			if err := mctlFailIfFound(t, ctx, args, cl.NodeIDs[0]); err != nil {
+				return err
+			}
+			od, err := os.ReadFile("list.txt")
+			if err != nil {
+				return fmt.Errorf("while reading metroctl output file: %v", err)
+			}
+			if !strings.Contains(string(od), cl.NodeIDs[0]) {
+				return fmt.Errorf("expected node ID hasn't been found in metroctl output")
+			}
+			return nil
+		})
+	})
+	t.Run("list --filter", func(t *testing.T) {
+		util.TestEventual(t, "metroctl list --filter", ctx, 10*time.Second, func(ctx context.Context) error {
+			nid := cl.NodeIDs[1]
+			naddr := cl.Nodes[nid].ManagementAddress
+
+			var args []string
+			args = append(args, commonOpts...)
+			args = append(args, endpointOpts...)
+			// Filter list results based on nodes' external addresses.
+			args = append(args, "node", "list", "--filter", fmt.Sprintf("node.status.external_address==\"%s\"", naddr))
+			// Expect the second node's ID to show up in the results.
+			if err := mctlFailIfMissing(t, ctx, args, cl.NodeIDs[1]); err != nil {
+				return err
+			}
+			// The first node should've been filtered away.
+			return mctlFailIfFound(t, ctx, args, cl.NodeIDs[0])
+		})
+	})
 }

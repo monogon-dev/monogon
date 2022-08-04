@@ -118,7 +118,7 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 			},
 		}
 	} else {
-		cc := dialAuthenticated()
+		cc := dialAuthenticated(ctx)
 		mgmt := api.NewManagementClient(cc)
 		resT, err := mgmt.GetRegisterTicket(ctx, &api.GetRegisterTicketRequest{})
 		if err != nil {
