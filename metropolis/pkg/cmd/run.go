@@ -14,8 +14,10 @@ import (
 )
 
 // RunCommand starts a new process and waits until either its completion, or
-// until the supplied predicate function returns true. The function is called
+// until the supplied predicate function pf returns true. The function is called
 // for each line produced by the new process.
+//
+// The returned boolean value equals the last value returned by pf.
 //
 // The process will be killed both in the event the context is cancelled, and
 // when expectedOutput is found.
@@ -50,6 +52,13 @@ func RunCommand(ctx context.Context, path string, args []string, pf func(string)
 		return false, fmt.Errorf("couldn't start the process: %w", err)
 	}
 
+	// Handle the case in which the process finishes before pf takes the chance to
+	// kill it.
+	complC := make(chan error, 1)
+	go func() {
+		complC <- cmd.Wait()
+	}()
+
 	// Try matching against expectedOutput and return the result.
 	for {
 		select {
@@ -61,6 +70,8 @@ func RunCommand(ctx context.Context, path string, args []string, pf func(string)
 				cmd.Wait()
 				return true, nil
 			}
+		case err := <-complC:
+			return false, err
 		}
 	}
 }
