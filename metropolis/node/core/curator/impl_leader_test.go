@@ -1059,22 +1059,30 @@ func TestUpdateNodeRoles(t *testing.T) {
 	opt := func(v bool) *bool { return &v }
 	ue := []*apb.UpdateNodeRolesRequest{
 		&apb.UpdateNodeRolesRequest{
-			Pubkey:           tn[0].pubkey,
+			Node: &apb.UpdateNodeRolesRequest_Pubkey{
+				Pubkey: tn[0].pubkey,
+			},
 			KubernetesWorker: opt(false),
 			ConsensusMember:  opt(false),
 		},
 		&apb.UpdateNodeRolesRequest{
-			Pubkey:           tn[1].pubkey,
+			Node: &apb.UpdateNodeRolesRequest_Pubkey{
+				Pubkey: tn[1].pubkey,
+			},
 			KubernetesWorker: opt(false),
 			ConsensusMember:  opt(true),
 		},
 		&apb.UpdateNodeRolesRequest{
-			Pubkey:           tn[2].pubkey,
+			Node: &apb.UpdateNodeRolesRequest_Pubkey{
+				Pubkey: tn[2].pubkey,
+			},
 			KubernetesWorker: opt(true),
 			ConsensusMember:  opt(true),
 		},
 		&apb.UpdateNodeRolesRequest{
-			Pubkey:           tn[2].pubkey,
+			Node: &apb.UpdateNodeRolesRequest_Pubkey{
+				Pubkey: tn[2].pubkey,
+			},
 			KubernetesWorker: nil,
 			ConsensusMember:  nil,
 		},
@@ -1100,7 +1108,7 @@ func TestUpdateNodeRoles(t *testing.T) {
 	cn := getNodes(t, ctx, mgmt, "")
 	for i, e := range ue {
 		for _, n := range cn {
-			if bytes.Equal(n.Pubkey, e.Pubkey) {
+			if bytes.Equal(n.Pubkey, e.GetPubkey()) {
 				if e.KubernetesWorker != nil {
 					if *e.KubernetesWorker != (n.Roles.KubernetesWorker != nil) {
 						t.Fatalf("KubernetesWorker role mismatch (node %d/%d).", i+1, len(ue))
@@ -1120,12 +1128,16 @@ func TestUpdateNodeRoles(t *testing.T) {
 	// as well.
 	uf := []*apb.UpdateNodeRolesRequest{
 		&apb.UpdateNodeRolesRequest{
-			Pubkey:           tn[0].pubkey,
+			Node: &apb.UpdateNodeRolesRequest_Pubkey{
+				Pubkey: tn[0].pubkey,
+			},
 			KubernetesWorker: opt(true),
 			ConsensusMember:  opt(false),
 		},
 		&apb.UpdateNodeRolesRequest{
-			Pubkey:           tn[0].pubkey,
+			Node: &apb.UpdateNodeRolesRequest_Pubkey{
+				Pubkey: tn[0].pubkey,
+			},
 			KubernetesWorker: opt(true),
 			ConsensusMember:  nil,
 		},

@@ -283,8 +283,21 @@ func (l *leaderManagement) ApproveNode(ctx context.Context, req *apb.ApproveNode
 // adjusting the affected node's representation within the cluster, can also
 // trigger the addition of a new etcd learner node.
 func (l *leaderManagement) UpdateNodeRoles(ctx context.Context, req *apb.UpdateNodeRolesRequest) (*apb.UpdateNodeRolesResponse, error) {
-	if len(req.Pubkey) != ed25519.PublicKeySize {
-		return nil, status.Errorf(codes.InvalidArgument, "pubkey must be %d bytes long", ed25519.PublicKeySize)
+	// Nodes are identifiable by either of their public keys or (string) node IDs.
+	// In case a public key was provided, convert it to a corresponding node ID
+	// here.
+	var id string
+	switch rid := req.Node.(type) {
+	case *apb.UpdateNodeRolesRequest_Pubkey:
+		if len(rid.Pubkey) != ed25519.PublicKeySize {
+			return nil, status.Errorf(codes.InvalidArgument, "pubkey must be %d bytes long", ed25519.PublicKeySize)
+		}
+		// Convert the pubkey into node ID.
+		id = identity.NodeID(rid.Pubkey)
+	case *apb.UpdateNodeRolesRequest_Id:
+		id = rid.Id
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "exactly one of pubkey or id must be set")
 	}
 
 	// Take l.muNodes before modifying the node.
@@ -292,8 +305,10 @@ func (l *leaderManagement) UpdateNodeRoles(ctx context.Context, req *apb.UpdateN
 	defer l.muNodes.Unlock()
 
 	// Find the node matching the requested public key.
-	id := identity.NodeID(req.Pubkey)
 	node, err := nodeLoad(ctx, l.leadership, id)
+	if err == errNodeNotFound {
+		return nil, status.Errorf(codes.NotFound, "node %s not found", id)
+	}
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "while loading node %s: %v", id, err)
 	}

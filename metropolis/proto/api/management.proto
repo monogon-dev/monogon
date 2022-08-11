@@ -158,9 +158,15 @@ message ApproveNodeResponse {
 // role fields are optional, and no change will result if they're either unset
 // or if their value matches existing state.
 message UpdateNodeRolesRequest {
-  // pubkey is the Ed25519 public key of this node, which can be used to
-  // generate the node's ID. This is always set.
-  bytes pubkey = 1;
+  // node uniquely identifies the node subject to this request.
+  oneof node {
+    // pubkey is the Ed25519 public key of this node, which can be used to
+    // generate the node's ID.
+    bytes pubkey = 1;
+    // id is the human-readable identifier of the node, based on its public
+    // key.
+    string id = 4;
+  }
 
   // kubernetesWorker adjusts the appropriate role when set. Nodes performing
   // this role must also be consensus members. 
