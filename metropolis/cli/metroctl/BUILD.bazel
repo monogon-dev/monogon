@@ -13,6 +13,7 @@ go_library(
         "main.go",
         "node.go",
         "rpc.go",
+        "set.go",
         "takeownership.go",
     ],
     data = [
