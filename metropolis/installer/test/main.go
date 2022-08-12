@@ -69,7 +69,7 @@ func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, e
 		"-no-reboot",
 	}
 	qemuArgs := append(defaultArgs, args...)
-	pf := cmd.TerminateIfFound(expectedOutput)
+	pf := cmd.TerminateIfFound(expectedOutput, nil)
 	return cmd.RunCommand(ctx, "external/qemu/qemu-x86_64-softmmu", qemuArgs, pf)
 }
 

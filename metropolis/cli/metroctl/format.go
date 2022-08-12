@@ -8,6 +8,7 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/identity"
 	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 type encoder struct {
@@ -18,6 +19,45 @@ func (e *encoder) writeNodeID(n *apb.Node) error {
 	id := identity.NodeID(n.Pubkey)
 	_, err := fmt.Fprintf(e.out, "%s\n", id)
 	return err
+}
+
+func (e *encoder) writeNode(n *apb.Node) error {
+	id := identity.NodeID(n.Pubkey)
+	if _, err := fmt.Fprintf(e.out, "%s", id); err != nil {
+		return err
+	}
+
+	state := cpb.NodeState_name[int32(n.State)]
+	if _, err := fmt.Fprintf(e.out, "\t%s", state); err != nil {
+		return err
+	}
+
+	addr := n.Status.ExternalAddress
+	if _, err := fmt.Fprintf(e.out, "\t%s", addr); err != nil {
+		return err
+	}
+
+	health := apb.Node_Health_name[int32(n.Health)]
+	if _, err := fmt.Fprintf(e.out, "\t%s", health); err != nil {
+		return err
+	}
+
+	var roles string
+	if n.Roles.KubernetesWorker != nil {
+		roles += "KubernetesWorker"
+	}
+	if n.Roles.ConsensusMember != nil {
+		roles += ",ConsensusMember"
+	}
+	if _, err := fmt.Fprintf(e.out, "\t%s", roles); err != nil {
+		return err
+	}
+
+	tshs := n.TimeSinceHeartbeat.GetSeconds()
+	if _, err := fmt.Fprintf(e.out, "\t%ds\n", tshs); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (e *encoder) close() error {

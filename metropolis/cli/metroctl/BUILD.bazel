@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "approve.go",
         "credentials.go",
+        "describe.go",
         "format.go",
         "install.go",
         "k8scredplugin.go",
@@ -30,6 +31,7 @@ go_library(
         "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
         "//metropolis/proto/api",
+        "//metropolis/proto/common",
         "@com_github_adrg_xdg//:xdg",
         "@com_github_spf13_cobra//:cobra",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",

@@ -79,9 +79,25 @@ func RunCommand(ctx context.Context, path string, args []string, pf func(string)
 // TerminateIfFound creates RunCommand predicates that instantly terminate
 // program execution in the event the given string is found in any line
 // produced. RunCommand will return true, if the string searched for was found,
-// and false otherwise.
-func TerminateIfFound(needle string) func(string) bool {
+// and false otherwise. If logf isn't nil, it will be called whenever a new
+// line is received.
+func TerminateIfFound(needle string, logf func(string)) func(string) bool {
 	return func(haystack string) bool {
+		if logf != nil {
+			logf(haystack)
+		}
 		return strings.Contains(haystack, needle)
+	}
+}
+
+// WaitUntilCompletion creates a RunCommand predicate that will make it wait
+// for the process to exit on its own. If logf isn't nil, it will be called
+// whenever a new line is received.
+func WaitUntilCompletion(logf func(string)) func(string) bool {
+	return func(line string) bool {
+		if logf != nil {
+			logf(line)
+		}
+		return false
 	}
 }

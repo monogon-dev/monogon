@@ -16,19 +16,42 @@ import (
 	"source.monogon.dev/metropolis/test/util"
 )
 
+// resolveMetroctl resolves metroctl filesystem path. It will return a correct
+// path, or terminate test execution.
+func resolveMetroctl() string {
+	path, err := datafile.ResolveRunfile("metropolis/cli/metroctl/metroctl_/metroctl")
+	if err != nil {
+		log.Fatalf("Couldn't resolve metroctl binary: %v", err)
+	}
+	return path
+}
+
+// mctlRun starts metroctl, and waits till it exits. It returns nil, if the run
+// was successful.
+func mctlRun(t *testing.T, ctx context.Context, args []string) error {
+	t.Helper()
+
+	path := resolveMetroctl()
+	log.Printf("$ metroctl %s", strings.Join(args, " "))
+	logf := func(line string) {
+		log.Printf("metroctl: %s", line)
+	}
+	_, err := cmd.RunCommand(ctx, path, args, cmd.WaitUntilCompletion(logf))
+	return err
+}
+
 // mctlExpectOutput returns true in the event the expected string is found in
 // metroctl output, and false otherwise.
 func mctlExpectOutput(t *testing.T, ctx context.Context, args []string, expect string) (bool, error) {
 	t.Helper()
 
-	path, err := datafile.ResolveRunfile("metropolis/cli/metroctl/metroctl_/metroctl")
-	if err != nil {
-		return false, fmt.Errorf("couldn't resolve metroctl binary: %v", err)
-	}
-
+	path := resolveMetroctl()
 	log.Printf("$ metroctl %s", strings.Join(args, " "))
 	// Terminate metroctl as soon as the expected output is found.
-	found, err := cmd.RunCommand(ctx, path, args, cmd.TerminateIfFound(expect))
+	logf := func(line string) {
+		log.Printf("metroctl: %s", line)
+	}
+	found, err := cmd.RunCommand(ctx, path, args, cmd.TerminateIfFound(expect, logf))
 	if err != nil {
 		return false, fmt.Errorf("while running metroctl: %v", err)
 	}
@@ -181,6 +204,53 @@ func TestMetroctl(t *testing.T) {
 			}
 			// The first node should've been filtered away.
 			return mctlFailIfFound(t, ctx, args, cl.NodeIDs[0])
+		})
+	})
+	t.Run("describe --filter", func(t *testing.T) {
+		util.TestEventual(t, "metroctl list --filter", ctx, 10*time.Second, func(ctx context.Context) error {
+			nid := cl.NodeIDs[0]
+			naddr := cl.Nodes[nid].ManagementAddress
+
+			var args []string
+			args = append(args, commonOpts...)
+			args = append(args, endpointOpts...)
+
+			// Filter out the first node. Afterwards, only one node should be left.
+			args = append(args, "node", "describe", "--output", "describe.txt", "--filter", fmt.Sprintf("node.status.external_address==\"%s\"", naddr))
+			if err := mctlRun(t, ctx, args); err != nil {
+				return err
+			}
+
+			// Try matching metroctl output against the advertised format.
+			ob, err := os.ReadFile("describe.txt")
+			if err != nil {
+				return fmt.Errorf("while reading metroctl output: %v", err)
+			}
+			var onid, ostate, onaddr, onstatus, onroles string
+			var ontimeout int
+			_, err = fmt.Sscanf(string(ob[:]), "%s\t%s\t%s\t%s\t%s\t%ds\n", &onid, &ostate, &onaddr, &onstatus, &onroles, &ontimeout)
+			if err != nil {
+				return fmt.Errorf("while parsing metroctl output: %v", err)
+			}
+			if onid != nid {
+				return fmt.Errorf("node id mismatch")
+			}
+			if ostate != "NODE_STATE_UP" {
+				return fmt.Errorf("node state mismatch")
+			}
+			if onaddr != naddr {
+				return fmt.Errorf("node address mismatch")
+			}
+			if onstatus != "HEALTHY" {
+				return fmt.Errorf("node status mismatch")
+			}
+			if onroles != "KubernetesWorker,ConsensusMember" {
+				return fmt.Errorf("node role mismatch")
+			}
+			if ontimeout < 0 || ontimeout > 30 {
+				return fmt.Errorf("node timeout mismatch")
+			}
+			return nil
 		})
 	})
 }

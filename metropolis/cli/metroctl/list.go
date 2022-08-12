@@ -8,8 +8,7 @@ import (
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
-	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/proto/api"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 var listCmd = &cobra.Command{
@@ -27,7 +26,7 @@ func init() {
 func doList(cmd *cobra.Command, args []string) {
 	ctx := clicontext.WithInterrupt(context.Background())
 	cc := dialAuthenticated(ctx)
-	mgmt := api.NewManagementClient(cc)
+	mgmt := apb.NewManagementClient(cc)
 
 	// Narrow down the output set to supplied node IDs, if any.
 	qids := make(map[string]bool)
@@ -42,20 +41,8 @@ func doList(cmd *cobra.Command, args []string) {
 		log.Fatalf("While calling Management.GetNodes: %v", err)
 	}
 
-	enc := newOutputEncoder()
-	defer enc.close()
-
-	for _, n := range nodes {
-		// Filter the information we want client-side.
-		if len(qids) != 0 {
-			nid := identity.NodeID(n.Pubkey)
-			if _, e := qids[nid]; !e {
-				continue
-			}
-		}
-
-		if err := enc.writeNodeID(n); err != nil {
-			log.Fatalf("While listing nodes: %v", err)
-		}
+	of := func(enc *encoder, n *apb.Node) error {
+		return enc.writeNodeID(n)
 	}
+	printNodes(of, nodes, args)
 }
