@@ -57,19 +57,19 @@ func doApprove(cmd *cobra.Command, args []string) {
 			log.Print("There are no nodes pending approval at this time.")
 		}
 	} else {
-		// Otherwise, try to approve the node matching the id.
-		tgtNodeId := args[0]
-
-		n := nodeById(nodes, tgtNodeId)
-		if n == nil {
-			log.Fatalf("Couldn't find a new node matching id %s", tgtNodeId)
+		// Otherwise, try to approve the nodes matching the supplied ids.
+		for _, tgtNodeId := range args {
+			n := nodeById(nodes, tgtNodeId)
+			if n == nil {
+				log.Fatalf("Couldn't find a new node matching id %s", tgtNodeId)
+			}
+			_, err := mgmt.ApproveNode(ctx, &api.ApproveNodeRequest{
+				Pubkey: n.Pubkey,
+			})
+			if err != nil {
+				log.Fatalf("While approving node %s: %v", tgtNodeId, err)
+			}
+			log.Printf("Approved node %s.", tgtNodeId)
 		}
-		_, err := mgmt.ApproveNode(ctx, &api.ApproveNodeRequest{
-			Pubkey: n.Pubkey,
-		})
-		if err != nil {
-			log.Fatalf("While approving node %s: %v", tgtNodeId, err)
-		}
-		log.Printf("Approved node %s.", tgtNodeId)
 	}
 }
