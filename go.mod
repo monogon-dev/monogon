@@ -82,6 +82,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/insomniacslk/dhcp v0.0.0-20220119180841-3c283ff8b7dd
 	github.com/joho/godotenv v1.4.0
+	github.com/kevinburke/go-bindata v3.23.0+incompatible
 	github.com/kyleconroy/sqlc v1.15.0
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mdlayher/raw v0.1.0

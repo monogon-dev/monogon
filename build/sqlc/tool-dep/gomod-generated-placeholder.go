@@ -6,6 +6,7 @@
 package main
 
 import (
+	_ "github.com/kevinburke/go-bindata"
 	_ "github.com/kyleconroy/sqlc/pkg/cli"
 )
 

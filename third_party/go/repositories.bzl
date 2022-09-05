@@ -2862,6 +2862,12 @@ def go_repositories():
         sum = "h1:DynhcF+bztK8gooS0+NDJFrdNZjJ3gzVzC545UNA9iw=",
         version = "v1.16.1",
     )
+    go_repository(
+        name = "com_github_kevinburke_go_bindata",
+        importpath = "github.com/kevinburke/go-bindata",
+        sum = "h1:rqNOXZlqrYhMVVAsQx8wuc+LaA73YcfbQ407wAykyS8=",
+        version = "v3.23.0+incompatible",
+    )
 
     go_repository(
         name = "com_github_kevinburke_ssh_config",
