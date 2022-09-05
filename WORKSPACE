@@ -238,6 +238,12 @@ efistub_external(
     version = "3542da2442d8b29661b47c42ad7e5fa9bc8562ec",
 )
 
+load("//third_party/libpg_query:external.bzl", "libpg_query_external")
+libpg_query_external(
+    name = "libpg_query",
+    version = "13-2.1.2",
+)
+
 register_toolchains("//:host_python")
 
 # same for gvisor/rules_docker.

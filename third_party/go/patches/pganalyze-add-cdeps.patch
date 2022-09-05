@@ -1,0 +1,13 @@
+--- a/parser/BUILD.bazel	2022-09-05 14:33:25.825959896 +0200
++++ b/parser/BUILD.bazel	2022-09-05 14:33:51.071298361 +0200
+@@ -86,6 +86,9 @@
+         "xxhash.c",
+     ],
+     cgo = True,
++    cdeps = [
++        "@libpg_query//:libpg_query",
++    ],
+     clinkopts = [""],
+     copts = ["-Iparser/include -g -fstack-protector -std=gnu99"],
+     importpath = "github.com/pganalyze/pg_query_go/v2/parser",
+
