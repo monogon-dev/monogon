@@ -9,7 +9,6 @@ import (
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 )
 
-
 func dialAuthenticated(ctx context.Context) *grpc.ClientConn {
 	// Collect credentials, validate command parameters, and try dialing the
 	// cluster.

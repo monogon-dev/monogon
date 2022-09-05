@@ -5,8 +5,8 @@ import (
 )
 
 var nodeCmd = &cobra.Command{
-	Short:   "Updates and queries node information.",
-	Use:     "node",
+	Short: "Updates and queries node information.",
+	Use:   "node",
 }
 
 func init() {

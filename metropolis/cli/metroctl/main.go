@@ -51,7 +51,7 @@ func init() {
 // used.
 func rpcLogger(f string, args ...interface{}) {
 	if flags.verbose {
-		log.Printf("resolver: " + f, args...)
+		log.Printf("resolver: "+f, args...)
 	}
 }
 
