@@ -107,17 +107,15 @@ def _fsspec_core_impl(ctx, tool, output_file):
     extra_specs = []
 
     for fsspec in ctx.attr.fsspecs:
-        # Skip files-as-fsspecs.
-        if FSSpecInfo not in fsspec:
-            continue
-        fsspecInfo = fsspec[FSSpecInfo]
-        extra_specs.append(fsspecInfo.spec)
-        for f in fsspecInfo.referenced:
-            inputs.append(f)
-
-    for file in ctx.files.fsspecs:
-        # Raw .fsspec prototext. No referenced data allowed.
-        extra_specs.append(file)
+        if FSSpecInfo in fsspec:
+            fsspecInfo = fsspec[FSSpecInfo]
+            extra_specs.append(fsspecInfo.spec)
+            for f in fsspecInfo.referenced:
+                inputs.append(f)
+        else:
+            # Raw .fsspec prototext. No referenced data allowed.
+            di = fsspec[DefaultInfo]
+            extra_specs += di.files.to_list()
 
     ctx.actions.run(
         outputs = [output_file],
