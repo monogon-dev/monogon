@@ -1114,6 +1114,13 @@ def go_repositories():
         version = "v0.0.0-20200317170641-1fdf38b7b0e9",
     )
     go_repository(
+        name = "com_github_desertbit_timer",
+        importpath = "github.com/desertbit/timer",
+        sum = "h1:U5y3Y5UE0w7amNe7Z5G/twsBW0KEalRQXZzf8ufSh9I=",
+        version = "v0.0.0-20180107155436-c41aec40b27f",
+    )
+
+    go_repository(
         name = "com_github_devigned_tab",
         importpath = "github.com/devigned/tab",
         sum = "h1:3mD6Kb1mUOYeLpJvTVSDwSg5ZsfSxfvxGRTxRsJsITA=",
@@ -1846,6 +1853,25 @@ def go_repositories():
         version = "v0.0.0-20190224160051-33c29581e754",
     )
     go_repository(
+        name = "com_github_gobwas_httphead",
+        importpath = "github.com/gobwas/httphead",
+        sum = "h1:s+21KNqlpePfkah2I+gwHF8xmJWRjooY+5248k6m4A0=",
+        version = "v0.0.0-20180130184737-2c6c146eadee",
+    )
+    go_repository(
+        name = "com_github_gobwas_pool",
+        importpath = "github.com/gobwas/pool",
+        sum = "h1:QEmUOlnSjWtnpRGHF3SauEiOsy82Cup83Vf2LcMlnc8=",
+        version = "v0.2.0",
+    )
+    go_repository(
+        name = "com_github_gobwas_ws",
+        importpath = "github.com/gobwas/ws",
+        sum = "h1:CoAavW/wd/kulfZmSIBt6p24n4j7tHgNVCjsfHVNUbo=",
+        version = "v1.0.2",
+    )
+
+    go_repository(
         name = "com_github_gocql_gocql",
         importpath = "github.com/gocql/gocql",
         sum = "h1:6ImvI6U901e1ezn/8u2z3bh1DZIvMOia0yTSBxhy4Ao=",
@@ -2540,6 +2566,13 @@ def go_repositories():
         sum = "h1:b6R2BslTbIEToALKP7LxUvijTsNI9TAe80pLWN2g/HU=",
         version = "v0.3.12",
     )
+    go_repository(
+        name = "com_github_improbable_eng_grpc_web",
+        importpath = "github.com/improbable-eng/grpc-web",
+        sum = "h1:BN+7z6uNXZ1tQGcNAuaU1YjsLTApzkjt2tzCixLaUPQ=",
+        version = "v0.15.0",
+    )
+
     go_repository(
         name = "com_github_inconshreveable_mousetrap",
         importpath = "github.com/inconshreveable/mousetrap",
@@ -3520,6 +3553,13 @@ def go_repositories():
         sum = "h1:qRlmpTzm2pstMKKzTdvwPCF5QfBNURSlAgN/R+qbKos=",
         version = "v0.3.2",
     )
+    go_repository(
+        name = "com_github_mwitkow_grpc_proxy",
+        importpath = "github.com/mwitkow/grpc-proxy",
+        sum = "h1:0xuRacu/Zr+jX+KyLLPPktbwXqyOvnOPUQmMLzX1jxU=",
+        version = "v0.0.0-20181017164139-0f1106ef9c76",
+    )
+
     go_repository(
         name = "com_github_mxk_go_flowrate",
         importpath = "github.com/mxk/go-flowrate",
@@ -5507,6 +5547,13 @@ def go_repositories():
         version = "v0.0.0-20220210201930-3a6ce19ff2f9",
     )
     go_repository(
+        name = "io_nhooyr_websocket",
+        importpath = "nhooyr.io/websocket",
+        sum = "h1:s+C3xAMLwGmlI31Nyn/eAehUlZPwfYZu2JXM621Q5/k=",
+        version = "v1.8.6",
+    )
+
+    go_repository(
         name = "io_opencensus_go",
         importpath = "go.opencensus.io",
         sum = "h1:gqCw0LfLxScz8irSi8exQc7fyQ0fKQU/qnC/X8+V/1M=",
@@ -5728,6 +5775,7 @@ def go_repositories():
     )
     go_repository(
         name = "org_golang_google_grpc",
+        build_file_proto_mode = "disable",
         importpath = "google.golang.org/grpc",
         sum = "h1:oCjezcn6g6A75TGoKYBPgKmVBLexhYLM6MebdrPApP8=",
         version = "v1.46.0",
