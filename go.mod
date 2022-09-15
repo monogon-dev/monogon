@@ -64,6 +64,7 @@ require (
 	github.com/bazelbuild/rules_go v0.30.0
 	github.com/cavaliergopher/cpio v1.0.1
 	github.com/cenkalti/backoff/v4 v4.1.2
+	github.com/cockroachdb/cockroach-go/v2 v2.2.10
 	github.com/container-storage-interface/spec v1.5.0
 	github.com/containerd/containerd v1.6.6
 	github.com/containernetworking/plugins v1.1.1
@@ -71,6 +72,7 @@ require (
 	github.com/corverroos/commentwrap v0.0.0-20191204065359-2926638be44c
 	github.com/diskfs/go-diskfs v1.2.0
 	github.com/go-delve/delve v1.8.2
+	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.11.4
 	github.com/google/certificate-transparency-go v1.1.2
@@ -85,6 +87,7 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/kevinburke/go-bindata v3.23.0+incompatible
 	github.com/kyleconroy/sqlc v1.15.0
+	github.com/lib/pq v1.10.6
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mdlayher/raw v0.1.0
 	github.com/opencontainers/runc v1.1.3
@@ -103,10 +106,10 @@ require (
 	go.etcd.io/etcd/server/v3 v3.5.4
 	go.etcd.io/etcd/tests/v3 v3.5.4
 	go.uber.org/multierr v1.8.0
-	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
+	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
 	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4
-	golang.org/x/sys v0.0.0-20220502124256-b6088ccd6cba
+	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a
 	golang.org/x/text v0.3.7
 	golang.org/x/tools v0.1.10-0.20220218145154-897bd77cd717
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220208144051-fde48d68ee68
@@ -147,7 +150,7 @@ require (
 	github.com/GoogleCloudPlatform/k8s-cloud-provider v1.16.1-0.20210702024009-ea6160c1d0e3 // indirect
 	github.com/JeffAshton/win_pdh v0.0.0-20161109143554-76bb4ee9f0ab // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd // indirect
-	github.com/Microsoft/go-winio v0.5.1 // indirect
+	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Microsoft/hcsshim v0.9.3 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
@@ -203,7 +206,7 @@ require (
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
-	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
+	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/go-delve/liner v1.2.2-1 // indirect
@@ -214,7 +217,7 @@ require (
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible // indirect
 	github.com/godbus/dbus/v5 v5.0.6 // indirect
-	github.com/gofrs/flock v0.8.0 // indirect
+	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -237,6 +240,8 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/heketi/heketi v10.3.0+incompatible // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
@@ -356,10 +361,10 @@ require (
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
+	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20220202223031-3b95c81cc178 // indirect
-	gonum.org/v1/gonum v0.6.2 // indirect
+	gonum.org/v1/gonum v0.9.3 // indirect
 	google.golang.org/api v0.78.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.38.1 // indirect

@@ -315,3 +315,22 @@ dosfstools_external(
 load("//build/toolchain/musl-host-gcc:sysroot.bzl", "musl_sysroot_repositories")
 
 musl_sysroot_repositories()
+
+# CockroachDB binary used for tests.
+#
+# WARNING: Not distributed under an OSI certified license. Must only be used in
+# tests, not be redistributed!
+http_archive(
+    name = "cockroach",
+    urls = [
+        # TODO: select() to pick other host architectures.
+        "https://binaries.cockroachdb.com/cockroach-v22.1.6.linux-amd64.tgz",
+    ],
+    sha256 = "0821cff5770400fb94c8b6c2ab338d96f4114fbf2b3206bc8a6dcf62f9c0f4ea",
+    strip_prefix = "cockroach-v22.1.6.linux-amd64",
+    build_file_content = """
+exports_files([
+    "cockroach"
+])
+""",
+)
