@@ -13,22 +13,29 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	apb "source.monogon.dev/cloud/api"
+	"source.monogon.dev/cloud/apigw/model"
 	"source.monogon.dev/cloud/lib/component"
 )
 
-// TestPublicSimple ensures the public grpc-web listener is working.
-func TestPublicSimple(t *testing.T) {
-	s := Server{
+func dut() *Server {
+	return &Server{
 		Config: Config{
-			Configuration: component.Configuration{
+			Component: component.ComponentConfig{
 				GRPCListenAddress: ":0",
 				DevCerts:          true,
 				DevCertsPath:      "/tmp/foo",
 			},
+			Database: component.CockroachConfig{
+				InMemory: true,
+			},
 			PublicListenAddress: ":0",
 		},
 	}
+}
 
+// TestPublicSimple ensures the public grpc-web listener is working.
+func TestPublicSimple(t *testing.T) {
+	s := dut()
 	ctx := context.Background()
 	s.Start(ctx)
 
@@ -70,5 +77,50 @@ func TestPublicSimple(t *testing.T) {
 	}
 	if want, got := "unimplemented", res.Header.Get("Grpc-Message"); want != got {
 		t.Errorf("Wanted message %q, got %q", want, got)
+	}
+}
+
+// TestUserSimple makes sure we can add and retrieve users. This is a low-level
+// test which mostly exercises the machinery to bring up a working database in
+// tests.
+func TestUserSimple(t *testing.T) {
+	s := dut()
+	ctx := context.Background()
+	s.Start(ctx)
+
+	db, err := s.Config.Database.Connect()
+	if err != nil {
+		t.Fatalf("Connecting to the database failed: %v", err)
+	}
+	q := model.New(db)
+
+	// Start out with no account by sub 'test'.
+	accounts, err := q.GetAccountByOIDC(ctx, "test")
+	if err != nil {
+		t.Fatalf("Retrieving accounts failed: %v", err)
+	}
+	if want, got := 0, len(accounts); want != got {
+		t.Fatalf("Expected no accounts at first, got %d", got)
+	}
+
+	// Create a new test account for sub 'test'.
+	_, err = q.InitializeAccountFromOIDC(ctx, model.InitializeAccountFromOIDCParams{
+		AccountOidcSub:     "test",
+		AccountDisplayName: "Test User",
+	})
+	if err != nil {
+		t.Fatalf("Creating new account failed: %v", err)
+	}
+
+	// Expect this account to be available now.
+	accounts, err = q.GetAccountByOIDC(ctx, "test")
+	if err != nil {
+		t.Fatalf("Retrieving accounts failed: %v", err)
+	}
+	if want, got := 1, len(accounts); want != got {
+		t.Fatalf("Expected exactly one account after creation, got %d", got)
+	}
+	if want, got := "Test User", accounts[0].AccountDisplayName; want != got {
+		t.Fatalf("Expected to read back display name %q, got %q", want, got)
 	}
 }

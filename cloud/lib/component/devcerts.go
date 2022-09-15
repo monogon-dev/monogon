@@ -18,7 +18,7 @@ import (
 
 // GetDevCerts returns paths to this component's development certificate, key
 // and CA, or panics if unavailable.
-func (c *Configuration) GetDevCerts() (certPath, keyPath, caPath string) {
+func (c *ComponentConfig) GetDevCerts() (certPath, keyPath, caPath string) {
 	klog.Infof("Using developer certificates at %s", c.DevCertsPath)
 
 	caPath = c.ensureDevCA()
@@ -30,7 +30,7 @@ func (c *Configuration) GetDevCerts() (certPath, keyPath, caPath string) {
 // component and returns paths to them. This data is either read from disk if it
 // already exists, or is generated when this function is called. If any problem
 // occurs, the code panics.
-func (c *Configuration) ensureDevComponent() (certPath, keyPath string) {
+func (c *ComponentConfig) ensureDevComponent() (certPath, keyPath string) {
 	caKeyPath := c.DevCertsPath + "/ca.key"
 	caCertPath := c.DevCertsPath + "/ca.cert"
 
@@ -113,7 +113,7 @@ func (c *Configuration) ensureDevComponent() (certPath, keyPath string) {
 // paths to them. This data is either read from disk if it already exists, or is
 // generated when this function is called. If any problem occurs, the code
 // panics.
-func (c *Configuration) ensureDevCA() (caCertPath string) {
+func (c *ComponentConfig) ensureDevCA() (caCertPath string) {
 	caKeyPath := c.DevCertsPath + "/ca.key"
 	caCertPath = c.DevCertsPath + "/ca.cert"
 

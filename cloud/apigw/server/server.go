@@ -15,13 +15,15 @@ import (
 	"k8s.io/klog/v2"
 
 	apb "source.monogon.dev/cloud/api"
+	"source.monogon.dev/cloud/apigw/model"
 	"source.monogon.dev/cloud/lib/component"
 )
 
 // Config is the main configuration of the apigw server. It's usually populated
 // from flags via RegisterFlags, but can also be set manually (eg. in tests).
 type Config struct {
-	component.Configuration
+	Component component.ComponentConfig
+	Database  component.CockroachConfig
 
 	PublicListenAddress string
 }
@@ -29,7 +31,8 @@ type Config struct {
 // RegisterFlags registers the component configuration to be provided by flags.
 // This must be called exactly once before then calling flags.Parse().
 func (c *Config) RegisterFlags() {
-	c.Configuration.RegisterFlags("apigw")
+	c.Component.RegisterFlags("apigw")
+	c.Database.RegisterFlags("apigw_db")
 	flag.StringVar(&c.PublicListenAddress, "apigw_public_grpc_listen_address", ":8080", "Address to listen at for public/user gRPC connections for apigw")
 }
 
@@ -51,8 +54,8 @@ type Server struct {
 }
 
 func (s *Server) startInternalGRPC(ctx context.Context) {
-	g := grpc.NewServer(s.Config.GRPCServerOptions()...)
-	lis, err := net.Listen("tcp", s.Config.GRPCListenAddress)
+	g := grpc.NewServer(s.Config.Component.GRPCServerOptions()...)
+	lis, err := net.Listen("tcp", s.Config.Component.GRPCListenAddress)
 	if err != nil {
 		klog.Exitf("Could not listen: %v", err)
 	}
@@ -97,6 +100,20 @@ func (s *Server) startPublic(ctx context.Context) {
 // Start runs the two listeners of the server. The process will fail (via
 // klog.Exit) if any of the listeners/servers fail to start.
 func (s *Server) Start(ctx context.Context) {
+	if s.Config.Database.Migrations == nil {
+		klog.Infof("Using default migrations source.")
+		m, err := model.MigrationsSource()
+		if err != nil {
+			klog.Exitf("failed to prepare migrations source: %w", err)
+		}
+		s.Config.Database.Migrations = m
+	}
+
+	klog.Infof("Running migrations...")
+	if err := s.Config.Database.MigrateUp(); err != nil {
+		klog.Exitf("Migrations failed: %v", err)
+	}
+	klog.Infof("Migrations done.")
 	s.startInternalGRPC(ctx)
 	s.startPublic(ctx)
 }

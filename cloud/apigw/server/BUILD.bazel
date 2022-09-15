@@ -7,6 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//cloud/api",
+        "//cloud/apigw/model",
         "//cloud/lib/component",
         "@com_github_improbable_eng_grpc_web//go/grpcweb",
         "@io_k8s_klog_v2//:klog",
@@ -21,9 +22,13 @@ go_library(
 go_test(
     name = "server_test",
     srcs = ["server_test.go"],
+    data = [
+        "@cockroach",
+    ],
     embed = [":server"],
     deps = [
         "//cloud/api",
+        "//cloud/apigw/model",
         "//cloud/lib/component",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_protobuf//proto",

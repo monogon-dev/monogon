@@ -17,8 +17,11 @@ import (
 	"k8s.io/klog/v2"
 )
 
-// Configuration is the common configuration of a component.
-type Configuration struct {
+// ComponentConfig is the common configuration of a component. It's
+// supposed to be instantiated within a Configuration struct of a component.
+//
+// It can be configured by flags (via RegisterFlags) or manually (eg. in tests).
+type ComponentConfig struct {
 	// GRPCKeyPath is the filesystem path of the x509 key used to serve internal
 	// gRPC traffic.
 	GRPCKeyPath string
@@ -46,7 +49,7 @@ type Configuration struct {
 
 // RegisterFlags registers the component configuration to be provided by flags.
 // This must be called exactly once before then calling flags.Parse().
-func (c *Configuration) RegisterFlags(componentName string) {
+func (c *ComponentConfig) RegisterFlags(componentName string) {
 	flag.StringVar(&c.GRPCKeyPath, componentName+"_grpc_key_path", "", "Path to gRPC server/client key for "+componentName)
 	flag.StringVar(&c.GRPCCertificatePath, componentName+"_grpc_certificate_path", "", "Path to gRPC server/client certificate for "+componentName)
 	flag.StringVar(&c.GRPCCAPath, componentName+"_grpc_ca_certificate_path", "", "Path to gRPC CA certificate for "+componentName)
@@ -60,7 +63,7 @@ func (c *Configuration) RegisterFlags(componentName string) {
 
 // GRPCServerOptions returns pre-built grpc.ServerOptions that this component
 // should use to serve internal gRPC.
-func (c *Configuration) GRPCServerOptions() []grpc.ServerOption {
+func (c *ComponentConfig) GRPCServerOptions() []grpc.ServerOption {
 	var certPath, keyPath, caPath string
 	if c.DevCerts {
 		// Use devcerts if requested.
