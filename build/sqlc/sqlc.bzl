@@ -77,8 +77,6 @@ def _sqlc_go_library(ctx):
     for basename in query_basenames:
         sqlc_go_sources.append(ctx.actions.declare_file(basename + ".go"))
 
-    migrations_source = ctx.actions.declare_file("migrations.go")
-
     # Cockroachdb is PostgreSQL with some extra overrides to fix Go/SQL type
     # mappings.
     overrides = []
@@ -127,20 +125,7 @@ def _sqlc_go_library(ctx):
         outputs = sqlc_go_sources,
     )
 
-    # Generate migrations bindata.
-    ctx.actions.run(
-        mnemonic = "MigrationsEmbed",
-        executable = ctx.executable._bindata,
-        arguments = [
-            "-pkg", package_name,
-            "-prefix", ctx.label.workspace_root,
-            "-o", migrations_source.path,
-        ] + [up.path for up in uppers.values()] + [down.path for down in downers.values()],
-        inputs = uppers.values() + downers.values(),
-        outputs = [migrations_source],
-    )
-
-    library = go.new_library(go, srcs = sqlc_go_sources + [migrations_source], importparth = ctx.attr.importpath)
+    library = go.new_library(go, srcs = sqlc_go_sources, importparth = ctx.attr.importpath)
     source = go.library_to_source(go, ctx.attr, library, ctx.coverage_instrumented())
     return [
         library,

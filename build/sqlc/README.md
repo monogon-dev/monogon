@@ -3,8 +3,6 @@ Bazel rules for sqlc
 
 This is a set of rules which uses [sqlc](https://github.com/kyleconroy/sqlc) to generate Go code (types and functions) based on a SQL schema/migrations and a list of queries to be turned into functions.
 
-It also embeds the migrations using [bindata](https://github.com/kevinburke/go-bindata).
-
 Usage
 ---
 
@@ -47,4 +45,7 @@ The built `go_library ` will contain sqlc functions corresponding to queries def
 
 To list the generated files for inspection/debugging, `bazel aquery //foo/bar:sqlc_model` and find files named `db.go`, `model.go` and `queries.sql.go` (or similar, depending on how your query file(s) are named).
 
-TODO(q3k): document migrations (and probably move them to a subpackage).
+Migrations
+---
+
+Currently, you need to manually embed the same migrations files using standard //go:embed directives, then you can used them with golang-migrate via en embed.FS/io.FS/iofs-source. See //cloud/apigw/model for an example.
