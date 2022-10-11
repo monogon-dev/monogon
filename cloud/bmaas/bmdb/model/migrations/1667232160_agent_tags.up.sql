@@ -42,5 +42,16 @@ CREATE TABLE machine_agent_heartbeat (
     CONSTRAINT "primary" PRIMARY KEY(machine_id)
 );
 
+-- tag HardwareReport {
+--     Raw []byte
+-- }
+-- Represents a hardware report submitted by an Agent running on a machine.
+-- Usually a report is submitted only once after an agent has been started.
+CREATE TABLE machine_hardware_report (
+    machine_id UUID NOT NULL REFERENCES machines(machine_id) ON DELETE RESTRICT,
+    hardware_report_raw BYTES NOT NULL,
+    CONSTRAINT "primary" PRIMARY KEY(machine_id)
+);
+
 -- Used by the Shepherd when performing direct actions against a machine.
 ALTER TYPE process ADD VALUE IF NOT EXISTS 'ShepherdInstall';

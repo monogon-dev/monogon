@@ -147,7 +147,7 @@ func (s *ServerSecurity) authenticationCheck(ctx context.Context, methodName str
 // on the configured authentication of a given gRPC method, as described by the
 // metropolis.proto.ext.authorization extension.
 func (s *ServerSecurity) getPeerInfo(ctx context.Context) (*PeerInfo, error) {
-	cert, err := getPeerCertificate(ctx)
+	cert, err := GetPeerCertificate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,7 @@ func (s *ServerSecurity) getPeerInfoUnauthenticated(ctx context.Context) (*PeerI
 
 	// If peer presented a valid self-signed certificate, attach that to the
 	// Unauthenticated struct.
-	cert, err := getPeerCertificate(ctx)
+	cert, err := GetPeerCertificate(ctx)
 	if err == nil {
 		if err := cert.CheckSignature(cert.SignatureAlgorithm, cert.RawTBSCertificate, cert.Signature); err != nil {
 			// Peer presented a certificate that is not self-signed - for example a user or
@@ -210,13 +210,13 @@ func (s *ServerSecurity) getPeerInfoUnauthenticated(ctx context.Context) (*PeerI
 	return &res, nil
 }
 
-// getPeerCertificate returns the x509 certificate associated with the given
+// GetPeerCertificate returns the x509 certificate associated with the given
 // gRPC connection's context and ensures that it is a certificate for an Ed25519
 // keypair. The certificate is _not_ checked against the cluster CA.
 //
 // A gRPC status is returned if the certificate is invalid / unauthenticated for
 // any reason.
-func getPeerCertificate(ctx context.Context) (*x509.Certificate, error) {
+func GetPeerCertificate(ctx context.Context) (*x509.Certificate, error) {
 	p, ok := peer.FromContext(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unavailable, "could not retrive peer info")

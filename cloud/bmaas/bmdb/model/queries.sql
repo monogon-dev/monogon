@@ -70,6 +70,15 @@ INSERT INTO machine_agent_heartbeat (
     agent_heartbeat_at = $2
 ;
 
+-- name: MachineSetHardwareReport :exec
+INSERT INTO machine_hardware_report (
+    machine_id, hardware_report_raw
+) VALUES (
+    $1, $2
+) ON CONFLICT (machine_id) DO UPDATE SET
+    hardware_report_raw = $2
+;
+
 -- name: GetMachinesForAgentStart :many
 -- Get machines that need agent installed for the first time. Machine can be
 -- assumed to be 'new', with no previous attempts or failures.
@@ -116,3 +125,12 @@ WHERE
   )
   AND work.machine_id IS NULL
 LIMIT $1;
+
+-- name: AuthenticateAgentConnection :many
+SELECT
+    machine_agent_started.*
+FROM machines
+INNER JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
+WHERE
+    machines.machine_id = $1
+    AND machine_agent_started.agent_public_key = $2;

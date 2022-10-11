@@ -106,3 +106,37 @@ func (c *ComponentConfig) GRPCServerOptions() []grpc.ServerOption {
 		grpc.Creds(credentials.NewTLS(tlsConf)),
 	}
 }
+
+// GRPCServerOptionsPublic returns pre-built grpc.ServerOptions that this
+// component should use to serve public gRPC. Any client will be allowed to
+// connect, and it's up to the server implementation to authenticate incoming
+// requests.
+func (c *ComponentConfig) GRPCServerOptionsPublic() []grpc.ServerOption {
+	var certPath, keyPath string
+	if c.DevCerts {
+		// Use devcerts if requested.
+		certPath, keyPath, _ = c.GetDevCerts()
+	} else {
+		// Otherwise, use data from flags.
+		if c.GRPCKeyPath == "" {
+			klog.Exitf("-grpc_key_path must be set")
+		}
+		if c.GRPCCertificatePath == "" {
+			klog.Exitf("-grpc_certificate_path must be set")
+		}
+		keyPath = c.GRPCKeyPath
+		certPath = c.GRPCCertificatePath
+	}
+
+	pair, err := tls.LoadX509KeyPair(certPath, keyPath)
+	if err != nil {
+		klog.Exitf("Could not load GRPC TLS keypair: %v", err)
+	}
+	tlsConf := &tls.Config{
+		Certificates: []tls.Certificate{pair},
+		ClientAuth:   tls.RequestClientCert,
+	}
+	return []grpc.ServerOption{
+		grpc.Creds(credentials.NewTLS(tlsConf)),
+	}
+}

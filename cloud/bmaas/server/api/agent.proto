@@ -1,0 +1,36 @@
+syntax = "proto3";
+package cloud.bmaas.server.api;
+option go_package = "source.monogon.dev/cloud/bmaas/server/api";
+
+// AgentCallback runs on the BMDB Server and exposes a gRPC interface to agents
+// running on machines. These APIs are served over TLS using component-style
+// server certificates, but clients are authenticated using ephemeral
+// certificates proving ownership of an agent keypair.
+service AgentCallback {
+  // Heartbeat is called by agents repeatedly to upload a hardware report, signal
+  // liveness and retrieve actions to be prformed on a host.
+  //
+  // This isn't a streaming RPC as the current server implementation actually
+  // isn't reactive, so it would have to do its own inner polling to create
+  // a stream of updates. To keep things simple, we instead let the agent decide
+  // on the cadence of updates it wants to keep up with.
+  rpc Heartbeat(AgentHeartbeatRequest) returns (AgentHeartbeatResponse);
+}
+
+message AgentHardwareReport {
+  // TODO(lorenz): implement
+}
+
+message AgentHeartbeatRequest {
+  // MachineID that this agent represents. Technically not necessary since
+  // keypairs between agents should be unique, but this provides an extra layer
+  // of protection against programming bugs.
+  string machine_id = 1;
+  // Optional hardware report to be upserted for this machine. An agent should
+  // submit one at least once after it's started, as early as it can.
+  AgentHardwareReport hardware_report = 2;
+}
+
+message AgentHeartbeatResponse {
+  // Agent actions (like install, reboot, etc) go here.
+}
