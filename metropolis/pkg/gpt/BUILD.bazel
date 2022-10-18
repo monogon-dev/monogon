@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//metropolis/test/ktest:ktest.bzl", "ktest")
+
+go_library(
+    name = "gpt",
+    srcs = [
+        "gpt.go",
+        "mbr.go",
+    ],
+    importpath = "source.monogon.dev/metropolis/pkg/gpt",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_google_uuid//:uuid"],
+)
+
+go_test(
+    name = "gpt_test",
+    srcs = [
+        "gpt_test.go",
+        "linux_test.go",
+        "mbr_test.go",
+        "structs_test.go",
+    ],
+    embed = [":gpt"],
+    deps = [
+        "@com_github_google_uuid//:uuid",
+        "@org_golang_x_sys//unix",
+    ],
+)
+
+ktest(
+    cmdline = "ramdisk_size=4096",
+    tester = ":gpt_test",
+)
