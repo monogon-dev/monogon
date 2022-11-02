@@ -50,24 +50,3 @@ CREATE TABLE work (
     UNIQUE (machine_id, process),
     CONSTRAINT "primary" PRIMARY KEY (machine_id, session_id, process)
 );
-
--- The following three tables are for illustrative purposes only.
-
-CREATE TABLE machine_provided (
-    machine_id UUID NOT NULL REFERENCES machines(machine_id) ON DELETE CASCADE,
-    provider STRING NOT NULL,
-    provider_id STRING NOT NULL,
-    CONSTRAINT "primary" PRIMARY KEY (machine_id)
-);
-
-CREATE TABLE machine_agent_installed (
-    machine_id UUID NOT NULL REFERENCES machines(machine_id) ON DELETE CASCADE,
-    CONSTRAINT "primary" PRIMARY KEY (machine_id)
-);
-
-CREATE TABLE machine_agent_report (
-    machine_id UUID NOT NULL REFERENCES machines(machine_id) ON DELETE CASCADE,
-    shape_cpu_count INT NOT NULL,
-    shape_memory_megabytes INT NOT NULL,
-    CONSTRAINT "primary" PRIMARY KEY (machine_id)
-);

@@ -51,14 +51,68 @@ INSERT INTO machine_provided (
     $1, $2, $3
 );
 
--- name: GetMachinesNeedingInstall :many
+-- name: MachineSetAgentStarted :exec
+INSERT INTO machine_agent_started (
+    machine_id, agent_started_at, agent_public_key
+) VALUES (
+    $1, $2, $3
+) ON CONFLICT (machine_id) DO UPDATE SET
+    agent_started_at = $2,
+    agent_public_key = $3
+;
+
+-- name: MachineSetAgentHeartbeat :exec
+INSERT INTO machine_agent_heartbeat (
+    machine_id, agent_heartbeat_at
+) VALUES (
+    $1, $2
+) ON CONFLICT (machine_id) DO UPDATE SET
+    agent_heartbeat_at = $2
+;
+
+-- name: GetMachinesForAgentStart :many
+-- Get machines that need agent installed for the first time. Machine can be
+-- assumed to be 'new', with no previous attempts or failures.
 SELECT
     machine_provided.*
 FROM machines
 INNER JOIN machine_provided ON machines.machine_id = machine_provided.machine_id
-LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process = 'NecromancerInstall'
-LEFT JOIN machine_agent_installed ON machines.machine_id = machine_agent_installed.machine_id
-WHERE machine_agent_installed.machine_id IS NULL
+LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process = 'ShepherdInstall'
+LEFT JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
+WHERE
+  machine_agent_started.machine_id IS NULL
+  -- TODO(q3k): exclude machines which are not expected to run the agent (eg.
+  -- are already exposed to a user).
   AND work.machine_id IS NULL
 LIMIT $1;
 
+-- name: GetMachineForAgentRecovery :many
+-- Get machines that need agent installed after something went wrong. Either
+-- the agent started but never responded, or the agent stopped responding at
+-- some point, or the machine is being reinstalled after failure. Assume some
+-- work needs to be performed on the shepherd side to diagnose and recover
+-- whatever state the machine truly is in.
+SELECT
+    machine_provided.*
+FROM machines
+INNER JOIN machine_provided ON machines.machine_id = machine_provided.machine_id
+LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process = 'ShepherdInstall'
+LEFT JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
+LEFT JOIN machine_agent_heartbeat ON machines.machine_id = machine_agent_heartbeat.machine_id
+WHERE
+  -- Only act on machines where the agent is expected to have been started.
+  machine_agent_started.machine_id IS NOT NULL
+  AND (
+    -- No heartbeat 30 minutes after starting the agent.
+    (
+        machine_agent_heartbeat.machine_id IS NULL
+        AND now() > (machine_agent_started.agent_started_at + interval '30 minutes')
+    )
+    -- Heartbeats ceased for 10 minutes.
+    OR (
+        machine_agent_heartbeat.machine_id IS NOT NULL
+        AND now() > (machine_agent_heartbeat.agent_heartbeat_at + interval '10 minutes')
+    )
+  )
+  AND work.machine_id IS NULL
+LIMIT $1;

@@ -20,7 +20,10 @@ go_library(
 
 go_test(
     name = "bmdb_test",
-    srcs = ["sessions_test.go"],
+    srcs = [
+        "queries_test.go",
+        "sessions_test.go",
+    ],
     data = [
         "@cockroach",
     ],
