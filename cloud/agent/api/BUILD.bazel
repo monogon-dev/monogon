@@ -1,0 +1,23 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+proto_library(
+    name = "api_proto",
+    srcs = ["agent.proto"],
+    visibility = ["//visibility:public"],
+)
+
+go_proto_library(
+    name = "api_go_proto",
+    importpath = "source.monogon.dev/cloud/agent/api",
+    proto = ":api_proto",
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "api",
+    embed = [":api_go_proto"],
+    importpath = "source.monogon.dev/cloud/agent/api",
+    visibility = ["//visibility:public"],
+)
