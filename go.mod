@@ -101,6 +101,7 @@ require (
 	github.com/mdlayher/netlink v1.6.0
 	github.com/mdlayher/raw v0.1.0
 	github.com/opencontainers/runc v1.1.3
+	github.com/packethost/packngo v0.29.0
 	github.com/pierrec/lz4/v4 v4.1.14
 	github.com/pkg/errors v0.9.1
 	github.com/rekby/gpt v0.0.0-20200614112001-7da10aec5566

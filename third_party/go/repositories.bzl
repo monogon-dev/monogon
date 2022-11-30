@@ -4065,6 +4065,13 @@ def go_repositories():
         sum = "h1:BCmzIS3n71sGfHB5NMNDB3lHYPz8fWSkCAErHed//qc=",
         version = "v1.3.1",
     )
+
+    go_repository(
+        name = "com_github_packethost_packngo",
+        importpath = "github.com/packethost/packngo",
+        sum = "h1:gRIhciVZQ/zLNrIdIdbOUyB/Tw5IgoaXyhP4bvE+D2s=",
+        version = "v0.29.0",
+    )
     go_repository(
         name = "com_github_pact_foundation_pact_go",
         importpath = "github.com/pact-foundation/pact-go",
