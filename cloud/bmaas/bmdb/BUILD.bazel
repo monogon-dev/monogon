@@ -31,5 +31,6 @@ go_test(
     deps = [
         "//cloud/bmaas/bmdb/model",
         "//cloud/lib/component",
+        "@com_github_google_uuid//:uuid",
     ],
 )
