@@ -163,6 +163,11 @@ type MemoryDeviceRaw struct {
 	ExtendedConfiguredMemorySpeed           uint32
 }
 
+const (
+	kibLeftShift = 10 // 2^10 = 1KiB
+	mibLeftShift = 20 // 2^20 = 1MiB
+)
+
 func (md *MemoryDeviceRaw) SizeBytes() (uint64, bool) {
 	if md.Size == 0 || md.Size == 0xFFFF {
 		// Device unpopulated / unknown memory, return ok false
@@ -170,8 +175,12 @@ func (md *MemoryDeviceRaw) SizeBytes() (uint64, bool) {
 	}
 	if md.Size == 0x7FFF && md.StructureVersion.AtLeast(2, 7) {
 		// Bit 31 is reserved, rest is memory size in MiB
-		return uint64(md.ExtendedSize&0x7FFFFFFF) * (1024 * 1024), true
+		return uint64(md.ExtendedSize&0x7FFFFFFF) << mibLeftShift, true
 	}
-	// Bit 15 flips between KiB and MiB, rest is size
-	return uint64(md.Size&0x7FFF) << 10 * uint64(md.Size&0x8000+1), true
+	// Bit 15 flips between MiB and KiB, rest is size
+	var shift uint64 = mibLeftShift
+	if (md.Size & 0x8000) != 0 { // Bit set means KiB
+		shift = kibLeftShift
+	}
+	return uint64(md.Size&0x7FFF) << shift, true
 }
