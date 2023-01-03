@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"crypto/ed25519"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -57,6 +58,7 @@ func (a *agentCallbackService) Heartbeat(ctx context.Context, req *apb.AgentHear
 			return fmt.Errorf("AuthenticateAgentConnection: %w", err)
 		}
 		if len(agents) < 1 {
+			klog.Errorf("No agent for %s/%s", machineId.String(), hex.EncodeToString(pk))
 			return errAgentUnauthenticated
 		}
 		return nil
@@ -76,7 +78,7 @@ func (a *agentCallbackService) Heartbeat(ctx context.Context, req *apb.AgentHear
 	if req.HardwareReport != nil {
 		hwraw, err = proto.Marshal(req.HardwareReport)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "could not serialize harcware report: %v", err)
+			return nil, status.Errorf(codes.InvalidArgument, "could not serialize hardware report: %v", err)
 		}
 	}
 
@@ -92,6 +94,13 @@ func (a *agentCallbackService) Heartbeat(ctx context.Context, req *apb.AgentHear
 				return fmt.Errorf("hardware report upsert: %w", err)
 			}
 		}
+		// Upsert os installation report if submitted.
+		if req.InstallationReport != nil {
+			err = q.MachineSetOSInstallationReport(ctx, model.MachineSetOSInstallationReportParams{
+				MachineID:  machineId,
+				Generation: req.InstallationReport.Generation,
+			})
+		}
 		return q.MachineSetAgentHeartbeat(ctx, model.MachineSetAgentHeartbeatParams{
 			MachineID:        machineId,
 			AgentHeartbeatAt: time.Now(),
@@ -101,6 +110,35 @@ func (a *agentCallbackService) Heartbeat(ctx context.Context, req *apb.AgentHear
 		klog.Errorf("Could not submit heartbeat: %v", err)
 		return nil, status.Error(codes.Unavailable, "could not submit heartbeat")
 	}
+	klog.Infof("Heartbeat from %s/%s", machineId.String(), hex.EncodeToString(pk))
 
-	return &apb.AgentHeartbeatResponse{}, nil
+	// Get installation request for machine if present.
+	var installRequest *apb.OSInstallationRequest
+	err = session.Transact(ctx, func(q *model.Queries) error {
+		reqs, err := q.GetExactMachineForOSInstallation(ctx, model.GetExactMachineForOSInstallationParams{
+			MachineID: machineId,
+			Limit:     1,
+		})
+		if err != nil {
+			return fmt.Errorf("GetExactMachineForOSInstallation: %w", err)
+		}
+		if len(reqs) > 0 {
+			raw := reqs[0].OsInstallationRequestRaw
+			var preq apb.OSInstallationRequest
+			if err := proto.Unmarshal(raw, &preq); err != nil {
+				return fmt.Errorf("could not decode stored OS installation request: %w", err)
+			}
+			installRequest = &preq
+		}
+		return nil
+	})
+	if err != nil {
+		// Do not fail entire request. Instead, just log an error.
+		// TODO(q3k): alert on this
+		klog.Errorf("Failure during OS installation request retrieval: %v", err)
+	}
+
+	return &apb.AgentHeartbeatResponse{
+		InstallationRequest: installRequest,
+	}, nil
 }

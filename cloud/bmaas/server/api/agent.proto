@@ -21,6 +21,14 @@ message AgentHardwareReport {
   // TODO(lorenz): implement
 }
 
+// OSInstallationReport is submitted from the agent to the BMDB server after
+// successful OS installation.
+message OSInstallationReport {
+  // generation must be set to the same value as 'generation' in the
+  // OSInstallation request which triggered the OS installation
+  int64 generation = 1;
+}
+
 message AgentHeartbeatRequest {
   // MachineID that this agent represents. Technically not necessary since
   // keypairs between agents should be unique, but this provides an extra layer
@@ -29,8 +37,26 @@ message AgentHeartbeatRequest {
   // Optional hardware report to be upserted for this machine. An agent should
   // submit one at least once after it's started, as early as it can.
   AgentHardwareReport hardware_report = 2;
+  // Optional installation report sent to be upserted to this machine. An agent
+  // should submit one after it successfully installed an operating system for
+  // a given OSInstallationRequest.
+  OSInstallationReport installation_report = 3;
+}
+
+// OSInstallationRequest is provided to the agent by the BMDB server, from
+// a responding BMDB tag, when an OS installation request is pending.
+message OSInstallationRequest {
+  // generation is the 'version' of the OS installation request, and will always
+  // be incremented within the BMDB when a new OS installation request is
+  // submitted. The agent must pipe this through to the OSInstallationReport to
+  // let the rest of the system know which OS installation request it actually
+  // fulfilled.
+  int64 generation = 1;
+  // TODO(lorenz): implement
 }
 
 message AgentHeartbeatResponse {
-  // Agent actions (like install, reboot, etc) go here.
+  // If set, the control plane is requesting the installation of an operating
+  // system.
+  OSInstallationRequest installation_request = 1;
 }

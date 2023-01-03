@@ -40,5 +40,6 @@ go_test(
         "//metropolis/node/core/rpc",
         "@com_github_google_uuid//:uuid",
         "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_protobuf//proto",
     ],
 )

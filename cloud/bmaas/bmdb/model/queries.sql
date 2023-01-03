@@ -42,8 +42,6 @@ WHERE machine_id = $1
   AND session_id = $2
   AND process = $3;
 
--- Example tag processing queries follow.
-
 -- name: MachineAddProvided :exec
 INSERT INTO machine_provided (
     machine_id, provider, provider_id
@@ -77,6 +75,25 @@ INSERT INTO machine_hardware_report (
     $1, $2
 ) ON CONFLICT (machine_id) DO UPDATE SET
     hardware_report_raw = $2
+;
+
+-- name: MachineSetOSInstallationRequest :exec
+INSERT INTO machine_os_installation_request (
+    machine_id, generation, os_installation_request_raw
+) VALUES (
+    $1, $2, $3
+) ON CONFLICT (machine_id) DO UPDATE SET
+    generation = $2,
+    os_installation_request_raw = $3
+;
+
+-- name: MachineSetOSInstallationReport :exec
+INSERT INTO machine_os_installation_report (
+    machine_id, generation
+) VALUES (
+    $1, $2
+) ON CONFLICT (machine_id) DO UPDATE SET
+    generation = $2
 ;
 
 -- name: GetMachinesForAgentStart :many
@@ -125,6 +142,25 @@ WHERE
   )
   AND work.machine_id IS NULL
 LIMIT $1;
+
+-- name: GetExactMachineForOSInstallation :many
+SELECT
+    machine_os_installation_request.*
+FROM machines
+LEFT JOIN machine_os_installation_request ON machines.machine_id = machine_os_installation_request.machine_id
+LEFT JOIN machine_os_installation_report ON machines.machine_id = machine_os_installation_report.machine_id
+WHERE
+    -- We are only interested in one concrete machine.
+    machines.machine_id = $1
+    -- We must have an installation request.
+    AND machine_os_installation_request.machine_id IS NOT NULL
+    -- And we either must have no installation report, or the installation
+    -- report's generation must not match the installation request's generation.
+    AND (
+        machine_os_installation_report.machine_id IS NULL
+        OR machine_os_installation_report.generation != machine_os_installation_request.generation
+    )
+LIMIT $2;
 
 -- name: AuthenticateAgentConnection :many
 SELECT
