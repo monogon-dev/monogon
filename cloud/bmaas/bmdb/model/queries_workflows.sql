@@ -1,101 +1,3 @@
--- name: NewMachine :one
-INSERT INTO machines (
-    machine_created_at
-) VALUES (
-    now()
-)
-RETURNING *;
-
--- name: NewSession :one
-INSERT INTO sessions (
-    session_component_name, session_runtime_info, session_created_at, session_interval_seconds, session_deadline
-) VALUES (
-    $1, $2, now(), $3, (now() + $3 * interval '1 second')
-)
-RETURNING *;
-
--- name: SessionPoke :exec
--- Update a given session with a new deadline. Must be called in the same
--- transaction as SessionCheck to ensure the session is still alive.
-UPDATE sessions
-SET session_deadline = now() + session_interval_seconds * interval '1 second'
-WHERE session_id = $1;
-
--- name: SessionCheck :many
--- SessionCheck returns a session by ID if that session is still valid (ie. its
--- deadline hasn't expired).
-SELECT *
-FROM sessions
-WHERE session_id = $1
-AND session_deadline > now();
-
--- name: StartWork :exec
-INSERT INTO work (
-    machine_id, session_id, process
-) VALUES (
-    $1, $2, $3
-);
-
--- name: FinishWork :exec
-DELETE FROM work
-WHERE machine_id = $1
-  AND session_id = $2
-  AND process = $3;
-
--- name: MachineAddProvided :exec
-INSERT INTO machine_provided (
-    machine_id, provider, provider_id
-) VALUES (
-    $1, $2, $3
-);
-
--- name: MachineSetAgentStarted :exec
-INSERT INTO machine_agent_started (
-    machine_id, agent_started_at, agent_public_key
-) VALUES (
-    $1, $2, $3
-) ON CONFLICT (machine_id) DO UPDATE SET
-    agent_started_at = $2,
-    agent_public_key = $3
-;
-
--- name: MachineSetAgentHeartbeat :exec
-INSERT INTO machine_agent_heartbeat (
-    machine_id, agent_heartbeat_at
-) VALUES (
-    $1, $2
-) ON CONFLICT (machine_id) DO UPDATE SET
-    agent_heartbeat_at = $2
-;
-
--- name: MachineSetHardwareReport :exec
-INSERT INTO machine_hardware_report (
-    machine_id, hardware_report_raw
-) VALUES (
-    $1, $2
-) ON CONFLICT (machine_id) DO UPDATE SET
-    hardware_report_raw = $2
-;
-
--- name: MachineSetOSInstallationRequest :exec
-INSERT INTO machine_os_installation_request (
-    machine_id, generation, os_installation_request_raw
-) VALUES (
-    $1, $2, $3
-) ON CONFLICT (machine_id) DO UPDATE SET
-    generation = $2,
-    os_installation_request_raw = $3
-;
-
--- name: MachineSetOSInstallationReport :exec
-INSERT INTO machine_os_installation_report (
-    machine_id, generation
-) VALUES (
-    $1, $2
-) ON CONFLICT (machine_id) DO UPDATE SET
-    generation = $2
-;
-
 -- name: GetMachinesForAgentStart :many
 -- Get machines that need agent installed for the first time. Machine can be
 -- assumed to be 'new', with no previous attempts or failures.
@@ -143,7 +45,20 @@ WHERE
   AND work.machine_id IS NULL
 LIMIT $1;
 
+-- name: AuthenticateAgentConnection :many
+-- Used by bmdb server to verify incoming connections.
+SELECT
+    machine_agent_started.*
+FROM machines
+INNER JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
+WHERE
+    machines.machine_id = $1
+    AND machine_agent_started.agent_public_key = $2;
+
 -- name: GetExactMachineForOSInstallation :many
+-- Get OS installation request for a given machine ID. Used by the bmdb server
+-- to tell agent whether there's a pending installation request for the machine
+-- it's running on.
 SELECT
     machine_os_installation_request.*
 FROM machines
@@ -162,11 +77,3 @@ WHERE
     )
 LIMIT $2;
 
--- name: AuthenticateAgentConnection :many
-SELECT
-    machine_agent_started.*
-FROM machines
-INNER JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
-WHERE
-    machines.machine_id = $1
-    AND machine_agent_started.agent_public_key = $2;

@@ -7,7 +7,9 @@ sqlc_go_library(
     importpath = "source.monogon.dev/cloud/bmaas/bmdb/model",
     migrations = glob(["migrations/*sql"]),
     queries = [
-        "queries.sql",
+        "queries_base.sql",
+        "queries_tags.sql",
+        "queries_workflows.sql",
     ],
 )
 
