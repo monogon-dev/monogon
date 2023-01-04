@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Both bazelisk and bazel's native wrapper scripts will attempt to use the well-known executable
+# named "tools/bazel" to run Bazel. The path of the original executable is stored in BAZEL_REAL.
+set -euo pipefail
+
+if [[ -z "${BAZEL_REAL:-}" ]]; then
+  echo "BAZEL_REAL is not set - do not run directly, instead, use bazelisk" >&2
+  exit 1
+fi
+
+if [[ -z "${BAZELISK_SKIP_WRAPPER:-}" ]]; then
+  echo "#########################################################" >&2
+  echo "  You are not using Bazelisk. This is not recommended." >&2
+  echo "  Make sure you are using the correct version of Bazel." >&2
+  echo "#########################################################" >&2
+fi
+
+exec scripts/bin/bazel "$@"
