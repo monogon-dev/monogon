@@ -334,3 +334,18 @@ exports_files([
 ])
 """,
 )
+
+# bazeldnf is used to generate our sandbox root.
+http_archive(
+    name = "bazeldnf",
+    sha256 = "404fc34e6bd3b568a7ca6fbcde70267d43830d0171d3192e3ecd83c14c320cfc",
+    strip_prefix = "bazeldnf-0.5.4",
+    urls = [
+        "https://github.com/rmohr/bazeldnf/archive/v0.5.4.tar.gz",
+        "https://storage.googleapis.com/builddeps/404fc34e6bd3b568a7ca6fbcde70267d43830d0171d3192e3ecd83c14c320cfc",
+    ],
+)
+
+load("@bazeldnf//:deps.bzl", "bazeldnf_dependencies", "rpm")
+
+bazeldnf_dependencies()

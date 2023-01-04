@@ -442,6 +442,12 @@ def go_repositories():
         sum = "h1:TYi4+3m5t6K48TGI9AUdb+IzbnSxvnvUMfuitfgcfuo=",
         version = "v0.6.0",
     )
+    go_repository(
+        name = "com_github_bazelbuild_buildtools",
+        importpath = "github.com/bazelbuild/buildtools",
+        sum = "h1:M7gqMiatHWf9F3HL32QsFX8H3C/JFh1a8jYM5+F+5JI=",
+        version = "v0.0.0-20201023142455-8a8e1e724705",
+    )
 
     go_repository(
         name = "com_github_bazelbuild_rules_go",
@@ -1073,6 +1079,12 @@ def go_repositories():
         importpath = "github.com/creack/pty",
         sum = "h1:07n33Z8lZxZ2qwegKbObQohDhXDQxiMMz1NOUGYlesw=",
         version = "v1.1.11",
+    )
+    go_repository(
+        name = "com_github_crillab_gophersat",
+        importpath = "github.com/crillab/gophersat",
+        sum = "h1:l4fgnEMmy1+b7pn3nvPwj1ja3Z9MgXE4hUIl9TU8v+M=",
+        version = "v1.3.1",
     )
 
     go_repository(
@@ -4308,6 +4320,12 @@ def go_repositories():
         sum = "h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=",
         version = "v0.2.0",
     )
+    go_repository(
+        name = "com_github_rmohr_bazeldnf",
+        importpath = "github.com/rmohr/bazeldnf",
+        sum = "h1:xYSQoQHuCZY+2mZJtt+2KN0G6TmeEOPR6cxPZomTXX4=",
+        version = "v0.5.4",
+    )
 
     go_repository(
         name = "com_github_robfig_cron",
@@ -4407,8 +4425,9 @@ def go_repositories():
     go_repository(
         name = "com_github_sassoftware_go_rpmutils",
         importpath = "github.com/sassoftware/go-rpmutils",
-        sum = "h1:+gCnWOZV8Z/8jehJ2CdqB47Z3S+SREmQcuXkRFLNsiI=",
-        version = "v0.0.0-20190420191620-a8f1baeba37b",
+        replace = "github.com/rmohr/go-rpmutils",
+        sum = "h1:IPm+rJWi7P9mkoFQjloDEGThxlM71dzDrC2DZSjgnL8=",
+        version = "v0.1.2-0.20201215123907-5acf7436c00d",
     )
     go_repository(
         name = "com_github_satori_go_uuid",

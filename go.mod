@@ -59,6 +59,9 @@ replace github.com/containerd/ttrpc => github.com/monogon-dev/ttrpc v1.0.2-0.202
 // Override version for Bazel support
 replace github.com/mwitkow/go-proto-validators => github.com/mwitkow/go-proto-validators v0.3.2
 
+// bazeldnf currently comes with a go-rpmutils patch
+replace github.com/sassoftware/go-rpmutils v0.1.1 => github.com/rmohr/go-rpmutils v0.1.2-0.20201215123907-5acf7436c00d
+
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/bazelbuild/rules_go v0.30.0
@@ -94,6 +97,7 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.14
 	github.com/pkg/errors v0.9.1
 	github.com/rekby/gpt v0.0.0-20200614112001-7da10aec5566
+	github.com/rmohr/bazeldnf v0.5.4
 	github.com/sbezverk/nfproxy v0.0.0-20210112155058-0d98b4a69f0c
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
@@ -122,6 +126,7 @@ require (
 	k8s.io/cli-runtime v0.24.2
 	k8s.io/client-go v0.24.2
 	k8s.io/component-base v0.24.2
+	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.60.1
 	k8s.io/kubectl v0.0.0
 	k8s.io/kubelet v0.0.0
@@ -161,6 +166,7 @@ require (
 	github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e // indirect
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/aws/aws-sdk-go v1.44.9 // indirect
+	github.com/bazelbuild/buildtools v0.0.0-20201023142455-8a8e1e724705 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bytecodealliance/wasmtime-go v0.39.0 // indirect
@@ -185,6 +191,7 @@ require (
 	github.com/cosiner/argv v0.1.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/creack/pty v1.1.11 // indirect
+	github.com/crillab/gophersat v1.3.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -320,6 +327,7 @@ require (
 	github.com/russross/blackfriday v1.5.2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/safchain/ethtool v0.0.0-20210803160452-9aa261dae9b1 // indirect
+	github.com/sassoftware/go-rpmutils v0.1.1 // indirect
 	github.com/sbezverk/nftableslib v0.0.0-20210111145735-b08b2d804e1f // indirect
 	github.com/seccomp/libseccomp-golang v0.9.2-0.20220502022130-f33da4d89646 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
@@ -335,6 +343,7 @@ require (
 	github.com/urfave/cli v1.22.4 // indirect
 	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74 // indirect
 	github.com/vmware/govmomi v0.20.3 // indirect
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
@@ -384,7 +393,6 @@ require (
 	k8s.io/controller-manager v0.24.2 // indirect
 	k8s.io/cri-api v0.23.1 // indirect
 	k8s.io/csi-translation-lib v0.24.2 // indirect
-	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-aggregator v0.0.0 // indirect
 	k8s.io/kube-controller-manager v0.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect

@@ -1,5 +1,6 @@
 load("@bazel_gazelle//:def.bzl", "gazelle")
 load("@io_bazel_rules_go//go:def.bzl", "go_path")
+load("@bazeldnf//:def.bzl", "bazeldnf")
 
 # gazelle:prefix source.monogon.dev
 # gazelle:go_naming_convention import
@@ -50,6 +51,9 @@ toolchain(
     toolchain = ":host_python_pair",
     toolchain_type = "@rules_python//python:toolchain_type",
 )
+
+# bazeldnf binary
+bazeldnf(name = "bazeldnf")
 
 # Shortcuts for top-level binaries/tools
 
