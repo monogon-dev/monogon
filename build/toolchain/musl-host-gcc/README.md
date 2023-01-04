@@ -10,7 +10,7 @@ At some point, this toolchain should be replaced by a fully hermetic toolchain t
 Usage
 -----
 
-To use this toolchain explicitely while building a `cc_binary`, do:
+To use this toolchain explicitly while building a `cc_binary`, do:
 
     bazel build --crosstool_top=//build/toolchain/musl-host-gcc:musl_host_cc_suite //foo/bar
 
