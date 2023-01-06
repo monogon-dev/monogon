@@ -2,6 +2,12 @@
 # This avoids unnecessary cache invalidations.
 build --incompatible_strict_action_env=true
 
+# TODO: Enable hermetic sandbox on Bazel 5.x
+# build --experimental_use_hermetic_linux_sandbox
+
+build --action_env=MONOGON_SANDBOX_DIGEST
+import %workspace%/.bazelrc.sandbox
+
 # Build resources
 startup --batch_cpu_scheduling --io_nice_level 7
 test --test_output=errors
@@ -24,11 +30,8 @@ build --stamp --workspace_status_command=./build/print-workspace-status.sh
 
 # Use our custom-configured host C++ toolchain.
 build --crosstool_top=//build/toolchain:host_cc_suite
+build --host_crosstool_top=//build/toolchain:host_cc_suite
 build --cpu=k8
-
-# Use the default Bazel C++ toolchain to build the tools used during the
-# build.
-build --host_crosstool_top=@bazel_tools//tools/cpp:toolchain
 
 # Load CI bazelrc if present.
 try-import %workspace%/ci.bazelrc

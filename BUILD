@@ -5,6 +5,7 @@ load("@bazeldnf//:def.bzl", "bazeldnf")
 # gazelle:prefix source.monogon.dev
 # gazelle:go_naming_convention import
 # gazelle:exclude **/gomod-generated-placeholder.go
+# gazelle:exclude .bazeldnf/**
 gazelle(name = "gazelle")
 
 gazelle(

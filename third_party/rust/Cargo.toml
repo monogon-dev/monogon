@@ -82,7 +82,7 @@ extra_aliased_targets = [
 # We end up linking mdbook into a binary. rustc, when doing that, calls gcc as
 # a linker (probably because cc-rs?).
 #
-# On our build container, the gcc used as a linker is /usr/bin/gcc. This gcc
+# On our sandbox sysroot, the gcc used as a linker is /usr/bin/gcc. This gcc
 # then attempts to call its corresponding system ld, expecting it to be on
 # PATH. However, rules_rust hermeticizes the build to the point where PATH is
 # totally stripped out. Here, we add back /usr/bin back as the sole PATH

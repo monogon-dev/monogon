@@ -1,58 +1,49 @@
 # Monogon Monorepo
 
-This is the main repository containing the source code for the [Monogon Project](https://monogon.tech).
+This is the main repository containing the source code for the [Monogon Platform](https://monogon.tech).
 
-*This is pre-release software - feel free to look around, and check back later for our first release!*
+*This is pre-release software - take a look, and check back later!*
 
 ## Environment
 
-Our build environment requires a working Podman binary (your distribution should have one).
+Our build environment is self-contained and requires only minimal host dependencies:
 
-#### Usage
+- A Linux machine or VM.
+- [Bazelisk](https://github.com/bazelbuild/bazelisk) >= v1.15.0
+- A reasonably recent kernel with user namespaces enabled.
+- Working KVM with access to `/dev/kvm` (if you want to run tests).
 
-Spinning up: `scripts/create_container.sh` 
+Our docs assume that Bazelisk is available as `bazel` on your PATH.
 
-Spinning down: `scripts/destroy_container.sh` 
+### IntelliJ support
 
-Running commands: `scripts/run_in_container.sh <...>`
-
-Using bazel using a wrapper script: `scripts/bin/bazel <...>` (add to your local $PATH for convenience)
-
-#### IntelliJ
-
-This repository is compatible with the IntelliJ Bazel plugin, which enables
-full autocompletion for external dependencies and generated code. All commands
-run inside the container, and necessary paths are mapped into the container.
+This repository is compatible with the IntelliJ Bazel plugin out of the box, which enables
+full autocompletion for external dependencies and generated code.
 
 The following steps are necessary:
 
-- Install Google's [Bazel plugin](https://plugins.jetbrains.com/plugin/8609-bazel) in IntelliJ. On IntelliJ 2020.3 or later,
-  you need to install a [beta release](https://github.com/bazelbuild/intellij/issues/2102#issuecomment-801242977) of the plugin.
-
-- Add the absolute path to your `~/.cache/bazel-monogon` folder to your `idea64.vmoptions` (Help → Edit Custom VM Options)
-  and restart IntelliJ:
-
-  `-Dbazel.bep.path=/home/leopold/.cache/bazel-monogon`
+- Install Google's [Bazel plugin](https://plugins.jetbrains.com/plugin/8609-bazel) in IntelliJ.
+ 
+- Make sure that Bazel "*Bazel Binary Location*" in Other Settings → Bazel Settings points to Bazelisk.
   
-- Set "*Bazel Binary Location*" in Other Settings → Bazel Settings to the absolute path of `scripts/bin/bazel`.
-  This is a wrapper that will execute Bazel inside the container.
-  
-- Use _File → Import Bazel project_... to create a new project from `.bazelproject`.
+- Use _File → Import Bazel project_... and select your monorepo checkout.
 
 After running the first sync, everything should now resolve in the IDE, including generated code.
 
-## Metropolis
+## Monogon OS
 
-### Run a single node cluster
+### Run a single node demo cluster
 
 Launch the node:
 
-    scripts/bin/bazel run //:launch -c dbg
+    bazel run //:launch -c dbg
     
 Run a kubectl command:
 
-    scripts/bin/bazel run //metropolis/cli/dbg -c dbg -- kubectl describe
+    bazel run //metropolis/cli/dbg -c dbg -- kubectl describe node
  
-Run tests:
+### Test suite
 
-    scripts/bin/bazel test -c dbg //...
+Run full test suite:
+
+    bazel test -c dbg //...

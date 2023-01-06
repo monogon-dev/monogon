@@ -3,3 +3,5 @@ bazel-*
 .idea
 .ijwb
 .bazelrc.user
+.bazelrc.sandbox
+.bazeldnf

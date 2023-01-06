@@ -2,6 +2,9 @@
 // executed by Jenkins for presubmit checks, ie. checks that run against an
 // open Gerrit change request.
 
+// TODO(leo): remove once CI image has been updated.
+def gazelle_build = "bazel --noworkspace_rc run go install github.com/bazelbuild/bazelisk@v1.15.0"
+
 pipeline {
     agent none
     options {
@@ -21,8 +24,9 @@ pipeline {
                         gerritCheck checks: ['jenkins:test': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
                         echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe bazel test //..."
-                        sh "JENKINS_NODE_COOKIE=dontKillMe bazel test -c dbg //..."
+                        sh gazelle_build
+                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/go/bin/bazelisk test //..."
+                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/go/bin/bazelisk test -c dbg //..."
                     }
                     post {
                         success {
@@ -45,8 +49,9 @@ pipeline {
                         gerritCheck checks: ['jenkins:gazelle': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
                         echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe bazel run //:gazelle-update-repos"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe bazel run //:gazelle -- update"
+                        sh gazelle_build
+                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/go/bin/bazelisk run //:gazelle-update-repos"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/go/bin/bazelisk run //:gazelle -- update"
 
                         script {
                             def diff = sh script: "git status --porcelain", returnStdout: true

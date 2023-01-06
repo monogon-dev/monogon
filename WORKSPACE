@@ -110,13 +110,13 @@ http_archive(
     ],
 )
 
-load("@rules_rust//rust:repositories.bzl", "rust_repositories")
-
-rust_repositories()
-
-load("//third_party/rust/cargo:crates.bzl", "raze_fetch_remote_crates")
-
-raze_fetch_remote_crates()
+#load("@rules_rust//rust:repositories.bzl", "rust_repositories")
+#
+#rust_repositories()
+#
+#load("//third_party/rust/cargo:crates.bzl", "raze_fetch_remote_crates")
+#
+#raze_fetch_remote_crates()
 
 # third_party external repositories
 load("//third_party/linux:external.bzl", "linux_external")
@@ -349,3 +349,7 @@ http_archive(
 load("@bazeldnf//:deps.bzl", "bazeldnf_dependencies", "rpm")
 
 bazeldnf_dependencies()
+
+load("//third_party/sandboxroot:repositories.bzl", "sandbox_dependencies")
+
+sandbox_dependencies()

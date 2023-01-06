@@ -2,17 +2,168 @@
 # Both bazelisk and bazel's native wrapper scripts will attempt to use the well-known executable
 # named "tools/bazel" to run Bazel. The path of the original executable is stored in BAZEL_REAL.
 set -euo pipefail
+shopt -s nullglob
 
-if [[ -z "${BAZEL_REAL:-}" ]]; then
-  echo "BAZEL_REAL is not set - do not run directly, instead, use bazelisk" >&2
-  exit 1
+# Short circuit if we're rebuilding the sandbox via third_party/sandboxroot/regenerate.sh.
+if [[ -n ${MONOGON_SYSROOT_REBUILD:-} ]]; then
+  echo "Skipping Bazel wrapper" >&2
+  exec -a "$0" "${BAZEL_REAL}" "$@"
 fi
 
-if [[ -z "${BAZELISK_SKIP_WRAPPER:-}" ]]; then
-  echo "#########################################################" >&2
-  echo "  You are not using Bazelisk. This is not recommended." >&2
-  echo "  Make sure you are using the correct version of Bazel." >&2
-  echo "#########################################################" >&2
-fi
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SANDBOX="${DIR}/../.bazeldnf/sandbox/default"
+BAZEL_ARGS="--noworkspace_rc --bazelrc ${DIR}/../.bazelrc.sandboxroot"
 
-exec scripts/bin/bazel "$@"
+prechecks() {
+  # Complain if script invoked directly.
+  if [[ -z "${BAZEL_REAL:-}" ]]; then
+    echo "BAZEL_REAL is not set - do not run directly, instead, use bazelisk" >&2
+    exit 1
+  fi
+
+  # Recommend using Bazelisk instead of Bazel's "bazel.sh" wrapper.
+  if [[ -z "${BAZELISK_SKIP_WRAPPER:-}" ]]; then
+    echo "############################################################" >&2
+    echo "#  Please use Bazelisk to build the Monorepo. Using Bazel  #" >&2
+    echo "#  directly may work, but is not recommended or supported. #" >&2
+    echo "############################################################" >&2
+  fi
+
+  # Our local user needs write access to /dev/kvm. Warn if this is not the case.
+  if ! touch /dev/kvm; then
+    echo "###################################################################" >&2
+    echo "#  Cannot write to /dev/kvm - please verify permissions.          #" >&2
+    echo "#  Most tests require KVM and will not work. Builds still work.   #" >&2
+    echo "#  On most systems, add your user to the kvm group and re-login.  #" >&2
+    echo "###################################################################" >&2
+  fi
+}
+
+intellij_patch() {
+  # When IntelliJ's Bazel plugin uses //scripts/bin/bazel to either build targets
+  # or run syncs, it adds a --override_repository flag to the bazel command
+  # line that points @intellij_aspect into a path on the filesystem. This
+  # external repository contains a Bazel Aspect definition which Bazel
+  # executes to provide the IntelliJ Bazel plugin with information about the
+  # workspace / build targets / etc...
+  #
+  # We need to patch the aspect definition to fix a number of bugs
+  # to make it work with the Monogon monorepo.
+
+  # Find all IntelliJ installation/config directories.
+  local ij_home_paths=("${HOME}/.local/share/JetBrains/IntelliJIdea"*)
+  # Get the newest one, if any.
+  local ij_home=""
+  if ! [[  ${#ij_home_paths[@]} -eq 0 ]]; then
+      # Reverse sort paths by name, with the first being the newest IntelliJ
+      # installation.
+      IFS=$'\n'
+      local sorted=($(sort -r <<<"${ij_home_paths[*]}"))
+      unset IFS
+      ij_home="${sorted[0]}"
+  fi
+
+  # If we don't have or can't find ij_home, don't bother with attempting to patch anything.
+  if [[ -d "${ij_home}" ]]; then
+      # aspect_path is the path to the aspect external repository that IntelliJ will
+      # inject into bazel via --override_repository.
+      local aspect_path="${ij_home}/ijwb/aspect"
+      # Our copy of it.
+      local patched_path="${ij_home}/ijwb/aspect-monogon"
+      # Checksum of the patch that was used to create patched_path.
+      local checksum_file="${patched_path}/checksum"
+      # The patch
+      local patch_file="${DIR}/../intellij/patches/bazel_intellij_aspect_filter.patch"
+      # The checksum of the patch we're about to apply.
+      local checksum
+      checksum=$(sha256sum "$patch_file" | cut -d' ' -f1)
+
+      # If the patched aspect repository doesn't exist, or the checksum of the patch
+      # we're about to apply doesn't match the checksum of the patch that was used
+      # to create the patched aspect repository, apply the patch.
+
+      if ! [[ -d "${patched_path}" ]] || ! [[ "$(cat "${checksum_file}")" == "${checksum}" ]]; then
+          echo "IntelliJ found at ${ij_home}, patching aspect repository." >&2
+          # Copy the aspect repository to the patched path.
+          rm -rf "${patched_path}"
+          cp -r "${aspect_path}" "${patched_path}"
+          # Apply the patch.
+          patch -d "${patched_path}" -p1 < "${patch_file}"
+          # Write the checksum of the patch to the checksum file.
+          echo "${checksum}" > "${checksum_file}"
+      else
+          echo "IntelliJ found at ${ij_home}, aspect repository already patched." >&2
+      fi
+  fi
+}
+
+regenerate_sysroot() {
+  local checksum_file="${SANDBOX}/checksum"
+  local checksum_input=(
+    ${DIR}/../third_party/sandboxroot/{repositories.bzl,BUILD.bazel}
+    ${DIR}/../.bazelrc.sandbox
+    ${DIR}/../.bazelrc.sandboxroot
+    ${DIR}/../tools/bazel
+  )
+  local checksum
+  checksum="$(sha256sum <(cat "${checksum_input[@]}") | cut -d' ' -f1)"
+
+  if [[ -f "${checksum_file}" ]] && [[ "$(cat "${checksum_file}")" == "${checksum}" ]]; then
+    # Sysroot is up to date.
+    return
+  fi
+
+  echo "Regenerating sysroot $SANDBOX ..." >&2
+  rm -rf "$SANDBOX"
+  "$BAZEL_REAL" ${BAZEL_ARGS} run //third_party/sandboxroot:sandboxroot
+
+  # Manually resolve alternatives (https://github.com/rmohr/bazeldnf/issues/28)
+  ln -r -s -f "${SANDBOX}/root/usr/bin/ld.bfd" "${SANDBOX}/root/usr/bin/ld"
+
+  # Write checksum of the sysroot to a file in order to detect changes.
+  echo "$checksum" > "${SANDBOX}/checksum"
+
+  # Write Bazel config
+  ROOT=$(realpath "$DIR/..")
+
+  # We need the host's resolv.conf for some E2E tests which require internet access.
+  cp /etc/resolv.conf "${ROOT}/.bazeldnf/sandbox/default/root/etc/resolv.conf"
+
+  cat > "${DIR}/../.bazelrc.sandbox" <<EOF
+build --sandbox_add_mount_pair=${ROOT}/.bazeldnf/sandbox/default/root/etc:/etc
+build --sandbox_add_mount_pair=${ROOT}/.bazeldnf/sandbox/default/root/usr:/usr
+build --sandbox_add_mount_pair=${ROOT}/.bazeldnf/sandbox/default/root/var:/var
+build --sandbox_add_mount_pair=${ROOT}/.bazeldnf/sandbox/default/root/run:/run
+build --sandbox_add_mount_pair=${ROOT}/.bazeldnf/sandbox/default/root/tmp:/tmp
+build --sandbox_add_mount_pair=${ROOT}/.bazeldnf/sandbox/default/root/lib64:/lib64
+build --sandbox_add_mount_pair=${ROOT}/.bazeldnf/sandbox/default/root/lib:/lib
+build --sandbox_add_mount_pair=${ROOT}/.bazeldnf/sandbox/default/root/bin:/bin
+build --sandbox_add_mount_pair=${ROOT}/.bazeldnf/sandbox/default/root/sbin:/sbin
+EOF
+
+  echo "Done regenerating sysroot." >&2
+}
+
+prechecks
+intellij_patch
+regenerate_sysroot
+
+# Find the --override_repository=intellij_aspect=[path]
+# argument in $@ and replace the path with the patched version.
+# This is surprisingly tricky - bash special-cases "$@" to expand
+# as "$1" "$2" ... "$n" so that argv is preserved, so we need to
+# modify the real $@ array.
+
+for i in $(seq 1 $#); do
+  if [[ "${!i}" == "--override_repository=intellij_aspect="* ]]; then
+    new_arg="${!i/\/aspect/\/aspect-monogon}"
+    set -- "${@:1:$((i-1))}" "${new_arg}" "${@:$((i+1))}"
+  fi
+done
+
+# Bazel does not track the ambient environment, so we need to invalidate
+# the entire build via an --action_env whenever the sandbox digest changes.
+# This is strictly necessary to guarantee correctness.
+export MONOGON_SANDBOX_DIGEST="$(cat "${SANDBOX}/checksum")"
+
+exec -a "$0" "${BAZEL_REAL}" "$@"

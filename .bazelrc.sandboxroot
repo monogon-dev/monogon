@@ -1,0 +1,8 @@
+# bazelrc config used during sandboxroot generation
+
+startup --batch_cpu_scheduling --io_nice_level 7
+build --incompatible_strict_action_env=true
+
+# Shared with main .bazelrc
+try-import %workspace%/.bazelrc.user
+try-import %workspace%/ci.bazelrc
