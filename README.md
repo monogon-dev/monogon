@@ -15,20 +15,7 @@ Our build environment is self-contained and requires only minimal host dependenc
 
 Our docs assume that Bazelisk is available as `bazel` on your PATH.
 
-### IntelliJ support
-
-This repository is compatible with the IntelliJ Bazel plugin out of the box, which enables
-full autocompletion for external dependencies and generated code.
-
-The following steps are necessary:
-
-- Install Google's [Bazel plugin](https://plugins.jetbrains.com/plugin/8609-bazel) in IntelliJ.
- 
-- Make sure that Bazel "*Bazel Binary Location*" in Other Settings → Bazel Settings points to Bazelisk.
-  
-- Use _File → Import Bazel project_... and select your monorepo checkout.
-
-After running the first sync, everything should now resolve in the IDE, including generated code.
+Refer to [SETUP.md](./SETUP.md) for detailed instructions.
 
 ## Monogon OS
 
