@@ -1,0 +1,25 @@
+processor   : 0
+vendor_id   : GenuineIntel
+cpu family  : 6
+model       : 6
+model name  : QEMU Virtual CPU version 2.1.0
+stepping    : 3
+microcode   : 0x1
+cpu MHz     : 2693.764
+cache size  : 4096 KB
+physical id : 0
+siblings    : 1
+core id     : 0
+cpu cores   : 1
+apicid      : 0
+initial apicid  : 0
+fpu     : yes
+fpu_exception   : yes
+cpuid level : 4
+wp      : yes
+flags       : fpu de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pse36 clflush mmx fxsr sse sse2 syscall nx lm rep_good nopl pni cx16 x2apic popcnt hypervisor lahf_lm abm
+bogomips    : 5387.52
+clflush size    : 64
+cache_alignment : 64
+address sizes   : 40 bits physical, 48 bits virtual
+power management:

@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "agent_lib",
+    srcs = [
+        "hwreport.go",
+        "main.go",
+    ],
+    importpath = "source.monogon.dev/cloud/agent",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//cloud/agent/api",
+        "//metropolis/pkg/nvme",
+        "//metropolis/pkg/scsi",
+        "//metropolis/pkg/smbios",
+        "@com_github_mdlayher_ethtool//:ethtool",
+        "@com_github_vishvananda_netlink//:netlink",
+        "@org_golang_google_protobuf//encoding/prototext",
+        "@org_golang_x_sys//unix",
+    ],
+)
+
+go_binary(
+    name = "agent",
+    embed = [":agent_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "agent_test",
+    srcs = ["hwreport_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":agent_lib"],
+    deps = [
+        "//cloud/agent/api",
+        "@com_github_stretchr_testify//assert",
+    ],
+)
