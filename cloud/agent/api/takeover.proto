@@ -1,0 +1,24 @@
+syntax = "proto3";
+package cloud.agent.api;
+option go_package = "source.monogon.dev/cloud/agent/api";
+
+// TakeoverInit is the message sent to the takeover process over an SSH session
+// during initialization.
+message TakeoverInit {
+  // provider is the provider name the machine was created at.
+  string provider = 1;
+  // provider_id is the machine's provider-assigned ID.
+  string provider_id = 2;
+  // bmaas_endpoint is an address of the BMaaS service the agent should call
+  // back to.
+  string bmaas_endpoint = 3;
+}
+
+// TakeoverResponse is the message the takeover process sends back after
+// receiving an TakeoverInit message.
+message TakeoverResponse {
+  // init_message is the exact init message the agent received.
+  TakeoverInit init_message = 1;
+  // key is the agent's public key.
+  bytes key = 2;
+}
