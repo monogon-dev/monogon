@@ -289,6 +289,14 @@ func (s *Session) Work(ctx context.Context, process model.Process, fn func(q *mo
 			}
 			return fmt.Errorf("could not start work on %q: %w", mids[0], err)
 		}
+		err = q.WorkHistoryInsert(ctx, model.WorkHistoryInsertParams{
+			MachineID: mids[0],
+			Event:     model.WorkHistoryEventStarted,
+			Process:   process,
+		})
+		if err != nil {
+			return fmt.Errorf("could not insert history event: %w", err)
+		}
 		return nil
 	})
 	if err != nil {
@@ -329,10 +337,18 @@ func (w *Work) Cancel(ctx context.Context) {
 	// will be invalidated soon and so will the work being performed on this
 	// machine.
 	err := w.s.Transact(ctx, func(q *model.Queries) error {
-		return q.FinishWork(ctx, model.FinishWorkParams{
+		err := q.FinishWork(ctx, model.FinishWorkParams{
 			MachineID: w.Machine,
 			SessionID: w.s.UUID,
 			Process:   w.process,
+		})
+		if err != nil {
+			return err
+		}
+		return q.WorkHistoryInsert(ctx, model.WorkHistoryInsertParams{
+			MachineID: w.Machine,
+			Process:   w.process,
+			Event:     model.WorkHistoryEventCanceled,
 		})
 	})
 	if err != nil {
@@ -362,6 +378,61 @@ func (w *Work) Finish(ctx context.Context, fn func(q *model.Queries) error) erro
 		if err != nil {
 			return err
 		}
+		err = q.WorkHistoryInsert(ctx, model.WorkHistoryInsertParams{
+			MachineID: w.Machine,
+			Process:   w.process,
+			Event:     model.WorkHistoryEventFinished,
+		})
+		if err != nil {
+			return err
+		}
 		return fn(q)
+	})
+}
+
+// Fail work and introduce backoff for a given duration (if given backoff is
+// non-nil). As long as that backoff is active, no further work for this
+// machine/process will be started. The given cause is an operator-readable
+// string that will be persisted alongside the backoff and the work history/audit
+// table.
+func (w *Work) Fail(ctx context.Context, backoff *time.Duration, cause string) error {
+	if w.done {
+		return fmt.Errorf("already finished")
+	}
+	w.done = true
+
+	return w.s.Transact(ctx, func(q *model.Queries) error {
+		err := q.FinishWork(ctx, model.FinishWorkParams{
+			MachineID: w.Machine,
+			SessionID: w.s.UUID,
+			Process:   w.process,
+		})
+		if err != nil {
+			return err
+		}
+		err = q.WorkHistoryInsert(ctx, model.WorkHistoryInsertParams{
+			MachineID: w.Machine,
+			Process:   w.process,
+			Event:     model.WorkHistoryEventFailed,
+			FailedCause: sql.NullString{
+				String: cause,
+				Valid:  true,
+			},
+		})
+		if err != nil {
+			return err
+		}
+		if backoff != nil && backoff.Seconds() >= 1.0 {
+			seconds := int64(backoff.Seconds())
+			klog.Infof("Adding backoff for %q on machine %q (%d seconds)", w.process, w.Machine, seconds)
+			return q.WorkBackoffInsert(ctx, model.WorkBackoffInsertParams{
+				MachineID: w.Machine,
+				Process:   w.process,
+				Seconds:   seconds,
+				Cause:     cause,
+			})
+		} else {
+			return nil
+		}
 	})
 }

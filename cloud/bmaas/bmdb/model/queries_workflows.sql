@@ -6,12 +6,14 @@ SELECT
 FROM machines
 INNER JOIN machine_provided ON machines.machine_id = machine_provided.machine_id
 LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process = 'ShepherdInstall'
+LEFT JOIN work_backoff ON machines.machine_id = work_backoff.machine_id AND work_backoff.until > now() AND work_backoff.process = 'ShepherdInstall'
 LEFT JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
 WHERE
   machine_agent_started.machine_id IS NULL
   -- TODO(q3k): exclude machines which are not expected to run the agent (eg.
   -- are already exposed to a user).
   AND work.machine_id IS NULL
+  AND work_backoff.machine_id IS NULL
 LIMIT $1;
 
 -- name: GetMachineForAgentRecovery :many
@@ -25,6 +27,7 @@ SELECT
 FROM machines
 INNER JOIN machine_provided ON machines.machine_id = machine_provided.machine_id
 LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process = 'ShepherdInstall'
+LEFT JOIN work_backoff ON machines.machine_id = work_backoff.machine_id AND work_backoff.until > now() AND work_backoff.process = 'ShepherdInstall'
 LEFT JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
 LEFT JOIN machine_agent_heartbeat ON machines.machine_id = machine_agent_heartbeat.machine_id
 WHERE
@@ -43,6 +46,7 @@ WHERE
     )
   )
   AND work.machine_id IS NULL
+  AND work_backoff.machine_id IS NULL
 LIMIT $1;
 
 -- name: AuthenticateAgentConnection :many
@@ -76,4 +80,3 @@ WHERE
         OR machine_os_installation_report.generation != machine_os_installation_request.generation
     )
 LIMIT $2;
-
