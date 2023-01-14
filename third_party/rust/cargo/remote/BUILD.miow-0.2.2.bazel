@@ -10,9 +10,10 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 
 # buildifier: disable=load
 load(
-    "@rules_rust//rust:rust.bzl",
+    "@rules_rust//rust:defs.bzl",
     "rust_binary",
     "rust_library",
+    "rust_proc_macro",
     "rust_test",
 )
 
@@ -33,10 +34,7 @@ licenses([
 rust_library(
     name = "miow",
     srcs = glob(["**/*.rs"]),
-    crate_features = [
-    ],
     crate_root = "src/lib.rs",
-    crate_type = "lib",
     data = [],
     edition = "2015",
     rustc_flags = [
@@ -44,13 +42,14 @@ rust_library(
     ],
     tags = [
         "cargo-raze",
+        "crate-name=miow",
         "manual",
     ],
     version = "0.2.2",
     # buildifier: leave-alone
     deps = [
         "@raze__kernel32_sys__0_2_2//:kernel32_sys",
-        "@raze__net2__0_2_37//:net2",
+        "@raze__net2__0_2_38//:net2",
         "@raze__winapi__0_2_8//:winapi",
         "@raze__ws2_32_sys__0_2_1//:ws2_32_sys",
     ],

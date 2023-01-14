@@ -1,0 +1,160 @@
+"""
+@generated
+cargo-raze crate build file.
+
+DO NOT EDIT! Replaced on runs of cargo-raze
+"""
+
+# buildifier: disable=load
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+# buildifier: disable=load
+load(
+    "@rules_rust//rust:defs.bzl",
+    "rust_binary",
+    "rust_library",
+    "rust_proc_macro",
+    "rust_test",
+)
+
+package(default_visibility = [
+    # Public for visibility by "@raze__crate__version//" targets.
+    #
+    # Prefer access through "//third_party/rust/cargo", which limits external
+    # visibility to explicit Cargo.toml dependencies.
+    "//visibility:public",
+])
+
+licenses([
+    "notice",  # MIT from expression "MIT"
+])
+
+# Generated Targets
+
+# Unsupported target "autoreload" with type "example" omitted
+
+# Unsupported target "body" with type "example" omitted
+
+# Unsupported target "compression" with type "example" omitted
+
+# Unsupported target "custom_methods" with type "example" omitted
+
+# Unsupported target "dir" with type "example" omitted
+
+# Unsupported target "dyn_reply" with type "example" omitted
+
+# Unsupported target "file" with type "example" omitted
+
+# Unsupported target "futures" with type "example" omitted
+
+# Unsupported target "handlebars_template" with type "example" omitted
+
+# Unsupported target "headers" with type "example" omitted
+
+# Unsupported target "hello" with type "example" omitted
+
+# Unsupported target "query_string" with type "example" omitted
+
+# Unsupported target "rejections" with type "example" omitted
+
+# Unsupported target "returning" with type "example" omitted
+
+# Unsupported target "routing" with type "example" omitted
+
+# Unsupported target "sse" with type "example" omitted
+
+# Unsupported target "sse_chat" with type "example" omitted
+
+# Unsupported target "tls" with type "example" omitted
+
+# Unsupported target "todos" with type "example" omitted
+
+# Unsupported target "tracing" with type "example" omitted
+
+# Unsupported target "unix_socket" with type "example" omitted
+
+# Unsupported target "websockets" with type "example" omitted
+
+# Unsupported target "websockets_chat" with type "example" omitted
+
+# Unsupported target "wrapping" with type "example" omitted
+
+rust_library(
+    name = "warp",
+    srcs = glob(["**/*.rs"]),
+    crate_features = [
+        "tokio-tungstenite",
+        "websocket",
+    ],
+    crate_root = "src/lib.rs",
+    data = [],
+    edition = "2018",
+    rustc_flags = [
+        "--cap-lints=allow",
+    ],
+    tags = [
+        "cargo-raze",
+        "crate-name=warp",
+        "manual",
+    ],
+    version = "0.3.3",
+    # buildifier: leave-alone
+    deps = [
+        "@raze__bytes__1_3_0//:bytes",
+        "@raze__futures_channel__0_3_25//:futures_channel",
+        "@raze__futures_util__0_3_25//:futures_util",
+        "@raze__headers__0_3_8//:headers",
+        "@raze__http__0_2_8//:http",
+        "@raze__hyper__0_14_23//:hyper",
+        "@raze__log__0_4_17//:log",
+        "@raze__mime__0_3_16//:mime",
+        "@raze__mime_guess__2_0_4//:mime_guess",
+        "@raze__percent_encoding__2_2_0//:percent_encoding",
+        "@raze__pin_project__1_0_12//:pin_project",
+        "@raze__rustls_pemfile__0_2_1//:rustls_pemfile",
+        "@raze__scoped_tls__1_0_1//:scoped_tls",
+        "@raze__serde__1_0_152//:serde",
+        "@raze__serde_json__1_0_91//:serde_json",
+        "@raze__serde_urlencoded__0_7_1//:serde_urlencoded",
+        "@raze__tokio__1_24_1//:tokio",
+        "@raze__tokio_stream__0_1_11//:tokio_stream",
+        "@raze__tokio_tungstenite__0_17_2//:tokio_tungstenite",
+        "@raze__tokio_util__0_7_4//:tokio_util",
+        "@raze__tower_service__0_3_2//:tower_service",
+        "@raze__tracing__0_1_37//:tracing",
+    ],
+)
+
+# Unsupported target "addr" with type "test" omitted
+
+# Unsupported target "body" with type "test" omitted
+
+# Unsupported target "cookie" with type "test" omitted
+
+# Unsupported target "cors" with type "test" omitted
+
+# Unsupported target "ext" with type "test" omitted
+
+# Unsupported target "filter" with type "test" omitted
+
+# Unsupported target "fs" with type "test" omitted
+
+# Unsupported target "header" with type "test" omitted
+
+# Unsupported target "host" with type "test" omitted
+
+# Unsupported target "method" with type "test" omitted
+
+# Unsupported target "multipart" with type "test" omitted
+
+# Unsupported target "path" with type "test" omitted
+
+# Unsupported target "query" with type "test" omitted
+
+# Unsupported target "redirect" with type "test" omitted
+
+# Unsupported target "reply_with" with type "test" omitted
+
+# Unsupported target "tracing" with type "test" omitted
+
+# Unsupported target "ws" with type "test" omitted

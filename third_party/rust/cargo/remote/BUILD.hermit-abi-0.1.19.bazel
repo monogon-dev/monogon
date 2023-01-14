@@ -10,9 +10,10 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 
 # buildifier: disable=load
 load(
-    "@rules_rust//rust:rust.bzl",
+    "@rules_rust//rust:defs.bzl",
     "rust_binary",
     "rust_library",
+    "rust_proc_macro",
     "rust_test",
 )
 
@@ -33,11 +34,7 @@ licenses([
 rust_library(
     name = "hermit_abi",
     srcs = glob(["**/*.rs"]),
-    crate_features = [
-        "default",
-    ],
     crate_root = "src/lib.rs",
-    crate_type = "lib",
     data = [],
     edition = "2018",
     rustc_flags = [
@@ -45,11 +42,12 @@ rust_library(
     ],
     tags = [
         "cargo-raze",
+        "crate-name=hermit-abi",
         "manual",
     ],
     version = "0.1.19",
     # buildifier: leave-alone
     deps = [
-        "@raze__libc__0_2_97//:libc",
+        "@raze__libc__0_2_139//:libc",
     ],
 )

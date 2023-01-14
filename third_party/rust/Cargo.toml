@@ -17,12 +17,40 @@ targets = [
 ]
 genmode = "Remote"
 
-[package.metadata.raze.crates.handlebars.'4.0.1']
+[package.metadata.raze.crates.handlebars.'4.3.6']
 data_dependencies = [
     "src/grammar.pest",
 ]
 
-[package.metadata.raze.crates.mdbook.'0.4.10']
+[package.metadata.raze.crates.opener.'0.5.0']
+data_dependencies = [
+    "src/xdg-open",
+]
+
+[package.metadata.raze.crates.clap.'3.2.23']
+data_dependencies = [
+    "README.md",
+    "examples/demo.md",
+]
+
+[package.metadata.raze.crates.clap_complete.'3.2.5']
+data_dependencies = [
+    "README.md",
+]
+
+[package.metadata.raze.crates.bstr.'0.2.17']
+data_dependencies = [
+	"src/unicode/fsm/grapheme_break_fwd.littleendian.dfa",
+	"src/unicode/fsm/grapheme_break_rev.littleendian.dfa",
+	"src/unicode/fsm/regional_indicator_rev.littleendian.dfa",
+	"src/unicode/fsm/sentence_break_fwd.littleendian.dfa",
+	"src/unicode/fsm/simple_word_fwd.littleendian.dfa",
+	"src/unicode/fsm/whitespace_anchored_fwd.littleendian.dfa",
+	"src/unicode/fsm/whitespace_anchored_rev.littleendian.dfa",
+	"src/unicode/fsm/word_break_fwd.littleendian.dfa",
+]
+
+[package.metadata.raze.crates.mdbook.'0.4.22']
 data_dependencies = [
     "src/theme/playground_editor/ace.js",
     "src/theme/playground_editor/editor.js",

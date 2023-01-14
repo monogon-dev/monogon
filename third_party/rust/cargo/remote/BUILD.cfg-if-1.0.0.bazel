@@ -10,9 +10,10 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 
 # buildifier: disable=load
 load(
-    "@rules_rust//rust:rust.bzl",
+    "@rules_rust//rust:defs.bzl",
     "rust_binary",
     "rust_library",
+    "rust_proc_macro",
     "rust_test",
 )
 
@@ -33,10 +34,7 @@ licenses([
 rust_library(
     name = "cfg_if",
     srcs = glob(["**/*.rs"]),
-    crate_features = [
-    ],
     crate_root = "src/lib.rs",
-    crate_type = "lib",
     data = [],
     edition = "2018",
     rustc_flags = [
@@ -44,6 +42,7 @@ rust_library(
     ],
     tags = [
         "cargo-raze",
+        "crate-name=cfg-if",
         "manual",
     ],
     version = "1.0.0",

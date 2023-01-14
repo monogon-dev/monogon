@@ -13,8 +13,8 @@ licenses([
 
 # Aliased targets
 alias(
-    name = "mdbook",
-    actual = "@raze__mdbook__0_4_10//:mdbook",
+    name = "cargo_bin_mdbook",
+    actual = "@raze__mdbook__0_4_22//:cargo_bin_mdbook",
     tags = [
         "cargo-raze",
         "manual",
@@ -22,10 +22,8 @@ alias(
 )
 
 alias(
-    # Extra aliased target, from raze configuration
-    # N.B.: The exact form of this is subject to change.
-    name = "cargo_bin_mdbook",
-    actual = "@raze__mdbook__0_4_10//:cargo_bin_mdbook",
+    name = "mdbook",
+    actual = "@raze__mdbook__0_4_22//:mdbook",
     tags = [
         "cargo-raze",
         "manual",
@@ -34,8 +32,18 @@ alias(
 
 # Export file for Stardoc support
 exports_files(
-    [
-        "crates.bzl",
-    ],
+    glob([
+        "**/*.bazel",
+        "**/*.bzl",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "srcs",
+    srcs = glob([
+        "**/*.bazel",
+        "**/*.bzl",
+    ]),
     visibility = ["//visibility:public"],
 )

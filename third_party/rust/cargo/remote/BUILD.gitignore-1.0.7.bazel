@@ -10,9 +10,10 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 
 # buildifier: disable=load
 load(
-    "@rules_rust//rust:rust.bzl",
+    "@rules_rust//rust:defs.bzl",
     "rust_binary",
     "rust_library",
+    "rust_proc_macro",
     "rust_test",
 )
 
@@ -35,8 +36,6 @@ rust_binary(
     # N.B.: The exact form of this is subject to change.
     name = "cargo_bin_gitignore_check",
     srcs = glob(["**/*.rs"]),
-    crate_features = [
-    ],
     crate_root = "src/bin/gitignore_check.rs",
     data = [],
     edition = "2015",
@@ -45,13 +44,14 @@ rust_binary(
     ],
     tags = [
         "cargo-raze",
+        "crate-name=gitignore_check",
         "manual",
     ],
     version = "1.0.7",
     # buildifier: leave-alone
     deps = [
         ":gitignore",
-        "@raze__glob__0_3_0//:glob",
+        "@raze__glob__0_3_1//:glob",
     ],
 )
 
@@ -60,8 +60,6 @@ rust_binary(
     # N.B.: The exact form of this is subject to change.
     name = "cargo_bin_gitignore_tree",
     srcs = glob(["**/*.rs"]),
-    crate_features = [
-    ],
     crate_root = "src/bin/gitignore_tree.rs",
     data = [],
     edition = "2015",
@@ -70,23 +68,21 @@ rust_binary(
     ],
     tags = [
         "cargo-raze",
+        "crate-name=gitignore_tree",
         "manual",
     ],
     version = "1.0.7",
     # buildifier: leave-alone
     deps = [
         ":gitignore",
-        "@raze__glob__0_3_0//:glob",
+        "@raze__glob__0_3_1//:glob",
     ],
 )
 
 rust_library(
     name = "gitignore",
     srcs = glob(["**/*.rs"]),
-    crate_features = [
-    ],
     crate_root = "src/lib.rs",
-    crate_type = "lib",
     data = [],
     edition = "2015",
     rustc_flags = [
@@ -94,11 +90,12 @@ rust_library(
     ],
     tags = [
         "cargo-raze",
+        "crate-name=gitignore",
         "manual",
     ],
     version = "1.0.7",
     # buildifier: leave-alone
     deps = [
-        "@raze__glob__0_3_0//:glob",
+        "@raze__glob__0_3_1//:glob",
     ],
 )

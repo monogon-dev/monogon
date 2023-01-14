@@ -10,9 +10,10 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 
 # buildifier: disable=load
 load(
-    "@rules_rust//rust:rust.bzl",
+    "@rules_rust//rust:defs.bzl",
     "rust_binary",
     "rust_library",
+    "rust_proc_macro",
     "rust_test",
 )
 
@@ -39,10 +40,7 @@ licenses([
 rust_library(
     name = "inotify",
     srcs = glob(["**/*.rs"]),
-    crate_features = [
-    ],
     crate_root = "src/lib.rs",
-    crate_type = "lib",
     data = [],
     edition = "2015",
     rustc_flags = [
@@ -50,14 +48,15 @@ rust_library(
     ],
     tags = [
         "cargo-raze",
+        "crate-name=inotify",
         "manual",
     ],
     version = "0.7.1",
     # buildifier: leave-alone
     deps = [
-        "@raze__bitflags__1_2_1//:bitflags",
+        "@raze__bitflags__1_3_2//:bitflags",
         "@raze__inotify_sys__0_1_5//:inotify_sys",
-        "@raze__libc__0_2_97//:libc",
+        "@raze__libc__0_2_139//:libc",
     ],
 )
 

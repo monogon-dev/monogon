@@ -10,9 +10,10 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 
 # buildifier: disable=load
 load(
-    "@rules_rust//rust:rust.bzl",
+    "@rules_rust//rust:defs.bzl",
     "rust_binary",
     "rust_library",
+    "rust_proc_macro",
     "rust_test",
 )
 
@@ -33,10 +34,7 @@ licenses([
 rust_library(
     name = "mio_extras",
     srcs = glob(["**/*.rs"]),
-    crate_features = [
-    ],
     crate_root = "src/lib.rs",
-    crate_type = "lib",
     data = [],
     edition = "2018",
     rustc_flags = [
@@ -44,15 +42,16 @@ rust_library(
     ],
     tags = [
         "cargo-raze",
+        "crate-name=mio-extras",
         "manual",
     ],
     version = "2.0.6",
     # buildifier: leave-alone
     deps = [
         "@raze__lazycell__1_3_0//:lazycell",
-        "@raze__log__0_4_14//:log",
+        "@raze__log__0_4_17//:log",
         "@raze__mio__0_6_23//:mio",
-        "@raze__slab__0_4_3//:slab",
+        "@raze__slab__0_4_7//:slab",
     ],
 )
 
