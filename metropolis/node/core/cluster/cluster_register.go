@@ -160,7 +160,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 			ClusterUnlockKey: cuk,
 		})
 		if err == nil {
-			supervisor.Logger(ctx).Infof("Registering: Commit succesfull, received certificate")
+			supervisor.Logger(ctx).Infof("Registering: Commit successful, received certificate")
 			certBytes = resC.NodeCertificate
 			caCertBytes = resC.CaCertificate
 			break

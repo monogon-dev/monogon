@@ -38,26 +38,27 @@ import (
 	"source.monogon.dev/metropolis/test/launch"
 )
 
-// Options contains all options that can be passed to Launch()
+// NodeOptions contains all options that can be passed to Launch()
 type NodeOptions struct {
 	// Ports contains the port mapping where to expose the internal ports of the VM to
 	// the host. See IdentityPortMap() and ConflictFreePortMap(). Ignored when
 	// ConnectToSocket is set.
 	Ports launch.PortMap
 
-	// If set to true, reboots are honored. Otherwise all reboots exit the Launch()
-	// command. Metropolis nodes generally restarts on almost all errors, so unless you
+	// If set to true, reboots are honored. Otherwise, all reboots exit the Launch()
+	// command. Metropolis nodes generally restart on almost all errors, so unless you
 	// want to test reboot behavior this should be false.
 	AllowReboot bool
 
-	// By default the VM is connected to the Host via SLIRP. If ConnectToSocket is set,
-	// it is instead connected to the given file descriptor/socket. If this is set, all
-	// port maps from the Ports option are ignored. Intended for networking this
-	// instance together with others for running  more complex network configurations.
+	// By default, the VM is connected to the Host via SLIRP. If ConnectToSocket is
+	// set, it is instead connected to the given file descriptor/socket. If this is
+	// set, all port maps from the Ports option are ignored. Intended for networking
+	// this instance together with others for running more complex network
+	// configurations.
 	ConnectToSocket *os.File
 
-	// SerialPort is a io.ReadWriter over which you can communicate with the serial
-	// port of the machine It can be set to an existing file descriptor (like
+	// SerialPort is an io.ReadWriter over which you can communicate with the serial
+	// port of the machine. It can be set to an existing file descriptor (like
 	// os.Stdout/os.Stderr) or any Go structure implementing this interface.
 	SerialPort io.ReadWriter
 
@@ -72,7 +73,7 @@ type NodeOptions struct {
 	Runtime *NodeRuntime
 }
 
-// Runtime keeps the node's QEMU runtime options.
+// NodeRuntime keeps the node's QEMU runtime options.
 type NodeRuntime struct {
 	// ld points at the node's launch directory storing data such as storage
 	// images, firmware variables or the TPM state.
@@ -473,7 +474,7 @@ type Cluster struct {
 
 	// nodesDone is a list of channels populated with the return codes from all the
 	// nodes' qemu instances. It's used by Close to ensure all nodes have
-	// succesfully been stopped.
+	// successfully been stopped.
 	nodesDone []chan error
 	// nodeOpts are the cluster member nodes' mutable launch options, kept here
 	// to facilitate reboots.
@@ -517,7 +518,7 @@ type NodeInCluster struct {
 // running at 10.1.0.2, which is always the case with the current nanoswitch
 // implementation.
 //
-// It returns the newly escrowed credentials as well as the firt node's
+// It returns the newly escrowed credentials as well as the first node's
 // information as NodeInCluster.
 func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certificate, *NodeInCluster, error) {
 	// Dial external service.
@@ -931,19 +932,19 @@ func (c *Cluster) Close() error {
 	}
 	c.ctxC()
 
-	var errors []error
+	var errs []error
 	log.Printf("Cluster: waiting for nodes to exit...")
 	for _, c := range c.nodesDone {
 		err := <-c
 		if err != nil {
-			errors = append(errors, err)
+			errs = append(errs, err)
 		}
 	}
 	log.Printf("Cluster: removing nodes' state files.")
 	os.RemoveAll(c.launchDir)
 	os.RemoveAll(c.socketDir)
 	log.Printf("Cluster: done")
-	return multierr.Combine(errors...)
+	return multierr.Combine(errs...)
 }
 
 // DialNode is a grpc.WithContextDialer compatible dialer which dials nodes by
