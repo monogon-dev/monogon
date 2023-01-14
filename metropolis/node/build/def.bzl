@@ -38,7 +38,7 @@ def _build_static_transition_impl(settings, attr):
     """
     return {
         "@io_bazel_rules_go//go/config:static": True,
-        "//command_line_option:crosstool_top": "//build/toolchain/musl-host-gcc:musl_host_cc_suite",
+        "//command_line_option:platforms": "//build/platforms:linux_amd64_static",
     }
 
 build_static_transition = transition(
@@ -46,7 +46,7 @@ build_static_transition = transition(
     inputs = [],
     outputs = [
         "@io_bazel_rules_go//go/config:static",
-        "//command_line_option:crosstool_top",
+        "//command_line_option:platforms",
     ],
 )
 

@@ -1,19 +1,18 @@
 llvm-efi
 ========
 
-llvm-efi is a Bazel cc toolchain that uses the machine's host LLVM/clang with flags targeting freestanding EFI.
+llvm-efi is a Bazel cc toolchain that uses the sandbox sysroot LLVM/clang with flags targeting freestanding EFI.
 EFI headers are not shipped as part of the toolchain, but are available as a cc_library from `@gnuefi//:gnuefi`.
-
-At some point, this toolchain should be replaced by a fully hermetic toolchain that doesn't depend on the host environment.
 
 Usage
 -----
 
 To use this toolchain explicitly while building a `cc_binary`, do:
 
-    bazel build --crosstool_top=//build/toolchain/llvm-efi:efi_cc_suite //foo/bar
+    bazel build --platforms=//build/platforms:efi_amd64 //foo/bar
 
-During an actual build however, the right toolchain should be selected using aspects or other Bazel configurability features, instead of a hardcoded `--crosstool_top`.
+During an actual build however, the right toolchain should be selected using transitions
+or other configuration mechanisms.
 
 fltused
 -------

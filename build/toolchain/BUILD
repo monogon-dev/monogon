@@ -4,33 +4,25 @@ load(":cc_toolchain_config.bzl", "host_cc_toolchain_config")
 #
 # We currently define two toolchains:
 #
-#  - //build/toolchain:host_cc_suite , which is a fully unhermetic host toolchain,
-#    that can be used to build tools for the host.
-#  - //build/toolchain/musl-host-gcc:musl_host_cc_suite , which combines the host's
+#  - //build/toolchain:host_cc_toolchain , which points to our hermetic sandbox
+#    sysroot default compiler toolchain. It is mainly used to target the execution platform
+#    inside the sandbox (i.e. build tooling).
+#  - //build/toolchain/musl-host-gcc:musl_host_toolchain , which combines the sandbox sysroot
 #    gcc compiler with a sysroot tarball that targets the Metropolis node
 #    runtime. This can be used to build C libraries/tools running within the
-#    Metropolis node image.
-#
+#    Metropolis node image or on the (unknown) host operating system outside the sandbox.
 
-# This file defines //build/toolchain:host_cc_suite.
+# This file defines //build/toolchain:host_cc_toolchain.
 #
-# This is a C++ toolchain that uses GCC from the host at hardcoded paths. We
-# can get away with this, as currently the entire build is performed in a known
-# container (see: //scripts:create_container.sh). We define this toolchain so
+# This is a C++ toolchain that uses GCC from the sandbox sysroot at hardcoded paths. We
+# can get away with this, as currently the entire build is performed in a hermetic
+# sandbox sysroot (see: //third_party/sandboxroot). We define this toolchain so
 # that we have full control over all configuration of it, which we need as we
 # are building some fairly odd C binaries (notably, a qboot bootloader for
 # testing).
 #
-# The host_cc toolchain suite is enabled for all cc_* targets that aren't
-# building host tools by setting --crosstool_top in .bazelrc. In the future,
-# this should only be triggered by transitions where necessary.
-#
-# In the future, the host_cc toolchains should be replaced by a hermetic
-# toolchain that's built locally, or downloaded from the Internet - as
-# github.com/bazelbuild/bazel-toolchains does it. As that's being built, we
-# should then also have another toolchain definition for C binaries that
-# target static binaries for Metropolis nodes, so that mkfs.xfs can be built
-# using native cc_* rules, too.
+# The host_cc toolchain suite is enabled for all cc_* targets whose
+# platform isn't matching a more specific toolchain.
 #
 # This, and :cc_toolchain_config.bzl is based on the following tutorial:
 # https://docs.bazel.build/versions/master/tutorial/cc-toolchain-config.html
@@ -39,16 +31,11 @@ package(default_visibility = ["//visibility:public"])
 
 filegroup(name = "empty")
 
-cc_toolchain_suite(
-    name = "host_cc_suite",
-    toolchains = {
-        "k8": ":host_cc_k8_toolchain",
-    },
-)
-
 cc_toolchain(
     name = "host_cc_k8_toolchain",
     all_files = ":empty",
+    ar_files = ":empty",
+    as_files = ":empty",
     compiler_files = ":empty",
     dwp_files = ":empty",
     linker_files = ":empty",
@@ -60,3 +47,17 @@ cc_toolchain(
 )
 
 host_cc_toolchain_config(name = "host_cc_k8_toolchain_config")
+
+toolchain(
+    name = "host_cc_toolchain",
+    exec_compatible_with = [
+        "@bazel_tools//platforms:linux",
+        "@bazel_tools//platforms:x86_64",
+    ],
+    target_compatible_with = [
+        "@bazel_tools//platforms:linux",
+        "@bazel_tools//platforms:x86_64",
+    ],
+    toolchain = ":host_cc_k8_toolchain",
+    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+)

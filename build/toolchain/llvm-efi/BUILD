@@ -4,13 +4,6 @@ package(default_visibility = ["//visibility:public"])
 
 filegroup(name = "empty")
 
-cc_toolchain_suite(
-    name = "efi_cc_suite",
-    toolchains = {
-        "k8": ":efi_k8_cc_toolchain",
-    },
-)
-
 filegroup(
     name = "fltused",
     srcs = ["fltused.o"],
@@ -19,6 +12,8 @@ filegroup(
 cc_toolchain(
     name = "efi_k8_cc_toolchain",
     all_files = ":empty",
+    ar_files = ":empty",
+    as_files = ":empty",
     compiler_files = ":empty",
     dwp_files = ":empty",
     linker_files = ":fltused",
@@ -30,3 +25,17 @@ cc_toolchain(
 )
 
 efi_k8_cc_toolchain_config(name = "efi_k8_cc_toolchain_config")
+
+toolchain(
+    name = "efi_k8_toolchain",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "//build/platforms/os:efi",
+    ],
+    toolchain = ":efi_k8_cc_toolchain",
+    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+)

@@ -2,11 +2,34 @@
 # This avoids unnecessary cache invalidations.
 build --incompatible_strict_action_env=true
 
-# TODO: Enable hermetic sandbox on Bazel 5.x
-# build --experimental_use_hermetic_linux_sandbox
-
+# Run all spawns in our own hermetic sandbox sysroot.
+#build --experimental_use_hermetic_linux_sandbox
+# TODO: https://github.com/bazelbuild/rules_go/issues/1910
 build --action_env=MONOGON_SANDBOX_DIGEST
 import %workspace%/.bazelrc.sandbox
+
+# No local CPP toolchain resolution. In our sandbox root, it doesn't make sense -
+# anything auto-detected during analysis stage is on the host instead of the sandbox.
+# Sysroot rebuild is pure Go and doesn't need it either.
+# The flag ensures we fail early if we somehow depend on the host toolchain,
+# and do not spend unnecessary time on autodiscovery.
+build --action_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+
+# Use new-style C++ toolchain resolution.
+build --incompatible_enable_cc_toolchain_resolution
+
+# In our monorepo, we mostly ignore the host platform since we bring our own
+# execution environment. However, we still need to run a small number of tools
+# such as gazelle. We can just use rules_go's pure-Go platform. Attempting to
+# build CGO binaries for the host will fail (and does not make sense).
+# The host is lava - it could be NixOS (or even potentially macOS/Windows).
+build --host_platform=@io_bazel_rules_go//go/toolchain:linux_amd64
+
+# Target platform for the monorepo is currently the same as the host platform,
+# but we'll support cross-compilation at some point. Do not rely on it.
+build --platforms=//build/platforms:linux_amd64
+# Make sure our platform is picked instead of the --host_platform.
+build --extra_execution_platforms=//build/platforms:linux_amd64
 
 # Build resources
 startup --batch_cpu_scheduling --io_nice_level 7
@@ -27,11 +50,6 @@ build --cxxopt=-std=c++17
 
 # Set workspace status file and stamp
 build --stamp --workspace_status_command=./build/print-workspace-status.sh
-
-# Use our custom-configured host C++ toolchain.
-build --crosstool_top=//build/toolchain:host_cc_suite
-build --host_crosstool_top=//build/toolchain:host_cc_suite
-build --cpu=k8
 
 # Load CI bazelrc if present.
 try-import %workspace%/ci.bazelrc

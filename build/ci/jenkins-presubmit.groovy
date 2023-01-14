@@ -3,7 +3,7 @@
 // open Gerrit change request.
 
 // TODO(leo): remove once CI image has been updated.
-def gazelle_build = "bazel --noworkspace_rc run go install github.com/bazelbuild/bazelisk@v1.15.0"
+def gazelle_build = "curl -o ~/bazelisk https://storage.googleapis.com/monogon-infra-public/bazelisk-v1.15.0 && chmod +x ~/bazelisk"
 
 pipeline {
     agent none
@@ -25,8 +25,8 @@ pipeline {
                         echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
                         sh gazelle_build
-                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/go/bin/bazelisk test //..."
-                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/go/bin/bazelisk test -c dbg //..."
+                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk test //..."
+                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk test -c dbg //..."
                     }
                     post {
                         success {
@@ -50,8 +50,8 @@ pipeline {
                         echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
                         sh gazelle_build
-                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/go/bin/bazelisk run //:gazelle-update-repos"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/go/bin/bazelisk run //:gazelle -- update"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk run //:gazelle-update-repos"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk run //:gazelle -- update"
 
                         script {
                             def diff = sh script: "git status --porcelain", returnStdout: true

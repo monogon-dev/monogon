@@ -1,23 +1,18 @@
 load("//build/toolchain:cc_toolchain_config.bzl", "host_cc_toolchain_config")
 
-# This file defines //build/toolchain/musl-host-gcc:musl_host_cc_suite.
+# This file defines //build/toolchain/musl-host-gcc:musl_host_toolchain.
 #
-# This is a C++ toolchain that uses GCC from the host at hardcoded paths, with
+# This is a C++ toolchain that uses GCC from the sandbox sysroot at hardcoded paths, with
 # a pre-built sysroot tarball that targets Metropolis nodes with musl and Linux
-# headers.  It's a superset of //build/toolchain:host_cc_suite.
+# headers.  It's a superset of //build/toolchain:host_cc_toolchain.
+#
 # For more information, see README.md.
-
-cc_toolchain_suite(
-    name = "musl_host_cc_suite",
-    toolchains = {
-        "k8": ":musl_host_cc_k8_toolchain",
-    },
-    visibility = ["//visibility:public"],
-)
 
 cc_toolchain(
     name = "musl_host_cc_k8_toolchain",
     all_files = ":musl_toolchain_files",
+    ar_files = ":musl_toolchain_files",
+    as_files = ":musl_toolchain_files",
     compiler_files = ":musl_toolchain_files",
     dwp_files = ":musl_toolchain_files",
     linker_files = ":musl_toolchain_files",
@@ -44,4 +39,19 @@ filegroup(
         ":musl.spec",
         "@musl_sysroot//:all",
     ],
+)
+
+toolchain(
+    name = "musl_host_toolchain",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+        "//build/platforms/linkmode:musl-static",
+    ],
+    toolchain = ":musl_host_cc_k8_toolchain",
+    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
 )

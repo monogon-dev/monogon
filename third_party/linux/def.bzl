@@ -18,7 +18,7 @@
 Rules for building Linux kernel images.
 
 This currently performs the build in a fully unhermetic manner, using
-make/gcc/... from the host, and is only slightly better than a genrule. This
+make/gcc/... from the sandbox sysroot, and is only slightly better than a genrule. This
 should be replaced by a hermetic build that at least uses rules_cc toolchain
 information, or even better, just uses cc_library targets.
 """
@@ -37,7 +37,7 @@ def _ignore_unused_configuration_impl(settings, attr):
         "@io_bazel_rules_go//go/config:pure": True,
         "@io_bazel_rules_go//go/config:static": True,
         # Note: this toolchain is not actually used to perform the build.
-        "//command_line_option:crosstool_top": "//build/toolchain/musl-host-gcc:musl_host_cc_suite",
+        "//command_line_option:platforms": "//build/platforms:linux_amd64_static",
     }
 
 # Transition to flip all known-unimportant but varying configuration options to
@@ -56,7 +56,7 @@ ignore_unused_configuration = transition(
     outputs = [
         "@io_bazel_rules_go//go/config:pure",
         "@io_bazel_rules_go//go/config:static",
-        "//command_line_option:crosstool_top",
+        "//command_line_option:platforms",
     ],
 )
 

@@ -167,6 +167,10 @@ def _host_cc_toolchain_impl(ctx):
             name = "strip",
             path = "/bin/false",
         ),
+        tool_path(
+            name = "objcopy",
+            path = "/usr/bin/objcopy",
+        ),
     ]
 
     return cc_common.create_cc_toolchain_config_info(

@@ -17,7 +17,7 @@ def _toolchain_library_impl(ctx):
         template = ctx.file._template,
         output = out,
         substitutions = {
-            "GOROOT": go.root,
+            "GOROOT": go.sdk.root_file.dirname,
             "GOTOOL": go.go.path,
         },
     )

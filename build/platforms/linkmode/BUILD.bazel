@@ -1,0 +1,14 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+# Minimal Metropolis node environment. No dynamic linker,
+# so everything has to be statically linked.
+constraint_value(
+    name = "musl-static",
+    constraint_setting = ":linkmode",
+)
+
+constraint_setting(
+    name = "linkmode",
+)

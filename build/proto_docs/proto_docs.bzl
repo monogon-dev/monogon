@@ -25,7 +25,7 @@ def _proto_docs(ctx):
         #  "duplicate" types.
         # Since generating documentation for well-known types is not that useful just
         # skip them.
-        if src.path.find("/bin/external/com_google_protobuf/_virtual_imports/") != -1:
+        if src.path.find("/bin/external/com_github_protocolbuffers_protobuf/_virtual_imports/") != -1:
             continue
         args.append(src.path)
 

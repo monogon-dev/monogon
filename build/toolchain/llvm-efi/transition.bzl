@@ -3,13 +3,13 @@ def _build_efi_transition_impl(settings, attr):
     Transition that enables building for an EFI environment. Currently only supports C code.
     """
     return {
-        "//command_line_option:crosstool_top": "//build/toolchain/llvm-efi:efi_cc_suite",
+        "//command_line_option:platforms": "//build/platforms:efi_amd64"
     }
 
 build_efi_transition = transition(
     implementation = _build_efi_transition_impl,
     inputs = [],
     outputs = [
-        "//command_line_option:crosstool_top",
+        "//command_line_option:platforms",
     ],
 )

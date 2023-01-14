@@ -1,0 +1,28 @@
+# Generic platform for Linux x86_64 targets.
+platform(
+    name = "linux_amd64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+# EFI preboot environment for x86_64 machines.
+platform(
+    name = "efi_amd64",
+    constraint_values = [
+        "//build/platforms/os:efi",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+# Linux x86_64 platform with static linking
+# (i.e. Metropolis node, scratch containers...).
+platform(
+    name = "linux_amd64_static",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+        "//build/platforms/linkmode:musl-static",
+    ],
+)

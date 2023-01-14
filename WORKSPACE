@@ -7,11 +7,11 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 
 http_archive(
     name = "bazel_skylib",
-    sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
     ],
+    sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
 )
 
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
@@ -22,7 +22,14 @@ bazel_skylib_workspace()
 
 load("@bazel_skylib//lib:versions.bzl", "versions")
 
-versions.check(minimum_bazel_version = "2.2.0")
+versions.check(minimum_bazel_version = "5.4.0")
+
+# Register our custom CC toolchains. Order matters - more specific toolchains must be registered first.
+# (host_cc_toolchain won't care about //build/platforms/linkmode, but musl_host_toolchain won't
+# match anything unless its linkmode is set).
+register_toolchains("//build/toolchain/musl-host-gcc:musl_host_toolchain")
+register_toolchains("//build/toolchain/llvm-efi:efi_k8_toolchain")
+register_toolchains("//build/toolchain:host_cc_toolchain")
 
 # Go and Gazelle
 
@@ -34,10 +41,10 @@ http_archive(
     patches = [
         "//third_party/go/patches:rules_go_absolute_embedsrc.patch",
     ],
-    sha256 = "685052b498b6ddfe562ca7a97736741d87916fe536623afb7da2824c0211c369",
+    sha256 = "56d8c5a5c91e1af73eca71a6fab2ced959b67c86d12ba37feedb0a2dfea441a6",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.33.0/rules_go-v0.33.0.zip",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.33.0/rules_go-v0.33.0.zip",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.37.0/rules_go-v0.37.0.zip",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.37.0/rules_go-v0.37.0.zip",
     ],
 )
 
@@ -75,24 +82,27 @@ gazelle_dependencies()
 # Protobuf
 
 http_archive(
-    name = "com_google_protobuf",
-    sha256 = "c6003e1d2e7fefa78a3039f19f383b4f3a61e81be8c19356f85b6461998ad3db",
-    strip_prefix = "protobuf-3.17.3",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.17.3.tar.gz"],
+    name = "rules_proto",
+    sha256 = "dc3fb206a2cb3441b485eb1e423165b231235a1ea9b031b4433cf7bc1fa460dd",
+    strip_prefix = "rules_proto-5.3.0-21.7",
+    urls = [
+        "https://github.com/bazelbuild/rules_proto/archive/refs/tags/5.3.0-21.7.tar.gz",
+    ],
 )
 
-load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
-protobuf_deps()
+rules_proto_dependencies()
+rules_proto_toolchains()
 
 # Build packages
 http_archive(
     name = "rules_pkg",
-    sha256 = "a89e203d3cf264e564fcb96b6e06dd70bc0557356eb48400ce4b5d97c2c3720d",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.5.1/rules_pkg-0.5.1.tar.gz",
-        "https://github.com/bazelbuild/rules_pkg/releases/download/0.5.1/rules_pkg-0.5.1.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.8.0/rules_pkg-0.8.0.tar.gz",
+        "https://github.com/bazelbuild/rules_pkg/releases/download/0.8.0/rules_pkg-0.8.0.tar.gz",
     ],
+    sha256 = "eea0f59c28a9241156a47d7a8e32db9122f3d50b505fae0f33de6ce4d9b61834",
 )
 
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")

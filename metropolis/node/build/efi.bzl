@@ -49,7 +49,7 @@ def _efi_unified_kernel_image_impl(ctx):
 
     # Append the objcopy parameter separately, as it's not of File type, and
     # it does not constitute an input, since it's part of the toolchain.
-    objcopy = ctx.attr._toolchain[platform_common.ToolchainInfo].objcopy_executable
+    objcopy = ctx.toolchains["@bazel_tools//tools/cpp:toolchain_type"].cc.objcopy_executable
     args.append("-objcopy={}".format(objcopy))
 
     # Run mkpayload.
@@ -128,14 +128,12 @@ efi_unified_kernel_image = rule(
             executable = True,
             cfg = "exec",
         ),
-        "_toolchain": attr.label(
-            doc = "The toolchain used for objcopy.",
-            default = "//build/toolchain/llvm-efi:efi_cc_suite",
-            providers = [platform_common.ToolchainInfo],
-        ),
         # Allow for transitions to be attached to this rule.
         "_whitelist_function_transition": attr.label(
             default = "@bazel_tools//tools/whitelists/function_transition_whitelist",
         ),
     },
+    toolchains = [
+        "@bazel_tools//tools/cpp:toolchain_type"
+    ],
 )

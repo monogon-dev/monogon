@@ -1,20 +1,21 @@
 musl-host-gcc
 =============
 
-musl-host-gcc is a Bazel C++ toolchain that uses the machine's host gcc in combination with a pre-built musl, musl headers, and Linux headers.
+musl-host-gcc is a Bazel C++ toolchain that uses the sandbox sysroot gcc in combination with a pre-built musl, musl headers, and Linux headers.
 
 It is currently used to build the few C binaries we need on Metropolis nodes.
 
-At some point, this toolchain should be replaced by a fully hermetic toolchain that doesn't depend on the host environment.
+At some point, this toolchain should be improved to directly consume a static compiler toolchain and sysroot, so we can eventually get rid of the sandbox (like Aspect's [gcc-toolchain](https://github.com/aspect-build/gcc-toolchain) is doing).
 
 Usage
 -----
 
 To use this toolchain explicitly while building a `cc_binary`, do:
 
-    bazel build --crosstool_top=//build/toolchain/musl-host-gcc:musl_host_cc_suite //foo/bar
+    bazel build --platforms=//build/platforms:linux_amd64_static //foo/bar
 
-During an actual build however, the right toolchain should be selected using aspects or other Bazel configurability features, instead of a hardcoded `--crosstool_top`.
+During an actual build however, the right toolchain should be selected using transitions
+or other configuration mechanisms.
 
 Building Toolchain Sysroot Tarball
 ----------------------------------
@@ -36,7 +37,7 @@ The toolchain is implemented in the following way:
 1. `//build/toolchain/musl-host-gcc/sysroot` is used to build `//build/toolchain/musl-host-gcc/sysroot.tar.xz` which is a tarball that contains all include and binary library files for building against musl for Metropolis nodes (x86\_64 / k8) - these are musl headers, musl libraries, and linux headers. This tarball is committed to source control.
 1. When building a target that uses the toolchain, the `sysroot.tar.xz` tarball is extracted into an external repository `@musl_sysroot`, via `sysroot.bzl` and `sysroot_repository.bzl`.
 1. A toolchain config is built using `//build/toolchain:cc_toolchain_config.bzl`, which points at `gcc-wrapper.sh` as its gcc entrypoint. `gcc-wrapper.sh` expects to be able to call the host gcc with `musl.spec`.
-1. A toolchain is built in `//build/toolchain/musl-host-gcc:musl_host_cc_suite`, which uses the previously mentioned config, and builds it to contain `gcc-wrapper.sh`, `musl.spec`, and the sysroot tarball.
+1. A toolchain is defined in `//build/toolchain/musl-host-gcc:musl_host_toolchain` with a `//build/platforms/linkmode:musl-static` constraint, which is selected by the `//build/platforms:linux_amd64_static` platform.
 
 Quirks
 ------
