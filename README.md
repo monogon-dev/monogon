@@ -34,13 +34,17 @@ After running the first sync, everything should now resolve in the IDE, includin
 
 ### Run a single node demo cluster
 
-Launch the node:
+Build CLI and node image:
 
-    bazel run //:launch -c dbg
+    bazel build //metropolis/cli/dbg //:launch -c dbg
+
+Launch an ephemeral test node:
+
+    bazel test //:launch -c dbg --test_output=streamed
     
-Run a kubectl command:
+Run a kubectl command while the test is running:
 
-    bazel run //metropolis/cli/dbg -c dbg -- kubectl describe node
+    bazel-bin/metropolis/cli/dbg/dbg_/dbg kubectl describe node
  
 ### Test suite
 

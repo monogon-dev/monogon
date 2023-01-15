@@ -73,15 +73,21 @@ alias(
 )
 
 # Shortcut for launching a single Metropolis node instance in a VM.
-alias(
+test_suite(
     name = "launch",
-    actual = "//metropolis/test/launch/cli/launch",
+    tags = ["manual"],
+    tests = [
+        "//metropolis/test/launch/cli/launch",
+    ],
 )
 
 # Shortcut for launching a virtual network a Metropolis cluster consisting of two nodes.
-alias(
+test_suite(
     name = "launch-multi2",
-    actual = "//metropolis/test/launch/cli/launch-multi2",
+    tags = ["manual"],
+    tests = [
+        "//metropolis/test/launch/cli/launch-multi2",
+    ],
 )
 
 alias(
