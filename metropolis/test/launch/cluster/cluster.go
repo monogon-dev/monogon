@@ -40,6 +40,9 @@ import (
 
 // NodeOptions contains all options that can be passed to Launch()
 type NodeOptions struct {
+	// Name is a human-readable identifier to be used in debug output.
+	Name string
+
 	// Ports contains the port mapping where to expose the internal ports of the VM to
 	// the host. See IdentityPortMap() and ConflictFreePortMap(). Ignored when
 	// ConnectToSocket is set.
@@ -329,6 +332,8 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 	var stdErrBuf bytes.Buffer
 	systemCmd.Stderr = &stdErrBuf
 	systemCmd.Stdout = options.SerialPort
+
+	launch.PrettyPrintQemuArgs(options.Name, systemCmd.Args)
 
 	err = systemCmd.Run()
 
@@ -638,6 +643,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	// had bootstrapped the cluster.
 	nodeOpts := make([]NodeOptions, opts.NumNodes)
 	nodeOpts[0] = NodeOptions{
+		Name:            "node0",
 		ConnectToSocket: vmPorts[0],
 		NodeParameters: &apb.NodeParameters{
 			Cluster: &apb.NodeParameters_ClusterBootstrap_{
@@ -669,6 +675,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 
 	go func() {
 		if err := launch.RunMicroVM(ctxT, &launch.MicroVMOptions{
+			Name:                   "nanoswitch [99]",
 			KernelPath:             "metropolis/test/ktest/vmlinux",
 			InitramfsPath:          "metropolis/test/nanoswitch/initramfs.cpio.lz4",
 			ExtraNetworkInterfaces: switchPorts,
@@ -750,6 +757,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	// Use the retrieved information to configure the rest of the node options.
 	for i := 1; i < opts.NumNodes; i++ {
 		nodeOpts[i] = NodeOptions{
+			Name:            fmt.Sprintf("node%d", i),
 			ConnectToSocket: vmPorts[i],
 			NodeParameters: &apb.NodeParameters{
 				Cluster: &apb.NodeParameters_ClusterRegister_{

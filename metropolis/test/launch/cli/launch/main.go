@@ -49,6 +49,7 @@ func main() {
 	}
 	ctx := clicontext.WithInterrupt(context.Background())
 	err = cluster.LaunchNode(ctx, ld, sd, &cluster.NodeOptions{
+		Name:       "test-node",
 		Ports:      launch.IdentityPortMap(ports),
 		SerialPort: os.Stdout,
 		NodeParameters: &apb.NodeParameters{

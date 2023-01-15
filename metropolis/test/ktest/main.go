@@ -56,6 +56,7 @@ func main() {
 	}()
 
 	if err := launch.RunMicroVM(context.Background(), &launch.MicroVMOptions{
+		Name:                        "ktest",
 		KernelPath:                  *kernelPath,
 		InitramfsPath:               *initrdPath,
 		Cmdline:                     *cmdline,

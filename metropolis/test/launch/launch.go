@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -53,6 +54,20 @@ func (value QemuValue) ToOption(name string) string {
 		}
 	}
 	return strings.Join(optionValues, ",")
+}
+
+// PrettyPrintQemuArgs prints the given QEMU arguments to stderr.
+func PrettyPrintQemuArgs(name string, args []string) {
+	var argsFmt string
+	for _, arg := range args {
+		argsFmt += arg
+		if !strings.HasPrefix(arg, "-") {
+			argsFmt += "\n  "
+		} else {
+			argsFmt += " "
+		}
+	}
+	log.Printf("Running %s:\n  %s\n", name, argsFmt)
 }
 
 // PortMap represents where VM ports are mapped to on the host. It maps from the VM
@@ -120,6 +135,9 @@ var HostInterfaceMAC = net.HardwareAddr{0x02, 0x72, 0x82, 0xbf, 0xc3, 0x56}
 
 // MicroVMOptions contains all options to start a MicroVM
 type MicroVMOptions struct {
+	// Name is a human-readable identifier to be used in debug output.
+	Name string
+
 	// Path to the ELF kernel binary
 	KernelPath string
 
@@ -246,6 +264,8 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 
 	cmd.ExtraFiles = append(cmd.ExtraFiles, opts.ExtraChardevs...)
 	cmd.ExtraFiles = append(cmd.ExtraFiles, opts.ExtraNetworkInterfaces...)
+
+	PrettyPrintQemuArgs(opts.Name, cmd.Args)
 
 	err := cmd.Run()
 	// If it's a context error, just quit. There's no way to tell a
