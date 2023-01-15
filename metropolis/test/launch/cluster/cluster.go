@@ -16,6 +16,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -59,6 +60,10 @@ type NodeOptions struct {
 	// this instance together with others for running more complex network
 	// configurations.
 	ConnectToSocket *os.File
+
+	// When PcapDump is set, all traffic is dumped to a pcap file in the
+	// runtime directory (e.g. "net0.pcap" for the first interface).
+	PcapDump bool
 
 	// SerialPort is an io.ReadWriter over which you can communicate with the serial
 	// port of the machine. It can be set to an existing file descriptor (like
@@ -291,6 +296,19 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 			return fmt.Errorf("failed to write node parameters: %w", err)
 		}
 		qemuArgs = append(qemuArgs, "-fw_cfg", "name=dev.monogon.metropolis/parameters.pb,file="+parametersPath)
+	}
+
+	if options.PcapDump {
+		var qemuNetDump launch.QemuValue
+		pcapPath := filepath.Join(r.ld, "net0.pcap")
+		if options.PcapDump {
+			qemuNetDump = launch.QemuValue{
+				"id":     {"net0"},
+				"netdev": {"net0"},
+				"file":   {pcapPath},
+			}
+		}
+		qemuArgs = append(qemuArgs, "-object", qemuNetDump.ToOption("filter-dump"))
 	}
 
 	// Start TPM emulator as a subprocess
@@ -653,6 +671,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			},
 		},
 		SerialPort: newPrefixedStdio(0),
+		PcapDump:   true,
 	}
 
 	// Start the first node.
@@ -681,6 +700,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			ExtraNetworkInterfaces: switchPorts,
 			PortMap:                portMap,
 			SerialPort:             newPrefixedStdio(99),
+			PcapDump:               path.Join(ld, "nanoswitch.pcap"),
 		}); err != nil {
 			if !errors.Is(err, ctxT.Err()) {
 				log.Fatalf("Failed to launch nanoswitch: %v", err)

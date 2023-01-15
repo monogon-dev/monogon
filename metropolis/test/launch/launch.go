@@ -170,6 +170,10 @@ type MicroVMOptions struct {
 	// that is normally the first network interface. If this is set PortMap is ignored.
 	// Mostly useful for speeding up QEMU's startup time for tests.
 	DisableHostNetworkInterface bool
+
+	// PcapDump can be used to dump all network traffic to a pcap file.
+	// If unset, no dump is created.
+	PcapDump string
 }
 
 // RunMicroVM launches a tiny VM mostly intended for testing. Very quick to boot
@@ -255,6 +259,15 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 
 		baseArgs = append(baseArgs, "-netdev", qemuNetConfig.ToOption(qemuNetType),
 			"-device", "virtio-net-device,netdev=usernet0,mac="+HostInterfaceMAC.String())
+	}
+
+	if !opts.DisableHostNetworkInterface && opts.PcapDump != "" {
+		qemuNetDump := QemuValue{
+			"id":     {"usernet0"},
+			"netdev": {"usernet0"},
+			"file":   {opts.PcapDump},
+		}
+		extraArgs = append(extraArgs, "-object", qemuNetDump.ToOption("filter-dump"))
 	}
 
 	var stdErrBuf bytes.Buffer
