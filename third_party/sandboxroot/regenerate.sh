@@ -76,7 +76,7 @@ bazeldnf(
 
 EOF
 
-touch ${DIR}/repositories.bzl.in
+echo > ${DIR}/repositories.bzl.in
 
 # Create new sandbox root
 bazel ${BAZEL_ARGS} \
