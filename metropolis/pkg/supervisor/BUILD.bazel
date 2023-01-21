@@ -22,5 +22,7 @@ go_test(
     name = "supervisor_test",
     srcs = ["supervisor_test.go"],
     embed = [":supervisor"],
+    # TODO: https://github.com/monogon-dev/monogon/issues/131
+    flaky = True,
     deps = ["//metropolis/pkg/logtree"],
 )

@@ -27,6 +27,8 @@ go_test(
         "//third_party/edk2:firmware",
     ],
     embed = [":e2e"],
+    # TODO: https://github.com/monogon-dev/monogon/issues/170
+    flaky = True,
     rundir = ".",
     deps = [
         "//metropolis/node",
