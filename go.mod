@@ -96,6 +96,8 @@ require (
 	github.com/lib/pq v1.10.6
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mdlayher/ethtool v0.0.0-20211028163843-288d040e9d60
+	github.com/mdlayher/genetlink v1.2.0
+	github.com/mdlayher/netlink v1.6.0
 	github.com/mdlayher/raw v0.1.0
 	github.com/opencontainers/runc v1.1.3
 	github.com/pierrec/lz4/v4 v4.1.14
@@ -276,8 +278,6 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
-	github.com/mdlayher/genetlink v1.2.0 // indirect
-	github.com/mdlayher/netlink v1.6.0 // indirect
 	github.com/mdlayher/packet v0.0.0-20220221164757-67998ac0ff93 // indirect
 	github.com/mdlayher/socket v0.2.1 // indirect
 	github.com/miekg/dns v1.1.48 // indirect

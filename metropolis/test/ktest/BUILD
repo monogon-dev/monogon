@@ -14,7 +14,10 @@ go_binary(
     name = "ktest",
     embed = [":ktest_lib"],
     pure = "on",
-    visibility = ["//metropolis:__subpackages__"],
+    visibility = [
+        "//go/net/psample:__pkg__",
+        "//metropolis:__subpackages__",
+    ],
 )
 
 kconfig_patch(
@@ -41,6 +44,7 @@ linux_image(
     # This image is directly used by the ktest macro, thus it needs a pretty
     # wide visibility.
     visibility = [
+        "//go/net/psample:__pkg__",
         "//metropolis:__subpackages__",
     ],
 )
@@ -48,5 +52,8 @@ linux_image(
 filegroup(
     name = "test-script",
     srcs = ["run_ktest.sh"],
-    visibility = ["//metropolis:__subpackages__"],
+    visibility = [
+        "//go/net/psample:__pkg__",
+        "//metropolis:__subpackages__",
+    ],
 )

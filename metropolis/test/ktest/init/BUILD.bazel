@@ -12,5 +12,8 @@ go_binary(
     name = "init",
     embed = [":init_lib"],
     pure = "on",
-    visibility = ["//metropolis:__subpackages__"],
+    visibility = [
+        "//go/net/psample:__pkg__",
+        "//metropolis:__subpackages__",
+    ],
 )

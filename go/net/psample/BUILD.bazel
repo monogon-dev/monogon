@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//metropolis/test/ktest:ktest.bzl", "ktest")
+
+go_library(
+    name = "psample",
+    srcs = ["subscriber.go"],
+    importpath = "source.monogon.dev/go/net/psample",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_mdlayher_genetlink//:genetlink",
+        "@com_github_mdlayher_netlink//:netlink",
+    ],
+)
+
+go_test(
+    name = "psample_test",
+    srcs = ["psample_test.go"],
+    embed = [":psample"],
+    deps = [
+        "@com_github_google_gopacket//:gopacket",
+        "@com_github_google_gopacket//layers",
+        "@com_github_vishvananda_netlink//:netlink",
+        "@org_golang_x_sys//unix",
+    ],
+)
+
+ktest(
+    tester = ":psample_test",
+)
