@@ -1051,6 +1051,10 @@ def go_repositories():
     go_repository(
         name = "com_github_corverroos_commentwrap",
         importpath = "github.com/corverroos/commentwrap",
+        patch_args = ["-p1"],
+        patches = [
+            "//third_party/go/patches:commentwrap-uri.patch",
+        ],
         sum = "h1:toeMwwechJKH0iwOoGJLZK6x42Ba9si+816KxqmgFc8=",
         version = "v0.0.0-20191204065359-2926638be44c",
     )

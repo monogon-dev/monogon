@@ -1,0 +1,31 @@
+Ask commentwrap to ignore lines that contain HTTP URIs.
+Wrapping URLs is not useful and makes them not clicky in editors.
+
+---
+diff --git a/commentwrap.go b/commentwrap.go
+index a1e8c00..5491064 100644
+--- a/commentwrap.go
++++ b/commentwrap.go
+@@ -86,6 +86,10 @@ func mustFlow(g *ast.CommentGroup, limit int) bool {
+ 		if strings.HasPrefix(comment.Text, "/*") {
+ 			return false
+ 		}
++		// Ignore lines that are URIs.
++		if isURI(comment.Text) {
++			continue
++		}
+ 		if len(comment.Text) > limit {
+ 			exceed = true
+ 		}
+@@ -156,6 +160,11 @@ func isDirective(line string) bool {
+ 	return strings.HasPrefix(line, "go:") || strings.HasPrefix(line, "line:")
+ }
+ 
++// isURI returns true if the line contains an HTTP URI.
++func isURI(line string) bool {
++	return strings.Contains(line, "http://") || strings.Contains(line, "https://")
++}
++
+ var notes = []string{"TODO", "BUG", "FIXME", "OPTIMIZE"}
+ 
+ // isNote returns true if the unescaped comment is a note: TODO, BUG, FIXME, OPTIMIZE.
