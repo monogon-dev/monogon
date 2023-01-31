@@ -194,6 +194,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 				// Linux weirdly returns no RTA_DST for default routes, but one
 				// for everything else.
 				Dst:       nil,
+				Family:    unix.AF_INET,
 				Gw:        testNet1Router,
 				Src:       testNet1.IP,
 				Table:     mainRoutingTable,
@@ -212,6 +213,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 			name: "RemovesUnrelatedOldRoutes",
 			initialRoutes: []netlink.Route{{
 				Dst:       &testRoute,
+				Family:    unix.AF_INET,
 				LinkIndex: -1, // Filled in dynamically with test interface
 				Protocol:  unix.RTPROT_DHCP,
 				Gw:        testNet2Router,
@@ -225,6 +227,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 			name: "IgnoresNonDHCPRoutes",
 			initialRoutes: []netlink.Route{{
 				Dst:       &testRoute,
+				Family:    unix.AF_INET,
 				LinkIndex: -1, // Filled in dynamically with test interface
 				Protocol:  unix.RTPROT_BIRD,
 				Gw:        testNet2Router,
@@ -234,6 +237,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 			expectedRoutes: []netlink.Route{{
 				Protocol:  unix.RTPROT_BIRD,
 				Dst:       &testRoute,
+				Family:    unix.AF_INET,
 				Gw:        testNet2Router,
 				Table:     mainRoutingTable,
 				LinkIndex: -1, // Filled in dynamically with test interface
@@ -244,6 +248,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 			name: "RemovesRoute",
 			initialRoutes: []netlink.Route{{
 				Dst:       nil,
+				Family:    unix.AF_INET,
 				LinkIndex: -1, // Filled in dynamically with test interface
 				Protocol:  unix.RTPROT_DHCP,
 				Gw:        testNet2Router,
@@ -256,6 +261,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 			name: "UpdatesRoute",
 			initialRoutes: []netlink.Route{{
 				Dst:       nil,
+				Family:    unix.AF_INET,
 				LinkIndex: -1, // Filled in dynamically with test interface
 				Protocol:  unix.RTPROT_DHCP,
 				Src:       testNet1.IP,
@@ -266,6 +272,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 			expectedRoutes: []netlink.Route{{
 				Protocol:  unix.RTPROT_DHCP,
 				Dst:       nil,
+				Family:    unix.AF_INET,
 				Gw:        testNet2Router,
 				Src:       testNet2.IP,
 				Table:     mainRoutingTable,
@@ -288,6 +295,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 			expectedRoutes: []netlink.Route{{
 				Protocol:  unix.RTPROT_DHCP,
 				Dst:       nil,
+				Family:    unix.AF_INET,
 				Gw:        net.IPv4(192, 168, 42, 1).To4(), // Equal() doesn't know about canonicalization
 				Src:       testNet1.IP,
 				Table:     mainRoutingTable,
@@ -296,6 +304,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 			}, {
 				Protocol:  unix.RTPROT_DHCP,
 				Dst:       mustParseCIDR("192.168.42.1/32"),
+				Family:    unix.AF_INET,
 				Gw:        nil,
 				Src:       testNet1.IP,
 				Table:     mainRoutingTable,

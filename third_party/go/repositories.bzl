@@ -4917,8 +4917,9 @@ def go_repositories():
     go_repository(
         name = "com_github_vishvananda_netlink",
         importpath = "github.com/vishvananda/netlink",
-        sum = "h1:+UB2BJA852UkGH42H+Oee69djmxS3ANzl2b/JtT1YiA=",
-        version = "v1.1.1-0.20210330154013-f5de75959ad5",
+        replace = "github.com/monogon-dev/netlink",
+        sum = "h1:y05BDqZ6q3if6pYBHJcnQRUd92ihzBEJde/S4fpKEAM=",
+        version = "v0.0.0-20230125113930-88977c3ff4b3",
     )
     go_repository(
         name = "com_github_vishvananda_netns",
@@ -6170,8 +6171,8 @@ def go_repositories():
     go_repository(
         name = "org_golang_x_sys",
         importpath = "golang.org/x/sys",
-        sum = "h1:N2T1jUrTQE9Re6TFF5PhvEHXHCguynGhKjWVsIUt5cY=",
-        version = "v0.0.0-20220513210249-45d2b4557a2a",
+        sum = "h1:9vYwv7OjYaky/tlAeD7C4oC9EsPTlaFl1H2jS++V+ME=",
+        version = "v0.0.0-20220804214406-8e32c043e418",
     )
     go_repository(
         name = "org_golang_x_term",

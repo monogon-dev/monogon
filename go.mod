@@ -62,6 +62,9 @@ replace github.com/mwitkow/go-proto-validators => github.com/mwitkow/go-proto-va
 // bazeldnf currently comes with a go-rpmutils patch
 replace github.com/sassoftware/go-rpmutils v0.1.1 => github.com/rmohr/go-rpmutils v0.1.2-0.20201215123907-5acf7436c00d
 
+// Our psample patches
+replace github.com/vishvananda/netlink => github.com/monogon-dev/netlink v0.0.0-20230125113930-88977c3ff4b3
+
 require (
 	github.com/adrg/xdg v0.4.0
 	github.com/bazelbuild/rules_go v0.30.0
@@ -114,7 +117,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
 	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4
-	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a
+	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418
 	golang.org/x/text v0.3.7
 	golang.org/x/tools v0.1.10-0.20220218145154-897bd77cd717
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220208144051-fde48d68ee68
