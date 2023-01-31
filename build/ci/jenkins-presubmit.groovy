@@ -52,6 +52,7 @@ pipeline {
                         sh gazelle_build
                         sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk run //:gazelle-update-repos"
                         sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk run //:gazelle -- update"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk run //:go -- mod tidy"
 
                         script {
                             def diff = sh script: "git status --porcelain", returnStdout: true

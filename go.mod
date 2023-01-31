@@ -92,6 +92,7 @@ require (
 	github.com/kyleconroy/sqlc v1.15.0
 	github.com/lib/pq v1.10.6
 	github.com/mattn/go-shellwords v1.0.12
+	github.com/mdlayher/ethtool v0.0.0-20211028163843-288d040e9d60
 	github.com/mdlayher/raw v0.1.0
 	github.com/opencontainers/runc v1.1.3
 	github.com/pierrec/lz4/v4 v4.1.14
@@ -148,6 +149,7 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.1.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
+	github.com/BurntSushi/toml v0.4.1 // indirect
 	github.com/DataDog/datadog-agent/pkg/obfuscate v0.0.0-20211129110424-6491aa3bf583 // indirect
 	github.com/DataDog/datadog-go v4.8.2+incompatible // indirect
 	github.com/DataDog/datadog-go/v5 v5.0.2 // indirect
@@ -385,6 +387,7 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	honnef.co/go/tools v0.2.2 // indirect
 	k8s.io/apiextensions-apiserver v0.0.0 // indirect
 	k8s.io/apiserver v0.24.2 // indirect
 	k8s.io/cloud-provider v0.24.2 // indirect
