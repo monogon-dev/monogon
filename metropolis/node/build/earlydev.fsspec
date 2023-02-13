@@ -8,7 +8,7 @@
 special_file <
     path: "/dev/console"
     type: CHARACTER_DEV
-    major: 1 minor: 1
+    major: 5 minor: 1
     mode: 0600 uid: 0 gid: 0
 >
 special_file <
