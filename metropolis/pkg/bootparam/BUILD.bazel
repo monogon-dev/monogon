@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "bootparam",
+    srcs = ["bootparam.go"],
+    importpath = "source.monogon.dev/metropolis/pkg/bootparam",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "bootparam_test",
+    srcs = ["bootparam_test.go"],
+    gc_goopts = ["-d=libfuzzer"],
+    deps = [
+        ":bootparam",
+        "//metropolis/pkg/bootparam/ref",
+        "@com_github_google_go_cmp//cmp",
+    ],
+)
