@@ -4,6 +4,7 @@ go_library(
     name = "bmdb",
     srcs = [
         "bmdb.go",
+        "connection.go",
         "sessions.go",
     ],
     importpath = "source.monogon.dev/cloud/bmaas/bmdb",
