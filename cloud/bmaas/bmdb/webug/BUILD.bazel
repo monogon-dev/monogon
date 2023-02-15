@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "webug",
+    srcs = [
+        "functions.go",
+        "views.go",
+        "webug.go",
+    ],
+    embedsrcs = [
+        "templates/base.html",
+        "templates/fragment_tag.html",
+        "templates/fragment_tag_default.html",
+        "templates/fragment_tag_provided.html",
+        "templates/machines.html",
+        "templates/machine.html",
+    ],
+    importpath = "source.monogon.dev/cloud/bmaas/bmdb/webug",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cloud/bmaas/bmdb",
+        "//cloud/bmaas/bmdb/model",
+        "//cloud/bmaas/bmdb/reflection",
+        "@com_github_cenkalti_backoff_v4//:backoff",
+        "@com_github_google_uuid//:uuid",
+        "@io_k8s_klog_v2//:klog",
+    ],
+)

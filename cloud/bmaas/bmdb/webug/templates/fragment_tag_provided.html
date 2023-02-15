@@ -1,0 +1,3 @@
+{{- $provider := (.Field "provider").HumanValue }}
+{{- $pid := (.Field "provider_id").HumanValue }}
+<b>{{ .Type.Name }}</b>({{- $provider }}, <a href="provider/{{ $provider }}/{{ $pid }}" style="font-family: mono">{{ $pid }}</a>)

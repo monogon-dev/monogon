@@ -1,0 +1,36 @@
+{{ template "base.html" .Base }}
+<h2>Machine List</h2>
+<p>
+    Click on a Machine ID to explore it further. Commonly viewed tags are expanded.
+</p>
+<table>
+    <tr>
+        <th>Machine ID</th>
+        <th>Work</th>
+        <th>Backoffs</th>
+        <th>Tags</th>
+    </tr>
+    {{ range .Machines -}}
+    <tr>
+        <td class="mono"><a href="/machine/{{ .ID }}">{{ .ID }}</a></td>
+        <td>
+            {{- range $process, $work := .Work -}}
+            <b><a href="/session/{{ $work.SessionID }}">{{ $process }}</a></b>
+            {{- end -}}
+        </td>
+        <td>
+            {{- range $process, $backoff := .Backoffs -}}
+            <b>{{ $backoff.Process }}</b>(<span class="small">{{ summarizeError .Cause }}</span>)
+            {{- end -}}
+        </td>
+        <td>
+            {{- range $name, $tag := .Tags -}}
+            {{- template "fragment_tag.html" $tag -}}
+            {{- end -}}
+        </td>
+    </tr>
+    {{ end -}}
+</table>
+<p class="small faint mono">
+    {{ .NMachines }} rows, rendered in {{ .RenderTime }}. Query: {{ .Query }}
+</p>

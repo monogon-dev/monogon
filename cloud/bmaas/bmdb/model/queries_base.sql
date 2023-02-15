@@ -68,3 +68,9 @@ SELECT *
 FROM work_history
 WHERE machine_id = $1
 ORDER BY timestamp ASC;
+
+-- name: GetSession :many
+-- Retrieve session information by session ID.
+SELECT *
+FROM sessions
+WHERE session_id = $1;

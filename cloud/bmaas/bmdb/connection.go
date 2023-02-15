@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/google/uuid"
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
@@ -77,4 +78,17 @@ type Connection struct {
 // or something.
 func (c *Connection) Reflect(ctx context.Context) (*reflection.Schema, error) {
 	return reflection.Reflect(ctx, c.db)
+}
+
+// ListHistoryOf retrieves a full audit history of a machine, sorted
+// chronologically. It can be read without a session / transaction for debugging
+// purposes.
+func (c *Connection) ListHistoryOf(ctx context.Context, machine uuid.UUID) ([]model.WorkHistory, error) {
+	return model.New(c.db).ListHistoryOf(ctx, machine)
+}
+
+// GetSession retrieves all information about a session. It can be read without a
+// session/transaction for debugging purposes.
+func (c *Connection) GetSession(ctx context.Context, session uuid.UUID) ([]model.Session, error) {
+	return model.New(c.db).GetSession(ctx, session)
 }

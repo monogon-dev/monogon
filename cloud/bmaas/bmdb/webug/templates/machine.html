@@ -1,0 +1,176 @@
+{{ template "base.html" .Base }}
+<h2>Machine {{ .Machine.ID }}</h2>
+
+{{ $sessions := .Sessions }}
+
+<table>
+    <tr>
+        <td><b>Machine ID</b></td>
+        <td class="mono">{{ .Machine.ID }}</td>
+    </tr>
+    <tr>
+        <td><b>Created</b></td>
+        <td>{{ .Machine.Created }}</td>
+    </tr>
+    <tr>
+        <td><b>Active Backoffs</b></td>
+        <td>{{ len .Machine.ActiveBackoffs }}</td>
+    </tr>
+    <tr>
+        <td><b>Active Work</b></td>
+        <td>{{ len .Machine.Work }}</td>
+    </tr>
+</table>
+
+<div class="vsplit">
+    <div class="column">
+        <h2>Tags</h2>
+        {{ range $name, $tag := .Machine.Tags }}
+        <table>
+            <tr>
+                <th colspan="2">
+                    {{ template "fragment_tag.html" $tag }}
+                </th>
+            </tr>
+            {{ range $tag.Fields }}
+            <tr>
+                <td>
+                    <b>{{ .Type.NativeName }}:</b>
+                </td>
+                <td class="mono">
+                    {{ .HumanValue }}
+                </td>
+            </tr>
+            {{ end }}
+        </table>
+        {{ else }}
+        <i>No tags.</i>
+        {{ end }}
+        <h2>Work</h2>
+        {{ range $name, $work := .Machine.Work }}
+        <table>
+            <tr>
+                <th colspan="3">
+                    <b>{{ $work.Process }}</b>
+                </th>
+            </tr>
+            <tr>
+                <td><b>Process:</b></td>
+                <td class="mono" colspan="2">
+                    {{ $work.Process }}
+                </td>
+            </tr>
+            {{ $sessionOrErr := index $sessions $name }}
+            {{ if ne $sessionOrErr.Error "" }}
+            <tr>
+                <td colspan="3" class="error">
+                    Could not retrieve session information: {{ $sessionOrErr.Error }}
+                </td>
+            </tr>
+            {{ else }}
+            {{ $session := $sessionOrErr.Session }}
+            <tr>
+                <td rowspan="5" style="vertical-align: top;"><b>Session</b></td>
+                <td><b>ID:</b></td>
+                <td class="mono" colspan="2">
+                    <a href="/session/{{ $session.SessionID }}">{{ $session.SessionID }}</a>
+                </td>
+            </tr>
+            <tr>
+                <td><b>Component:</b></td>
+                <td class="mono">{{ $session.SessionComponentName }}</td>
+            </tr>
+            <tr>
+                <td><b>Runtime:</b></td>
+                <td class="mono">{{ $session.SessionRuntimeInfo }}</td>
+            </tr>
+            <tr>
+                <td><b>Created At:</b></td>
+                <td>{{ $session.SessionCreatedAt }}</td>
+            </tr>
+            <tr>
+                <td><b>Liveness:</b></td>
+                <td>Interval {{ $session.SessionIntervalSeconds }}s, deadline {{ $session.SessionDeadline }}</td>
+            </tr>
+            {{ end }}
+        </table>
+        {{ else }}
+        <i>No active work.</i>
+        {{ end }}
+        <h2>Backoffs</h2>
+        <h3>Active</h3>
+        {{ range $name, $backoff := .Machine.ActiveBackoffs }}
+        <table>
+            <tr>
+                <th colspan="2">
+                    <b>{{ $backoff.Process }}</b>
+                </th>
+            </tr>
+            <tr>
+                <td><b>Process:</b></td>
+                <td class="mono">{{ $backoff.Process }}</td>
+            </tr>
+            <tr>
+                <td><b>Until:</b></td>
+                <td class="mono">{{ $backoff.Until }}</td>
+            </tr>
+            <tr>
+                <td><b>Cause:</b></td>
+                <td class="mono">{{ $backoff.Cause }}</td>
+            </tr>
+        </table>
+        {{ else }}
+        <i>No active backoffs.</i>
+        {{ end }}
+        <h3>Expired</h3>
+        {{ range $name, $backoff := .Machine.ExpiredBackoffs }}
+        <table style="opacity: 0.4">
+            <tr>
+                <th colspan="2">
+                    <b>{{ $backoff.Process }}</b>
+                </th>
+            </tr>
+            <tr>
+                <td><b>Process:</b></td>
+                <td class="mono">{{ $backoff.Process }}</td>
+            </tr>
+            <tr>
+                <td><b>Until:</b></td>
+                <td class="mono">{{ $backoff.Until }}</td>
+            </tr>
+            <tr>
+                <td><b>Cause:</b></td>
+                <td class="mono">{{ $backoff.Cause }}</td>
+            </tr>
+        </table>
+        {{ else }}
+        <i>No expired backoffs.</i>
+        {{ end }}
+    </div>
+    <div class="column">
+        <h2>Work History</h2>
+        {{ if ne .HistoryError "" }}
+        <b class="error">Unavailable: {{ .HistoryError }}</b>
+        {{ else }}
+        <i>Note: reverse chronological order.</i>
+        <table>
+            <tr>
+                <th>Time</th>
+                <th>Process</th>
+                <th>Event</th>
+            </tr>
+            {{ range .History }}
+            <tr class="Event{{.Event}}">
+                <td>{{ .Timestamp }}</td>
+                <td><b>{{ .Process }}</b></td>
+                {{ if eq .Event "Failed" }}
+                <td>{{ .Event }}: <span class="mono">{{ .FailedCause.String }}</span></td>
+                {{ else }}
+                <td>{{ .Event }}</td>
+                {{ end }}
+            </tr>
+            {{ end }}
+        </table>
+        {{ end }}
+    </div>
+</div>

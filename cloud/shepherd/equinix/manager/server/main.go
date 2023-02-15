@@ -10,6 +10,7 @@ import (
 	"k8s.io/klog"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
+	"source.monogon.dev/cloud/bmaas/bmdb/webug"
 	"source.monogon.dev/cloud/lib/component"
 	"source.monogon.dev/cloud/shepherd/equinix/manager"
 	"source.monogon.dev/cloud/shepherd/equinix/wrapngo"
@@ -24,6 +25,7 @@ type Config struct {
 	AgentConfig       manager.AgentConfig
 	ProvisionerConfig manager.ProvisionerConfig
 	InitializerConfig manager.InitializerConfig
+	WebugConfig       webug.Config
 	API               wrapngo.Opts
 }
 
@@ -46,6 +48,7 @@ func (c *Config) RegisterFlags() {
 	c.AgentConfig.RegisterFlags()
 	c.ProvisionerConfig.RegisterFlags()
 	c.InitializerConfig.RegisterFlags()
+	c.WebugConfig.RegisterFlags()
 	c.API.RegisterFlags()
 }
 
@@ -90,6 +93,7 @@ func main() {
 	if err != nil {
 		klog.Exitf("Failed to open BMDB connection: %v", err)
 	}
+
 	go func() {
 		err = provisioner.Run(ctx, conn)
 		if err != nil {
@@ -100,6 +104,11 @@ func main() {
 		err = initializer.Run(ctx, conn)
 		if err != nil {
 			klog.Exit(err)
+		}
+	}()
+	go func() {
+		if err := c.WebugConfig.Start(ctx, conn); err != nil && err != ctx.Err() {
+			klog.Exitf("Failed to start webug: %v", err)
 		}
 	}()
 

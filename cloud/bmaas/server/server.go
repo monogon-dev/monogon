@@ -12,6 +12,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
+	"source.monogon.dev/cloud/bmaas/bmdb/webug"
 	apb "source.monogon.dev/cloud/bmaas/server/api"
 	"source.monogon.dev/cloud/lib/component"
 )
@@ -19,6 +20,7 @@ import (
 type Config struct {
 	Component component.ComponentConfig
 	BMDB      bmdb.BMDB
+	Webug     webug.Config
 
 	// PublicListenAddress is the address at which the 'public' (agent-facing) gRPC
 	// server listener will run.
@@ -39,6 +41,7 @@ func (c *Config) RegisterFlags() {
 	c.BMDB.ComponentName = "srv"
 	c.BMDB.RuntimeInfo = runtimeInfo()
 	c.BMDB.Database.RegisterFlags("bmdb")
+	c.Webug.RegisterFlags()
 
 	flag.StringVar(&c.PublicListenAddress, "srv_public_grpc_listen_address", ":8080", "Address to listen at for public/user gRPC connections for bmdbsrv")
 }
@@ -108,4 +111,9 @@ func (s *Server) Start(ctx context.Context) {
 	s.bmdb = conn
 	s.startInternalGRPC(ctx)
 	s.startPublic(ctx)
+	go func() {
+		if err := s.Config.Webug.Start(ctx, conn); err != nil && err != ctx.Err() {
+			klog.Exitf("Failed to start webug: %v", err)
+		}
+	}()
 }

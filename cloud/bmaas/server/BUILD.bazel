@@ -11,6 +11,7 @@ go_library(
     deps = [
         "//cloud/bmaas/bmdb",
         "//cloud/bmaas/bmdb/model",
+        "//cloud/bmaas/bmdb/webug",
         "//cloud/bmaas/server/api",
         "//cloud/lib/component",
         "//metropolis/node/core/rpc",
