@@ -11,6 +11,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//cloud/bmaas/bmdb/model",
+        "//cloud/bmaas/bmdb/reflection",
         "//cloud/lib/component",
         "@com_github_cockroachdb_cockroach_go_v2//crdb",
         "@com_github_google_uuid//:uuid",
@@ -23,6 +24,7 @@ go_test(
     name = "bmdb_test",
     srcs = [
         "queries_test.go",
+        "reflection_test.go",
         "sessions_test.go",
     ],
     data = [
@@ -31,6 +33,7 @@ go_test(
     embed = [":bmdb"],
     deps = [
         "//cloud/bmaas/bmdb/model",
+        "//cloud/bmaas/bmdb/reflection",
         "//cloud/lib/component",
         "@com_github_google_uuid//:uuid",
     ],

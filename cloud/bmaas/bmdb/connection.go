@@ -1,12 +1,14 @@
 package bmdb
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
+	"source.monogon.dev/cloud/bmaas/bmdb/reflection"
 )
 
 // Open creates a new Connection to the BMDB for the calling component. Multiple
@@ -57,4 +59,22 @@ type Connection struct {
 	// be in-memory. If you just connect to an in-memory CRDB manually, this will
 	// still be false.
 	InMemory bool
+}
+
+// Reflect returns a reflection.Schema as detected by inspecting the table
+// information of this connection to the BMDB. The Schema can then be used to
+// retrieve arbitrary tag/machine information without going through the
+// concurrency/ordering mechanism of the BMDB.
+//
+// This should only be used to implement debugging tooling and should absolutely
+// not be in the path of any user requests.
+//
+// This Connection will be used not only to query the Schema information, but
+// also for all subsequent data retrieval operations on it. Please ensure that
+// the Schema is rebuilt in the event of a database connection failure. Ideally,
+// you should be rebuilding the schema often, to follow what is currently
+// available on the production database - but not for every request. Use a cache
+// or something.
+func (c *Connection) Reflect(ctx context.Context) (*reflection.Schema, error) {
+	return reflection.Reflect(ctx, c.db)
 }
