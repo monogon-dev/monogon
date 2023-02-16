@@ -1,0 +1,54 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "manager",
+    srcs = [
+        "initializer.go",
+        "manager.go",
+        "provisioner.go",
+        "shared_config.go",
+        "ssh.go",
+    ],
+    importpath = "source.monogon.dev/cloud/shepherd/equinix/manager",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cloud/agent/api",
+        "//cloud/bmaas/bmdb",
+        "//cloud/bmaas/bmdb/model",
+        "//cloud/lib/sinbin",
+        "//cloud/shepherd/equinix/wrapngo",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_packethost_packngo//:packngo",
+        "@com_github_pkg_sftp//:sftp",
+        "@io_k8s_klog_v2//:klog",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_x_crypto//ssh",
+        "@org_golang_x_time//rate",
+    ],
+)
+
+go_test(
+    name = "manager_test",
+    timeout = "eternal",
+    srcs = [
+        "fakequinix_test.go",
+        "initializer_test.go",
+        "provisioner_test.go",
+    ],
+    data = [
+        "//cloud/shepherd/equinix/manager/test_agent",
+        "@cockroach",
+    ],
+    embed = [":manager"],
+    deps = [
+        "//cloud/agent/api",
+        "//cloud/bmaas/bmdb",
+        "//cloud/bmaas/bmdb/model",
+        "//cloud/lib/component",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_packethost_packngo//:packngo",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_x_crypto//ssh",
+        "@org_golang_x_time//rate",
+    ],
+)
