@@ -216,7 +216,7 @@ func (c *Initializer) runInSession(ctx context.Context, sess *bmdb.Session, sign
 	}
 	defer t.work.Cancel(ctx)
 
-	klog.Infof("Machine %q needs installation, fetching corresponding packngo device %q...", t.id, t.pid)
+	klog.Infof("Machine %q needs agent start, fetching corresponding packngo device %q...", t.id, t.pid)
 	dev, err := c.cl.GetDevice(ctx, c.sharedConfig.ProjectId, t.pid.String())
 	if err != nil {
 		klog.Errorf("failed to fetch device %q: %v", t.pid, err)
@@ -314,7 +314,7 @@ func (ir *Initializer) init(ctx context.Context, sgn ssh.Signer, t *task) error 
 	klog.Infof("Starting agent on device (ID: %s, PID %s)", t.id, t.pid)
 	apk, err := ir.startAgent(ctx, sgn, *t.dev)
 	if err != nil {
-		return fmt.Errorf("while installing the agent: %w", err)
+		return fmt.Errorf("while starting the agent: %w", err)
 	}
 
 	// Agent startup succeeded. Set the appropriate BMDB tag, and release the
@@ -341,7 +341,7 @@ func (ir *Initializer) source(ctx context.Context, sess *bmdb.Session) (*task, e
 	ir.config.DBQueryLimiter.Wait(ctx)
 
 	var machine *model.MachineProvided
-	work, err := sess.Work(ctx, model.ProcessShepherdInstall, func(q *model.Queries) ([]uuid.UUID, error) {
+	work, err := sess.Work(ctx, model.ProcessShepherdAccess, func(q *model.Queries) ([]uuid.UUID, error) {
 		machines, err := q.GetMachinesForAgentStart(ctx, 1)
 		if err != nil {
 			return nil, err

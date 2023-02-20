@@ -53,5 +53,6 @@ CREATE TABLE machine_hardware_report (
     CONSTRAINT "primary" PRIMARY KEY(machine_id)
 );
 
--- Used by the Shepherd when performing direct actions against a machine.
-ALTER TYPE process ADD VALUE IF NOT EXISTS 'ShepherdInstall';
+-- Used by the Shepherd when performing mutations against the underlying machine
+-- (eg. SSH access, restarts, ...).
+ALTER TYPE process ADD VALUE IF NOT EXISTS 'ShepherdAccess';

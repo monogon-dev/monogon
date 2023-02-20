@@ -6,14 +6,14 @@ INNER JOIN machine_provided ON machines.machine_id = machine_provided.machine_id
 WHERE machine_provided.provider = $1;
 
 -- name: GetMachinesForAgentStart :many
--- Get machines that need agent installed for the first time. Machine can be
+-- Get machines that need agent started for the first time. Machine can be
 -- assumed to be 'new', with no previous attempts or failures.
 SELECT
     machine_provided.*
 FROM machines
 INNER JOIN machine_provided ON machines.machine_id = machine_provided.machine_id
-LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process = 'ShepherdInstall'
-LEFT JOIN work_backoff ON machines.machine_id = work_backoff.machine_id AND work_backoff.until > now() AND work_backoff.process = 'ShepherdInstall'
+LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process = 'ShepherdAccess'
+LEFT JOIN work_backoff ON machines.machine_id = work_backoff.machine_id AND work_backoff.until > now() AND work_backoff.process = 'ShepherdAccess'
 LEFT JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
 WHERE
   machine_agent_started.machine_id IS NULL
@@ -24,17 +24,17 @@ WHERE
 LIMIT $1;
 
 -- name: GetMachineForAgentRecovery :many
--- Get machines that need agent installed after something went wrong. Either
+-- Get machines that need agent restarted after something went wrong. Either
 -- the agent started but never responded, or the agent stopped responding at
--- some point, or the machine is being reinstalled after failure. Assume some
--- work needs to be performed on the shepherd side to diagnose and recover
+-- some point, or the machine got rebooted or somehow else lost the agent. Assume
+-- some work needs to be performed on the shepherd side to diagnose and recover
 -- whatever state the machine truly is in.
 SELECT
     machine_provided.*
 FROM machines
 INNER JOIN machine_provided ON machines.machine_id = machine_provided.machine_id
-LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process = 'ShepherdInstall'
-LEFT JOIN work_backoff ON machines.machine_id = work_backoff.machine_id AND work_backoff.until > now() AND work_backoff.process = 'ShepherdInstall'
+LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process = 'ShepherdAccess'
+LEFT JOIN work_backoff ON machines.machine_id = work_backoff.machine_id AND work_backoff.until > now() AND work_backoff.process = 'ShepherdAccess'
 LEFT JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
 LEFT JOIN machine_agent_heartbeat ON machines.machine_id = machine_agent_heartbeat.machine_id
 WHERE

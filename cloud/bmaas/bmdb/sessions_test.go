@@ -193,7 +193,7 @@ func TestWorkBackoff(t *testing.T) {
 	}
 
 	// Work on machine, but fail it with a backoff.
-	work, err := session.Work(ctx, model.ProcessShepherdInstall, func(q *model.Queries) ([]uuid.UUID, error) {
+	work, err := session.Work(ctx, model.ProcessShepherdAccess, func(q *model.Queries) ([]uuid.UUID, error) {
 		machines, err := q.GetMachinesForAgentStart(ctx, 1)
 		if err != nil {
 			return nil, err
@@ -218,12 +218,12 @@ func TestWorkBackoff(t *testing.T) {
 			return err
 		}
 		if len(machines) > 0 {
-			t.Errorf("Expected no machines ready for installation.")
+			t.Errorf("Expected no machines ready for agent start.")
 		}
 		return nil
 	})
 	if err != nil {
-		t.Errorf("Failed to retrieve machines for installation: %v", err)
+		t.Errorf("Failed to retrieve machines for agent start: %v", err)
 	}
 
 	// Instead of waiting for the backoff to expire, set it again, but this time
@@ -231,7 +231,7 @@ func TestWorkBackoff(t *testing.T) {
 	err = session.Transact(ctx, func(q *model.Queries) error {
 		return q.WorkBackoffInsert(ctx, model.WorkBackoffInsertParams{
 			MachineID: machine.MachineID,
-			Process:   model.ProcessShepherdInstall,
+			Process:   model.ProcessShepherdAccess,
 			Seconds:   0,
 		})
 	})
@@ -249,18 +249,17 @@ func TestWorkBackoff(t *testing.T) {
 			return err
 		}
 		if len(machines) != 1 {
-			t.Errorf("Expected exactly one machine ready for installation.")
+			t.Errorf("Expected exactly one machine ready for agent start.")
 		}
 		return nil
 	})
 	if err != nil {
-		t.Errorf("Failed to retrieve machines for installation: %v", err)
+		t.Errorf("Failed to retrieve machines for agent start: %v", err)
 	}
 }
 
-// TestInstallationWorkflow exercises the agent installation workflow within the
-// BMDB.
-func TestInstallationWorkflow(t *testing.T) {
+// TestAgentStartWorkflow exercises the agent start workflow within the BMDB.
+func TestAgentStartWorkflow(t *testing.T) {
 	b := dut()
 	conn, err := b.Open(true)
 	if err != nil {
@@ -297,7 +296,7 @@ func TestInstallationWorkflow(t *testing.T) {
 	doneC := make(chan struct{})
 	errC := make(chan error)
 	go func() {
-		work, err := session.Work(ctx, model.ProcessShepherdInstall, func(q *model.Queries) ([]uuid.UUID, error) {
+		work, err := session.Work(ctx, model.ProcessShepherdAccess, func(q *model.Queries) ([]uuid.UUID, error) {
 			machines, err := q.GetMachinesForAgentStart(ctx, 1)
 			if err != nil {
 				return nil, err
@@ -339,12 +338,12 @@ func TestInstallationWorkflow(t *testing.T) {
 			return err
 		}
 		if len(machines) > 0 {
-			t.Errorf("Expected no machines ready for installation.")
+			t.Errorf("Expected no machines ready for agent start.")
 		}
 		return nil
 	})
 	if err != nil {
-		t.Fatalf("Failed to retrieve machines for installation in parallel: %v", err)
+		t.Fatalf("Failed to retrieve machines for start in parallel: %v", err)
 	}
 	// Finish working on machine.
 	close(doneC)
@@ -352,19 +351,20 @@ func TestInstallationWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to finish work on machine: %v", err)
 	}
-	// That machine is now installed, so we still expect no work to have to be done.
+	// That machine has its agent started, so we still expect no work to have to be
+	// done.
 	err = session.Transact(ctx, func(q *model.Queries) error {
 		machines, err := q.GetMachinesForAgentStart(ctx, 1)
 		if err != nil {
 			return err
 		}
 		if len(machines) > 0 {
-			t.Errorf("Expected still no machines ready for installation.")
+			t.Errorf("Expected still no machines ready for agent start.")
 		}
 		return nil
 	})
 	if err != nil {
-		t.Fatalf("Failed to retrieve machines for installation after work finished: %v", err)
+		t.Fatalf("Failed to retrieve machines for agent start after work finished: %v", err)
 	}
 
 	// Check history has been recorded.
@@ -392,15 +392,15 @@ func TestInstallationWorkflow(t *testing.T) {
 		if want, got := machine, el.MachineID; want.String() != got.String() {
 			t.Errorf("Wanted %d history event machine ID to be %s, got %s", i, want, got)
 		}
-		if want, got := model.ProcessShepherdInstall, el.Process; want != got {
+		if want, got := model.ProcessShepherdAccess, el.Process; want != got {
 			t.Errorf("Wanted %d history event process to be %s, got %s", i, want, got)
 		}
 	}
 }
 
-// TestInstallationWorkflowParallel starts work on three machines by six workers
+// TestAgentStartWorkflowParallel starts work on three machines by six workers
 // and makes sure that there are no scheduling conflicts between them.
-func TestInstallationWorkflowParallel(t *testing.T) {
+func TestAgentStartWorkflowParallel(t *testing.T) {
 	b := dut()
 	conn, err := b.Open(true)
 	if err != nil {
@@ -444,7 +444,7 @@ func TestInstallationWorkflowParallel(t *testing.T) {
 	})
 
 	workOnce := func(ctx context.Context, workerID int, session *Session) error {
-		work, err := session.Work(ctx, model.ProcessShepherdInstall, func(q *model.Queries) ([]uuid.UUID, error) {
+		work, err := session.Work(ctx, model.ProcessShepherdAccess, func(q *model.Queries) ([]uuid.UUID, error) {
 			machines, err := q.GetMachinesForAgentStart(ctx, 1)
 			if err != nil {
 				return nil, err
