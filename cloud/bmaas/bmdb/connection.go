@@ -17,15 +17,15 @@ import (
 // Connections manage an underlying CockroachDB connection pool, which performs
 // required reconnects and connection pooling automatically).
 func (b *BMDB) Open(migrate bool) (*Connection, error) {
-	if migrate {
-		if b.Config.Database.Migrations == nil {
-			klog.Infof("Using default migrations source.")
-			m, err := model.MigrationsSource()
-			if err != nil {
-				klog.Exitf("failed to prepare migrations source: %w", err)
-			}
-			b.Config.Database.Migrations = m
+	if b.Config.Database.Migrations == nil {
+		klog.Infof("Using default migrations source.")
+		m, err := model.MigrationsSource()
+		if err != nil {
+			klog.Exitf("failed to prepare migrations source: %w", err)
 		}
+		b.Config.Database.Migrations = m
+	}
+	if migrate {
 		if err := b.Database.MigrateUp(); err != nil {
 			return nil, fmt.Errorf("migration failed: %w", err)
 		}
