@@ -184,7 +184,7 @@ func (r *Schema) GetMachines(ctx context.Context, opts *GetMachinesOpts) (*Refle
 			machine = &Machine{
 				ID:       mid,
 				Created:  machineCreated,
-				Tags:     make(map[string]Tag),
+				Tags:     make(map[string]*Tag),
 				Backoffs: make(map[string]Backoff),
 				Work:     make(map[string]Work),
 			}
@@ -198,7 +198,7 @@ func (r *Schema) GetMachines(ctx context.Context, opts *GetMachinesOpts) (*Refle
 				for _, f := range st.fields {
 					fields = append(fields, *f)
 				}
-				machine.Tags[st.ty.Name()] = Tag{
+				machine.Tags[st.ty.Name()] = &Tag{
 					Type:   st.ty,
 					Fields: fields,
 				}
@@ -253,7 +253,7 @@ type Machine struct {
 	Created time.Time
 
 	// Tags on this machine, keyed by Tag type name (canonical, not native).
-	Tags map[string]Tag
+	Tags map[string]*Tag
 
 	// Backoffs on this machine, keyed by process name. By default these are only
 	// active backoffs, unless ExpiredBackoffs was set on GetMachineOptions.
