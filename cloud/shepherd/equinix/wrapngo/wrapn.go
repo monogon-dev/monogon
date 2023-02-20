@@ -67,11 +67,19 @@ type Opts struct {
 
 	// APIRate is the minimum time taken between subsequent API calls.
 	APIRate time.Duration
+
+	// Parallelism defines how many calls to the Equinix API will be issued in
+	// parallel. When this limit is reached, subsequent attmepts to call the API will
+	// block. The order of serving of pending calls is currently undefined.
+	//
+	// If not defined (ie. 0), defaults to 1.
+	Parallelism int
 }
 
 func (o *Opts) RegisterFlags() {
 	flag.StringVar(&o.User, "equinix_api_username", "", "Username for Equinix API")
 	flag.StringVar(&o.APIKey, "equinix_api_key", "", "Key/token/password for Equinix API")
+	flag.IntVar(&o.Parallelism, "equinix_parallelism", 1, "How many parallel connections to the Equinix API will be allowed")
 }
 
 // Client is a limited interface of methods that the Shepherd uses on Equinix. It
@@ -116,8 +124,8 @@ type client struct {
 	o        *Opts
 	rlt      *time.Ticker
 
-	// serializer is a 1-semaphore channel (effectively a mutex) which is used to
-	// limit the number of concurrent calls to the Equinix API.
+	// serializer is a N-semaphore channel (configured by opts.Parallelism) which is
+	// used to limit the number of concurrent calls to the Equinix API.
 	serializer chan (struct{})
 }
 
@@ -138,6 +146,9 @@ func new(opts *Opts) *client {
 			return backoff.NewExponentialBackOff()
 		}
 	}
+	if opts.Parallelism == 0 {
+		opts.Parallelism = 1
+	}
 
 	return &client{
 		username: opts.User,
@@ -145,7 +156,7 @@ func new(opts *Opts) *client {
 		o:        opts,
 		rlt:      time.NewTicker(opts.APIRate),
 
-		serializer: make(chan struct{}, 1),
+		serializer: make(chan struct{}, opts.Parallelism),
 	}
 }
 
