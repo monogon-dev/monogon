@@ -23,6 +23,7 @@ go_library(
 go_test(
     name = "bmdb_test",
     srcs = [
+        "migrations_test.go",
         "queries_test.go",
         "reflection_test.go",
         "sessions_test.go",

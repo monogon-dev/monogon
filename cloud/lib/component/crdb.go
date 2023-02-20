@@ -3,6 +3,7 @@ package component
 import (
 	"database/sql"
 	"flag"
+	"fmt"
 	"net/url"
 	"os"
 	"sync"
@@ -141,4 +142,39 @@ func (d *CockroachConfig) MigrateUp() error {
 		return err
 	}
 	return m.Up()
+}
+
+// MigrateDownDangerDanger removes all data from the database by performing a
+// full migration down.
+//
+// Let me reiterate: this function, by design, DESTROYS YOUR DATA.
+//
+// Obviously, this is a dangerous method. Thus, to prevent accidental nuking of
+// production data, we currently only allow this to be performed on InMemory
+// databases.
+func (d *CockroachConfig) MigrateDownDangerDanger() error {
+	if !d.InMemory {
+		return fmt.Errorf("refusing to migrate down a non-in-memory database")
+	}
+	// Sneaky extra check to make sure the caller didn't just set InMemory after
+	// connecting to an external database. We really need to be safe here.
+	if d.inMemoryInstance == nil {
+		return fmt.Errorf("no really, this cannot be run on non-in-memory databases")
+	}
+	dsn := d.buildDSN("cockroachdb")
+	klog.Infof("Running migrations on %s...", dsn)
+	m, err := migrate.NewWithSourceInstance("iofs", d.Migrations, dsn)
+	if err != nil {
+		return err
+	}
+	// Final sneaky check, make sure the remote schema version is our maximum locally
+	// supported version.
+	v, _, err := m.Version()
+	if err != nil {
+		return fmt.Errorf("could not retrieve remote version: %w", err)
+	}
+	if v2, err := d.Migrations.Next(v); !os.IsNotExist(err) {
+		return fmt.Errorf("remote running version %d, but we know %d which is newer", v, v2)
+	}
+	return m.Down()
 }
