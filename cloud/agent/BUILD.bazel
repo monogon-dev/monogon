@@ -1,4 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("//metropolis/node/build/fwprune:def.bzl", "fsspec_linux_firmware")
+load("//metropolis/node/build:def.bzl", "node_initramfs")
 
 go_library(
     name = "agent_lib",
@@ -35,4 +37,24 @@ go_test(
         "//cloud/agent/api",
         "@com_github_stretchr_testify//assert",
     ],
+)
+
+fsspec_linux_firmware(
+    name = "firmware",
+    firmware_files = ["@linux-firmware//:all_files"],
+    kernel = "//third_party/linux",
+    metadata = "@linux-firmware//:metadata",
+)
+
+node_initramfs(
+    name = "initramfs",
+    files = {
+        ":agent": "/init",
+        "@cacerts//file": "/etc/ssl/cert.pem",
+    },
+    fsspecs = [
+        "//metropolis/node/build:earlydev.fsspec",
+        ":firmware",
+    ],
+    visibility = ["//cloud:__subpackages__"],
 )
