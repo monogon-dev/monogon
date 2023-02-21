@@ -323,14 +323,23 @@ func (i *Initializer) startAgent(ctx context.Context, sgn ssh.Signer, d packngo.
 	if err := proto.Unmarshal(stdout, &arsp); err != nil {
 		return nil, fmt.Errorf("agent reply couldn't be unmarshaled: %w", err)
 	}
-	if !proto.Equal(&imsg, arsp.InitMessage) {
+	var successResp *apb.TakeoverSuccess
+	switch r := arsp.Result.(type) {
+	case *apb.TakeoverResponse_Error:
+		return nil, fmt.Errorf("agent returned error: %v", r.Error.Message)
+	case *apb.TakeoverResponse_Success:
+		successResp = r.Success
+	default:
+		return nil, fmt.Errorf("agent returned unknown result of type %T", arsp.Result)
+	}
+	if !proto.Equal(&imsg, successResp.InitMessage) {
 		return nil, fmt.Errorf("agent did not send back the init message.")
 	}
-	if len(arsp.Key) != ed25519.PublicKeySize {
+	if len(successResp.Key) != ed25519.PublicKeySize {
 		return nil, fmt.Errorf("agent key length mismatch.")
 	}
-	klog.Infof("Started the agent (provider ID: %s, key: %s).", d.ID, hex.EncodeToString(arsp.Key))
-	return arsp.Key, nil
+	klog.Infof("Started the agent (provider ID: %s, key: %s).", d.ID, hex.EncodeToString(successResp.Key))
+	return successResp.Key, nil
 }
 
 // init initializes the server described by t, using BMDB session 'sess' to set

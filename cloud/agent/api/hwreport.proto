@@ -1,0 +1,124 @@
+syntax = "proto3";
+package cloud.agent.api;
+option go_package = "source.monogon.dev/cloud/agent/api";
+
+message BlockDevice {
+  // Name of the vendor of the block device
+  string vendor = 1;
+  // Device model of the block device
+  string device_model = 2;
+  // Serial number of the block device
+  string serial_number = 3;
+  // World Wide Name of the block device (not always available)
+  bytes wwn = 4;
+  // Set if this is a rotational disk
+  bool rotational = 5;
+
+  // Usable capacity in bytes
+  int64 capacity_bytes = 6;
+
+  // Logical and physical block size in bytes. Note that on many modern
+  // enterprise drives these can be changed.
+  int32 logical_block_size_bytes = 7;
+  int32 physical_block_size_bytes = 8;
+
+  enum Protocol {
+    UNKNOWN = 0;
+    SCSI = 1;
+    ATA = 2;
+    NVME = 3;
+    MMC = 4;
+  }
+  Protocol protocol = 9;
+
+  // Set if the block device has reasons to believe that it will fail soon.
+  // This is entirely controlled by firmware, its accuracy is as good as
+  // the vendor has made it.
+  bool critical_warning = 10;
+
+  // Number of unrecoverable media read errors.
+  // On SATA disks this is technically equivalent to Raw_Read_Error_Rate, but
+  // only a tiny minority of devices populate that sanely. So instead this is
+  // defined as the sum of S.M.A.R.T. attributes 5, 197 and 198.
+  optional int64 media_errors = 11;
+
+  // Fraction of spare space still available to replace bad blocks.
+  // If this reaches zero, the disk generally dies.
+  optional float available_spare_ratio = 12;
+
+  // Fraction of the estimated life of the device used up.
+  // Only considers flash wear, not runtime or similar.
+  // Reported by firmware, as accurate as the vendor has made it.
+  optional float usage_ratio = 13;
+}
+
+message NetworkInterface {
+  // Contains the EUI-48 MAC address of the interface.
+  bytes mac = 1;
+  // Linux kernel driver which is bound to the interface.
+  string driver = 2;
+
+  // List of supported speeds in bytes per second.
+  repeated int64 supported_speed_bytes = 3;
+
+  // Does the interface have an active link.
+  bool link_up = 4;
+  // Currently-negotiated speed in bytes per second. Unstable on marginal
+  // links.
+  int64 current_speed_bytes = 5;
+}
+
+message CPU {
+  message X86_64 {
+    // Family of the CPU, including extended family.
+    // For example 6 for Intel's "big" cores.
+    int32 family = 1;
+    // Model of the CPU, including extended model.
+    // For example 154 for ADL-S.
+    int32 model = 2;
+    // Stepping of the CPU, model-dependent value.
+    int32 stepping = 3;
+  }
+  oneof architecture {
+    X86_64 x86_64 = 1;
+    // Information specific to other architectures can be added here.
+  }
+  // Number of hardware threads (including SMT threads, harts, ...) exposed to
+  // to the operating system.
+  int32 hardware_threads = 9;
+  // Number of cores of the CPU. This does not include SMT threads or other
+  // equivalent mechanisms to increase logical core count.
+  int32 cores = 8;
+  // Name of the vendor of the CPU
+  string vendor = 10;
+  // Name of the model of the CPU
+  string model = 11;
+}
+
+message Node {
+  // Manufacturer of the system, taken from DMI.
+  string manufacturer = 1;
+  // Product name, taken from DMI.
+  string product = 2;
+  // Serial number of the system, taken from DMI.
+  string serial_number = 3;
+
+  // Amount of physical memory installed, in bytes. Determined using DMI (if
+  // available and not marked unusable) or memory blocks in sysfs
+  // (/sys/devices/system/memory/...). This is not taken from meminfo as that
+  // value is relatively unstable and hard to match to.
+  // Assuming a non-terrible firmware implementation this value is expected to
+  // be stable.
+  int64 memory_installed_bytes = 8;
+
+  // Ratio of claimed installed memory which is available to the Linux
+  // kernel (taken from sysinfo's totalmem). Note that this value is unstable
+  // across kernel versions and even firmware configuration settings and should
+  // only be used to detect gross mismatches. 1 means all of the claimed
+  // installed memory is available, 0 means none.
+  float memory_usable_ratio = 9;
+
+  repeated CPU cpu = 10;
+  repeated BlockDevice block_device = 11;
+  repeated NetworkInterface network_interface = 12;
+}

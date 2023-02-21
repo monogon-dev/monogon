@@ -14,11 +14,26 @@ message TakeoverInit {
   string bmaas_endpoint = 3;
 }
 
-// TakeoverResponse is the message the takeover process sends back after
-// receiving an TakeoverInit message.
-message TakeoverResponse {
+message TakeoverSuccess {
   // init_message is the exact init message the agent received.
   TakeoverInit init_message = 1;
   // key is the agent's public key.
   bytes key = 2;
+  // warnings contains a list of non-critical errors which occurred during the
+  // takeover preparation.
+  repeated string warning = 3;
+}
+
+message TakeoverError {
+  // Error message
+  string message = 1;
+}
+
+// TakeoverResponse is the message the takeover process sends back after
+// receiving an TakeoverInit message.
+message TakeoverResponse {
+  oneof result {
+    TakeoverSuccess success = 1;
+    TakeoverError error = 2;
+  }
 }

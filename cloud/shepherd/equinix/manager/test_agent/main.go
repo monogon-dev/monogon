@@ -36,8 +36,10 @@ func main() {
 		return
 	}
 	arsp := apb.TakeoverResponse{
-		InitMessage: &aim,
-		Key:         pub,
+		Result: &apb.TakeoverResponse_Success{Success: &apb.TakeoverSuccess{
+			InitMessage: &aim,
+			Key:         pub,
+		}},
 	}
 	arspb, err := proto.Marshal(&arsp)
 	if err != nil {

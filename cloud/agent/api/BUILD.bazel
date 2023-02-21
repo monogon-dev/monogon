@@ -6,9 +6,11 @@ proto_library(
     name = "api_proto",
     srcs = [
         "agent.proto",
+        "hwreport.proto",
         "takeover.proto",
     ],
     visibility = ["//visibility:public"],
+    deps = ["//net/proto:net_proto_proto"],
 )
 
 go_proto_library(
@@ -16,6 +18,7 @@ go_proto_library(
     importpath = "source.monogon.dev/cloud/agent/api",
     proto = ":api_proto",
     visibility = ["//visibility:public"],
+    deps = ["//net/proto"],
 )
 
 go_library(

@@ -21,11 +21,9 @@ import (
 
 // fakeSSHClient is an SSHClient that pretends to start an agent, but in reality
 // just responds with what an agent would respond on every execution attempt.
-type fakeSSHClient struct {
-}
+type fakeSSHClient struct{}
 
-type fakeSSHConnection struct {
-}
+type fakeSSHConnection struct{}
 
 func (f *fakeSSHClient) Dial(ctx context.Context, address, username string, sshkey ssh.Signer, timeout time.Duration) (SSHConnection, error) {
 	return &fakeSSHConnection{}, nil
@@ -43,8 +41,10 @@ func (f *fakeSSHConnection) Execute(ctx context.Context, command string, stdin [
 		return nil, nil, fmt.Errorf("while generating agent public key: %v", err)
 	}
 	arsp := apb.TakeoverResponse{
-		InitMessage: &aim,
-		Key:         pub,
+		Result: &apb.TakeoverResponse_Success{Success: &apb.TakeoverSuccess{
+			InitMessage: &aim,
+			Key:         pub,
+		}},
 	}
 	arspb, err := proto.Marshal(&arsp)
 	if err != nil {
