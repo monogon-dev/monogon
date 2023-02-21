@@ -1,0 +1,216 @@
+syntax = "proto3";
+
+// This package provides a configuration format for configuring IP-based
+// networking on Linux. This is going to be used in cases where automatic
+// configuration by Monogon's network stack is infeasible or network
+// configuration information needs to be provided to non-Monogon systems.
+// It's kept human-readable as it may be written by humans directly when
+// configuring Monogon systems.
+package net.proto;
+option go_package = "source.monogon.dev/net/proto";
+
+// Device references one or more network adapters, i.e. network devices which
+// connect this kernel to an outside system.
+// All conditions which are set in the message are ANDed together.
+message Device {
+  // Matches the permanent hardware address of the interface. The raw address
+  // is hex-encoded and colons are inserted between every byte boundary.
+  // This is the MAC address on Ethernet interfaces.
+  string hardware_address = 1;
+  // Matches the Linux driver of the network interface
+  string driver = 2;
+  // In case of multiple matches, use the n-th interface instead of the first.
+  int32 index = 3;
+}
+// Bond defines an aggregate of physical layer 2 links which behave as one
+// virtual layer 2 link. This includes active-passive as well as active-
+// active configurations with two or more links.
+message Bond {
+  // List of interface names which are a member of this bond. It's recommended
+  // to only use Device-type interfaces here as others might behave
+  // unexpectedly (Bond on VLAN interfaces) or fail to be configured entirely
+  // (Bond on Bond). All interface names listed here must exist as part of the
+  // same Net message as this Bond interface.
+  repeated string member_interface = 1;
+  // Minimum number of links to be up to consider the bond to be up.
+  // Can be used in case expected bandwith is more than a single interface
+  // can take in which case it might be preferable to not pass any traffic
+  // over causing significant packet loss.
+  int32 min_links = 2;
+  message CarrierMonitor {
+    // Interval at which the PCS is polled for physical link status if Linux's
+    // carrier monitoring is not available.
+    int32 polling_interval_ms = 1;
+    // Disable the use of Linux's carrier monitoring which can use interrupts
+    // and force polling in all cases.
+    bool force_polling = 4;
+    // Amount of time to delay marking the link as down in the bond after the
+    // carrier has been lost. Should be a multiple of polling_interval_ms.
+    int32 down_delay_ms = 2;
+    // Amount of time to delay marking the link as up in the bond after the
+    // carrier is available. Should be a multiple of polling_interval_ms.
+    int32 up_delay_ms = 3;
+  }
+  oneof link_monitor {
+    CarrierMonitor carrier_monitor = 3;
+    // TODO(#186): Support ARP monitor for other modes
+  }
+  enum TransmitHashPolicy {
+    // Layer 2 MAC address
+    LAYER2 = 0;
+    // IP address, protocol and port
+    LAYER3_4 = 1;
+    // MAC address and IP address
+    LAYER2_3 = 2;
+    // Encapsulated MAC address and IP address
+    ENCAP_LAYER2_3 = 3;
+    // Encapsulated IP address, protocol and port
+    ENCAP_LAYER3_4 = 4;
+    // VLAN ID and source MAC
+    VLAN_SRCMAC = 5;
+  }
+  TransmitHashPolicy transmit_hash_policy = 4;
+  // Use the Link Aggregation Control Protocol to automatically use the
+  // available links as best as possible.
+  message LACP {
+    enum Rate {
+      // LACP slow rate, one packet every 30s
+      SLOW = 0;
+      // LACP fast rate, one packet every 1s
+      FAST = 1;
+    }
+    Rate rate = 1;
+    enum SelectionLogic {
+      STABLE = 0;
+      BANDWIDTH = 1;
+      COUNT = 2;
+    }
+    SelectionLogic selection_logic = 2;
+    int32 actor_system_priority = 3;
+    int32 user_port_key = 4;
+    string actor_system_mac = 5;
+  }
+  message ActiveBackup {
+    // TODO(#186): More settings
+  }
+  oneof mode {
+    LACP lacp = 5;
+    ActiveBackup active_backup = 6;
+  }
+}
+
+message VLAN {
+  // Name of the parent interface passing tagged packets. The interface
+  // referenced here must exist in the same Net message as this VLAN
+  // interface.
+  string parent = 1;
+  // VLAN ID (1-4094)
+  int32 id = 2;
+  enum Protocol {
+    // C-VLAN, also known as "standard" VLAN inserts a header with the
+    // VLAN ID (VID) right before the EtherType.
+    CVLAN = 0;
+    // S-VLAN, also known as QinQ or 802.1ad (obsolete) inserts a second VLAN ID
+    // before the C-VLAN header. This allows stacking two VLANs. The ID
+    // specified here is just for the outer VLAN, the inner one can be set by
+    // creating another VLAN interface and setting this one to be its parent.
+    SVLAN = 1;
+  }
+  Protocol protocol = 3;
+}
+
+// IPv4Autoconfig contains settings for the automatic configuration of IPv4
+// addresses, routes and further network information via DHCPv4.
+message IPv4Autoconfig {}
+
+// IPv6Autoconfig contains settings for the automatic configuration of IPv6
+// addreses, routes and further network information via ICMPv6 Router
+// Advertisements and optionally DHCPv6 if indicated by the Router
+// Advertisement.
+message IPv6Autoconfig {
+  enum Privacy {
+    // Do not generate privacy addresses.
+    DISABLE = 0;
+    // Generate privacy addresses, but prefer non-privacy addresses.
+    AVOID = 1;
+    // Generate privacy addresses and use them over other non-privacy
+    // addresses.
+    PREFER = 2;
+  }
+  // privacy controls if and how privacy addresses (see RFC 4941) are used if
+  // DHCPv6 is not used for addressing. If DHCPv6 is used for addressing
+  // any privacy considerations lie with the DHCPv6 server.
+  Privacy privacy = 1;
+}
+
+message Interface {
+  // Name of the interface. Used as a reference in this config as well as for
+  // the name of the kernel interface. Must not be empty, less than 16 UTF-8
+  // bytes long and cannot contain spaces, forward slashes, colons or percent
+  // signs. The UTF-8 encoding can also not include 0xa0 which is interpreted
+  // as a space by Linux since its ctype database is based on Latin1.
+  string name = 1;
+
+  // Type of interface
+  oneof type {
+    Device device = 3;
+    Bond bond = 4;
+    VLAN vlan = 5;
+  }
+  // Enable automatic IPv4 network configuration via DHCPv4.
+  IPv4Autoconfig ipv4_autoconfig = 10;
+
+  // Enable automatic IPv6 network configuration via router advertisements and
+  // DHCPv6.
+  IPv6Autoconfig ipv6_autoconfig = 11;
+
+  // IP addresses to be statically configured. These can either be single
+  // IP addresses (both IPv4 and IPv6) as well as CIDR-style networks for
+  // which a corresponding route is automatically added. If single IP addreses
+  // are used, a corresponding route must be added, otherwise no traffic will
+  // be routed out of the interface.
+  repeated string address = 12;
+
+  message Route {
+    // Destination in CIDR form or as a single IP.
+    string destination = 1;
+
+    // If set, the destination network is not directly on-link, but reachable
+    // via a gateway which is on-link. On point-to-point networks without
+    // ARP/NDP this doesn't do anything should never be set.
+    // Note that here, different from other network configs, the gateway IP (if
+    // configured) is assumed to be on-link for the interface it's configured
+    // under. Configuring a route with a gateway IP which is routed to another
+    // interface is invalid.
+    string gateway_ip = 2;
+
+    // An optional hint to the kernel which source address to prefer when using
+    // this route.
+    string source_ip = 3;
+
+    // Metric of this interface route. A lower metric route wins over one with a
+    // higher metric. If unset, defaults to 0 which is the default metric in
+    // Linux.
+    int32 metric = 4;
+  }
+  // List of routes which direct traffic into this interface.
+  repeated Route route = 14;
+
+  // Maximum transmission unit of the interface. If unset it will be
+  // automatically configured by DHCP or LLDP or left at the interface default
+  // value. Minimum value is 1280 bytes as required by IPv6.
+  int32 mtu = 13;
+}
+
+message Nameserver {
+  // The IP address of the nameserver in string form.
+  string ip = 1;
+}
+
+// Net contains a network configuration for a single network namespace.
+//
+// This is effectively the top-level configuration message for a machine.
+message Net {
+  repeated Interface interface = 1;
+  repeated Nameserver nameserver = 3;
+}
