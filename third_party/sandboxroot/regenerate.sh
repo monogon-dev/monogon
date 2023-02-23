@@ -29,6 +29,9 @@ PKGS=(
   "nasm"
   "acpica-tools"
 
+  # patch tool, as used by gazelle
+  "patch"
+
   # TPM emulator for testing
   "swtpm-tools"
 
