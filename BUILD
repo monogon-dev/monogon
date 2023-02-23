@@ -33,12 +33,16 @@ py_runtime(
     name = "host_python3",
     interpreter_path = "/usr/bin/python3",
     python_version = "PY3",
+    # Necessary on NixOS, as the nixpkgs-packaged Bazel has this overriden to
+    # the local /nix/store.
+    stub_shebang = "#!/usr/bin/python3",
 )
 
 py_runtime(
     name = "host_python2",
     interpreter_path = "/usr/bin/python2",
     python_version = "PY2",
+    stub_shebang = "#!/usr/bin/python2",
 )
 
 py_runtime_pair(
