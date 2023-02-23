@@ -1495,7 +1495,7 @@ new file mode 100644
 index 0000000000..70ce080a62
 --- /dev/null
 +++ b/scripts/tracetool/defs.bzl
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,67 @@
 +def _impl_cc_qemu_trace(ctx):
 +    outs = []
 +    for src in ctx.files.srcs:
@@ -1508,15 +1508,17 @@ index 0000000000..70ce080a62
 +        outs.append(trace_h)
 +
 +        ctx.actions.run(
-+            inputs = [src] + ctx.files._tracetool,
++            inputs = [src],
++            tools = [ctx.executable._tracetool],
 +            executable = ctx.executable._savestdout,
-+            arguments = [trace_h.path, ctx.files._tracetool[0].path, "--backend", ctx.attr.backend, "--group", name, "--format=h", src.path],
++            arguments = [trace_h.path, ctx.executable._tracetool.path, "--backend", ctx.attr.backend, "--group", name, "--format=h", src.path],
 +            outputs = [trace_h],
 +        )
 +        ctx.actions.run(
-+            inputs = [src] + ctx.files._tracetool,
++            inputs = [src],
++            tools = [ctx.executable._tracetool],
 +            executable = ctx.executable._savestdout,
-+            arguments = [trace_c.path, ctx.files._tracetool[0].path, "--backend", ctx.attr.backend, "--group", name, "--format=c", src.path],
++            arguments = [trace_c.path, ctx.executable._tracetool.path, "--backend", ctx.attr.backend, "--group", name, "--format=c", src.path],
 +            outputs = [trace_c],
 +        )
 +    return [DefaultInfo(files = depset(outs))]
