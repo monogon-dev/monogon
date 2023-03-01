@@ -75,6 +75,8 @@ package event
 import (
 	"context"
 	"errors"
+
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 // A Value is an 'Event Value', some piece of data that can be updated ('Set')
@@ -206,3 +208,26 @@ var (
 	// of the requested key has been retrieved.
 	BacklogDone = errors.New("no more backlogged data")
 )
+
+// Pipe a Value's initial state and subsequent updates to an already existing
+// channel in a supervisor.Runnable. This is mostly useful when wanting to select
+// {} on many Values.
+//
+// The given channel will NOT be closed when the runnable exits. The process
+// receiving from the channel should be running in a group with the pipe
+// runnable, so that both restart if either does. This ensures that there is always
+// at least one value in the channel when the receiver starts.
+func Pipe[T any](value Value[T], c chan<- T, opts ...GetOption[T]) supervisor.Runnable {
+	return func(ctx context.Context) error {
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
+		w := value.Watch()
+		defer w.Close()
+		for {
+			v, err := w.Get(ctx, opts...)
+			if err != nil {
+				return err
+			}
+			c <- v
+		}
+	}
+}

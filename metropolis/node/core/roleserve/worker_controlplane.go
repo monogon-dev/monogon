@@ -16,6 +16,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
+	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/pki"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -109,43 +110,11 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 
 	supervisor.RunGroup(ctx, map[string]supervisor.Runnable{
 		// Plain conversion from Event Value to channel.
-		"map-bootstrap-data": func(ctx context.Context) error {
-			w := s.bootstrapData.Watch()
-			defer w.Close()
-			for {
-				v, err := w.Get(ctx)
-				if err != nil {
-					return err
-				}
-				bootstrapDataC <- v
-			}
-		},
+		"map-bootstrap-data": event.Pipe[*bootstrapData](s.bootstrapData, bootstrapDataC),
 		// Plain conversion from Event Value to channel.
-		"map-cluster-membership": func(ctx context.Context) error {
-			supervisor.Signal(ctx, supervisor.SignalHealthy)
-			w := s.clusterMembership.Watch()
-			defer w.Close()
-			for {
-				v, err := w.Get(ctx, FilterHome())
-				if err != nil {
-					return err
-				}
-				clusterMembershipC <- v
-			}
-		},
+		"map-cluster-membership": event.Pipe[*ClusterMembership](s.clusterMembership, clusterMembershipC, FilterHome()),
 		// Plain conversion from Event Value to channel.
-		"map-roles": func(ctx context.Context) error {
-			supervisor.Signal(ctx, supervisor.SignalHealthy)
-			w := s.localRoles.Watch()
-			defer w.Close()
-			for {
-				v, err := w.Get(ctx)
-				if err != nil {
-					return err
-				}
-				rolesC <- v
-			}
-		},
+		"map-roles": event.Pipe[*cpb.NodeRoles](s.localRoles, rolesC),
 		// Provide config from clusterMembership and roles.
 		"reduce-config": func(ctx context.Context) error {
 			supervisor.Signal(ctx, supervisor.SignalHealthy)

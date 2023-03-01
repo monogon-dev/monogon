@@ -5,4 +5,5 @@ go_library(
     srcs = ["event.go"],
     importpath = "source.monogon.dev/metropolis/pkg/event",
     visibility = ["//visibility:public"],
+    deps = ["//metropolis/pkg/supervisor"],
 )
