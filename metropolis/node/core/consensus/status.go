@@ -23,38 +23,12 @@ import (
 type ServiceHandle interface {
 	// Watch returns a Event Value compatible Watcher for accessing the State of the
 	// consensus Service in a safe manner.
-	Watch() Watcher
+	Watch() event.Watcher[*Status]
 }
 
-// Watch returns a Event Value compatible Watcher for accessing the State of the
-// consensus Service in a safe manner.
-func (s *Service) Watch() Watcher {
-	return Watcher{s.value.Watch()}
-}
-
-type Watcher struct {
-	event.Watcher
-}
-
-func (w *Watcher) Get(ctx context.Context, opts ...event.GetOption) (*Status, error) {
-	v, err := w.Watcher.Get(ctx, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return v.(*Status), nil
-}
-
-func (w *Watcher) GetRunning(ctx context.Context) (*Status, error) {
-	for {
-		st, err := w.Get(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if st.Running() {
-			return st, nil
-		}
-	}
-}
+var FilterRunning = event.Filter(func(st *Status) bool {
+	return st.Running()
+})
 
 // Status of the consensus service. It represents either a running consensus
 // service to which a client can connect and on which management can be

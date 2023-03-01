@@ -6,19 +6,18 @@
 // cluster's curator, updates the status of the node within the curator, and
 // spawns on-demand services.
 //
-//
-//  .-----------.          .--------.  Watches  .------------.
-//  | Cluster   |--------->| Role   |<----------| Node Roles |
-//  | Enrolment | Provides | Server |  Updates  '------------'
-//  '-----------'   Data   |        |----.      .-------------.
-//                         '--------'    '----->| Node Status |
-//                    Spawns |    | Spawns      '-------------'
-//                     .-----'    '-----.
-//                     V                V
-//                 .-----------. .------------.
-//                 | Consensus | | Kubernetes |
-//                 | & Curator | |            |
-//                 '-----------' '------------'
+//	.-----------.          .--------.  Watches  .------------.
+//	| Cluster   |--------->| Role   |<----------| Node Roles |
+//	| Enrolment | Provides | Server |  Updates  '------------'
+//	'-----------'   Data   |        |----.      .-------------.
+//	                       '--------'    '----->| Node Status |
+//	                  Spawns |    | Spawns      '-------------'
+//	                   .-----'    '-----.
+//	                   V                V
+//	               .-----------. .------------.
+//	               | Consensus | | Kubernetes |
+//	               | & Curator | |            |
+//	               '-----------' '------------'
 //
 // The internal state of the Role Server (eg. status of services, input from
 // Cluster Enrolment, current node roles as retrieved from the cluster) is
@@ -38,7 +37,6 @@
 // or remote). It is updated both by external processes (ie. data from the
 // Cluster Enrolment) as well as logic responsible for spawning the control
 // plane.
-//
 package roleserve
 
 import (
@@ -50,6 +48,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
+	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
@@ -76,10 +75,10 @@ type Config struct {
 type Service struct {
 	Config
 
-	ClusterMembership ClusterMembershipValue
-	KubernetesStatus  KubernetesStatusValue
-	bootstrapData     bootstrapDataValue
-	localRoles        localRolesValue
+	ClusterMembership memory.Value[*ClusterMembership]
+	KubernetesStatus  memory.Value[*KubernetesStatus]
+	bootstrapData     memory.Value[*bootstrapData]
+	localRoles        memory.Value[*cpb.NodeRoles]
 
 	controlPlane *workerControlPlane
 	statusPush   *workerStatusPush
@@ -141,11 +140,11 @@ func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk
 	// available on the loopback interface.
 	s.Resolver.AddOverride(nid, resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 
-	s.ClusterMembership.set(&ClusterMembership{
+	s.ClusterMembership.Set(&ClusterMembership{
 		pubkey:   pubkey,
 		resolver: s.Resolver,
 	})
-	s.bootstrapData.set(&bootstrapData{
+	s.bootstrapData.Set(&bootstrapData{
 		nodePrivateKey:     privkey,
 		initialOwnerKey:    iok,
 		clusterUnlockKey:   cuk,
@@ -159,7 +158,7 @@ func (s *Service) ProvideRegisterData(credentials identity.NodeCredentials, dire
 	// available on the loopback interface.
 	s.Resolver.AddOverride(credentials.ID(), resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 
-	s.ClusterMembership.set(&ClusterMembership{
+	s.ClusterMembership.Set(&ClusterMembership{
 		remoteCurators: directory,
 		credentials:    &credentials,
 		pubkey:         credentials.PublicKey(),
@@ -172,7 +171,7 @@ func (s *Service) ProvideJoinData(credentials identity.NodeCredentials, director
 	// available on the loopback interface.
 	s.Resolver.AddOverride(credentials.ID(), resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 
-	s.ClusterMembership.set(&ClusterMembership{
+	s.ClusterMembership.Set(&ClusterMembership{
 		remoteCurators: directory,
 		credentials:    &credentials,
 		pubkey:         credentials.PublicKey(),

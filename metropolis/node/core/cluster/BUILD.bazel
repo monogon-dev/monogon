@@ -20,7 +20,6 @@ go_library(
         "//metropolis/node/core/roleserve",
         "//metropolis/node/core/rpc",
         "//metropolis/node/core/rpc/resolver",
-        "//metropolis/pkg/event/memory",
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/api",
         "//metropolis/proto/common",

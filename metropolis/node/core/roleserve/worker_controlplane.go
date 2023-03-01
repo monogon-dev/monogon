@@ -44,11 +44,11 @@ type workerControlPlane struct {
 	storageRoot *localstorage.Root
 
 	// bootstrapData will be read.
-	bootstrapData *bootstrapDataValue
+	bootstrapData *memory.Value[*bootstrapData]
 	// clusterMembership will be read and written.
-	clusterMembership *ClusterMembershipValue
+	clusterMembership *memory.Value[*ClusterMembership]
 	// localRoles will be read.
-	localRoles *localRolesValue
+	localRoles *memory.Value[*cpb.NodeRoles]
 	// resolver will be read and used to populate ClusterMembership.
 	resolver *resolver.Resolver
 }
@@ -98,7 +98,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 	//                                             |
 	//         NodeRoles -M-> rolesC --------------'
 	//
-	var startupV memory.Value
+	var startupV memory.Value[*controlPlaneStartup]
 
 	// Channels are used as intermediaries between map stages and the final reduce,
 	// which is okay as long as the entire tree restarts simultaneously (which we
@@ -126,7 +126,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 			w := s.clusterMembership.Watch()
 			defer w.Close()
 			for {
-				v, err := w.GetHome(ctx)
+				v, err := w.Get(ctx, FilterHome())
 				if err != nil {
 					return err
 				}
@@ -264,11 +264,10 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 		// Read config from startupV.
 		w := startupV.Watch()
 		defer w.Close()
-		startupI, err := w.Get(ctx)
+		startup, err := w.Get(ctx)
 		if err != nil {
 			return err
 		}
-		startup := startupI.(*controlPlaneStartup)
 
 		// Start Control Plane if we have a config.
 		if startup.consensusConfig == nil {
@@ -424,7 +423,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 
 			// We now have a locally running ControlPlane. Reflect that in a new
 			// ClusterMembership.
-			s.clusterMembership.set(&ClusterMembership{
+			s.clusterMembership.Set(&ClusterMembership{
 				localConsensus: con,
 				localCurator:   cur,
 				credentials:    creds,
@@ -440,11 +439,10 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 		// Not restarting on every single change prevents us from going in a
 		// ClusterMembership -> ClusterDirectory -> ClusterMembership thrashing loop.
 		for {
-			ncI, err := w.Get(ctx)
+			nc, err := w.Get(ctx)
 			if err != nil {
 				return err
 			}
-			nc := ncI.(*controlPlaneStartup)
 			if nc.changed(startup) {
 				supervisor.Logger(ctx).Infof("Configuration changed, restarting...")
 				return fmt.Errorf("config changed, restarting")

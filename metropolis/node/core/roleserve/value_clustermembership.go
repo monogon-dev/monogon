@@ -13,7 +13,6 @@ import (
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/pkg/event"
-	"source.monogon.dev/metropolis/pkg/event/memory"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -53,44 +52,14 @@ type ClusterMembership struct {
 	resolver *resolver.Resolver
 }
 
-type ClusterMembershipValue struct {
-	value memory.Value
-}
-
-func (c *ClusterMembershipValue) Watch() *ClusterMembershipWatcher {
-	return &ClusterMembershipWatcher{
-		w: c.value.Watch(),
-	}
-}
-
-func (c *ClusterMembershipValue) set(v *ClusterMembership) {
-	c.value.Set(v)
-}
-
-type ClusterMembershipWatcher struct {
-	w event.Watcher
-}
-
-func (c *ClusterMembershipWatcher) Close() error {
-	return c.w.Close()
-}
-
-func (c *ClusterMembershipWatcher) getAny(ctx context.Context) (*ClusterMembership, error) {
-	v, err := c.w.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return v.(*ClusterMembership), nil
-}
-
 // GetNodeID returns the Node ID of the locally running node whenever available.
 // NodeIDs are available early on in the node startup process and are guaranteed
 // to never change at runtime. The watcher will then block all further Get calls
 // until new information is available. This method should only be used if
 // GetNodeID is the only method ran on the watcher.
-func (c *ClusterMembershipWatcher) GetNodeID(ctx context.Context) (string, error) {
+func GetNodeID(ctx context.Context, watcher event.Watcher[*ClusterMembership]) (string, error) {
 	for {
-		cm, err := c.getAny(ctx)
+		cm, err := watcher.Get(ctx)
 		if err != nil {
 			return "", err
 		}
@@ -105,20 +74,16 @@ func (c *ClusterMembershipWatcher) GetNodeID(ctx context.Context) (string, error
 // the cluster's Curator). See proto.common.ClusterState for more information
 // about cluster states. The watcher will then block all futher Get calls until
 // new information is available.
-func (c *ClusterMembershipWatcher) GetHome(ctx context.Context) (*ClusterMembership, error) {
-	for {
-		cm, err := c.getAny(ctx)
-		if err != nil {
-			return nil, err
-		}
+func FilterHome() event.GetOption[*ClusterMembership] {
+	return event.Filter(func(cm *ClusterMembership) bool {
 		if cm.credentials == nil {
-			continue
+			return false
 		}
 		if cm.remoteCurators == nil {
-			continue
+			return false
 		}
-		return cm, nil
-	}
+		return true
+	})
 }
 
 // DialCurator returns an authenticated gRPC client connection to the Curator

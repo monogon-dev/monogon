@@ -25,7 +25,6 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
@@ -57,7 +56,7 @@ type Service struct {
 
 	// status is a memory Event Value for keeping the electionStatus of this
 	// instance. It is not exposed to users of the Curator.
-	status memory.Value
+	status memory.Value[*electionStatus]
 }
 
 // New creates a new curator Service.
@@ -92,28 +91,6 @@ type electionStatusLeader struct {
 
 type electionStatusFollower struct {
 	lock *ppb.LeaderElectionValue
-}
-
-func (s *Service) electionWatch() electionWatcher {
-	return electionWatcher{
-		Watcher: s.status.Watch(),
-	}
-}
-
-// electionWatcher is a type-safe wrapper around event.Watcher which provides
-// electionStatus values.
-type electionWatcher struct {
-	event.Watcher
-}
-
-// get retrieves an electionStatus from the electionWatcher.
-func (w *electionWatcher) get(ctx context.Context) (*electionStatus, error) {
-	val, err := w.Watcher.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-	status := val.(electionStatus)
-	return &status, err
 }
 
 // buildLockValue returns a serialized etcd value that will be set by the
@@ -206,7 +183,7 @@ func (s *Service) elect(ctx context.Context) error {
 			if err := proto.Unmarshal(o.Kvs[0].Value, &lock); err != nil {
 				return fmt.Errorf("parsing existing lock value failed: %w", err)
 			}
-			s.status.Set(electionStatus{
+			s.status.Set(&electionStatus{
 				follower: &electionStatusFollower{
 					lock: &lock,
 				},
@@ -223,7 +200,7 @@ campaigned:
 	supervisor.Logger(ctx).Info("Curator became leader.")
 
 	// Update status, watchers will now know that this curator is the leader.
-	s.status.Set(electionStatus{
+	s.status.Set(&electionStatus{
 		leader: &electionStatusLeader{
 			lockKey: election.Key(),
 			lockRev: election.Rev(),
@@ -246,9 +223,9 @@ func (s *Service) Run(ctx context.Context) error {
 	// Start local election watcher. This logs what this curator knows about its own
 	// leadership.
 	go func() {
-		w := s.electionWatch()
+		w := s.status.Watch()
 		for {
-			s, err := w.get(ctx)
+			s, err := w.Get(ctx)
 			if err != nil {
 				supervisor.Logger(ctx).Warningf("Election watcher exiting: get(): %v", err)
 				return
@@ -264,7 +241,7 @@ func (s *Service) Run(ctx context.Context) error {
 	supervisor.Logger(ctx).Infof("Waiting for consensus...")
 	w := s.config.Consensus.Watch()
 	defer w.Close()
-	st, err := w.GetRunning(ctx)
+	st, err := w.Get(ctx, consensus.FilterRunning)
 	if err != nil {
 		return fmt.Errorf("while waiting for consensus: %w", err)
 	}
@@ -279,7 +256,7 @@ func (s *Service) Run(ctx context.Context) error {
 	// or forwarding to a remotely running leader.
 	lis := listener{
 		node:          s.config.NodeCredentials,
-		electionWatch: s.electionWatch,
+		electionWatch: s.status.Watch,
 		consensus:     s.config.Consensus,
 		etcd:          etcd,
 	}
@@ -297,9 +274,9 @@ func (s *Service) Run(ctx context.Context) error {
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	for {
-		s.status.Set(electionStatus{})
+		s.status.Set(&electionStatus{})
 		err := s.elect(ctx)
-		s.status.Set(electionStatus{})
+		s.status.Set(&electionStatus{})
 
 		if err != nil && errors.Is(err, ctx.Err()) {
 			return fmt.Errorf("election round failed due to context cancelation, not attempting to re-elect: %w", err)

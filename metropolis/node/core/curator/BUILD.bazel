@@ -66,6 +66,7 @@ go_test(
         "//metropolis/node/core/curator/proto/private",
         "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
+        "//metropolis/pkg/event",
         "//metropolis/pkg/logtree",
         "//metropolis/pkg/pki",
         "//metropolis/pkg/supervisor",

@@ -5,24 +5,26 @@ import (
 	"fmt"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 // workerRoleFetch is the Role Fetcher, an internal bookkeeping service
 // responsible for populating localRoles based on a clusterMembership whenever
 // the node is HOME and cluster credentials / curator access is available.
 type workerRoleFetch struct {
-	clusterMembership *ClusterMembershipValue
+	clusterMembership *memory.Value[*ClusterMembership]
 
 	// localRoles will be written.
-	localRoles *localRolesValue
+	localRoles *memory.Value[*cpb.NodeRoles]
 }
 
 func (s *workerRoleFetch) run(ctx context.Context) error {
 	w := s.clusterMembership.Watch()
 	defer w.Close()
 	supervisor.Logger(ctx).Infof("Waiting for cluster membership...")
-	cm, err := w.GetHome(ctx)
+	cm, err := w.Get(ctx, FilterHome())
 	if err != nil {
 		return err
 	}
@@ -70,7 +72,7 @@ func (s *workerRoleFetch) run(ctx context.Context) error {
 			if n.Roles.KubernetesWorker != nil {
 				supervisor.Logger(ctx).Infof(" - kubernetes worker")
 			}
-			s.localRoles.set(n.Roles)
+			s.localRoles.Set(n.Roles)
 			break
 		}
 	}

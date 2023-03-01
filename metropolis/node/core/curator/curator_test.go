@@ -13,6 +13,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
@@ -131,11 +132,11 @@ func (s dutSet) wait(ctx context.Context, f func(s dutSetStatus) bool) (dutSetSt
 	// Run a watcher for each dut which sends that dut's newest available
 	// electionStatus (or error) to updC.
 	for e, d := range s {
-		w := d.instance.electionWatch()
-		go func(e string, w electionWatcher) {
+		w := d.instance.status.Watch()
+		go func(e string, w event.Watcher[*electionStatus]) {
 			defer w.Close()
 			for {
-				s, err := w.get(ctx2)
+				s, err := w.Get(ctx2)
 				if err != nil {
 					updC <- dutUpdate{
 						endpoint: e,

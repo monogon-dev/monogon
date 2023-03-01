@@ -145,8 +145,8 @@ func (c *Certificate) makeCRL(ctx context.Context, kv clientv3.KV, revoked []pki
 
 // WatchCRL returns and Event Value compatible CRLWatcher which can be used to
 // retrieve and watch for the newest CRL available from this CA certificate.
-func (c *Certificate) WatchCRL(cl client.Namespaced) CRLWatcher {
-	value := etcd.NewValue(cl, c.crlPath(), func(_, data []byte) (interface{}, error) {
+func (c *Certificate) WatchCRL(cl client.Namespaced) event.Watcher[*CRL] {
+	value := etcd.NewValue(cl, c.crlPath(), func(_, data []byte) (*CRL, error) {
 		crl, err := x509.ParseCRL(data)
 		if err != nil {
 			return nil, fmt.Errorf("could not parse CRL from etcd: %w", err)
@@ -156,29 +156,10 @@ func (c *Certificate) WatchCRL(cl client.Namespaced) CRLWatcher {
 			List: crl,
 		}, nil
 	})
-	return CRLWatcher{value.Watch()}
-}
-
-// CRLWatcher is a Event Value compatible Watcher which will be updated any time
-// a given CA certificate's CRL gets updated.
-type CRLWatcher struct {
-	event.Watcher
+	return value.Watch()
 }
 
 type CRL struct {
 	Raw  []byte
 	List *pkix.CertificateList
-}
-
-// Retrieve the newest available CRL from etcd, blocking until one is available
-// or updated.
-//
-// The first call will block until a CRL is available, which happens the first
-// time a given CA certificate is stored in etcd (eg. through an Ensure call).
-func (c *CRLWatcher) Get(ctx context.Context, opts ...event.GetOption) (*CRL, error) {
-	v, err := c.Watcher.Get(ctx, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return v.(*CRL), nil
 }

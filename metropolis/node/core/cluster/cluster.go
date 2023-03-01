@@ -14,15 +14,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// cluster implements low-level clustering logic, especially logic regarding to
-// bootstrapping, registering into and joining a cluster. Its goal is to provide
-// the rest of the node code with the following:
-//  - A mounted plaintext storage.
-//  - Node credentials/identity.
-//  - A locally running etcd server if the node is supposed to run one, and a
-//    client connection to that etcd cluster if so.
-//  - The state of the cluster as seen by the node, to enable code to respond to
-//    node lifecycle changes.
+// Package cluster implements low-level clustering logic, especially logic
+// regarding to bootstrapping, registering into and joining a cluster. Its goal
+// is to provide the rest of the node code with the following:
+//   - A mounted plaintext storage.
+//   - Node credentials/identity.
+//   - A locally running etcd server if the node is supposed to run one, and a
+//     client connection to that etcd cluster if so.
+//   - The state of the cluster as seen by the node, to enable code to respond to
+//     node lifecycle changes.
 package cluster
 
 import (
@@ -43,7 +43,6 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/roleserve"
-	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -62,7 +61,6 @@ type Manager struct {
 	storageRoot    *localstorage.Root
 	networkService *network.Service
 	roleServer     *roleserve.Service
-	status         memory.Value
 
 	state
 

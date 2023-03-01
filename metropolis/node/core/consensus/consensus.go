@@ -99,6 +99,7 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/node/core/identity"
+	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/logtree/unraw"
 	"source.monogon.dev/metropolis/pkg/pki"
@@ -144,7 +145,7 @@ func pkiPeerCertificate(pubkey ed25519.PublicKey, extraNames []string) x509.Cert
 type Service struct {
 	config *Config
 
-	value memory.Value
+	value memory.Value[*Status]
 	ca    *pki.Certificate
 }
 
@@ -454,7 +455,7 @@ func (s *Service) autopromoter(ctx context.Context) error {
 		}
 	}
 
-	w := s.Watch()
+	w := s.value.Watch()
 	for {
 		st, err := w.Get(ctx)
 		if err != nil {
@@ -473,6 +474,10 @@ func (s *Service) autopromoter(ctx context.Context) error {
 	}
 }
 
+func (s *Service) Watch() event.Watcher[*Status] {
+	return s.value.Watch()
+}
+
 // selfupdater is a runnable that performs a one-shot (once per Service Run,
 // thus once for each configuration) update of the node's Peer URL in etcd. This
 // is currently only really needed because the first node in the cluster
@@ -482,7 +487,7 @@ func (s *Service) autopromoter(ctx context.Context) error {
 // more robust.
 func (s *Service) selfupdater(ctx context.Context) error {
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
-	w := s.Watch()
+	w := s.value.Watch()
 	for {
 		st, err := w.Get(ctx)
 		if err != nil {

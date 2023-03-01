@@ -9,6 +9,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/curator"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/network"
+	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
@@ -18,7 +19,7 @@ type workerHeartbeat struct {
 	network *network.Service
 
 	// clusterMembership will be read.
-	clusterMembership *ClusterMembershipValue
+	clusterMembership *memory.Value[*ClusterMembership]
 }
 
 func (s *workerHeartbeat) run(ctx context.Context) error {
@@ -28,7 +29,7 @@ func (s *workerHeartbeat) run(ctx context.Context) error {
 	w := s.clusterMembership.Watch()
 	defer w.Close()
 	supervisor.Logger(ctx).Infof("Waiting for cluster membership...")
-	cm, err := w.GetHome(ctx)
+	cm, err := w.Get(ctx, FilterHome())
 	if err != nil {
 		return err
 	}

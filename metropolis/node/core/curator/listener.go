@@ -15,6 +15,7 @@ import (
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
@@ -45,7 +46,7 @@ type listener struct {
 	// listener to use when determining local leadership. As the listener may
 	// restart on error, this factory-function is used instead of an electionWatcher
 	// directly.
-	electionWatch func() electionWatcher
+	electionWatch func() event.Watcher[*electionStatus]
 
 	consensus consensus.ServiceHandle
 }
@@ -57,7 +58,7 @@ func (l *listener) run(ctx context.Context) error {
 	// waiting for a result.
 	w := l.electionWatch()
 	supervisor.Logger(ctx).Infof("Waiting for election status...")
-	st, err := w.get(ctx)
+	st, err := w.Get(ctx)
 	if err != nil {
 		return fmt.Errorf("could not get election status: %w", err)
 	}
@@ -141,7 +142,7 @@ func (l *listener) run(ctx context.Context) error {
 	case st.leader != nil:
 		supervisor.Logger(ctx).Infof("Leader running until leadership lost.")
 		for {
-			nst, err := w.get(ctx)
+			nst, err := w.Get(ctx)
 			if err != nil {
 				return fmt.Errorf("getting election status after starting listener failed, bailing just in case: %w", err)
 			}
@@ -152,7 +153,7 @@ func (l *listener) run(ctx context.Context) error {
 	case st.follower != nil:
 		supervisor.Logger(ctx).Infof("Follower running until leadership change.")
 		for {
-			nst, err := w.get(ctx)
+			nst, err := w.Get(ctx)
 			if err != nil {
 				return fmt.Errorf("getting election status after starting listener failed, bailing just in case: %w", err)
 			}

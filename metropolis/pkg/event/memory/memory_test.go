@@ -28,7 +28,7 @@ import (
 // TestAsync exercises the high-level behaviour of a Value, in which a
 // watcher is able to catch up to the newest Set value.
 func TestAsync(t *testing.T) {
-	p := Value{}
+	p := Value[int]{}
 	p.Set(0)
 
 	ctx := context.Background()
@@ -39,7 +39,7 @@ func TestAsync(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
-	if want, got := 0, val.(int); want != got {
+	if want, got := 0, val; want != got {
 		t.Fatalf("Value: got %d, wanted %d", got, want)
 	}
 
@@ -54,7 +54,7 @@ func TestAsync(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
-	if want, got := 100, val.(int); want != got {
+	if want, got := 100, val; want != got {
 		t.Fatalf("Value: got %d, wanted %d", got, want)
 	}
 }
@@ -64,7 +64,7 @@ func TestAsync(t *testing.T) {
 // This particular test ensures that .Set() calls to a Watcher result in a
 // prefect log of updates being transmitted to a watcher.
 func TestSync(t *testing.T) {
-	p := Value{
+	p := Value[int]{
 		Sync: true,
 	}
 	values := make(chan int, 100)
@@ -79,7 +79,7 @@ func TestSync(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			values <- value.(int)
+			values <- value
 		}
 	}()
 
@@ -109,7 +109,7 @@ func TestSync(t *testing.T) {
 // This particular test ensures that .Set() calls actually block when a watcher
 // is unattended.
 func TestSyncBlocks(t *testing.T) {
-	p := Value{
+	p := Value[int]{
 		Sync: true,
 	}
 	ctx := context.Background()
@@ -124,7 +124,7 @@ func TestSyncBlocks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
-	if want, got := 0, value.(int); want != got {
+	if want, got := 0, value; want != got {
 		t.Fatalf("Got initial value %d, wanted %d", got, want)
 	}
 
@@ -160,7 +160,7 @@ func TestSyncBlocks(t *testing.T) {
 		t.Fatalf("Set() returned before Get()")
 	}
 
-	if want, got := 1, value.(int); want != got {
+	if want, got := 1, value; want != got {
 		t.Fatalf("Wanted value %d, got %d", want, got)
 	}
 
@@ -175,7 +175,7 @@ func TestSyncBlocks(t *testing.T) {
 // TestMultipleGets verifies that calling .Get() on a single watcher from two
 // goroutines is prevented by returning an error in exactly one of them.
 func TestMultipleGets(t *testing.T) {
-	p := Value{}
+	p := Value[int]{}
 	ctx := context.Background()
 
 	w := p.Watch()
@@ -204,7 +204,7 @@ func TestMultipleGets(t *testing.T) {
 func TestConcurrency(t *testing.T) {
 	ctx := context.Background()
 
-	p := Value{}
+	p := Value[int]{}
 	p.Set(0)
 
 	// Number of watchers to create.
@@ -236,10 +236,10 @@ func TestConcurrency(t *testing.T) {
 				}
 
 				// Ensure monotonicity of received data.
-				if val.(int) <= prev {
+				if val <= prev {
 					done(fmt.Errorf("received out of order data: %d after %d", val, prev))
 				}
-				prev = val.(int)
+				prev = val
 
 				// Quit when the final value is received.
 				if val == final {
@@ -274,7 +274,7 @@ func TestConcurrency(t *testing.T) {
 // aborts that particular Get call, but also allows subsequent use of the same
 // watcher.
 func TestCanceling(t *testing.T) {
-	p := Value{
+	p := Value[int]{
 		Sync: true,
 	}
 
@@ -316,7 +316,7 @@ func TestCanceling(t *testing.T) {
 func TestSetAfterWatch(t *testing.T) {
 	ctx := context.Background()
 
-	p := Value{}
+	p := Value[int]{}
 	p.Set(0)
 
 	watcher := p.Watch()
@@ -326,7 +326,7 @@ func TestSetAfterWatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
-	if want, got := 1, data.(int); want != got {
+	if want, got := 1, data; want != got {
 		t.Errorf("Get should've returned %v, got %v", want, got)
 	}
 }

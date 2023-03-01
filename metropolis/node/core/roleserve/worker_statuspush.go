@@ -10,6 +10,7 @@ import (
 	common "source.monogon.dev/metropolis/node"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/network"
+	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
@@ -20,7 +21,7 @@ type workerStatusPush struct {
 	network *network.Service
 
 	// clusterMembership will be read.
-	clusterMembership *ClusterMembershipValue
+	clusterMembership *memory.Value[*ClusterMembership]
 }
 
 // workerStatusPushChannels contain all the channels between the status pusher's
@@ -142,7 +143,7 @@ func (s *workerStatusPush) run(ctx context.Context) error {
 		defer w.Close()
 		supervisor.Logger(ctx).Infof("Waiting for cluster membership...")
 		for {
-			cm, err := w.GetHome(ctx)
+			cm, err := w.Get(ctx, FilterHome())
 			if err != nil {
 				return fmt.Errorf("getting cluster membership status failed: %w", err)
 			}

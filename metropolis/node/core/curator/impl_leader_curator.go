@@ -15,9 +15,11 @@ import (
 	tpb "google.golang.org/protobuf/types/known/timestamppb"
 
 	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/consensus"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/etcd"
 	"source.monogon.dev/metropolis/pkg/pki"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -74,7 +76,7 @@ func (l *leaderCurator) watchNodeInCluster(nic *ipb.WatchRequest_NodeInCluster, 
 	defer w.Close()
 
 	for {
-		v, err := w.Get(ctx)
+		nodeKV, err := w.Get(ctx)
 		if err != nil {
 			if rpcErr, ok := rpcError(err); ok {
 				return rpcErr
@@ -84,7 +86,6 @@ func (l *leaderCurator) watchNodeInCluster(nic *ipb.WatchRequest_NodeInCluster, 
 		}
 
 		ev := &ipb.WatchEvent{}
-		nodeKV := v.(nodeAtID)
 		nodeKV.appendToEvent(ev)
 		if err := srv.Send(ev); err != nil {
 			return err
@@ -99,7 +100,7 @@ func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, 
 	ctx := srv.Context()
 
 	start, end := nodeEtcdPrefix.KeyRange()
-	value := etcd.NewValue(l.etcd, start, nodeValueConverter, etcd.Range(end))
+	value := etcd.NewValue[*nodeAtID](l.etcd, start, nodeValueConverter, etcd.Range(end))
 
 	w := value.Watch()
 	defer w.Close()
@@ -107,15 +108,14 @@ func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, 
 	// Perform initial fetch from etcd.
 	nodes := make(map[string]*Node)
 	for {
-		v, err := w.Get(ctx, etcd.BacklogOnly)
-		if err == etcd.BacklogDone {
+		nodeKV, err := w.Get(ctx, event.BacklogOnly[*nodeAtID]())
+		if err == event.BacklogDone {
 			break
 		}
 		if err != nil {
 			rpc.Trace(ctx).Printf("etcd watch failed (initial fetch): %v", err)
 			return status.Error(codes.Unavailable, "internal error during initial fetch")
 		}
-		nodeKV := v.(nodeAtID)
 		if nodeKV.value != nil {
 			nodes[nodeKV.id] = nodeKV.value
 		}
@@ -148,13 +148,12 @@ func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, 
 
 	// Send updates as they arrive from etcd watcher.
 	for {
-		v, err := w.Get(ctx)
+		nodeKV, err := w.Get(ctx)
 		if err != nil {
 			rpc.Trace(ctx).Printf("etcd watch failed (update): %v", err)
 			return status.Errorf(codes.Unavailable, "internal error during update")
 		}
 		we := &ipb.WatchEvent{}
-		nodeKV := v.(nodeAtID)
 		nodeKV.appendToEvent(we)
 		if err := srv.Send(we); err != nil {
 			return err
@@ -173,7 +172,7 @@ type nodeAtID struct {
 // nodeValueConverter is called by etcd node value watchers to convert updates
 // from the cluster into nodeAtID, ensuring data integrity and checking
 // invariants.
-func nodeValueConverter(key, value []byte) (interface{}, error) {
+func nodeValueConverter(key, value []byte) (*nodeAtID, error) {
 	res := nodeAtID{
 		id: nodeEtcdPrefix.ExtractID(string(key)),
 	}
@@ -192,7 +191,7 @@ func nodeValueConverter(key, value []byte) (interface{}, error) {
 		// panic.
 		return nil, fmt.Errorf("invalid node key %q", key)
 	}
-	return res, nil
+	return &res, nil
 }
 
 // appendToId records a node update represented by nodeAtID into a Curator
@@ -429,7 +428,7 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 
 	w := l.consensus.Watch()
 	defer w.Close()
-	st, err := w.GetRunning(ctx)
+	st, err := w.Get(ctx, consensus.FilterRunning)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "could not get running consensus: %v", err)
 	}

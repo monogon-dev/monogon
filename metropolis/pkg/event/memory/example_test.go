@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"net"
 	"time"
-
-	"source.monogon.dev/metropolis/pkg/event"
 )
 
 // NetworkStatus is example data that will be stored in a Value.
@@ -31,35 +29,11 @@ type NetworkStatus struct {
 	DefaultGateway  net.IP
 }
 
-// NetworkStatusWatcher is a typesafe wrapper around a Watcher.
-type NetworkStatusWatcher struct {
-	watcher event.Watcher
-}
-
-// Get wraps Watcher.Get and performs type assertion.
-func (s *NetworkStatusWatcher) Get(ctx context.Context) (*NetworkStatus, error) {
-	val, err := s.watcher.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ns := val.(NetworkStatus)
-	return &ns, nil
-}
-
 // NetworkService is a fake/example network service that is responsible for
 // communicating the newest information about a machine's network configuration
 // to consumers/watchers.
 type NetworkService struct {
-	Provider Value
-}
-
-// Watch is a thin wrapper around Value.Watch that returns the typesafe
-// NetworkStatusWatcher wrapper.
-func (s *NetworkService) Watch() NetworkStatusWatcher {
-	watcher := s.Provider.Watch()
-	return NetworkStatusWatcher{
-		watcher: watcher,
-	}
+	Provider Value[NetworkStatus]
 }
 
 // Run pretends to execute the network service's main logic loop, in which it
@@ -113,7 +87,7 @@ func ExampleValue_full() {
 	// Run an /etc/hosts updater. It will watch for updates from the NetworkService
 	// about the current IP address of the node.
 	go func() {
-		w := ns.Watch()
+		w := ns.Provider.Watch()
 		for {
 			status, err := w.Get(ctx)
 			if err != nil {

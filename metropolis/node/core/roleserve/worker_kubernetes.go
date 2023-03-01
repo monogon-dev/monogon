@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 
+	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/kubernetes"
@@ -26,9 +27,9 @@ type workerKubernetes struct {
 	network     *network.Service
 	storageRoot *localstorage.Root
 
-	localRoles        *localRolesValue
-	clusterMembership *ClusterMembershipValue
-	kubernetesStatus  *KubernetesStatusValue
+	localRoles        *memory.Value[*cpb.NodeRoles]
+	clusterMembership *memory.Value[*ClusterMembership]
+	kubernetesStatus  *memory.Value[*KubernetesStatus]
 }
 
 // kubernetesStartup is used internally to provide a reduced (as in MapReduce
@@ -64,7 +65,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 	//                                             |
 	//         NodeRoles -M-> rolesC --------------'
 	//
-	var startupV memory.Value
+	var startupV memory.Value[*kubernetesStartup]
 
 	clusterMembershipC := make(chan *ClusterMembership)
 	rolesC := make(chan *cpb.NodeRoles)
@@ -76,7 +77,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			w := s.clusterMembership.Watch()
 			defer w.Close()
 			for {
-				v, err := w.GetHome(ctx)
+				v, err := w.Get(ctx, FilterHome())
 				if err != nil {
 					return err
 				}
@@ -127,11 +128,11 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 		// KubernetesController local role.
 		var d *kubernetesStartup
 		for {
-			dV, err := w.Get(ctx)
+			var err error
+			d, err = w.Get(ctx)
 			if err != nil {
 				return err
 			}
-			d = dV.(*kubernetesStartup)
 			supervisor.Logger(ctx).Infof("Got new startup data.")
 			if d.roles.KubernetesController == nil {
 				supervisor.Logger(ctx).Infof("No Kubernetes role, not starting.")
@@ -144,10 +145,10 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 
 			break
 		}
-		supervisor.Logger(ctx).Infof("Waiting for local consensus...")
+		supervisor.Logger(ctx).Infof("Waiting for local consensus (%+v)...")
 		cstW := d.membership.localConsensus.Watch()
 		defer cstW.Close()
-		cst, err := cstW.GetRunning(ctx)
+		cst, err := cstW.Get(ctx, consensus.FilterRunning)
 		if err != nil {
 			return fmt.Errorf("waiting for local consensus: %w", err)
 		}
@@ -197,7 +198,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 		}
 
 		// Let downstream know that Kubernetes is running.
-		s.kubernetesStatus.set(&KubernetesStatus{
+		s.kubernetesStatus.Set(&KubernetesStatus{
 			Svc: kubeSvc,
 		})
 
@@ -206,11 +207,10 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 		// Restart everything if we get a significantly different config (ie., a config
 		// whose change would/should either turn up or tear down Kubernetes).
 		for {
-			ncI, err := w.Get(ctx)
+			nc, err := w.Get(ctx)
 			if err != nil {
 				return err
 			}
-			nc := ncI.(*kubernetesStartup)
 			if nc.changed(d) {
 				supervisor.Logger(ctx).Errorf("watcher got new config, restarting")
 				return fmt.Errorf("restarting")

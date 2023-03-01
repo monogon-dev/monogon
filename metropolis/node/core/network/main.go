@@ -55,7 +55,7 @@ type Service struct {
 	natTable            *nftables.Table
 	natPostroutingChain *nftables.Chain
 
-	status memory.Value
+	status memory.Value[*Status]
 }
 
 func New() *Service {
@@ -76,35 +76,12 @@ type Status struct {
 	DNSServers      dhcp4c.DNSServers
 }
 
-// Watcher allows network Service consumers to watch for updates of the current
-// Status.
-type Watcher struct {
-	watcher event.Watcher
-}
-
-// Get returns the newest network Status from a Watcher. It will block until a
-// new Status is available.
-func (w *Watcher) Get(ctx context.Context) (*Status, error) {
-	val, err := w.watcher.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-	status := val.(Status)
-	return &status, err
-}
-
-func (w *Watcher) Close() error {
-	return w.watcher.Close()
-}
-
 // Watch returns a Watcher, which can be used by consumers of the network
 // Service to retrieve the current network status.
 // Close must be called on the Watcher when it is not used anymore in order to
 // prevent goroutine leaks.
-func (s *Service) Watch() Watcher {
-	return Watcher{
-		watcher: s.status.Watch(),
-	}
+func (s *Service) Watch() event.Watcher[*Status] {
+	return s.status.Watch()
 }
 
 // ConfigureDNS sets a DNS ExtraDirective on the built-in DNS server of the
@@ -134,7 +111,7 @@ func (s *Service) statusCallback(old, new *dhcp4c.Lease) error {
 		s.ConfigureDNS(dns.NewUpstreamDirective(newServers))
 	}
 	// Notify status waiters.
-	s.status.Set(Status{
+	s.status.Set(&Status{
 		ExternalAddress: new.AssignedIP,
 		DNSServers:      new.DNSServers(),
 	})

@@ -2,12 +2,12 @@
 // files/interfaces used by the system to resolve the local node's name and the
 // names of other nodes in the cluster:
 //
-// 1. All cluster node names are written into /etc/hosts for DNS resolution.
-// 2. The local node's name is written into /etc/machine-id.
-// 3. The local node's name is set as the UNIX hostname of the machine (via the
-//    sethostname call).
-// 4. The local node's ClusterDirectory is updated with the same set of
-//    addresses as the one used in /etc/hosts.
+//  1. All cluster node names are written into /etc/hosts for DNS resolution.
+//  2. The local node's name is written into /etc/machine-id.
+//  3. The local node's name is set as the UNIX hostname of the machine (via the
+//     sethostname call).
+//  4. The local node's ClusterDirectory is updated with the same set of
+//     addresses as the one used in /etc/hosts.
 //
 // The hostsfile Service can start up in two modes: with cluster connectivity
 // and without cluster connectivity. Without cluster connectivity, only
@@ -137,7 +137,7 @@ func (s *Service) Run(ctx context.Context) error {
 	cmw := s.Roleserver.ClusterMembership.Watch()
 	defer cmw.Close()
 	supervisor.Logger(ctx).Infof("Waiting for node ID...")
-	nodeID, err := cmw.GetNodeID(ctx)
+	nodeID, err := roleserve.GetNodeID(ctx, cmw)
 	if err != nil {
 		return err
 	}
@@ -261,7 +261,7 @@ func (s *Service) runCluster(ctx context.Context) error {
 	defer cmw.Close()
 
 	supervisor.Logger(ctx).Infof("Waiting for cluster membership...")
-	cm, err := cmw.GetHome(ctx)
+	cm, err := cmw.Get(ctx, roleserve.FilterHome())
 	if err != nil {
 		return err
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 type testServiceHandle struct {
-	s memory.Value
+	s memory.Value[*Status]
 }
 
 // TestServiceHandle builds a somewhat functioning ServiceHandle from a bare
@@ -41,9 +41,5 @@ func TestServiceHandle(t *testing.T, cl *clientv3.Client) ServiceHandle {
 		t.Fatalf("failed to ensure PKI CA: %v", err)
 	}
 	tsh.s.Set(st)
-	return &tsh
-}
-
-func (h *testServiceHandle) Watch() Watcher {
-	return Watcher{h.s.Watch()}
+	return &tsh.s
 }
