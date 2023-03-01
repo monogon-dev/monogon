@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
@@ -77,7 +79,12 @@ func (l *listener) run(ctx context.Context) error {
 
 	// Prepare a gRPC server and listener.
 	logger := supervisor.MustSubLogger(ctx, "rpc")
-	srv := grpc.NewServer(sec.GRPCOptions(logger)...)
+	opts := sec.GRPCOptions(logger)
+	opts = append(opts, grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+		MinTime:             time.Second,
+		PermitWithoutStream: true,
+	}))
+	srv := grpc.NewServer(opts...)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", node.CuratorServicePort))
 	if err != nil {
 		return fmt.Errorf("failed to listen on curator socket: %w", err)

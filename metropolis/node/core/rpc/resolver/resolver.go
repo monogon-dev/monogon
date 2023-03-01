@@ -209,21 +209,22 @@ func (r *Resolver) runCuratorUpdater(ctx context.Context, opts []grpc.DialOption
 	bo.MaxElapsedTime = 0
 	bo.MaxInterval = 10 * time.Second
 
-	return backoff.RetryNotify(func() error {
-		// Use a keepalive to make sure we time out fast if the node we're connecting to
-		// partitions.
-		opts = append(opts, grpc.WithResolvers(r), grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:    10 * time.Second,
-			Timeout: 5 * time.Second,
-		}))
-		cl, err := grpc.Dial(MetropolisControlAddress, opts...)
-		if err != nil {
-			// This generally shouldn't happen.
-			return fmt.Errorf("could not dial gRPC: %v", err)
-		}
-		defer cl.Close()
+	// Use a keepalive to make sure we time out fast if the node we're connecting to
+	// partitions.
+	opts = append(opts, grpc.WithResolvers(r), grpc.WithKeepaliveParams(keepalive.ClientParameters{
+		Time:    10 * time.Second,
+		Timeout: 5 * time.Second,
+	}))
+	cl, err := grpc.Dial(MetropolisControlAddress, opts...)
+	if err != nil {
+		// This generally shouldn't happen.
+		return fmt.Errorf("could not dial gRPC: %v", err)
+	}
+	defer cl.Close()
 
-		cur := apb.NewCuratorClient(cl)
+	cur := apb.NewCuratorClient(cl)
+
+	return backoff.RetryNotify(func() error {
 		w, err := cur.Watch(ctx, &apb.WatchRequest{
 			Kind: &apb.WatchRequest_NodesInCluster_{
 				NodesInCluster: &apb.WatchRequest_NodesInCluster{},
