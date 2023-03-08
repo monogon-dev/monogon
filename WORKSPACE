@@ -359,3 +359,12 @@ bazeldnf_dependencies()
 load("//third_party/sandboxroot:repositories.bzl", "sandbox_dependencies")
 
 sandbox_dependencies()
+
+# Used by tests in cloud/takeover
+http_file(
+    name = "debian_11_cloudimage",
+    sha256 = "14caeec68ba3129a115a9b57396d08dc0973cc9f569ce049232d7d15d768ad41",
+    urls = [
+        "https://cloud.debian.org/images/cloud/bullseye/20230124-1270/debian-11-genericcloud-amd64-20230124-1270.qcow2",
+    ],
+)

@@ -1,0 +1,219 @@
+package e2e
+
+import (
+	"bufio"
+	"bytes"
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net"
+	"os"
+	"os/exec"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
+	"google.golang.org/protobuf/proto"
+
+	"source.monogon.dev/cloud/agent/api"
+	"source.monogon.dev/metropolis/cli/pkg/datafile"
+	"source.monogon.dev/metropolis/pkg/fat32"
+	"source.monogon.dev/metropolis/pkg/freeport"
+)
+
+func TestE2E(t *testing.T) {
+	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sshPubKey, err := ssh.NewPublicKey(pubKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sshPrivkey, err := ssh.NewSignerFromKey(privKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// CloudConfig doesn't really have a rigid spec, so just put things into it
+	cloudConfig := make(map[string]any)
+	cloudConfig["ssh_authorized_keys"] = []string{
+		strings.TrimSuffix(string(ssh.MarshalAuthorizedKey(sshPubKey)), "\n"),
+	}
+
+	userData, err := json.Marshal(cloudConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rootInode := fat32.Inode{
+		Attrs: fat32.AttrDirectory,
+		Children: []*fat32.Inode{
+			{
+				Name:    "user-data",
+				Content: strings.NewReader("#cloud-config\n" + string(userData)),
+			},
+			{
+				Name:    "meta-data",
+				Content: strings.NewReader(""),
+			},
+		},
+	}
+	cloudInitDataFile, err := os.CreateTemp("", "cidata*.img")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(cloudInitDataFile.Name())
+	if err := fat32.WriteFS(cloudInitDataFile, rootInode, fat32.Options{Label: "cidata"}); err != nil {
+		t.Fatal(err)
+	}
+	cloudImagePath, err := datafile.ResolveRunfile("external/debian_11_cloudimage/file/downloaded")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ovmfVarsPath, err := datafile.ResolveRunfile("external/edk2/OVMF_VARS.fd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ovmfCodePath, err := datafile.ResolveRunfile("external/edk2/OVMF_CODE.fd")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sshPort, sshPortCloser, err := freeport.AllocateTCPPort()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	qemuArgs := []string{
+		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "1024",
+		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
+		"-drive", "if=pflash,format=raw,readonly,file=" + ovmfCodePath,
+		"-drive", "if=pflash,format=raw,snapshot=on,file=" + ovmfVarsPath,
+		"-drive", "if=virtio,format=qcow2,snapshot=on,cache=unsafe,file=" + cloudImagePath,
+		"-drive", "if=virtio,format=raw,snapshot=on,file=" + cloudInitDataFile.Name(),
+		"-netdev", fmt.Sprintf("user,id=net0,net=10.42.0.0/24,dhcpstart=10.42.0.10,hostfwd=tcp::%d-:22", sshPort),
+		"-device", "virtio-net-pci,netdev=net0,mac=22:d5:8e:76:1d:07",
+		"-device", "virtio-rng-pci",
+		"-serial", "stdio",
+		"-no-reboot",
+	}
+	qemuCmd := exec.Command("qemu-system-x86_64", qemuArgs...)
+	stdoutPipe, err := qemuCmd.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	agentStarted := make(chan struct{})
+	go func() {
+		s := bufio.NewScanner(stdoutPipe)
+		for s.Scan() {
+			t.Log("kernel: " + s.Text())
+			if strings.Contains(s.Text(), "Monogon BMaaS Agent started") {
+				agentStarted <- struct{}{}
+				break
+			}
+		}
+		qemuCmd.Wait()
+	}()
+	qemuCmd.Stderr = os.Stderr
+	sshPortCloser.Close()
+	if err := qemuCmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer qemuCmd.Process.Kill()
+
+	var c *ssh.Client
+	for {
+		c, err = ssh.Dial("tcp", net.JoinHostPort("localhost", fmt.Sprintf("%d", sshPort)), &ssh.ClientConfig{
+			User:            "debian",
+			Auth:            []ssh.AuthMethod{ssh.PublicKeys(sshPrivkey)},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			Timeout:         5 * time.Second,
+		})
+		if err != nil {
+			t.Logf("error connecting via SSH, retrying: %v", err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		break
+	}
+	defer c.Close()
+	sc, err := sftp.NewClient(c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sc.Close()
+	takeoverFile, err := sc.Create("takeover")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer takeoverFile.Close()
+	if err := takeoverFile.Chmod(0o755); err != nil {
+		t.Fatal(err)
+	}
+	takeoverPath, err := datafile.ResolveRunfile("cloud/takeover/takeover_/takeover")
+	if err != nil {
+		t.Fatal(err)
+	}
+	takeoverSrcFile, err := os.Open(takeoverPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer takeoverSrcFile.Close()
+	if _, err := io.Copy(takeoverFile, takeoverSrcFile); err != nil {
+		t.Fatal(err)
+	}
+	if err := takeoverFile.Close(); err != nil {
+		t.Fatal(err)
+	}
+	sc.Close()
+
+	sess, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sess.Close()
+
+	init := api.TakeoverInit{
+		Provider:      "test",
+		ProviderId:    "test1",
+		BmaasEndpoint: "localhost:1234",
+	}
+	initRaw, err := proto.Marshal(&init)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sess.Stdin = bytes.NewReader(initRaw)
+	var stdoutBuf bytes.Buffer
+	var stderrBuf bytes.Buffer
+	sess.Stdout = &stdoutBuf
+	sess.Stderr = &stderrBuf
+	if err := sess.Run("sudo ./takeover"); err != nil {
+		t.Errorf("stderr:\n%s\n\n", stderrBuf.String())
+		t.Fatal(err)
+	}
+	var resp api.TakeoverResponse
+	if err := proto.Unmarshal(stdoutBuf.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
+	switch res := resp.Result.(type) {
+	case *api.TakeoverResponse_Success:
+		if res.Success.InitMessage.BmaasEndpoint != init.BmaasEndpoint {
+			t.Error("InitMessage not passed through properly")
+		}
+	case *api.TakeoverResponse_Error:
+		t.Fatalf("takeover returned error: %v", res.Error.Message)
+	}
+	select {
+	case <-agentStarted:
+		// Done, test passed
+	case <-time.After(30 * time.Second):
+		t.Fatal("Waiting for BMaaS agent startup timed out")
+	}
+}

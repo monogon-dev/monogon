@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "e2e_test",
+    srcs = ["main_test.go"],
+    data = [
+        "//cloud/takeover",
+        "//third_party/edk2:firmware",
+        "@debian_11_cloudimage//file",
+    ],
+    deps = [
+        "//cloud/agent/api",
+        "//metropolis/cli/pkg/datafile",
+        "//metropolis/pkg/fat32",
+        "//metropolis/pkg/freeport",
+        "@com_github_pkg_sftp//:sftp",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_x_crypto//ssh",
+    ],
+)
