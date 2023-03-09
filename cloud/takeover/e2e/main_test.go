@@ -181,8 +181,7 @@ func TestE2E(t *testing.T) {
 	defer sess.Close()
 
 	init := api.TakeoverInit{
-		Provider:      "test",
-		ProviderId:    "test1",
+		MachineId:     "test",
 		BmaasEndpoint: "localhost:1234",
 	}
 	initRaw, err := proto.Marshal(&init)

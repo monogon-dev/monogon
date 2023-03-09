@@ -5,13 +5,12 @@ option go_package = "source.monogon.dev/cloud/agent/api";
 // TakeoverInit is the message sent to the takeover process over an SSH session
 // during initialization.
 message TakeoverInit {
-  // provider is the provider name the machine was created at.
-  string provider = 1;
-  // provider_id is the machine's provider-assigned ID.
-  string provider_id = 2;
+  // Machine ID of this machine to be taken over as assigned by the BMaaS
+  // service.
+  string machine_id = 1;
   // bmaas_endpoint is an address of the BMaaS service the agent should call
   // back to.
-  string bmaas_endpoint = 3;
+  string bmaas_endpoint = 2;
 }
 
 message TakeoverSuccess {

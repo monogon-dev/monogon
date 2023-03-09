@@ -264,7 +264,7 @@ func (c *Initializer) runInSession(ctx context.Context, sess *bmdb.Session, sign
 
 // startAgent runs the agent executable on the target device d, returning the
 // agent's public key on success.
-func (i *Initializer) startAgent(ctx context.Context, sgn ssh.Signer, d packngo.Device) ([]byte, error) {
+func (i *Initializer) startAgent(ctx context.Context, sgn ssh.Signer, d *packngo.Device, mid uuid.UUID) ([]byte, error) {
 	// Provide a bound on execution time in case we get stuck after the SSH
 	// connection is established.
 	sctx, sctxC := context.WithTimeout(ctx, i.agentConfig.SSHExecTimeout)
@@ -278,9 +278,9 @@ func (i *Initializer) startAgent(ctx context.Context, sgn ssh.Signer, d packngo.
 	} else if ni.PublicIPv6 != "" {
 		addr = net.JoinHostPort(ni.PublicIPv6, "22")
 	} else {
-		return nil, fmt.Errorf("device (ID: %s) has no available addresses", d.ID)
+		return nil, fmt.Errorf("device (machine ID: %s) has no available addresses", mid)
 	}
-	klog.V(1).Infof("Dialing device (provider ID: %s, addr: %s).", d.ID, addr)
+	klog.V(1).Infof("Dialing device (machine ID: %s, addr: %s).", mid, addr)
 
 	conn, err := i.sshClient.Dial(sctx, addr, "root", sgn, i.agentConfig.SSHConnectTimeout)
 	if err != nil {
@@ -290,17 +290,16 @@ func (i *Initializer) startAgent(ctx context.Context, sgn ssh.Signer, d packngo.
 
 	// Upload the agent executable.
 
-	klog.Infof("Uploading the agent executable (provider ID: %s, addr: %s).", d.ID, addr)
+	klog.Infof("Uploading the agent executable (machine ID: %s, addr: %s).", mid, addr)
 	if err := conn.Upload(sctx, i.agentConfig.TargetPath, i.agentConfig.Executable); err != nil {
 		return nil, fmt.Errorf("while uploading agent executable: %w", err)
 	}
-	klog.V(1).Infof("Upload successful (provider ID: %s, addr: %s).", d.ID, addr)
+	klog.V(1).Infof("Upload successful (machine ID: %s, addr: %s).", mid, addr)
 
 	// The initialization protobuf message will be sent to the agent on its
 	// standard input.
 	imsg := apb.TakeoverInit{
-		Provider:      "equinix",
-		ProviderId:    d.ID,
+		MachineId:     mid.String(),
 		BmaasEndpoint: i.agentConfig.Endpoint,
 	}
 	imsgb, err := proto.Marshal(&imsg)
@@ -309,7 +308,7 @@ func (i *Initializer) startAgent(ctx context.Context, sgn ssh.Signer, d packngo.
 	}
 
 	// Start the agent and wait for the agent's output to arrive.
-	klog.V(1).Infof("Starting the agent executable at path %q (provider ID: %s).", i.agentConfig.TargetPath, d.ID)
+	klog.V(1).Infof("Starting the agent executable at path %q (machine ID: %s).", i.agentConfig.TargetPath, mid)
 	stdout, stderr, err := conn.Execute(ctx, i.agentConfig.TargetPath, imsgb)
 	stderrStr := strings.TrimSpace(string(stderr))
 	if stderrStr != "" {
@@ -338,7 +337,7 @@ func (i *Initializer) startAgent(ctx context.Context, sgn ssh.Signer, d packngo.
 	if len(successResp.Key) != ed25519.PublicKeySize {
 		return nil, fmt.Errorf("agent key length mismatch.")
 	}
-	klog.Infof("Started the agent (provider ID: %s, key: %s).", d.ID, hex.EncodeToString(successResp.Key))
+	klog.Infof("Started the agent (machine ID: %s, key: %s).", mid, hex.EncodeToString(successResp.Key))
 	return successResp.Key, nil
 }
 
@@ -347,7 +346,7 @@ func (i *Initializer) startAgent(ctx context.Context, sgn ssh.Signer, d packngo.
 func (ir *Initializer) init(ctx context.Context, sgn ssh.Signer, t *task) error {
 	// Start the agent.
 	klog.Infof("Starting agent on device (ID: %s, PID %s)", t.id, t.pid)
-	apk, err := ir.startAgent(ctx, sgn, *t.dev)
+	apk, err := ir.startAgent(ctx, sgn, t.dev, t.id)
 	if err != nil {
 		return fmt.Errorf("while starting the agent: %w", err)
 	}
