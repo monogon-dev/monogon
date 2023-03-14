@@ -2,17 +2,12 @@ package main
 
 import (
 	"context"
-	"encoding/pem"
 	"log"
 	"net"
 	"os"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
-	clientauthentication "k8s.io/client-go/pkg/apis/clientauthentication/v1"
-	"k8s.io/client-go/tools/clientcmd"
-	clientapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
@@ -39,8 +34,8 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 
 	// Retrieve the cluster owner's private key, and use it to construct
 	// ephemeral credentials. Then, dial the cluster.
-	opk, err := getOwnerKey()
-	if err == noCredentialsError {
+	opk, err := core.GetOwnerKey(flags.configPath)
+	if err == core.NoCredentialsError {
 		log.Fatalf("Owner key does not exist. takeownership needs to be executed on the same system that has previously installed the cluster using metroctl install.")
 	}
 	if err != nil {
@@ -57,21 +52,12 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 	if err != nil {
 		log.Fatalf("Failed to retrive owner certificate from cluster: %v", err)
 	}
-	ownerCertPEM := pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: ownerCert.Certificate[0],
-	}
-	if err := os.WriteFile(filepath.Join(flags.configPath, "owner.pem"), pem.EncodeToMemory(&ownerCertPEM), 0644); err != nil {
+	if err := core.WriteOwnerCertificate(flags.configPath, ownerCert.Certificate[0]); err != nil {
 		log.Printf("Failed to store retrieved owner certificate: %v", err)
 		log.Fatalln("Sorry, the cluster has been lost as taking ownership cannot be repeated. Fix the reason the file couldn't be written and reinstall the node.")
 	}
 	log.Print("Successfully retrieved owner credentials! You now own this cluster. Setting up kubeconfig now...")
 
-	ca := clientcmd.NewDefaultPathOptions()
-	config, err := ca.GetStartingConfig()
-	if err != nil {
-		log.Fatalf("Failed to get initial kubeconfig to add Metropolis cluster: %v", err)
-	}
 	// If the user has metroctl in their path, use the metroctl from path as
 	// a credential plugin. Otherwise use the path to the currently-running
 	// metroctl.
@@ -82,44 +68,11 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 			log.Fatalf("Failed to create kubectl entry as metroctl is neither in PATH nor can its absolute path be determined: %v", err)
 		}
 	}
-
-	config.AuthInfos["metropolis"] = &clientapi.AuthInfo{
-		Exec: &clientapi.ExecConfig{
-			APIVersion: clientauthentication.SchemeGroupVersion.String(),
-			Command:    metroctlPath,
-			Args:       []string{k8scredpluginCmd.Use},
-			InstallHint: `Authenticating to Metropolis clusters requires metroctl to be present.
-Running metroctl takeownership creates this entry and either points to metroctl as a command in
-PATH if metroctl is in PATH at that time or to the absolute path to metroctl at that time.
-If you moved metroctl afterwards or want to switch to PATH resolution, edit $HOME/.kube/config and
-change users.metropolis.exec.command to the required path (or just metroctl if using PATH resolution).`,
-			InteractiveMode: clientapi.NeverExecInteractiveMode,
-		},
-	}
-
-	config.Clusters["metropolis"] = &clientapi.Cluster{
-		// MVP: This is insecure, but making this work would be wasted effort
-		// as all of it will be replaced by the identity system.
-		// TODO(issues/144): adjust cluster endpoints once have functioning roles
-		// implemented.
-		InsecureSkipTLSVerify: true,
-		Server:                "https://" + net.JoinHostPort(flags.clusterEndpoints[0], node.KubernetesAPIWrappedPort.PortString()),
-	}
-
-	config.Contexts["metropolis"] = &clientapi.Context{
-		AuthInfo:  "metropolis",
-		Cluster:   "metropolis",
-		Namespace: "default",
-	}
-
-	// Only set us as the current context if no other exists. Changing that
-	// unprompted would be kind of rude.
-	if config.CurrentContext == "" {
-		config.CurrentContext = "metropolis"
-	}
-
-	if err := clientcmd.ModifyConfig(ca, *config, true); err != nil {
-		log.Fatalf("Failed to modify kubeconfig to add Metropolis cluster: %v", err)
+	// TODO(issues/144): adjust cluster endpoints once have functioning roles
+	// implemented.
+	server := "https://" + net.JoinHostPort(flags.clusterEndpoints[0], node.KubernetesAPIWrappedPort.PortString())
+	if err := core.InstallK8SWrapper(metroctlPath, "metroctl", server, ""); err != nil {
+		log.Fatalf("Failed to install metroctl/k8s integration: %v", err)
 	}
 	log.Println("Success! kubeconfig is set up. You can now run kubectl --context=metropolis ... to access the Kubernetes cluster.")
 }

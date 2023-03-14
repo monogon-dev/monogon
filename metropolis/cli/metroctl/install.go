@@ -4,13 +4,10 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
-	"crypto/rand"
 	_ "embed"
-	"encoding/pem"
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -40,9 +37,6 @@ var genusbCmd = &cobra.Command{
 // it will try to connect to the cluster which endpoints were provided with
 // the --endpoints flag.
 var bootstrap bool
-
-// A PEM block type for a Metropolis initial owner private key
-const ownerKeyType = "METROPOLIS INITIAL OWNER PRIVATE KEY"
 
 //go:embed metropolis/installer/kernel.efi
 var installer []byte
@@ -81,39 +75,15 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 
 	var params *api.NodeParameters
 	if bootstrap {
-		var ownerPublicKey ed25519.PublicKey
-		ownerPrivateKeyPEM, err := os.ReadFile(filepath.Join(flags.configPath, "owner-key.pem"))
-		if os.IsNotExist(err) {
-			pub, priv, err := ed25519.GenerateKey(rand.Reader)
-			if err != nil {
-				log.Fatalf("Failed to generate owner private key: %v", err)
-			}
-			pemPriv := pem.EncodeToMemory(&pem.Block{Type: ownerKeyType, Bytes: priv})
-			if err := os.WriteFile(filepath.Join(flags.configPath, "owner-key.pem"), pemPriv, 0600); err != nil {
-				log.Fatalf("Failed to store owner private key: %v", err)
-			}
-			ownerPublicKey = pub
-		} else if err != nil {
-			log.Fatalf("Failed to load owner private key: %v", err)
-		} else {
-			block, _ := pem.Decode(ownerPrivateKeyPEM)
-			if block == nil {
-				log.Fatalf("owner-key.pem contains invalid PEM")
-			}
-			if block.Type != ownerKeyType {
-				log.Fatalf("owner-key.pem contains a PEM block that's not a %v", ownerKeyType)
-			}
-			if len(block.Bytes) != ed25519.PrivateKeySize {
-				log.Fatal("owner-key.pem contains non-Ed25519 key")
-			}
-			ownerPrivateKey := ed25519.PrivateKey(block.Bytes)
-			ownerPublicKey = ownerPrivateKey.Public().(ed25519.PublicKey)
+		priv, err := core.GetOrMakeOwnerKey(flags.configPath)
+		if err != nil {
+			log.Fatalf("Failed to generate or get owner key: %v", err)
 		}
-
+		pub := priv.Public().(ed25519.PublicKey)
 		params = &api.NodeParameters{
 			Cluster: &api.NodeParameters_ClusterBootstrap_{
 				ClusterBootstrap: &api.NodeParameters_ClusterBootstrap{
-					OwnerPublicKey: ownerPublicKey,
+					OwnerPublicKey: pub,
 				},
 			},
 		}

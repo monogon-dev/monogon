@@ -4,7 +4,6 @@ go_library(
     name = "metroctl_lib",
     srcs = [
         "approve.go",
-        "credentials.go",
         "describe.go",
         "format.go",
         "install.go",
@@ -37,8 +36,6 @@ go_library(
         "@com_github_spf13_cobra//:cobra",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
         "@io_k8s_client_go//pkg/apis/clientauthentication/v1:clientauthentication",
-        "@io_k8s_client_go//tools/clientcmd",
-        "@io_k8s_client_go//tools/clientcmd/api",
         "@org_golang_google_grpc//:go_default_library",
     ],
 )

@@ -12,8 +12,8 @@ import (
 func dialAuthenticated(ctx context.Context) *grpc.ClientConn {
 	// Collect credentials, validate command parameters, and try dialing the
 	// cluster.
-	ocert, opkey, err := getCredentials()
-	if err == noCredentialsError {
+	ocert, opkey, err := core.GetOwnerCredentials(flags.configPath)
+	if err == core.NoCredentialsError {
 		log.Fatalf("You have to take ownership of the cluster first: %v", err)
 	}
 	if len(flags.clusterEndpoints) == 0 {

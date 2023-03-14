@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientauthentication "k8s.io/client-go/pkg/apis/clientauthentication/v1"
+
+	"source.monogon.dev/metropolis/cli/metroctl/core"
 )
 
 var k8scredpluginCmd = &cobra.Command{
@@ -23,8 +25,8 @@ cluster. This should never be directly called by end users.`,
 }
 
 func doK8sCredPlugin(cmd *cobra.Command, args []string) {
-	cert, key, err := getCredentials()
-	if err == noCredentialsError {
+	cert, key, err := core.GetOwnerCredentials(flags.configPath)
+	if err == core.NoCredentialsError {
 		log.Fatal("No credentials found on your machine")
 	}
 	if err != nil {
