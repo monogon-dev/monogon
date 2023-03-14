@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
+	"strings"
 
 	"source.monogon.dev/metropolis/node/core/identity"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -42,14 +44,18 @@ func (e *encoder) writeNode(n *apb.Node) error {
 		return err
 	}
 
-	var roles string
-	if n.Roles.KubernetesWorker != nil {
-		roles += "KubernetesWorker"
-	}
+	var roles []string
 	if n.Roles.ConsensusMember != nil {
-		roles += ",ConsensusMember"
+		roles = append(roles, "ConsensusMember")
 	}
-	if _, err := fmt.Fprintf(e.out, "\t%s", roles); err != nil {
+	if n.Roles.KubernetesController != nil {
+		roles = append(roles, "KubernetesController")
+	}
+	if n.Roles.KubernetesWorker != nil {
+		roles = append(roles, "KubernetesWorker")
+	}
+	sort.Strings(roles)
+	if _, err := fmt.Fprintf(e.out, "\t%s", strings.Join(roles, ",")); err != nil {
 		return err
 	}
 

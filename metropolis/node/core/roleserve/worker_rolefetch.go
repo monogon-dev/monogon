@@ -64,6 +64,9 @@ func (s *workerRoleFetch) run(ctx context.Context) error {
 			if n.Roles.ConsensusMember != nil {
 				supervisor.Logger(ctx).Infof(" - control plane member, existing peers: %+v", n.Roles.ConsensusMember.Peers)
 			}
+			if n.Roles.KubernetesController != nil {
+				supervisor.Logger(ctx).Infof(" - kubernetes controller")
+			}
 			if n.Roles.KubernetesWorker != nil {
 				supervisor.Logger(ctx).Infof(" - kubernetes worker")
 			}

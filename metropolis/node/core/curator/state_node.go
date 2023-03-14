@@ -78,13 +78,15 @@ type Node struct {
 	// of NodeRole* structures in this structure, with a nil pointer
 	// representing the lack of a role.
 
-	// kubernetesWorker is set if this node is a Kubernetes worker, ie. running the
-	// Kubernetes control plan and workload elements.
-	// In the future, this will be split into a separate worker and control plane
-	// role.
-	kubernetesWorker *NodeRoleKubernetesWorker
-
 	consensusMember *NodeRoleConsensusMember
+
+	// kubernetesController is set if this node is a Kubernetes controller, ie.
+	// running the Kubernetes control plane.
+	kubernetesController *NodeRoleKubernetesController
+
+	// kubernetesWorker is set if this node is a Kubernetes worker, ie. running the
+	// Kubernetes dataplane which runs user workloads.
+	kubernetesWorker *NodeRoleKubernetesWorker
 }
 
 // NewNodeForBootstrap creates a brand new node without regard for any other
@@ -100,8 +102,13 @@ func NewNodeForBootstrap(cuk, pubkey, jpub []byte) Node {
 	}
 }
 
+// NodeRoleKubernetesController defines that the Node should be running the
+// Kubernetes control plane.
+type NodeRoleKubernetesController struct {
+}
+
 // NodeRoleKubernetesWorker defines that the Node should be running the
-// Kubernetes control and data plane.
+// Kubernetes data plane.
 type NodeRoleKubernetesWorker struct {
 }
 
@@ -163,6 +170,22 @@ func (n *Node) DisableKubernetesWorker() {
 	n.kubernetesWorker = nil
 }
 
+func (n *Node) KubernetesController() *NodeRoleKubernetesController {
+	if n.kubernetesController == nil {
+		return nil
+	}
+	kcp := *n.kubernetesController
+	return &kcp
+}
+
+func (n *Node) EnableKubernetesController() {
+	n.kubernetesController = &NodeRoleKubernetesController{}
+}
+
+func (n *Node) DisableKubernetesController() {
+	n.kubernetesController = nil
+}
+
 func (n *Node) EnableConsensusMember(jc *consensus.JoinCluster) {
 	peers := make([]NodeRoleConsensusMemberPeer, len(jc.ExistingNodes))
 	for i, n := range jc.ExistingNodes {
@@ -214,6 +237,9 @@ func (n *Node) proto() *ppb.Node {
 	if n.kubernetesWorker != nil {
 		msg.Roles.KubernetesWorker = &cpb.NodeRoles_KubernetesWorker{}
 	}
+	if n.kubernetesController != nil {
+		msg.Roles.KubernetesController = &cpb.NodeRoles_KubernetesController{}
+	}
 	if n.consensusMember != nil {
 		peers := make([]*cpb.NodeRoles_ConsensusMember_Peer, len(n.consensusMember.Peers))
 		for i, p := range n.consensusMember.Peers {
@@ -246,6 +272,9 @@ func nodeUnmarshal(data []byte) (*Node, error) {
 	}
 	if msg.Roles.KubernetesWorker != nil {
 		n.kubernetesWorker = &NodeRoleKubernetesWorker{}
+	}
+	if msg.Roles.KubernetesController != nil {
+		n.kubernetesController = &NodeRoleKubernetesController{}
 	}
 	if cm := msg.Roles.ConsensusMember; cm != nil {
 		caCert, err := x509.ParseCertificate(cm.CaCertificate)

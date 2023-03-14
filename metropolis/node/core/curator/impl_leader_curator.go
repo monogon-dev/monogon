@@ -442,7 +442,7 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 	node.state = cpb.NodeState_NODE_STATE_UP
 	node.clusterUnlockKey = req.ClusterUnlockKey
 	node.EnableConsensusMember(join)
-	node.EnableKubernetesWorker()
+	node.EnableKubernetesController()
 	if err := nodeSave(ctx, l.leadership, node); err != nil {
 		return nil, err
 	}

@@ -43,8 +43,8 @@ type kubernetesStartup struct {
 // kubernetesStartups differ to the point where a restart of Kubernetes should
 // happen.
 func (k *kubernetesStartup) changed(o *kubernetesStartup) bool {
-	hasKubernetesA := k.roles.KubernetesWorker != nil
-	hasKubernetesB := o.roles.KubernetesWorker != nil
+	hasKubernetesA := k.roles.KubernetesController != nil
+	hasKubernetesB := o.roles.KubernetesController != nil
 	if hasKubernetesA != hasKubernetesB {
 		return true
 	}
@@ -124,7 +124,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 		supervisor.Logger(ctx).Infof("Waiting for startup data...")
 
 		// Acquire kubernetesStartup, waiting for it to contain local consensus and a
-		// KubernetesWorker local role.
+		// KubernetesController local role.
 		var d *kubernetesStartup
 		for {
 			dV, err := w.Get(ctx)
@@ -133,7 +133,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			}
 			d = dV.(*kubernetesStartup)
 			supervisor.Logger(ctx).Infof("Got new startup data.")
-			if d.roles.KubernetesWorker == nil {
+			if d.roles.KubernetesController == nil {
 				supervisor.Logger(ctx).Infof("No Kubernetes role, not starting.")
 				continue
 			}

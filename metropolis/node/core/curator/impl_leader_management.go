@@ -201,6 +201,9 @@ func (l *leaderManagement) GetNodes(req *apb.GetNodesRequest, srv apb.Management
 
 		// Convert node roles.
 		roles := &cpb.NodeRoles{}
+		if node.kubernetesController != nil {
+			roles.KubernetesController = &cpb.NodeRoles_KubernetesController{}
+		}
 		if node.kubernetesWorker != nil {
 			roles.KubernetesWorker = &cpb.NodeRoles_KubernetesWorker{}
 		}
@@ -335,15 +338,26 @@ func (l *leaderManagement) UpdateNodeRoles(ctx context.Context, req *apb.UpdateN
 			// Modify the node's state to reflect the change.
 			node.EnableConsensusMember(join)
 		} else {
+			if node.kubernetesController != nil {
+				return nil, status.Errorf(codes.FailedPrecondition, "could not remove consensus member role while node is a kubernetes controller")
+			}
 			node.DisableConsensusMember()
+		}
+	}
+
+	if req.KubernetesController != nil {
+		if *req.KubernetesController {
+			if node.consensusMember == nil {
+				return nil, status.Errorf(codes.FailedPrecondition, "could not set role: Kubernetes controller nodes must also be consensus members")
+			}
+			node.EnableKubernetesController()
+		} else {
+			node.DisableKubernetesController()
 		}
 	}
 
 	if req.KubernetesWorker != nil {
 		if *req.KubernetesWorker {
-			if node.consensusMember == nil {
-				return nil, status.Errorf(codes.InvalidArgument, "could not set role: Kubernetes worker nodes must also be consensus members.")
-			}
 			node.EnableKubernetesWorker()
 		} else {
 			node.DisableKubernetesWorker()

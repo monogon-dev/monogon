@@ -27,13 +27,13 @@ import (
 // locally running Control Plane (Consensus and Curator service pair) if needed.
 //
 // The Control Plane will run under the following conditions:
-//  - This node has been started in BOOTSTRAP mode and bootstrapData was provided
-//    by the cluster enrolment logic. In this case, the Control Plane Worker will
-//    perform the required bootstrap steps, creating a local node with appropriate
-//    roles, and will start Consensus and the Curator.
-//  - This node has the ConsensusMember Node Role. This will be true for nodes
-//    which are REGISTERing into the cluster, as well as already running nodes that
-//    have been assigned the role.
+//   - This node has been started in BOOTSTRAP mode and bootstrapData was provided
+//     by the cluster enrolment logic. In this case, the Control Plane Worker will
+//     perform the required bootstrap steps, creating a local node with appropriate
+//     roles, and will start Consensus and the Curator.
+//   - This node has the ConsensusMember Node Role. This will be true for nodes
+//     which are REGISTERing into the cluster, as well as already running nodes that
+//     have been assigned the role.
 //
 // In either case, ClusterMembership will be updated to allow connecting to the
 // newly locally running control plane. For nodes that are bootstrapping the
@@ -324,7 +324,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				}
 
 				n.EnableConsensusMember(join)
-				n.EnableKubernetesWorker()
+				n.EnableKubernetesController()
 
 				var nodeCert []byte
 				caCert, nodeCert, err = curator.BootstrapNodeFinish(ctx, ckv, &n, b.initialOwnerKey)

@@ -23,7 +23,7 @@ var removeCmd = &cobra.Command{
 
 var addRoleCmd = &cobra.Command{
 	Short:   "Updates node roles.",
-	Use:     "role <KubernetesWorker|ConsensusMember> [NodeID, ...]",
+	Use:     "role <KubernetesController|KubernetesWorker|ConsensusMember> [NodeID, ...]",
 	Example: "metroctl node add role KubernetesWorker metropolis-25fa5f5e9349381d4a5e9e59de0215e3",
 	Args:    cobra.ArbitraryArgs,
 	Run:     doAdd,
@@ -31,7 +31,7 @@ var addRoleCmd = &cobra.Command{
 
 var removeRoleCmd = &cobra.Command{
 	Short:   "Updates node roles.",
-	Use:     "role <KubernetesWorker|ConsensusMember> [NodeID, ...]",
+	Use:     "role <KubernetesController|KubernetesWorker|ConsensusMember> [NodeID, ...]",
 	Example: "metroctl node remove role KubernetesWorker metropolis-25fa5f5e9349381d4a5e9e59de0215e3",
 	Args:    cobra.ArbitraryArgs,
 	Run:     doRemove,
@@ -65,6 +65,8 @@ func doAdd(cmd *cobra.Command, args []string) {
 			},
 		}
 		switch role {
+		case "kubernetescontroller", "kc":
+			req.KubernetesController = opt(true)
 		case "kubernetesworker", "kw":
 			req.KubernetesWorker = opt(true)
 		case "consensusmember", "cm":
@@ -77,7 +79,7 @@ func doAdd(cmd *cobra.Command, args []string) {
 		if err != nil {
 			log.Printf("Couldn't update node \"%s\": %v", node, err)
 		}
-		log.Printf("Updated node %s. Must be one of: KubernetesWorker, ConsensusMember.", node)
+		log.Printf("Updated node %s.", node)
 	}
 }
 
@@ -101,6 +103,8 @@ func doRemove(cmd *cobra.Command, args []string) {
 			},
 		}
 		switch role {
+		case "kubernetescontroller", "kc":
+			req.KubernetesController = opt(false)
 		case "kubernetesworker", "kw":
 			req.KubernetesWorker = opt(false)
 		case "consensusmember", "cm":

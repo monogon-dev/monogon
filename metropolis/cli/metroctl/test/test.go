@@ -244,8 +244,8 @@ func TestMetroctl(t *testing.T) {
 			if onstatus != "HEALTHY" {
 				return fmt.Errorf("node status mismatch")
 			}
-			if onroles != "KubernetesWorker,ConsensusMember" {
-				return fmt.Errorf("node role mismatch")
+			if want, got := "ConsensusMember,KubernetesController", onroles; want != got {
+				return fmt.Errorf("node role mismatch: wanted %q, got %q", want, got)
 			}
 			if ontimeout < 0 || ontimeout > 30 {
 				return fmt.Errorf("node timeout mismatch")
@@ -254,44 +254,44 @@ func TestMetroctl(t *testing.T) {
 		})
 	})
 	t.Run("set/unset role", func(t *testing.T) {
-		util.TestEventual(t, "metroctl set/unset role KubernetesWorker", ctx, 10*time.Second, func(ctx context.Context) error {
+		util.TestEventual(t, "metroctl set/unset role KubernetesController", ctx, 10*time.Second, func(ctx context.Context) error {
 			nid := cl.NodeIDs[1]
 			naddr := cl.Nodes[nid].ManagementAddress
 
 			// In this test we'll unset a node role, make sure that it's been in fact
 			// unset, then set it again, and check again. This exercises commands of
-			// the form "metroctl set/unset role KubernetesWorker [NodeID, ...]".
+			// the form "metroctl set/unset role KubernetesController [NodeID, ...]".
 
-			// Check that KubernetesWorker role is set initially.
+			// Check that KubernetesController role is set initially.
 			var describeArgs []string
 			describeArgs = append(describeArgs, commonOpts...)
 			describeArgs = append(describeArgs, endpointOpts...)
 			describeArgs = append(describeArgs, "node", "describe", "--filter", fmt.Sprintf("node.status.external_address==\"%s\"", naddr))
-			if err := mctlFailIfMissing(t, ctx, describeArgs, "KubernetesWorker"); err != nil {
+			if err := mctlFailIfMissing(t, ctx, describeArgs, "KubernetesController"); err != nil {
 				return err
 			}
 			// Remove the role.
 			var unsetArgs []string
 			unsetArgs = append(unsetArgs, commonOpts...)
 			unsetArgs = append(unsetArgs, endpointOpts...)
-			unsetArgs = append(unsetArgs, "node", "remove", "role", "KubernetesWorker", nid)
+			unsetArgs = append(unsetArgs, "node", "remove", "role", "KubernetesController", nid)
 			if err := mctlRun(t, ctx, unsetArgs); err != nil {
 				return err
 			}
 			// Check that the role is unset.
-			if err := mctlFailIfFound(t, ctx, describeArgs, "KubernetesWorker"); err != nil {
+			if err := mctlFailIfFound(t, ctx, describeArgs, "KubernetesController"); err != nil {
 				return err
 			}
 			// Set the role back to the initial value.
 			var setArgs []string
 			setArgs = append(setArgs, commonOpts...)
 			setArgs = append(setArgs, endpointOpts...)
-			setArgs = append(setArgs, "node", "add", "role", "KubernetesWorker", nid)
+			setArgs = append(setArgs, "node", "add", "role", "KubernetesController", nid)
 			if err := mctlRun(t, ctx, setArgs); err != nil {
 				return err
 			}
 			// Chack that the role is set.
-			return mctlFailIfMissing(t, ctx, describeArgs, "KubernetesWorker")
+			return mctlFailIfMissing(t, ctx, describeArgs, "KubernetesController")
 		})
 	})
 }

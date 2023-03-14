@@ -1123,23 +1123,23 @@ func TestUpdateNodeRoles(t *testing.T) {
 		}
 	}
 
-	// Try running a request containing a contradictory set of roles. A cluster
-	// node currently can't be a KubernetesWorker if it's not a ConsensusMember
-	// as well.
+	// Try running a request containing a contradictory set of roles. A cluster node
+	// currently can't be a KubernetesController if it's not a ConsensusMember as
+	// well.
 	uf := []*apb.UpdateNodeRolesRequest{
 		&apb.UpdateNodeRolesRequest{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[0].pubkey,
 			},
-			KubernetesWorker: opt(true),
-			ConsensusMember:  opt(false),
+			KubernetesController: opt(true),
+			ConsensusMember:      opt(false),
 		},
 		&apb.UpdateNodeRolesRequest{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[0].pubkey,
 			},
-			KubernetesWorker: opt(true),
-			ConsensusMember:  nil,
+			KubernetesController: opt(true),
+			ConsensusMember:      nil,
 		},
 	}
 	for _, e := range uf {

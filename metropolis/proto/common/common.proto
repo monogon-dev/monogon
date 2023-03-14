@@ -28,6 +28,8 @@ import "google/protobuf/timestamp.proto";
 // can be used to carry required data to start up services for a given role,
 // this must not be confidential/private data.
 message NodeRoles {
+    message KubernetesController {
+    }
     message KubernetesWorker {
     }
     message ConsensusMember {
@@ -56,6 +58,7 @@ message NodeRoles {
     }
     KubernetesWorker kubernetes_worker = 1;
     ConsensusMember consensus_member = 2;
+    KubernetesController kubernetes_controller = 3;
 }
 
 // NodeState is the state of a Metropolis node from the point of view of the
