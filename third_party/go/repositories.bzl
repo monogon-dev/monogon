@@ -4924,14 +4924,14 @@ def go_repositories():
     go_repository(
         name = "com_github_vishvananda_netlink",
         importpath = "github.com/vishvananda/netlink",
-        replace = "github.com/monogon-dev/netlink",
-        sum = "h1:y05BDqZ6q3if6pYBHJcnQRUd92ihzBEJde/S4fpKEAM=",
-        version = "v0.0.0-20230125113930-88977c3ff4b3",
         patch_args = ["-p1"],
         patches = [
             # Going upstream as https://github.com/vishvananda/netlink/pull/850
             "//third_party/go/patches:netlink-permhwaddr.patch",
         ],
+        replace = "github.com/monogon-dev/netlink",
+        sum = "h1:y05BDqZ6q3if6pYBHJcnQRUd92ihzBEJde/S4fpKEAM=",
+        version = "v0.0.0-20230125113930-88977c3ff4b3",
     )
     go_repository(
         name = "com_github_vishvananda_netns",
