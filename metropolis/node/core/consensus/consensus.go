@@ -341,8 +341,9 @@ func (s *Service) bootstrap(ctx context.Context, fifoPath string) error {
 	// Start the bootstrap etcd instance...
 	server, err := embed.StartEtcd(cfg)
 	if err != nil {
-		return fmt.Errorf("failed to start etcd: %w", err)
+		return fmt.Errorf("failed to start bootstrap etcd: %w", err)
 	}
+	defer server.Close()
 
 	// ... wait for it to run ...
 	select {

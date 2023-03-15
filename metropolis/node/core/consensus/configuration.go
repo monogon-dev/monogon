@@ -155,6 +155,6 @@ func (c *Config) localClient() (*clientv3.Client, error) {
 	socket := c.Ephemeral.ClientSocket.FullPath()
 	return clientv3.New(clientv3.Config{
 		Endpoints:   []string{fmt.Sprintf("unix://%s:0", socket)},
-		DialTimeout: time.Second,
+		DialTimeout: 2 * time.Second,
 	})
 }
