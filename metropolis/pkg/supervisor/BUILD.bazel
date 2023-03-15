@@ -10,7 +10,11 @@ go_library(
         "supervisor_testhelpers.go",
     ],
     importpath = "source.monogon.dev/metropolis/pkg/supervisor",
-    visibility = ["//metropolis:__subpackages__"],
+    visibility = [
+        "//metropolis:__subpackages__",
+        # TODO(q3k): move supervisor to //go
+        "//go:__subpackages__",
+    ],
     deps = [
         "//metropolis/pkg/logtree",
         "@com_github_cenkalti_backoff_v4//:backoff",

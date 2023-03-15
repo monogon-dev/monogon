@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "tinylb",
+    srcs = [
+        "connection_pool.go",
+        "tinylb.go",
+    ],
+    importpath = "source.monogon.dev/go/net/tinylb",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/types/mapsets",
+        "//metropolis/pkg/event",
+        "//metropolis/pkg/supervisor",
+    ],
+)
+
+go_test(
+    name = "tinylb_test",
+    srcs = ["tinylb_test.go"],
+    embed = [":tinylb"],
+    deps = [
+        "//metropolis/pkg/event/memory",
+        "//metropolis/pkg/supervisor",
+    ],
+)
