@@ -85,6 +85,7 @@ func (k *klogParser) consumeLine(l *logbuffer.Line) {
 		// We could instead emit that line as a raw log - however, this would lead to
 		// interleaving raw logging and leveled logging.
 		k.publisher.Errorf("Invalid klog line: %s", l.Data)
+		return
 	}
 	// TODO(q3k): should this be exposed as an API on LeveledLogger? How much should
 	// we permit library users to 'fake' logs? This would also permit us to get rid
