@@ -16,8 +16,18 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 func main() {
 	fmt.Println("Hello world from preseeded image")
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello world from preseeded image\n")
+	})
+	err := http.ListenAndServe(":80", nil)
+	if err != nil {
+		fmt.Printf("Serve failed: %v\n", err)
+	}
 }

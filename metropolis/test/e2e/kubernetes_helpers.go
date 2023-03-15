@@ -75,9 +75,9 @@ func makeTestDeploymentSpec(name string) *appsv1.Deployment {
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name: "test",
-							// TODO(phab/T793): Build and preseed our own container images
-							Image: "nginx:alpine",
+							Name:            "test",
+							ImagePullPolicy: corev1.PullNever,
+							Image:           "bazel/metropolis/test/e2e/preseedtest:preseedtest_image",
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{Port: intstr.FromInt(80)},
@@ -120,8 +120,9 @@ func makeTestStatefulSet(name string, volumeMode corev1.PersistentVolumeMode) *a
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  "test",
-							Image: "nginx:alpine",
+							Name:            "test",
+							ImagePullPolicy: corev1.PullNever,
+							Image:           "bazel/metropolis/test/e2e/preseedtest:preseedtest_image",
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{Port: intstr.FromInt(80)},
