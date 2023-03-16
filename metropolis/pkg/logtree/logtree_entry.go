@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mitchellh/go-wordwrap"
+
 	"source.monogon.dev/metropolis/pkg/logbuffer"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
@@ -55,6 +57,116 @@ func (l *LogEntry) String() string {
 		return fmt.Sprintf("%-32s R %s", l.DN, l.Raw)
 	}
 	return "INVALID"
+}
+
+// ConciseString returns a concise representation of this log entry for
+// constrained environments, like TTY consoles.
+//
+// The output format is as follows:
+//
+//	  shortened dn I Hello there
+//	some component W Something went wrong
+//	  shortened dn I Goodbye there
+//	external stuff R I am en external process using raw logging.
+//
+// The above output is the result of calling ConciseString on three different
+// LogEntries.
+//
+// If maxWidth is greater than zero, word wrapping will be applied. For example,
+// with maxWidth set to 40:
+//
+//	     shortened I Hello there
+//	some component W Something went wrong and here are the very long details that
+//	               | describe this particular issue: according to all known laws of
+//	               | aviation, there is no way a bee should be able to fly.
+//	  shortened dn I Goodbye there
+//	external stuff R I am en external process using raw logging.
+//
+// The above output is also the result of calling ConciseString on three
+// different LogEntries.
+//
+// Multi-line log entries will emit 'continuation' lines (with '|') in the same
+// way as word wrapping does. That means that even with word wrapping disabled,
+// the result of this function might be multiline.
+//
+// The width of the first column (the 'shortened DN' column) is automatically
+// selected based on maxWidth. If maxWidth is less than 60, the column will be
+// omitted. For example, with maxWidth set to 20:
+//
+//	I Hello there
+//	W Something went wrong and here are the very long details that
+//	| describe this particular issue: according to all known laws of
+//	| aviation, there is no way a bee should be able to fly.
+//	I Goodbye there
+//	R I am en external process using raw logging.
+//
+// The given `dict` implements simple replacement rules for shortening the DN
+// parts of a log entry's DN. Some rules are hardcoded for Metropolis' DN tree.
+// If no extra shortening rules should be applied, dict can be set to ni// The
+// given `dict` implements simple replacement rules for shortening the DN parts
+// of a log entry's DN. Some rules are hardcoded for Metropolis' DN tree. If no
+// extra shortening rules should be applied, dict can be set to nil.
+func (l *LogEntry) ConciseString(dict ShortenDictionary, maxWidth int) string {
+	// Decide on a dnWidth.
+	dnWidth := 0
+	switch {
+	case maxWidth >= 80:
+		dnWidth = 20
+	case maxWidth >= 60:
+		dnWidth = 16
+	case maxWidth <= 0:
+		// No word wrapping.
+		dnWidth = 20
+	}
+
+	// Compute shortened DN, if needed.
+	sh := ""
+	if dnWidth > 0 {
+		sh = l.DN.Shorten(dict, dnWidth)
+		sh = fmt.Sprintf("%*s ", dnWidth, sh)
+	}
+
+	// Prefix of the first line emitted.
+	var prefix string
+	switch {
+	case l.Leveled != nil:
+		prefix = sh + string(l.Leveled.Severity()) + " "
+	case l.Raw != nil:
+		prefix = sh + "R "
+	}
+	// Prefix of rest of lines emitted.
+	continuationPrefix := strings.Repeat(" ", len(sh)) + "| "
+
+	// Collect lines based on the type of LogEntry.
+	var lines []string
+	collect := func(message string) {
+		if maxWidth > 0 {
+			message = wordwrap.WrapString(message, uint(maxWidth-len(prefix)))
+		}
+		for _, m2 := range strings.Split(message, "\n") {
+			if len(m2) == 0 {
+				continue
+			}
+			if len(lines) == 0 {
+				lines = append(lines, prefix+m2)
+			} else {
+				lines = append(lines, continuationPrefix+m2)
+			}
+		}
+	}
+	switch {
+	case l.Leveled != nil:
+		_, messages := l.Leveled.Strings()
+		for _, m := range messages {
+			collect(m)
+		}
+	case l.Raw != nil:
+		collect(l.Raw.String())
+	default:
+		return ""
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 // Strings returns the canonical representation of this payload split into a

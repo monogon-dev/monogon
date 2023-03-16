@@ -59,21 +59,25 @@ func (d DN) Path() ([]string, error) {
 // represented by heads[DN]/tails[DN] pointers in journal and nextLocal/prevLocal
 // pointers in entries:
 //
-//       .------------.        .------------.        .------------.
-//       | dn: A.B    |        | dn: Z      |        | dn: A.B    |
-//       | time: 1    |        | time: 2    |        | time: 3    |
-//       |------------|        |------------|        |------------|
-//       | nextGlobal :------->| nextGlobal :------->| nextGlobal :--> nil
+//	.------------.        .------------.        .------------.
+//	| dn: A.B    |        | dn: Z      |        | dn: A.B    |
+//	| time: 1    |        | time: 2    |        | time: 3    |
+//	|------------|        |------------|        |------------|
+//	| nextGlobal :------->| nextGlobal :------->| nextGlobal :--> nil
+//
 // nil <-: prevGlobal |<-------: prevGlobal |<-------| prevGlobal |
-//       |------------|        |------------|  n     |------------|
-//       | nextLocal  :---. n  | nextLocal  :->i .-->| nextLocal  :--> nil
+//
+//	|------------|        |------------|  n     |------------|
+//	| nextLocal  :---. n  | nextLocal  :->i .-->| nextLocal  :--> nil
+//
 // nil <-: prevLocal  |<--: i<-: prevLocal  |  l :---| prevLocal  |
-//       '------------'   | l  '------------'    |   '------------'
-//            ^           '----------------------'         ^
-//            |                      ^                     |
-//            |                      |                     |
-//         ( head )             ( tails[Z] )            ( tail )
-//      ( heads[A.B] )          ( heads[Z] )         ( tails[A.B] )
+//
+//	 '------------'   | l  '------------'    |   '------------'
+//	      ^           '----------------------'         ^
+//	      |                      ^                     |
+//	      |                      |                     |
+//	   ( head )             ( tails[Z] )            ( tail )
+//	( heads[A.B] )          ( heads[Z] )         ( tails[A.B] )
 type journal struct {
 	// mu locks the rest of the structure. It must be taken during any operation on the
 	// journal.
@@ -231,4 +235,71 @@ func (j *journal) getEntries(exact DN, filters ...filter) (res []*entry) {
 		cur = cur.nextLocal
 	}
 
+}
+
+// Shorten returns a shortened version of this DN for constrained logging
+// environments like tty0 logging.
+//
+// If ShortenDictionary is given, it will be used to replace DN parts with
+// shorter equivalents. For example, with the dictionary:
+//
+// { "foobar": "foo", "manager": "mgr" }
+//
+// The DN some.foobar.logger will be turned into some.foo.logger before further
+// being processed by the shortening mechanism.
+//
+// The shortening rules applied are Metropolis-specific.
+func (d DN) Shorten(dict ShortenDictionary, maxLen int) string {
+	path, _ := d.Path()
+	// Apply DN part shortening rules.
+	if dict != nil {
+		for i, p := range path {
+			if sh, ok := dict[p]; ok {
+				path[i] = sh
+			}
+		}
+	}
+
+	// This generally shouldn't happen.
+	if len(path) == 0 {
+		return "?"
+	}
+
+	// Strip 'root.' prefix.
+	if len(path) > 1 && path[0] == "root" {
+		path = path[1:]
+	}
+
+	// Replace role.xxx.yyy.zzz with xxx.zzz - stripping everything between the role
+	// name and the last element of the path.
+	if path[0] == "role" && len(path) > 1 {
+		if len(path) == 2 {
+			path = path[1:]
+		} else {
+			path = []string{
+				path[1],
+				path[len(path)-1],
+			}
+		}
+	}
+
+	// Join back to be ' '-delimited, and ellipsize if too long.
+	s := strings.Join(path, " ")
+	if overflow := len(s) - maxLen; overflow > 0 {
+		s = "..." + s[overflow+3:]
+	}
+	return s
+}
+
+type ShortenDictionary map[string]string
+
+var MetropolisShortenDict = ShortenDictionary{
+	"controlplane":           "cplane",
+	"map-cluster-membership": "map-membership",
+	"cluster-membership":     "cluster",
+	"controller-manager":     "controllers",
+	"networking":             "net",
+	"network":                "net",
+	"interfaces":             "ifaces",
+	"kubernetes":             "k8s",
 }

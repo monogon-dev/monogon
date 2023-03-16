@@ -146,3 +146,28 @@ func TestJournalSubtree(t *testing.T) {
 		t.Fatalf("Subtree(a.b): %s", res)
 	}
 }
+
+func TestDN_Shorten(t *testing.T) {
+	for i, te := range []struct {
+		input  string
+		maxLen int
+		want   string
+	}{
+		{"root.role.controlplane.launcher.consensus.autopromoter", 20, "cplane autopromoter"},
+		{"networking.interfaces", 20, "net ifaces"},
+		{"hostsfile", 20, "hostsfile"},
+		{"root.dhcp-server", 20, "dhcp-server"},
+		{"root.role.kubernetes.run.kubernetes.apiserver", 20, "k8s apiserver"},
+		{"some.very.long.dn.that.cant.be.shortened", 20, "...cant be shortened"},
+		{"network.interfaces.dhcp", 20, "net ifaces dhcp"},
+	} {
+		got := DN(te.input).Shorten(MetropolisShortenDict, te.maxLen)
+		if len(got) > te.maxLen {
+			t.Errorf("case %d: output %q too long, got %d bytes, wanted %d", i, got, len(got), te.maxLen)
+		} else {
+			if te.want != got {
+				t.Errorf("case %d: wanted %q, got %q", i, te.want, got)
+			}
+		}
+	}
+}

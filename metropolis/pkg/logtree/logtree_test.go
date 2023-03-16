@@ -237,3 +237,90 @@ func TestAddedStackDepth(t *testing.T) {
 		t.Errorf("first entry at %d, second at %d, wanted one after the other", first, second)
 	}
 }
+
+func TestLogEntry_ConciseString(t *testing.T) {
+	trim := func(s string) string {
+		return strings.Trim(s, "\n")
+	}
+	for i, te := range []struct {
+		entry    *LogEntry
+		maxWidth int
+		want     string
+	}{
+		{
+			&LogEntry{
+				Leveled: &LeveledPayload{
+					messages: []string{"Hello there!"},
+					severity: WARNING,
+				},
+				DN: "root.role.kubernetes.run.kubernetes.apiserver",
+			},
+			120,
+			"       k8s apiserver W Hello there!",
+		},
+		{
+			&LogEntry{
+				Leveled: &LeveledPayload{
+					messages: []string{"Hello there!", "I am multiline."},
+					severity: WARNING,
+				},
+				DN: "root.role.kubernetes.run.kubernetes.apiserver",
+			},
+			120,
+			trim(`
+       k8s apiserver W Hello there!
+                     | I am multiline.
+`),
+		},
+		{
+			&LogEntry{
+				Leveled: &LeveledPayload{
+					messages: []string{"Hello there! I am a very long string, and I will get wrapped to 120 columns because that's just how life is for long strings."},
+					severity: WARNING,
+				},
+				DN: "root.role.kubernetes.run.kubernetes.apiserver",
+			},
+			120,
+			trim(`
+       k8s apiserver W Hello there! I am a very long string, and I will get wrapped to 120 columns because that's just
+                     | how life is for long strings.
+`),
+		},
+		{
+			&LogEntry{
+				Leveled: &LeveledPayload{
+					messages: []string{"Hello there!"},
+					severity: WARNING,
+				},
+				DN: "root.role.kubernetes.run.kubernetes.apiserver",
+			},
+			60,
+			trim(`
+   k8s apiserver W Hello there!
+`),
+		},
+		{
+			&LogEntry{
+				Leveled: &LeveledPayload{
+					messages: []string{"Hello there!"},
+					severity: WARNING,
+				},
+				DN: "root.role.kubernetes.run.kubernetes.apiserver",
+			},
+			40,
+			"W Hello there!",
+		},
+	} {
+		got := te.entry.ConciseString(MetropolisShortenDict, te.maxWidth)
+		for _, line := range strings.Split(got, "\n") {
+			if want, got := te.maxWidth, len(line); got > want {
+				t.Errorf("Case %d, line %q too long (%d bytes, wanted at most %d)", i, line, got, want)
+			}
+		}
+		if te.want != got {
+			t.Errorf("Case %d, message diff", i)
+			t.Logf("Wanted:\n%s", te.want)
+			t.Logf("Got:\n%s", got)
+		}
+	}
+}

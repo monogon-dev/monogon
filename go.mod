@@ -100,6 +100,7 @@ require (
 	github.com/mdlayher/genetlink v1.2.0
 	github.com/mdlayher/netlink v1.6.0
 	github.com/mdlayher/raw v0.1.0
+	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/opencontainers/runc v1.1.3
 	github.com/packethost/packngo v0.29.0
 	github.com/pierrec/lz4/v4 v4.1.14
@@ -290,7 +291,6 @@ require (
 	github.com/mindprince/gonvml v0.0.0-20190828220739-9ebdce4bb989 // indirect
 	github.com/mistifyio/go-zfs v2.1.2-0.20190413222219-f784269be439+incompatible // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
