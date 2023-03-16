@@ -22,6 +22,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/google/nftables"
@@ -35,6 +36,7 @@ import (
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	netpb "source.monogon.dev/net/proto"
 )
 
 // Service is the network service for this node. It maintains all
@@ -43,6 +45,13 @@ import (
 // via New, it can be started and restarted arbitrarily, but the service object
 // itself must be long-lived.
 type Service struct {
+	// If set, use the given static network configuration instead of relying on
+	// autoconfiguration.
+	StaticConfig *netpb.Net
+
+	// Vendor Class identifier of the system
+	DHCPVendorClassID string
+
 	dnsReg chan *dns.ExtraDirective
 	dnsSvc *dns.Service
 
@@ -58,12 +67,16 @@ type Service struct {
 	status memory.Value[*Status]
 }
 
-func New() *Service {
+// New instantiates a new network service. If autoconfiguration is desired,
+// staticConfig must be set to nil. If staticConfig is set to a non-nil value,
+// it will be used instead of autoconfiguration.
+func New(staticConfig *netpb.Net) *Service {
 	dnsReg := make(chan *dns.ExtraDirective)
 	dnsSvc := dns.New(dnsReg)
 	return &Service{
-		dnsReg: dnsReg,
-		dnsSvc: dnsSvc,
+		dnsReg:       dnsReg,
+		dnsSvc:       dnsSvc,
+		StaticConfig: staticConfig,
 	}
 }
 
@@ -134,7 +147,7 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 	if err != nil {
 		return fmt.Errorf("failed to create DHCP client on interface %v: %w", iface.Attrs().Name, err)
 	}
-	s.dhcp.VendorClassIdentifier = "dev.monogon.metropolis.node.v1"
+	s.dhcp.VendorClassIdentifier = s.DHCPVendorClassID
 	s.dhcp.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter, dhcpv4.OptionDomainNameServer, dhcpv4.OptionClasslessStaticRoute}
 	s.dhcp.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(iface), dhcpcb.ManageRoutes(iface), s.statusCallback, func(old, new *dhcp4c.Lease) error {
 		if old == nil || !old.AssignedIP.Equal(new.AssignedIP) {
@@ -190,10 +203,38 @@ func (o sysctlOptions) apply() error {
 	return nil
 }
 
+// RFC2474 Section 4.2.2.1 with reference to RFC791 Section 3.1 (Network
+// Control Precedence)
+const dscpCS7 = 0x7 << 3
+
 func (s *Service) Run(ctx context.Context) error {
 	logger := supervisor.Logger(ctx)
 	supervisor.Run(ctx, "dns", s.dnsSvc.Run)
-	supervisor.Run(ctx, "interfaces", s.runInterfaces)
+
+	earlySysctlOpts := sysctlOptions{
+		// Enable strict reverse path filtering on all interfaces (important
+		// for spoofing prevention from Pods with CAP_NET_ADMIN)
+		"net.ipv4.conf.all.rp_filter": "1",
+		// Disable source routing
+		"net.ipv4.conf.all.accept_source_route": "0",
+		// By default no interfaces should accept router advertisements.
+		// This will be selectively enabled on the appropriate interfaces.
+		"net.ipv6.conf.all.accept_ra": "0",
+		// Make static IPs stick around, otherwise we have to configure them
+		// again after carrier loss events.
+		"net.ipv6.conf.all.keep_addr_on_down": "1",
+		// Make neighbor discovery use DSCP CS7 without ECN
+		"net.ipv6.conf.all.ndisc_tclass": strconv.Itoa(dscpCS7 << 2),
+	}
+	if err := earlySysctlOpts.apply(); err != nil {
+		logger.Fatalf("Error configuring early sysctl options: %v", err)
+	}
+	// Choose between autoconfig and static config runnables
+	if s.StaticConfig == nil {
+		supervisor.Run(ctx, "dynamic", s.runDynamicConfig)
+	} else {
+		supervisor.Run(ctx, "static", s.runStaticConfig)
+	}
 
 	s.natTable = s.nftConn.AddTable(&nftables.Table{
 		Family: nftables.TableFamilyIPv4,
@@ -214,11 +255,6 @@ func (s *Service) Run(ctx context.Context) error {
 	sysctlOpts := sysctlOptions{
 		// Enable IP forwarding for our pods
 		"net.ipv4.ip_forward": "1",
-		// Enable strict reverse path filtering on all interfaces (important
-		// for spoofing prevention from Pods with CAP_NET_ADMIN)
-		"net.ipv4.conf.all.rp_filter": "1",
-		// Disable source routing
-		"net.ipv4.conf.all.accept_source_route": "0",
 
 		// Increase Linux socket kernel buffer sizes to 16MiB (needed for fast
 		// datacenter networks)
@@ -236,7 +272,7 @@ func (s *Service) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) runInterfaces(ctx context.Context) error {
+func (s *Service) runDynamicConfig(ctx context.Context) error {
 	logger := supervisor.Logger(ctx)
 	logger.Info("Starting network interface management")
 

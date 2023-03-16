@@ -107,7 +107,8 @@ func main() {
 		logger.Warningf("Failed to initialize TPM 2.0, attempting fallback to untrusted: %v", err)
 	}
 
-	networkSvc := network.New()
+	networkSvc := network.New(nil)
+	networkSvc.DHCPVendorClassID = "dev.monogon.metropolis.node.v1"
 	timeSvc := timesvc.New()
 
 	// This function initializes a headless Delve if this is a debug build or
