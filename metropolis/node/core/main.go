@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -49,19 +50,23 @@ func main() {
 
 	// Set up logger for Metropolis. Currently logs everything to /dev/tty0 and
 	// /dev/ttyS0.
-	consoles := []string{"/dev/tty0", "/dev/ttyS0"}
-	// Logtree readers that will be used to retrieve data from the root logtree and
-	// write them to consoles. We keep a reference to them as we want to be able to
-	// close them after a fatal error, allowing us to clearly output an error to the
-	// user without the console being clobbered by logtree logs.
-	var readers []*logtree.LogReader
+	consoles := []console{
+		{
+			path:     "/dev/tty0",
+			maxWidth: 80,
+		},
+		{
+			path:     "/dev/ttyS0",
+			maxWidth: 120,
+		},
+	}
 	// Alternative channel that crash handling writes to, and which gets distributed
 	// to the consoles.
 	crash := make(chan string)
 
 	// Open up consoles and set up logging from logtree and crash channel.
-	for _, p := range consoles {
-		f, err := os.OpenFile(p, os.O_WRONLY, 0)
+	for _, console := range consoles {
+		f, err := os.OpenFile(console.path, os.O_WRONLY, 0)
 		if err != nil {
 			continue
 		}
@@ -69,18 +74,20 @@ func main() {
 		if err != nil {
 			panic(fmt.Errorf("could not set up root log reader: %v", err))
 		}
-		readers = append(readers, reader)
-		go func(path string, f io.Writer) {
+		console.reader = reader
+		go func(path string, maxWidth int, f io.Writer) {
 			fmt.Fprintf(f, "\nMetropolis: this is %s. Verbose node logs follow.\n\n", path)
 			for {
 				select {
 				case p := <-reader.Stream:
-					fmt.Fprintf(f, "%s\n", p.String())
+					if consoleFilter(p) {
+						fmt.Fprintf(f, "%s\n", p.ConciseString(logtree.MetropolisShortenDict, maxWidth))
+					}
 				case s := <-crash:
 					fmt.Fprintf(f, "%s\n", s)
 				}
 			}
-		}(p, f)
+		}(console.path, console.maxWidth, f)
 	}
 
 	// Initialize persistent panic handler early
@@ -197,9 +204,9 @@ func main() {
 	ctxC()
 	time.Sleep(time.Second)
 	// After a bit, kill all console log readers.
-	for _, r := range readers {
-		r.Close()
-		r.Stream = nil
+	for _, console := range consoles {
+		console.reader.Close()
+		console.reader.Stream = nil
 	}
 	// Wait for final logs to flush to console...
 	time.Sleep(time.Second)
@@ -210,4 +217,45 @@ func main() {
 	time.Sleep(time.Second)
 	// Return to minit, which will reboot this node.
 	os.Exit(1)
+}
+
+// consoleFilter is used to filter out some uselessly verbose logs from the
+// console.
+//
+// This should be limited to external services, our internal services should
+// instead just have good logging by default.
+func consoleFilter(p *logtree.LogEntry) bool {
+	if p.Raw != nil {
+		return false
+	}
+	if p.Leveled == nil {
+		return false
+	}
+	s := string(p.DN)
+	if strings.HasPrefix(s, "root.role.controlplane.launcher.consensus.etcd") {
+		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+	}
+	// TODO(q3k): turn off RPC traces instead
+	if strings.HasPrefix(s, "root.role.controlplane.launcher.curator.listener.rpc") {
+		return false
+	}
+	if strings.HasPrefix(s, "root.role.kubernetes.run.kubernetes.networked.kubelet") {
+		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+	}
+	if strings.HasPrefix(s, "root.role.kubernetes.run.kubernetes.networked.apiserver") {
+		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+	}
+	if strings.HasPrefix(s, "root.role.kubernetes.run.kubernetes.controller-manager") {
+		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+	}
+	if strings.HasPrefix(s, "root.role.kubernetes.run.kubernetes.scheduler") {
+		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+	}
+	return true
+}
+
+type console struct {
+	path     string
+	maxWidth int
+	reader   *logtree.LogReader
 }

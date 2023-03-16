@@ -20,6 +20,7 @@ import (
 
 // This hooks into a global variable which is checked by runtime.write and used
 // instead of runtime.write1 if populated.
+//
 //go:linkname overrideWrite runtime.overrideWrite
 var overrideWrite func(fd uintptr, p unsafe.Pointer, n int32) int32
 
@@ -30,6 +31,7 @@ var runtimeFds []int
 // runtime.write1, just with a hardcoded file descriptor and using the assembly
 // function unix.RawSyscall to not get a dependency on Go's calling convention
 // and needing an implementation for every architecture.
+//
 //go:nosplit
 func runtimeWrite(fd uintptr, p unsafe.Pointer, n int32) int32 {
 	// Only redirect writes to stderr.
@@ -55,7 +57,7 @@ func runtimeWrite(fd uintptr, p unsafe.Pointer, n int32) int32 {
 
 const runtimeLogPath = "/esp/core_runtime.log"
 
-func initPanicHandler(lt *logtree.LogTree, consoles []string) {
+func initPanicHandler(lt *logtree.LogTree, consoles []console) {
 	rl := lt.MustRawFor("panichandler")
 	l := lt.MustLeveledFor("panichandler")
 
@@ -82,11 +84,11 @@ func initPanicHandler(lt *logtree.LogTree, consoles []string) {
 		runtimeFds = append(runtimeFds, fd)
 	}
 
-	for _, s := range consoles {
-		fd, err := unix.Open(s, os.O_WRONLY, 0)
+	for _, console := range consoles {
+		fd, err := unix.Open(console.path, os.O_WRONLY, 0)
 		if err == nil {
 			runtimeFds = append(runtimeFds, fd)
-			l.Infof("Panic console: %s", s)
+			l.Infof("Panic console: %s", console.path)
 		}
 	}
 
