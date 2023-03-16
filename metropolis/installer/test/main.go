@@ -28,6 +28,7 @@ import (
 	"path/filepath"
 	"syscall"
 	"testing"
+	"time"
 
 	diskfs "github.com/diskfs/go-diskfs"
 	"github.com/diskfs/go-diskfs/disk"
@@ -46,9 +47,6 @@ var (
 	// installerImage is a filesystem path pointing at the installer image that
 	// is generated during the test, and is removed afterwards.
 	installerImage string
-	// nodeStorage is a filesystem path pointing at the VM block device image
-	// Metropolis is installed to during the test. The file is removed afterwards.
-	nodeStorage string
 )
 
 // runQemu starts a new QEMU process, expecting the given output to appear
@@ -83,6 +81,11 @@ func runQemuWithInstaller(ctx context.Context, args []string, expectedOutput str
 // getStorage creates a sparse file, given a size expressed in mebibytes, and
 // returns a path to that file. It may return an error.
 func getStorage(size int64) (string, error) {
+	nodeStorageDir, err := os.MkdirTemp(os.Getenv("TEST_TMPDIR"), "storage")
+	if err != nil {
+		return "", err
+	}
+	nodeStorage := filepath.Join(nodeStorageDir, "stor.img")
 	image, err := os.Create(nodeStorage)
 	if err != nil {
 		return "", fmt.Errorf("couldn't create the block device image at %q: %w", nodeStorage, err)
@@ -119,7 +122,6 @@ func checkEspContents(image *disk.Disk) error {
 
 func TestMain(m *testing.M) {
 	installerImage = filepath.Join(os.Getenv("TEST_TMPDIR"), "installer.img")
-	nodeStorage = filepath.Join(os.Getenv("TEST_TMPDIR"), "stor.img")
 
 	installer := datafile.MustGet("metropolis/installer/test/kernel.efi")
 	bundle := datafile.MustGet("metropolis/installer/test/testos/testos_bundle.zip")
@@ -266,9 +268,10 @@ func TestInstall(t *testing.T) {
 	if err := checkEspContents(storage); err != nil {
 		t.Error(err.Error())
 	}
-	storage.File.Close()
+	//storage.File.Close()
 	// Run QEMU again. Expect TestOS to launch successfully.
 	expectedOutput = "_TESTOS_LAUNCH_SUCCESS_"
+	time.Sleep(time.Second)
 	result, err = runQemu(ctx, qemuDriveParam(storagePath), expectedOutput)
 	if err != nil {
 		t.Error(err.Error())
