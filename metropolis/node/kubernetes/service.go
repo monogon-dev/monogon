@@ -96,6 +96,7 @@ func (s *Service) Run(ctx context.Context) error {
 	// Sub-runnable which starts all parts of Kubernetes that depend on the
 	// machine's external IP address. If it changes, the runnable will exit.
 	// TODO(q3k): test this
+	startKubelet := make(chan struct{})
 	supervisor.Run(ctx, "networked", func(ctx context.Context) error {
 		networkWatch := s.c.Network.Watch()
 		defer networkWatch.Close()
@@ -130,7 +131,10 @@ func (s *Service) Run(ctx context.Context) error {
 
 		err := supervisor.RunGroup(ctx, map[string]supervisor.Runnable{
 			"apiserver": apiserver.Run,
-			"kubelet":   kubelet.Run,
+			"kubelet": func(ctx context.Context) error {
+				<-startKubelet
+				return kubelet.Run(ctx)
+			},
 		})
 		if err != nil {
 			return fmt.Errorf("when starting apiserver/kubelet: %w", err)
@@ -146,6 +150,25 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 		return fmt.Errorf("network configuration changed (%s -> %s)", address.String(), status.ExternalAddress.String())
 	})
+
+	// Before we start anything else, make sure reconciliation passes at least once.
+	// This makes the initial startup of a cluster much cleaner as we don't end up
+	// starting the scheduler/controller-manager/etc just to get them to immediately
+	// fail and back off with 'unauthorized'.
+	startLogging := time.Now().Add(2 * time.Second)
+	supervisor.Logger(ctx).Infof("Performing initial resource reconciliation...")
+	for {
+		err := reconciler.ReconcileAll(ctx, clientSet)
+		if err == nil {
+			supervisor.Logger(ctx).Infof("Initial resource reconciliation succeeded.")
+			close(startKubelet)
+			break
+		}
+		if time.Now().After(startLogging) {
+			supervisor.Logger(ctx).Errorf("Still couldn't do initial reconciliation: %v", err)
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 
 	csiPlugin := csiPluginServer{
 		KubeletDirectory: &s.c.Root.Data.Kubernetes.Kubelet,
@@ -187,7 +210,7 @@ func (s *Service) Run(ctx context.Context) error {
 	}{
 		{"controller-manager", runControllerManager(*controllerManagerConfig)},
 		{"scheduler", runScheduler(*schedulerConfig)},
-		{"reconciler", reconciler.Run(clientSet)},
+		{"reconciler", reconciler.Maintain(clientSet)},
 		{"csi-plugin", csiPlugin.Run},
 		{"csi-provisioner", csiProvisioner.Run},
 		{"clusternet", clusternet.Run},

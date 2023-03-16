@@ -126,24 +126,30 @@ func allResources(clientSet kubernetes.Interface) map[string]resource {
 	}
 }
 
-func Run(clientSet kubernetes.Interface) supervisor.Runnable {
+func ReconcileAll(ctx context.Context, clientSet kubernetes.Interface) error {
+	resources := allResources(clientSet)
+	for name, resource := range resources {
+		err := reconcile(ctx, resource)
+		if err != nil {
+			return fmt.Errorf("resource %s: %w", name, err)
+		}
+	}
+	return nil
+}
+
+func Maintain(clientSet kubernetes.Interface) supervisor.Runnable {
 	return func(ctx context.Context) error {
 		log := supervisor.Logger(ctx)
-		resources := allResources(clientSet)
-		t := time.NewTicker(10 * time.Second)
-		reconcileAll := func() {
-			for name, resource := range resources {
-				if err := reconcile(ctx, resource); err != nil {
-					log.Warningf("Failed to reconcile built-in resources %s: %v", name, err)
-				}
-			}
-		}
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
-		reconcileAll()
+		t := time.NewTicker(10 * time.Second)
+		defer t.Stop()
 		for {
 			select {
 			case <-t.C:
-				reconcileAll()
+				err := ReconcileAll(ctx, clientSet)
+				if err != nil {
+					log.Warning(err)
+				}
 			case <-ctx.Done():
 				return nil
 			}
