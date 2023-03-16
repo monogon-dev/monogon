@@ -114,9 +114,12 @@ func (r *clientWatcher) ResolveNow(_ resolver.ResolveNowOptions) {
 }
 
 func (r *clientWatcher) Close() {
-	r.resolver.reqC <- &request{
+	select {
+	case <-r.resolver.ctx.Done():
+	case r.resolver.reqC <- &request{
 		unsub: &requestUnsubscribe{
 			id: r.subscription.id,
 		},
+	}:
 	}
 }
