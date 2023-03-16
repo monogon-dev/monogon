@@ -12,7 +12,7 @@ import (
 //
 // It's designed to be used in tests, and will automatically stop when the
 // test/benchmark it's running in exits.
-func PipeAllToStderr(t *testing.T, lt *LogTree) {
+func PipeAllToStderr(t testing.TB, lt *LogTree) {
 	t.Helper()
 
 	reader, err := lt.Read("", WithChildren(), WithStream())

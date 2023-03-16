@@ -43,13 +43,22 @@ import (
 // The second returned value is the logtree used by this supervisor. It can be
 // used to assert some log messages are emitted in tests that exercise some
 // log-related functionality.
-func TestHarness(t *testing.T, r func(ctx context.Context) error) (context.CancelFunc, *logtree.LogTree) {
+func TestHarness(t testing.TB, r func(ctx context.Context) error) (context.CancelFunc, *logtree.LogTree) {
 	t.Helper()
 
 	ctx, ctxC := context.WithCancel(context.Background())
 
 	lt := logtree.New()
-	logtree.PipeAllToStderr(t, lt)
+
+	// Only log to stderr when we're running in a test, not in a fuzz harness or a
+	// benchmark - otherwise we just waste CPU cycles.
+	verbose := false
+	if _, ok := t.(*testing.T); ok {
+		verbose = true
+	}
+	if verbose {
+		logtree.PipeAllToStderr(t, lt)
+	}
 
 	sup := New(ctx, func(ctx context.Context) error {
 		Logger(ctx).Infof("Starting test %s...", t.Name())
@@ -61,24 +70,29 @@ func TestHarness(t *testing.T, r func(ctx context.Context) error) (context.Cance
 	}, WithExistingLogtree(lt))
 
 	t.Cleanup(func() {
-		log.Printf("supervisor.TestHarness: Canceling context...")
 		ctxC()
-		log.Printf("supervisor.TestHarness: Waiting for supervisor runnables to die...")
+		if verbose {
+			log.Printf("supervisor.TestHarness: Waiting for supervisor runnables to die...")
+		}
 		timeoutNag := time.Now().Add(5 * time.Second)
 
 		for {
 			live := sup.liveRunnables()
 			if len(live) == 0 {
-				log.Printf("supervisor.TestHarness: All done.")
+				if verbose {
+					log.Printf("supervisor.TestHarness: All done.")
+				}
 				return
 			}
 
 			if time.Now().After(timeoutNag) {
 				timeoutNag = time.Now().Add(5 * time.Second)
 				sort.Strings(live)
-				log.Printf("supervisor.TestHarness: Still live:")
-				for _, l := range live {
-					log.Printf("supervisor.TestHarness: - %s", l)
+				if verbose {
+					log.Printf("supervisor.TestHarness: Still live:")
+					for _, l := range live {
+						log.Printf("supervisor.TestHarness: - %s", l)
+					}
 				}
 			}
 
