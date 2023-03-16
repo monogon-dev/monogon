@@ -35,6 +35,7 @@ go_test(
         "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
         "//metropolis/proto/api",
+        "//metropolis/test/launch",
         "//metropolis/test/launch/cluster",
         "//metropolis/test/util",
         "@io_k8s_api//core/v1:core",

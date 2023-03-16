@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	_ "net/http"
@@ -41,6 +40,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
+	"source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/launch/cluster"
 	"source.monogon.dev/metropolis/test/util"
 )
@@ -70,12 +70,12 @@ func TestE2E(t *testing.T) {
 
 	pprofListen, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		log.Fatalf("Failed to listen on pprof port: %s", pprofListen.Addr())
+		launch.Fatal("Failed to listen on pprof port: %s", pprofListen.Addr())
 	}
 
-	log.Printf("E2E: pprof server listening on %s", pprofListen.Addr())
+	launch.Log("E2E: pprof server listening on %s", pprofListen.Addr())
 	go func() {
-		log.Printf("E2E: pprof server returned an error: %v", http.Serve(pprofListen, nil))
+		launch.Log("E2E: pprof server returned an error: %v", http.Serve(pprofListen, nil))
 		pprofListen.Close()
 	}()
 
@@ -98,7 +98,7 @@ func TestE2E(t *testing.T) {
 		}
 	}()
 
-	log.Printf("E2E: Cluster running, starting tests...")
+	launch.Log("E2E: Cluster running, starting tests...")
 
 	// Dial first node's curator.
 	creds := rpc.NewAuthenticatedCredentials(cluster.Owner, nil)

@@ -22,7 +22,8 @@ type prefixedStdio struct {
 func newPrefixedStdio(num int) prefixedStdio {
 	return prefixedStdio{
 		logbuffer.NewLineBuffer(1024, func(l *logbuffer.Line) {
-			s := strings.TrimSpace(l.String())
+			s := strings.TrimRight(l.String(), " \t\n\r")
+			s = strings.TrimLeft(s, "\n\r\t")
 			// TODO(q3k): don't just skip lines containing escape sequences, strip the
 			// sequences out. Or stop parsing qemu logs and instead dial log endpoint in
 			// spawned nodes.

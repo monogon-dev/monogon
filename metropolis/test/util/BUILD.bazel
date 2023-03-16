@@ -5,4 +5,5 @@ go_library(
     srcs = ["runners.go"],
     importpath = "source.monogon.dev/metropolis/test/util",
     visibility = ["//metropolis:__subpackages__"],
+    deps = ["//metropolis/test/launch"],
 )

@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -67,7 +66,7 @@ func PrettyPrintQemuArgs(name string, args []string) {
 			argsFmt += " "
 		}
 	}
-	log.Printf("Running %s:\n  %s\n", name, argsFmt)
+	Log("Running %s:\n  %s\n", name, argsFmt)
 }
 
 // PortMap represents where VM ports are mapped to on the host. It maps from the VM

@@ -2,7 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "launch",
-    srcs = ["launch.go"],
+    srcs = [
+        "launch.go",
+        "log.go",
+    ],
     importpath = "source.monogon.dev/metropolis/test/launch",
     visibility = ["//metropolis:__subpackages__"],
     deps = [

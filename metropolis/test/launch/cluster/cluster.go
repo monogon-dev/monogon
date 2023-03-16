@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -125,7 +124,7 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 		return nil, fmt.Errorf("while resolving a path: %w", err)
 	}
 	di := filepath.Join(stdp, filepath.Base(si))
-	log.Printf("Cluster: copying the node image: %s -> %s", si, di)
+	launch.Log("Cluster: copying node image: %s -> %s", si, di)
 	if err := copyFile(si, di); err != nil {
 		return nil, fmt.Errorf("while copying the node image: %w", err)
 	}
@@ -183,7 +182,7 @@ func (c *Cluster) CuratorClient() (*grpc.ClientConn, error) {
 	if c.authClient == nil {
 		authCreds := rpc.NewAuthenticatedCredentials(c.Owner, nil)
 		r := resolver.New(c.ctxT, resolver.WithLogger(func(f string, args ...interface{}) {
-			log.Printf("Cluster: client resolver: %s", fmt.Sprintf(f, args...))
+			launch.Log("Cluster: client resolver: %s", fmt.Sprintf(f, args...))
 		}))
 		for _, n := range c.NodeIDs {
 			ep, err := resolver.NodeWithDefaultPort(n)
@@ -357,11 +356,11 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 
 	// Stop TPM emulator and wait for it to exit to properly reap the child process
 	tpmCancel()
-	log.Print("Node: Waiting for TPM emulator to exit")
+	launch.Log("Node: Waiting for TPM emulator to exit")
 	// Wait returns a SIGKILL error because we just cancelled its context.
 	// We still need to call it to avoid creating zombies.
 	_ = tpmEmuCmd.Wait()
-	log.Print("Node: TPM emulator done")
+	launch.Log("Node: TPM emulator done")
 
 	var exerr *exec.ExitError
 	if err != nil && errors.As(err, &exerr) {
@@ -561,14 +560,14 @@ func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certif
 
 	// Retrieve owner certificate - this can take a while because the node is still
 	// coming up, so do it in a backoff loop.
-	log.Printf("Cluster: retrieving owner certificate (this can take a few seconds while the first node boots)...")
+	launch.Log("Cluster: retrieving owner certificate (this can take a few seconds while the first node boots)...")
 	aaa := apb.NewAAAClient(initClient)
 	var cert *tls.Certificate
 	err = backoff.Retry(func() error {
 		cert, err = rpc.RetrieveOwnerCertificate(ctx, aaa, InsecurePrivateKey)
 		if st, ok := status.FromError(err); ok {
 			if st.Code() == codes.Unavailable {
-				log.Printf("Cluster: cluster UNAVAILABLE: %v", st.Message())
+				launch.Log("Cluster: cluster UNAVAILABLE: %v", st.Message())
 				return err
 			}
 		}
@@ -577,7 +576,7 @@ func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certif
 	if err != nil {
 		return nil, nil, fmt.Errorf("couldn't retrieve owner certificate: %w", err)
 	}
-	log.Printf("Cluster: retrieved owner certificate.")
+	launch.Log("Cluster: retrieved owner certificate.")
 
 	// Now connect authenticated and get the node ID.
 	creds := rpc.NewAuthenticatedCredentials(*cert, nil)
@@ -676,11 +675,11 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 
 	// Start the first node.
 	ctxT, ctxC := context.WithCancel(ctx)
-	log.Printf("Cluster: Starting node %d...", 1)
+	launch.Log("Cluster: Starting node %d...", 1)
 	go func() {
 		err := LaunchNode(ctxT, ld, sd, &nodeOpts[0])
 		if err != nil {
-			log.Printf("Node %d finished with an error: %v", 1, err)
+			launch.Log("Node %d finished with an error: %v", 1, err)
 		}
 		done[0] <- err
 	}()
@@ -703,7 +702,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			PcapDump:               path.Join(ld, "nanoswitch.pcap"),
 		}); err != nil {
 			if !errors.Is(err, ctxT.Err()) {
-				log.Fatalf("Failed to launch nanoswitch: %v", err)
+				launch.Fatal("Failed to launch nanoswitch: %v", err)
 			}
 		}
 	}()
@@ -757,14 +756,14 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	mgmt := apb.NewManagementClient(curC)
 
 	// Retrieve register ticket to register further nodes.
-	log.Printf("Cluster: retrieving register ticket...")
+	launch.Log("Cluster: retrieving register ticket...")
 	resT, err := mgmt.GetRegisterTicket(ctx, &apb.GetRegisterTicketRequest{})
 	if err != nil {
 		ctxC()
 		return nil, fmt.Errorf("GetRegisterTicket: %w", err)
 	}
 	ticket := resT.Ticket
-	log.Printf("Cluster: retrieved register ticket (%d bytes).", len(ticket))
+	launch.Log("Cluster: retrieved register ticket (%d bytes).", len(ticket))
 
 	// Retrieve cluster info (for directory and ca public key) to register further
 	// nodes.
@@ -796,17 +795,17 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	//
 	// TODO(q3k): parallelize this
 	for i := 1; i < opts.NumNodes; i++ {
-		log.Printf("Cluster: Starting node %d...", i+1)
+		launch.Log("Cluster: Starting node %d...", i+1)
 		go func(i int) {
 			err := LaunchNode(ctxT, ld, sd, &nodeOpts[i])
 			if err != nil {
-				log.Printf("Node %d finished with an error: %v", i, err)
+				launch.Log("Node %d finished with an error: %v", i, err)
 			}
 			done[i] <- err
 		}(i)
 		var newNode *apb.Node
 
-		log.Printf("Cluster: waiting for node %d to appear as NEW...", i)
+		launch.Log("Cluster: waiting for node %d to appear as NEW...", i)
 		for {
 			nodes, err := getNodes(ctx, mgmt)
 			if err != nil {
@@ -825,9 +824,9 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			time.Sleep(1 * time.Second)
 		}
 		id := identity.NodeID(newNode.Pubkey)
-		log.Printf("Cluster: node %d is %s", i, id)
+		launch.Log("Cluster: node %d is %s", i, id)
 
-		log.Printf("Cluster: approving node %d", i)
+		launch.Log("Cluster: approving node %d", i)
 		_, err := mgmt.ApproveNode(ctx, &apb.ApproveNodeRequest{
 			Pubkey: newNode.Pubkey,
 		})
@@ -835,7 +834,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			ctxC()
 			return nil, fmt.Errorf("ApproveNode(%s): %w", id, err)
 		}
-		log.Printf("Cluster: node %d approved, waiting for it to appear as UP and with a network address...", i)
+		launch.Log("Cluster: node %d approved, waiting for it to appear as UP and with a network address...", i)
 		for {
 			nodes, err := getNodes(ctx, mgmt)
 			if err != nil {
@@ -866,12 +865,12 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			}
 			time.Sleep(time.Second)
 		}
-		log.Printf("Cluster: node %d (%s) UP!", i, id)
+		launch.Log("Cluster: node %d (%s) UP!", i, id)
 	}
 
-	log.Printf("Cluster: all nodes up:")
+	launch.Log("Cluster: all nodes up:")
 	for _, node := range cluster.Nodes {
-		log.Printf("Cluster:  - %s at %s", node.ID, node.ManagementAddress)
+		launch.Log("Cluster:  - %s at %s", node.ID, node.ManagementAddress)
 	}
 
 	return cluster, nil
@@ -914,18 +913,18 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 
 	// Cancel the node's context. This will shut down QEMU.
 	c.nodeOpts[idx].Runtime.CtxC()
-	log.Printf("Cluster: waiting for node %d (%s) to stop.", idx, id)
+	launch.Log("Cluster: waiting for node %d (%s) to stop.", idx, id)
 	err = <-c.nodesDone[idx]
 	if err != nil {
 		return fmt.Errorf("while restarting node: %w", err)
 	}
 
 	// Start QEMU again.
-	log.Printf("Cluster: restarting node %d (%s).", idx, id)
+	launch.Log("Cluster: restarting node %d (%s).", idx, id)
 	go func(n int) {
 		err := LaunchNode(c.ctxT, c.launchDir, c.socketDir, &c.nodeOpts[n])
 		if err != nil {
-			log.Printf("Node %d finished with an error: %v", n, err)
+			launch.Log("Node %d finished with an error: %v", n, err)
 		}
 		c.nodesDone[n] <- err
 	}(idx)
@@ -934,10 +933,10 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 	for {
 		cs, err := getNode(ctx, mgmt, id)
 		if err != nil {
-			log.Printf("Cluster: node get error: %v", err)
+			launch.Log("Cluster: node get error: %v", err)
 			return err
 		}
-		log.Printf("Cluster: node status: %+v", cs)
+		launch.Log("Cluster: node status: %+v", cs)
 		if cs.Status == nil {
 			continue
 		}
@@ -946,7 +945,7 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 		}
 		time.Sleep(time.Second)
 	}
-	log.Printf("Cluster: node %d (%s) has rejoined the cluster.", idx, id)
+	launch.Log("Cluster: node %d (%s) has rejoined the cluster.", idx, id)
 	return nil
 }
 
@@ -954,24 +953,24 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 // nodes to stop. It returns an error if stopping the nodes failed, or one of
 // the nodes failed to fully start in the first place.
 func (c *Cluster) Close() error {
-	log.Printf("Cluster: stopping...")
+	launch.Log("Cluster: stopping...")
 	if c.authClient != nil {
 		c.authClient.Close()
 	}
 	c.ctxC()
 
 	var errs []error
-	log.Printf("Cluster: waiting for nodes to exit...")
+	launch.Log("Cluster: waiting for nodes to exit...")
 	for _, c := range c.nodesDone {
 		err := <-c
 		if err != nil {
 			errs = append(errs, err)
 		}
 	}
-	log.Printf("Cluster: removing nodes' state files.")
+	launch.Log("Cluster: removing nodes' state files.")
 	os.RemoveAll(c.launchDir)
 	os.RemoveAll(c.socketDir)
-	log.Printf("Cluster: done")
+	launch.Log("Cluster: done")
 	return multierr.Combine(errs...)
 }
 
@@ -981,8 +980,7 @@ func (c *Cluster) Close() error {
 //
 // For example:
 //
-//   grpc.Dial("metropolis-deadbeef:1234", grpc.WithContextDialer(c.DialNode))
-//
+//	grpc.Dial("metropolis-deadbeef:1234", grpc.WithContextDialer(c.DialNode))
 func (c *Cluster) DialNode(_ context.Context, addr string) (net.Conn, error) {
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {
