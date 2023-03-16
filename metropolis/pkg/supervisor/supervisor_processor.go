@@ -297,12 +297,10 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 	err := r.err
 	// A lack of returned error is also an error.
 	if err == nil {
-		err = fmt.Errorf("returned when %s", n.state)
-	} else {
-		err = fmt.Errorf("returned error when %s: %w", n.state, err)
+		err = fmt.Errorf("returned nil when %s", n.state)
 	}
 
-	s.ilogger.Errorf("Runnable %s died: %v", n.dn(), err)
+	s.ilogger.Errorf("%s: %v", n.dn(), err)
 	// Mark as dead.
 	n.state = nodeStateDead
 
