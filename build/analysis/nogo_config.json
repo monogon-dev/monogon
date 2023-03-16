@@ -2,7 +2,8 @@
   "composites": {
     "exclude_files": {
       "external/": "third_party",
-      "metropolis/pkg/bootparam/": "gofuzz"
+      "metropolis/pkg/bootparam/": "gofuzz",
+      "go/algorithm/toposort/": "gofuzz"
     }
   },
   "copylocks": {
