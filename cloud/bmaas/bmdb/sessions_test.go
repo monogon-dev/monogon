@@ -497,6 +497,9 @@ func TestAgentStartWorkflowParallel(t *testing.T) {
 		for {
 			err := workOnce(ctxS, workerID, session)
 			if err != nil {
+				if errors.Is(err, ErrNothingToDo) {
+					continue
+				}
 				if errors.Is(err, ctxS.Err()) {
 					return
 				}
