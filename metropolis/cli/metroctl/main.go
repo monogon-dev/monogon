@@ -38,7 +38,7 @@ type metroctlFlags struct {
 var flags metroctlFlags
 
 func init() {
-	rootCmd.PersistentFlags().StringArrayVar(&flags.clusterEndpoints, "endpoints", nil, "A list of the target cluster's endpoints.")
+	rootCmd.PersistentFlags().StringSliceVar(&flags.clusterEndpoints, "endpoints", nil, "A list of the target cluster's endpoints.")
 	rootCmd.PersistentFlags().StringVar(&flags.proxyAddr, "proxy", "", "SOCKS5 proxy address")
 	rootCmd.PersistentFlags().StringVar(&flags.configPath, "config", filepath.Join(xdg.ConfigHome, "metroctl"), "An alternative cluster config path")
 	rootCmd.PersistentFlags().BoolVar(&flags.verbose, "verbose", false, "Log additional runtime information")
