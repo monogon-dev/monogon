@@ -5505,6 +5505,10 @@ def go_repositories():
         name = "io_etcd_go_etcd_server_v3",
         build_file_proto_mode = "disable",
         importpath = "go.etcd.io/etcd/server/v3",
+        patch_args = ["-p1"],
+        patches = [
+            "//third_party/go/patches:etcd-fix-embed-close.patch",
+        ],
         sum = "h1:CMAZd0g8Bn5NRhynW6pKhc4FRg41/0QYy3d7aNm9874=",
         version = "v3.5.4",
     )
