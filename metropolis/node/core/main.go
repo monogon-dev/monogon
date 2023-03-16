@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -43,10 +44,22 @@ func main() {
 		panic(fmt.Errorf("could not set up basic mounts: %w", err))
 	}
 
+	// Root system logtree.
+	lt := logtree.New()
+
 	// Set up logger for Metropolis. Currently logs everything to /dev/tty0 and
 	// /dev/ttyS0.
 	consoles := []string{"/dev/tty0", "/dev/ttyS0"}
-	lt := logtree.New()
+	// Logtree readers that will be used to retrieve data from the root logtree and
+	// write them to consoles. We keep a reference to them as we want to be able to
+	// close them after a fatal error, allowing us to clearly output an error to the
+	// user without the console being clobbered by logtree logs.
+	var readers []*logtree.LogReader
+	// Alternative channel that crash handling writes to, and which gets distributed
+	// to the consoles.
+	crash := make(chan string)
+
+	// Open up consoles and set up logging from logtree and crash channel.
 	for _, p := range consoles {
 		f, err := os.OpenFile(p, os.O_WRONLY, 0)
 		if err != nil {
@@ -56,14 +69,20 @@ func main() {
 		if err != nil {
 			panic(fmt.Errorf("could not set up root log reader: %v", err))
 		}
+		readers = append(readers, reader)
 		go func(path string, f io.Writer) {
 			fmt.Fprintf(f, "\nMetropolis: this is %s. Verbose node logs follow.\n\n", path)
 			for {
-				p := <-reader.Stream
-				fmt.Fprintf(f, "%s\n", p.String())
+				select {
+				case p := <-reader.Stream:
+					fmt.Fprintf(f, "%s\n", p.String())
+				case s := <-crash:
+					fmt.Fprintf(f, "%s\n", s)
+				}
 			}
 		}(p, f)
 	}
+
 	// Initialize persistent panic handler early
 	initPanicHandler(lt, consoles)
 
@@ -95,10 +114,6 @@ func main() {
 		panic(fmt.Errorf("when placing root FS: %w", err))
 	}
 
-	// trapdoor is a channel used to signal to the init service that a very
-	// low-level, unrecoverable failure occured.
-	trapdoor := make(chan struct{})
-
 	// Make context for supervisor. We cancel it when we reach the trapdoor.
 	ctxS, ctxC := context.WithCancel(context.Background())
 
@@ -107,11 +122,10 @@ func main() {
 		lt.MustLeveledFor("resolver").WithAddedStackDepth(1).Infof(f, args...)
 	}))
 
-	// Start root initialization code as a supervisor one-shot runnable. This
-	// means waiting for the network, starting the cluster manager, and then
-	// starting all services related to the node's roles.
-	// TODO(q3k): move this to a separate 'init' service.
-	supervisor.New(ctxS, func(ctx context.Context) error {
+	// Function which performs core, one-way initialization of the node. This means
+	// waiting for the network, starting the cluster manager, and then starting all
+	// services related to the node's roles.
+	init := func(ctx context.Context) error {
 		// Start storage and network - we need this to get anything else done.
 		if err := root.Start(ctx); err != nil {
 			return fmt.Errorf("cannot start root FS: %w", err)
@@ -135,7 +149,6 @@ func main() {
 			Resolver:    res,
 		})
 		if err := supervisor.Run(ctx, "role", rs.Run); err != nil {
-			close(trapdoor)
 			return fmt.Errorf("failed to start role service: %w", err)
 		}
 
@@ -149,28 +162,52 @@ func main() {
 			},
 		}
 		if err := supervisor.Run(ctx, "hostsfile", hostsfileSvc.Run); err != nil {
-			close(trapdoor)
 			return fmt.Errorf("failed to start hostsfile service: %w", err)
-		}
-
-		// Start cluster manager. This kicks off cluster membership machinery,
-		// which will either start a new cluster, enroll into one or join one.
-		m := cluster.NewManager(root, networkSvc, rs)
-		if err := supervisor.Run(ctx, "enrolment", m.Run); err != nil {
-			close(trapdoor)
-			return fmt.Errorf("when starting enrolment: %w", err)
 		}
 
 		if err := runDebugService(ctx, rs, lt, root); err != nil {
 			return fmt.Errorf("when starting debug service: %w", err)
 		}
 
-		supervisor.Signal(ctx, supervisor.SignalHealthy)
-		supervisor.Signal(ctx, supervisor.SignalDone)
+		// Start cluster manager. This kicks off cluster membership machinery,
+		// which will either start a new cluster, enroll into one or join one.
+		m := cluster.NewManager(root, networkSvc, rs)
+		return m.Run(ctx)
+	}
+
+	// Start the init function in a one-shot runnable. Smuggle out any errors from
+	// the init function and stuff them into the fatal channel. This is where the
+	// system supervisor takes over as the main process management system.
+	fatal := make(chan error)
+	supervisor.New(ctxS, func(ctx context.Context) error {
+		err := init(ctx)
+		if err != nil {
+			fatal <- err
+			select {}
+		}
 		return nil
 	}, supervisor.WithExistingLogtree(lt))
 
-	<-trapdoor
-	logger.Infof("Trapdoor closed, exiting core.")
+	// Meanwhile, wait for any fatal error from the init process, and handle it
+	// accordingly.
+	err := <-fatal
+	// Log error with primary logging mechanism still active.
+	logger.Infof("Node startup failed: %v", err)
+	// Start shutting down the supervision tree...
 	ctxC()
+	time.Sleep(time.Second)
+	// After a bit, kill all console log readers.
+	for _, r := range readers {
+		r.Close()
+		r.Stream = nil
+	}
+	// Wait for final logs to flush to console...
+	time.Sleep(time.Second)
+	// Present final message to the console.
+	crash <- ""
+	crash <- ""
+	crash <- fmt.Sprintf("Fatal error: %v", err)
+	time.Sleep(time.Second)
+	// Return to minit, which will reboot this node.
+	os.Exit(1)
 }
