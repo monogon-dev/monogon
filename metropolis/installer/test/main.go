@@ -268,7 +268,7 @@ func TestInstall(t *testing.T) {
 	if err := checkEspContents(storage); err != nil {
 		t.Error(err.Error())
 	}
-	//storage.File.Close()
+	storage.File.Close()
 	// Run QEMU again. Expect TestOS to launch successfully.
 	expectedOutput = "_TESTOS_LAUNCH_SUCCESS_"
 	time.Sleep(time.Second)
