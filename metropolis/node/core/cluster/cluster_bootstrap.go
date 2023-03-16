@@ -31,19 +31,16 @@ import (
 func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_ClusterBootstrap) error {
 	supervisor.Logger(ctx).Infof("Bootstrapping new cluster, owner public key: %s", hex.EncodeToString(bootstrap.OwnerPublicKey))
 
-	state, unlock := m.lock()
-	defer unlock()
-
 	ownerKey := bootstrap.OwnerPublicKey
-	state.configuration = &ppb.SealedConfiguration{}
+	configuration := ppb.SealedConfiguration{}
 
 	// Mount new storage with generated CUK, and save NUK into sealed config proto.
 	supervisor.Logger(ctx).Infof("Bootstrapping: mounting new storage...")
-	cuk, err := m.storageRoot.Data.MountNew(state.configuration)
+	cuk, err := m.storageRoot.Data.MountNew(&configuration)
 	if err != nil {
 		return fmt.Errorf("could not make and mount data partition: %w", err)
 	}
-	nuk := state.configuration.NodeUnlockKey
+	nuk := configuration.NodeUnlockKey
 
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {

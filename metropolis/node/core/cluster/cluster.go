@@ -34,39 +34,24 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/cenkalti/backoff/v4"
 	"google.golang.org/protobuf/proto"
 
-	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
-	ppb "source.monogon.dev/metropolis/proto/private"
 )
-
-type state struct {
-	mu sync.RWMutex
-
-	oneway bool
-
-	configuration *ppb.SealedConfiguration
-}
 
 type Manager struct {
 	storageRoot    *localstorage.Root
 	networkService *network.Service
 	roleServer     *roleserve.Service
 
-	state
-
-	// consensus is the spawned etcd/consensus service, if the Manager brought
-	// up a Node that should run one.
-	consensus *consensus.Service
+	oneway chan struct{}
 }
 
 // NewManager creates a new cluster Manager. The given localstorage Root must
@@ -77,32 +62,19 @@ func NewManager(storageRoot *localstorage.Root, networkService *network.Service,
 		storageRoot:    storageRoot,
 		networkService: networkService,
 		roleServer:     rs,
-
-		state: state{},
+		oneway:         make(chan struct{}),
 	}
-}
-
-func (m *Manager) lock() (*state, func()) {
-	m.mu.Lock()
-	return &m.state, m.mu.Unlock
-}
-
-func (m *Manager) rlock() (*state, func()) {
-	m.mu.RLock()
-	return &m.state, m.mu.RUnlock
 }
 
 // Run is the runnable of the Manager, to be started using the Supervisor. It
 // is one-shot, and should not be restarted.
 func (m *Manager) Run(ctx context.Context) error {
-	state, unlock := m.lock()
-	if state.oneway {
-		unlock()
-		// TODO(q3k): restart the entire system if this happens
+	select {
+	case <-m.oneway:
 		return fmt.Errorf("cannot restart cluster manager")
+	default:
 	}
-	state.oneway = true
-	unlock()
+	close(m.oneway)
 
 	configuration, err := m.storageRoot.ESP.Metropolis.SealedConfiguration.Unseal()
 	if err == nil {
@@ -140,6 +112,7 @@ func (m *Manager) Run(ctx context.Context) error {
 
 	if err == nil {
 		supervisor.Logger(ctx).Info("Cluster enrolment done.")
+		return nil
 	}
 	return err
 }

@@ -68,11 +68,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 		register.ClusterDirectory.Nodes[i].PublicKey = nil
 	}
 
-	// Validation passed, let's take the state lock and start working on registering
-	// us into the cluster.
-
-	state, unlock := m.lock()
-	defer unlock()
+	// Validation passed, let's start working on registering us into the cluster.
 
 	// Tell the user what we're doing.
 	supervisor.Logger(ctx).Infof("Registering into existing cluster.")
@@ -84,9 +80,8 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	// Mount new storage with generated CUK, MountNew will save NUK into sc, to be
 	// saved into the ESP after successful registration.
 	var sc ppb.SealedConfiguration
-	state.configuration = &sc
 	supervisor.Logger(ctx).Infof("Registering: mounting new storage...")
-	cuk, err := m.storageRoot.Data.MountNew(state.configuration)
+	cuk, err := m.storageRoot.Data.MountNew(&sc)
 	if err != nil {
 		return fmt.Errorf("could not make and mount data partition: %w", err)
 	}
