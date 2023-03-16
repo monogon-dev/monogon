@@ -208,7 +208,7 @@ func main() {
 	}
 	go func() {
 		for p := range reader.Stream {
-			fmt.Fprintf(os.Stderr, "%s\n", p.String())
+			fmt.Fprintf(os.Stderr, "%s\n", p.ConciseString(nil, 120))
 		}
 	}()
 	supervisor.New(context.Background(), func(ctx context.Context) error {
