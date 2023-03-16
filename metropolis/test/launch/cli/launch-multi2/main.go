@@ -28,7 +28,8 @@ import (
 func main() {
 	ctx := clicontext.WithInterrupt(context.Background())
 	cl, err := cluster.LaunchCluster(ctx, cluster.ClusterOptions{
-		NumNodes: 2,
+		NumNodes:        2,
+		NodeLogsToFiles: true,
 	})
 	if err != nil {
 		log.Fatalf("LaunchCluster: %v", err)

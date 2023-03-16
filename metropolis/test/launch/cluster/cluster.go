@@ -478,6 +478,13 @@ var ClusterPorts = []uint16{
 type ClusterOptions struct {
 	// The number of nodes this cluster should be started with.
 	NumNodes int
+
+	// If true, node logs will be saved to individual files instead of being printed
+	// out to stderr. The path of these files will be still printed to stdout.
+	//
+	// The files will be located within the launch directory inside TEST_TMPDIR (or
+	// the default tempdir location, if not set).
+	NodeLogsToFiles bool
 }
 
 // Cluster is the running Metropolis cluster launched using the LaunchCluster
@@ -616,6 +623,14 @@ func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certif
 	return cert, node, nil
 }
 
+func NewSerialFileLogger(p string) (io.ReadWriter, error) {
+	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return nil, err
+	}
+	return f, nil
+}
+
 // LaunchCluster launches a cluster of Metropolis node VMs together with a
 // Nanoswitch instance to network them all together.
 //
@@ -682,6 +697,15 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		SerialPort: newPrefixedStdio(0),
 		PcapDump:   true,
 	}
+	if opts.NodeLogsToFiles {
+		path := path.Join(ld, "node-1.txt")
+		port, err := NewSerialFileLogger(path)
+		if err != nil {
+			return nil, fmt.Errorf("could not open log file for node 1: %w", err)
+		}
+		launch.Log("Node 1 logs at %s", path)
+		nodeOpts[0].SerialPort = port
+	}
 
 	// Start the first node.
 	ctxT, ctxC := context.WithCancel(ctx)
@@ -702,13 +726,24 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	}
 
 	go func() {
+		var serialPort io.ReadWriter
+		if opts.NodeLogsToFiles {
+			path := path.Join(ld, "nanoswitch.txt")
+			serialPort, err = NewSerialFileLogger(path)
+			if err != nil {
+				launch.Log("Could not open log file for nanoswitch: %v", err)
+			}
+			launch.Log("Nanoswitch logs at %s", path)
+		} else {
+			serialPort = newPrefixedStdio(99)
+		}
 		if err := launch.RunMicroVM(ctxT, &launch.MicroVMOptions{
-			Name:                   "nanoswitch [99]",
+			Name:                   "nanoswitch",
 			KernelPath:             "metropolis/test/ktest/vmlinux",
 			InitramfsPath:          "metropolis/test/nanoswitch/initramfs.cpio.lz4",
 			ExtraNetworkInterfaces: switchPorts,
 			PortMap:                portMap,
-			SerialPort:             newPrefixedStdio(99),
+			SerialPort:             serialPort,
 			PcapDump:               path.Join(ld, "nanoswitch.pcap"),
 		}); err != nil {
 			if !errors.Is(err, ctxT.Err()) {
@@ -809,6 +844,15 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 				},
 			},
 			SerialPort: newPrefixedStdio(i),
+		}
+		if opts.NodeLogsToFiles {
+			path := path.Join(ld, fmt.Sprintf("node-%d.txt", i+1))
+			port, err := NewSerialFileLogger(path)
+			if err != nil {
+				return nil, fmt.Errorf("could not open log file for node %d: %w", i+1, err)
+			}
+			launch.Log("Node %d logs at %s", i+1, path)
+			nodeOpts[i].SerialPort = port
 		}
 	}
 
@@ -988,7 +1032,7 @@ func (c *Cluster) Close() error {
 			errs = append(errs, err)
 		}
 	}
-	launch.Log("Cluster: removing nodes' state files.")
+	launch.Log("Cluster: removing nodes' state files (%s) and sockets (%s).", c.launchDir, c.socketDir)
 	os.RemoveAll(c.launchDir)
 	os.RemoveAll(c.socketDir)
 	os.RemoveAll(c.metroctlDir)
