@@ -14,6 +14,8 @@ import (
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -44,7 +46,17 @@ type kubernetesStartup struct {
 // changed informs the Kubernetes launcher whether two different
 // kubernetesStartups differ to the point where a restart of Kubernetes should
 // happen.
-func (k *kubernetesStartup) changed(o *kubernetesStartup) bool {
+func (k *kubernetesStartup) workerChanged(o *kubernetesStartup) bool {
+	hasKubernetesA := k.roles.KubernetesWorker != nil
+	hasKubernetesB := o.roles.KubernetesWorker != nil
+	if hasKubernetesA != hasKubernetesB {
+		return true
+	}
+
+	return false
+}
+
+func (k *kubernetesStartup) controllerChanged(o *kubernetesStartup) bool {
 	hasKubernetesA := k.roles.KubernetesController != nil
 	hasKubernetesB := o.roles.KubernetesController != nil
 	if hasKubernetesA != hasKubernetesB {
@@ -98,7 +110,23 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 		},
 	})
 
-	supervisor.Run(ctx, "run", func(ctx context.Context) error {
+	// TODO(q3k): make these configurable.
+	clusterIPRange := net.IPNet{
+		IP: net.IP{10, 0, 0, 0},
+		// That's a /16.
+		Mask: net.IPMask{0xff, 0xff, 0x00, 0x00},
+	}
+	serviceIPRange := net.IPNet{
+		IP: net.IP{10, 0, 255, 1},
+		// That's a /24.
+		Mask: net.IPMask{0xff, 0xff, 0xff, 0x00},
+	}
+
+	// TODO(q3k): remove this once the controller also uses curator-emitted PKI.
+	clusterDomain := "cluster.local"
+
+	// TODO(q3k): move worker services to worker.
+	supervisor.Run(ctx, "controller", func(ctx context.Context) error {
 		w := startupV.Watch()
 		defer w.Close()
 		supervisor.Logger(ctx).Infof("Waiting for startup data...")
@@ -114,7 +142,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			}
 			supervisor.Logger(ctx).Infof("Got new startup data.")
 			if d.roles.KubernetesController == nil {
-				supervisor.Logger(ctx).Infof("No Kubernetes role, not starting.")
+				supervisor.Logger(ctx).Infof("No Kubernetes controller role, not starting.")
 				continue
 			}
 			if d.membership.localConsensus == nil {
@@ -146,39 +174,26 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			return fmt.Errorf("failed to start containerd service: %w", err)
 		}
 
-		// TODO(lorenz): Align this with the global cluster domain once it
-		// exists.
-		clusterDomain := "cluster.local"
-
 		// Start building Kubernetes service...
-		pki := kpki.New(supervisor.Logger(ctx), kkv, clusterDomain)
+		pki := kpki.New(kkv, clusterDomain)
 
-		kubeSvc := kubernetes.New(kubernetes.Config{
-			Node: &d.membership.credentials.Node,
-			// TODO(q3k): make this configurable.
-			ServiceIPRange: net.IPNet{
-				IP: net.IP{10, 0, 255, 1},
-				// That's a /24.
-				Mask: net.IPMask{0xff, 0xff, 0xff, 0x00},
-			},
-			ClusterNet: net.IPNet{
-				IP: net.IP{10, 0, 0, 0},
-				// That's a /16.
-				Mask: net.IPMask{0xff, 0xff, 0x00, 0x00},
-			},
-			ClusterDomain: clusterDomain,
-			KPKI:          pki,
-			Root:          s.storageRoot,
-			Network:       s.network,
+		controller := kubernetes.NewController(kubernetes.ConfigController{
+			Node:           &d.membership.credentials.Node,
+			ServiceIPRange: serviceIPRange,
+			ClusterNet:     clusterIPRange,
+			ClusterDomain:  clusterDomain,
+			KPKI:           pki,
+			Root:           s.storageRoot,
+			Network:        s.network,
 		})
 		// Start Kubernetes.
-		if err := supervisor.Run(ctx, "kubernetes", kubeSvc.Run); err != nil {
-			return fmt.Errorf("failed to start kubernetes service: %w", err)
+		if err := supervisor.Run(ctx, "run", controller.Run); err != nil {
+			return fmt.Errorf("failed to start kubernetes controller service: %w", err)
 		}
 
 		// Let downstream know that Kubernetes is running.
 		s.kubernetesStatus.Set(&KubernetesStatus{
-			Svc: kubeSvc,
+			Controller: controller,
 		})
 
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
@@ -190,7 +205,66 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			if nc.changed(d) {
+			if nc.controllerChanged(d) {
+				supervisor.Logger(ctx).Errorf("watcher got new config, restarting")
+				return fmt.Errorf("restarting")
+			}
+		}
+	})
+
+	supervisor.Run(ctx, "worker", func(ctx context.Context) error {
+		w := startupV.Watch()
+		defer w.Close()
+		supervisor.Logger(ctx).Infof("Waiting for startup data...")
+
+		// Acquire kubernetesStartup, waiting for it to contain local consensus and a
+		// KubernetesWorker local role.
+		var d *kubernetesStartup
+		for {
+			var err error
+			d, err = w.Get(ctx)
+			if err != nil {
+				return err
+			}
+			supervisor.Logger(ctx).Infof("Got new startup data.")
+			if d.roles.KubernetesWorker == nil {
+				supervisor.Logger(ctx).Infof("No Kubernetes worker role, not starting.")
+				continue
+			}
+			break
+		}
+
+		cur, err := d.membership.DialCurator()
+		if err != nil {
+			return fmt.Errorf("could not dial curator: %w", err)
+		}
+		ccli := ipb.NewCuratorClient(cur)
+
+		worker := kubernetes.NewWorker(kubernetes.ConfigWorker{
+			ServiceIPRange: serviceIPRange,
+			ClusterNet:     clusterIPRange,
+			ClusterDomain:  clusterDomain,
+
+			Root:          s.storageRoot,
+			Network:       s.network,
+			NodeID:        d.membership.NodeID(),
+			CuratorClient: ccli,
+		})
+		// Start Kubernetes.
+		if err := supervisor.Run(ctx, "run", worker.Run); err != nil {
+			return fmt.Errorf("failed to start kubernetes worker service: %w", err)
+		}
+
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
+
+		// Restart everything if we get a significantly different config (ie., a config
+		// whose change would/should either turn up or tear down Kubernetes).
+		for {
+			nc, err := w.Get(ctx)
+			if err != nil {
+				return err
+			}
+			if nc.workerChanged(d) {
 				supervisor.Logger(ctx).Errorf("watcher got new config, restarting")
 				return fmt.Errorf("restarting")
 			}

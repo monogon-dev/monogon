@@ -37,7 +37,6 @@ import (
 	configapi "k8s.io/client-go/tools/clientcmd/api"
 
 	common "source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/pkg/logtree"
 	opki "source.monogon.dev/metropolis/pkg/pki"
 )
 
@@ -95,15 +94,13 @@ const (
 // generate Kubeconfigs from.
 type PKI struct {
 	namespace    opki.Namespace
-	logger       logtree.LeveledLogger
 	KV           clientv3.KV
 	Certificates map[KubeCertificateName]*opki.Certificate
 }
 
-func New(l logtree.LeveledLogger, kv clientv3.KV, clusterDomain string) *PKI {
+func New(kv clientv3.KV, clusterDomain string) *PKI {
 	pki := PKI{
 		namespace:    opki.Namespaced(etcdPrefix),
-		logger:       l,
 		KV:           kv,
 		Certificates: make(map[KubeCertificateName]*opki.Certificate),
 	}

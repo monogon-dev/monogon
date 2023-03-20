@@ -40,6 +40,10 @@ const (
 	// KubernetesAPIWrappedPort is the TCP port on which the Metropolis
 	// authenticating proxy for the Kubernetes API is exposed.
 	KubernetesAPIWrappedPort Port = 6444
+	// KubernetesWorkerLocalAPIPort is the TCP port on which Kubernetes worker nodes
+	// run a loadbalancer to access the cluster's API servers before cluster
+	// networking is available. This port is only bound to 127.0.0.1.
+	KubernetesWorkerLocalAPIPort Port = 6445
 	// DebuggerPort is the port on which the delve debugger runs (on debug
 	// builds only). Not to be confused with DebugServicePort.
 	DebuggerPort Port = 2345
@@ -57,6 +61,8 @@ func (p Port) String() string {
 		return "wireguard"
 	case KubernetesAPIPort:
 		return "kubernetes-api"
+	case KubernetesWorkerLocalAPIPort:
+		return "kubernetes-worker-local-api"
 	case KubernetesAPIWrappedPort:
 		return "kubernetes-api-wrapped"
 	case DebuggerPort:

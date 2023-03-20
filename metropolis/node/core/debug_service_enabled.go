@@ -89,10 +89,10 @@ func (s *debugService) GetDebugKubeconfig(ctx context.Context, req *apb.GetDebug
 		if err != nil {
 			return nil, status.Errorf(codes.Unavailable, "could not get kubernetes status: %v", err)
 		}
-		if v.Svc == nil {
+		if v.Controller == nil {
 			continue
 		}
-		return v.Svc.GetDebugKubeconfig(ctx, req)
+		return v.Controller.GetDebugKubeconfig(ctx, req)
 	}
 }
 

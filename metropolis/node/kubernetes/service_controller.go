@@ -39,10 +39,11 @@ import (
 	"source.monogon.dev/metropolis/node/kubernetes/plugins/kvmdevice"
 	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
-type Config struct {
+type ConfigController struct {
 	ServiceIPRange net.IPNet
 	ClusterNet     net.IPNet
 	ClusterDomain  string
@@ -53,18 +54,18 @@ type Config struct {
 	Node    *identity.Node
 }
 
-type Service struct {
-	c Config
+type Controller struct {
+	c ConfigController
 }
 
-func New(c Config) *Service {
-	s := &Service{
+func NewController(c ConfigController) *Controller {
+	s := &Controller{
 		c: c,
 	}
 	return s
 }
 
-func (s *Service) Run(ctx context.Context) error {
+func (s *Controller) Run(ctx context.Context) error {
 	controllerManagerConfig, err := getPKIControllerManagerConfig(ctx, s.c.KPKI)
 	if err != nil {
 		return fmt.Errorf("could not generate controller manager pki config: %w", err)
@@ -236,7 +237,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 // GetDebugKubeconfig issues a kubeconfig for an arbitrary given identity.
 // Useful for debugging and testing.
-func (s *Service) GetDebugKubeconfig(ctx context.Context, request *apb.GetDebugKubeconfigRequest) (*apb.GetDebugKubeconfigResponse, error) {
+func (s *Controller) GetDebugKubeconfig(ctx context.Context, request *apb.GetDebugKubeconfigRequest) (*apb.GetDebugKubeconfigResponse, error) {
 	client, err := s.c.KPKI.VolatileClient(ctx, request.Id, request.Groups)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "Failed to get volatile client certificate: %v", err)

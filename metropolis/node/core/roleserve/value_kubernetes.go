@@ -8,5 +8,5 @@ import (
 // Kubernetes instance. It allows external services to access the Kubernetes
 // Service whenever available (ie. enabled and started by the Role Server).
 type KubernetesStatus struct {
-	Svc *kubernetes.Service
+	Controller *kubernetes.Controller
 }
