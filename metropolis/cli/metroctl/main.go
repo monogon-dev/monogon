@@ -6,6 +6,8 @@ import (
 
 	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
+
+	"source.monogon.dev/metropolis/cli/metroctl/core"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -57,4 +59,14 @@ func rpcLogger(f string, args ...interface{}) {
 
 func main() {
 	cobra.CheckErr(rootCmd.Execute())
+}
+
+// connectOptions returns core.ConnectOptions as defined by the metroctl flags
+// currently set.
+func connectOptions() *core.ConnectOptions {
+	return &core.ConnectOptions{
+		ProxyServer: flags.proxyAddr,
+		Endpoints:   flags.clusterEndpoints,
+		ConfigPath:  flags.configPath,
+	}
 }

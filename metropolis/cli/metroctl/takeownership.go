@@ -68,10 +68,10 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 			log.Fatalf("Failed to create kubectl entry as metroctl is neither in PATH nor can its absolute path be determined: %v", err)
 		}
 	}
-	// TODO(issues/144): adjust cluster endpoints once have functioning roles
-	// implemented.
-	server := "https://" + net.JoinHostPort(flags.clusterEndpoints[0], node.KubernetesAPIWrappedPort.PortString())
-	if err := core.InstallK8SWrapper(metroctlPath, "metroctl", server, ""); err != nil {
+	// TODO(q3k, issues/144): this only works as long as all nodes are kubernetes controller
+	// nodes. This won't be the case for too long. Figure this out.
+	apiserver := "https://" + net.JoinHostPort(flags.clusterEndpoints[0], node.KubernetesAPIWrappedPort.PortString())
+	if err := core.InstallKubeletConfig(metroctlPath, connectOptions(), "metroctl", apiserver); err != nil {
 		log.Fatalf("Failed to install metroctl/k8s integration: %v", err)
 	}
 	log.Println("Success! kubeconfig is set up. You can now run kubectl --context=metropolis ... to access the Kubernetes cluster.")

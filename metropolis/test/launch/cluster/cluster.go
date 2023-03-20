@@ -7,6 +7,7 @@ package cluster
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/tls"
 	"errors"
@@ -28,6 +29,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/identity"
@@ -508,7 +510,8 @@ type Cluster struct {
 	// used to facilitate communication between QEMU and swtpm. It's different
 	// from launchDir, and anchored nearer the file system root, due to the
 	// socket path length limitation imposed by the kernel.
-	socketDir string
+	socketDir   string
+	metroctlDir string
 
 	// socksDialer is used by DialNode to establish connections to nodes via the
 	// SOCKS server ran by nanoswitch.
@@ -624,12 +627,19 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	}
 
 	// Create the launch directory.
-	ld, err := os.MkdirTemp(os.Getenv("TEST_TMPDIR"), "cluster*")
+	ld, err := os.MkdirTemp(os.Getenv("TEST_TMPDIR"), "cluster-*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the launch directory: %w", err)
 	}
-	// Create the socket directory.
-	sd, err := os.MkdirTemp("/tmp", "cluster*")
+	// Create the metroctl config directory. We keep it in /tmp because in some
+	// scenarios it's end-user visible and we want it short.
+	md, err := os.MkdirTemp("/tmp", "metroctl-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create the metroctl directory: %w", err)
+	}
+
+	// Create the socket directory. We keep it in /tmp because of socket path limits.
+	sd, err := os.MkdirTemp("/tmp", "cluster-*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the socket directory: %w", err)
 	}
@@ -722,6 +732,16 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		return nil, err
 	}
 
+	// Write credentials to the metroctl directory.
+	if err := metroctl.WriteOwnerKey(md, cert.PrivateKey.(ed25519.PrivateKey)); err != nil {
+		ctxC()
+		return nil, fmt.Errorf("could not write owner key: %w", err)
+	}
+	if err := metroctl.WriteOwnerCertificate(md, cert.Certificate[0]); err != nil {
+		ctxC()
+		return nil, fmt.Errorf("could not write owner certificate: %w", err)
+	}
+
 	// Set up a partially initialized cluster instance, to be filled in in the
 	// later steps.
 	cluster := &Cluster{
@@ -734,10 +754,11 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			firstNode.ID,
 		},
 
-		nodesDone: done,
-		nodeOpts:  nodeOpts,
-		launchDir: ld,
-		socketDir: sd,
+		nodesDone:   done,
+		nodeOpts:    nodeOpts,
+		launchDir:   ld,
+		socketDir:   sd,
+		metroctlDir: md,
 
 		socksDialer: socksDialer,
 
@@ -970,6 +991,7 @@ func (c *Cluster) Close() error {
 	launch.Log("Cluster: removing nodes' state files.")
 	os.RemoveAll(c.launchDir)
 	os.RemoveAll(c.socketDir)
+	os.RemoveAll(c.metroctlDir)
 	launch.Log("Cluster: done")
 	return multierr.Combine(errs...)
 }
@@ -998,4 +1020,38 @@ func (c *Cluster) DialNode(_ context.Context, addr string) (net.Conn, error) {
 	}
 	addr = net.JoinHostPort(node.ManagementAddress, port)
 	return c.socksDialer.Dial("tcp", addr)
+}
+
+// KubernetesControllerNodeAddresses returns the list of IP addresses of nodes
+// which are currently Kubernetes controllers, ie. run an apiserver. This list
+// might be empty if no node is currently configured with the
+// 'KubernetesController' node.
+func (c *Cluster) KubernetesControllerNodeAddresses(ctx context.Context) ([]string, error) {
+	curC, err := c.CuratorClient()
+	if err != nil {
+		return nil, err
+	}
+	mgmt := apb.NewManagementClient(curC)
+	srv, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{
+		Filter: "has(node.roles.kubernetes_controller)",
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer srv.CloseSend()
+	var res []string
+	for {
+		n, err := srv.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if n.Status == nil || n.Status.ExternalAddress == "" {
+			continue
+		}
+		res = append(res, n.Status.ExternalAddress)
+	}
+	return res, nil
 }

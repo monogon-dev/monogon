@@ -7,12 +7,16 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 
 	clientauthentication "k8s.io/client-go/pkg/apis/clientauthentication/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	clientapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"source.monogon.dev/metropolis/node"
 )
 
 const (
@@ -129,24 +133,33 @@ func GetOwnerCredentials(path string) (cert *x509.Certificate, key ed25519.Priva
 	return
 }
 
-// InstallK8SWrapper configures the current user's kubectl to connect to a
-// Kubernetes cluster as defined by server (Metropolis wrapped APIServer
-// endpoint), proxyURL (optional proxy URL) and metroctlPath (binary managing
-// credentials for this cluster, and used to implement the client-side part of
-// the Metropolis-wrapped APIServer protocol). The configuration will be saved to
-// the 'configName' context in kubectl.
-func InstallK8SWrapper(metroctlPath, configName, server, proxyURL string) error {
+// InstallKubeletConfig modifies the default kubelet kubeconfig of the host
+// system to be able to connect via a metroctl (and an associated ConnectOptions)
+// to a Kubernetes apiserver at IP address/hostname 'server'.
+//
+// The kubelet's kubeconfig changes will be limited to contexts/configs/... named
+// configName. The configName context will be made the default context only if
+// there is no other default context in the current subconfig.
+//
+// Kubeconfigs can only take a single Kubernetes server address, so this function
+// similarly only allows you to specify only a single server address.
+func InstallKubeletConfig(metroctlPath string, opts *ConnectOptions, configName, server string) error {
 	ca := clientcmd.NewDefaultPathOptions()
 	config, err := ca.GetStartingConfig()
 	if err != nil {
 		return fmt.Errorf("getting initial config failed: %w", err)
 	}
 
+	args := []string{
+		"k8scredplugin",
+	}
+	args = append(args, opts.ToFlags()...)
+
 	config.AuthInfos[configName] = &clientapi.AuthInfo{
 		Exec: &clientapi.ExecConfig{
 			APIVersion: clientauthentication.SchemeGroupVersion.String(),
 			Command:    metroctlPath,
-			Args:       []string{"k8scredplugin"},
+			Args:       args,
 			InstallHint: `Authenticating to Metropolis clusters requires metroctl to be present.
 Running metroctl takeownership creates this entry and either points to metroctl as a command in
 PATH if metroctl is in PATH at that time or to the absolute path to metroctl at that time.
@@ -156,14 +169,17 @@ change users.metropolis.exec.command to the required path (or just metroctl if u
 		},
 	}
 
+	var u url.URL
+	u.Scheme = "https"
+	u.Host = net.JoinHostPort(server, node.KubernetesAPIWrappedPort.PortString())
 	config.Clusters[configName] = &clientapi.Cluster{
 		// MVP: This is insecure, but making this work would be wasted effort
 		// as all of it will be replaced by the identity system.
 		// TODO(issues/144): adjust cluster endpoints once have functioning roles
 		// implemented.
 		InsecureSkipTLSVerify: true,
-		Server:                server,
-		ProxyURL:              proxyURL,
+		Server:                u.String(),
+		ProxyURL:              opts.ProxyURL(),
 	}
 
 	config.Contexts[configName] = &clientapi.Context{
@@ -182,4 +198,62 @@ change users.metropolis.exec.command to the required path (or just metroctl if u
 		return fmt.Errorf("modifying config failed: %w", err)
 	}
 	return nil
+}
+
+// ConnectOptions define how to reach a Metropolis cluster from metroctl.
+//
+// This structure can be built directly. All unset fields mean 'default'. It can
+// then be used to generate the equivalent flags to passs to metroctl.
+//
+// Nil pointers to ConnectOptions are equivalent to an empty ConneectOptions when
+// methods on it are called.
+type ConnectOptions struct {
+	// ConfigPath is the path at which the metroctl configuration/credentials live.
+	// If not set, the default will be used.
+	ConfigPath string
+	// ProxyServer is a host:port pair that indicates the metropolis cluster should
+	// be reached via the given SOCKS5 proxy. If not set, the cluster can be reached
+	// directly from the host networking stack.
+	ProxyServer string
+	// Endpoints are the IP addresses/hostnames (without port part) of the Metropolis
+	// instances that metroctl should use to establish connectivity to a cluster.
+	// These instances should have the ControlPlane role set.
+	Endpoints []string
+}
+
+// ToFlags returns the metroctl flags corresponding to the options described by
+// this ConnectionOptions struct.
+func (c *ConnectOptions) ToFlags() []string {
+	var res []string
+
+	if c == nil {
+		return res
+	}
+
+	if c.ConfigPath != "" {
+		res = append(res, "--config", c.ConfigPath)
+	}
+	if c.ProxyServer != "" {
+		res = append(res, "--proxy", c.ProxyServer)
+	}
+	for _, ep := range c.Endpoints {
+		res = append(res, "--endpoints", ep)
+	}
+
+	return res
+}
+
+// ProxyURL returns a kubeconfig-compatible URL of the proxy server configured by
+// ConnectOptions, or an empty string if not set.
+func (c *ConnectOptions) ProxyURL() string {
+	if c == nil {
+		return ""
+	}
+	if c.ProxyServer == "" {
+		return ""
+	}
+	var u url.URL
+	u.Scheme = "socks5"
+	u.Host = c.ProxyServer
+	return u.String()
 }

@@ -7,6 +7,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/test/launch/cli/launch-multi2",
     visibility = ["//visibility:private"],
     deps = [
+        "//metropolis/cli/metroctl/core",
         "//metropolis/cli/pkg/context",
         "//metropolis/test/launch/cluster",
     ],
@@ -15,12 +16,7 @@ go_library(
 go_binary(
     name = "launch-multi2_bin",
     data = [
-        "//metropolis/node:image",
-        "//metropolis/node:swtpm_data",
-        "//metropolis/test/ktest:linux-testing",
-        "//metropolis/test/nanoswitch:initramfs",
-        "//third_party/edk2:firmware",
-        "@com_github_bonzini_qboot//:qboot-bin",
+        "//metropolis/cli/metroctl",
     ],
     embed = [":launch-multi2_lib"],
     visibility = ["//:__pkg__"],

@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "cluster.go",
         "insecure_key.go",
+        "metroctl.go",
         "prefixed_stdio.go",
     ],
     data = [
@@ -18,6 +19,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/test/launch/cluster",
     visibility = ["//visibility:public"],
     deps = [
+        "//metropolis/cli/metroctl/core",
         "//metropolis/cli/pkg/datafile",
         "//metropolis/node",
         "//metropolis/node/core/identity",
@@ -28,6 +30,7 @@ go_library(
         "//metropolis/proto/common",
         "//metropolis/test/launch",
         "@com_github_cenkalti_backoff_v4//:backoff",
+        "@com_github_kballard_go_shellquote//:go-shellquote",
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//status",

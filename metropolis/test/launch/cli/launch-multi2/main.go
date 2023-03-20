@@ -20,6 +20,7 @@ import (
 	"context"
 	"log"
 
+	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/test/launch/cluster"
 )
@@ -32,7 +33,33 @@ func main() {
 	if err != nil {
 		log.Fatalf("LaunchCluster: %v", err)
 	}
+
+	mpath, err := cluster.MetroctlRunfilePath()
+	if err != nil {
+		log.Fatalf("MetroctlRunfilePath: %v", err)
+	}
+	wpath, err := cl.MakeMetroctlWrapper()
+	if err != nil {
+		log.Fatalf("MakeWrapper: %v", err)
+	}
+
+	apiservers, err := cl.KubernetesControllerNodeAddresses(ctx)
+	if err != nil {
+		log.Fatalf("Could not get Kubernetes controller nodes: %v", err)
+	}
+	if len(apiservers) < 1 {
+		log.Fatalf("Cluster has no Kubernetes controller nodes")
+	}
+
+	configName := "launch-multi2"
+	if err := metroctl.InstallKubeletConfig(mpath, cl.ConnectOptions(), configName, apiservers[0]); err != nil {
+		log.Fatalf("InstallKubeletConfig: %v", err)
+	}
+
 	log.Printf("Launch: Cluster running!")
+	log.Printf("  To access cluster use: metroctl %s", cl.MetroctlFlags())
+	log.Printf("  Or use this handy wrapper: %s", wpath)
+	log.Printf("  To access Kubernetes, use kubectl --context=%s", configName)
 
 	<-ctx.Done()
 	cl.Close()

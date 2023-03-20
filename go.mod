@@ -92,6 +92,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/insomniacslk/dhcp v0.0.0-20220119180841-3c283ff8b7dd
 	github.com/joho/godotenv v1.4.0
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/kevinburke/go-bindata v3.23.0+incompatible
 	github.com/kyleconroy/sqlc v1.15.0
 	github.com/lib/pq v1.10.6
