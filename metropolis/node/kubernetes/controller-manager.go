@@ -53,7 +53,7 @@ func getPKIControllerManagerConfig(ctx context.Context, kpki *pki.PKI) (*control
 	if err != nil {
 		return nil, fmt.Errorf("failed to get serviceaccount privkey: %w", err)
 	}
-	config.kubeConfig, err = kpki.Kubeconfig(ctx, pki.ControllerManagerClient)
+	config.kubeConfig, err = kpki.Kubeconfig(ctx, pki.ControllerManagerClient, pki.KubernetesAPIEndpointForController)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get controller-manager kubeconfig: %w", err)
 	}

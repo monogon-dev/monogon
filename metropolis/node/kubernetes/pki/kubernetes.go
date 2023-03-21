@@ -24,10 +24,13 @@
 package pki
 
 import (
+	"bytes"
 	"context"
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"net"
@@ -37,6 +40,7 @@ import (
 	configapi "k8s.io/client-go/tools/clientcmd/api"
 
 	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/consensus"
 	opki "source.monogon.dev/metropolis/pkg/pki"
 )
 
@@ -129,6 +133,10 @@ func New(kv clientv3.KV, clusterDomain string) *PKI {
 			"kubernetes.default.svc",
 			"kubernetes.default.svc." + clusterDomain,
 			"localhost",
+			// Domain used to access the apiserver by Kubernetes components themselves,
+			// without going over Kubernetes networking. This domain only lives as a set of
+			// entries in local hostsfiles.
+			"metropolis-kube-apiserver",
 		},
 		// TODO(q3k): add service network internal apiserver address
 		[]net.IP{{10, 0, 255, 1}, {127, 0, 0, 1}},
@@ -153,6 +161,31 @@ func New(kv clientv3.KV, clusterDomain string) *PKI {
 	return &pki
 }
 
+// FromLocalConsensus returns a PKI stored on the given local consensus instance,
+// in the correct etcd namespace.
+func FromLocalConsensus(ctx context.Context, svc consensus.ServiceHandle) (*PKI, error) {
+	// TODO(q3k): make this configurable
+	clusterDomain := "cluster.local"
+
+	cstW := svc.Watch()
+	defer cstW.Close()
+	cst, err := cstW.Get(ctx, consensus.FilterRunning)
+	if err != nil {
+		return nil, fmt.Errorf("waiting for local consensus: %w", err)
+	}
+	kkv, err := cst.KubernetesClient()
+	if err != nil {
+		return nil, fmt.Errorf("retrieving kubernetes client: %w", err)
+	}
+	pki := New(kkv, clusterDomain)
+	// Run EnsureAll ASAP to prevent race conditions between two kpki instances
+	// attempting to initialize the PKI data at the same time.
+	if err := pki.EnsureAll(ctx); err != nil {
+		return nil, fmt.Errorf("initial ensure failed: %w", err)
+	}
+	return pki, nil
+}
+
 // EnsureAll ensures that all static certificates (and the serviceaccount key)
 // are present on etcd.
 func (k *PKI) EnsureAll(ctx context.Context) error {
@@ -171,12 +204,12 @@ func (k *PKI) EnsureAll(ctx context.Context) error {
 
 // Kubeconfig generates a kubeconfig blob for a given certificate name. The
 // same lifetime semantics as in .Certificate apply.
-func (k *PKI) Kubeconfig(ctx context.Context, name KubeCertificateName) ([]byte, error) {
+func (k *PKI) Kubeconfig(ctx context.Context, name KubeCertificateName, endpoint KubernetesAPIEndpoint) ([]byte, error) {
 	c, ok := k.Certificates[name]
 	if !ok {
 		return nil, fmt.Errorf("no certificate %q", name)
 	}
-	return Kubeconfig(ctx, k.KV, c)
+	return Kubeconfig(ctx, k.KV, c, endpoint)
 }
 
 // Certificate retrieves an x509 DER-encoded (but not PEM-wrapped) key and
@@ -197,31 +230,47 @@ func (k *PKI) Certificate(ctx context.Context, name KubeCertificateName) (cert, 
 	return
 }
 
-// Kubeconfig generates a kubeconfig blob for this certificate. The same
-// lifetime semantics as in .Ensure apply.
-func Kubeconfig(ctx context.Context, kv clientv3.KV, c *opki.Certificate) ([]byte, error) {
+// A KubernetesAPIEndpoint describes where a Kubeconfig will make a client
+// attempt to connect to reach the Kubernetes apiservers(s).
+type KubernetesAPIEndpoint string
 
-	cert, err := c.Ensure(ctx, kv)
-	if err != nil {
-		return nil, fmt.Errorf("could not ensure certificate exists: %w", err)
+var (
+	// KubernetesAPIEndpointForWorker points Kubernetes workers to connect to a
+	// locally-running apiproxy, which in turn loadbalances the connection to
+	// controller nodes running in the cluster.
+	KubernetesAPIEndpointForWorker = KubernetesAPIEndpoint(fmt.Sprintf("https://127.0.0.1:%d", common.KubernetesWorkerLocalAPIPort))
+	// KubernetesAPIEndpointForController points Kubernetes controllers to connect to
+	// the locally-running API server.
+	KubernetesAPIEndpointForController = KubernetesAPIEndpoint(fmt.Sprintf("https://127.0.0.1:%d", common.KubernetesAPIPort))
+)
+
+// KubeconfigRaw emits a Kubeconfig for a given set of certificates, private key,
+// and a KubernetesAPIEndpoint. This function does not rely on the rest of the
+// (K)PKI infrastructure.
+func KubeconfigRaw(cacert, cert []byte, priv ed25519.PrivateKey, endpoint KubernetesAPIEndpoint) ([]byte, error) {
+	caX, _ := x509.ParseCertificate(cacert)
+	certX, _ := x509.ParseCertificate(cert)
+	if err := certX.CheckSignatureFrom(caX); err != nil {
+		return nil, fmt.Errorf("given ca does not sign given cert")
 	}
-	key, err := c.PrivateKeyX509()
+	pub1 := priv.Public().(ed25519.PublicKey)
+	pub2 := certX.PublicKey.(ed25519.PublicKey)
+	if !bytes.Equal(pub1, pub2) {
+		return nil, fmt.Errorf("given private key does not match given cert (cert: %s, key: %s)", hex.EncodeToString(pub2), hex.EncodeToString(pub1))
+	}
+
+	key, err := x509.MarshalPKCS8PrivateKey(priv)
 	if err != nil {
-		return nil, fmt.Errorf("could not get certificate's private key: %w", err)
+		return nil, fmt.Errorf("could not marshal private key: %w", err)
 	}
 
 	kubeconfig := configapi.NewConfig()
 
 	cluster := configapi.NewCluster()
-	cluster.Server = fmt.Sprintf("https://127.0.0.1:%d", common.KubernetesAPIPort)
 
-	ca, err := c.Issuer.CACertificate(ctx, kv)
-	if err != nil {
-		return nil, fmt.Errorf("could not get CA certificate: %w", err)
-	}
-	if ca != nil {
-		cluster.CertificateAuthorityData = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: ca})
-	}
+	cluster.Server = string(endpoint)
+
+	cluster.CertificateAuthorityData = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cacert})
 	kubeconfig.Clusters["default"] = cluster
 
 	authInfo := configapi.NewAuthInfo()
@@ -236,6 +285,24 @@ func Kubeconfig(ctx context.Context, kv clientv3.KV, c *opki.Certificate) ([]byt
 
 	kubeconfig.CurrentContext = "default"
 	return clientcmd.Write(*kubeconfig)
+}
+
+// Kubeconfig generates a kubeconfig blob for this certificate. The same
+// lifetime semantics as in .Ensure apply.
+func Kubeconfig(ctx context.Context, kv clientv3.KV, c *opki.Certificate, endpoint KubernetesAPIEndpoint) ([]byte, error) {
+	cert, err := c.Ensure(ctx, kv)
+	if err != nil {
+		return nil, fmt.Errorf("could not ensure certificate exists: %w", err)
+	}
+	if len(c.PrivateKey) != ed25519.PrivateKeySize {
+		return nil, fmt.Errorf("certificate has no associated private key")
+	}
+	ca, err := c.Issuer.CACertificate(ctx, kv)
+	if err != nil {
+		return nil, fmt.Errorf("could not get CA certificate: %w", err)
+	}
+
+	return KubeconfigRaw(ca, cert, c.PrivateKey, endpoint)
 }
 
 // ServiceAccountKey retrieves (and possibly generates and stores on etcd) the

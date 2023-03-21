@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 
-	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/kubernetes"
@@ -152,19 +151,13 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 
 			break
 		}
-		supervisor.Logger(ctx).Infof("Waiting for local consensus (%+v)...")
-		cstW := d.membership.localConsensus.Watch()
-		defer cstW.Close()
-		cst, err := cstW.Get(ctx, consensus.FilterRunning)
+		supervisor.Logger(ctx).Infof("Waiting for local consensus...")
+		pki, err := kpki.FromLocalConsensus(ctx, d.membership.localConsensus)
 		if err != nil {
-			return fmt.Errorf("waiting for local consensus: %w", err)
+			return fmt.Errorf("getting kubernetes PKI client: %w", err)
 		}
 
 		supervisor.Logger(ctx).Infof("Got data, starting Kubernetes...")
-		kkv, err := cst.KubernetesClient()
-		if err != nil {
-			return fmt.Errorf("retrieving kubernetes client: %w", err)
-		}
 
 		// Start containerd.
 		containerdSvc := &containerd.Service{
@@ -174,8 +167,6 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			return fmt.Errorf("failed to start containerd service: %w", err)
 		}
 
-		// Start building Kubernetes service...
-		pki := kpki.New(kkv, clusterDomain)
 
 		controller := kubernetes.NewController(kubernetes.ConfigController{
 			Node:           &d.membership.credentials.Node,
@@ -239,6 +230,14 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			return fmt.Errorf("could not dial curator: %w", err)
 		}
 		ccli := ipb.NewCuratorClient(cur)
+
+		// Start containerd.
+		containerdSvc := &containerd.Service{
+			EphemeralVolume: &s.storageRoot.Ephemeral.Containerd,
+		}
+		if err := supervisor.Run(ctx, "containerd", containerdSvc.Run); err != nil {
+			return fmt.Errorf("failed to start containerd service: %w", err)
+		}
 
 		worker := kubernetes.NewWorker(kubernetes.ConfigWorker{
 			ServiceIPRange: serviceIPRange,

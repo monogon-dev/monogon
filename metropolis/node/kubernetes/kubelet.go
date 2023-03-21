@@ -54,7 +54,7 @@ func (s *kubeletService) createCertificates(ctx context.Context) error {
 		return fmt.Errorf("when generating local kubelet credentials: %w", err)
 	}
 
-	clientKubeconfig, err := pki.Kubeconfig(ctx, s.KPKI.KV, client)
+	clientKubeconfig, err := pki.Kubeconfig(ctx, s.KPKI.KV, client, pki.KubernetesAPIEndpointForController)
 	if err != nil {
 		return fmt.Errorf("when generating kubeconfig: %w", err)
 	}

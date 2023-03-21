@@ -76,7 +76,7 @@ func (s *Controller) Run(ctx context.Context) error {
 		return fmt.Errorf("could not generate scheduler pki config: %w", err)
 	}
 
-	masterKubeconfig, err := s.c.KPKI.Kubeconfig(ctx, pki.Master)
+	masterKubeconfig, err := s.c.KPKI.Kubeconfig(ctx, pki.Master, pki.KubernetesAPIEndpointForController)
 	if err != nil {
 		return fmt.Errorf("could not generate master kubeconfig: %w", err)
 	}
@@ -243,7 +243,7 @@ func (s *Controller) GetDebugKubeconfig(ctx context.Context, request *apb.GetDeb
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "Failed to get volatile client certificate: %v", err)
 	}
-	kubeconfig, err := pki.Kubeconfig(ctx, s.c.KPKI.KV, client)
+	kubeconfig, err := pki.Kubeconfig(ctx, s.c.KPKI.KV, client, pki.KubernetesAPIEndpointForController)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "Failed to generate kubeconfig: %v", err)
 	}

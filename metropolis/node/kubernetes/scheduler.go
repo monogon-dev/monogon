@@ -40,7 +40,7 @@ func getPKISchedulerConfig(ctx context.Context, kpki *pki.PKI) (*schedulerConfig
 	if err != nil {
 		return nil, fmt.Errorf("failed to get scheduler serving certificate: %w", err)
 	}
-	config.kubeConfig, err = kpki.Kubeconfig(ctx, pki.SchedulerClient)
+	config.kubeConfig, err = kpki.Kubeconfig(ctx, pki.SchedulerClient, pki.KubernetesAPIEndpointForController)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get scheduler kubeconfig: %w", err)
 	}
