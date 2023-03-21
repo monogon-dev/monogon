@@ -18,61 +18,64 @@ package kubernetes
 
 import (
 	"context"
+	"crypto/ed25519"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
-	"io"
 	"net"
 	"os/exec"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
 	"source.monogon.dev/metropolis/pkg/fileargs"
-	opki "source.monogon.dev/metropolis/pkg/pki"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 type kubeletService struct {
-	NodeName           string
 	ClusterDNS         []net.IP
 	ClusterDomain      string
 	KubeletDirectory   *localstorage.DataKubernetesKubeletDirectory
 	EphemeralDirectory *localstorage.EphemeralDirectory
-	Output             io.Writer
-	KPKI               *pki.PKI
 
-	mount               *opki.FilesystemCertificate
-	mountKubeconfigPath string
+	kubeconfig   []byte
+	serverCACert []byte
+	serverCert   []byte
 }
 
-func (s *kubeletService) createCertificates(ctx context.Context) error {
-	server, client, err := s.KPKI.VolatileKubelet(ctx, s.NodeName)
+func (s *kubeletService) getPubkey(ctx context.Context) (ed25519.PublicKey, error) {
+	// First make sure we have a local ED25519 private key, and generate one if not.
+	if err := s.KubeletDirectory.PKI.GeneratePrivateKey(); err != nil {
+		return nil, fmt.Errorf("failed to generate private key: %w", err)
+	}
+	priv, err := s.KubeletDirectory.PKI.ReadPrivateKey()
 	if err != nil {
-		return fmt.Errorf("when generating local kubelet credentials: %w", err)
+		return nil, fmt.Errorf("could not read keypair: %w", err)
+	}
+	pubkey := priv.Public().(ed25519.PublicKey)
+	return pubkey, nil
+}
+
+func (s *kubeletService) setCertificates(kw *ipb.IssueCertificateResponse_KubernetesWorker) error {
+	key, err := s.KubeletDirectory.PKI.ReadPrivateKey()
+	if err != nil {
+		return fmt.Errorf("could not read private key from disk: %w", err)
 	}
 
-	clientKubeconfig, err := pki.Kubeconfig(ctx, s.KPKI.KV, client, pki.KubernetesAPIEndpointForController)
+	s.kubeconfig, err = pki.KubeconfigRaw(kw.IdentityCaCertificate, kw.KubeletClientCertificate, key, pki.KubernetesAPIEndpointForWorker)
 	if err != nil {
 		return fmt.Errorf("when generating kubeconfig: %w", err)
 	}
-
-	// Use a single fileargs mount for server certificate and client kubeconfig.
-	mounted, err := server.Mount(ctx, s.KPKI.KV)
-	if err != nil {
-		return fmt.Errorf("could not mount kubelet cert dir: %w", err)
-	}
-	// mounted is closed by Run() on process exit.
-
-	s.mount = mounted
-	s.mountKubeconfigPath = mounted.ArgPath("kubeconfig", clientKubeconfig)
-
+	s.serverCACert = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: kw.IdentityCaCertificate})
+	s.serverCert = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: kw.KubeletServerCertificate})
 	return nil
 }
 
-func (s *kubeletService) configure() *kubeletconfig.KubeletConfiguration {
+func (s *kubeletService) configure(fargs *fileargs.FileArgs) *kubeletconfig.KubeletConfiguration {
 	var clusterDNS []string
 	for _, dnsIP := range s.ClusterDNS {
 		clusterDNS = append(clusterDNS, dnsIP.String())
@@ -83,13 +86,13 @@ func (s *kubeletService) configure() *kubeletconfig.KubeletConfiguration {
 			Kind:       "KubeletConfiguration",
 			APIVersion: kubeletconfig.GroupName + "/v1beta1",
 		},
-		TLSCertFile:       s.mount.CertPath,
-		TLSPrivateKeyFile: s.mount.KeyPath,
+		TLSCertFile:       fargs.ArgPath("server.crt", s.serverCert),
+		TLSPrivateKeyFile: s.KubeletDirectory.PKI.Key.FullPath(),
 		TLSMinVersion:     "VersionTLS13",
 		ClusterDNS:        clusterDNS,
 		Authentication: kubeletconfig.KubeletAuthentication{
 			X509: kubeletconfig.KubeletX509Authentication{
-				ClientCAFile: s.mount.CACertPath,
+				ClientCAFile: fargs.ArgPath("ca.crt", s.serverCACert),
 			},
 		},
 		// TODO(q3k): move reconciler.False to a generic package, fix the following references.
@@ -111,24 +114,25 @@ func (s *kubeletService) configure() *kubeletconfig.KubeletConfiguration {
 }
 
 func (s *kubeletService) Run(ctx context.Context) error {
-	if err := s.createCertificates(ctx); err != nil {
-		return fmt.Errorf("when creating certificates: %w", err)
-	}
-	defer s.mount.Close()
-
-	configRaw, err := json.Marshal(s.configure())
-	if err != nil {
-		return fmt.Errorf("when marshaling kubelet configuration: %w", err)
+	if len(s.serverCert) == 0 || len(s.serverCACert) == 0 || len(s.kubeconfig) == 0 {
+		return fmt.Errorf("setCertificates was not called")
 	}
 
 	fargs, err := fileargs.New()
 	if err != nil {
 		return err
 	}
+	defer fargs.Close()
+
+	configRaw, err := json.Marshal(s.configure(fargs))
+	if err != nil {
+		return fmt.Errorf("when marshaling kubelet configuration: %w", err)
+	}
+
 	cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kubelet",
 		fargs.FileOpt("--config", "config.json", configRaw),
 		fmt.Sprintf("--container-runtime-endpoint=unix://%s", s.EphemeralDirectory.Containerd.ClientSocket.FullPath()),
-		fmt.Sprintf("--kubeconfig=%s", s.mountKubeconfigPath),
+		fargs.FileOpt("--kubeconfig", "kubeconfig", s.kubeconfig),
 		fmt.Sprintf("--root-dir=%s", s.KubeletDirectory.FullPath()),
 	)
 	cmd.Env = []string{"PATH=/kubernetes/bin"}

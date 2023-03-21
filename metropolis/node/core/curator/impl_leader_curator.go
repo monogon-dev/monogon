@@ -15,7 +15,6 @@ import (
 	tpb "google.golang.org/protobuf/types/known/timestamppb"
 
 	common "source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/node/core/consensus"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
@@ -428,22 +427,8 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 		return nil, status.Errorf(codes.Unavailable, "could not emit node credentials: %v", err)
 	}
 
-	w := l.consensus.Watch()
-	defer w.Close()
-	st, err := w.Get(ctx, consensus.FilterRunning)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not get running consensus: %v", err)
-	}
-
-	join, err := st.AddNode(ctx, node.pubkey)
-	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "could not add node: %v", err)
-	}
-
 	node.state = cpb.NodeState_NODE_STATE_UP
 	node.clusterUnlockKey = req.ClusterUnlockKey
-	node.EnableConsensusMember(join)
-	node.EnableKubernetesController()
 	if err := nodeSave(ctx, l.leadership, node); err != nil {
 		return nil, err
 	}

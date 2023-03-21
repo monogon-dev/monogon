@@ -161,14 +161,6 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 
 		supervisor.Logger(ctx).Infof("Got data, starting Kubernetes...")
 
-		// Start containerd.
-		containerdSvc := &containerd.Service{
-			EphemeralVolume: &s.storageRoot.Ephemeral.Containerd,
-		}
-		if err := supervisor.Run(ctx, "containerd", containerdSvc.Run); err != nil {
-			return fmt.Errorf("failed to start containerd service: %w", err)
-		}
-
 		controller := kubernetes.NewController(kubernetes.ConfigController{
 			Node:           &d.membership.credentials.Node,
 			ServiceIPRange: serviceIPRange,
@@ -177,7 +169,6 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			KPKI:           pki,
 			Root:           s.storageRoot,
 			Network:        s.network,
-			PodNetwork:     s.podNetwork,
 		})
 		// Start Kubernetes.
 		if err := supervisor.Run(ctx, "run", controller.Run); err != nil {
@@ -250,6 +241,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			Network:       s.network,
 			NodeID:        d.membership.NodeID(),
 			CuratorClient: ccli,
+			PodNetwork:    s.podNetwork,
 		})
 		// Start Kubernetes.
 		if err := supervisor.Run(ctx, "run", worker.Run); err != nil {

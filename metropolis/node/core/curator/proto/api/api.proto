@@ -345,6 +345,8 @@ message IssueCertificateRequest {
         bytes kubelet_pubkey = 1;
         // The ED25519 public key of the keypair that that will run the CSI provisioner.
         bytes csi_provisioner_pubkey = 2;
+        // The ED25519 public key of the keypair that will run nfproxy and clusternet.
+        bytes netservices_pubkey = 3;
     }
     oneof kind {
         KubernetesWorker kubernetes_worker = 1;
@@ -366,6 +368,9 @@ message IssueCertificateResponse {
         // DER-encoded (but not PEM armored) certificate to be used by the CSI
         // provisioner when connecting to the api server.
         bytes csi_provisioner_certificate = 4;
+        // DER-encoded (but not PEM armored) certificate to be used by worker
+        // services nfproxy and clusternet when connecting to the apiserver.
+        bytes netservices_certificate = 5;
     }
     oneof kind {
         KubernetesWorker kubernetes_worker = 1;

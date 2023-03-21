@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	_ "net/http"
@@ -160,13 +161,57 @@ func TestE2E(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			util.TestEventual(t, "Nodes are registered and ready", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Add KubernetesWorker roles", ctx, smallTestTimeout, func(ctx context.Context) error {
+				// Find all nodes that are non-controllers.
+				var ids []string
+				srvN, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
+				if err != nil {
+					return fmt.Errorf("GetNodes: %w", err)
+				}
+				defer srvN.CloseSend()
+				for {
+					node, err := srvN.Recv()
+					if err == io.EOF {
+						break
+					}
+					if err != nil {
+						return fmt.Errorf("GetNodes.Recv: %w", err)
+					}
+					if node.Roles.KubernetesController != nil {
+						continue
+					}
+					if node.Roles.ConsensusMember != nil {
+						continue
+					}
+					ids = append(ids, identity.NodeID(node.Pubkey))
+				}
+
+				if len(ids) < 1 {
+					return fmt.Errorf("no appropriate nodes found")
+				}
+
+				// Make all these nodes as KubernetesWorker.
+				for _, id := range ids {
+					tr := true
+					_, err := mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
+						Node: &apb.UpdateNodeRolesRequest_Id{
+							Id: id,
+						},
+						KubernetesWorker: &tr,
+					})
+					if err != nil {
+						return fmt.Errorf("could not make node %q into kubernetes worker: %w", id, err)
+					}
+				}
+				return nil
+			})
+			util.TestEventual(t, "Node is registered and ready", ctx, largeTestTimeout, func(ctx context.Context) error {
 				nodes, err := clientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 				if err != nil {
 					return err
 				}
-				if len(nodes.Items) < 2 {
-					return errors.New("nodes not yet registered")
+				if len(nodes.Items) < 1 {
+					return errors.New("node not yet registered")
 				}
 				node := nodes.Items[0]
 				for _, cond := range node.Status.Conditions {

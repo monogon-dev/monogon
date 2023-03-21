@@ -36,7 +36,6 @@ go_library(
         "//metropolis/pkg/fsquota",
         "//metropolis/pkg/logtree",
         "//metropolis/pkg/loop",
-        "//metropolis/pkg/pki",
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/api",
         "@com_github_container_storage_interface_spec//lib/go/csi",

@@ -1209,6 +1209,7 @@ func TestIssueKubernetesWorkerCertificate(t *testing.T) {
 	// Issue certificates for some random pubkey.
 	kpub, _, _ := ed25519.GenerateKey(rand.Reader)
 	cpub, _, _ := ed25519.GenerateKey(rand.Reader)
+	npub, _, _ := ed25519.GenerateKey(rand.Reader)
 
 	curator := ipb.NewCuratorClient(cl.localNodeConn)
 	res, err := curator.IssueCertificate(ctx, &ipb.IssueCertificateRequest{
@@ -1216,6 +1217,7 @@ func TestIssueKubernetesWorkerCertificate(t *testing.T) {
 			KubernetesWorker: &ipb.IssueCertificateRequest_KubernetesWorker{
 				KubeletPubkey:        kpub,
 				CsiProvisionerPubkey: cpub,
+				NetservicesPubkey:    npub,
 			},
 		},
 	})
@@ -1240,6 +1242,10 @@ func TestIssueKubernetesWorkerCertificate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not parse CSI provisiooner certificate: %v", err)
 	}
+	ncert, err := x509.ParseCertificate(kw.NetservicesCertificate)
+	if err != nil {
+		t.Fatalf("Could not parse network services certificate: %v", err)
+	}
 
 	if err := scert.CheckSignatureFrom(idca); err != nil {
 		t.Errorf("Server certificate not signed by IdCA: %v", err)
@@ -1249,6 +1255,9 @@ func TestIssueKubernetesWorkerCertificate(t *testing.T) {
 	}
 	if err := pcert.CheckSignatureFrom(idca); err != nil {
 		t.Errorf("CSI provisioner certificate not signed by IdCA: %v", err)
+	}
+	if err := ncert.CheckSignatureFrom(idca); err != nil {
+		t.Errorf("Network services certificate not signed by IdCA: %v", err)
 	}
 	scertPubkey := scert.PublicKey.(ed25519.PublicKey)
 	if !bytes.Equal(scertPubkey, kpub) {
@@ -1262,6 +1271,10 @@ func TestIssueKubernetesWorkerCertificate(t *testing.T) {
 	if !bytes.Equal(pcertPubkey, cpub) {
 		t.Errorf("CSI provisioner certificate not emitted for requested key")
 	}
+	ncertPubkey := ncert.PublicKey.(ed25519.PublicKey)
+	if !bytes.Equal(ncertPubkey, npub) {
+		t.Errorf("Network services certificate not emitted for requested key")
+	}
 
 	// Try issuing again for the same pubkeys. This should work.
 	_, err = curator.IssueCertificate(ctx, &ipb.IssueCertificateRequest{
@@ -1269,6 +1282,7 @@ func TestIssueKubernetesWorkerCertificate(t *testing.T) {
 			KubernetesWorker: &ipb.IssueCertificateRequest_KubernetesWorker{
 				KubeletPubkey:        kpub,
 				CsiProvisionerPubkey: cpub,
+				NetservicesPubkey:    npub,
 			},
 		},
 	})
@@ -1279,12 +1293,14 @@ func TestIssueKubernetesWorkerCertificate(t *testing.T) {
 	// Try issuing again for other pubkey. These should be rejected.
 	kpub2, _, _ := ed25519.GenerateKey(rand.Reader)
 	cpub2, _, _ := ed25519.GenerateKey(rand.Reader)
+	npub2, _, _ := ed25519.GenerateKey(rand.Reader)
 
 	_, err = curator.IssueCertificate(ctx, &ipb.IssueCertificateRequest{
 		Kind: &ipb.IssueCertificateRequest_KubernetesWorker_{
 			KubernetesWorker: &ipb.IssueCertificateRequest_KubernetesWorker{
 				KubeletPubkey:        kpub2,
 				CsiProvisionerPubkey: cpub,
+				NetservicesPubkey:    npub,
 			},
 		},
 	})
@@ -1296,6 +1312,19 @@ func TestIssueKubernetesWorkerCertificate(t *testing.T) {
 			KubernetesWorker: &ipb.IssueCertificateRequest_KubernetesWorker{
 				KubeletPubkey:        kpub,
 				CsiProvisionerPubkey: cpub2,
+				NetservicesPubkey:    npub,
+			},
+		},
+	})
+	if err == nil {
+		t.Errorf("Certificate has been issued again for a different pubkey")
+	}
+	_, err = curator.IssueCertificate(ctx, &ipb.IssueCertificateRequest{
+		Kind: &ipb.IssueCertificateRequest_KubernetesWorker_{
+			KubernetesWorker: &ipb.IssueCertificateRequest_KubernetesWorker{
+				KubeletPubkey:        kpub,
+				CsiProvisionerPubkey: cpub,
+				NetservicesPubkey:    npub2,
 			},
 		},
 	})

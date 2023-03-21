@@ -392,29 +392,25 @@ func (k *PKI) CSIProvisioner(ctx context.Context, name string, pubkey ed25519.Pu
 	return client, nil
 }
 
-// VolatileKubelet returns a pair of server/client ceritficates for the Kubelet
-// to use. The certificates are ephemeral, meaning they are not stored in etcd,
-// and instead are regenerated any time this function is called.
-func (k *PKI) VolatileKubelet(ctx context.Context, name string) (server *opki.Certificate, client *opki.Certificate, err error) {
-	name = fmt.Sprintf("system:node:%s", name)
+// NetServices returns a certificate to be used by nfproxy and clusternet running
+// on a worker node.
+func (k *PKI) NetServices(ctx context.Context, name string, pubkey ed25519.PublicKey) (client *opki.Certificate, err error) {
+	name = fmt.Sprintf("metropolis:netservices:%s", name)
 	err = k.EnsureAll(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not ensure certificates exist: %w", err)
+		return nil, fmt.Errorf("could not ensure certificates exist: %w", err)
 	}
 	kubeCA := k.Certificates[IdCA]
-	server = &opki.Certificate{
-		Namespace: &k.namespace,
-		Issuer:    kubeCA,
-		Template:  opki.Server([]string{name}, nil),
-		Mode:      opki.CertificateEphemeral,
-	}
+	clientName := fmt.Sprintf("netservices-%s", name)
 	client = &opki.Certificate{
+		Name:      clientName,
 		Namespace: &k.namespace,
 		Issuer:    kubeCA,
-		Template:  opki.Client(name, []string{"system:nodes"}),
-		Mode:      opki.CertificateEphemeral,
+		Template:  opki.Client(name, []string{"metropolis:netservices"}),
+		Mode:      opki.CertificateExternal,
+		PublicKey: pubkey,
 	}
-	return server, client, nil
+	return client, nil
 }
 
 // VolatileClient returns a client certificate for Kubernetes clients to use.

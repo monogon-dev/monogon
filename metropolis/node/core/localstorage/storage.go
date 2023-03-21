@@ -102,6 +102,8 @@ type DataEtcdDirectory struct {
 type DataKubernetesDirectory struct {
 	declarative.Directory
 	ClusterNetworking DataKubernetesClusterNetworkingDirectory `dir:"clusternet"`
+	CSIProvisioner    DataKubernetesCSIProvisionerDirectory    `dir:"csiprovisioner"`
+	Netservices       DataKubernetesNetservicesDirectory       `dir:"netservices"`
 	Kubelet           DataKubernetesKubeletDirectory           `dir:"kubelet"`
 }
 
@@ -110,10 +112,19 @@ type DataKubernetesClusterNetworkingDirectory struct {
 	Key declarative.File `file:"private.key"`
 }
 
+type DataKubernetesCSIProvisionerDirectory struct {
+	declarative.Directory
+	PKI PKIDirectory `dir:"pki"`
+}
+
+type DataKubernetesNetservicesDirectory struct {
+	declarative.Directory
+	PKI PKIDirectory `dir:"pki"`
+}
+
 type DataKubernetesKubeletDirectory struct {
 	declarative.Directory
-	Kubeconfig declarative.File `file:"kubeconfig"`
-	PKI        PKIDirectory     `dir:"pki"`
+	PKI PKIDirectory `dir:"pki"`
 
 	DevicePlugins struct {
 		declarative.Directory

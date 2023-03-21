@@ -18,6 +18,7 @@ package localstorage
 
 import (
 	"crypto/ed25519"
+	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -62,6 +63,21 @@ func (p *PKIDirectory) AllAbsent() (bool, error) {
 		}
 	}
 	return true, nil
+}
+
+// GeneratePrivateKey will generate an ED25519 private key for this PKIDirectory
+// if it doesn't yet exist.
+func (p *PKIDirectory) GeneratePrivateKey() error {
+	// Do nothing if key already exists.
+	_, err := p.Key.Read()
+	if err == nil {
+		return nil
+	}
+	_, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return err
+	}
+	return p.WritePrivateKey(priv)
 }
 
 // WritePrivateKey serializes the given private key (PKCS8 + PEM) and writes it

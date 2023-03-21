@@ -24,22 +24,16 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	oclusternet "source.monogon.dev/metropolis/node/core/clusternet"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/network/dns"
 	"source.monogon.dev/metropolis/node/kubernetes/authproxy"
-	"source.monogon.dev/metropolis/node/kubernetes/clusternet"
-	"source.monogon.dev/metropolis/node/kubernetes/nfproxy"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
-	"source.monogon.dev/metropolis/node/kubernetes/plugins/kvmdevice"
 	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
-	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -50,11 +44,10 @@ type ConfigController struct {
 	ClusterNet     net.IPNet
 	ClusterDomain  string
 
-	KPKI       *pki.PKI
-	Root       *localstorage.Root
-	Network    *network.Service
-	Node       *identity.Node
-	PodNetwork event.Value[*oclusternet.Prefixes]
+	KPKI    *pki.PKI
+	Root    *localstorage.Root
+	Network *network.Service
+	Node    *identity.Node
 }
 
 type Controller struct {
@@ -95,12 +88,9 @@ func (s *Controller) Run(ctx context.Context) error {
 		return fmt.Errorf("could not generate kubernetes client: %w", err)
 	}
 
-	informerFactory := informers.NewSharedInformerFactory(clientSet, 5*time.Minute)
-
 	// Sub-runnable which starts all parts of Kubernetes that depend on the
 	// machine's external IP address. If it changes, the runnable will exit.
 	// TODO(q3k): test this
-	startKubelet := make(chan struct{})
 	supervisor.Run(ctx, "networked", func(ctx context.Context) error {
 		networkWatch := s.c.Network.Watch()
 		defer networkWatch.Close()
@@ -124,21 +114,8 @@ func (s *Controller) Run(ctx context.Context) error {
 			EphemeralConsensusDirectory: &s.c.Root.Ephemeral.Consensus,
 		}
 
-		kubelet := kubeletService{
-			NodeName:           s.c.Node.ID(),
-			ClusterDNS:         []net.IP{address},
-			ClusterDomain:      s.c.ClusterDomain,
-			KubeletDirectory:   &s.c.Root.Data.Kubernetes.Kubelet,
-			EphemeralDirectory: &s.c.Root.Ephemeral,
-			KPKI:               s.c.KPKI,
-		}
-
 		err := supervisor.RunGroup(ctx, map[string]supervisor.Runnable{
 			"apiserver": apiserver.Run,
-			"kubelet": func(ctx context.Context) error {
-				<-startKubelet
-				return kubelet.Run(ctx)
-			},
 		})
 		if err != nil {
 			return fmt.Errorf("when starting apiserver/kubelet: %w", err)
@@ -165,7 +142,6 @@ func (s *Controller) Run(ctx context.Context) error {
 		err := reconciler.ReconcileAll(ctx, clientSet)
 		if err == nil {
 			supervisor.Logger(ctx).Infof("Initial resource reconciliation succeeded.")
-			close(startKubelet)
 			break
 		}
 		if time.Now().After(startLogging) {
@@ -173,33 +149,6 @@ func (s *Controller) Run(ctx context.Context) error {
 			startLogging = time.Now().Add(10 * time.Second)
 		}
 		time.Sleep(100 * time.Millisecond)
-	}
-
-	csiPlugin := csiPluginServer{
-		KubeletDirectory: &s.c.Root.Data.Kubernetes.Kubelet,
-		VolumesDirectory: &s.c.Root.Data.Volumes,
-	}
-
-	csiProvisioner := csiProvisionerServer{
-		NodeName:         s.c.Node.ID(),
-		Kubernetes:       clientSet,
-		InformerFactory:  informerFactory,
-		VolumesDirectory: &s.c.Root.Data.Volumes,
-	}
-
-	clusternet := clusternet.Service{
-		NodeName:   s.c.Node.ID(),
-		Kubernetes: clientSet,
-		Prefixes:   s.c.PodNetwork,
-	}
-
-	nfproxy := nfproxy.Service{
-		ClusterCIDR: s.c.ClusterNet,
-		ClientSet:   clientSet,
-	}
-
-	kvmDevicePlugin := kvmdevice.Plugin{
-		KubeletDirectory: &s.c.Root.Data.Kubernetes.Kubelet,
 	}
 
 	authProxy := authproxy.Service{
@@ -214,11 +163,6 @@ func (s *Controller) Run(ctx context.Context) error {
 		{"controller-manager", runControllerManager(*controllerManagerConfig)},
 		{"scheduler", runScheduler(*schedulerConfig)},
 		{"reconciler", reconciler.Maintain(clientSet)},
-		{"csi-plugin", csiPlugin.Run},
-		{"csi-provisioner", csiProvisioner.Run},
-		{"clusternet", clusternet.Run},
-		{"nfproxy", nfproxy.Run},
-		{"kvmdeviceplugin", kvmDevicePlugin.Run},
 		{"authproxy", authProxy.Run},
 	} {
 		err := supervisor.Run(ctx, sub.name, sub.runnable)

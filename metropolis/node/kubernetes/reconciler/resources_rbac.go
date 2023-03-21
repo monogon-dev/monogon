@@ -29,6 +29,10 @@ var (
 	clusterRoleBindingDefaultPSP             = builtinRBACName("default-psp-for-sa")
 	clusterRoleBindingAPIServerKubeletClient = builtinRBACName("apiserver-kubelet-client")
 	clusterRoleBindingOwnerAdmin             = builtinRBACName("owner-admin")
+	clusterRoleCSIProvisioner                = builtinRBACName("csi-provisioner")
+	clusterRoleBindingCSIProvisioners        = builtinRBACName("csi-provisioner")
+	clusterRoleNetServices                   = builtinRBACName("netservices")
+	clusterRoleBindingNetServices            = builtinRBACName("netservices")
 )
 
 type resourceClusterRoles struct {
@@ -72,6 +76,53 @@ func (r resourceClusterRoles) Expected() map[string]interface{} {
 					Resources:     []string{"podsecuritypolicies"},
 					ResourceNames: []string{"default"},
 					Verbs:         []string{"use"},
+				},
+			},
+		},
+		clusterRoleCSIProvisioner: &rbac.ClusterRole{
+			ObjectMeta: meta.ObjectMeta{
+				Name:   clusterRoleCSIProvisioner,
+				Labels: builtinLabels(nil),
+				Annotations: map[string]string{
+					"kubernetes.io/description": "This role grants access to PersistentVolumes, PersistentVolumeClaims and StorageClassses, as used the the CSI provisioner running on nodes.",
+				},
+			},
+			Rules: []rbac.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"events"},
+					Verbs:     []string{"get", "list", "watch", "create", "update", "patch"},
+				},
+				{
+					APIGroups: []string{"storage.k8s.io"},
+					Resources: []string{"storageclasses"},
+					Verbs:     []string{"get", "list", "watch"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"persistentvolumes", "persistentvolumeclaims"},
+					Verbs:     []string{"*"},
+				},
+			},
+		},
+		clusterRoleNetServices: &rbac.ClusterRole{
+			ObjectMeta: meta.ObjectMeta{
+				Name:   clusterRoleNetServices,
+				Labels: builtinLabels(nil),
+				Annotations: map[string]string{
+					"kubernetes.io/description": "This role grants access to the minimum set of resources that are needed to run networking services for a node.",
+				},
+			},
+			Rules: []rbac.PolicyRule{
+				{
+					APIGroups: []string{"discovery.k8s.io"},
+					Resources: []string{"endpointslices"},
+					Verbs:     []string{"get", "list", "watch"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"services", "nodes", "namespaces"},
+					Verbs:     []string{"get", "list", "watch"},
 				},
 			},
 		},
@@ -170,6 +221,48 @@ func (r resourceClusterRoleBindings) Expected() map[string]interface{} {
 					APIGroup: rbac.GroupName,
 					Kind:     "User",
 					Name:     "owner",
+				},
+			},
+		},
+		clusterRoleBindingCSIProvisioners: &rbac.ClusterRoleBinding{
+			ObjectMeta: meta.ObjectMeta{
+				Name:   clusterRoleBindingCSIProvisioners,
+				Labels: builtinLabels(nil),
+				Annotations: map[string]string{
+					"kubernetes.io/description": "This role binding grants CSI provisioners running on nodes access to the necessary resources.",
+				},
+			},
+			RoleRef: rbac.RoleRef{
+				APIGroup: rbac.GroupName,
+				Kind:     "ClusterRole",
+				Name:     clusterRoleCSIProvisioner,
+			},
+			Subjects: []rbac.Subject{
+				{
+					APIGroup: rbac.GroupName,
+					Kind:     "Group",
+					Name:     "metropolis:csi-provisioner",
+				},
+			},
+		},
+		clusterRoleBindingNetServices: &rbac.ClusterRoleBinding{
+			ObjectMeta: meta.ObjectMeta{
+				Name:   clusterRoleBindingNetServices,
+				Labels: builtinLabels(nil),
+				Annotations: map[string]string{
+					"kubernetes.io/description": "This role binding grants node network services access to necessary resources.",
+				},
+			},
+			RoleRef: rbac.RoleRef{
+				APIGroup: rbac.GroupName,
+				Kind:     "ClusterRole",
+				Name:     clusterRoleNetServices,
+			},
+			Subjects: []rbac.Subject{
+				{
+					APIGroup: rbac.GroupName,
+					Kind:     "Group",
+					Name:     "metropolis:netservices",
 				},
 			},
 		},

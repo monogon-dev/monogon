@@ -23,7 +23,10 @@ func issueKubernetesWorkerCertificates(ctx context.Context, kp *kpki.PKI, nodeID
 		return nil, status.Error(codes.InvalidArgument, "kubelet pubkey must be set and valid")
 	}
 	if len(req.CsiProvisionerPubkey) != ed25519.PublicKeySize {
-		return nil, status.Error(codes.InvalidArgument, "worker services pubkey must be set and valid")
+		return nil, status.Error(codes.InvalidArgument, "CSI provisioner pubkey must be set and valid")
+	}
+	if len(req.NetservicesPubkey) != ed25519.PublicKeySize {
+		return nil, status.Error(codes.InvalidArgument, "network services pubkey must be set and valid")
 	}
 
 	kubeletServer, kubeletClient, err := kp.Kubelet(ctx, nodeID, req.KubeletPubkey)
@@ -50,6 +53,16 @@ func issueKubernetesWorkerCertificates(ctx context.Context, kp *kpki.PKI, nodeID
 		return nil, status.Errorf(codes.Unavailable, "could not ensure CSI provisioner client certificate: %v", err)
 	}
 
+	netservClient, err := kp.NetServices(ctx, nodeID, req.NetservicesPubkey)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not generate netservices client certificates: %v", err)
+	}
+
+	netservClientCert, err := netservClient.Ensure(ctx, kp.KV)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not ensure netservices client certificate: %v", err)
+	}
+
 	return &ipb.IssueCertificateResponse{
 		Kind: &ipb.IssueCertificateResponse_KubernetesWorker_{
 			KubernetesWorker: &ipb.IssueCertificateResponse_KubernetesWorker{
@@ -57,6 +70,7 @@ func issueKubernetesWorkerCertificates(ctx context.Context, kp *kpki.PKI, nodeID
 				KubeletServerCertificate:  kubeletServerCert,
 				KubeletClientCertificate:  kubeletClientCert,
 				CsiProvisionerCertificate: csiClientCert,
+				NetservicesCertificate:    netservClientCert,
 			},
 		},
 	}, nil
