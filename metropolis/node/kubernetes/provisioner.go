@@ -91,6 +91,11 @@ func (p *csiProvisionerServer) Run(ctx context.Context) error {
 	p.claimQueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	p.pvQueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
+	p.logger = supervisor.Logger(ctx)
+
+	p.pvcInformer.Informer().SetWatchErrorHandler(func(_ *cache.Reflector, err error) {
+		p.logger.Errorf("pvcInformer watch error: %v", err)
+	})
 	p.pvcInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: p.enqueueClaim,
 		UpdateFunc: func(old, new interface{}) {
@@ -103,7 +108,13 @@ func (p *csiProvisionerServer) Run(ctx context.Context) error {
 			p.enqueuePV(new)
 		},
 	})
-	p.logger = supervisor.Logger(ctx)
+	p.pvInformer.Informer().SetWatchErrorHandler(func(_ *cache.Reflector, err error) {
+		p.logger.Errorf("pvInformer watch error: %v", err)
+	})
+
+	p.storageClassInformer.Informer().SetWatchErrorHandler(func(_ *cache.Reflector, err error) {
+		p.logger.Errorf("storageClassInformer watch error: %v", err)
+	})
 
 	go p.pvcInformer.Informer().Run(ctx.Done())
 	go p.pvInformer.Informer().Run(ctx.Done())
@@ -226,7 +237,7 @@ func (p *csiProvisionerServer) processPVC(key string) error {
 
 	storageClass, err := p.storageClassInformer.Lister().Get(*pvc.Spec.StorageClassName)
 	if err != nil {
-		return fmt.Errorf("")
+		return fmt.Errorf("could not get storage class: %w", err)
 	}
 
 	if storageClass.Provisioner != csiProvisionerServerName {
@@ -283,7 +294,7 @@ func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, stora
 			return errors.New("newly-created volume already contains data, bailing")
 		}
 		if err := fsquota.SetQuota(volumePath, uint64(capacity), 100000); err != nil {
-			return fmt.Errorf("failed to update quota: %v", err)
+			return fmt.Errorf("failed to update quota: %w", err)
 		}
 	case v1.PersistentVolumeBlock:
 		imageFile, err := os.OpenFile(volumePath, os.O_CREATE|os.O_RDWR, 0644)
