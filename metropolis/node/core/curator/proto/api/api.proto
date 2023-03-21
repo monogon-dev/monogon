@@ -119,6 +119,17 @@ service Curator {
             allow_unauthenticated: true
         };
     }
+
+    // IssueCertificate issues some TLS certificate (currently only for nodes),
+    // effectively performing credential escrow.
+    //
+    // This is currently used to issue Kubernetes component certificates for
+    // nodes (as Kubernetes doesn't understand Metropolis certificates, and we
+    // don't want to be running components with node private keys anyway).
+    rpc IssueCertificate(IssueCertificateRequest) returns (IssueCertificateResponse) {
+        option (metropolis.proto.ext.authorization) = {
+        };
+    }
 }
 
 // Node is the state and configuration of a node in the cluster.
@@ -295,4 +306,43 @@ message GetCurrentLeaderResponse {
     int32 leader_port = 3;
     // this_node_id is the Node ID of the node which sent this response.
     string this_node_id = 4;
+}
+
+message IssueCertificateRequest {
+    // Issue a set of TLS certificates for a Kubernetes worker node.
+    message KubernetesWorker {
+        // The ED25519 public key of the keypair that will run the kubelet and
+        // cluster networking.
+        //
+        // Kubernetes worker certificates can only be issued for one pubkey for
+        // a given node. Attempting to retrieve certificates for a different
+        // pubkey will fail.
+        bytes kubelet_pubkey = 1;
+        // The ED25519 public key of the keypair that that will run the CSI provisioner.
+        bytes csi_provisioner_pubkey = 2;
+    }
+    oneof kind {
+        KubernetesWorker kubernetes_worker = 1;
+    };
+}
+
+message IssueCertificateResponse {
+    message KubernetesWorker {
+        // DER-encoded (but not PEM armored) certificate of the Kubernetes
+        // 'identity' CA, which is used to authenticate services users. The
+        // certificates issued below are signed by this CA.
+        bytes identity_ca_certificate = 1;
+        // DER-encoded (but not PEM armored) certificate to be used by kubelet
+        // when authenticating incoming connections.
+        bytes kubelet_server_certificate = 2;
+        // DER-encoded (but not PEM armored) certificate to be used by kubelet
+        // and cluster networking when connecting to the api server.
+        bytes kubelet_client_certificate = 3;
+        // DER-encoded (but not PEM armored) certificate to be used by the CSI
+        // provisioner when connecting to the api server.
+        bytes csi_provisioner_certificate = 4;
+    }
+    oneof kind {
+        KubernetesWorker kubernetes_worker = 1;
+    };
 }

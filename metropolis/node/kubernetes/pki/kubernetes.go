@@ -342,6 +342,56 @@ func (k *PKI) ServiceAccountKey(ctx context.Context) ([]byte, error) {
 	return key, nil
 }
 
+// Kubelet returns a pair of server/client ceritficates for the Kubelet to use.
+func (k *PKI) Kubelet(ctx context.Context, name string, pubkey ed25519.PublicKey) (server *opki.Certificate, client *opki.Certificate, err error) {
+	name = fmt.Sprintf("system:node:%s", name)
+	err = k.EnsureAll(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not ensure certificates exist: %w", err)
+	}
+	kubeCA := k.Certificates[IdCA]
+	serverName := fmt.Sprintf("kubelet-%s-server", name)
+	server = &opki.Certificate{
+		Name:      serverName,
+		Namespace: &k.namespace,
+		Issuer:    kubeCA,
+		Template:  opki.Server([]string{name}, nil),
+		Mode:      opki.CertificateExternal,
+		PublicKey: pubkey,
+	}
+	clientName := fmt.Sprintf("kubelet-%s-client", name)
+	client = &opki.Certificate{
+		Name:      clientName,
+		Namespace: &k.namespace,
+		Issuer:    kubeCA,
+		Template:  opki.Client(name, []string{"system:nodes"}),
+		Mode:      opki.CertificateExternal,
+		PublicKey: pubkey,
+	}
+	return server, client, nil
+}
+
+// CSIProvisioner returns a certificate to be used by the CSI provisioner running
+// on a worker node.
+func (k *PKI) CSIProvisioner(ctx context.Context, name string, pubkey ed25519.PublicKey) (client *opki.Certificate, err error) {
+	name = fmt.Sprintf("metropolis:csi-provisioner:%s", name)
+	err = k.EnsureAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not ensure certificates exist: %w", err)
+	}
+	kubeCA := k.Certificates[IdCA]
+	clientName := fmt.Sprintf("csi-provisioner-%s", name)
+	client = &opki.Certificate{
+		Name:      clientName,
+		Namespace: &k.namespace,
+		Issuer:    kubeCA,
+		Template:  opki.Client(name, []string{"metropolis:csi-provisioner"}),
+		Mode:      opki.CertificateExternal,
+		PublicKey: pubkey,
+	}
+	return client, nil
+}
+
 // VolatileKubelet returns a pair of server/client ceritficates for the Kubelet
 // to use. The certificates are ephemeral, meaning they are not stored in etcd,
 // and instead are regenerated any time this function is called.

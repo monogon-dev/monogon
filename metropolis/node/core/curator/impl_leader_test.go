@@ -1176,3 +1176,120 @@ func TestGetCurrentLeader(t *testing.T) {
 		t.Errorf("Wanted leader port %d, got %d", want, got)
 	}
 }
+
+// TestIssueKubernetesWorkerCertificate exercises whether we can retrieve
+// Kubernetes Worker certificates from the curator.
+func TestIssueKubernetesWorkerCertificate(t *testing.T) {
+	cl := fakeLeader(t)
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	mgmt := apb.NewManagementClient(cl.mgmtConn)
+	true_ := true
+	_, err := mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
+		Node: &apb.UpdateNodeRolesRequest_Id{
+			Id: cl.localNodeID,
+		},
+		KubernetesWorker: &true_,
+	})
+	if err != nil {
+		t.Fatalf("Could not make node into Kubernetes worker: %v", err)
+	}
+
+	// Issue certificates for some random pubkey.
+	kpub, _, _ := ed25519.GenerateKey(rand.Reader)
+	cpub, _, _ := ed25519.GenerateKey(rand.Reader)
+
+	curator := ipb.NewCuratorClient(cl.localNodeConn)
+	res, err := curator.IssueCertificate(ctx, &ipb.IssueCertificateRequest{
+		Kind: &ipb.IssueCertificateRequest_KubernetesWorker_{
+			KubernetesWorker: &ipb.IssueCertificateRequest_KubernetesWorker{
+				KubeletPubkey:        kpub,
+				CsiProvisionerPubkey: cpub,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("IssueCertificate: %v", err)
+	}
+
+	kw := res.Kind.(*ipb.IssueCertificateResponse_KubernetesWorker_).KubernetesWorker
+	idca, err := x509.ParseCertificate(kw.IdentityCaCertificate)
+	if err != nil {
+		t.Fatalf("Could not parse IdCA cert: %v", err)
+	}
+	scert, err := x509.ParseCertificate(kw.KubeletServerCertificate)
+	if err != nil {
+		t.Fatalf("Could not parse server certificate: %v", err)
+	}
+	ccert, err := x509.ParseCertificate(kw.KubeletClientCertificate)
+	if err != nil {
+		t.Fatalf("Could not parse client certificate: %v", err)
+	}
+	pcert, err := x509.ParseCertificate(kw.CsiProvisionerCertificate)
+	if err != nil {
+		t.Fatalf("Could not parse CSI provisiooner certificate: %v", err)
+	}
+
+	if err := scert.CheckSignatureFrom(idca); err != nil {
+		t.Errorf("Server certificate not signed by IdCA: %v", err)
+	}
+	if err := ccert.CheckSignatureFrom(idca); err != nil {
+		t.Errorf("Client certificate not signed by IdCA: %v", err)
+	}
+	if err := pcert.CheckSignatureFrom(idca); err != nil {
+		t.Errorf("CSI provisioner certificate not signed by IdCA: %v", err)
+	}
+	scertPubkey := scert.PublicKey.(ed25519.PublicKey)
+	if !bytes.Equal(scertPubkey, kpub) {
+		t.Errorf("Server certificate not emitted for requested key")
+	}
+	ccertPubkey := ccert.PublicKey.(ed25519.PublicKey)
+	if !bytes.Equal(ccertPubkey, kpub) {
+		t.Errorf("Client certificate not emitted for requested key")
+	}
+	pcertPubkey := pcert.PublicKey.(ed25519.PublicKey)
+	if !bytes.Equal(pcertPubkey, cpub) {
+		t.Errorf("CSI provisioner certificate not emitted for requested key")
+	}
+
+	// Try issuing again for the same pubkeys. This should work.
+	_, err = curator.IssueCertificate(ctx, &ipb.IssueCertificateRequest{
+		Kind: &ipb.IssueCertificateRequest_KubernetesWorker_{
+			KubernetesWorker: &ipb.IssueCertificateRequest_KubernetesWorker{
+				KubeletPubkey:        kpub,
+				CsiProvisionerPubkey: cpub,
+			},
+		},
+	})
+	if err != nil {
+		t.Errorf("Certificate should have been re-issued: %v", err)
+	}
+
+	// Try issuing again for other pubkey. These should be rejected.
+	kpub2, _, _ := ed25519.GenerateKey(rand.Reader)
+	cpub2, _, _ := ed25519.GenerateKey(rand.Reader)
+
+	_, err = curator.IssueCertificate(ctx, &ipb.IssueCertificateRequest{
+		Kind: &ipb.IssueCertificateRequest_KubernetesWorker_{
+			KubernetesWorker: &ipb.IssueCertificateRequest_KubernetesWorker{
+				KubeletPubkey:        kpub2,
+				CsiProvisionerPubkey: cpub,
+			},
+		},
+	})
+	if err == nil {
+		t.Errorf("Certificate has been issued again for a different pubkey")
+	}
+	_, err = curator.IssueCertificate(ctx, &ipb.IssueCertificateRequest{
+		Kind: &ipb.IssueCertificateRequest_KubernetesWorker_{
+			KubernetesWorker: &ipb.IssueCertificateRequest_KubernetesWorker{
+				KubeletPubkey:        kpub,
+				CsiProvisionerPubkey: cpub2,
+			},
+		},
+	})
+	if err == nil {
+		t.Errorf("Certificate has been issued again for a different pubkey")
+	}
+}
