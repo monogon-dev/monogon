@@ -5,7 +5,10 @@ load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
 
 go_library(
     name = "installer_lib",
-    srcs = ["main.go"],
+    srcs = [
+        "log.go",
+        "main.go",
+    ],
     importpath = "source.monogon.dev/metropolis/installer",
     visibility = ["//visibility:private"],
     deps = [

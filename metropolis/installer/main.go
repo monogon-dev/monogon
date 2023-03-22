@@ -178,20 +178,13 @@ func initializeSystemPartition(image io.Reader, tgtBlkdev string) error {
 	return nil
 }
 
-// panicf is a replacement for log.panicf that doesn't print the error message
-// before calling panic.
-func panicf(format string, v ...interface{}) {
-	s := fmt.Sprintf(format, v...)
-	panic(s)
-}
-
 func main() {
 	// Reboot on panic after a delay. The error string will have been printed
 	// before recover is called.
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println(r)
-			fmt.Println("The installation could not be finalized. Please reboot to continue.")
+			logf("Fatal error: %v", r)
+			logf("The installation could not be finalized. Please reboot to continue.")
 			syscall.Pause()
 		}
 	}()
@@ -200,6 +193,12 @@ func main() {
 	if err := mountPseudoFS(); err != nil {
 		panicf("While mounting pseudo-filesystems: %v", err)
 	}
+
+	go logPiper()
+	logf("Metropolis Installer")
+	logf("Copyright (c) 2023 The Monogon Project Authors")
+	logf("")
+
 	// Read the installer ESP UUID from efivarfs.
 	espUuid, err := efivarfs.ReadLoaderDevicePartUUID()
 	if err != nil {
@@ -292,7 +291,7 @@ func main() {
 
 	// Use osimage to partition the target block device and set up its ESP.
 	// Create will return an EFI boot entry on success.
-	fmt.Printf("Installing to %s\n", tgtBlkdevPath)
+	logf("Installing to %s...", tgtBlkdevPath)
 	be, err := osimage.Create(&installParams)
 	if err != nil {
 		panicf("While installing: %v", err)
@@ -327,6 +326,6 @@ func main() {
 
 	// Reboot.
 	unix.Sync()
-	fmt.Println("Installation completed. Rebooting.")
+	logf("Installation completed. Rebooting.")
 	unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART)
 }
