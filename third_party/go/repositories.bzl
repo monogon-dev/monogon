@@ -5238,7 +5238,7 @@ def go_repositories():
         patches = [
             "//third_party/go/patches:gvisor-containerd-compat.patch",
             "//third_party/go/patches:gvisor-fix-resolution.patch",
-            #"//third_party/go/patches:gvisor-build-against-newer-runtime-specs.patch",
+            "//third_party/go/patches:gvisor-fix-syslog.patch",
         ],
         sum = "h1:aXIFpjZYl3zv2rQyr4rSit5Uq0k7BVXC8lJaDa4Cg7M=",
         version = "v0.0.0-20220315202956-f1399ecf1672",
