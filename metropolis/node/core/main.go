@@ -205,6 +205,9 @@ func main() {
 	time.Sleep(time.Second)
 	// After a bit, kill all console log readers.
 	for _, console := range consoles {
+		if console.reader == nil {
+			continue
+		}
 		console.reader.Close()
 		console.reader.Stream = nil
 	}
