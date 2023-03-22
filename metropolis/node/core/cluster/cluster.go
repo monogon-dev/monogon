@@ -168,9 +168,14 @@ func (m *Manager) nodeParamsGCPMetadata(ctx context.Context) (*apb.NodeParameter
 func (m *Manager) nodeParams(ctx context.Context) (*apb.NodeParameters, error) {
 	boardName, err := getDMIBoardName()
 	if err != nil {
-		supervisor.Logger(ctx).Warningf("Could not get board name, cannot detect platform: %v", err)
+		if errors.Is(err, os.ErrNotExist) {
+			supervisor.Logger(ctx).Infof("Board name: UNKNOWN")
+		} else {
+			supervisor.Logger(ctx).Warningf("Could not get board name, cannot detect platform: %v", err)
+		}
+	} else {
+		supervisor.Logger(ctx).Infof("Board name: %q", boardName)
 	}
-	supervisor.Logger(ctx).Infof("Board name: %q", boardName)
 
 	// When running on GCP, attempt to retrieve the node parameters from the
 	// metadata server first. Retry until we get a response, since we need to
@@ -197,14 +202,22 @@ func (m *Manager) nodeParams(ctx context.Context) (*apb.NodeParameters, error) {
 	// TODO(q3k): probably abstract this away and implement per platform/build/...
 	paramsFWCFG, err := m.nodeParamsFWCFG(ctx)
 	if err != nil {
-		supervisor.Logger(ctx).Warningf("Could not retrieve node parameters from qemu fwcfg: %v", err)
+		if errors.Is(err, os.ErrNotExist) {
+			supervisor.Logger(ctx).Infof("No qemu fwcfg params.")
+		} else {
+			supervisor.Logger(ctx).Warningf("Could not retrieve node parameters from qemu fwcfg: %v", err)
+		}
 		paramsFWCFG = nil
 	} else {
 		supervisor.Logger(ctx).Infof("Retrieved node parameters from qemu fwcfg")
 	}
 	paramsESP, err := m.storageRoot.ESP.Metropolis.NodeParameters.Unmarshal()
 	if err != nil {
-		supervisor.Logger(ctx).Warningf("Could not retrieve node parameters from ESP: %v", err)
+		if errors.Is(err, os.ErrNotExist) {
+			supervisor.Logger(ctx).Infof("No ESP node parameters.")
+		} else {
+			supervisor.Logger(ctx).Warningf("Could not retrieve node parameters from ESP: %v", err)
+		}
 		paramsESP = nil
 	} else {
 		supervisor.Logger(ctx).Infof("Retrieved node parameters from ESP")
