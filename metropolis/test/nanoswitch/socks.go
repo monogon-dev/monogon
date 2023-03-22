@@ -49,6 +49,7 @@ func (s *socksHandler) Connect(ctx context.Context, req *socksproxy.ConnectReque
 	res, err := socksproxy.ConnectResponseFromConn(con)
 	if err != nil {
 		logger.Warningf("Connect %s: could not make SOCKS response: %v", target, err)
+		con.Close()
 		return &socksproxy.ConnectResponse{
 			Error: socksproxy.ReplyGeneralFailure,
 		}

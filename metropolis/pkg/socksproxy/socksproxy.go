@@ -59,9 +59,9 @@ type ConnectResponse struct {
 	// default value (ReplySucceeded).
 	Error Reply
 
-	// Backend is the ReadWriter that will be bridged over to the connecting client
-	// if no Error is set.
-	Backend io.ReadWriter
+	// Backend is the ReadWriteCloser that will be bridged over to the connecting
+	// client if no Error is set.
+	Backend io.ReadWriteCloser
 	// LocalAddress is the IP address that is returned to the client as the local
 	// address of the newly established backend connection.
 	LocalAddress net.IP
@@ -213,6 +213,10 @@ func handle(ctx context.Context, handler Handler, con net.Conn) {
 	}
 
 	// Pipe returned backend into connection.
-	go io.Copy(conRes.Backend, con)
+	go func() {
+		io.Copy(conRes.Backend, con)
+		conRes.Backend.Close()
+	}()
 	io.Copy(con, conRes.Backend)
+	conRes.Backend.Close()
 }
