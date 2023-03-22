@@ -4,6 +4,7 @@ import (
 	"crypto/ed25519"
 
 	"source.monogon.dev/metropolis/node/core/curator"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 // bootstrapData is an internal EventValue structure which is populated by the
@@ -17,4 +18,5 @@ type bootstrapData struct {
 	initialOwnerKey             []byte
 	nodePrivateJoinKey          ed25519.PrivateKey
 	initialClusterConfiguration *curator.Cluster
+	nodeTPMUsage                cpb.NodeTPMUsage
 }

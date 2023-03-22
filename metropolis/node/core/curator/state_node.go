@@ -75,6 +75,8 @@ type Node struct {
 
 	status *cpb.NodeStatus
 
+	tpmUsage cpb.NodeTPMUsage
+
 	// A Node can have multiple Roles. Each Role is represented by the presence
 	// of NodeRole* structures in this structure, with a nil pointer
 	// representing the lack of a role.
@@ -103,12 +105,13 @@ type Node struct {
 // cluster state.
 //
 // This can only be used by the cluster bootstrap logic.
-func NewNodeForBootstrap(cuk, pubkey, jpub []byte) Node {
+func NewNodeForBootstrap(cuk, pubkey, jpub []byte, tpmUsage cpb.NodeTPMUsage) Node {
 	return Node{
 		clusterUnlockKey: cuk,
 		pubkey:           pubkey,
 		jkey:             jpub,
 		state:            cpb.NodeState_NODE_STATE_UP,
+		tpmUsage:         tpmUsage,
 	}
 }
 
@@ -243,6 +246,7 @@ func (n *Node) proto() *ppb.Node {
 		FsmState:         n.state,
 		Roles:            &cpb.NodeRoles{},
 		Status:           n.status,
+		TpmUsage:         n.tpmUsage,
 	}
 	if n.kubernetesWorker != nil {
 		msg.Roles.KubernetesWorker = &cpb.NodeRoles_KubernetesWorker{}
@@ -291,6 +295,7 @@ func nodeUnmarshal(data []byte) (*Node, error) {
 		jkey:             msg.JoinKey,
 		state:            msg.FsmState,
 		status:           msg.Status,
+		tpmUsage:         msg.TpmUsage,
 	}
 	if msg.Roles.KubernetesWorker != nil {
 		n.kubernetesWorker = &NodeRoleKubernetesWorker{}

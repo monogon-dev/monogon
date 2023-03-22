@@ -283,7 +283,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				npub := b.nodePrivateKey.Public().(ed25519.PublicKey)
 				jpub := b.nodePrivateJoinKey.Public().(ed25519.PublicKey)
 
-				n := curator.NewNodeForBootstrap(b.clusterUnlockKey, npub, jpub)
+				n := curator.NewNodeForBootstrap(b.clusterUnlockKey, npub, jpub, b.nodeTPMUsage)
 
 				// The first node always runs consensus.
 				join, err := st.AddNode(ctx, npub)
@@ -369,7 +369,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 					JoinKey:       b.nodePrivateJoinKey,
 					ClusterCa:     caCert,
 				}
-				if err = s.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc); err != nil {
+				if err = s.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc, b.nodeTPMUsage); err != nil {
 					return fmt.Errorf("writing sealed configuration failed: %w", err)
 				}
 

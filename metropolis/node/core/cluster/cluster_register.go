@@ -14,11 +14,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
-	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	apb "source.monogon.dev/metropolis/proto/api"
 	ppb "source.monogon.dev/metropolis/proto/private"
 )
@@ -139,13 +140,17 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	// logic into some sort of state machine where we can atomically make progress
 	// on each of the stages and get rid of the retry loops. The cluster enrolment
 	// code should let us do this quite easily.
-	_, err = cur.RegisterNode(ctx, &ipb.RegisterNodeRequest{
+	res, err := cur.RegisterNode(ctx, &ipb.RegisterNodeRequest{
 		RegisterTicket: register.RegisterTicket,
 		JoinKey:        jpub,
+		HaveLocalTpm:   m.haveTPM,
 	})
 	if err != nil {
 		return fmt.Errorf("register call failed: %w", err)
 	}
+
+	supervisor.Logger(ctx).Infof("TPM: cluster TPM mode: %s", res.ClusterConfiguration.TpmMode)
+	supervisor.Logger(ctx).Infof("TPM: node TPM usage: %v", res.TpmUsage)
 
 	// Attempt to commit in a loop. This will succeed once the node is approved.
 	supervisor.Logger(ctx).Infof("Registering: success, attempting to commit...")
@@ -185,7 +190,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	// Include the Cluster CA in Sealed Configuration.
 	sc.ClusterCa = register.CaCertificate
 	// Save Cluster CA, NUK and Join Credentials into Sealed Configuration.
-	if err = m.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc); err != nil {
+	if err = m.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc, res.TpmUsage); err != nil {
 		return err
 	}
 	unix.Sync()

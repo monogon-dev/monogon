@@ -20,7 +20,7 @@ import (
 )
 
 // join implements Join Flow of an already registered node.
-func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb.ClusterDirectory) error {
+func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb.ClusterDirectory, sealed bool) error {
 	// Generate a complete ED25519 Join Key based on the seed included in Sealed
 	// Configuration.
 	var jpriv ed25519.PrivateKey = sc.JoinKey
@@ -34,6 +34,7 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 	// Tell the user what we're doing.
 	hpkey := hex.EncodeToString(jpriv.Public().(ed25519.PublicKey))
 	supervisor.Logger(ctx).Infof("Joining an existing cluster.")
+	supervisor.Logger(ctx).Infof("  Using TPM-secured configuration: %v", sealed)
 	supervisor.Logger(ctx).Infof("  Node Join public key: %s", hpkey)
 	supervisor.Logger(ctx).Infof("  Directory:")
 	logClusterDirectory(ctx, cd)
@@ -75,7 +76,9 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 	bo := backoff.NewExponentialBackOff()
 	bo.MaxElapsedTime = 0
 	backoff.Retry(func() error {
-		jr, err = cur.JoinNode(ctx, &ipb.JoinNodeRequest{})
+		jr, err = cur.JoinNode(ctx, &ipb.JoinNodeRequest{
+			UsingSealedConfiguration: sealed,
+		})
 		if err != nil {
 			supervisor.Logger(ctx).Warningf("Join failed: %v", err)
 			// This is never used.

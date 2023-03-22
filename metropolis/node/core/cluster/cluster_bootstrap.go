@@ -45,14 +45,13 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 		return fmt.Errorf("invalid initial cluster configuration: %w", err)
 	}
 
-	useTPM, err := cc.UseTPM(m.haveTPM)
+	tpmUsage, err := cc.NodeTPMUsage(m.haveTPM)
 	if err != nil {
 		return fmt.Errorf("cannot join cluster: %w", err)
 	}
 
 	supervisor.Logger(ctx).Infof("TPM: cluster TPM mode: %s", cc.TPMMode)
-	supervisor.Logger(ctx).Infof("TPM: present in this node: %v", m.haveTPM)
-	supervisor.Logger(ctx).Infof("TPM: used by this node: %v", useTPM)
+	supervisor.Logger(ctx).Infof("TPM: node TPM usage: %s", tpmUsage)
 
 	ownerKey := bootstrap.OwnerPublicKey
 	configuration := ppb.SealedConfiguration{}
@@ -89,7 +88,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	}
 	supervisor.Logger(ctx).Infof("Bootstrapping: node public join key: %s", hex.EncodeToString([]byte(jpub)))
 
-	m.roleServer.ProvideBootstrapData(priv, ownerKey, cuk, nuk, jpriv, cc)
+	m.roleServer.ProvideBootstrapData(priv, ownerKey, cuk, nuk, jpriv, cc, tpmUsage)
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)

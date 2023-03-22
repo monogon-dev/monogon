@@ -35,6 +35,10 @@ message Node {
     // metropolis.node.core.curator.api.Curator.UpdateNodeClusterNetworking for
     // more details.
     metropolis.proto.common.NodeClusterNetworking clusternet = 7;
+
+    // tpm_usage describes whether this node has a TPM 2.0 and whether it's using
+    // it.
+    metropolis.proto.common.NodeTPMUsage tpm_usage = 8;
 }
 
 // Information about the cluster owner, currently the only Metropolis management

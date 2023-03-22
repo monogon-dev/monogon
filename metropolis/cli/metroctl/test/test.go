@@ -237,10 +237,10 @@ func TestMetroctl(t *testing.T) {
 			line := scanner.Text()
 			t.Logf("Line: %q", line)
 
-			var onid, ostate, onaddr, onstatus, onroles string
+			var onid, ostate, onaddr, onstatus, onroles, ontpm string
 			var ontimeout int
 
-			_, err = fmt.Sscanf(line, "%s%s%s%s%s%ds", &onid, &ostate, &onaddr, &onstatus, &onroles, &ontimeout)
+			_, err = fmt.Sscanf(line, "%s%s%s%s%s%s%ds", &onid, &ostate, &onaddr, &onstatus, &onroles, &ontpm, &ontimeout)
 			if err != nil {
 				return fmt.Errorf("while parsing metroctl output: %v", err)
 			}
@@ -258,6 +258,9 @@ func TestMetroctl(t *testing.T) {
 			}
 			if want, got := "ConsensusMember,KubernetesController", onroles; want != got {
 				return fmt.Errorf("node role mismatch: wanted %q, got %q", want, got)
+			}
+			if want, got := "yes", ontpm; want != got {
+				return fmt.Errorf("node tpm mismatch: wanted %q, got %q", want, got)
 			}
 			if ontimeout < 0 || ontimeout > 30 {
 				return fmt.Errorf("node timeout mismatch")

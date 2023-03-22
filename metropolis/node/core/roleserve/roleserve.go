@@ -165,7 +165,7 @@ func New(c Config) *Service {
 	return s
 }
 
-func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk, jkey []byte, icc *curator.Cluster) {
+func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk, jkey []byte, icc *curator.Cluster, tpmUsage cpb.NodeTPMUsage) {
 	pubkey := privkey.Public().(ed25519.PublicKey)
 	nid := identity.NodeID(pubkey)
 
@@ -184,6 +184,7 @@ func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk
 		nodeUnlockKey:               nuk,
 		nodePrivateJoinKey:          jkey,
 		initialClusterConfiguration: icc,
+		nodeTPMUsage:                tpmUsage,
 	})
 }
 

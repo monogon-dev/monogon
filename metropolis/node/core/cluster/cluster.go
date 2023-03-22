@@ -73,6 +73,7 @@ func (m *Manager) Run(ctx context.Context) error {
 	}
 	close(m.oneway)
 
+	// Try sealed configuration first.
 	configuration, err := m.storageRoot.ESP.Metropolis.SealedConfiguration.Unseal()
 	if err == nil {
 		supervisor.Logger(ctx).Info("Sealed configuration present. attempting to join cluster")
@@ -84,11 +85,25 @@ func (m *Manager) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("while reading cluster directory: %w", err)
 		}
-		return m.join(ctx, configuration, cd)
+		return m.join(ctx, configuration, cd, true)
 	}
 
 	if !errors.Is(err, localstorage.ErrNoSealed) {
 		return fmt.Errorf("unexpected sealed config error: %w", err)
+	}
+
+	configuration, err = m.storageRoot.ESP.Metropolis.SealedConfiguration.ReadUnsafe()
+	if err == nil {
+		supervisor.Logger(ctx).Info("Non-sealed configuration present. attempting to join cluster")
+
+		// Read Cluster Directory and unmarshal it. Since the node is already
+		// registered with the cluster, the directory won't be bootstrapped from
+		// Node Parameters.
+		cd, err := m.storageRoot.ESP.Metropolis.ClusterDirectory.Unmarshal()
+		if err != nil {
+			return fmt.Errorf("while reading cluster directory: %w", err)
+		}
+		return m.join(ctx, configuration, cd, false)
 	}
 
 	supervisor.Logger(ctx).Info("No sealed configuration, looking for node parameters")

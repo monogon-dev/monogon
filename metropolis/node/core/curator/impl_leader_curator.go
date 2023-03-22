@@ -322,6 +322,17 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 	l.muNodes.Lock()
 	defer l.muNodes.Unlock()
 
+	cl, err := clusterLoad(ctx, l.leadership)
+	if err != nil {
+		return nil, err
+	}
+
+	// Figure out if node should be using TPM.
+	tpmUsage, err := cl.NodeTPMUsage(req.HaveLocalTpm)
+	if err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, "%s", err)
+	}
+
 	// Check if there already is a node with this pubkey in the cluster.
 	id := identity.NodeID(pubkey)
 	node, err := nodeLoad(ctx, l.leadership, id)
@@ -346,14 +357,21 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 
 	// No node exists, create one.
 	node = &Node{
-		pubkey: pubkey,
-		jkey:   req.JoinKey,
-		state:  cpb.NodeState_NODE_STATE_NEW,
+		pubkey:   pubkey,
+		jkey:     req.JoinKey,
+		state:    cpb.NodeState_NODE_STATE_NEW,
+		tpmUsage: tpmUsage,
 	}
 	if err := nodeSave(ctx, l.leadership, node); err != nil {
 		return nil, err
 	}
-	return &ipb.RegisterNodeResponse{}, nil
+
+	// Eat error, as we just deserialized this from a proto.
+	clusterConfig, _ := cl.proto()
+	return &ipb.RegisterNodeResponse{
+		ClusterConfiguration: clusterConfig,
+		TpmUsage:             tpmUsage,
+	}, nil
 }
 
 func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeRequest) (*ipb.CommitNodeResponse, error) {
@@ -465,6 +483,29 @@ func (l *leaderCurator) JoinNode(ctx context.Context, req *ipb.JoinNodeRequest) 
 	node, err := nodeLoad(ctx, l.leadership, id)
 	if err != nil {
 		return nil, err
+	}
+
+	cl, err := clusterLoad(ctx, l.leadership)
+	if err != nil {
+		return nil, err
+	}
+
+	switch cl.TPMMode {
+	case cpb.ClusterConfiguration_TPM_MODE_REQUIRED:
+		if !req.UsingSealedConfiguration {
+			return nil, status.Errorf(codes.PermissionDenied, "cannot join this cluster with an unsealed configuration")
+		}
+	case cpb.ClusterConfiguration_TPM_MODE_DISABLED:
+		if req.UsingSealedConfiguration {
+			return nil, status.Errorf(codes.PermissionDenied, "cannot join this cluster with a sealed configuration")
+		}
+	}
+
+	if node.tpmUsage == cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED && !req.UsingSealedConfiguration {
+		return nil, status.Errorf(codes.PermissionDenied, "node registered with TPM, cannot join without one")
+	}
+	if node.tpmUsage != cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED && req.UsingSealedConfiguration {
+		return nil, status.Errorf(codes.PermissionDenied, "node registered without TPM, cannot join with one")
 	}
 
 	// Don't progress further unless the node is already UP.

@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"net"
 	"strings"
@@ -44,13 +45,21 @@ import (
 //
 // This is used to test functionality of the individual curatorLeader RPC
 // implementations without the overhead of having to wait for a leader election.
-func fakeLeader(t *testing.T) fakeLeaderData {
+func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 	t.Helper()
 	lt := logtree.New()
 	logtree.PipeAllToTest(t, lt)
 	// Set up context whose cancel function will be returned to the user for
 	// terminating all harnesses started by this function.
 	ctx, ctxC := context.WithCancel(context.Background())
+
+	// Merge all options into a single struct.
+	var opt fakeLeaderOption
+	for _, optI := range opts {
+		if optI.icc != nil {
+			opt.icc = optI.icc
+		}
+	}
 
 	// Start a single-node etcd cluster.
 	integration.BeforeTestExternal(t)
@@ -94,12 +103,19 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	if err != nil {
 		t.Fatalf("could not generate node keypair: %v", err)
 	}
-	cNode := NewNodeForBootstrap(nil, nodePub, nodeJoinPub)
+	cNode := NewNodeForBootstrap(nil, nodePub, nodeJoinPub, cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED)
 
 	// Here we would enable the leader node's roles. But for tests, we don't enable
 	// any.
 
-	caCertBytes, nodeCertBytes, err := BootstrapNodeFinish(ctx, curEtcd, &cNode, nil, DefaultClusterConfiguration())
+	cc := DefaultClusterConfiguration()
+	if opt.icc != nil {
+		cc, err = ClusterConfigurationFromInitial(opt.icc)
+		if err != nil {
+			t.Fatalf("invalid initial cluster options: %v", err)
+		}
+	}
+	caCertBytes, nodeCertBytes, err := BootstrapNodeFinish(ctx, curEtcd, &cNode, nil, cc)
 	if err != nil {
 		t.Fatalf("could not finish node bootstrap: %v", err)
 	}
@@ -225,6 +241,12 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		ca:            nodeCredentials.ClusterCA(),
 		etcd:          curEtcd,
 	}
+}
+
+type fakeLeaderOption struct {
+	// icc is the initial cluster configuration to be set when bootstrapping the
+	//fake cluster. If not set, uses system defaults.
+	icc *cpb.ClusterConfiguration
 }
 
 // fakeLeaderData is returned by fakeLeader and contains information about the
@@ -620,12 +642,12 @@ func TestRegistration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not generate node join keypair: %v", err)
 	}
-
 	// Register 'other node' into cluster.
 	cur := ipb.NewCuratorClient(cl.otherNodeConn)
 	_, err = cur.RegisterNode(ctx, &ipb.RegisterNodeRequest{
 		RegisterTicket: res1.Ticket,
 		JoinKey:        nodeJoinPub,
+		HaveLocalTpm:   true,
 	})
 	if err != nil {
 		t.Fatalf("RegisterNode failed: %v", err)
@@ -710,6 +732,7 @@ func TestJoin(t *testing.T) {
 		pubkey:           npub,
 		jkey:             jpub,
 		state:            cpb.NodeState_NODE_STATE_UP,
+		tpmUsage:         cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED,
 	}
 	if err := nodeSave(ctx, cl.l, &node); err != nil {
 		t.Fatalf("nodeSave failed: %v", err)
@@ -729,7 +752,9 @@ func TestJoin(t *testing.T) {
 		t.Fatalf("Dialing external GRPC failed: %v", err)
 	}
 	cur := ipb.NewCuratorClient(eph)
-	jr, err := cur.JoinNode(ctx, &ipb.JoinNodeRequest{})
+	jr, err := cur.JoinNode(ctx, &ipb.JoinNodeRequest{
+		UsingSealedConfiguration: true,
+	})
 	if err != nil {
 		t.Fatalf("JoinNode failed: %v", err)
 	}
@@ -1476,5 +1501,116 @@ func TestUpdateNodeClusterNetworking(t *testing.T) {
 		}})
 	if err == nil || !strings.Contains(err.Error(), "public key alread used by another node") {
 		t.Errorf("Adding same pubkey to different node should have failed, got %v", err)
+	}
+}
+
+// TestClusterTPMModeSetting exercises the TPM mode logic present in the Register
+// and Join methods of the Curator.
+func TestClusterTPMModeSetting(t *testing.T) {
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	for i, te := range []struct {
+		mode    cpb.ClusterConfiguration_TPMMode
+		haveTPM bool
+		success bool
+	}{
+		// REQUIRED mode should only allow in nodes with TPM.
+		{cpb.ClusterConfiguration_TPM_MODE_REQUIRED, true, true},
+		{cpb.ClusterConfiguration_TPM_MODE_REQUIRED, false, false},
+		// BEST_EFFORT mode should allow nodes with and without TPM.
+		{cpb.ClusterConfiguration_TPM_MODE_BEST_EFFORT, true, true},
+		{cpb.ClusterConfiguration_TPM_MODE_BEST_EFFORT, false, true},
+		// DISABLED mode should allow nodes with and without TPM.
+		{cpb.ClusterConfiguration_TPM_MODE_DISABLED, true, true},
+		{cpb.ClusterConfiguration_TPM_MODE_DISABLED, false, true},
+	} {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			cl := fakeLeader(t, &fakeLeaderOption{
+				icc: &cpb.ClusterConfiguration{
+					TpmMode: te.mode,
+				},
+			})
+			// Register node and make sure it's either successful or not, depending on the
+			// table test success value.
+			mgmt := apb.NewManagementClient(cl.mgmtConn)
+			resT, err := mgmt.GetRegisterTicket(ctx, &apb.GetRegisterTicketRequest{})
+			if err != nil {
+				t.Fatalf("GetRegisterTicket failed: %v", err)
+			}
+			nodeJoinPub, nodeJoinPriv, err := ed25519.GenerateKey(rand.Reader)
+			if err != nil {
+				t.Fatalf("could not generate node join keypair: %v", err)
+			}
+			cur := ipb.NewCuratorClient(cl.otherNodeConn)
+			resR, err := cur.RegisterNode(ctx, &ipb.RegisterNodeRequest{
+				RegisterTicket: resT.Ticket,
+				JoinKey:        nodeJoinPub,
+				HaveLocalTpm:   te.haveTPM,
+			})
+			if te.success && err != nil {
+				t.Errorf("expected success, got %v", err)
+			}
+			if !te.success && err == nil {
+				t.Errorf("should have failed")
+			}
+
+			// Nothing else to do if the test variant was supposed to fail.
+			if !te.success {
+				return
+			}
+
+			// Finish node registration by approving it and calling commit.
+			otherNodePub := cl.otherNodePriv.Public().(ed25519.PublicKey)
+			_, err = mgmt.ApproveNode(ctx, &apb.ApproveNodeRequest{Pubkey: otherNodePub})
+			if err != nil {
+				t.Fatalf("ApproveNode failed: %v", err)
+			}
+
+			_, err = cur.CommitNode(ctx, &ipb.CommitNodeRequest{
+				ClusterUnlockKey: []byte("fakefakefakefakefakefakefakefake"),
+			})
+			if err != nil {
+				t.Fatalf("CommitNode failed: %v", err)
+			}
+
+			// Node registered as expected. Now make sure it can only join with the same seal
+			// state as it was supposed to use.
+			ephCreds, err := rpc.NewEphemeralCredentials(nodeJoinPriv, cl.ca)
+			if err != nil {
+				t.Fatalf("NewEphemeralCredentials: %v", err)
+			}
+			withLocalDialer := grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
+				return cl.curatorLis.Dial()
+			})
+			eph, err := grpc.Dial("local", withLocalDialer, grpc.WithTransportCredentials(ephCreds))
+			if err != nil {
+				t.Fatalf("Dialing external GRPC failed: %v", err)
+			}
+			t.Cleanup(func() {
+				eph.Close()
+			})
+
+			useTPM := false
+			if resR.TpmUsage == cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED {
+				useTPM = true
+			}
+
+			// First try with the wrong state. That should fail.
+			curJ := ipb.NewCuratorClient(eph)
+			_, err = curJ.JoinNode(ctx, &ipb.JoinNodeRequest{
+				UsingSealedConfiguration: !useTPM,
+			})
+			if err == nil {
+				t.Fatalf("curator should have rejected invalid UsingSealedConfiguration setting")
+			}
+			// Now with the expected state. That should succeed.
+			_, err = curJ.JoinNode(ctx, &ipb.JoinNodeRequest{
+				UsingSealedConfiguration: useTPM,
+			})
+			if err != nil {
+				t.Fatalf("join failed: %v", err)
+			}
+		})
 	}
 }

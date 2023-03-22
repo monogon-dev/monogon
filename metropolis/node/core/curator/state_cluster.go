@@ -40,7 +40,12 @@ func ClusterConfigurationFromInitial(icc *cpb.ClusterConfiguration) (*Cluster, e
 	return clusterFromProto(icc)
 }
 
-func (c *Cluster) UseTPM(available bool) (bool, error) {
+// NodeShouldUseTPM returns whether a node should use a TPM or not for this Cluster
+// and a given node's TPM availability.
+//
+// A user-facing error is returned if the combination of local cluster policy and
+// node TPM availability is invalid.
+func (c *Cluster) NodeShouldUseTPM(available bool) (bool, error) {
 	switch c.TPMMode {
 	case cpb.ClusterConfiguration_TPM_MODE_DISABLED:
 		return false, nil
@@ -54,6 +59,29 @@ func (c *Cluster) UseTPM(available bool) (bool, error) {
 	default:
 		return false, fmt.Errorf("invalid TPM mode")
 	}
+}
+
+// NodeTPMUsage returns the NodeTPMUsage (whether a node should use a TPM or not
+// plus information whether it has a TPM in the first place) for this Cluster and
+// a given node's TPM availability.
+//
+// A user-facing error is returned if the combination of local cluster policy and
+// node TPM availability is invalid.
+func (c *Cluster) NodeTPMUsage(have bool) (usage cpb.NodeTPMUsage, err error) {
+	var use bool
+	use, err = c.NodeShouldUseTPM(have)
+	if err != nil {
+		return
+	}
+	switch {
+	case have && use:
+		usage = cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED
+	case have && !use:
+		usage = cpb.NodeTPMUsage_NODE_TPM_PRESENT_BUT_UNUSED
+	case !have:
+		usage = cpb.NodeTPMUsage_NODE_TPM_NOT_PRESENT
+	}
+	return
 }
 
 func clusterUnmarshal(data []byte) (*Cluster, error) {

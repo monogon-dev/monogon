@@ -255,9 +255,18 @@ message RegisterNodeRequest {
     // join_key is an ED25519 public key generated during registration. It's
     // shared with Curator to authenticate the join procedure later on.
     bytes join_key = 2;
+    // have_local_tpm is set by the node if it has a local TPM2.0 that it
+    // successfully initialized. This information should be verified by the
+    // Curator in high-assurance scenarios using hardware attestation.
+    bool have_local_tpm = 3;
 }
 
 message RegisterNodeResponse {
+    // cluster_configuration is currently returned to the node just for
+    // informative reasons.
+    metropolis.proto.common.ClusterConfiguration cluster_configuration = 1;
+    // tpm_usage tells the node whether it should use its TPM or not.
+    metropolis.proto.common.NodeTPMUsage tpm_usage = 2;
 }
 
 message CommitNodeRequest {
@@ -280,6 +289,15 @@ message CommitNodeResponse {
 }
 
 message JoinNodeRequest {
+    // using_sealed_configuration is set by the node if it has loaded its join
+    // keys and NUK from a sealed secret on the EFI system partition. If it did,
+    // it means it was previously configured to use the TPM 2.0 to seal it.
+    //
+    // Naturally, this information should be verified by the Curator
+    // in high-assurance scenarios using hardware attestation. Ie., if the node
+    // claims to have loaded its keys from the TPM, then it should also be able
+    // to prove that it's running using that TPM.
+    bool using_sealed_configuration = 1;
 }
 
 message JoinNodeResponse {

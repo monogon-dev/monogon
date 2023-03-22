@@ -7,6 +7,7 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/identity"
 	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 func nodeEntry(n *apb.Node) entry {
@@ -31,6 +32,17 @@ func nodeEntry(n *apb.Node) entry {
 	}
 	sort.Strings(roles)
 	res.add("roles", strings.Join(roles, ","))
+
+	tpm := "unk"
+	switch n.TpmUsage {
+	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED:
+		tpm = "yes"
+	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_BUT_UNUSED:
+		tpm = "unused"
+	case cpb.NodeTPMUsage_NODE_TPM_NOT_PRESENT:
+		tpm = "no"
+	}
+	res.add("tpm", tpm)
 
 	tshs := n.TimeSinceHeartbeat.GetSeconds()
 	res.add("heartbeat", fmt.Sprintf("%ds", tshs))

@@ -152,20 +152,27 @@ func (e *ESPNetworkConfiguration) Marshal(n *npb.Net) error {
 	return nil
 }
 
-func (e *ESPSealedConfiguration) SealSecureBoot(c *ppb.SealedConfiguration) error {
+func (e *ESPSealedConfiguration) SealSecureBoot(c *ppb.SealedConfiguration, tpmUsage cpb.NodeTPMUsage) error {
 	bytes, err := proto.Marshal(c)
 	if err != nil {
 		return fmt.Errorf("while marshaling: %w", err)
 	}
 
-	// Use Secure Boot PCRs to seal the configuration.
-	// See: TCG PC Client Platform Firmware Profile Specification v1.05,
-	//      table 3.3.4.1
-	// See: https://trustedcomputinggroup.org/wp-content/uploads/
-	//      TCG_PCClient_PFP_r1p05_v22_02dec2020.pdf
-	bytes, err = tpm.Seal(bytes, tpm.SecureBootPCRs)
-	if err != nil {
-		return fmt.Errorf("while using tpm: %w", err)
+	switch tpmUsage {
+	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED:
+		// Use Secure Boot PCRs to seal the configuration.
+		// See: TCG PC Client Platform Firmware Profile Specification v1.05,
+		//      table 3.3.4.1
+		// See: https://trustedcomputinggroup.org/wp-content/uploads/
+		//      TCG_PCClient_PFP_r1p05_v22_02dec2020.pdf
+		bytes, err = tpm.Seal(bytes, tpm.SecureBootPCRs)
+		if err != nil {
+			return fmt.Errorf("while using tpm: %w", err)
+		}
+	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_BUT_UNUSED:
+	case cpb.NodeTPMUsage_NODE_TPM_NOT_PRESENT:
+	default:
+		return fmt.Errorf("unknown tpmUsage %d", tpmUsage)
 	}
 
 	if err := e.Write(bytes, 0644); err != nil {
@@ -186,6 +193,24 @@ func (e *ESPSealedConfiguration) Unseal() (*ppb.SealedConfiguration, error) {
 	bytes, err = tpm.Unseal(bytes)
 	if err != nil {
 		return nil, fmt.Errorf("%w: when unsealing: %v", ErrSealedCorrupted, err)
+	}
+
+	config := ppb.SealedConfiguration{}
+	err = proto.Unmarshal(bytes, &config)
+	if err != nil {
+		return nil, fmt.Errorf("%w: when unmarshaling: %v", ErrSealedCorrupted, err)
+	}
+
+	return &config, nil
+}
+
+func (e *ESPSealedConfiguration) ReadUnsafe() (*ppb.SealedConfiguration, error) {
+	bytes, err := e.Read()
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrNoSealed
+		}
+		return nil, fmt.Errorf("%w: when reading sealed data: %v", ErrSealedUnavailable, err)
 	}
 
 	config := ppb.SealedConfiguration{}

@@ -148,6 +148,16 @@ message Node {
     // heartbeats was received, expressed in nanoseconds. It is only valid with
     // the health status of either HEALTHY or HEARTBEAT_TIMEOUT.
     google.protobuf.Duration time_since_heartbeat = 6;
+
+    // tpm_usage describes whether this node has a TPM 2.0 and whether it is
+    // being actively used as part of its membership in the Metropolis cluster.
+    //
+    // Currently, the TPM 2.0 is only used to seal the local part of the disk
+    // encryption key and the early join credentials of the node. Depending on
+    // future cluster configuration settings, this might also indicate that the
+    // node has actually passed high assurance hardware attestation against the
+    // cluster.
+    metropolis.proto.common.NodeTPMUsage tpm_usage = 8;
 }
 
 message ApproveNodeRequest {

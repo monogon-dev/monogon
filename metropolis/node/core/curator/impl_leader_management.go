@@ -230,6 +230,7 @@ func (l *leaderManagement) GetNodes(req *apb.GetNodesRequest, srv apb.Management
 			Roles:              roles,
 			TimeSinceHeartbeat: dpb.New(lhb),
 			Health:             health,
+			TpmUsage:           node.tpmUsage,
 		}
 
 		// Evaluate the filter expression for this node. Send the node, if it's
