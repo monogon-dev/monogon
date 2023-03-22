@@ -361,7 +361,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 					return fmt.Errorf("couldn't marshal ClusterDirectory: %w", err)
 				}
 				if err = s.storageRoot.ESP.Metropolis.ClusterDirectory.Write(cdirRaw, 0644); err != nil {
-					return err
+					return fmt.Errorf("writing cluster directory failed: %w", err)
 				}
 
 				sc := ppb.SealedConfiguration{
@@ -370,7 +370,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 					ClusterCa:     caCert,
 				}
 				if err = s.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc); err != nil {
-					return err
+					return fmt.Errorf("writing sealed configuration failed: %w", err)
 				}
 
 				supervisor.Logger(ctx).Infof("Saved bootstrapped node's credentials.")
