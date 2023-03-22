@@ -167,6 +167,7 @@ func (s *Controller) Run(ctx context.Context) error {
 		}
 		if time.Now().After(startLogging) {
 			supervisor.Logger(ctx).Errorf("Still couldn't do initial reconciliation: %v", err)
+			startLogging = time.Now().Add(10 * time.Second)
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
