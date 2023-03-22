@@ -22,6 +22,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"time"
 
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -36,7 +37,19 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 
 	// Mount new storage with generated CUK, and save NUK into sealed config proto.
 	supervisor.Logger(ctx).Infof("Bootstrapping: mounting new storage...")
+	storageDone := make(chan struct{})
+	go func() {
+		t := time.NewTicker(5 * time.Second)
+		defer t.Stop()
+		select {
+		case <-storageDone:
+			return
+		case <-t.C:
+			supervisor.Logger(ctx).Infof("Bootstrapping: still waiting for storage....")
+		}
+	}()
 	cuk, err := m.storageRoot.Data.MountNew(&configuration)
+	close(storageDone)
 	if err != nil {
 		return fmt.Errorf("could not make and mount data partition: %w", err)
 	}
