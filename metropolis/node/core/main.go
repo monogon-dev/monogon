@@ -255,6 +255,9 @@ func consoleFilter(p *logtree.LogEntry) bool {
 	if strings.HasPrefix(s, "root.role.kubernetes.run.kubernetes.scheduler") {
 		return p.Leveled.Severity().AtLeast(logtree.WARNING)
 	}
+	if strings.HasPrefix(s, "supervisor") {
+		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+	}
 	return true
 }
 
