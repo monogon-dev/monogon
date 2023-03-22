@@ -213,10 +213,11 @@ func main() {
 	// Present final message to the console.
 	crash <- ""
 	crash <- ""
-	crash <- fmt.Sprintf("Fatal error: %v", err)
+	crash <- fmt.Sprintf(" Fatal error: %v", err)
+	crash <- fmt.Sprintf(" This node could not be started. Rebooting...")
 	time.Sleep(time.Second)
 	// Return to minit, which will reboot this node.
-	os.Exit(1)
+	os.Exit(0)
 }
 
 // consoleFilter is used to filter out some uselessly verbose logs from the
