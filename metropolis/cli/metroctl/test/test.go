@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bufio"
 	"context"
 	"encoding/pem"
 	"fmt"
@@ -222,20 +223,31 @@ func TestMetroctl(t *testing.T) {
 			}
 
 			// Try matching metroctl output against the advertised format.
-			ob, err := os.ReadFile("describe.txt")
+			f, err := os.Open("describe.txt")
 			if err != nil {
-				return fmt.Errorf("while reading metroctl output: %v", err)
+				return fmt.Errorf("while opening metroctl output: %v", err)
 			}
+			scanner := bufio.NewScanner(f)
+			if !scanner.Scan() {
+				return fmt.Errorf("expected header line")
+			}
+			if !scanner.Scan() {
+				return fmt.Errorf("expected result line")
+			}
+			line := scanner.Text()
+			t.Logf("Line: %q", line)
+
 			var onid, ostate, onaddr, onstatus, onroles string
 			var ontimeout int
-			_, err = fmt.Sscanf(string(ob[:]), "%s\t%s\t%s\t%s\t%s\t%ds\n", &onid, &ostate, &onaddr, &onstatus, &onroles, &ontimeout)
+
+			_, err = fmt.Sscanf(line, "%s%s%s%s%s%ds", &onid, &ostate, &onaddr, &onstatus, &onroles, &ontimeout)
 			if err != nil {
 				return fmt.Errorf("while parsing metroctl output: %v", err)
 			}
 			if onid != nid {
 				return fmt.Errorf("node id mismatch")
 			}
-			if ostate != "NODE_STATE_UP" {
+			if ostate != "UP" {
 				return fmt.Errorf("node state mismatch")
 			}
 			if onaddr != naddr {
