@@ -1,4 +1,4 @@
-// package roleserve implements the roleserver/“Role Server”.
+// Package roleserve implements the roleserver/“Role Server”.
 //
 // The Role Server runs on every node and is responsible for running all of the
 // node's role dependant services, like the control plane (Consensus/etcd and
@@ -45,6 +45,7 @@ import (
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/clusternet"
+	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
@@ -164,7 +165,7 @@ func New(c Config) *Service {
 	return s
 }
 
-func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk, jkey []byte) {
+func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk, jkey []byte, icc *curator.Cluster) {
 	pubkey := privkey.Public().(ed25519.PublicKey)
 	nid := identity.NodeID(pubkey)
 
@@ -177,11 +178,12 @@ func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk
 		resolver: s.Resolver,
 	})
 	s.bootstrapData.Set(&bootstrapData{
-		nodePrivateKey:     privkey,
-		initialOwnerKey:    iok,
-		clusterUnlockKey:   cuk,
-		nodeUnlockKey:      nuk,
-		nodePrivateJoinKey: jkey,
+		nodePrivateKey:              privkey,
+		initialOwnerKey:             iok,
+		clusterUnlockKey:            cuk,
+		nodeUnlockKey:               nuk,
+		nodePrivateJoinKey:          jkey,
+		initialClusterConfiguration: icc,
 	})
 }
 

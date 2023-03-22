@@ -24,13 +24,35 @@ import (
 	"fmt"
 	"time"
 
+	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+
 	apb "source.monogon.dev/metropolis/proto/api"
 	ppb "source.monogon.dev/metropolis/proto/private"
 )
 
 func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_ClusterBootstrap) error {
 	supervisor.Logger(ctx).Infof("Bootstrapping new cluster, owner public key: %s", hex.EncodeToString(bootstrap.OwnerPublicKey))
+
+	var cc *curator.Cluster
+
+	if bootstrap.InitialClusterConfiguration == nil {
+		supervisor.Logger(ctx).Infof("No initial cluster configuration provided, using defaults.")
+		cc = curator.DefaultClusterConfiguration()
+	} else {
+		var err error
+		cc, err = curator.ClusterConfigurationFromInitial(bootstrap.InitialClusterConfiguration)
+		return fmt.Errorf("invalid initial cluster configuration: %w", err)
+	}
+
+	useTPM, err := cc.UseTPM(m.haveTPM)
+	if err != nil {
+		return fmt.Errorf("cannot join cluster: %w", err)
+	}
+
+	supervisor.Logger(ctx).Infof("TPM: cluster TPM mode: %s", cc.TPMMode)
+	supervisor.Logger(ctx).Infof("TPM: present in this node: %v", m.haveTPM)
+	supervisor.Logger(ctx).Infof("TPM: used by this node: %v", useTPM)
 
 	ownerKey := bootstrap.OwnerPublicKey
 	configuration := ppb.SealedConfiguration{}
@@ -67,7 +89,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	}
 	supervisor.Logger(ctx).Infof("Bootstrapping: node public join key: %s", hex.EncodeToString([]byte(jpub)))
 
-	m.roleServer.ProvideBootstrapData(priv, ownerKey, cuk, nuk, jpriv)
+	m.roleServer.ProvideBootstrapData(priv, ownerKey, cuk, nuk, jpriv, cc)
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)

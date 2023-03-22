@@ -295,7 +295,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				n.EnableKubernetesController()
 
 				var nodeCert []byte
-				caCert, nodeCert, err = curator.BootstrapNodeFinish(ctx, ckv, &n, b.initialOwnerKey)
+				caCert, nodeCert, err = curator.BootstrapNodeFinish(ctx, ckv, &n, b.initialOwnerKey, b.initialClusterConfiguration)
 				if err != nil {
 					return fmt.Errorf("while bootstrapping node: %w", err)
 				}

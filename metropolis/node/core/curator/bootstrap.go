@@ -8,9 +8,10 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
-	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/pkg/pki"
+
+	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 )
 
 // bootstrap.go contains functions specific for integration between the curator
@@ -33,7 +34,7 @@ import (
 // This must only be used by the cluster bootstrap logic. It is idempotent, thus
 // can be called repeatedly in case of intermittent failures in the bootstrap
 // logic.
-func BootstrapNodeFinish(ctx context.Context, etcd client.Namespaced, node *Node, ownerKey []byte) (caCertBytes, nodeCertBytes []byte, err error) {
+func BootstrapNodeFinish(ctx context.Context, etcd client.Namespaced, node *Node, ownerKey []byte, cluster *Cluster) (caCertBytes, nodeCertBytes []byte, err error) {
 	// Workaround for pkiCA being a global, but BootstrapNodeFinish being called for
 	// multiple, different etcd instances in tests. Doing this ensures that we
 	// always resynchronize with etcd, ie. not keep certificates loaded in memory
@@ -81,15 +82,26 @@ func BootstrapNodeFinish(ctx context.Context, etcd client.Namespaced, node *Node
 		return nil, nil, fmt.Errorf("failed to get join key: %w", err)
 	}
 
+	clusterProto, err := cluster.proto()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to serialize initial cluster configuration: %w", err)
+	}
+	clusterRaw, err := proto.Marshal(clusterProto)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to marshal initial cluster configuration: %w", err)
+	}
+
 	// We don't care about the result's success - this is idempotent.
 	_, err = etcd.Txn(ctx).If(
 		clientv3.Compare(clientv3.CreateRevision(nodePath), "=", 0),
 		clientv3.Compare(clientv3.CreateRevision(initialOwnerEtcdPath), "=", 0),
 		clientv3.Compare(clientv3.CreateRevision(joinKeyPath), "=", 0),
+		clientv3.Compare(clientv3.CreateRevision(clusterConfigurationKey), "=", 0),
 	).Then(
 		clientv3.OpPut(nodePath, string(nodeRaw)),
 		clientv3.OpPut(initialOwnerEtcdPath, string(ownerRaw)),
 		clientv3.OpPut(joinKeyPath, node.ID()),
+		clientv3.OpPut(clusterConfigurationKey, string(clusterRaw)),
 	).Commit()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to store initial cluster state: %w", err)

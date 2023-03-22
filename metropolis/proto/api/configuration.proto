@@ -37,6 +37,10 @@ message NodeParameters {
         // key can be used to prove ownership of the cluster and retrieve
         // management credentials for the cluster via an AAA.Escrow call.
         bytes owner_public_key = 1;
+
+        // If not set, defaults to:
+        //   - TPM mode: REQUIRED
+        common.ClusterConfiguration initial_cluster_configuration = 3;
     }
     // ClusterRegister configures the node to attempt to register into an
     // existing cluster, ie. contact an existing running cluster and become

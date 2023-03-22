@@ -90,6 +90,8 @@ message GetClusterInfoResponse {
 
     // ca_certificate is the x509 DER encoded CA certificate of the cluster.
     bytes ca_certificate = 2;
+
+    metropolis.proto.common.ClusterConfiguration cluster_configuration = 3;
 }
 
 message GetNodesRequest {

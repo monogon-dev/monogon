@@ -44,6 +44,7 @@ type Manager struct {
 	networkService *network.Service
 	roleServer     *roleserve.Service
 	nodeParams     *apb.NodeParameters
+	haveTPM        bool
 
 	oneway chan struct{}
 }
@@ -51,12 +52,13 @@ type Manager struct {
 // NewManager creates a new cluster Manager. The given localstorage Root must
 // be places, but not yet started (and will be started as the Manager makes
 // progress). The given network Service must already be running.
-func NewManager(storageRoot *localstorage.Root, networkService *network.Service, rs *roleserve.Service, nodeParams *apb.NodeParameters) *Manager {
+func NewManager(storageRoot *localstorage.Root, networkService *network.Service, rs *roleserve.Service, nodeParams *apb.NodeParameters, haveTPM bool) *Manager {
 	return &Manager{
 		storageRoot:    storageRoot,
 		networkService: networkService,
 		roleServer:     rs,
 		nodeParams:     nodeParams,
+		haveTPM:        haveTPM,
 		oneway:         make(chan struct{}),
 	}
 }

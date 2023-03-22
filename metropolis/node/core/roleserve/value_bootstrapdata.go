@@ -2,6 +2,8 @@ package roleserve
 
 import (
 	"crypto/ed25519"
+
+	"source.monogon.dev/metropolis/node/core/curator"
 )
 
 // bootstrapData is an internal EventValue structure which is populated by the
@@ -9,9 +11,10 @@ import (
 // the control plane logic to go into bootstrap mode and bring up a control
 // plane from scratch.
 type bootstrapData struct {
-	nodePrivateKey     ed25519.PrivateKey
-	clusterUnlockKey   []byte
-	nodeUnlockKey      []byte
-	initialOwnerKey    []byte
-	nodePrivateJoinKey ed25519.PrivateKey
+	nodePrivateKey              ed25519.PrivateKey
+	clusterUnlockKey            []byte
+	nodeUnlockKey               []byte
+	initialOwnerKey             []byte
+	nodePrivateJoinKey          ed25519.PrivateKey
+	initialClusterConfiguration *curator.Cluster
 }

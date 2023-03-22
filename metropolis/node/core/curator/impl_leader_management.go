@@ -116,10 +116,17 @@ func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClust
 		}
 	}
 
-	return &apb.GetClusterInfoResponse{
+	resp := &apb.GetClusterInfoResponse{
 		ClusterDirectory: directory,
 		CaCertificate:    l.node.ClusterCA().Raw,
-	}, nil
+	}
+
+	cl, err := clusterLoad(ctx, l.leadership)
+	if err == nil {
+		resp.ClusterConfiguration, _ = cl.proto()
+	}
+
+	return resp, nil
 }
 
 // nodeHeartbeatTimestamp returns the node nid's last heartbeat timestamp, as

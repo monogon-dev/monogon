@@ -103,8 +103,10 @@ func main() {
 
 	logger.Info("Starting Metropolis node init")
 
+	haveTPM := true
 	if err := tpm.Initialize(logger); err != nil {
-		logger.Warningf("Failed to initialize TPM 2.0, attempting fallback to untrusted: %v", err)
+		logger.Warningf("Failed to initialize TPM 2.0: %v", err)
+		haveTPM = false
 	}
 
 	networkSvc := network.New(nil)
@@ -184,7 +186,7 @@ func main() {
 
 		// Start cluster manager. This kicks off cluster membership machinery,
 		// which will either start a new cluster, enroll into one or join one.
-		m := cluster.NewManager(root, networkSvc, rs, nodeParams)
+		m := cluster.NewManager(root, networkSvc, rs, nodeParams, haveTPM)
 		return m.Run(ctx)
 	}
 

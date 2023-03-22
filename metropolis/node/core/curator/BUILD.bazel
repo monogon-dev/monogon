@@ -15,6 +15,7 @@ go_library(
         "impl_leader_management.go",
         "listener.go",
         "state.go",
+        "state_cluster.go",
         "state_node.go",
         "state_pki.go",
         "state_registerticket.go",

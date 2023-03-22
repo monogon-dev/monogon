@@ -99,7 +99,7 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	// Here we would enable the leader node's roles. But for tests, we don't enable
 	// any.
 
-	caCertBytes, nodeCertBytes, err := BootstrapNodeFinish(ctx, curEtcd, &cNode, nil)
+	caCertBytes, nodeCertBytes, err := BootstrapNodeFinish(ctx, curEtcd, &cNode, nil, DefaultClusterConfiguration())
 	if err != nil {
 		t.Fatalf("could not finish node bootstrap: %v", err)
 	}

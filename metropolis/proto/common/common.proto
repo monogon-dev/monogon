@@ -263,3 +263,42 @@ message LogEntry {
     }
 }
 
+// ClusterConfiguration contains the entirety of the user-configurable behaviour
+// of the cluster that is scoped to the entirety of the cluster (vs. per-node
+// configuration, which is kept alongside Node).
+//
+// It can be set initially when a cluster is being bootstrapped (in
+// NodeParamaters.ClusterBootstrap), and then can be partially managed by
+// management calls to the curator.
+message ClusterConfiguration {
+    // tpm_mode defines the TPM usage policy for cluster nodes. When nodes
+    // register into the cluster (and then join into it) they will report their
+    // TPM availability, and in return the cluster will respond whether they
+    // should use that TPM or not.
+    //
+    // If a node is instructed to use its TPM, it will use it to encrypt its part
+    // of the disk encryption key when saving it to the EFI system partition.
+    // That means that the node will only be able to re-join the cluster if its
+    // secure boot configuration doesn't change.
+    //
+    // If a node is instructed to not use its TPM, it will save its part of the
+    // disk encryption key straight onto the EFI system partition without any
+    // further encryption. It still needs to connect to a working cluster to
+    // retrieve the other part of the key. This means that the configuration is
+    // secure vs. offline disk decryption attempts, but not secure if an
+    // attacker can connect to a cluster and impersonate the node in order to
+    // retrieve the other part of its key.
+    enum TPMMode {
+        TPM_MODE_INVALID = 0;
+        // Nodes need to join with a TPM2.0 device and will be instructed to
+        // use it.
+        TPM_MODE_REQUIRED = 1;
+        // Nodes will be allowed to join regardless of TPM2.0 presence, and will
+        // be instructed to use it if they have one.
+        TPM_MODE_BEST_EFFORT = 2;
+        // Regardless of the node's local TPM presence it will be instructed to
+        // not use it.
+        TPM_MODE_DISABLED = 3;
+    }
+    TPMMode tpm_mode = 1;
+}
