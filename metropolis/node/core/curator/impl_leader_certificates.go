@@ -41,6 +41,10 @@ func issueKubernetesWorkerCertificates(ctx context.Context, kp *kpki.PKI, nodeID
 	}
 
 	csiClient, err := kp.CSIProvisioner(ctx, nodeID, req.CsiProvisionerPubkey)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not generate CSI provisioner certificates: %v", err)
+	}
+
 	csiClientCert, err := csiClient.Ensure(ctx, kp.KV)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "could not ensure CSI provisioner client certificate: %v", err)
