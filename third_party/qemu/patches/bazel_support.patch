@@ -1,62 +1,13 @@
-Copyright 2020 The Monogon Project Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-
-From 88ba396b627c26b9b01c2bc358557964cbb59cf8 Mon Sep 17 00:00:00 2001
-From: Lorenz Brun <lorenz@brun.one>
-Date: Wed, 10 Mar 2021 18:25:11 +0100
-Subject: [PATCH 3/6] Add Bazel support
-
----
- BUILD                           | 1146 +++++++++++++++++++++++++++++++
- defs.bzl                        |   52 ++
- qapi/BUILD                      |   25 +
- qapi/defs.bzl                   |   40 ++
- scripts/BUILD                   |   35 +
- scripts/modules/BUILD           |    7 +
- scripts/qapi/BUILD              |    7 +
- scripts/qapi/defs.bzl           |   52 ++
- scripts/tracetool/BUILD         |   11 +
- scripts/tracetool/backend/BUILD |    7 +
- scripts/tracetool/defs.bzl      |   65 ++
- scripts/tracetool/format/BUILD  |    7 +
- trace/BUILD                     |   18 +
- 13 files changed, 1472 insertions(+)
- create mode 100644 BUILD
- create mode 100644 defs.bzl
- create mode 100644 qapi/BUILD
- create mode 100644 qapi/defs.bzl
- create mode 100644 scripts/BUILD
- create mode 100644 scripts/modules/BUILD
- create mode 100644 scripts/qapi/BUILD
- create mode 100644 scripts/qapi/defs.bzl
- create mode 100644 scripts/tracetool/BUILD
- create mode 100644 scripts/tracetool/backend/BUILD
- create mode 100644 scripts/tracetool/defs.bzl
- create mode 100644 scripts/tracetool/format/BUILD
- create mode 100644 trace/BUILD
-
 diff --git a/BUILD b/BUILD
 new file mode 100644
 index 0000000000..436f8c5cf3
 --- /dev/null
 +++ b/BUILD
-@@ -0,0 +1,1147 @@
+@@ -0,0 +1,1357 @@
 +load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 +load("@rules_python//python:defs.bzl", "py_binary")
 +load("@dev_source_monogon//build/utils:template_file.bzl", "template_file")
-+load(":defs.bzl", "filter_label_suffix")
++load(":defs.bzl", "filter_label_suffix", "filter_label_contains")
 +load("//:defs.bzl", "cc_qemu_keymaps")
 +
 +filegroup(
@@ -75,6 +26,23 @@ index 0000000000..436f8c5cf3
 +    name = "qapi_c",
 +    srcs = ["//qapi:qapi_generated"],
 +    suffix = ".c",
++)
++
++# qapi sources which are needed for qemu-img. We don't want to pull in too
++# many, as that basically pulls in the entirety of softmmu and monitor
++# functionality, which we don't want and are poisoned by a targetless build
++# anyway.
++filter_label_contains(
++    name = "qapi_qemu_img_c",
++    srcs = [":qapi_c"],
++    contains = 
++        ["%s-block" % kind for kind in ["types", "events", "visit"]] +
++        ["%s-job" % kind for kind in ["types", "events", "visit"]] +
++        ["%s-crypto" % kind for kind in ["types", "visit"]] +
++        ["%s-common" % kind for kind in ["types", "visit"]] +
++        ["%s-sockets" % kind for kind in ["types", "visit"]] +
++        ["%s-misc." % kind for kind in ["types", "visit"]] +
++        ["builtin-%s" % kind for kind in ["types", "visit"]],
 +)
 +
 +filter_label_suffix(
@@ -959,6 +927,199 @@ index 0000000000..436f8c5cf3
 +)
 +
 +cc_binary(
++    name = "qemu-img",
++    srcs = [":all_headers"] + [
++        "qemu-img.c",
++
++        "qobject/block-qdict.c",
++        "qobject/json-lexer.c",
++        "qobject/json-parser.c",
++        "qobject/json-streamer.c",
++        "qobject/qbool.c",
++        "qobject/qdict.c",
++        "qobject/qjson.c",
++        "qobject/qlist.c",
++        "qobject/qlit.c",
++        "qobject/qnull.c",
++        "qobject/qnum.c",
++        "qobject/qobject.c",
++        "qobject/qstring.c",
++
++        "qom/container.c",
++        "qom/object_interfaces.c",
++        "qom/object.c",
++        "qom/qom-qobject.c",
++
++        "util/aio-posix.c",
++        "util/aio-wait.c",
++        "util/aiocb.c",
++        "util/async.c",
++        "util/base64.c",
++        "util/bitmap.c",
++        "util/bitops.c",
++        "util/block-helpers.c",
++        "util/buffer.c",
++        "util/bufferiszero.c",
++        "util/compatfd.c",
++        "util/coroutine-sigaltstack.c",
++        "util/crc32c.c",
++        "util/cutils.c",
++        "util/error.c",
++        "util/event_notifier-posix.c",
++        "util/fdmon-epoll.c",
++        "util/fdmon-io_uring.c",
++        "util/fdmon-poll.c",
++        "util/filemonitor-inotify.c",
++        "util/hbitmap.c",
++        "util/hexdump.c",
++        "util/id.c",
++        "util/iov.c",
++        "util/keyval.c",
++        "util/lockcnt.c",
++        "util/log.c",
++        "util/main-loop.c",
++        "util/mmap-alloc.c",
++        "util/module.c",
++        "util/notify.c",
++        "util/osdep.c",
++        "util/oslib-posix.c",
++        "util/pagesize.c",
++        "util/qdist.c",
++        "util/qemu-config.c",
++        "util/qemu-coroutine-io.c",
++        "util/qemu-coroutine-lock.c",
++        "util/qemu-coroutine-sleep.c",
++        "util/qemu-error.c",
++        "util/qemu-option.c",
++        "util/qemu-print.c",
++        "util/qemu-progress.c",
++        "util/qemu-thread-posix.c",
++        "util/qemu-timer-common.c",
++        "util/qemu-timer.c",
++        "util/qht.c",
++        "util/qsp.c",
++        "util/range.c",
++        "util/rcu.c",
++        "util/sys_membarrier.c",
++        "util/thread-pool.c",
++        "util/throttle.c",
++        "util/timed-average.c",
++        "util/unicode.c",
++        "util/uuid.c",
++        "util/qemu-coroutine.c",
++
++        # All of these are needed for qcow/luks encryption, which can't be
++        # disabled.
++        "crypto/aes.c",
++        "crypto/afsplit.c",
++        "crypto/block-luks.c",
++        "crypto/block-qcow.c",
++        "crypto/block.c",
++        "crypto/cipher.c",
++        "crypto/desrfb.c",
++        "crypto/hash-glib.c",
++        "crypto/hash.c",
++        "crypto/hmac-glib.c",
++        "crypto/hmac.c",
++        "crypto/init.c",
++        "crypto/ivgen-essiv.c",
++        "crypto/ivgen-plain.c",
++        "crypto/ivgen-plain64.c",
++        "crypto/ivgen.c",
++        "crypto/pbkdf-stub.c",
++        "crypto/pbkdf.c",
++        "crypto/random-platform.c",
++        "crypto/secret_common.c",
++        "crypto/secret.c",
++        "crypto/xts.c",
++
++        "block.c",
++        "block/accounting.c",
++        "block/aio_task.c",
++        "block/block-backend.c",
++        "block/commit.c",
++        "block/create.c",
++        "block/crypto.c",
++        "block/dirty-bitmap.c",
++        "block/file-posix.c",
++        "block/io.c",
++        "block/io_uring.c",
++        "block/mirror.c",
++        "block/monitor/bitmap-qmp-cmds.c",
++        "block/qapi.c",
++        "block/qcow2-bitmap.c",
++        "block/qcow2-cache.c",
++        "block/qcow2-cluster.c",
++        "block/qcow2-refcount.c",
++        "block/qcow2-snapshot.c",
++        "block/qcow2-threads.c",
++        "block/qcow2.c",
++        "block/raw-format.c",
++        "block/snapshot.c",
++        "block/throttle-groups.c",
++        "block/write-threshold.c",
++
++        "stubs/bdrv-next-monitor-owned.c",
++        "stubs/blk-exp-close-all.c",
++        "stubs/blockdev-close-all-bdrv-states.c",
++        "stubs/change-state-handler.c",
++        "stubs/cpu-get-clock.c",
++        "stubs/cpus-get-virtual-clock.c",
++        "stubs/error-printf.c",
++        "stubs/fdset.c",
++        "stubs/icount.c",
++        "stubs/iothread-lock.c",
++        "stubs/is-daemonized.c",
++        "stubs/migr-blocker.c",
++        "stubs/monitor-core.c",
++        "stubs/monitor.c",
++        "stubs/qemu-timer-notify-cb.c",
++        "stubs/qtest.c",
++        "stubs/ram-block.c",
++        "stubs/replay-tools.c",
++        "stubs/replay.c",
++        "stubs/runstate-check.c",
++        "stubs/trace-control.c",
++        "stubs/vm-stop.c",
++        "scsi/pr-manager.c",
++
++        "blockjob.c",
++        "iothread.c",
++        "job.c",
++    ] + [
++        "//qapi:opts-visitor.c",
++        "//qapi:qapi-clone-visitor.c",
++        "//qapi:qapi-dealloc-visitor.c",
++        "//qapi:qapi-util.c",
++        "//qapi:qapi-visit-core.c",
++        "//qapi:qmp-event.c",
++        "//qapi:qobject-input-visitor.c",
++        "//qapi:qobject-output-visitor.c",
++        "//qapi:string-input-visitor.c",
++        "//qapi:string-output-visitor.c",
++        "//trace:control.c",
++    ] + [
++        ":block-coroutine-gen",
++        ":gen_hdrs",
++        ":qapi_qemu_img_c",
++        ":trace_c",
++    ],
++    copts = ["-fwrapv"],  # QEMU relies on hacky two's complement representations of bitshifts
++    local_defines = [
++        "_GNU_SOURCE",
++        "_FILE_OFFSET_BITS=64",
++        "_LARGEFILE_SOURCE",
++    ],
++    deps = [
++        "@glib//glib",
++        "@uring//:uring",
++        "@zlib//:zlib",
++    ],
++    visibility = ["//visibility:public"],
++    includes = ["linux-headers", "include"],
++)
++
++cc_binary(
 +    name = "qemu-x86_64-softmmu",
 +    srcs = [":all_headers"] + [
 +        "//trace:control-target.c",
@@ -1205,7 +1366,25 @@ new file mode 100644
 index 0000000000..3a8d50d429
 --- /dev/null
 +++ b/defs.bzl
-@@ -0,0 +1,52 @@
+@@ -0,0 +1,70 @@
++def _impl_filter_label_contains(ctx):
++    return [DefaultInfo(
++        files = depset([f for f in ctx.files.srcs if any([c in f.path for c in ctx.attr.contains])]),
++    )]
++
++filter_label_contains = rule(
++    implementation = _impl_filter_label_contains,
++    attrs = {
++        "srcs": attr.label_list(
++            mandatory = True,
++            allow_files = True,
++        ),
++        "contains": attr.string_list(
++            default = [],
++        ),
++    },
++)
++
 +def _impl_filter_label_suffix(ctx):
 +    return [DefaultInfo(
 +        files = depset([f for f in ctx.files.srcs if f.path.endswith(ctx.attr.suffix) and f.basename not in ctx.attr.exclude]),
