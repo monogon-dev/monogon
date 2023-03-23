@@ -27,6 +27,9 @@ func issueKubernetesWorkerCertificates(ctx context.Context, kp *kpki.PKI, nodeID
 	}
 
 	kubeletServer, kubeletClient, err := kp.Kubelet(ctx, nodeID, req.KubeletPubkey)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "could not generate kubelet certificates: %v", err)
+	}
 
 	kubeletServerCert, err := kubeletServer.Ensure(ctx, kp.KV)
 	if err != nil {
