@@ -3,6 +3,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 def linux_firmware_external(name, version):
     sums = {
         "20211216": "c0f735dd232c22d41ce4d23a050a8d6efe3b6b8cbf9d0a636af5f9df66a619a3",
+        "20230310": "14c472af10f9b566c4f575aeb30d8a274d54b1660007e7426b7e4ea21dff81aa",
     }
     all_content = """
 filegroup(name = "all_files", srcs = glob(["**"]), visibility = ["//visibility:public"])
