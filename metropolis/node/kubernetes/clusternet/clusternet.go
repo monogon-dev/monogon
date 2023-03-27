@@ -247,6 +247,9 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 
 	nodeInformer := s.InformerFactory.Core().V1().Nodes()
+	nodeInformer.Informer().SetWatchErrorHandler(func(_ *cache.Reflector, err error) {
+		supervisor.Logger(ctx).Errorf("node informer watch error: %v", err)
+	})
 	nodeInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(new interface{}) {
 			newNode, ok := new.(*corev1.Node)

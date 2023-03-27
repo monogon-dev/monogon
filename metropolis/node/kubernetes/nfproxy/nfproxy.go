@@ -37,6 +37,7 @@ import (
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -90,8 +91,17 @@ func (s *Service) Run(ctx context.Context) error {
 			options.LabelSelector = labelSelector.String()
 		}))
 
-	svcController := controller.NewServiceController(nfproxy, s.ClientSet, kubeInformerFactory.Core().V1().Services())
-	ep := controller.NewEndpointSliceController(nfproxy, s.ClientSet, kubeInformerFactory.Discovery().V1beta1().EndpointSlices())
+	endpointSlicesInformer := kubeInformerFactory.Discovery().V1beta1().EndpointSlices()
+	endpointSlicesInformer.Informer().SetWatchErrorHandler(func(_ *cache.Reflector, err error) {
+		supervisor.Logger(ctx).Errorf("endpoint slices watch error: %v", err)
+	})
+	servicesInformer := kubeInformerFactory.Core().V1().Services()
+	servicesInformer.Informer().SetWatchErrorHandler(func(_ *cache.Reflector, err error) {
+		supervisor.Logger(ctx).Errorf("service informer watch error: %v", err)
+	})
+
+	svcController := controller.NewServiceController(nfproxy, s.ClientSet, servicesInformer)
+	ep := controller.NewEndpointSliceController(nfproxy, s.ClientSet, endpointSlicesInformer)
 	kubeInformerFactory.Start(ctx.Done())
 
 	if err = svcController.Start(ctx.Done()); err != nil {
