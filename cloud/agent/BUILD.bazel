@@ -5,19 +5,31 @@ load("//metropolis/node/build:def.bzl", "node_initramfs")
 go_library(
     name = "agent_lib",
     srcs = [
+        "agent.go",
         "hwreport.go",
+        "install.go",
         "main.go",
     ],
     importpath = "source.monogon.dev/cloud/agent",
     visibility = ["//visibility:private"],
     deps = [
         "//cloud/agent/api",
+        "//cloud/bmaas/server/api",
+        "//metropolis/node/build/mkimage/osimage",
+        "//metropolis/node/core/network",
+        "//metropolis/pkg/efivarfs",
+        "//metropolis/pkg/logtree",
         "//metropolis/pkg/nvme",
+        "//metropolis/pkg/pki",
         "//metropolis/pkg/scsi",
         "//metropolis/pkg/smbios",
+        "//metropolis/pkg/supervisor",
+        "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_mdlayher_ethtool//:ethtool",
         "@com_github_vishvananda_netlink//:netlink",
-        "@org_golang_google_protobuf//encoding/prototext",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//credentials",
+        "@org_golang_google_protobuf//proto",
         "@org_golang_x_sys//unix",
     ],
 )
@@ -50,6 +62,8 @@ node_initramfs(
     name = "initramfs",
     files = {
         ":agent": "/init",
+        "@com_github_coredns_coredns//:coredns": "/kubernetes/bin/coredns",
+        "//metropolis/node/core/network/dns:resolv.conf": "/etc/resolv.conf",
         "@cacerts//file": "/etc/ssl/cert.pem",
     },
     fsspecs = [

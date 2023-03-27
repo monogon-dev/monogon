@@ -31,7 +31,7 @@ pkg_zip(
         ":kernel_efi",
         ":verity_rootfs",
     ],
-    visibility = ["//metropolis/installer/test:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 go_library(

@@ -11,6 +11,9 @@ message TakeoverInit {
   // bmaas_endpoint is an address of the BMaaS service the agent should call
   // back to.
   string bmaas_endpoint = 2;
+  // Optional CA certificate to be used instead of a public CA root store.
+  // Formatted as raw ASN.1 DER.
+  bytes ca_certificate = 3;
 }
 
 message TakeoverSuccess {

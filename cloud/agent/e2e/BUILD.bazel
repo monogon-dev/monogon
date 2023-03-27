@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "e2e_test",
+    srcs = ["main_test.go"],
+    data = [
+        "//cloud/agent:initramfs",
+        "//metropolis/installer/test/testos:testos_bundle",
+        "//third_party/edk2:firmware",
+        "//third_party/linux",
+    ],
+    deps = [
+        "//cloud/agent/api",
+        "//cloud/bmaas/server/api",
+        "//metropolis/cli/pkg/datafile",
+        "//metropolis/pkg/pki",
+        "//metropolis/proto/api",
+        "@com_github_cavaliergopher_cpio//:cpio",
+        "@com_github_pierrec_lz4_v4//:lz4",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//credentials",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_x_sys//unix",
+    ],
+)

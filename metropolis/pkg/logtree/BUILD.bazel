@@ -18,8 +18,9 @@ go_library(
         "testhelpers.go",
         "zap.go",
     ],
+    # TODO(#189): move logtree to //go
     importpath = "source.monogon.dev/metropolis/pkg/logtree",
-    visibility = ["//metropolis:__subpackages__"],
+    visibility = ["//visibility:public"],
     deps = [
         "//metropolis/pkg/logbuffer",
         "//metropolis/proto/common",

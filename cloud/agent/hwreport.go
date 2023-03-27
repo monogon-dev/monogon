@@ -184,9 +184,7 @@ func (c *hwReportContext) gatherCPU() {
 	return
 }
 
-var (
-	FRUUnavailable = [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-)
+var FRUUnavailable = [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (c *hwReportContext) gatherNVMe(bd *api.BlockDevice, bde os.DirEntry) error {
 	bd.Protocol = api.BlockDevice_NVME
@@ -207,7 +205,7 @@ func (c *hwReportContext) gatherNVMe(bd *api.BlockDevice, bde os.DirEntry) error
 	if healthInfo, err := nvmeDev.GetHealthInfo(); err == nil {
 		bd.AvailableSpareRatio = &healthInfo.AvailableSpare
 		bd.CriticalWarning = healthInfo.HasCriticalWarning()
-		var mediaErrors = int64(healthInfo.MediaAndDataIntegrityErrors)
+		mediaErrors := int64(healthInfo.MediaAndDataIntegrityErrors)
 		bd.MediaErrors = &mediaErrors
 		bd.UsageRatio = &healthInfo.LifeUsed
 	}
@@ -399,7 +397,9 @@ func (c *hwReportContext) gatherNICs() {
 }
 
 func gatherHWReport() (*api.Node, []error) {
-	var hwReportCtx hwReportContext
+	hwReportCtx := hwReportContext{
+		node: &api.Node{},
+	}
 
 	hwReportCtx.gatherCPU()
 	hwReportCtx.gatherSMBIOS()
