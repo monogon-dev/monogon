@@ -70,7 +70,7 @@ go_repositories()
 go_rules_dependencies()
 
 go_register_toolchains(
-    go_version = "1.18.3",
+    go_version = "1.18.10",
     nogo = "@dev_source_monogon//build/analysis:nogo",
 )
 
