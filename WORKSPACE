@@ -278,8 +278,8 @@ go_image_repos()
 # Derived from Mozilla NSS, currently needed for containerd to be able to pull images
 http_file(
     name = "cacerts",
-    sha256 = "adf770dfd574a0d6026bfaa270cb6879b063957177a991d453ff1d302c02081f",
-    urls = ["https://curl.haxx.se/ca/cacert-2020-01-01.pem"],
+    sha256 = "fb1ecd641d0a02c01bc9036d513cb658bbda62a75e246bedbc01764560a639f0",
+    urls = ["https://curl.se/ca/cacert-2023-01-10.pem"],
 )
 
 # lz4, the library and the tool.
