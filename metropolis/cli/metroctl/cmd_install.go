@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -15,6 +16,7 @@ import (
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	"source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 var installCmd = &cobra.Command{
@@ -38,10 +40,24 @@ var genusbCmd = &cobra.Command{
 // the --endpoints flag.
 var bootstrap bool
 
+var bootstrapTPMMode string
+
 //go:embed metropolis/installer/kernel.efi
 var installer []byte
 
 func doGenUSB(cmd *cobra.Command, args []string) {
+	var tpmMode cpb.ClusterConfiguration_TPMMode
+	switch strings.ToLower(bootstrapTPMMode) {
+	case "required", "require":
+		tpmMode = cpb.ClusterConfiguration_TPM_MODE_REQUIRED
+	case "best-effort", "besteffort":
+		tpmMode = cpb.ClusterConfiguration_TPM_MODE_BEST_EFFORT
+	case "disabled", "disable":
+		tpmMode = cpb.ClusterConfiguration_TPM_MODE_DISABLED
+	default:
+		log.Fatalf("Invalid --bootstrap-tpm-mode (must be one of: required, best-effort, disabled)")
+	}
+
 	var bundleReader io.Reader
 	var bundleSize uint64
 	if bundlePath == nil || *bundlePath == "" {
@@ -84,6 +100,9 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 			Cluster: &api.NodeParameters_ClusterBootstrap_{
 				ClusterBootstrap: &api.NodeParameters_ClusterBootstrap{
 					OwnerPublicKey: pub,
+					InitialClusterConfiguration: &cpb.ClusterConfiguration{
+						TpmMode: tpmMode,
+					},
 				},
 			},
 		}
@@ -129,5 +148,6 @@ func init() {
 	rootCmd.AddCommand(installCmd)
 
 	genusbCmd.Flags().BoolVar(&bootstrap, "bootstrap", false, "Create a bootstrap installer image.")
+	genusbCmd.Flags().StringVar(&bootstrapTPMMode, "bootstrap-tpm-mode", "required", "TPM mode to set on cluster (required, best-effort, disabled)")
 	installCmd.AddCommand(genusbCmd)
 }
