@@ -6,6 +6,10 @@ proto_library(
     name = "api_proto",
     srcs = ["agent.proto"],
     visibility = ["//visibility:public"],
+    deps = [
+        "//cloud/agent/api:api_proto",
+        "//metropolis/proto/api:api_proto",
+    ],
 )
 
 go_proto_library(
@@ -14,6 +18,10 @@ go_proto_library(
     importpath = "source.monogon.dev/cloud/bmaas/server/api",
     proto = ":api_proto",
     visibility = ["//visibility:public"],
+    deps = [
+        "//cloud/agent/api",
+        "//metropolis/proto/api",
+    ],
 )
 
 go_library(

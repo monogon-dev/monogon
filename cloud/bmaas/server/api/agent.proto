@@ -2,6 +2,9 @@ syntax = "proto3";
 package cloud.bmaas.server.api;
 option go_package = "source.monogon.dev/cloud/bmaas/server/api";
 
+import "metropolis/proto/api/configuration.proto";
+import "cloud/agent/api/hwreport.proto";
+
 // AgentCallback runs on the BMDB Server and exposes a gRPC interface to agents
 // running on machines. These APIs are served over TLS using component-style
 // server certificates, but clients are authenticated using ephemeral
@@ -18,7 +21,10 @@ service AgentCallback {
 }
 
 message AgentHardwareReport {
-  // TODO(lorenz): implement
+  cloud.agent.api.Node report = 1;
+  // List of human-readable warnings which occurred during hardware report
+  // generation.
+  repeated string warning = 2;
 }
 
 // OSInstallationReport is submitted from the agent to the BMDB server after
@@ -27,6 +33,21 @@ message OSInstallationReport {
   // generation must be set to the same value as 'generation' in the
   // OSInstallation request which triggered the OS installation
   int64 generation = 1;
+
+  // Success is set by the agent when the installation request has been
+  // successfully fulfilled. It is currently empty but is specified as a
+  // message to allow it to be expanded in the future.
+  message Success {}
+  // Error is set by the agent when the installation request could not be
+  // fulfilled due to an error.
+  message Error {
+    // A human-readable message of what went wrong.
+    string error = 1;
+  }
+  oneof result {
+    Success success = 2;
+    Error error = 3;
+  }
 }
 
 message AgentHeartbeatRequest {
@@ -43,6 +64,17 @@ message AgentHeartbeatRequest {
   OSInstallationReport installation_report = 3;
 }
 
+message MetropolisInstallationRequest {
+  // An HTTPS URL to a Metropolis bundle containing the OS to install.
+  string bundle_url = 1;
+  // Node parameters to be supplied to the new node. Note that network_config
+  // is automatically filled out if coming from the takeover.
+  metropolis.proto.api.NodeParameters node_parameters = 2;
+  // Name of the block device to be used as the root device for the install.
+  // A list of block devices can be taken from the node hardware report.
+  string root_device = 3;
+}
+
 // OSInstallationRequest is provided to the agent by the BMDB server, from
 // a responding BMDB tag, when an OS installation request is pending.
 message OSInstallationRequest {
@@ -52,7 +84,10 @@ message OSInstallationRequest {
   // let the rest of the system know which OS installation request it actually
   // fulfilled.
   int64 generation = 1;
-  // TODO(lorenz): implement
+  // Selects which operating system installation flow is used.
+  oneof type {
+    MetropolisInstallationRequest metropolis = 2;
+  }
 }
 
 message AgentHeartbeatResponse {
