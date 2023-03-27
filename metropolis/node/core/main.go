@@ -137,8 +137,26 @@ func main() {
 		if err := root.Start(ctx); err != nil {
 			return fmt.Errorf("cannot start root FS: %w", err)
 		}
-		if err := supervisor.Run(ctx, "network", networkSvc.Run); err != nil {
-			return fmt.Errorf("when starting network: %w", err)
+		nodeParams, err := getNodeParams(ctx, root)
+		if err != nil {
+			return fmt.Errorf("cannot get node parameters: %w", err)
+		}
+		if nodeParams.NetworkConfig != nil {
+			networkSvc.StaticConfig = nodeParams.NetworkConfig
+			if err := root.ESP.Metropolis.NetworkConfiguration.Marshal(nodeParams.NetworkConfig); err != nil {
+				logger.Errorf("Error writing back network_config from NodeParameters: %v", err)
+			}
+		}
+		if networkSvc.StaticConfig == nil {
+			staticConfig, err := root.ESP.Metropolis.NetworkConfiguration.Unmarshal()
+			if err == nil {
+				networkSvc.StaticConfig = staticConfig
+			} else {
+				logger.Errorf("Unable to load static config, proceeding without it: %v", err)
+			}
+			if err := supervisor.Run(ctx, "network", networkSvc.Run); err != nil {
+				return fmt.Errorf("when starting network: %w", err)
+			}
 		}
 		if err := supervisor.Run(ctx, "time", timeSvc.Run); err != nil {
 			return fmt.Errorf("when starting time: %w", err)
@@ -166,7 +184,7 @@ func main() {
 
 		// Start cluster manager. This kicks off cluster membership machinery,
 		// which will either start a new cluster, enroll into one or join one.
-		m := cluster.NewManager(root, networkSvc, rs)
+		m := cluster.NewManager(root, networkSvc, rs, nodeParams)
 		return m.Run(ctx)
 	}
 

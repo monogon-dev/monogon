@@ -28,6 +28,7 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	ppb "source.monogon.dev/metropolis/proto/private"
+	npb "source.monogon.dev/net/proto"
 )
 
 // ESPDirectory is the EFI System Partition. It is a cleartext partition
@@ -43,9 +44,10 @@ type ESPDirectory struct {
 // bootstrap-related data.
 type ESPMetropolisDirectory struct {
 	declarative.Directory
-	SealedConfiguration ESPSealedConfiguration `file:"sealed_configuration.pb"`
-	NodeParameters      ESPNodeParameters      `file:"parameters.pb"`
-	ClusterDirectory    ESPClusterDirectory    `file:"cluster_directory.pb"`
+	SealedConfiguration  ESPSealedConfiguration  `file:"sealed_configuration.pb"`
+	NodeParameters       ESPNodeParameters       `file:"parameters.pb"`
+	ClusterDirectory     ESPClusterDirectory     `file:"cluster_directory.pb"`
+	NetworkConfiguration ESPNetworkConfiguration `file:"network_configuration.pb"`
 }
 
 // ESPSealedConfiguration is a TPM sealed serialized
@@ -69,14 +71,22 @@ type ESPClusterDirectory struct {
 	declarative.File
 }
 
+// ESPNetworkConfiguration is a serialized net.Net protobuf. If present, it
+// disables automatic network configuration and uses the given configuration
+// to enable network connectivity.
+type ESPNetworkConfiguration struct {
+	declarative.File
+}
+
 var (
-	ErrNoSealed            = errors.New("no sealed configuration exists")
-	ErrSealedUnavailable   = errors.New("sealed configuration temporary unavailable")
-	ErrSealedCorrupted     = errors.New("sealed configuration corrupted")
-	ErrNoParameters        = errors.New("no parameters found")
-	ErrParametersCorrupted = errors.New("parameters corrupted")
-	ErrNoDirectory         = errors.New("no cluster directory found")
-	ErrDirectoryCorrupted  = errors.New("cluster directory corrupted")
+	ErrNoSealed               = errors.New("no sealed configuration exists")
+	ErrSealedUnavailable      = errors.New("sealed configuration temporary unavailable")
+	ErrSealedCorrupted        = errors.New("sealed configuration corrupted")
+	ErrNoParameters           = errors.New("no parameters found")
+	ErrParametersCorrupted    = errors.New("parameters corrupted")
+	ErrNoDirectory            = errors.New("no cluster directory found")
+	ErrDirectoryCorrupted     = errors.New("cluster directory corrupted")
+	ErrNetworkConfigCorrupted = errors.New("network configuration corrupted")
 )
 
 func (e *ESPNodeParameters) Unmarshal() (*apb.NodeParameters, error) {
@@ -112,6 +122,34 @@ func (e *ESPClusterDirectory) Unmarshal() (*cpb.ClusterDirectory, error) {
 		return nil, fmt.Errorf("%w: when unmarshaling: %v", ErrDirectoryCorrupted, err)
 	}
 	return &dir, nil
+}
+
+func (e *ESPNetworkConfiguration) Unmarshal() (*npb.Net, error) {
+	bytes, err := e.Read()
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("%w: when reading: %v", ErrNetworkConfigCorrupted, err)
+	}
+
+	netConf := npb.Net{}
+	err = proto.Unmarshal(bytes, &netConf)
+	if err != nil {
+		return nil, fmt.Errorf("%w: when unmarshaling: %v", ErrNetworkConfigCorrupted, err)
+	}
+	return &netConf, nil
+}
+
+func (e *ESPNetworkConfiguration) Marshal(n *npb.Net) error {
+	netConfRaw, err := proto.Marshal(n)
+	if err != nil {
+		return fmt.Errorf("error marshaling Net: %w", err)
+	}
+	if err := e.Write(netConfRaw, 0666); err != nil {
+		return fmt.Errorf("error writing static network config to ESP: %w", err)
+	}
+	return nil
 }
 
 func (e *ESPSealedConfiguration) SealSecureBoot(c *ppb.SealedConfiguration) error {

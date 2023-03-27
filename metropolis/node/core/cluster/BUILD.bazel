@@ -7,7 +7,6 @@ go_library(
         "cluster_bootstrap.go",
         "cluster_join.go",
         "cluster_register.go",
-        "platform.go",
     ],
     importpath = "source.monogon.dev/metropolis/node/core/cluster",
     visibility = ["//metropolis/node/core:__subpackages__"],

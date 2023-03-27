@@ -18,6 +18,7 @@ go_library(
         "//metropolis/proto/api",
         "//metropolis/proto/common",
         "//metropolis/proto/private",
+        "//net/proto",
         "@org_golang_google_protobuf//proto",
         "@org_golang_x_sys//unix",
     ],

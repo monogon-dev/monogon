@@ -19,6 +19,7 @@ package metropolis.proto.api;
 option go_package = "source.monogon.dev/metropolis/proto/api";
 
 import "metropolis/proto/common/common.proto";
+import "net/proto/net.proto";
 
 // NodeParameters is the data with which a Node is set booted. It contains the
 // configuration required for a node to either bootstrap a new cluster, or
@@ -61,4 +62,8 @@ message NodeParameters {
         ClusterBootstrap cluster_bootstrap = 1;
         ClusterRegister cluster_register = 2;
     }
+
+    // Optional network configuration when autoconfiguration is not possible or
+    // desirable. If unset, autoconfiguration (ie. DHCP) is used.
+    net.proto.Net network_config = 4;
 }
