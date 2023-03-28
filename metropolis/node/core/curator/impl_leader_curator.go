@@ -198,10 +198,12 @@ func nodeValueConverter(key, value []byte) (*nodeAtID, error) {
 // WatchEvent, either a Node or NodeTombstone.
 func (kv nodeAtID) appendToEvent(ev *ipb.WatchEvent) {
 	if node := kv.value; node != nil {
+		np := node.proto()
 		ev.Nodes = append(ev.Nodes, &ipb.Node{
-			Id:     node.ID(),
-			Roles:  node.proto().Roles,
-			Status: node.status,
+			Id:         node.ID(),
+			Roles:      np.Roles,
+			Status:     np.Status,
+			Clusternet: np.Clusternet,
 		})
 	} else {
 		ev.NodeTombstones = append(ev.NodeTombstones, &ipb.WatchEvent_NodeTombstone{

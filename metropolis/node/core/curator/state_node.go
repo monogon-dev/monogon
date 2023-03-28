@@ -21,6 +21,7 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
+	"net/netip"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc/codes"
@@ -87,6 +88,15 @@ type Node struct {
 	// kubernetesWorker is set if this node is a Kubernetes worker, ie. running the
 	// Kubernetes dataplane which runs user workloads.
 	kubernetesWorker *NodeRoleKubernetesWorker
+
+	// wireguardKey, if set, is the Wireguard key of the node's cluster networking
+	// setup.
+	wireguardKey string
+	// networkingPrefixes are all the network routes exported by the node into the
+	// cluster networking mesh. All of them will be programmed as allowedIPs into a
+	// wireguard peer, but only the pod network will have a single large route
+	// installed into the host routing table.
+	networkPrefixes []netip.Prefix
 }
 
 // NewNodeForBootstrap creates a brand new node without regard for any other
@@ -255,6 +265,18 @@ func (n *Node) proto() *ppb.Node {
 			Peers:           peers,
 		}
 	}
+	if n.wireguardKey != "" {
+		var prefixes []*cpb.NodeClusterNetworking_Prefix
+		for _, prefix := range n.networkPrefixes {
+			prefixes = append(prefixes, &cpb.NodeClusterNetworking_Prefix{
+				Cidr: prefix.String(),
+			})
+		}
+		msg.Clusternet = &cpb.NodeClusterNetworking{
+			WireguardPubkey: n.wireguardKey,
+			Prefixes:        prefixes,
+		}
+	}
 	return msg
 }
 
@@ -304,6 +326,21 @@ func nodeUnmarshal(data []byte) (*Node, error) {
 				List: crl,
 			},
 			Peers: peers,
+		}
+	}
+	if cn := msg.Clusternet; cn != nil {
+		n.wireguardKey = cn.WireguardPubkey
+		for _, prefix := range cn.Prefixes {
+			if prefix.Cidr == "" {
+				continue
+			}
+			nip, err := netip.ParsePrefix(prefix.Cidr)
+			if err != nil {
+				// Eat error. When we serialize this back into a node, the invalid record will
+				// just be removed.
+				continue
+			}
+			n.networkPrefixes = append(n.networkPrefixes, nip)
 		}
 	}
 	return n, nil

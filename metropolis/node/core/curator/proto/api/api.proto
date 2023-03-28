@@ -130,6 +130,29 @@ service Curator {
         option (metropolis.proto.ext.authorization) = {
         };
     }
+
+    // UpdateNodeClusterNetworking is called by nodes when their local Cluster
+    // Networking state changes, ie. they are using a new WireGuard key or have
+    // new prefixes to announce. All per-node cluster networking information is
+    // then available for other nodes to consume. This information is then used
+    // to build up the WireGuard-based cluster networking mesh.
+    //
+    // The Curator performs basic validation on the submitted prefixes. It makes
+    // sure the submitted prefixes are either:
+    // 1. fully contained within the cluster's Kubernetes pod network, or
+    // 2. a /32 equal to a node's external IP address, which allows communicating
+    //    from node IPs to pods.
+    //
+    // These prefixes are always added to allowedIPs on WireGuard peers, but not
+    // automatically added as routes on the nodes. Instead, only the Kubernetes
+    // cluster network is programmed into the routing table, which catches all
+    // the prefixes of type 1. Prefixes of type 2. are only used to allow
+    // incoming traffic from nodes into pods.
+    rpc UpdateNodeClusterNetworking(UpdateNodeClusterNetworkingRequest) returns (UpdateNodeClusterNetworkingResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_UPDATE_NODE_SELF
+        };
+    }
 }
 
 // Node is the state and configuration of a node in the cluster.
@@ -140,6 +163,8 @@ message Node {
     metropolis.proto.common.NodeRoles roles = 2;
     // Last reported status of the node, if available.
     metropolis.proto.common.NodeStatus status = 3;
+    // Cluster networking configuration/status of node, if available.
+    metropolis.proto.common.NodeClusterNetworking clusternet = 4;
 };
 
 // WatchRequest specifies what data the caller is interested in. This influences
@@ -345,4 +370,14 @@ message IssueCertificateResponse {
     oneof kind {
         KubernetesWorker kubernetes_worker = 1;
     };
+}
+
+message UpdateNodeClusterNetworkingRequest {
+    // Details of the clusternet configuration/state of the node. Whatever is
+    // currently configured in the Curatoor will be fully replaced by data
+    // contained with this field, after validation.
+    metropolis.proto.common.NodeClusterNetworking clusternet = 1;
+}
+
+message UpdateNodeClusterNetworkingResponse {
 }

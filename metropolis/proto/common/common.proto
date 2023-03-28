@@ -175,3 +175,17 @@ message ClusterDirectory {
     };
     repeated Node nodes = 1;
 }
+
+
+// NodeClusterNetworking carries information about the cluster networking (ie.
+// WireGuard mesh) connectivity of a node.
+message NodeClusterNetworking {
+    message Prefix {
+        string cidr = 1;
+    }
+    // wireguard_pubkey is the base64-encoded public key used by the node.
+    string wireguard_pubkey = 1;
+    // prefixes are networking routes exported by the node to the cluster networking
+    // mesh, and are programmed by other nodes into their wireguard peer config.
+    repeated Prefix prefixes = 2;
+}

@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"io"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -1291,5 +1292,134 @@ func TestIssueKubernetesWorkerCertificate(t *testing.T) {
 	})
 	if err == nil {
 		t.Errorf("Certificate has been issued again for a different pubkey")
+	}
+}
+
+// TestUpdateNodeClusterNetworking exercises the validation and mutation
+// functionality of the UpdateNodeClusterNetworkship implementation in the
+// curator leader.
+func TestUpdateNodeClusterNetworking(t *testing.T) {
+	cl := fakeLeader(t)
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	cur := ipb.NewCuratorClient(cl.localNodeConn)
+	// Update the node's external address as it's used in tests.
+	_, err := cur.UpdateNodeStatus(ctx, &ipb.UpdateNodeStatusRequest{
+		NodeId: cl.localNodeID,
+		Status: &cpb.NodeStatus{
+			ExternalAddress: "203.0.113.43",
+		},
+	})
+	if err != nil {
+		t.Errorf("Failed to update node external address: %v", err)
+	}
+
+	// Run a few table tests, but end up with an update that went through.
+	for i, te := range []struct {
+		req     *ipb.UpdateNodeClusterNetworkingRequest
+		wantErr string
+	}{
+		{&ipb.UpdateNodeClusterNetworkingRequest{}, "clusternet must be set"},
+		{&ipb.UpdateNodeClusterNetworkingRequest{
+			Clusternet: &cpb.NodeClusterNetworking{},
+		}, "wireguard_pubkey must be set"},
+		{&ipb.UpdateNodeClusterNetworkingRequest{
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: "beep boop i'm a key",
+			},
+		}, "must be a valid wireguard"},
+		{&ipb.UpdateNodeClusterNetworkingRequest{
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: "w9RbFvF14pytyraq16IEuMov032XXrPBOQUr59kcxHg=",
+			},
+		}, ""},
+		{&ipb.UpdateNodeClusterNetworkingRequest{
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: "w9RbFvF14pytyraq16IEuMov032XXrPBOQUr59kcxHg=",
+				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
+					{Cidr: ""},
+				},
+			},
+		}, "no '/'"},
+		{&ipb.UpdateNodeClusterNetworkingRequest{
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: "w9RbFvF14pytyraq16IEuMov032XXrPBOQUr59kcxHg=",
+				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
+					{Cidr: "10.0.0.128/16"},
+				},
+			},
+		}, "must be in canonical format"},
+		{&ipb.UpdateNodeClusterNetworkingRequest{
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: "w9RbFvF14pytyraq16IEuMov032XXrPBOQUr59kcxHg=",
+				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
+					// Prefix outside of cluster net should not be allowed.
+					{Cidr: "10.0.0.0/15"},
+				},
+			},
+		}, "must be fully contained"},
+		{&ipb.UpdateNodeClusterNetworkingRequest{
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: "w9RbFvF14pytyraq16IEuMov032XXrPBOQUr59kcxHg=",
+				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
+					// Random /32 should not be allowed.
+					{Cidr: "8.8.8.8/32"},
+				},
+			},
+		}, "must be fully contained"},
+		{&ipb.UpdateNodeClusterNetworkingRequest{
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: "GaNXuc/yl8IaXduX6PQ+ZxIG4HtBACubHrRI7rqfA20=",
+				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
+					{Cidr: "10.0.0.0/24"},
+					// Yes, this is allowed.
+					{Cidr: "10.0.0.0/16"},
+					{Cidr: "10.0.12.23/32"},
+					// External address should be allowed.
+					{Cidr: "203.0.113.43/32"},
+				},
+			},
+		}, ""},
+	} {
+		_, err := cur.UpdateNodeClusterNetworking(ctx, te.req)
+		if te.wantErr != "" {
+			if !strings.Contains(err.Error(), te.wantErr) {
+				t.Errorf("case %d: error should've contained %q, got %q", i, te.wantErr, err.Error())
+			}
+		} else {
+			if err != nil {
+				t.Errorf("case %d: should've passed, got: %v", i, err)
+			}
+		}
+	}
+
+	// Make sure the last request actually ended up in a node mutation.
+	w, err := cur.Watch(ctx, &ipb.WatchRequest{
+		Kind: &ipb.WatchRequest_NodeInCluster_{
+			NodeInCluster: &ipb.WatchRequest_NodeInCluster{
+				NodeId: cl.localNodeID,
+			},
+		},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	ev, err := w.Recv()
+	if err != nil {
+		t.Error(err)
+	}
+	cn := ev.Nodes[0].Clusternet
+	if want, got := "GaNXuc/yl8IaXduX6PQ+ZxIG4HtBACubHrRI7rqfA20=", cn.WireguardPubkey; want != got {
+		t.Errorf("Wrong wireguard key: wanted %q, got %q", want, got)
+	}
+	if want, got := 4, len(cn.Prefixes); want != got {
+		t.Errorf("Wanted %d prefixes, got %d", want, got)
+	} else {
+		for i, want := range []string{"10.0.0.0/24", "10.0.0.0/16", "10.0.12.23/32", "203.0.113.43/32"} {
+			if got := cn.Prefixes[i].Cidr; want != got {
+				t.Errorf("Prefix %d should be %q, got %q", i, want, got)
+			}
+		}
 	}
 }
