@@ -18,6 +18,7 @@ go_library(
     deps = [
         "//go/net/tinylb",
         "//metropolis/node",
+        "//metropolis/node/core/clusternet",
         "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/identity",
         "//metropolis/node/core/localstorage",
@@ -29,6 +30,7 @@ go_library(
         "//metropolis/node/kubernetes/pki",
         "//metropolis/node/kubernetes/plugins/kvmdevice",
         "//metropolis/node/kubernetes/reconciler",
+        "//metropolis/pkg/event",
         "//metropolis/pkg/event/memory",
         "//metropolis/pkg/fileargs",
         "//metropolis/pkg/fsquota",

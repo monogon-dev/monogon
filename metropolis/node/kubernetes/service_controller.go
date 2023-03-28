@@ -28,6 +28,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
+	oclusternet "source.monogon.dev/metropolis/node/core/clusternet"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
@@ -38,6 +39,7 @@ import (
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/node/kubernetes/plugins/kvmdevice"
 	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
+	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -48,10 +50,11 @@ type ConfigController struct {
 	ClusterNet     net.IPNet
 	ClusterDomain  string
 
-	KPKI    *pki.PKI
-	Root    *localstorage.Root
-	Network *network.Service
-	Node    *identity.Node
+	KPKI       *pki.PKI
+	Root       *localstorage.Root
+	Network    *network.Service
+	Node       *identity.Node
+	PodNetwork event.Value[*oclusternet.Prefixes]
 }
 
 type Controller struct {
@@ -185,11 +188,9 @@ func (s *Controller) Run(ctx context.Context) error {
 	}
 
 	clusternet := clusternet.Service{
-		NodeName:        s.c.Node.ID(),
-		Kubernetes:      clientSet,
-		ClusterNet:      s.c.ClusterNet,
-		InformerFactory: informerFactory,
-		DataDirectory:   &s.c.Root.Data.Kubernetes.ClusterNetworking,
+		NodeName:   s.c.Node.ID(),
+		Kubernetes: clientSet,
+		Prefixes:   s.c.PodNetwork,
 	}
 
 	nfproxy := nfproxy.Service{

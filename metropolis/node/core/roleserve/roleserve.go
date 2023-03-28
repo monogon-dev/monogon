@@ -44,6 +44,7 @@ import (
 	"crypto/ed25519"
 
 	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/clusternet"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
@@ -83,6 +84,7 @@ type Service struct {
 	KubernetesStatus  memory.Value[*KubernetesStatus]
 	bootstrapData     memory.Value[*bootstrapData]
 	localRoles        memory.Value[*cpb.NodeRoles]
+	podNetwork        memory.Value[*clusternet.Prefixes]
 
 	controlPlane *workerControlPlane
 	statusPush   *workerStatusPush
@@ -90,6 +92,7 @@ type Service struct {
 	kubernetes   *workerKubernetes
 	rolefetch    *workerRoleFetch
 	nodeMgmt     *workerNodeMgmt
+	clusternet   *workerClusternet
 }
 
 // New creates a Role Server services from a Config.
@@ -126,6 +129,7 @@ func New(c Config) *Service {
 		clusterMembership: &s.ClusterMembership,
 
 		kubernetesStatus: &s.KubernetesStatus,
+		podNetwork:       &s.podNetwork,
 	}
 
 	s.rolefetch = &workerRoleFetch{
@@ -137,6 +141,12 @@ func New(c Config) *Service {
 	s.nodeMgmt = &workerNodeMgmt{
 		clusterMembership: &s.ClusterMembership,
 		logTree:           s.LogTree,
+	}
+	s.clusternet = &workerClusternet{
+		storageRoot: s.StorageRoot,
+
+		clusterMembership: &s.ClusterMembership,
+		podNetwork:        &s.podNetwork,
 	}
 
 	return s
@@ -198,6 +208,7 @@ func (s *Service) Run(ctx context.Context) error {
 	supervisor.Run(ctx, "heartbeat", s.heartbeat.run)
 	supervisor.Run(ctx, "rolefetch", s.rolefetch.run)
 	supervisor.Run(ctx, "nodemgmt", s.nodeMgmt.run)
+	supervisor.Run(ctx, "clusternet", s.clusternet.run)
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 
 	<-ctx.Done()

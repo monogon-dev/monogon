@@ -8,6 +8,7 @@ go_library(
         "value_clustermembership.go",
         "value_kubernetes.go",
         "value_node.go",
+        "worker_clusternet.go",
         "worker_controlplane.go",
         "worker_heartbeat.go",
         "worker_kubernetes.go",
@@ -19,6 +20,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//metropolis/node",
+        "//metropolis/node/core/clusternet",
         "//metropolis/node/core/consensus",
         "//metropolis/node/core/curator",
         "//metropolis/node/core/curator/proto/api",

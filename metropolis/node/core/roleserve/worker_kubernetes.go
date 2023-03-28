@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 
+	"source.monogon.dev/metropolis/node/core/clusternet"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/kubernetes"
@@ -32,6 +33,7 @@ type workerKubernetes struct {
 	localRoles        *memory.Value[*cpb.NodeRoles]
 	clusterMembership *memory.Value[*ClusterMembership]
 	kubernetesStatus  *memory.Value[*KubernetesStatus]
+	podNetwork        *memory.Value[*clusternet.Prefixes]
 }
 
 // kubernetesStartup is used internally to provide a reduced (as in MapReduce
@@ -167,7 +169,6 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			return fmt.Errorf("failed to start containerd service: %w", err)
 		}
 
-
 		controller := kubernetes.NewController(kubernetes.ConfigController{
 			Node:           &d.membership.credentials.Node,
 			ServiceIPRange: serviceIPRange,
@@ -176,6 +177,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			KPKI:           pki,
 			Root:           s.storageRoot,
 			Network:        s.network,
+			PodNetwork:     s.podNetwork,
 		})
 		// Start Kubernetes.
 		if err := supervisor.Run(ctx, "run", controller.Run); err != nil {
