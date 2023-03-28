@@ -1306,6 +1306,14 @@ func TestUpdateNodeClusterNetworking(t *testing.T) {
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
 
+	// Make another fake node out-of band. We'll be using it at the end to make sure
+	// that we can't add another node with the same pubkey. We have to do it as early
+	// as possible to bypass caching by the leader.
+	//
+	// TODO(q3k): implement adding more nodes in harness, and just add another node
+	// normally. This will actually exercise the cache better.
+	putNode(t, ctx, cl.l, func(n *Node) { n.wireguardKey = "+nb5grgIKQEbHm5JrUZovPQ9Bv04jR2TtY6sgS0dGG4=" })
+
 	cur := ipb.NewCuratorClient(cl.localNodeConn)
 	// Update the node's external address as it's used in tests.
 	_, err := cur.UpdateNodeStatus(ctx, &ipb.UpdateNodeStatusRequest{
@@ -1424,5 +1432,14 @@ func TestUpdateNodeClusterNetworking(t *testing.T) {
 				t.Errorf("Prefix %d should be %q, got %q", i, want, got)
 			}
 		}
+	}
+
+	// Make sure adding another node with the same pubkey fails.
+	_, err = cur.UpdateNodeClusterNetworking(ctx, &ipb.UpdateNodeClusterNetworkingRequest{
+		Clusternet: &cpb.NodeClusterNetworking{
+			WireguardPubkey: "+nb5grgIKQEbHm5JrUZovPQ9Bv04jR2TtY6sgS0dGG4=",
+		}})
+	if err == nil || !strings.Contains(err.Error(), "public key alread used by another node") {
+		t.Errorf("Adding same pubkey to different node should have failed, got %v", err)
 	}
 }

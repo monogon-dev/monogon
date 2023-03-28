@@ -29,6 +29,11 @@ type leaderState struct {
 	// startTs is a local monotonic clock timestamp associated with this node's
 	// assumption of Curator leadership.
 	startTs time.Time
+
+	// clusternetCache maps wireguard public keys (as strings) into node IDs. It is
+	// used to detect possibly re-used WireGuard public keys without having to get
+	// all nodes from etcd.
+	clusternetCache map[string]string
 }
 
 // leadership represents the curator leader's ability to perform actions as a
