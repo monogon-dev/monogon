@@ -9,10 +9,12 @@ go_library(
     name = "node",
     srcs = [
         "ids.go",
+        "net_protocols.go",
         "ports.go",
     ],
     importpath = "source.monogon.dev/metropolis/node",
     visibility = ["//metropolis:__subpackages__"],
+    deps = ["@com_github_vishvananda_netlink//:netlink"],
 )
 
 # debug_build checks if we're building in debug mode and enables various debug features for the image.

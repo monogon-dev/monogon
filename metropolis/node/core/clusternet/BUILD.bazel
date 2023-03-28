@@ -1,0 +1,53 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//metropolis/test/ktest:ktest.bzl", "ktest")
+
+go_library(
+    name = "clusternet",
+    srcs = [
+        "clusternet.go",
+        "types.go",
+        "wireguard.go",
+    ],
+    importpath = "source.monogon.dev/metropolis/node/core/clusternet",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node",
+        "//metropolis/node/core/curator/proto/api",
+        "//metropolis/node/core/localstorage",
+        "//metropolis/pkg/event",
+        "//metropolis/pkg/supervisor",
+        "//metropolis/proto/common",
+        "@com_github_cenkalti_backoff_v4//:backoff",
+        "@com_github_vishvananda_netlink//:netlink",
+        "@com_zx2c4_golang_wireguard_wgctrl//:wgctrl",
+        "@com_zx2c4_golang_wireguard_wgctrl//wgtypes",
+    ],
+)
+
+go_test(
+    name = "clusternet_test",
+    srcs = [
+        "clusternet_test.go",
+        "types_test.go",
+    ],
+    embed = [":clusternet"],
+    deps = [
+        "//metropolis/node",
+        "//metropolis/node/core/curator/proto/api",
+        "//metropolis/node/core/localstorage",
+        "//metropolis/node/core/localstorage/declarative",
+        "//metropolis/pkg/event/memory",
+        "//metropolis/pkg/supervisor",
+        "//metropolis/proto/common",
+        "@com_zx2c4_golang_wireguard_wgctrl//:wgctrl",
+        "@com_zx2c4_golang_wireguard_wgctrl//wgtypes",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//credentials/insecure",
+        "@org_golang_google_grpc//test/bufconn",
+    ],
+)
+
+ktest(
+    cmdline = "ramdisk_size=128",
+    tester = ":clusternet_test",
+)
