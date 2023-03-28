@@ -294,7 +294,7 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 	// ephemeral certificate. That certificate's pubkey will become the node's
 	// pubkey.
 	pi := rpc.GetPeerInfo(ctx)
-	if pi == nil || pi.Unauthenticated == nil {
+	if pi == nil || pi.Unauthenticated == nil || pi.Unauthenticated.SelfSignedPublicKey == nil {
 		return nil, status.Error(codes.Unauthenticated, "connection must be established with a self-signed ephemeral certificate")
 	}
 	pubkey := pi.Unauthenticated.SelfSignedPublicKey
@@ -362,7 +362,7 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 	// ephemeral certificate. That certificate's pubkey will become the node's
 	// pubkey.
 	pi := rpc.GetPeerInfo(ctx)
-	if pi == nil || pi.Unauthenticated == nil {
+	if pi == nil || pi.Unauthenticated == nil || pi.Unauthenticated.SelfSignedPublicKey == nil {
 		return nil, status.Error(codes.Unauthenticated, "connection must be established with a self-signed ephemeral certificate")
 	}
 	pubkey := pi.Unauthenticated.SelfSignedPublicKey
@@ -460,7 +460,7 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 func (l *leaderCurator) JoinNode(ctx context.Context, req *ipb.JoinNodeRequest) (*ipb.JoinNodeResponse, error) {
 	// Gather peer information.
 	pi := rpc.GetPeerInfo(ctx)
-	if pi == nil || pi.Unauthenticated == nil {
+	if pi == nil || pi.Unauthenticated == nil || pi.Unauthenticated.SelfSignedPublicKey == nil {
 		return nil, status.Error(codes.PermissionDenied, "connection must be established with a self-signed ephemeral certificate")
 	}
 	// The node will attempt to connect using its Join Key. jkey will contain
