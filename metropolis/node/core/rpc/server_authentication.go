@@ -56,7 +56,11 @@ func (s *ServerSecurity) GRPCOptions(logger logtree.LeveledLogger) []grpc.Server
 func (s *ServerSecurity) streamInterceptor(logger logtree.LeveledLogger) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		var span *logtreeSpan
-		if logger != nil {
+		// HACK: Do not log any log retrieval methods into the log, otherwise logs blow up
+		// on retrieval.
+		//
+		// TOOD(q3k): make this more generic
+		if logger != nil && info.FullMethod != "/metropolis.proto.api.NodeManagement/Logs" {
 			span = newLogtreeSpan(logger)
 			span.Printf("RPC invoked: streaming request: %s", info.FullMethod)
 			ss = &spanServerStream{
