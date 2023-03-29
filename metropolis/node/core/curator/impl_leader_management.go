@@ -217,6 +217,7 @@ func (l *leaderManagement) GetNodes(req *apb.GetNodesRequest, srv apb.Management
 
 		entry := apb.Node{
 			Pubkey:             node.pubkey,
+			Id:                 identity.NodeID(node.pubkey),
 			State:              node.state,
 			Status:             node.status,
 			Roles:              roles,

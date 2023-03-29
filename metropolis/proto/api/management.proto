@@ -114,6 +114,8 @@ message Node {
     // Raw Ed25519 public key of this node, which can be used to generate
     // the node's ID. This is always set.
     bytes pubkey = 1;
+    // Node ID calculated from pubkey, ie. 'metropolis-123456'.
+    string id = 7;
     // State of the node from the point of view of the cluster. This is
     // always set.
     metropolis.proto.common.NodeState state = 2;
