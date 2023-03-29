@@ -49,7 +49,9 @@ import (
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/pkg/event/memory"
+	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -68,6 +70,8 @@ type Config struct {
 	// created early in the roleserver lifecycle, and is seeded with node
 	// information as the first subordinate runs DialCurator().
 	Resolver *resolver.Resolver
+
+	LogTree *logtree.LogTree
 }
 
 // Service is the roleserver/“Role Server” service. See the package-level
@@ -132,6 +136,7 @@ func New(c Config) *Service {
 
 	s.nodeMgmt = &workerNodeMgmt{
 		clusterMembership: &s.ClusterMembership,
+		logTree:           s.LogTree,
 	}
 
 	return s

@@ -154,6 +154,7 @@ func main() {
 			StorageRoot: root,
 			Network:     networkSvc,
 			Resolver:    res,
+			LogTree:     lt,
 		})
 		if err := supervisor.Run(ctx, "role", rs.Run); err != nil {
 			return fmt.Errorf("failed to start role service: %w", err)

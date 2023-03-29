@@ -265,6 +265,20 @@ func TestMetroctl(t *testing.T) {
 			return nil
 		})
 	})
+	t.Run("logs [nodeID]", func(t *testing.T) {
+		util.TestEventual(t, "metroctl logs [nodeID]", ctx, 10*time.Second, func(ctx context.Context) error {
+			var args []string
+			args = append(args, commonOpts...)
+			args = append(args, endpointOpts...)
+			args = append(args, "node", "logs", cl.NodeIDs[1])
+
+			if err := mctlFailIfMissing(t, ctx, args, "Cluster enrolment done."); err != nil {
+				return err
+			}
+
+			return nil
+		})
+	})
 	t.Run("set/unset role", func(t *testing.T) {
 		util.TestEventual(t, "metroctl set/unset role KubernetesController", ctx, 10*time.Second, func(ctx context.Context) error {
 			nid := cl.NodeIDs[1]

@@ -12,16 +12,34 @@ import (
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
+// Service implements metropolis.proto.api.NodeManagement.
 type Service struct {
+	// NodeCredentials used to set up gRPC server.
 	NodeCredentials *identity.NodeCredentials
+	// LogTree from which NodeManagement.Logs will be served.
+	LogTree *logtree.LogTree
+
+	// Automatically populated on Run.
+	LogService
 }
 
+// Run the Servie as a supervisor runnable.
 func (s *Service) Run(ctx context.Context) error {
+	if s.NodeCredentials == nil {
+		return fmt.Errorf("NodeCredentials missing")
+	}
+	if s.LogTree == nil {
+		return fmt.Errorf("LogTree missing")
+	}
+
+	s.LogService.LogTree = s.LogTree
+
 	sec := rpc.ServerSecurity{
 		NodeCredentials: s.NodeCredentials,
 	}

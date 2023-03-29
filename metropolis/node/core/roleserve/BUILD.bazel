@@ -33,6 +33,7 @@ go_library(
         "//metropolis/node/kubernetes/pki",
         "//metropolis/pkg/event",
         "//metropolis/pkg/event/memory",
+        "//metropolis/pkg/logtree",
         "//metropolis/pkg/pki",
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/common",

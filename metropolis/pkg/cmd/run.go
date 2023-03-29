@@ -33,13 +33,18 @@ func RunCommand(ctx context.Context, path string, args []string, pf func(string)
 	// after the reader loop is broken, avoid deadlocks by making lineC a
 	// buffered channel.
 	lineC := make(chan string, 2)
-	outBuffer := logbuffer.NewLineBuffer(1024, func(l *logbuffer.Line) {
-		lineC <- l.Data
-	})
+	lineCB := func(l *logbuffer.Line) {
+		// If the context is canceled, no-one is listening on lineC anymore, so we would
+		// block.
+		select {
+		case <-ctx.Done():
+			return
+		case lineC <- l.Data:
+		}
+	}
+	outBuffer := logbuffer.NewLineBuffer(1024, lineCB)
 	defer outBuffer.Close()
-	errBuffer := logbuffer.NewLineBuffer(1024, func(l *logbuffer.Line) {
-		lineC <- l.Data
-	})
+	errBuffer := logbuffer.NewLineBuffer(1024, lineCB)
 	defer errBuffer.Close()
 
 	// Prepare the command context, and start the process.
