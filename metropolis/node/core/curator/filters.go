@@ -43,7 +43,7 @@ func buildFilter(ctx context.Context, fexpr string, opts ...cel.EnvOption) (cel.
 	env, err := cel.NewEnv(opts...)
 	if err != nil {
 		rpc.Trace(ctx).Printf("Couldn't create a CEL environment: %v", err)
-		return nil, status.Errorf(codes.Unavailable, "couldn't process the filter expression")
+		return nil, status.Errorf(codes.Unavailable, "couldn't process the filter expression: %v", err)
 	}
 
 	// Parse and type-check the expression.
@@ -73,7 +73,7 @@ func evaluateFilter(ctx context.Context, fprg cel.Program, varmap map[string]int
 	out, _, err := fprg.Eval(varmap)
 	if err != nil {
 		rpc.Trace(ctx).Printf("Couldn't evaluate a CEL program: %v", err)
-		return false, status.Errorf(codes.Unavailable, "couldn't process the filter expression")
+		return false, status.Errorf(codes.Unavailable, "couldn't evaluate the filter expression: %v", err)
 	}
 
 	res := out.ConvertToType(celtypes.BoolType)
