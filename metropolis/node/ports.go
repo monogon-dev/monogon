@@ -34,6 +34,9 @@ const (
 	// WireGuardPort is the UDP port on which the Wireguard Kubernetes network
 	// overlay listens for incoming peer traffic.
 	WireGuardPort Port = 7838
+	// NodeManagement is the TCP port on which the node-local management service
+	// serves gRPC traffic for NodeManagement.
+	NodeManagement Port = 7839
 	// KubernetesAPIPort is the TCP port on which the Kubernetes API is
 	// exposed.
 	KubernetesAPIPort Port = 6443
@@ -59,6 +62,8 @@ func (p Port) String() string {
 		return "debug"
 	case WireGuardPort:
 		return "wireguard"
+	case NodeManagement:
+		return "node-mgmt"
 	case KubernetesAPIPort:
 		return "kubernetes-api"
 	case KubernetesWorkerLocalAPIPort:

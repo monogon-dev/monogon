@@ -180,3 +180,8 @@ message UpdateNodeRolesRequest {
 
 message UpdateNodeRolesResponse {
 }
+
+// NodeManagement runs on every node of the cluster and providers management
+// and troubleshooting RPCs to operators. All requests must be authenticated.
+service NodeManagement {
+}

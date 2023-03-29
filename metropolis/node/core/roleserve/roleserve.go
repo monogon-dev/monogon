@@ -85,6 +85,7 @@ type Service struct {
 	heartbeat    *workerHeartbeat
 	kubernetes   *workerKubernetes
 	rolefetch    *workerRoleFetch
+	nodeMgmt     *workerNodeMgmt
 }
 
 // New creates a Role Server services from a Config.
@@ -127,6 +128,10 @@ func New(c Config) *Service {
 		clusterMembership: &s.ClusterMembership,
 
 		localRoles: &s.localRoles,
+	}
+
+	s.nodeMgmt = &workerNodeMgmt{
+		clusterMembership: &s.ClusterMembership,
 	}
 
 	return s
@@ -187,6 +192,7 @@ func (s *Service) Run(ctx context.Context) error {
 	supervisor.Run(ctx, "statuspush", s.statusPush.run)
 	supervisor.Run(ctx, "heartbeat", s.heartbeat.run)
 	supervisor.Run(ctx, "rolefetch", s.rolefetch.run)
+	supervisor.Run(ctx, "nodemgmt", s.nodeMgmt.run)
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 
 	<-ctx.Done()
