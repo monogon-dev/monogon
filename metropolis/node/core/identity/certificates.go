@@ -67,6 +67,9 @@ func CACertificate(cn string) x509.Certificate {
 // It does _not_ ensure that the certificate is the local node's CA, and should
 // not be used for security checks, just for data validation checks.
 func VerifyCAInsecure(ca *x509.Certificate) error {
+	if ca == nil {
+		return fmt.Errorf("ca must be set")
+	}
 	// Ensure ca certificate uses ED25519 keypair.
 	if _, ok := ca.PublicKey.(ed25519.PublicKey); !ok {
 		return fmt.Errorf("not issued for ed25519 keypair")
