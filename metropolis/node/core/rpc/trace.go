@@ -164,5 +164,9 @@ func protoMessagePretty(m interface{}) string {
 	if err != nil {
 		return name
 	}
-	return fmt.Sprintf("%s: %s", name, strings.ReplaceAll(string(bytes), "\n", " "))
+	pretty := strings.ReplaceAll(string(bytes), "\n", " ")
+	if len(pretty) > 100 {
+		pretty = pretty[:100] + "..."
+	}
+	return fmt.Sprintf("%s: %s", name, pretty)
 }
