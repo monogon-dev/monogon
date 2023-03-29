@@ -62,7 +62,7 @@ func TestExternalServerSecurity(t *testing.T) {
 
 	// Authenticate as manager externally, ensure that GetRegisterTicket runs.
 	cl, err := grpc.Dial("local",
-		grpc.WithTransportCredentials(NewAuthenticatedCredentials(eph.Manager, eph.CA)),
+		grpc.WithTransportCredentials(NewAuthenticatedCredentials(eph.Manager, WantRemoteCluster(eph.CA))),
 		withLocalDialer)
 	if err != nil {
 		t.Fatalf("Dial: %v", err)
@@ -77,7 +77,7 @@ func TestExternalServerSecurity(t *testing.T) {
 	// Authenticate as node externally, ensure that GetRegisterTicket is refused
 	// (this is because nodes miss the GET_REGISTER_TICKET permissions).
 	cl, err = grpc.Dial("local",
-		grpc.WithTransportCredentials(NewAuthenticatedCredentials(eph.Nodes[0].TLSCredentials(), eph.CA)),
+		grpc.WithTransportCredentials(NewAuthenticatedCredentials(eph.Nodes[0].TLSCredentials(), WantRemoteCluster(eph.CA))),
 		withLocalDialer)
 	if err != nil {
 		t.Fatalf("Dial: %v", err)

@@ -58,7 +58,7 @@ func DialCluster(ctx context.Context, opkey ed25519.PrivateKey, ocert *x509.Cert
 			Certificate: [][]byte{ocert.Raw},
 			PrivateKey:  opkey,
 		}
-		creds := rpc.NewAuthenticatedCredentials(tlsc, nil)
+		creds := rpc.NewAuthenticatedCredentials(tlsc, rpc.WantInsecure())
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
 	}
 

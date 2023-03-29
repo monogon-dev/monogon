@@ -20,7 +20,7 @@ import (
 
 type verifyPeerCertificate func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
 
-func verifyClusterCertificate(ca *x509.Certificate) verifyPeerCertificate {
+func verifyClusterCertificateAndNodeID(ca *x509.Certificate, nodeID string) verifyPeerCertificate {
 	return func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
 		if len(rawCerts) != 1 {
 			return fmt.Errorf("server presented %d certificates, wanted exactly one", len(rawCerts))
@@ -29,11 +29,24 @@ func verifyClusterCertificate(ca *x509.Certificate) verifyPeerCertificate {
 		if err != nil {
 			return fmt.Errorf("server presented unparseable certificate: %w", err)
 		}
-		if _, err := identity.VerifyNodeInCluster(serverCert, ca); err != nil {
+		pkey, err := identity.VerifyNodeInCluster(serverCert, ca)
+		if err != nil {
 			return fmt.Errorf("node certificate verification failed: %w", err)
+		}
+		if nodeID != "" {
+			id := identity.NodeID(pkey)
+			if id != nodeID {
+				return fmt.Errorf("wanted to reach node %q, got %q", nodeID, id)
+			}
 		}
 
 		return nil
+	}
+}
+
+func verifyFail(err error) verifyPeerCertificate {
+	return func(_ [][]byte, _ [][]*x509.Certificate) error {
+		return err
 	}
 }
 
@@ -44,11 +57,11 @@ func verifyClusterCertificate(ca *x509.Certificate) verifyPeerCertificate {
 //
 // Currently these credentials are used in two flows:
 //
-//   1. Registration of nodes into a cluster, after which a node receives a proper
-//      node certificate
+//  1. Registration of nodes into a cluster, after which a node receives a proper
+//     node certificate
 //
-//   2. Escrow of initial owner credentials into a proper manager
-//      certificate
+//  2. Escrow of initial owner credentials into a proper manager
+//     certificate
 //
 // If 'ca' is given, the remote side will be cryptographically verified to be a
 // node that's part of the cluster represented by the ca. Otherwise, no
@@ -71,28 +84,106 @@ func NewEphemeralCredentials(private ed25519.PrivateKey, ca *x509.Certificate) (
 		Certificate: [][]byte{certificateBytes},
 		PrivateKey:  private,
 	}
-	return NewAuthenticatedCredentials(certificate, ca), nil
+	var opts []AuthenticatedCredentialsOpt
+	if ca != nil {
+		opts = append(opts, WantRemoteCluster(ca))
+	} else {
+		opts = append(opts, WantInsecure())
+	}
+	return NewAuthenticatedCredentials(certificate, opts...), nil
+}
+
+// AuthenticatedCredentialsOpt are created using WantXXX functions and used in
+// NewAuthenticatedCredentials.
+type AuthenticatedCredentialsOpt struct {
+	wantCA       *x509.Certificate
+	wantNodeID   string
+	insecureOkay bool
+}
+
+func (a *AuthenticatedCredentialsOpt) merge(o *AuthenticatedCredentialsOpt) {
+	if a.wantNodeID == "" && o.wantNodeID != "" {
+		a.wantNodeID = o.wantNodeID
+	}
+	if a.wantCA == nil && o.wantCA != nil {
+		a.wantCA = o.wantCA
+	}
+	if !a.insecureOkay && o.insecureOkay {
+		a.insecureOkay = o.insecureOkay
+	}
+}
+
+// WantRemoteCluster enables the verification of the remote cluster identity when
+// using NewAuthanticatedCredentials. If the connection is not terminated at a
+// cluster with the given CA certificate, an error will be returned.
+//
+// This is the bare minimum option required to implement secure connections to
+// clusters.
+func WantRemoteCluster(ca *x509.Certificate) AuthenticatedCredentialsOpt {
+	return AuthenticatedCredentialsOpt{
+		wantCA: ca,
+	}
+}
+
+// WantRemoteNode enables the verification of the remote node identity when using
+// NewAuthenticatedCredentials. If the connection is not terminated at the node
+// ID 'id', an error will be returned. For this function to work,
+// WantRemoteCluster must also be set.
+func WantRemoteNode(id string) AuthenticatedCredentialsOpt {
+	return AuthenticatedCredentialsOpt{
+		wantNodeID: id,
+	}
+}
+
+// WantInsecure disables the verification of the remote side of the connection
+// via NewAuthenticatedCredentials. This is unsafe.
+func WantInsecure() AuthenticatedCredentialsOpt {
+	return AuthenticatedCredentialsOpt{
+		insecureOkay: true,
+	}
 }
 
 // NewAuthenticatedCredentials returns gRPC TransportCredentials that can be
 // used to dial a cluster with a given TLS certificate (from node or manager
 // credentials).
 //
-// If 'ca' is given, the remote side will be cryptographically verified to be a
-// node that's part of the cluster represented by the ca. Otherwise, no
-// verification is performed and this function is unsafe.
-func NewAuthenticatedCredentials(cert tls.Certificate, ca *x509.Certificate) credentials.TransportCredentials {
+// The provided AuthenticatedCredentialsOpt specify the verification of the
+// remote side of the connection. When connecting to a cluster (any node), use
+// WantRemoteCluster. If you also want to verify the connection to a particular
+// node, specify WantRemoteNode alongside it. If no verification should be
+// performed use WantInsecure.
+//
+// The given options are parsed on a first-wins basis.
+func NewAuthenticatedCredentials(cert tls.Certificate, opts ...AuthenticatedCredentialsOpt) credentials.TransportCredentials {
 	config := &tls.Config{
 		Certificates:       []tls.Certificate{cert},
 		InsecureSkipVerify: true,
 	}
-	if ca != nil {
-		config.VerifyPeerCertificate = verifyClusterCertificate(ca)
+
+	var merged AuthenticatedCredentialsOpt
+	for _, o := range opts {
+		merged.merge(&o)
 	}
+
+	if merged.insecureOkay {
+		if merged.wantNodeID != "" || merged.wantCA != nil {
+			config.VerifyPeerCertificate = verifyFail(fmt.Errorf("WantInsecure specified alongside WantRemoteNode/WantRemoteCluster"))
+		}
+	} else {
+		switch {
+		case merged.wantNodeID != "" && merged.wantCA == nil:
+			config.VerifyPeerCertificate = verifyFail(fmt.Errorf("WantRemoteNode also requires WantRemoteCluster"))
+		case merged.wantCA == nil:
+			config.VerifyPeerCertificate = verifyFail(fmt.Errorf("no AuthenticaedCreentialsOpts specified"))
+		default:
+			config.VerifyPeerCertificate = verifyClusterCertificateAndNodeID(merged.wantCA, merged.wantNodeID)
+		}
+	}
+
 	return credentials.NewTLS(config)
 }
 
-// RetrieveOwnerCertificates uses AAA.Escrow to retrieve a cluster manager
+// RetrieveOwnerCertificate uses AAA.Escrow to retrieve a cluster manager
 // certificate for the initial owner of the cluster, authenticated by the
 // public/private key set in the clusters NodeParameters.ClusterBoostrap.
 //

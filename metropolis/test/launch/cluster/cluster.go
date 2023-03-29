@@ -182,7 +182,7 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 // instance within Cluster c, or nil together with an error.
 func (c *Cluster) CuratorClient() (*grpc.ClientConn, error) {
 	if c.authClient == nil {
-		authCreds := rpc.NewAuthenticatedCredentials(c.Owner, nil)
+		authCreds := rpc.NewAuthenticatedCredentials(c.Owner, rpc.WantInsecure())
 		r := resolver.New(c.ctxT, resolver.WithLogger(func(f string, args ...interface{}) {
 			launch.Log("Cluster: client resolver: %s", fmt.Sprintf(f, args...))
 		}))
@@ -589,7 +589,7 @@ func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certif
 	launch.Log("Cluster: retrieved owner certificate.")
 
 	// Now connect authenticated and get the node ID.
-	creds := rpc.NewAuthenticatedCredentials(*cert, nil)
+	creds := rpc.NewAuthenticatedCredentials(*cert, rpc.WantInsecure())
 	authClient, err := grpc.Dial(remote, grpc.WithContextDialer(initDialer), grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, nil, fmt.Errorf("dialing with owner credentials failed: %w", err)

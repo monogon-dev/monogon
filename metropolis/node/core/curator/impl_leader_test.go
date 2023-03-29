@@ -175,14 +175,17 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 	ca := nodeCredentials.ClusterCA()
 
 	// Create an authenticated manager gRPC client.
-	mcl, err := grpc.Dial("local", withLocalDialer, grpc.WithTransportCredentials(rpc.NewAuthenticatedCredentials(ownerCreds, ca)))
+	creds := rpc.NewAuthenticatedCredentials(ownerCreds, rpc.WantRemoteCluster(ca))
+	gcreds := grpc.WithTransportCredentials(creds)
+	mcl, err := grpc.Dial("local", withLocalDialer, gcreds)
 	if err != nil {
 		t.Fatalf("Dialing external GRPC failed: %v", err)
 	}
 
 	// Create a node gRPC client for the local node.
-	lcl, err := grpc.Dial("local", withLocalDialer,
-		grpc.WithTransportCredentials(rpc.NewAuthenticatedCredentials(nodeCredentials.TLSCredentials(), ca)))
+	creds = rpc.NewAuthenticatedCredentials(nodeCredentials.TLSCredentials(), rpc.WantRemoteCluster(ca))
+	gcreds = grpc.WithTransportCredentials(creds)
+	lcl, err := grpc.Dial("local", withLocalDialer, gcreds)
 	if err != nil {
 		t.Fatalf("Dialing external GRPC failed: %v", err)
 	}

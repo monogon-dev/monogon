@@ -101,7 +101,7 @@ func TestE2E(t *testing.T) {
 	launch.Log("E2E: Cluster running, starting tests...")
 
 	// Dial first node's curator.
-	creds := rpc.NewAuthenticatedCredentials(cluster.Owner, nil)
+	creds := rpc.NewAuthenticatedCredentials(cluster.Owner, rpc.WantInsecure())
 	remote := net.JoinHostPort(cluster.NodeIDs[0], common.CuratorServicePort.PortString())
 	cl, err := grpc.Dial(remote, grpc.WithContextDialer(cluster.DialNode), grpc.WithTransportCredentials(creds))
 	if err != nil {
