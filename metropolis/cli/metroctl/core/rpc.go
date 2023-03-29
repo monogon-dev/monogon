@@ -81,6 +81,33 @@ func DialCluster(ctx context.Context, opkey ed25519.PrivateKey, ocert *x509.Cert
 	return c, nil
 }
 
+func DialNode(ctx context.Context, opkey ed25519.PrivateKey, ocert, ca *x509.Certificate, proxyAddr, nodeId, nodeAddr string) (*grpc.ClientConn, error) {
+	var dialOpts []grpc.DialOption
+
+	if opkey == nil {
+		return nil, fmt.Errorf("an owner's private key must be provided")
+	}
+	if proxyAddr != "" {
+		socksDialer, err := proxy.SOCKS5("tcp", proxyAddr, nil, proxy.Direct)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build a SOCKS dialer: %v", err)
+		}
+		grpcd := func(_ context.Context, addr string) (net.Conn, error) {
+			return socksDialer.Dial("tcp", addr)
+		}
+		dialOpts = append(dialOpts, grpc.WithContextDialer(grpcd))
+	}
+	tlsc := tls.Certificate{
+		Certificate: [][]byte{ocert.Raw},
+		PrivateKey:  opkey,
+	}
+	creds := rpc.NewAuthenticatedCredentials(tlsc, rpc.WantRemoteCluster(ca), rpc.WantRemoteNode(nodeId))
+	dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
+
+	endpoint := net.JoinHostPort(nodeAddr, node.NodeManagement.PortString())
+	return grpc.Dial(endpoint, dialOpts...)
+}
+
 // GetNodes retrieves node records, filtered by the supplied node filter
 // expression fexp.
 func GetNodes(ctx context.Context, mgmt api.ManagementClient, fexp string) ([]*api.Node, error) {

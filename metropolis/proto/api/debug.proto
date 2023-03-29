@@ -19,6 +19,7 @@ package metropolis.proto.api;
 option go_package = "source.monogon.dev/metropolis/proto/api";
 
 import "google/protobuf/timestamp.proto";
+import "metropolis/proto/api/management.proto";
 
 // NodeDebugService exposes debug and testing endpoints that allow introspection into a running Metropolis node.
 // It is not authenticated and will be disabled in production. It is currently consumed by metropolis/cli/dbg and
@@ -65,102 +66,6 @@ message GetDebugKubeconfigRequest {
 
 message GetDebugKubeconfigResponse {
     string debug_kubeconfig = 1;
-}
-
-// Severity level corresponding to //metropolis/pkg/logtree.Severity.
-enum LeveledLogSeverity {
-    INVALID = 0;
-    INFO = 1;
-    WARNING = 2;
-    ERROR = 3;
-    FATAL = 4;
-}
-
-// Filter set when requesting logs for a given DN. This message is equivalent to the following GADT enum:
-// data LogFilter = WithChildren
-//                | OnlyRaw
-//                | OnlyLeveled
-//                | LeveledWithMinimumSeverity(Severity)
-//
-// Multiple LogFilters can be chained/combined when requesting logs, as long as they do not conflict.
-message LogFilter {
-    // Entries will be returned not only for the given DN, but all child DNs as well. For instance, if the
-    // requested DN is foo, entries logged to foo, foo.bar and foo.bar.baz will all be returned.
-    message WithChildren {
-    }
-    // Only raw logging entries will be returned. Conflicts with OnlyLeveled filters.
-    message OnlyRaw {
-    }
-    // Only leveled logging entries will be returned. Conflicts with OnlyRaw filters.
-    message OnlyLeveled {
-    }
-    // If leveled logs are returned, all entries at severity lower than `minimum` will be discarded.
-    message LeveledWithMinimumSeverity {
-        LeveledLogSeverity minimum = 1;
-    }
-    oneof filter {
-        WithChildren with_children = 1;
-        OnlyRaw only_raw = 3;
-        OnlyLeveled only_leveled = 4;
-        LeveledWithMinimumSeverity leveled_with_minimum_severity = 5;
-    }
-}
-
-message GetLogsRequest {
-    // DN from which to request logs. All supervised runnables live at `root.`, the init code lives at `init.`.
-    string dn = 1;
-    // Filters to apply to returned data.
-    repeated LogFilter filters = 2;
-
-    enum BacklogMode {
-        BACKLOG_INVALID = 0;
-        // No historic data will be returned.
-        BACKLOG_DISABLE = 1;
-        // All available historic data will be returned.
-        BACKLOG_ALL = 2;
-        // At most backlog_count entries will be returned, if available.
-        BACKLOG_COUNT = 3;
-    }
-    BacklogMode backlog_mode = 3;
-    int64 backlog_count = 4;
-
-    enum StreamMode {
-        STREAM_INVALID = 0;
-        // No streaming entries, gRPC stream will be closed as soon as all backlog data is served.
-        STREAM_DISABLE = 1;
-        // Entries will be streamed as early as available right after all backlog data is served.
-        STREAM_UNBUFFERED = 2;
-    }
-    StreamMode stream_mode = 5;
-}
-
-message GetLogsResponse {
-    // Entries from the requested historical entries (via WithBackLog). They will all be served before the first
-    // stream_entries are served (if any).
-    repeated LogEntry backlog_entries = 1;
-    // Entries streamed as they arrive. Currently no server-side buffering is enabled, instead every line is served
-    // as early as it arrives. However, this might change in the future, so this behaviour cannot be depended
-    // upon.
-    repeated LogEntry stream_entries = 2;
-}
-
-message LogEntry {
-    message Leveled {
-        repeated string lines = 1;
-        google.protobuf.Timestamp timestamp = 2;
-        LeveledLogSeverity severity = 3;
-        string location = 4;
-    }
-    message Raw {
-        string data = 1;
-        int64 original_length = 2;
-    }
-
-    string dn = 1;
-    oneof kind {
-        Leveled leveled = 2;
-        Raw raw = 3;
-    }
 }
 
 message TraceRequest {

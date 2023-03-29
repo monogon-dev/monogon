@@ -2,7 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "mgmt",
-    srcs = ["mgmt.go"],
+    srcs = [
+        "mgmt.go",
+        "svc_logs.go",
+    ],
     importpath = "source.monogon.dev/metropolis/node/core/mgmt",
     visibility = ["//visibility:public"],
     deps = [
@@ -12,5 +15,7 @@ go_library(
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/api",
         "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
     ],
 )

@@ -60,6 +60,7 @@ var nodeListCmd = &cobra.Command{
 func init() {
 	nodeCmd.AddCommand(nodeDescribeCmd)
 	nodeCmd.AddCommand(nodeListCmd)
+	nodeCmd.AddCommand(nodeLogsCmd)
 	rootCmd.AddCommand(nodeCmd)
 }
 
