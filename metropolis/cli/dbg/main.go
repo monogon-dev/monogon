@@ -34,7 +34,9 @@ import (
 	"k8s.io/kubectl/pkg/cmd/util"
 
 	"source.monogon.dev/metropolis/pkg/logtree"
+
 	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 func main() {
@@ -110,8 +112,8 @@ func main() {
 		}
 
 		if *logsRecursive {
-			req.Filters = append(req.Filters, &apb.LogFilter{
-				Filter: &apb.LogFilter_WithChildren_{WithChildren: &apb.LogFilter_WithChildren{}},
+			req.Filters = append(req.Filters, &cpb.LogFilter{
+				Filter: &cpb.LogFilter_WithChildren_{WithChildren: &cpb.LogFilter_WithChildren{}},
 			})
 		}
 
@@ -130,6 +132,14 @@ func main() {
 				os.Exit(1)
 			}
 			for _, entry := range res.BacklogEntries {
+				entry, err := logtree.LogEntryFromProto(entry)
+				if err != nil {
+					fmt.Printf("error decoding entry: %v", err)
+					continue
+				}
+				fmt.Println(entry.String())
+			}
+			for _, entry := range res.StreamEntries {
 				entry, err := logtree.LogEntryFromProto(entry)
 				if err != nil {
 					fmt.Printf("error decoding entry: %v", err)

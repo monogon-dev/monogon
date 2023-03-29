@@ -185,56 +185,26 @@ message UpdateNodeRolesResponse {
 // NodeManagement runs on every node of the cluster and providers management
 // and troubleshooting RPCs to operators. All requests must be authenticated.
 service NodeManagement {
+  // GetLogs Returns historical and/or streaming logs for a given DN with given
+  // filters from the system global LogTree.
+  //
+  // For more information about this API, see //metropolis/pkg/logtree. But, in
+  // summary:
+  //   - All logging is performed to a DN (distinguished name), which is a
+  //     dot-delimited string like foo.bar.baz.
+  //   - Log entries can be either raw (coming from unstructured logging from
+  //     an external service, like a running process) or leveled (emitted by
+  //     Metropolis code with a source line, timestamp, and severity).
+  //   - The DNs form a tree of logging nodes - and when requesting logs, a
+  //     given subtree of DNs can be requested, instead of just a given DN.
+  //   - All supervised processes live at `root.<supervisor DN>`. For more
+  //     example paths, see the console logs of a running Metropolis node, or
+  //     request all logs (at DN "").
+  //
   rpc Logs(GetLogsRequest) returns (stream GetLogsResponse) {
     option (metropolis.proto.ext.authorization) = {
       need: PERMISSION_READ_NODE_LOGS
     };
-  }
-}
-
-
-// Severity level corresponding to //metropolis/pkg/logtree.Severity.
-enum LeveledLogSeverity {
-  INVALID = 0;
-  INFO = 1;
-  WARNING = 2;
-  ERROR = 3;
-  FATAL = 4;
-}
-
-// Filter set when requesting logs for a given DN. This message is equivalent to
-// the following GADT enum:
-// data LogFilter = WithChildren
-//                | OnlyRaw
-//                | OnlyLeveled
-//                | LeveledWithMinimumSeverity(Severity)
-//
-// Multiple LogFilters can be chained/combined when requesting logs, as long as
-// they do not conflict.
-message LogFilter {
-  // Entries will be returned not only for the given DN, but all child DNs as
-  // well. For instance, if the requested DN is foo, entries logged to foo,
-  // foo.bar and foo.bar.baz will all be returned.
-  message WithChildren {
-  }
-  // Only raw logging entries will be returned. Conflicts with OnlyLeveled
-  // filters.
-  message OnlyRaw {
-  }
-  // Only leveled logging entries will be returned. Conflicts with OnlyRaw
-  // filters.
-  message OnlyLeveled {
-  }
-  // If leveled logs are returned, all entries at severity lower than `minimum`
-  // will be discarded.
-  message LeveledWithMinimumSeverity {
-    LeveledLogSeverity minimum = 1;
-  }
-  oneof filter {
-    WithChildren with_children = 1;
-    OnlyRaw only_raw = 3;
-    OnlyLeveled only_leveled = 4;
-    LeveledWithMinimumSeverity leveled_with_minimum_severity = 5;
   }
 }
 
@@ -243,7 +213,7 @@ message GetLogsRequest {
   // the init code lives at `init.`.
   string dn = 1;
   // Filters to apply to returned data.
-  repeated LogFilter filters = 2;
+  repeated metropolis.proto.common.LogFilter filters = 2;
 
   enum BacklogMode {
     BACKLOG_INVALID = 0;
@@ -259,39 +229,22 @@ message GetLogsRequest {
 
   enum StreamMode {
     STREAM_INVALID = 0;
-    // No streaming entries, gRPC stream will be closed as soon as all backlog data is served.
+    // No streaming entries, gRPC stream will be closed as soon as all backlog
+    // data is served.
     STREAM_DISABLE = 1;
-    // Entries will be streamed as early as available right after all backlog data is served.
+    // Entries will be streamed as early as available right after all backlog
+    // data is served.
     STREAM_UNBUFFERED = 2;
   }
   StreamMode stream_mode = 5;
 }
 
-message LogEntry {
-  message Leveled {
-    repeated string lines = 1;
-    google.protobuf.Timestamp timestamp = 2;
-    LeveledLogSeverity severity = 3;
-    string location = 4;
-  }
-  message Raw {
-    string data = 1;
-    int64 original_length = 2;
-  }
-
-  string dn = 1;
-  oneof kind {
-    Leveled leveled = 2;
-    Raw raw = 3;
-  }
-}
-
 message GetLogsResponse {
-  // Entries from the requested historical entries (via WithBackLog). They will all be served before the first
-  // stream_entries are served (if any).
-  repeated LogEntry backlog_entries = 1;
-  // Entries streamed as they arrive. Currently no server-side buffering is enabled, instead every line is served
-  // as early as it arrives. However, this might change in the future, so this behaviour cannot be depended
-  // upon.
-  repeated LogEntry stream_entries = 2;
+  // Entries from the requested historical entries (via WithBackLog). They will
+  // all be served before the first stream_entries are served (if any).
+  repeated metropolis.proto.common.LogEntry backlog_entries = 1;
+  // Entries streamed as they arrive. Currently no server-side buffering is
+  // enabled, instead every line is served as early as it arrives. However, this
+  // might change in the future, so this behaviour cannot be depended upon.
+  repeated metropolis.proto.common.LogEntry stream_entries = 2;
 }

@@ -35,6 +35,7 @@ go_library(
         "//metropolis/pkg/supervisor",
         "//metropolis/pkg/tpm",
         "//metropolis/proto/api",
+        "//metropolis/proto/common",
         "@com_github_containerd_containerd//:containerd",
         "@com_github_containerd_containerd//namespaces",
         "@org_golang_google_grpc//:go_default_library",

@@ -11,6 +11,7 @@ import (
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 var nodeLogsCmd = &cobra.Command{
@@ -59,10 +60,10 @@ var nodeLogsCmd = &cobra.Command{
 			Dn:          "",
 			BacklogMode: api.GetLogsRequest_BACKLOG_ALL,
 			StreamMode:  api.GetLogsRequest_STREAM_DISABLE,
-			Filters: []*api.LogFilter{
+			Filters: []*cpb.LogFilter{
 				{
-					Filter: &api.LogFilter_WithChildren_{
-						WithChildren: &api.LogFilter_WithChildren{},
+					Filter: &cpb.LogFilter_WithChildren_{
+						WithChildren: &cpb.LogFilter_WithChildren{},
 					},
 				},
 			},

@@ -37,6 +37,7 @@ import (
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 const (
@@ -139,13 +140,13 @@ func (s *debugService) GetLogs(req *apb.GetLogsRequest, srv apb.NodeDebugService
 	// Parse proto filters into logtree options.
 	for i, filter := range req.Filters {
 		switch inner := filter.Filter.(type) {
-		case *apb.LogFilter_WithChildren_:
+		case *cpb.LogFilter_WithChildren_:
 			options = append(options, logtree.WithChildren())
-		case *apb.LogFilter_OnlyRaw_:
+		case *cpb.LogFilter_OnlyRaw_:
 			options = append(options, logtree.OnlyRaw())
-		case *apb.LogFilter_OnlyLeveled_:
+		case *cpb.LogFilter_OnlyLeveled_:
 			options = append(options, logtree.OnlyLeveled())
-		case *apb.LogFilter_LeveledWithMinimumSeverity_:
+		case *cpb.LogFilter_LeveledWithMinimumSeverity_:
 			severity, err := logtree.SeverityFromProto(inner.LeveledWithMinimumSeverity.Minimum)
 			if err != nil {
 				return status.Errorf(codes.InvalidArgument, "filter %d has invalid severity: %v", i, err)
@@ -179,7 +180,7 @@ func (s *debugService) GetLogs(req *apb.GetLogsRequest, srv apb.NodeDebugService
 	maxChunkSize := 2000
 
 	// Serve all backlog entries in chunks.
-	chunk := make([]*apb.LogEntry, 0, maxChunkSize)
+	chunk := make([]*cpb.LogEntry, 0, maxChunkSize)
 	for _, entry := range reader.Backlog {
 		p := entry.Proto()
 		if p == nil {
@@ -195,7 +196,7 @@ func (s *debugService) GetLogs(req *apb.GetLogsRequest, srv apb.NodeDebugService
 			if err != nil {
 				return err
 			}
-			chunk = make([]*apb.LogEntry, 0, maxChunkSize)
+			chunk = make([]*cpb.LogEntry, 0, maxChunkSize)
 		}
 	}
 
@@ -207,7 +208,7 @@ func (s *debugService) GetLogs(req *apb.GetLogsRequest, srv apb.NodeDebugService
 		if err != nil {
 			return err
 		}
-		chunk = make([]*apb.LogEntry, 0, maxChunkSize)
+		chunk = make([]*cpb.LogEntry, 0, maxChunkSize)
 	}
 
 	// Start serving streaming data, if streaming has been requested.
@@ -227,7 +228,7 @@ func (s *debugService) GetLogs(req *apb.GetLogsRequest, srv apb.NodeDebugService
 			continue
 		}
 		err := srv.Send(&apb.GetLogsResponse{
-			StreamEntries: []*apb.LogEntry{p},
+			StreamEntries: []*cpb.LogEntry{p},
 		})
 		if err != nil {
 			return err

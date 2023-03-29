@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//metropolis/pkg/logtree",
         "//metropolis/proto/api",
+        "//metropolis/proto/common",
         "@io_k8s_cli_runtime//pkg/genericclioptions",
         "@io_k8s_component_base//cli",
         "@io_k8s_kubectl//pkg/cmd",

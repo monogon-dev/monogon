@@ -28,19 +28,8 @@ service NodeDebugService {
     // GetDebugKubeconfig issues kubeconfigs with arbitrary identities and groups for debugging
     rpc GetDebugKubeconfig(GetDebugKubeconfigRequest) returns (GetDebugKubeconfigResponse);
 
-    // GetLogs Returns historical and/or streaming logs for a given DN with given filters from the system global
-    // LogTree.
-    //
-    // For more information about this API, see //metropolis/pkg/logtree. But, in summary:
-    //   - All logging is performed to a DN (distinguished name), which is a dot-delimited string like foo.bar.baz.
-    //   - Log entries can be either raw (coming from unstructured logging from an external service, like a running
-    //     process) or leveled (emitted by Metropolis code with a source line, timestamp, and severity).
-    //   - The DNs form a tree of logging nodes - and when requesting logs, a given subtree of DNs can be requested,
-    //     instead of just a given DN.
-    //   - All supervised processes live at `root.<supervisor DN>`. For more example paths, see the console logs of
-    //     a running Metropolis node, or request all logs (at DN "").
-    //
-    // TODO(q3k): move method and its related messages to the non-debug node endpoint once we have one.
+    // A reimplementation of metropolis.api.NodeManagement.Logs that's available
+    // before the node starts up the management service.
     rpc GetLogs(GetLogsRequest) returns (stream GetLogsResponse);
 
     // Trace enables tracing of Metropolis using the Linux ftrace infrastructure.

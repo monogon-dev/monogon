@@ -23,7 +23,7 @@ import (
 	"github.com/mitchellh/go-wordwrap"
 
 	"source.monogon.dev/metropolis/pkg/logbuffer"
-	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 // LogEntry contains a log entry, combining both leveled and raw logging into a
@@ -207,19 +207,19 @@ func (l *LogEntry) Strings() (prefix string, lines []string) {
 
 // Convert this LogEntry to proto. Returned value may be nil if given LogEntry is
 // invalid, eg. contains neither a Raw nor Leveled entry.
-func (l *LogEntry) Proto() *apb.LogEntry {
-	p := &apb.LogEntry{
+func (l *LogEntry) Proto() *cpb.LogEntry {
+	p := &cpb.LogEntry{
 		Dn: string(l.DN),
 	}
 	switch {
 	case l.Leveled != nil:
 		leveled := l.Leveled
-		p.Kind = &apb.LogEntry_Leveled_{
+		p.Kind = &cpb.LogEntry_Leveled_{
 			Leveled: leveled.Proto(),
 		}
 	case l.Raw != nil:
 		raw := l.Raw
-		p.Kind = &apb.LogEntry_Raw_{
+		p.Kind = &cpb.LogEntry_Raw_{
 			Raw: raw.ProtoLog(),
 		}
 	default:
@@ -230,7 +230,7 @@ func (l *LogEntry) Proto() *apb.LogEntry {
 
 // Parse a proto LogEntry back into internal structure. This can be used in log
 // proto API consumers to easily print received log entries.
-func LogEntryFromProto(l *apb.LogEntry) (*LogEntry, error) {
+func LogEntryFromProto(l *cpb.LogEntry) (*LogEntry, error) {
 	dn := DN(l.Dn)
 	if _, err := dn.Path(); err != nil {
 		return nil, fmt.Errorf("could not convert DN: %w", err)
@@ -239,13 +239,13 @@ func LogEntryFromProto(l *apb.LogEntry) (*LogEntry, error) {
 		DN: dn,
 	}
 	switch inner := l.Kind.(type) {
-	case *apb.LogEntry_Leveled_:
+	case *cpb.LogEntry_Leveled_:
 		leveled, err := LeveledPayloadFromProto(inner.Leveled)
 		if err != nil {
 			return nil, fmt.Errorf("could not convert leveled entry: %w", err)
 		}
 		res.Leveled = leveled
-	case *apb.LogEntry_Raw_:
+	case *cpb.LogEntry_Raw_:
 		line, err := logbuffer.LineFromLogProto(inner.Raw)
 		if err != nil {
 			return nil, fmt.Errorf("could not convert raw entry: %w", err)

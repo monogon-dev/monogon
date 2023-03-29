@@ -189,3 +189,77 @@ message NodeClusterNetworking {
     // mesh, and are programmed by other nodes into their wireguard peer config.
     repeated Prefix prefixes = 2;
 }
+
+// Severity level corresponding to //metropolis/pkg/logtree.Severity.
+enum LeveledLogSeverity {
+    INVALID = 0;
+    INFO = 1;
+    WARNING = 2;
+    ERROR = 3;
+    FATAL = 4;
+}
+
+// Filter set when requesting logs for a given DN. This message is equivalent to
+// the following GADT enum:
+// data LogFilter = WithChildren
+//                | OnlyRaw
+//                | OnlyLeveled
+//                | LeveledWithMinimumSeverity(Severity)
+//
+// Multiple LogFilters can be chained/combined when requesting logs, as long as
+// they do not conflict.
+message LogFilter {
+    // Entries will be returned not only for the given DN, but all child DNs as
+    // well. For instance, if the requested DN is foo, entries logged to foo,
+    // foo.bar and foo.bar.baz will all be returned.
+    message WithChildren {
+    }
+    // Only raw logging entries will be returned. Conflicts with OnlyLeveled
+    // filters.
+    message OnlyRaw {
+    }
+    // Only leveled logging entries will be returned. Conflicts with OnlyRaw
+    // filters.
+    message OnlyLeveled {
+    }
+    // If leveled logs are returned, all entries at severity lower than `minimum`
+    // will be discarded.
+    message LeveledWithMinimumSeverity {
+        LeveledLogSeverity minimum = 1;
+    }
+    oneof filter {
+        WithChildren with_children = 1;
+        OnlyRaw only_raw = 3;
+        OnlyLeveled only_leveled = 4;
+        LeveledWithMinimumSeverity leveled_with_minimum_severity = 5;
+    }
+}
+
+// LogEntry corresponding to logtree.LogEntry in //metropolis/pkg/logtree.
+message LogEntry {
+    // A leveled log entry emitted from a compatible system, eg. Metorpolis code
+    // or a klog-parsed line.
+    message Leveled {
+        repeated string lines = 1;
+        google.protobuf.Timestamp timestamp = 2;
+        LeveledLogSeverity severity = 3;
+        // Source of the error, expressed as file:line.
+        string location = 4;
+    }
+    // Raw log entry, captured from an external system without parting. Might
+    // contain some timestamp/level/origin information embedded in data. Data
+    // contained within should be treated as unsanitized external data.
+    message Raw {
+        string data = 1;
+        // Original length of line, set if data was truncated.
+        int64 original_length = 2;
+    }
+
+    // Origin DN.
+    string dn = 1;
+    oneof kind {
+        Leveled leveled = 2;
+        Raw raw = 3;
+    }
+}
+

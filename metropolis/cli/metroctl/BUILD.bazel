@@ -32,6 +32,7 @@ go_library(
         "//metropolis/node/core/rpc",
         "//metropolis/pkg/logtree",
         "//metropolis/proto/api",
+        "//metropolis/proto/common",
         "@com_github_adrg_xdg//:xdg",
         "@com_github_spf13_cobra//:cobra",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",

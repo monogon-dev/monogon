@@ -8,7 +8,7 @@ go_library(
     ],
     importpath = "source.monogon.dev/metropolis/pkg/logbuffer",
     visibility = ["//metropolis:__subpackages__"],
-    deps = ["//metropolis/proto/api"],
+    deps = ["//metropolis/proto/common"],
 )
 
 go_test(

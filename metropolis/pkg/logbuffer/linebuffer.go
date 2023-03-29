@@ -22,7 +22,7 @@ import (
 	"strings"
 	"sync"
 
-	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 // Line is a line stored in the log buffer - a string, that has been perhaps
@@ -47,15 +47,15 @@ func (l *Line) String() string {
 }
 
 // ProtoLog returns a Logging-specific protobuf structure.
-func (l *Line) ProtoLog() *apb.LogEntry_Raw {
-	return &apb.LogEntry_Raw{
+func (l *Line) ProtoLog() *cpb.LogEntry_Raw {
+	return &cpb.LogEntry_Raw{
 		Data:           l.Data,
 		OriginalLength: int64(l.OriginalLength),
 	}
 }
 
 // LineFromLogProto converts a Logging-specific protobuf message back into a Line.
-func LineFromLogProto(raw *apb.LogEntry_Raw) (*Line, error) {
+func LineFromLogProto(raw *cpb.LogEntry_Raw) (*Line, error) {
 	if raw.OriginalLength < int64(len(raw.Data)) {
 		return nil, fmt.Errorf("original_length smaller than length of data")
 	}

@@ -24,7 +24,7 @@ import (
 
 	tpb "google.golang.org/protobuf/types/known/timestamppb"
 
-	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 // LeveledPayload is a log entry for leveled logs (as per leveled.go). It contains
@@ -66,8 +66,9 @@ func (p *LeveledPayload) String() string {
 // unified with a rowspan- like mechanism.
 //
 // For example, this function can return:
-//   prefix = "I1102 17:20:06.921395 foo.go:42] "
-//   lines = []string{"current tags:", " - one", " - two"}
+//
+//	prefix = "I1102 17:20:06.921395 foo.go:42] "
+//	lines = []string{"current tags:", " - one", " - two"}
 //
 // With this data, the result should be presented to users this way in text form:
 // I1102 17:20:06.921395 foo.go:42] current tags:
@@ -113,8 +114,8 @@ func (p *LeveledPayload) Location() string { return fmt.Sprintf("%s:%d", p.file,
 func (p *LeveledPayload) Severity() Severity { return p.severity }
 
 // Proto converts a LeveledPayload to protobuf format.
-func (p *LeveledPayload) Proto() *apb.LogEntry_Leveled {
-	return &apb.LogEntry_Leveled{
+func (p *LeveledPayload) Proto() *cpb.LogEntry_Leveled {
+	return &cpb.LogEntry_Leveled{
 		Lines:     p.Messages(),
 		Timestamp: tpb.New(p.Timestamp()),
 		Severity:  p.Severity().ToProto(),
@@ -123,7 +124,7 @@ func (p *LeveledPayload) Proto() *apb.LogEntry_Leveled {
 }
 
 // LeveledPayloadFromProto parses a protobuf message into the internal format.
-func LeveledPayloadFromProto(p *apb.LogEntry_Leveled) (*LeveledPayload, error) {
+func LeveledPayloadFromProto(p *cpb.LogEntry_Leveled) (*LeveledPayload, error) {
 	severity, err := SeverityFromProto(p.Severity)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert severity: %w", err)
