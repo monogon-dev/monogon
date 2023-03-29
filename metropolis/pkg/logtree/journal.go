@@ -18,6 +18,7 @@ package logtree
 
 import (
 	"errors"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -59,25 +60,21 @@ func (d DN) Path() ([]string, error) {
 // represented by heads[DN]/tails[DN] pointers in journal and nextLocal/prevLocal
 // pointers in entries:
 //
-//	.------------.        .------------.        .------------.
-//	| dn: A.B    |        | dn: Z      |        | dn: A.B    |
-//	| time: 1    |        | time: 2    |        | time: 3    |
-//	|------------|        |------------|        |------------|
-//	| nextGlobal :------->| nextGlobal :------->| nextGlobal :--> nil
-//
-// nil <-: prevGlobal |<-------: prevGlobal |<-------| prevGlobal |
-//
-//	|------------|        |------------|  n     |------------|
-//	| nextLocal  :---. n  | nextLocal  :->i .-->| nextLocal  :--> nil
-//
-// nil <-: prevLocal  |<--: i<-: prevLocal  |  l :---| prevLocal  |
-//
-//	 '------------'   | l  '------------'    |   '------------'
-//	      ^           '----------------------'         ^
-//	      |                      ^                     |
-//	      |                      |                     |
-//	   ( head )             ( tails[Z] )            ( tail )
-//	( heads[A.B] )          ( heads[Z] )         ( tails[A.B] )
+//	      .------------.        .------------.        .------------.
+//	      | dn: A.B    |        | dn: Z      |        | dn: A.B    |
+//	      | time: 1    |        | time: 2    |        | time: 3    |
+//	      |------------|        |------------|        |------------|
+//	      | nextGlobal :------->| nextGlobal :------->| nextGlobal :--> nil
+//	nil <-: prevGlobal |<-------: prevGlobal |<-------| prevGlobal |
+//	      |------------|        |------------|  n     |------------|
+//	      | nextLocal  :---. n  | nextLocal  :->i .-->| nextLocal  :--> nil
+//	nil <-: prevLocal  |<--: i<-: prevLocal  |  l :---| prevLocal  |
+//	      '------------'   | l  '------------'    |   '------------'
+//	           ^           '----------------------'         ^
+//	           |                      ^                     |
+//	           |                      |                     |
+//	        ( head )             ( tails[Z] )            ( tail )
+//	     ( heads[A.B] )          ( heads[Z] )         ( tails[A.B] )
 type journal struct {
 	// mu locks the rest of the structure. It must be taken during any operation on the
 	// journal.
@@ -188,11 +185,11 @@ func filterOnlyLeveled(e *entry) bool {
 // getEntries should be used instead, as it will leverage DN-local linked lists to
 // retrieve them faster. journal.mu must be taken at R or RW level when calling
 // this function.
-func (j *journal) scanEntries(filters ...filter) (res []*entry) {
+func (j *journal) scanEntries(count int, filters ...filter) (res []*entry) {
 	cur := j.tail
 	for {
 		if cur == nil {
-			return
+			break
 		}
 
 		passed := true
@@ -205,8 +202,17 @@ func (j *journal) scanEntries(filters ...filter) (res []*entry) {
 		if passed {
 			res = append(res, cur)
 		}
-		cur = cur.nextGlobal
+		if count != BacklogAllAvailable && len(res) >= count {
+			break
+		}
+		cur = cur.prevGlobal
 	}
+
+	// Reverse entries back into chronological order.
+	sort.SliceStable(res, func(i, j int) bool {
+		return i > j
+	})
+	return
 }
 
 // getEntries returns all entries at a given DN. This is faster than a
@@ -215,11 +221,11 @@ func (j *journal) scanEntries(filters ...filter) (res []*entry) {
 // entries returned, but a scan through this DN's local linked list will be
 // performed regardless. journal.mu must be taken at R or RW level when calling
 // this function.
-func (j *journal) getEntries(exact DN, filters ...filter) (res []*entry) {
+func (j *journal) getEntries(count int, exact DN, filters ...filter) (res []*entry) {
 	cur := j.tails[exact]
 	for {
 		if cur == nil {
-			return
+			break
 		}
 
 		passed := true
@@ -232,9 +238,17 @@ func (j *journal) getEntries(exact DN, filters ...filter) (res []*entry) {
 		if passed {
 			res = append(res, cur)
 		}
-		cur = cur.nextLocal
+		if count != BacklogAllAvailable && len(res) >= count {
+			break
+		}
+		cur = cur.prevLocal
 	}
 
+	// Reverse entries back into chronological order.
+	sort.SliceStable(res, func(i, j int) bool {
+		return i > j
+	})
+	return
 }
 
 // Shorten returns a shortened version of this DN for constrained logging

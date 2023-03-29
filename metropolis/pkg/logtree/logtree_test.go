@@ -29,6 +29,7 @@ func expect(tree *LogTree, t *testing.T, dn DN, entries ...string) string {
 	if err != nil {
 		t.Fatalf("Read: %v", err)
 	}
+	defer res.Close()
 	if want, got := len(entries), len(res.Backlog); want != got {
 		t.Fatalf("wanted %v backlog entries, got %v", want, got)
 	}
@@ -49,6 +50,29 @@ func expect(tree *LogTree, t *testing.T, dn DN, entries ...string) string {
 	return ""
 }
 
+func readBacklog(tree *LogTree, t *testing.T, dn DN, backlog int, recursive bool) []string {
+	t.Helper()
+	opts := []LogReadOption{
+		WithBacklog(backlog),
+	}
+	if recursive {
+		opts = append(opts, WithChildren())
+	}
+	res, err := tree.Read(dn, opts...)
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	defer res.Close()
+
+	var lines []string
+	for _, e := range res.Backlog {
+		for _, msg := range e.Leveled.Messages() {
+			lines = append(lines, msg)
+		}
+	}
+	return lines
+}
+
 func TestMultiline(t *testing.T) {
 	tree := New()
 	// Two lines in a single message.
@@ -61,7 +85,7 @@ func TestMultiline(t *testing.T) {
 	}
 }
 
-func TestBacklog(t *testing.T) {
+func TestBacklogAll(t *testing.T) {
 	tree := New()
 	tree.MustLeveledFor("main").Info("hello, main!")
 	tree.MustLeveledFor("main.foo").Info("hello, main.foo!")
@@ -79,6 +103,44 @@ func TestBacklog(t *testing.T) {
 	if res := expect(tree, t, "aux", "hello, aux!", "processing foo", "processing bar"); res != "" {
 		t.Errorf("retrieval at aux failed: %s", res)
 	}
+}
+
+func TestBacklogExact(t *testing.T) {
+	tree := New()
+	tree.MustLeveledFor("main").Info("hello, main!")
+	tree.MustLeveledFor("main.foo").Info("hello, main.foo!")
+	tree.MustLeveledFor("main.bar").Info("hello, main.bar!")
+	tree.MustLeveledFor("main.bar.chatty").Info("hey there how are you")
+	tree.MustLeveledFor("main.bar.quiet").Info("fine how are you")
+	tree.MustLeveledFor("main.bar.chatty").Info("i've been alright myself")
+	tree.MustLeveledFor("main.bar.chatty").Info("but to tell you honestly...")
+	tree.MustLeveledFor("main.bar.chatty").Info("i feel like i'm stuck?")
+	tree.MustLeveledFor("main.bar.quiet").Info("mhm")
+	tree.MustLeveledFor("main.bar.chatty").Info("like you know what i'm saying, stuck in like")
+	tree.MustLeveledFor("main.bar.chatty").Info("like a go test?")
+	tree.MustLeveledFor("main.bar.quiet").Info("yeah totally")
+	tree.MustLeveledFor("main.bar.chatty").Info("it's hard to put my finger on it")
+	tree.MustLeveledFor("main.bar.chatty").Info("anyway, how's the wife doing?")
+
+	check := func(a []string, b ...string) {
+		t.Helper()
+		if len(a) != len(b) {
+			t.Errorf("Legth mismatch: wanted %d, got %d", len(b), len(a))
+		}
+		count := len(a)
+		if len(b) < count {
+			count = len(b)
+		}
+		for i := 0; i < count; i++ {
+			if want, got := b[i], a[i]; want != got {
+				t.Errorf("Message %d: wanted %q, got %q", i, want, got)
+			}
+		}
+	}
+
+	check(readBacklog(tree, t, "main", 3, true), "yeah totally", "it's hard to put my finger on it", "anyway, how's the wife doing?")
+	check(readBacklog(tree, t, "main.foo", 3, false), "hello, main.foo!")
+	check(readBacklog(tree, t, "main.bar.quiet", 2, true), "mhm", "yeah totally")
 }
 
 func TestStream(t *testing.T) {

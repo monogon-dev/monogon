@@ -157,14 +157,10 @@ func (l *LogTree) Read(dn DN, opts ...LogReadOption) (*LogReader, error) {
 
 	var entries []*entry
 	if backlog > 0 || backlog == BacklogAllAvailable {
-		// TODO(q3k): pass over the backlog count to scanEntries/getEntries, instead of discarding them here.
 		if recursive {
-			entries = l.journal.scanEntries(filters...)
+			entries = l.journal.scanEntries(backlog, filters...)
 		} else {
-			entries = l.journal.getEntries(dn, filters...)
-		}
-		if backlog != BacklogAllAvailable && len(entries) > backlog {
-			entries = entries[:backlog]
+			entries = l.journal.getEntries(backlog, dn, filters...)
 		}
 	}
 

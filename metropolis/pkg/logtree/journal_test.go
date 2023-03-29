@@ -44,7 +44,7 @@ func TestJournalRetention(t *testing.T) {
 		j.append(e)
 	}
 
-	entries := j.getEntries("main")
+	entries := j.getEntries(BacklogAllAvailable, "main")
 	if want, got := 8192, len(entries); want != got {
 		t.Fatalf("wanted %d entries, got %d", want, got)
 	}
@@ -73,20 +73,20 @@ func TestJournalQuota(t *testing.T) {
 		}
 	}
 
-	entries := j.getEntries("chatty")
+	entries := j.getEntries(BacklogAllAvailable, "chatty")
 	if want, got := 8192, len(entries); want != got {
 		t.Fatalf("wanted %d chatty entries, got %d", want, got)
 	}
-	entries = j.getEntries("solemn")
+	entries = j.getEntries(BacklogAllAvailable, "solemn")
 	if want, got := 900, len(entries); want != got {
 		t.Fatalf("wanted %d solemn entries, got %d", want, got)
 	}
-	entries = j.getEntries("absent")
+	entries = j.getEntries(BacklogAllAvailable, "absent")
 	if want, got := 0, len(entries); want != got {
 		t.Fatalf("wanted %d absent entries, got %d", want, got)
 	}
 
-	entries = j.scanEntries(filterAll())
+	entries = j.scanEntries(BacklogAllAvailable, filterAll())
 	if want, got := 8192+900, len(entries); want != got {
 		t.Fatalf("wanted %d total entries, got %d", want, got)
 	}
@@ -119,7 +119,7 @@ func TestJournalSubtree(t *testing.T) {
 	j.append(&entry{origin: "e.g", leveled: testPayload("e.g")})
 
 	expect := func(f filter, msgs ...string) string {
-		res := j.scanEntries(f)
+		res := j.scanEntries(BacklogAllAvailable, f)
 		set := make(map[string]bool)
 		for _, entry := range res {
 			set[strings.Join(entry.leveled.messages, "\n")] = true

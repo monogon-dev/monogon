@@ -81,10 +81,10 @@ func (e *entry) unlink() {
 	}
 	// Update journal head/tail pointers.
 	if e.journal.head == e {
-		e.journal.head = e.prevGlobal
+		e.journal.head = e.nextGlobal
 	}
 	if e.journal.tail == e {
-		e.journal.tail = e.nextGlobal
+		e.journal.tail = e.prevGlobal
 	}
 
 	// Unlink from the local linked list.
@@ -96,10 +96,10 @@ func (e *entry) unlink() {
 	}
 	// Update journal head/tail pointers.
 	if e.journal.heads[e.origin] == e {
-		e.journal.heads[e.origin] = e.prevLocal
+		e.journal.heads[e.origin] = e.nextLocal
 	}
 	if e.journal.tails[e.origin] == e {
-		e.journal.tails[e.origin] = e.nextLocal
+		e.journal.tails[e.origin] = e.prevLocal
 	}
 }
 
@@ -121,13 +121,13 @@ func (j *journal) append(e *entry) {
 
 	// Insert at head in global linked list, set pointers.
 	e.nextGlobal = nil
-	e.prevGlobal = j.head
-	if j.head != nil {
-		j.head.nextGlobal = e
+	e.prevGlobal = j.tail
+	if j.tail != nil {
+		j.tail.nextGlobal = e
 	}
-	j.head = e
-	if j.tail == nil {
-		j.tail = e
+	j.tail = e
+	if j.head == nil {
+		j.head = e
 	}
 
 	// Create quota if necessary.
@@ -137,27 +137,27 @@ func (j *journal) append(e *entry) {
 
 	// Insert at head in local linked list, calculate seqLocal, set pointers.
 	e.nextLocal = nil
-	e.prevLocal = j.heads[e.origin]
-	if j.heads[e.origin] != nil {
-		j.heads[e.origin].nextLocal = e
+	e.prevLocal = j.tails[e.origin]
+	if j.tails[e.origin] != nil {
+		j.tails[e.origin].nextLocal = e
 		e.seqLocal = e.prevLocal.seqLocal + 1
 	} else {
 		e.seqLocal = 0
 	}
-	j.heads[e.origin] = e
-	if j.tails[e.origin] == nil {
-		j.tails[e.origin] = e
+	j.tails[e.origin] = e
+	if j.heads[e.origin] == nil {
+		j.heads[e.origin] = e
 	}
 
 	// Apply quota to the local linked list that this entry got inserted to, ie. remove
 	// elements in excess of the quota.max count.
 	quota := j.quota[e.origin]
-	count := (j.heads[e.origin].seqLocal - j.tails[e.origin].seqLocal) + 1
+	count := (j.tails[e.origin].seqLocal - j.heads[e.origin].seqLocal) + 1
 	if count > quota.max {
-		// Keep popping elements off the tail of the local linked list until quota is not
+		// Keep popping elements off the head of the local linked list until quota is not
 		// violated.
 		left := count - quota.max
-		cur := j.tails[e.origin]
+		cur := j.heads[e.origin]
 		for {
 			// This shouldn't happen if quota.max >= 1.
 			if cur == nil {
