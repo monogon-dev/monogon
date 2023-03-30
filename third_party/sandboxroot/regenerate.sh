@@ -13,6 +13,10 @@ PKGS=(
   "python-unversioned-command"
   "glibc-static"
 
+  # Required to build static CGO binaries
+  # see monogon-dev/monogon#192
+  "libstdc++-static"
+
   # Kernel build
   "flex"
   "bison"

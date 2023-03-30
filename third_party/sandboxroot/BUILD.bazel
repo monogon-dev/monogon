@@ -142,6 +142,7 @@ rpmtree(
         "@libsmartcols-0__2.38.1-1.fc37.x86_64//rpm",
         "@libstdc__plus____plus__-0__12.2.1-4.fc37.x86_64//rpm",
         "@libstdc__plus____plus__-devel-0__12.2.1-4.fc37.x86_64//rpm",
+        "@libstdc__plus____plus__-static-0__12.2.1-4.fc37.x86_64//rpm",
         "@libtasn1-0__4.19.0-1.fc37.x86_64//rpm",
         "@libtirpc-0__1.3.3-0.fc37.x86_64//rpm",
         "@libtool-ltdl-0__2.4.7-2.fc37.x86_64//rpm",

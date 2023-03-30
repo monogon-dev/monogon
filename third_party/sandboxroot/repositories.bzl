@@ -1454,6 +1454,17 @@ def sandbox_dependencies():
     )
     
     rpm(
+        name = "libstdc__plus____plus__-static-0__12.2.1-4.fc37.x86_64",
+        sha256 = "36eeedc16aaa522f9d5875102a892a8f78c070c876782b73dbdd37d486735b6b",
+        urls = [
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-static-12.2.1-4.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-static-12.2.1-4.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-static-12.2.1-4.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-static-12.2.1-4.fc37.x86_64.rpm",
+        ],
+    )
+    
+    rpm(
         name = "libtasn1-0__4.19.0-1.fc37.x86_64",
         sha256 = "35b51a0796af6930b2a8a511df8c51938006cfcfdf74ddfe6482eb9febd87dfa",
         urls = [
