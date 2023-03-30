@@ -1,0 +1,16 @@
+load("@io_bazel_rules_docker//container:bundle.bzl", "container_bundle")
+load("@io_bazel_rules_docker//contrib:push-all.bzl", "container_push")
+
+container_bundle(
+    name = "cloud_containers",
+    images = {
+        "gcr.io/monogon-infra/cloud/apigw:{IMAGE_TAG}": "//cloud/apigw:apigw_container",
+        "gcr.io/monogon-infra/cloud/shepherd/equinix:{IMAGE_TAG}": "//cloud/shepherd/equinix/manager/server:server_container",
+    },
+)
+
+container_push(
+    name = "push",
+    bundle = ":cloud_containers",
+    format = "Docker",
+)

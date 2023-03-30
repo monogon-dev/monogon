@@ -18,6 +18,9 @@ KUBERNETES_gitMajor="1"
 KUBERNETES_gitMinor="24"
 KUBERNETES_gitVersion="v1.24.2+mngn"
 
+# CI doesnt have the user set...
+IMAGE_TAG=${USER:-unknown}-$(date +%s)
+
 cat <<EOF
 KUBERNETES_gitCommit $(git rev-parse "HEAD^{commit}")
 KUBERNETES_gitTreeState $KUBERNETES_gitTreeState
@@ -28,4 +31,5 @@ KUBERNETES_buildDate $(date \
   ${SOURCE_DATE_EPOCH:+"--date=@${SOURCE_DATE_EPOCH}"} \
  -u +'%Y-%m-%dT%H:%M:%SZ')
 STABLE_METROPOLIS_version $METROPOLIS_VERSION
+IMAGE_TAG $IMAGE_TAG
 EOF
