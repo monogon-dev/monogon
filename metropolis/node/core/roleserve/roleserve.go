@@ -151,6 +151,7 @@ func New(c Config) *Service {
 
 		clusterMembership: &s.ClusterMembership,
 		podNetwork:        &s.podNetwork,
+		network:           s.Network,
 	}
 
 	s.hostsfile = &workerHostsfile{

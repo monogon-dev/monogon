@@ -33,7 +33,6 @@ package clusternet
 
 import (
 	"context"
-	"errors"
 	"net/netip"
 	"time"
 
@@ -64,25 +63,6 @@ func (s *Service) ensureNode(newNode *corev1.Node) error {
 		return nil
 	}
 
-	var internalIP netip.Addr
-	for _, addr := range newNode.Status.Addresses {
-		if addr.Type == corev1.NodeInternalIP {
-			if internalIP.IsUnspecified() {
-				s.logger.Warningf("More than one NodeInternalIP specified, using the first one")
-				break
-			}
-			ip, err := netip.ParseAddr(addr.Address)
-			if err != nil {
-				s.logger.Warningf("Failed to parse Internal IP %s", addr.Address)
-				continue
-			}
-			internalIP = ip
-		}
-	}
-	if internalIP.IsUnspecified() {
-		return errors.New("node has no Internal IP")
-	}
-
 	var prefixes oclusternet.Prefixes
 	for _, podNetStr := range newNode.Spec.PodCIDRs {
 		prefix, err := netip.ParsePrefix(podNetStr)
@@ -92,7 +72,6 @@ func (s *Service) ensureNode(newNode *corev1.Node) error {
 		}
 		prefixes = append(prefixes, prefix)
 	}
-	prefixes = append(prefixes, netip.PrefixFrom(internalIP, 32))
 
 	s.logger.V(1).Infof("Updating locally originated prefixes: %+v", prefixes)
 	s.Prefixes.Set(&prefixes)

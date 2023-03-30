@@ -6,6 +6,7 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/clusternet"
 	"source.monogon.dev/metropolis/node/core/localstorage"
+	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 
@@ -19,6 +20,7 @@ type workerClusternet struct {
 	clusterMembership *memory.Value[*ClusterMembership]
 	// podNetwork will be read.
 	podNetwork *memory.Value[*clusternet.Prefixes]
+	network    *network.Service
 }
 
 func (s *workerClusternet) run(ctx context.Context) error {
@@ -46,6 +48,7 @@ func (s *workerClusternet) run(ctx context.Context) error {
 		},
 		DataDirectory:             &s.storageRoot.Data.Kubernetes.ClusterNetworking,
 		LocalKubernetesPodNetwork: s.podNetwork,
+		Network:                   s.network.Value(),
 	}
 	return svc.Run(ctx)
 }

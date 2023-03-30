@@ -15,13 +15,40 @@ import (
 // Cluster Networking mesh.
 type Prefixes []netip.Prefix
 
-func (p Prefixes) proto() (res []*cpb.NodeClusterNetworking_Prefix) {
-	for _, prefix := range p {
+func (p *Prefixes) proto() (res []*cpb.NodeClusterNetworking_Prefix) {
+	for _, prefix := range *p {
 		res = append(res, &cpb.NodeClusterNetworking_Prefix{
 			Cidr: prefix.String(),
 		})
 	}
 	return
+}
+
+// Update by copying all prefixes from o into p, merging duplicates as necessary.
+func (p *Prefixes) Update(o *Prefixes) {
+	// Gather prefixes we already have.
+	cur := make(map[netip.Prefix]bool)
+	for _, pp := range *p {
+		cur[pp] = true
+	}
+
+	// Copy over any prefix that we don't yet have.
+	for _, pp := range *o {
+		if cur[pp] {
+			continue
+		}
+		cur[pp] = true
+		*p = append(*p, pp)
+	}
+}
+
+// String returns a stringified, comma-dalimited representation of the prefixes.
+func (p *Prefixes) String() string {
+	var strs []string
+	for _, pp := range *p {
+		strs = append(strs, pp.String())
+	}
+	return strings.Join(strs, ", ")
 }
 
 // node is used for internal statekeeping in the cluster networking service.

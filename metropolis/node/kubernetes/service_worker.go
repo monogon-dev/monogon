@@ -7,8 +7,10 @@ import (
 
 	"source.monogon.dev/go/net/tinylb"
 	"source.monogon.dev/metropolis/node"
+	oclusternet "source.monogon.dev/metropolis/node/core/clusternet"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
+	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 
@@ -24,6 +26,7 @@ type ConfigWorker struct {
 	Network       *network.Service
 	NodeID        string
 	CuratorClient ipb.CuratorClient
+	PodNetwork    event.Value[*oclusternet.Prefixes]
 }
 
 type Worker struct {
@@ -67,6 +70,7 @@ func (s *Worker) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	<-ctx.Done()
 	return nil

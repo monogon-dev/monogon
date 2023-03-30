@@ -19,6 +19,7 @@ import (
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
+	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 
@@ -180,6 +181,8 @@ func TestClusternetBasic(t *testing.T) {
 	defer cl.Close()
 	curator := apb.NewCuratorClient(cl)
 
+	var nval memory.Value[*network.Status]
+
 	var podNetwork memory.Value[*Prefixes]
 	wg := &fakeWireguard{}
 	svc := Service{
@@ -190,6 +193,7 @@ func TestClusternetBasic(t *testing.T) {
 		},
 		DataDirectory:             nil,
 		LocalKubernetesPodNetwork: &podNetwork,
+		Network:                   &nval,
 
 		wg: wg,
 	}
