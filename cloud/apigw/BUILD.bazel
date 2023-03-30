@@ -1,4 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
 
 go_library(
     name = "apigw_lib",
@@ -12,4 +14,18 @@ go_binary(
     name = "apigw",
     embed = [":apigw_lib"],
     visibility = ["//visibility:public"],
+)
+
+static_binary_tarball(
+    name = "apigw_layer",
+    executable = ":apigw",
+)
+
+container_image(
+    name = "apigw_container",
+    base = "@go_image_base//image",
+    entrypoint = ["/app/cloud/apigw/apigw_/apigw"],
+    tars = [":apigw_layer"],
+    visibility = ["//visibility:public"],
+    workdir = "/app",
 )
