@@ -19,7 +19,7 @@ KUBERNETES_gitMinor="24"
 KUBERNETES_gitVersion="v1.24.2+mngn"
 
 # CI doesnt have the user set...
-IMAGE_TAG=${USER:-unknown}-$(date +%s)
+IMAGE_TAG=${IMAGE_TAG:-${USER:-unknown}-$(date +%s)}
 
 cat <<EOF
 KUBERNETES_gitCommit $(git rev-parse "HEAD^{commit}")
