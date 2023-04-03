@@ -28,8 +28,8 @@ var (
 // with information about the current set of nodes.
 func (r *Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	// We can only connect to "metropolis://control".
-	if target.Scheme != "metropolis" || target.Authority != "" || target.Endpoint != "control" {
-		return nil, fmt.Errorf("invalid target: must be %s, is: %s", MetropolisControlAddress, target.Endpoint)
+	if target.URL.Scheme != "metropolis" || target.URL.Host != "" || target.URL.Path != "/control" {
+		return nil, fmt.Errorf("invalid target: must be %s, is: %s", MetropolisControlAddress, target.URL.String())
 	}
 
 	if opts.DialCreds == nil {
