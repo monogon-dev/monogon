@@ -9,6 +9,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/a/acpica-tools-20220331-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/a/acpica-tools-20220331-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/a/acpica-tools-20220331-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/a/acpica-tools-20220331-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -20,6 +21,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/a/alternatives-1.22-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/a/alternatives-1.22-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/a/alternatives-1.22-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/a/alternatives-1.22-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -31,6 +33,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/a/ansible-srpm-macros-1-8.1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/a/ansible-srpm-macros-1-8.1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/a/ansible-srpm-macros-1-8.1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/a/ansible-srpm-macros-1-8.1.fc37.noarch.rpm",
         ],
     )
     
@@ -42,6 +45,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -53,6 +57,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/a/authselect-1.4.2-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/a/authselect-1.4.2-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/a/authselect-1.4.2-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/a/authselect-1.4.2-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -64,6 +69,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/a/authselect-libs-1.4.2-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/a/authselect-libs-1.4.2-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/a/authselect-libs-1.4.2-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/a/authselect-libs-1.4.2-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -75,6 +81,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/basesystem-11-14.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/basesystem-11-14.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/basesystem-11-14.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/basesystem-11-14.fc37.noarch.rpm",
         ],
     )
     
@@ -86,6 +93,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.15-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.15-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.15-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.15-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -97,6 +105,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bc-1.07.1-16.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bc-1.07.1-16.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bc-1.07.1-16.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bc-1.07.1-16.fc37.x86_64.rpm",
         ],
     )
     
@@ -108,6 +117,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/b/binutils-2.38-25.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/b/binutils-2.38-25.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/b/binutils-2.38-25.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/b/binutils-2.38-25.fc37.x86_64.rpm",
         ],
     )
     
@@ -119,6 +129,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/b/binutils-gold-2.38-25.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/b/binutils-gold-2.38-25.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/b/binutils-gold-2.38-25.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/b/binutils-gold-2.38-25.fc37.x86_64.rpm",
         ],
     )
     
@@ -130,6 +141,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bison-3.8.2-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bison-3.8.2-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bison-3.8.2-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bison-3.8.2-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -141,6 +153,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bzip2-libs-1.0.8-12.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bzip2-libs-1.0.8-12.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bzip2-libs-1.0.8-12.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/bzip2-libs-1.0.8-12.fc37.x86_64.rpm",
         ],
     )
     
@@ -152,6 +165,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/ca-certificates-2023.2.60-1.0.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/c/ca-certificates-2023.2.60-1.0.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/c/ca-certificates-2023.2.60-1.0.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/c/ca-certificates-2023.2.60-1.0.fc37.noarch.rpm",
         ],
     )
     
@@ -163,6 +177,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/capstone-4.0.2-11.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/c/capstone-4.0.2-11.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/c/capstone-4.0.2-11.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/c/capstone-4.0.2-11.fc37.x86_64.rpm",
         ],
     )
     
@@ -174,6 +189,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/checkpolicy-3.5-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/c/checkpolicy-3.5-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/c/checkpolicy-3.5-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/c/checkpolicy-3.5-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -185,6 +201,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-15.0.7-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-15.0.7-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-15.0.7-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-15.0.7-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -196,6 +213,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-libs-15.0.7-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-libs-15.0.7-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-libs-15.0.7-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-libs-15.0.7-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -207,6 +225,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-resource-filesystem-15.0.7-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-resource-filesystem-15.0.7-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-resource-filesystem-15.0.7-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/c/clang-resource-filesystem-15.0.7-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -218,6 +237,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/coreutils-single-9.1-7.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/c/coreutils-single-9.1-7.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/c/coreutils-single-9.1-7.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/c/coreutils-single-9.1-7.fc37.x86_64.rpm",
         ],
     )
     
@@ -229,6 +249,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/cpp-12.2.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/c/cpp-12.2.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/c/cpp-12.2.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/c/cpp-12.2.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -240,6 +261,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/cracklib-2.9.7-30.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/cracklib-2.9.7-30.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/cracklib-2.9.7-30.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/cracklib-2.9.7-30.fc37.x86_64.rpm",
         ],
     )
     
@@ -251,6 +273,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/crypto-policies-20220815-1.gite4ed860.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/crypto-policies-20220815-1.gite4ed860.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/crypto-policies-20220815-1.gite4ed860.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/crypto-policies-20220815-1.gite4ed860.fc37.noarch.rpm",
         ],
     )
     
@@ -262,6 +285,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-8.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-8.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-8.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-8.fc37.x86_64.rpm",
         ],
     )
     
@@ -273,6 +297,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/cyrus-sasl-lib-2.1.28-8.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/cyrus-sasl-lib-2.1.28-8.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/cyrus-sasl-lib-2.1.28-8.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/c/cyrus-sasl-lib-2.1.28-8.fc37.x86_64.rpm",
         ],
     )
     
@@ -284,6 +309,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/d/daxctl-libs-76.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/d/daxctl-libs-76.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/d/daxctl-libs-76.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/d/daxctl-libs-76.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -295,6 +321,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-1.14.6-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-1.14.6-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-1.14.6-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-1.14.6-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -306,6 +333,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-broker-33-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-broker-33-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-broker-33-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-broker-33-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -317,6 +345,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-common-1.14.6-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-common-1.14.6-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-common-1.14.6-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/d/dbus-common-1.14.6-1.fc37.noarch.rpm",
         ],
     )
     
@@ -328,6 +357,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/d/diffutils-3.8-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/d/diffutils-3.8-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/d/diffutils-3.8-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/d/diffutils-3.8-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -339,6 +369,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/d/dwz-0.14-7.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/d/dwz-0.14-7.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/d/dwz-0.14-7.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/d/dwz-0.14-7.fc37.x86_64.rpm",
         ],
     )
     
@@ -350,6 +381,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/e2fsprogs-libs-1.46.5-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/e2fsprogs-libs-1.46.5-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/e2fsprogs-libs-1.46.5-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/e2fsprogs-libs-1.46.5-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -361,6 +393,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/ed-1.18-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/ed-1.18-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/ed-1.18-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/ed-1.18-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -372,6 +405,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/edk2-ovmf-20230301gitf80f052277c8-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/edk2-ovmf-20230301gitf80f052277c8-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/edk2-ovmf-20230301gitf80f052277c8-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/edk2-ovmf-20230301gitf80f052277c8-1.fc37.noarch.rpm",
         ],
     )
     
@@ -383,6 +417,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/efi-srpm-macros-5-6.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/efi-srpm-macros-5-6.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/efi-srpm-macros-5-6.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/efi-srpm-macros-5-6.fc37.noarch.rpm",
         ],
     )
     
@@ -394,6 +429,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.189-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.189-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.189-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.189-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -405,6 +441,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.189-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.189-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.189-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.189-1.fc37.noarch.rpm",
         ],
     )
     
@@ -416,6 +453,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.189-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.189-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.189-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.189-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -427,6 +465,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.189-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.189-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.189-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.189-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -438,6 +477,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.189-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.189-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.189-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.189-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -449,6 +489,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/expat-2.5.0-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/expat-2.5.0-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/expat-2.5.0-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/expat-2.5.0-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -460,6 +501,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-gpg-keys-37-2.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-gpg-keys-37-2.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-gpg-keys-37-2.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-gpg-keys-37-2.noarch.rpm",
         ],
     )
     
@@ -471,6 +513,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-16.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-16.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-16.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-16.noarch.rpm",
         ],
     )
     
@@ -482,6 +525,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-16.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-16.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-16.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-16.noarch.rpm",
         ],
     )
     
@@ -493,6 +537,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-16.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-16.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-16.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-16.noarch.rpm",
         ],
     )
     
@@ -504,6 +549,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-repos-37-2.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-repos-37-2.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-repos-37-2.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-repos-37-2.noarch.rpm",
         ],
     )
     
@@ -515,6 +561,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/file-5.42-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/file-5.42-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/file-5.42-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/file-5.42-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -526,6 +573,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/file-libs-5.42-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/file-libs-5.42-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/file-libs-5.42-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/file-libs-5.42-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -537,6 +585,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/filesystem-3.18-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/filesystem-3.18-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/filesystem-3.18-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/filesystem-3.18-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -548,6 +597,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/findutils-4.9.0-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/findutils-4.9.0-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/findutils-4.9.0-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/findutils-4.9.0-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -559,6 +609,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/flex-2.6.4-11.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/flex-2.6.4-11.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/flex-2.6.4-11.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/flex-2.6.4-11.fc37.x86_64.rpm",
         ],
     )
     
@@ -570,6 +621,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fonts-srpm-macros-2.0.5-9.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fonts-srpm-macros-2.0.5-9.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fonts-srpm-macros-2.0.5-9.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fonts-srpm-macros-2.0.5-9.fc37.noarch.rpm",
         ],
     )
     
@@ -581,6 +633,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fpc-srpm-macros-1.3-6.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fpc-srpm-macros-1.3-6.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fpc-srpm-macros-1.3-6.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fpc-srpm-macros-1.3-6.fc37.noarch.rpm",
         ],
     )
     
@@ -592,6 +645,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fuse3-libs-3.10.5-5.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fuse3-libs-3.10.5-5.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fuse3-libs-3.10.5-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/f/fuse3-libs-3.10.5-5.fc37.x86_64.rpm",
         ],
     )
     
@@ -603,6 +657,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gawk-5.1.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gawk-5.1.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gawk-5.1.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gawk-5.1.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -614,6 +669,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gc-8.0.6-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gc-8.0.6-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gc-8.0.6-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gc-8.0.6-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -625,6 +681,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/gcc-12.2.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/gcc-12.2.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/gcc-12.2.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/gcc-12.2.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -636,6 +693,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/gcc-c++-12.2.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/gcc-c++-12.2.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/gcc-c++-12.2.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/gcc-c++-12.2.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -647,6 +705,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gdbm-libs-1.23-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gdbm-libs-1.23-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gdbm-libs-1.23-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gdbm-libs-1.23-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -658,6 +717,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/ghc-srpm-macros-1.6.1-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/ghc-srpm-macros-1.6.1-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/ghc-srpm-macros-1.6.1-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/ghc-srpm-macros-1.6.1-1.fc37.noarch.rpm",
         ],
     )
     
@@ -669,6 +729,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glib2-2.74.6-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glib2-2.74.6-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glib2-2.74.6-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glib2-2.74.6-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -680,6 +741,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-9.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-9.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-9.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-9.fc37.x86_64.rpm",
         ],
     )
     
@@ -691,6 +753,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-9.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-9.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-9.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-9.fc37.x86_64.rpm",
         ],
     )
     
@@ -702,6 +765,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-9.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-9.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-9.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-9.fc37.x86_64.rpm",
         ],
     )
     
@@ -713,6 +777,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-9.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-9.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-9.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-9.fc37.noarch.rpm",
         ],
     )
     
@@ -724,6 +789,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-9.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-9.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-9.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-9.fc37.x86_64.rpm",
         ],
     )
     
@@ -735,6 +801,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-9.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-9.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-9.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-9.fc37.x86_64.rpm",
         ],
     )
     
@@ -746,6 +813,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gmp-6.2.1-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gmp-6.2.1-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gmp-6.2.1-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gmp-6.2.1-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -757,6 +825,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnat-srpm-macros-5-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnat-srpm-macros-5-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnat-srpm-macros-5-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnat-srpm-macros-5-1.fc37.noarch.rpm",
         ],
     )
     
@@ -768,6 +837,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnupg2-2.3.8-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnupg2-2.3.8-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnupg2-2.3.8-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnupg2-2.3.8-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -779,6 +849,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-3.8.0-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-3.8.0-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-3.8.0-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-3.8.0-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -790,6 +861,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-dane-3.8.0-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-dane-3.8.0-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-dane-3.8.0-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-dane-3.8.0-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -801,6 +873,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-utils-3.8.0-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-utils-3.8.0-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-utils-3.8.0-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-utils-3.8.0-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -812,6 +885,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/go-srpm-macros-3.2.0-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/go-srpm-macros-3.2.0-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/go-srpm-macros-3.2.0-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/go-srpm-macros-3.2.0-1.fc37.noarch.rpm",
         ],
     )
     
@@ -823,6 +897,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/grep-3.7-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/grep-3.7-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/grep-3.7-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/grep-3.7-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -834,6 +909,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/groff-base-1.22.4-10.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/groff-base-1.22.4-10.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/groff-base-1.22.4-10.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/groff-base-1.22.4-10.fc37.x86_64.rpm",
         ],
     )
     
@@ -845,6 +921,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/guile22-2.2.7-6.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/guile22-2.2.7-6.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/guile22-2.2.7-6.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/guile22-2.2.7-6.fc37.x86_64.rpm",
         ],
     )
     
@@ -856,6 +933,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gzip-1.12-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gzip-1.12-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gzip-1.12-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/gzip-1.12-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -867,6 +945,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/i/ipxe-roms-qemu-20220210-2.git64113751.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/i/ipxe-roms-qemu-20220210-2.git64113751.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/i/ipxe-roms-qemu-20220210-2.git64113751.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/i/ipxe-roms-qemu-20220210-2.git64113751.fc37.noarch.rpm",
         ],
     )
     
@@ -878,6 +957,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/j/json-glib-1.6.6-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/j/json-glib-1.6.6-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/j/json-glib-1.6.6-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/j/json-glib-1.6.6-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -889,6 +969,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/k/kernel-headers-6.2.6-200.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/k/kernel-headers-6.2.6-200.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/k/kernel-headers-6.2.6-200.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/k/kernel-headers-6.2.6-200.fc37.x86_64.rpm",
         ],
     )
     
@@ -900,6 +981,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/kernel-srpm-macros-1.0-15.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/kernel-srpm-macros-1.0-15.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/kernel-srpm-macros-1.0-15.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/kernel-srpm-macros-1.0-15.fc37.noarch.rpm",
         ],
     )
     
@@ -911,6 +993,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/keyutils-libs-1.6.1-5.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/keyutils-libs-1.6.1-5.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/keyutils-libs-1.6.1-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/keyutils-libs-1.6.1-5.fc37.x86_64.rpm",
         ],
     )
     
@@ -922,6 +1005,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/kmod-libs-30-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/kmod-libs-30-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/kmod-libs-30-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/k/kmod-libs-30-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -933,6 +1017,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/k/krb5-libs-1.19.2-13.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/k/krb5-libs-1.19.2-13.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/k/krb5-libs-1.19.2-13.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/k/krb5-libs-1.19.2-13.fc37.x86_64.rpm",
         ],
     )
     
@@ -944,6 +1029,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libacl-2.3.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libacl-2.3.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libacl-2.3.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libacl-2.3.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -955,6 +1041,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libaio-0.3.111-14.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libaio-0.3.111-14.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libaio-0.3.111-14.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libaio-0.3.111-14.fc37.x86_64.rpm",
         ],
     )
     
@@ -966,6 +1053,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libarchive-3.6.1-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libarchive-3.6.1-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libarchive-3.6.1-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libarchive-3.6.1-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -977,6 +1065,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libassuan-2.5.5-5.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libassuan-2.5.5-5.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libassuan-2.5.5-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libassuan-2.5.5-5.fc37.x86_64.rpm",
         ],
     )
     
@@ -988,6 +1077,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libattr-2.5.1-5.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libattr-2.5.1-5.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libattr-2.5.1-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libattr-2.5.1-5.fc37.x86_64.rpm",
         ],
     )
     
@@ -999,6 +1089,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libb2-0.98.1-7.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libb2-0.98.1-7.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libb2-0.98.1-7.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libb2-0.98.1-7.fc37.x86_64.rpm",
         ],
     )
     
@@ -1010,6 +1101,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libblkid-2.38.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libblkid-2.38.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libblkid-2.38.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libblkid-2.38.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1021,6 +1113,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libbpf-0.8.0-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libbpf-0.8.0-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libbpf-0.8.0-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libbpf-0.8.0-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -1032,6 +1125,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcap-2.48-5.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcap-2.48-5.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcap-2.48-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcap-2.48-5.fc37.x86_64.rpm",
         ],
     )
     
@@ -1043,6 +1137,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcap-ng-0.8.3-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcap-ng-0.8.3-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcap-ng-0.8.3-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcap-ng-0.8.3-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -1054,6 +1149,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcom_err-1.46.5-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcom_err-1.46.5-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcom_err-1.46.5-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libcom_err-1.46.5-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -1065,6 +1161,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-8.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-8.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-8.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-8.fc37.x86_64.rpm",
         ],
     )
     
@@ -1076,6 +1173,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libdb-5.3.28-53.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libdb-5.3.28-53.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libdb-5.3.28-53.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libdb-5.3.28-53.fc37.x86_64.rpm",
         ],
     )
     
@@ -1087,6 +1185,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libeconf-0.4.0-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libeconf-0.4.0-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libeconf-0.4.0-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libeconf-0.4.0-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1098,6 +1197,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libedit-3.1-43.20221009cvs.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libedit-3.1-43.20221009cvs.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libedit-3.1-43.20221009cvs.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libedit-3.1-43.20221009cvs.fc37.x86_64.rpm",
         ],
     )
     
@@ -1109,6 +1209,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libevent-2.1.12-7.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libevent-2.1.12-7.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libevent-2.1.12-7.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libevent-2.1.12-7.fc37.x86_64.rpm",
         ],
     )
     
@@ -1120,6 +1221,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libfdisk-2.38.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libfdisk-2.38.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libfdisk-2.38.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libfdisk-2.38.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1131,6 +1233,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libfdt-1.6.1-5.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libfdt-1.6.1-5.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libfdt-1.6.1-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libfdt-1.6.1-5.fc37.x86_64.rpm",
         ],
     )
     
@@ -1142,6 +1245,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libffi-3.4.4-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libffi-3.4.4-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libffi-3.4.4-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libffi-3.4.4-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1153,6 +1257,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgcc-12.2.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgcc-12.2.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgcc-12.2.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgcc-12.2.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1164,6 +1269,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libgcrypt-1.10.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libgcrypt-1.10.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libgcrypt-1.10.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libgcrypt-1.10.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1175,6 +1281,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgomp-12.2.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgomp-12.2.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgomp-12.2.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgomp-12.2.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1186,6 +1293,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgpg-error-1.46-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgpg-error-1.46-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgpg-error-1.46-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libgpg-error-1.46-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1197,6 +1305,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libibverbs-41.0-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libibverbs-41.0-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libibverbs-41.0-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libibverbs-41.0-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1208,6 +1317,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libidn2-2.3.4-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libidn2-2.3.4-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libidn2-2.3.4-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libidn2-2.3.4-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1219,6 +1329,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libjpeg-turbo-2.1.3-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libjpeg-turbo-2.1.3-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libjpeg-turbo-2.1.3-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libjpeg-turbo-2.1.3-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -1230,6 +1341,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libksba-1.6.3-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libksba-1.6.3-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libksba-1.6.3-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libksba-1.6.3-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1241,6 +1353,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libmount-2.38.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libmount-2.38.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libmount-2.38.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libmount-2.38.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1252,6 +1365,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libmpc-1.2.1-5.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libmpc-1.2.1-5.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libmpc-1.2.1-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libmpc-1.2.1-5.fc37.x86_64.rpm",
         ],
     )
     
@@ -1263,6 +1377,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1274,6 +1389,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libnl3-3.7.0-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libnl3-3.7.0-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libnl3-3.7.0-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libnl3-3.7.0-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -1285,6 +1401,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libnsl2-2.0.0-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libnsl2-2.0.0-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libnsl2-2.0.0-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libnsl2-2.0.0-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1296,6 +1413,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpkgconf-1.8.0-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpkgconf-1.8.0-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpkgconf-1.8.0-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpkgconf-1.8.0-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -1307,6 +1425,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpmem-1.12.0-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpmem-1.12.0-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpmem-1.12.0-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpmem-1.12.0-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1318,6 +1437,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpng-1.6.37-13.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpng-1.6.37-13.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpng-1.6.37-13.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libpng-1.6.37-13.fc37.x86_64.rpm",
         ],
     )
     
@@ -1329,6 +1449,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libpwquality-1.4.5-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libpwquality-1.4.5-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libpwquality-1.4.5-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libpwquality-1.4.5-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -1340,6 +1461,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/librdmacm-41.0-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/librdmacm-41.0-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/librdmacm-41.0-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/librdmacm-41.0-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1351,6 +1473,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libseccomp-2.5.3-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libseccomp-2.5.3-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libseccomp-2.5.3-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libseccomp-2.5.3-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -1362,6 +1485,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libselinux-3.5-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libselinux-3.5-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libselinux-3.5-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libselinux-3.5-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1373,17 +1497,19 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libselinux-utils-3.5-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libselinux-utils-3.5-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libselinux-utils-3.5-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libselinux-utils-3.5-1.fc37.x86_64.rpm",
         ],
     )
     
     rpm(
-        name = "libsemanage-0__3.5-1.fc37.x86_64",
-        sha256 = "aeb55e09d224bd6212a8456160cabbcfac61eb2a792a572c01567dba9529c208",
+        name = "libsemanage-0__3.5-2.fc37.x86_64",
+        sha256 = "39a7db1792d9b17dd8a4339cef7037e32c100dce4dab242207ca86efffc4b61c",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsemanage-3.5-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsemanage-3.5-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsemanage-3.5-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsemanage-3.5-1.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsemanage-3.5-2.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsemanage-3.5-2.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsemanage-3.5-2.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsemanage-3.5-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsemanage-3.5-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -1395,6 +1521,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsepol-3.5-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsepol-3.5-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsepol-3.5-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libsepol-3.5-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1406,6 +1533,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libsigsegv-2.14-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libsigsegv-2.14-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libsigsegv-2.14-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libsigsegv-2.14-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -1417,6 +1545,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libslirp-4.7.0-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libslirp-4.7.0-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libslirp-4.7.0-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libslirp-4.7.0-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -1428,6 +1557,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libsmartcols-2.38.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libsmartcols-2.38.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libsmartcols-2.38.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libsmartcols-2.38.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1439,6 +1569,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-12.2.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-12.2.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-12.2.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-12.2.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1450,6 +1581,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-devel-12.2.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-devel-12.2.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-devel-12.2.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-devel-12.2.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1461,6 +1593,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-static-12.2.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-static-12.2.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-static-12.2.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libstdc++-static-12.2.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1472,6 +1605,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtasn1-4.19.0-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtasn1-4.19.0-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtasn1-4.19.0-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtasn1-4.19.0-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1483,6 +1617,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libtirpc-1.3.3-0.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libtirpc-1.3.3-0.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libtirpc-1.3.3-0.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libtirpc-1.3.3-0.fc37.x86_64.rpm",
         ],
     )
     
@@ -1494,6 +1629,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libtool-ltdl-2.4.7-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libtool-ltdl-2.4.7-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libtool-ltdl-2.4.7-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libtool-ltdl-2.4.7-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -1505,6 +1641,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtpms-0.9.6-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtpms-0.9.6-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtpms-0.9.6-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtpms-0.9.6-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1516,6 +1653,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libunistring-1.0-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libunistring-1.0-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libunistring-1.0-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libunistring-1.0-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -1527,6 +1665,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/liburing-2.3-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/liburing-2.3-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/liburing-2.3-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/liburing-2.3-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1538,6 +1677,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libutempter-1.2.1-7.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libutempter-1.2.1-7.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libutempter-1.2.1-7.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libutempter-1.2.1-7.fc37.x86_64.rpm",
         ],
     )
     
@@ -1549,6 +1689,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libuuid-2.38.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libuuid-2.38.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libuuid-2.38.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libuuid-2.38.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1560,6 +1701,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libuuid-devel-2.38.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libuuid-devel-2.38.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libuuid-devel-2.38.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libuuid-devel-2.38.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1571,6 +1713,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libverto-0.3.2-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libverto-0.3.2-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libverto-0.3.2-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libverto-0.3.2-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1582,6 +1725,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-4.4.33-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-4.4.33-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-4.4.33-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-4.4.33-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1593,6 +1737,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-devel-4.4.33-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-devel-4.4.33-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-devel-4.4.33-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-devel-4.4.33-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1604,6 +1749,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-static-4.4.33-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-static-4.4.33-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-static-4.4.33-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxcrypt-static-4.4.33-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1615,6 +1761,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxml2-2.10.3-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxml2-2.10.3-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxml2-2.10.3-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libxml2-2.10.3-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -1626,6 +1773,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libzstd-1.5.4-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libzstd-1.5.4-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libzstd-1.5.4-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libzstd-1.5.4-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1637,6 +1785,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libzstd-devel-1.5.4-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libzstd-devel-1.5.4-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libzstd-devel-1.5.4-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libzstd-devel-1.5.4-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1648,6 +1797,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/lld-15.0.7-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/lld-15.0.7-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/lld-15.0.7-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/lld-15.0.7-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1659,6 +1809,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/lld-libs-15.0.7-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/lld-libs-15.0.7-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/lld-libs-15.0.7-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/lld-libs-15.0.7-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1670,6 +1821,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/llvm-15.0.7-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/llvm-15.0.7-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/llvm-15.0.7-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/llvm-15.0.7-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1681,6 +1833,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/llvm-libs-15.0.7-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/llvm-libs-15.0.7-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/llvm-libs-15.0.7-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/llvm-libs-15.0.7-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1692,6 +1845,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/lua-libs-5.4.4-9.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/lua-libs-5.4.4-9.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/lua-libs-5.4.4-9.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/lua-libs-5.4.4-9.fc37.x86_64.rpm",
         ],
     )
     
@@ -1703,6 +1857,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/lua-srpm-macros-1-7.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/lua-srpm-macros-1-7.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/lua-srpm-macros-1-7.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/lua-srpm-macros-1-7.fc37.noarch.rpm",
         ],
     )
     
@@ -1714,6 +1869,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/lz4-1.9.4-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/lz4-1.9.4-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/lz4-1.9.4-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/lz4-1.9.4-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1725,6 +1881,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/lz4-libs-1.9.4-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/lz4-libs-1.9.4-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/lz4-libs-1.9.4-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/lz4-libs-1.9.4-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1736,6 +1893,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/lzo-2.10-7.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/lzo-2.10-7.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/lzo-2.10-7.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/lzo-2.10-7.fc37.x86_64.rpm",
         ],
     )
     
@@ -1747,6 +1905,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/m4-1.4.19-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/m4-1.4.19-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/m4-1.4.19-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/m4-1.4.19-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1758,6 +1917,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/make-4.3-11.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/make-4.3-11.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/make-4.3-11.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/make-4.3-11.fc37.x86_64.rpm",
         ],
     )
     
@@ -1769,6 +1929,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/mpdecimal-2.5.1-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/mpdecimal-2.5.1-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/mpdecimal-2.5.1-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/mpdecimal-2.5.1-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -1780,6 +1941,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/mpfr-4.1.0-10.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/mpfr-4.1.0-10.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/mpfr-4.1.0-10.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/m/mpfr-4.1.0-10.fc37.x86_64.rpm",
         ],
     )
     
@@ -1791,6 +1953,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nasm-2.15.05-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nasm-2.15.05-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nasm-2.15.05-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nasm-2.15.05-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -1802,6 +1965,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-6.3-4.20220501.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-6.3-4.20220501.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-6.3-4.20220501.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-6.3-4.20220501.fc37.x86_64.rpm",
         ],
     )
     
@@ -1813,6 +1977,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-base-6.3-4.20220501.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-base-6.3-4.20220501.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-base-6.3-4.20220501.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-base-6.3-4.20220501.fc37.noarch.rpm",
         ],
     )
     
@@ -1824,6 +1989,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-libs-6.3-4.20220501.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-libs-6.3-4.20220501.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-libs-6.3-4.20220501.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/n/ncurses-libs-6.3-4.20220501.fc37.x86_64.rpm",
         ],
     )
     
@@ -1835,6 +2001,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/n/ndctl-libs-76.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/n/ndctl-libs-76.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/n/ndctl-libs-76.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/n/ndctl-libs-76.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1846,6 +2013,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nettle-3.8-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nettle-3.8-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nettle-3.8-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nettle-3.8-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -1857,6 +2025,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nim-srpm-macros-3-7.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nim-srpm-macros-3-7.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nim-srpm-macros-3-7.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/nim-srpm-macros-3-7.fc37.noarch.rpm",
         ],
     )
     
@@ -1868,6 +2037,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/npth-1.6-9.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/npth-1.6-9.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/npth-1.6-9.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/npth-1.6-9.fc37.x86_64.rpm",
         ],
     )
     
@@ -1879,6 +2049,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/numactl-libs-2.0.14-6.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/numactl-libs-2.0.14-6.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/numactl-libs-2.0.14-6.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/n/numactl-libs-2.0.14-6.fc37.x86_64.rpm",
         ],
     )
     
@@ -1890,6 +2061,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/o/ocaml-srpm-macros-7-2.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/o/ocaml-srpm-macros-7-2.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/o/ocaml-srpm-macros-7-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/o/ocaml-srpm-macros-7-2.fc37.noarch.rpm",
         ],
     )
     
@@ -1901,6 +2073,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/o/openblas-srpm-macros-2-12.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/o/openblas-srpm-macros-2-12.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/o/openblas-srpm-macros-2-12.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/o/openblas-srpm-macros-2-12.fc37.noarch.rpm",
         ],
     )
     
@@ -1912,6 +2085,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/o/openldap-2.6.4-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/o/openldap-2.6.4-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/o/openldap-2.6.4-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/o/openldap-2.6.4-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1923,6 +2097,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/o/openssl-devel-3.0.8-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/o/openssl-devel-3.0.8-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/o/openssl-devel-3.0.8-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/o/openssl-devel-3.0.8-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1934,6 +2109,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/o/openssl-libs-3.0.8-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/o/openssl-libs-3.0.8-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/o/openssl-libs-3.0.8-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/o/openssl-libs-3.0.8-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -1945,6 +2121,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/p11-kit-0.24.1-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/p11-kit-0.24.1-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/p11-kit-0.24.1-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/p11-kit-0.24.1-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -1956,6 +2133,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/p11-kit-trust-0.24.1-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/p11-kit-trust-0.24.1-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/p11-kit-trust-0.24.1-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/p11-kit-trust-0.24.1-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -1967,6 +2145,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/package-notes-srpm-macros-0.5-6.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/package-notes-srpm-macros-0.5-6.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/package-notes-srpm-macros-0.5-6.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/package-notes-srpm-macros-0.5-6.fc37.noarch.rpm",
         ],
     )
     
@@ -1978,6 +2157,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pam-1.5.2-14.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pam-1.5.2-14.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pam-1.5.2-14.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pam-1.5.2-14.fc37.x86_64.rpm",
         ],
     )
     
@@ -1989,6 +2169,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pam-libs-1.5.2-14.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pam-libs-1.5.2-14.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pam-libs-1.5.2-14.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pam-libs-1.5.2-14.fc37.x86_64.rpm",
         ],
     )
     
@@ -2000,6 +2181,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/patch-2.7.6-17.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/patch-2.7.6-17.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/patch-2.7.6-17.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/patch-2.7.6-17.fc37.x86_64.rpm",
         ],
     )
     
@@ -2011,6 +2193,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre-8.45-1.fc37.2.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre-8.45-1.fc37.2.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre-8.45-1.fc37.2.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre-8.45-1.fc37.2.x86_64.rpm",
         ],
     )
     
@@ -2022,6 +2205,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre2-10.40-1.fc37.1.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre2-10.40-1.fc37.1.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre2-10.40-1.fc37.1.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre2-10.40-1.fc37.1.x86_64.rpm",
         ],
     )
     
@@ -2033,6 +2217,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre2-syntax-10.40-1.fc37.1.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre2-syntax-10.40-1.fc37.1.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre2-syntax-10.40-1.fc37.1.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pcre2-syntax-10.40-1.fc37.1.noarch.rpm",
         ],
     )
     
@@ -2044,6 +2229,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-5.36.0-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-5.36.0-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-5.36.0-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-5.36.0-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2055,6 +2241,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Algorithm-Diff-1.2010-7.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Algorithm-Diff-1.2010-7.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Algorithm-Diff-1.2010-7.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Algorithm-Diff-1.2010-7.fc37.noarch.rpm",
         ],
     )
     
@@ -2066,6 +2253,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Archive-Tar-2.40-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Archive-Tar-2.40-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Archive-Tar-2.40-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Archive-Tar-2.40-490.fc37.noarch.rpm",
         ],
     )
     
@@ -2077,6 +2265,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Archive-Zip-1.68-9.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Archive-Zip-1.68-9.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Archive-Zip-1.68-9.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Archive-Zip-1.68-9.fc37.noarch.rpm",
         ],
     )
     
@@ -2088,6 +2277,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Attribute-Handlers-1.02-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Attribute-Handlers-1.02-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Attribute-Handlers-1.02-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Attribute-Handlers-1.02-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2099,6 +2289,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-AutoLoader-5.74-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-AutoLoader-5.74-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-AutoLoader-5.74-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-AutoLoader-5.74-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2110,6 +2301,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-AutoSplit-5.74-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-AutoSplit-5.74-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-AutoSplit-5.74-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-AutoSplit-5.74-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2121,6 +2313,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-B-1.83-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-B-1.83-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-B-1.83-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-B-1.83-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2132,6 +2325,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Benchmark-1.23-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Benchmark-1.23-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Benchmark-1.23-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Benchmark-1.23-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2143,6 +2337,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-2.34-4.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-2.34-4.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-2.34-4.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-2.34-4.fc37.noarch.rpm",
         ],
     )
     
@@ -2154,6 +2349,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-2.150010-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-2.150010-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-2.150010-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-2.150010-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2165,6 +2361,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-Requirements-2.140-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-Requirements-2.140-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-Requirements-2.140-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-Requirements-2.140-490.fc37.noarch.rpm",
         ],
     )
     
@@ -2176,6 +2373,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-YAML-0.018-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-YAML-0.018-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-YAML-0.018-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-CPAN-Meta-YAML-0.018-490.fc37.noarch.rpm",
         ],
     )
     
@@ -2187,6 +2385,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Carp-1.52-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Carp-1.52-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Carp-1.52-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Carp-1.52-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2198,6 +2397,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Class-Struct-0.66-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Class-Struct-0.66-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Class-Struct-0.66-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Class-Struct-0.66-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2209,6 +2409,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Bzip2-2.28-10.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Bzip2-2.28-10.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Bzip2-2.28-10.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Bzip2-2.28-10.fc37.x86_64.rpm",
         ],
     )
     
@@ -2220,6 +2421,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Raw-Bzip2-2.201-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Raw-Bzip2-2.201-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Raw-Bzip2-2.201-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Raw-Bzip2-2.201-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -2231,6 +2433,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Compress-Raw-Lzma-2.201-7.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Compress-Raw-Lzma-2.201-7.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Compress-Raw-Lzma-2.201-7.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Compress-Raw-Lzma-2.201-7.fc37.x86_64.rpm",
         ],
     )
     
@@ -2242,6 +2445,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Raw-Zlib-2.202-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Raw-Zlib-2.202-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Raw-Zlib-2.202-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Compress-Raw-Zlib-2.202-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -2253,6 +2457,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Config-Extensions-0.03-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Config-Extensions-0.03-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Config-Extensions-0.03-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Config-Extensions-0.03-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2264,6 +2469,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Config-Perl-V-0.34-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Config-Perl-V-0.34-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Config-Perl-V-0.34-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Config-Perl-V-0.34-1.fc37.noarch.rpm",
         ],
     )
     
@@ -2275,6 +2481,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DBM_Filter-0.06-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DBM_Filter-0.06-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DBM_Filter-0.06-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DBM_Filter-0.06-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2286,6 +2493,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DB_File-1.858-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DB_File-1.858-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DB_File-1.858-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DB_File-1.858-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -2297,6 +2505,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-Dumper-2.184-490.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-Dumper-2.184-490.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-Dumper-2.184-490.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-Dumper-2.184-490.fc37.x86_64.rpm",
         ],
     )
     
@@ -2308,6 +2517,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-OptList-0.112-5.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-OptList-0.112-5.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-OptList-0.112-5.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-OptList-0.112-5.fc37.noarch.rpm",
         ],
     )
     
@@ -2319,6 +2529,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-Section-0.200007-17.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-Section-0.200007-17.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-Section-0.200007-17.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Data-Section-0.200007-17.fc37.noarch.rpm",
         ],
     )
     
@@ -2330,6 +2541,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-PPPort-3.68-490.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-PPPort-3.68-490.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-PPPort-3.68-490.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-PPPort-3.68-490.fc37.x86_64.rpm",
         ],
     )
     
@@ -2341,6 +2553,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-Peek-1.32-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-Peek-1.32-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-Peek-1.32-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-Peek-1.32-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2352,6 +2565,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-SelfStubber-1.06-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-SelfStubber-1.06-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-SelfStubber-1.06-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-SelfStubber-1.06-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2363,6 +2577,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-Size-0.83-13.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-Size-0.83-13.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-Size-0.83-13.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Devel-Size-0.83-13.fc37.x86_64.rpm",
         ],
     )
     
@@ -2374,6 +2589,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-1.20-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-1.20-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-1.20-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-1.20-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2385,6 +2601,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-MD5-2.58-489.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-MD5-2.58-489.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-MD5-2.58-489.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-MD5-2.58-489.fc37.x86_64.rpm",
         ],
     )
     
@@ -2396,6 +2613,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-SHA-6.03-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-SHA-6.03-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-SHA-6.03-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-SHA-6.03-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -2407,6 +2625,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-SHA1-2.13-37.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-SHA1-2.13-37.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-SHA1-2.13-37.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Digest-SHA1-2.13-37.fc37.x86_64.rpm",
         ],
     )
     
@@ -2418,6 +2637,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DirHandle-1.05-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DirHandle-1.05-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DirHandle-1.05-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DirHandle-1.05-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2429,6 +2649,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Dumpvalue-2.27-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Dumpvalue-2.27-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Dumpvalue-2.27-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Dumpvalue-2.27-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2440,6 +2661,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DynaLoader-1.52-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DynaLoader-1.52-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DynaLoader-1.52-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-DynaLoader-1.52-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2451,6 +2673,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Encode-3.19-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Encode-3.19-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Encode-3.19-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Encode-3.19-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2462,6 +2685,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Encode-devel-3.19-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Encode-devel-3.19-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Encode-devel-3.19-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Encode-devel-3.19-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2473,6 +2697,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-English-1.11-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-English-1.11-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-English-1.11-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-English-1.11-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2484,6 +2709,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Env-1.05-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Env-1.05-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Env-1.05-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Env-1.05-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2495,6 +2721,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Errno-1.36-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Errno-1.36-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Errno-1.36-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Errno-1.36-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2506,6 +2733,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Exporter-5.77-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Exporter-5.77-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Exporter-5.77-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Exporter-5.77-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2517,6 +2745,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-CBuilder-0.280236-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-CBuilder-0.280236-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-CBuilder-0.280236-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-CBuilder-0.280236-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2528,6 +2757,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-Command-7.66-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-Command-7.66-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-Command-7.66-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-Command-7.66-1.fc37.noarch.rpm",
         ],
     )
     
@@ -2539,6 +2769,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Constant-0.25-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Constant-0.25-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Constant-0.25-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Constant-0.25-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2550,6 +2781,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Embed-1.35-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Embed-1.35-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Embed-1.35-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Embed-1.35-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2561,6 +2793,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Install-2.20-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Install-2.20-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Install-2.20-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Install-2.20-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2572,6 +2805,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-MM-Utils-7.66-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-MM-Utils-7.66-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-MM-Utils-7.66-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-MM-Utils-7.66-1.fc37.noarch.rpm",
         ],
     )
     
@@ -2583,6 +2817,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-MakeMaker-7.66-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-MakeMaker-7.66-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-MakeMaker-7.66-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-ExtUtils-MakeMaker-7.66-1.fc37.noarch.rpm",
         ],
     )
     
@@ -2594,6 +2829,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Manifest-1.73-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Manifest-1.73-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Manifest-1.73-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Manifest-1.73-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2605,6 +2841,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Miniperl-1.11-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Miniperl-1.11-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Miniperl-1.11-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-Miniperl-1.11-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2616,6 +2853,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-ParseXS-3.45-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-ParseXS-3.45-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-ParseXS-3.45-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ExtUtils-ParseXS-3.45-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2627,6 +2865,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Fcntl-1.15-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Fcntl-1.15-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Fcntl-1.15-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Fcntl-1.15-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2638,6 +2877,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Basename-2.85-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Basename-2.85-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Basename-2.85-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Basename-2.85-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2649,6 +2889,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Compare-1.100.700-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Compare-1.100.700-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Compare-1.100.700-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Compare-1.100.700-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2660,6 +2901,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Copy-2.39-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Copy-2.39-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Copy-2.39-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Copy-2.39-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2671,6 +2913,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-DosGlob-1.12-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-DosGlob-1.12-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-DosGlob-1.12-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-DosGlob-1.12-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2682,6 +2925,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Fetch-1.04-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Fetch-1.04-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Fetch-1.04-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Fetch-1.04-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2693,6 +2937,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Find-1.40-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Find-1.40-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Find-1.40-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Find-1.40-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2704,6 +2949,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-HomeDir-1.006-7.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-HomeDir-1.006-7.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-HomeDir-1.006-7.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-HomeDir-1.006-7.fc37.noarch.rpm",
         ],
     )
     
@@ -2715,6 +2961,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Path-2.18-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Path-2.18-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Path-2.18-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Path-2.18-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2726,6 +2973,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Temp-0.231.100-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Temp-0.231.100-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Temp-0.231.100-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Temp-0.231.100-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2737,6 +2985,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Which-1.27-6.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Which-1.27-6.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Which-1.27-6.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-Which-1.27-6.fc37.noarch.rpm",
         ],
     )
     
@@ -2748,6 +2997,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-stat-1.12-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-stat-1.12-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-stat-1.12-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-File-stat-1.12-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2759,6 +3009,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FileCache-1.10-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FileCache-1.10-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FileCache-1.10-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FileCache-1.10-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2770,6 +3021,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FileHandle-2.03-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FileHandle-2.03-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FileHandle-2.03-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FileHandle-2.03-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2781,6 +3033,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Filter-1.64-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Filter-1.64-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Filter-1.64-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Filter-1.64-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -2792,6 +3045,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Filter-Simple-0.96-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Filter-Simple-0.96-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Filter-Simple-0.96-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Filter-Simple-0.96-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2803,6 +3057,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FindBin-1.53-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FindBin-1.53-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FindBin-1.53-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-FindBin-1.53-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2814,6 +3069,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-GDBM_File-1.23-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-GDBM_File-1.23-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-GDBM_File-1.23-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-GDBM_File-1.23-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2825,6 +3081,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Getopt-Long-2.54-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Getopt-Long-2.54-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Getopt-Long-2.54-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Getopt-Long-2.54-1.fc37.noarch.rpm",
         ],
     )
     
@@ -2836,6 +3093,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Getopt-Std-1.13-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Getopt-Std-1.13-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Getopt-Std-1.13-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Getopt-Std-1.13-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2847,6 +3105,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-HTTP-Tiny-0.082-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-HTTP-Tiny-0.082-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-HTTP-Tiny-0.082-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-HTTP-Tiny-0.082-1.fc37.noarch.rpm",
         ],
     )
     
@@ -2858,6 +3117,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Hash-Util-0.28-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Hash-Util-0.28-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Hash-Util-0.28-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Hash-Util-0.28-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2869,6 +3129,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Hash-Util-FieldHash-1.26-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Hash-Util-FieldHash-1.26-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Hash-Util-FieldHash-1.26-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Hash-Util-FieldHash-1.26-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2880,6 +3141,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-Collate-1.02-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-Collate-1.02-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-Collate-1.02-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-Collate-1.02-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2891,6 +3153,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-LangTags-0.45-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-LangTags-0.45-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-LangTags-0.45-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-LangTags-0.45-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2902,6 +3165,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-Langinfo-0.21-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-Langinfo-0.21-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-Langinfo-0.21-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-I18N-Langinfo-0.21-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2913,6 +3177,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-1.50-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-1.50-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-1.50-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-1.50-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -2924,6 +3189,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Compress-2.201-3.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Compress-2.201-3.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Compress-2.201-3.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Compress-2.201-3.fc37.noarch.rpm",
         ],
     )
     
@@ -2935,6 +3201,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Compress-Lzma-2.201-2.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Compress-Lzma-2.201-2.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Compress-Lzma-2.201-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Compress-Lzma-2.201-2.fc37.noarch.rpm",
         ],
     )
     
@@ -2946,6 +3213,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Socket-IP-0.41-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Socket-IP-0.41-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Socket-IP-0.41-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Socket-IP-0.41-490.fc37.noarch.rpm",
         ],
     )
     
@@ -2957,6 +3225,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Zlib-1.11-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Zlib-1.11-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Zlib-1.11-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IO-Zlib-1.11-489.fc37.noarch.rpm",
         ],
     )
     
@@ -2968,6 +3237,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-Cmd-1.04-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-Cmd-1.04-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-Cmd-1.04-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-Cmd-1.04-490.fc37.noarch.rpm",
         ],
     )
     
@@ -2979,6 +3249,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-Open3-1.22-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-Open3-1.22-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-Open3-1.22-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-Open3-1.22-492.fc37.noarch.rpm",
         ],
     )
     
@@ -2990,6 +3261,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-SysV-2.09-490.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-SysV-2.09-490.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-SysV-2.09-490.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-SysV-2.09-490.fc37.x86_64.rpm",
         ],
     )
     
@@ -3001,6 +3273,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-System-Simple-1.30-9.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-System-Simple-1.30-9.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-System-Simple-1.30-9.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-IPC-System-Simple-1.30-9.fc37.noarch.rpm",
         ],
     )
     
@@ -3012,6 +3285,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Importer-0.026-7.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Importer-0.026-7.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Importer-0.026-7.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Importer-0.026-7.fc37.noarch.rpm",
         ],
     )
     
@@ -3023,6 +3297,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-JSON-PP-4.11-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-JSON-PP-4.11-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-JSON-PP-4.11-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-JSON-PP-4.11-1.fc37.noarch.rpm",
         ],
     )
     
@@ -3034,6 +3309,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Locale-Maketext-1.32-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Locale-Maketext-1.32-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Locale-Maketext-1.32-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Locale-Maketext-1.32-1.fc37.noarch.rpm",
         ],
     )
     
@@ -3045,6 +3321,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Locale-Maketext-Simple-0.21-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Locale-Maketext-Simple-0.21-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Locale-Maketext-Simple-0.21-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Locale-Maketext-Simple-0.21-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3056,6 +3333,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-MIME-Base64-3.16-489.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-MIME-Base64-3.16-489.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-MIME-Base64-3.16-489.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-MIME-Base64-3.16-489.fc37.x86_64.rpm",
         ],
     )
     
@@ -3067,6 +3345,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-MRO-Compat-0.15-4.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-MRO-Compat-0.15-4.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-MRO-Compat-0.15-4.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-MRO-Compat-0.15-4.fc37.noarch.rpm",
         ],
     )
     
@@ -3078,6 +3357,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigInt-1.9998.37-2.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigInt-1.9998.37-2.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigInt-1.9998.37-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigInt-1.9998.37-2.fc37.noarch.rpm",
         ],
     )
     
@@ -3089,6 +3369,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigInt-FastCalc-0.501.300-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigInt-FastCalc-0.501.300-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigInt-FastCalc-0.501.300-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigInt-FastCalc-0.501.300-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -3100,6 +3381,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigRat-0.2624-2.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigRat-0.2624-2.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigRat-0.2624-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-BigRat-0.2624-2.fc37.noarch.rpm",
         ],
     )
     
@@ -3111,6 +3393,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-Complex-1.59-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-Complex-1.59-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-Complex-1.59-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Math-Complex-1.59-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3122,6 +3405,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Memoize-1.03-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Memoize-1.03-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Memoize-1.03-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Memoize-1.03-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3133,28 +3417,31 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Build-0.42.31-15.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Build-0.42.31-15.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Build-0.42.31-15.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Build-0.42.31-15.fc37.noarch.rpm",
         ],
     )
     
     rpm(
-        name = "perl-Module-CoreList-1__5.20230220-1.fc37.x86_64",
-        sha256 = "95d5258e4c9302250da4bc4c3e8a55717fe83a2f6d566bf4f6dd1fb7c55e2c78",
+        name = "perl-Module-CoreList-1__5.20230320-1.fc37.x86_64",
+        sha256 = "ce6dba0242ef460b0c3d2f5f03194a69951d7798f9f9098e12680d258406083b",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230220-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230220-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230220-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230220-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230320-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230320-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230320-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230320-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230320-1.fc37.noarch.rpm",
         ],
     )
     
     rpm(
-        name = "perl-Module-CoreList-tools-1__5.20230220-1.fc37.x86_64",
-        sha256 = "96761f9c6337c2b0f2a569cb6c67c9d1716000ed7a5fcbbe426335a031cf17ae",
+        name = "perl-Module-CoreList-tools-1__5.20230320-1.fc37.x86_64",
+        sha256 = "74500e5d65d6bd868eb4a8a4826a87facc1a555fe50d23810037ad405785857e",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230220-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230220-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230220-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230220-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230320-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230320-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230320-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230320-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230320-1.fc37.noarch.rpm",
         ],
     )
     
@@ -3166,6 +3453,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Load-0.36-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Load-0.36-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Load-0.36-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Load-0.36-489.fc37.noarch.rpm",
         ],
     )
     
@@ -3177,6 +3465,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Load-Conditional-0.74-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Load-Conditional-0.74-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Load-Conditional-0.74-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Load-Conditional-0.74-489.fc37.noarch.rpm",
         ],
     )
     
@@ -3188,6 +3477,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Loaded-0.08-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Loaded-0.08-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Loaded-0.08-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Loaded-0.08-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3199,6 +3489,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Metadata-1.000037-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Metadata-1.000037-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Metadata-1.000037-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Metadata-1.000037-489.fc37.noarch.rpm",
         ],
     )
     
@@ -3210,6 +3501,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Signature-0.88-4.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Signature-0.88-4.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Signature-0.88-4.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Module-Signature-0.88-4.fc37.noarch.rpm",
         ],
     )
     
@@ -3221,6 +3513,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-NDBM_File-1.15-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-NDBM_File-1.15-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-NDBM_File-1.15-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-NDBM_File-1.15-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -3232,6 +3525,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-NEXT-0.69-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-NEXT-0.69-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-NEXT-0.69-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-NEXT-0.69-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3243,6 +3537,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Net-1.03-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Net-1.03-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Net-1.03-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Net-1.03-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3254,6 +3549,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Net-Ping-2.75-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Net-Ping-2.75-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Net-Ping-2.75-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Net-Ping-2.75-1.fc37.noarch.rpm",
         ],
     )
     
@@ -3265,6 +3561,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ODBM_File-1.17-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ODBM_File-1.17-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ODBM_File-1.17-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ODBM_File-1.17-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -3276,6 +3573,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Object-HashBase-0.009-10.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Object-HashBase-0.009-10.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Object-HashBase-0.009-10.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Object-HashBase-0.009-10.fc37.noarch.rpm",
         ],
     )
     
@@ -3287,6 +3585,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Opcode-1.57-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Opcode-1.57-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Opcode-1.57-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Opcode-1.57-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -3298,6 +3597,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-POSIX-2.03-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-POSIX-2.03-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-POSIX-2.03-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-POSIX-2.03-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -3309,6 +3609,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Package-Generator-1.106-26.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Package-Generator-1.106-26.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Package-Generator-1.106-26.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Package-Generator-1.106-26.fc37.noarch.rpm",
         ],
     )
     
@@ -3320,6 +3621,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Params-Check-0.38-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Params-Check-0.38-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Params-Check-0.38-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Params-Check-0.38-489.fc37.noarch.rpm",
         ],
     )
     
@@ -3331,6 +3633,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Params-Util-1.102-8.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Params-Util-1.102-8.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Params-Util-1.102-8.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Params-Util-1.102-8.fc37.x86_64.rpm",
         ],
     )
     
@@ -3342,6 +3645,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-PathTools-3.84-489.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-PathTools-3.84-489.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-PathTools-3.84-489.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-PathTools-3.84-489.fc37.x86_64.rpm",
         ],
     )
     
@@ -3353,6 +3657,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Perl-OSType-1.010-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Perl-OSType-1.010-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Perl-OSType-1.010-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Perl-OSType-1.010-490.fc37.noarch.rpm",
         ],
     )
     
@@ -3364,6 +3669,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-PerlIO-via-QuotedPrint-0.10-3.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-PerlIO-via-QuotedPrint-0.10-3.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-PerlIO-via-QuotedPrint-0.10-3.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-PerlIO-via-QuotedPrint-0.10-3.fc37.noarch.rpm",
         ],
     )
     
@@ -3375,6 +3681,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Checker-1.75-3.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Checker-1.75-3.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Checker-1.75-3.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Checker-1.75-3.fc37.noarch.rpm",
         ],
     )
     
@@ -3386,6 +3693,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Escapes-1.07-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Escapes-1.07-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Escapes-1.07-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Escapes-1.07-489.fc37.noarch.rpm",
         ],
     )
     
@@ -3397,6 +3705,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Functions-1.14-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Functions-1.14-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Functions-1.14-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Functions-1.14-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3408,6 +3717,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Html-1.33-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Html-1.33-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Html-1.33-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Html-1.33-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3419,6 +3729,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Perldoc-3.28.01-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Perldoc-3.28.01-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Perldoc-3.28.01-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Perldoc-3.28.01-490.fc37.noarch.rpm",
         ],
     )
     
@@ -3430,6 +3741,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Simple-3.43-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Simple-3.43-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Simple-3.43-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Simple-3.43-490.fc37.noarch.rpm",
         ],
     )
     
@@ -3441,6 +3753,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Usage-2.03-3.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Usage-2.03-3.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Usage-2.03-3.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Pod-Usage-2.03-3.fc37.noarch.rpm",
         ],
     )
     
@@ -3452,6 +3765,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Safe-2.43-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Safe-2.43-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Safe-2.43-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Safe-2.43-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3463,6 +3777,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Scalar-List-Utils-1.63-489.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Scalar-List-Utils-1.63-489.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Scalar-List-Utils-1.63-489.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Scalar-List-Utils-1.63-489.fc37.x86_64.rpm",
         ],
     )
     
@@ -3474,6 +3789,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Search-Dict-1.07-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Search-Dict-1.07-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Search-Dict-1.07-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Search-Dict-1.07-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3485,6 +3801,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-SelectSaver-1.02-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-SelectSaver-1.02-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-SelectSaver-1.02-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-SelectSaver-1.02-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3496,6 +3813,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-SelfLoader-1.26-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-SelfLoader-1.26-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-SelfLoader-1.26-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-SelfLoader-1.26-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3507,6 +3825,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Socket-2.036-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Socket-2.036-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Socket-2.036-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Socket-2.036-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -3518,6 +3837,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Software-License-0.104002-2.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Software-License-0.104002-2.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Software-License-0.104002-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Software-License-0.104002-2.fc37.noarch.rpm",
         ],
     )
     
@@ -3529,6 +3849,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Storable-3.26-489.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Storable-3.26-489.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Storable-3.26-489.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Storable-3.26-489.fc37.x86_64.rpm",
         ],
     )
     
@@ -3540,6 +3861,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sub-Exporter-0.988-5.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sub-Exporter-0.988-5.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sub-Exporter-0.988-5.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sub-Exporter-0.988-5.fc37.noarch.rpm",
         ],
     )
     
@@ -3551,6 +3873,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sub-Install-0.928-33.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sub-Install-0.928-33.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sub-Install-0.928-33.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sub-Install-0.928-33.fc37.noarch.rpm",
         ],
     )
     
@@ -3562,6 +3885,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Symbol-1.09-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Symbol-1.09-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Symbol-1.09-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Symbol-1.09-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3573,6 +3897,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sys-Hostname-1.24-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sys-Hostname-1.24-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sys-Hostname-1.24-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sys-Hostname-1.24-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -3584,6 +3909,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sys-Syslog-0.36-490.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sys-Syslog-0.36-490.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sys-Syslog-0.36-490.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Sys-Syslog-0.36-490.fc37.x86_64.rpm",
         ],
     )
     
@@ -3595,6 +3921,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-ANSIColor-5.01-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-ANSIColor-5.01-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-ANSIColor-5.01-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-ANSIColor-5.01-490.fc37.noarch.rpm",
         ],
     )
     
@@ -3606,6 +3933,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Cap-1.17-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Cap-1.17-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Cap-1.17-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Cap-1.17-489.fc37.noarch.rpm",
         ],
     )
     
@@ -3617,6 +3945,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Complete-1.403-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Complete-1.403-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Complete-1.403-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Complete-1.403-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3628,6 +3957,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-ReadLine-1.17-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-ReadLine-1.17-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-ReadLine-1.17-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-ReadLine-1.17-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3639,6 +3969,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Table-0.016-4.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Table-0.016-4.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Table-0.016-4.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Term-Table-0.016-4.fc37.noarch.rpm",
         ],
     )
     
@@ -3650,6 +3981,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-1.31-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-1.31-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-1.31-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-1.31-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3661,6 +3993,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-Harness-3.44-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-Harness-3.44-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-Harness-3.44-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-Harness-3.44-490.fc37.noarch.rpm",
         ],
     )
     
@@ -3672,6 +4005,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-Simple-1.302191-2.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-Simple-1.302191-2.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-Simple-1.302191-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Test-Simple-1.302191-2.fc37.noarch.rpm",
         ],
     )
     
@@ -3683,6 +4017,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Abbrev-1.02-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Abbrev-1.02-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Abbrev-1.02-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Abbrev-1.02-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3694,6 +4029,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Balanced-2.06-2.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Balanced-2.06-2.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Balanced-2.06-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Balanced-2.06-2.fc37.noarch.rpm",
         ],
     )
     
@@ -3705,6 +4041,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Diff-1.45-16.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Diff-1.45-16.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Diff-1.45-16.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Diff-1.45-16.fc37.noarch.rpm",
         ],
     )
     
@@ -3716,6 +4053,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Glob-0.11-18.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Glob-0.11-18.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Glob-0.11-18.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Glob-0.11-18.fc37.noarch.rpm",
         ],
     )
     
@@ -3727,6 +4065,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-ParseWords-3.31-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-ParseWords-3.31-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-ParseWords-3.31-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-ParseWords-3.31-489.fc37.noarch.rpm",
         ],
     )
     
@@ -3738,6 +4077,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Tabs+Wrap-2021.0814-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Tabs+Wrap-2021.0814-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Tabs+Wrap-2021.0814-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Tabs+Wrap-2021.0814-489.fc37.noarch.rpm",
         ],
     )
     
@@ -3749,6 +4089,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Template-1.60-4.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Template-1.60-4.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Template-1.60-4.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Text-Template-1.60-4.fc37.noarch.rpm",
         ],
     )
     
@@ -3760,6 +4101,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-3.05-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-3.05-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-3.05-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-3.05-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3771,6 +4113,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-Queue-3.14-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-Queue-3.14-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-Queue-3.14-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-Queue-3.14-489.fc37.noarch.rpm",
         ],
     )
     
@@ -3782,6 +4125,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-Semaphore-2.13-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-Semaphore-2.13-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-Semaphore-2.13-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Thread-Semaphore-2.13-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3793,6 +4137,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-4.6-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-4.6-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-4.6-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-4.6-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3804,6 +4149,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-File-1.06-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-File-1.06-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-File-1.06-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-File-1.06-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3815,6 +4161,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-Memoize-1.1-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-Memoize-1.1-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-Memoize-1.1-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-Memoize-1.1-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3826,6 +4173,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-RefHash-1.40-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-RefHash-1.40-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-RefHash-1.40-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Tie-RefHash-1.40-489.fc37.noarch.rpm",
         ],
     )
     
@@ -3837,6 +4185,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-1.03-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-1.03-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-1.03-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-1.03-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3848,6 +4197,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-HiRes-1.9770-489.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-HiRes-1.9770-489.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-HiRes-1.9770-489.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-HiRes-1.9770-489.fc37.x86_64.rpm",
         ],
     )
     
@@ -3859,6 +4209,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-Local-1.300-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-Local-1.300-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-Local-1.300-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-Local-1.300-489.fc37.noarch.rpm",
         ],
     )
     
@@ -3870,6 +4221,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-Piece-1.3401-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-Piece-1.3401-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-Piece-1.3401-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Time-Piece-1.3401-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -3881,6 +4233,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-URI-5.17-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-URI-5.17-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-URI-5.17-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-URI-5.17-1.fc37.noarch.rpm",
         ],
     )
     
@@ -3892,6 +4245,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-Collate-1.31-489.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-Collate-1.31-489.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-Collate-1.31-489.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-Collate-1.31-489.fc37.x86_64.rpm",
         ],
     )
     
@@ -3903,6 +4257,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-Normalize-1.31-489.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-Normalize-1.31-489.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-Normalize-1.31-489.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-Normalize-1.31-489.fc37.x86_64.rpm",
         ],
     )
     
@@ -3914,6 +4269,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-UCD-0.78-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-UCD-0.78-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-UCD-0.78-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Unicode-UCD-0.78-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3925,6 +4281,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-User-pwent-1.03-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-User-pwent-1.03-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-User-pwent-1.03-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-User-pwent-1.03-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3936,6 +4293,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-autodie-2.34-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-autodie-2.34-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-autodie-2.34-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-autodie-2.34-490.fc37.noarch.rpm",
         ],
     )
     
@@ -3947,6 +4305,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-autouse-1.11-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-autouse-1.11-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-autouse-1.11-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-autouse-1.11-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3958,6 +4317,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-base-2.27-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-base-2.27-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-base-2.27-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-base-2.27-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3969,6 +4329,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-bignum-0.66-5.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-bignum-0.66-5.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-bignum-0.66-5.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-bignum-0.66-5.fc37.noarch.rpm",
         ],
     )
     
@@ -3980,6 +4341,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-blib-1.07-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-blib-1.07-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-blib-1.07-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-blib-1.07-492.fc37.noarch.rpm",
         ],
     )
     
@@ -3991,6 +4353,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-constant-1.33-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-constant-1.33-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-constant-1.33-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-constant-1.33-490.fc37.noarch.rpm",
         ],
     )
     
@@ -4002,6 +4365,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-debugger-1.60-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-debugger-1.60-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-debugger-1.60-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-debugger-1.60-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4013,6 +4377,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-deprecate-0.04-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-deprecate-0.04-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-deprecate-0.04-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-deprecate-0.04-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4024,6 +4389,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-devel-5.36.0-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-devel-5.36.0-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-devel-5.36.0-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-devel-5.36.0-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -4035,6 +4401,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-diagnostics-1.39-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-diagnostics-1.39-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-diagnostics-1.39-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-diagnostics-1.39-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4046,6 +4413,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-doc-5.36.0-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-doc-5.36.0-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-doc-5.36.0-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-doc-5.36.0-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4057,6 +4425,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-encoding-3.00-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-encoding-3.00-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-encoding-3.00-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-encoding-3.00-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -4068,6 +4437,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-encoding-warnings-0.13-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-encoding-warnings-0.13-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-encoding-warnings-0.13-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-encoding-warnings-0.13-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4079,6 +4449,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-experimental-0.028-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-experimental-0.028-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-experimental-0.028-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-experimental-0.028-489.fc37.noarch.rpm",
         ],
     )
     
@@ -4090,6 +4461,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-fields-2.27-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-fields-2.27-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-fields-2.27-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-fields-2.27-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4101,6 +4473,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-filetest-1.03-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-filetest-1.03-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-filetest-1.03-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-filetest-1.03-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4112,6 +4485,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-if-0.61.000-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-if-0.61.000-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-if-0.61.000-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-if-0.61.000-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4123,6 +4497,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-inc-latest-0.500-23.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-inc-latest-0.500-23.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-inc-latest-0.500-23.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-inc-latest-0.500-23.fc37.noarch.rpm",
         ],
     )
     
@@ -4134,6 +4509,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-interpreter-5.36.0-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-interpreter-5.36.0-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-interpreter-5.36.0-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-interpreter-5.36.0-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -4145,6 +4521,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-less-0.03-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-less-0.03-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-less-0.03-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-less-0.03-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4156,6 +4533,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-lib-0.65-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-lib-0.65-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-lib-0.65-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-lib-0.65-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -4167,6 +4545,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libnet-3.14-490.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libnet-3.14-490.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libnet-3.14-490.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libnet-3.14-490.fc37.noarch.rpm",
         ],
     )
     
@@ -4178,6 +4557,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libnetcfg-5.36.0-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libnetcfg-5.36.0-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libnetcfg-5.36.0-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libnetcfg-5.36.0-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4189,6 +4569,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libs-5.36.0-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libs-5.36.0-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libs-5.36.0-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-libs-5.36.0-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -4200,6 +4581,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-local-lib-2.000029-3.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-local-lib-2.000029-3.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-local-lib-2.000029-3.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-local-lib-2.000029-3.fc37.noarch.rpm",
         ],
     )
     
@@ -4211,6 +4593,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-locale-1.10-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-locale-1.10-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-locale-1.10-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-locale-1.10-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4222,6 +4605,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-macros-5.36.0-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-macros-5.36.0-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-macros-5.36.0-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-macros-5.36.0-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4233,6 +4617,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-meta-notation-5.36.0-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-meta-notation-5.36.0-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-meta-notation-5.36.0-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-meta-notation-5.36.0-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4244,6 +4629,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-mro-1.26-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-mro-1.26-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-mro-1.26-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-mro-1.26-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -4255,6 +4641,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-open-1.13-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-open-1.13-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-open-1.13-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-open-1.13-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4266,6 +4653,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-overload-1.35-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-overload-1.35-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-overload-1.35-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-overload-1.35-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4277,6 +4665,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-overloading-0.02-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-overloading-0.02-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-overloading-0.02-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-overloading-0.02-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4288,6 +4677,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-parent-0.238-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-parent-0.238-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-parent-0.238-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-parent-0.238-489.fc37.noarch.rpm",
         ],
     )
     
@@ -4299,6 +4689,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-perlfaq-5.20210520-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-perlfaq-5.20210520-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-perlfaq-5.20210520-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-perlfaq-5.20210520-489.fc37.noarch.rpm",
         ],
     )
     
@@ -4310,6 +4701,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ph-5.36.0-492.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ph-5.36.0-492.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ph-5.36.0-492.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-ph-5.36.0-492.fc37.x86_64.rpm",
         ],
     )
     
@@ -4321,6 +4713,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-podlators-4.14-489.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-podlators-4.14-489.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-podlators-4.14-489.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-podlators-4.14-489.fc37.noarch.rpm",
         ],
     )
     
@@ -4332,6 +4725,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-sigtrap-1.10-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-sigtrap-1.10-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-sigtrap-1.10-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-sigtrap-1.10-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4343,6 +4737,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-sort-2.05-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-sort-2.05-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-sort-2.05-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-sort-2.05-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4354,6 +4749,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-srpm-macros-1-46.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-srpm-macros-1-46.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-srpm-macros-1-46.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-srpm-macros-1-46.fc37.noarch.rpm",
         ],
     )
     
@@ -4365,6 +4761,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-subs-1.04-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-subs-1.04-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-subs-1.04-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-subs-1.04-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4376,6 +4773,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-threads-2.27-489.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-threads-2.27-489.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-threads-2.27-489.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-threads-2.27-489.fc37.x86_64.rpm",
         ],
     )
     
@@ -4387,6 +4785,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-threads-shared-1.64-489.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-threads-shared-1.64-489.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-threads-shared-1.64-489.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-threads-shared-1.64-489.fc37.x86_64.rpm",
         ],
     )
     
@@ -4398,6 +4797,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-utils-5.36.0-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-utils-5.36.0-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-utils-5.36.0-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-utils-5.36.0-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4409,6 +4809,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-vars-1.05-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-vars-1.05-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-vars-1.05-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-vars-1.05-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4420,6 +4821,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-version-0.99.29-490.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-version-0.99.29-490.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-version-0.99.29-490.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-version-0.99.29-490.fc37.x86_64.rpm",
         ],
     )
     
@@ -4431,6 +4833,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-vmsish-1.04-492.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-vmsish-1.04-492.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-vmsish-1.04-492.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-vmsish-1.04-492.fc37.noarch.rpm",
         ],
     )
     
@@ -4442,6 +4845,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pixman-0.40.0-6.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pixman-0.40.0-6.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pixman-0.40.0-6.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pixman-0.40.0-6.fc37.x86_64.rpm",
         ],
     )
     
@@ -4453,6 +4857,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-1.8.0-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-1.8.0-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-1.8.0-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-1.8.0-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -4464,6 +4869,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-m4-1.8.0-3.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-m4-1.8.0-3.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-m4-1.8.0-3.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-m4-1.8.0-3.fc37.noarch.rpm",
         ],
     )
     
@@ -4475,6 +4881,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-pkg-config-1.8.0-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-pkg-config-1.8.0-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-pkg-config-1.8.0-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/pkgconf-pkg-config-1.8.0-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -4486,6 +4893,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/policycoreutils-3.5-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/policycoreutils-3.5-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/policycoreutils-3.5-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/policycoreutils-3.5-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -4497,6 +4905,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/policycoreutils-python-utils-3.5-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/policycoreutils-python-utils-3.5-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/policycoreutils-python-utils-3.5-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/policycoreutils-python-utils-3.5-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4508,6 +4917,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/popt-1.19-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/popt-1.19-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/popt-1.19-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/popt-1.19-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -4519,6 +4929,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/protobuf-c-1.4.1-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/protobuf-c-1.4.1-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/protobuf-c-1.4.1-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/protobuf-c-1.4.1-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -4530,6 +4941,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/pyproject-srpm-macros-1.6.3-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/pyproject-srpm-macros-1.6.3-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/pyproject-srpm-macros-1.6.3-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/pyproject-srpm-macros-1.6.3-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4541,6 +4953,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-pip-wheel-22.2.2-3.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-pip-wheel-22.2.2-3.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-pip-wheel-22.2.2-3.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-pip-wheel-22.2.2-3.fc37.noarch.rpm",
         ],
     )
     
@@ -4552,6 +4965,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python-setuptools-wheel-62.6.0-2.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python-setuptools-wheel-62.6.0-2.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python-setuptools-wheel-62.6.0-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python-setuptools-wheel-62.6.0-2.fc37.noarch.rpm",
         ],
     )
     
@@ -4563,6 +4977,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-srpm-macros-3.11-5.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-srpm-macros-3.11-5.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-srpm-macros-3.11-5.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-srpm-macros-3.11-5.fc37.noarch.rpm",
         ],
     )
     
@@ -4574,6 +4989,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.2-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.2-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.2-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.2-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4585,6 +5001,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.2-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.2-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.2-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.2-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -4596,6 +5013,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -4607,6 +5025,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-distro-1.7.0-3.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-distro-1.7.0-3.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-distro-1.7.0-3.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-distro-1.7.0-3.fc37.noarch.rpm",
         ],
     )
     
@@ -4618,6 +5037,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.2-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.2-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.2-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.2-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -4629,17 +5049,19 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libselinux-3.5-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libselinux-3.5-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libselinux-3.5-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libselinux-3.5-1.fc37.x86_64.rpm",
         ],
     )
     
     rpm(
-        name = "python3-libsemanage-0__3.5-1.fc37.x86_64",
-        sha256 = "e7710d9e96771a3becdb771b28d9a2de6bbcb87a3d1a7319e1f4eb9581f242b8",
+        name = "python3-libsemanage-0__3.5-2.fc37.x86_64",
+        sha256 = "5b2a476b4b304c27e9c04c71cbd28b9f4d53d900fc84cff29677f9d0d259ec4b",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libsemanage-3.5-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libsemanage-3.5-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libsemanage-3.5-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libsemanage-3.5-1.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libsemanage-3.5-2.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libsemanage-3.5-2.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libsemanage-3.5-2.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libsemanage-3.5-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libsemanage-3.5-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -4651,6 +5073,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-policycoreutils-3.5-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-policycoreutils-3.5-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-policycoreutils-3.5-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-policycoreutils-3.5-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4662,6 +5085,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-pyparsing-3.0.9-2.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-pyparsing-3.0.9-2.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-pyparsing-3.0.9-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-pyparsing-3.0.9-2.fc37.noarch.rpm",
         ],
     )
     
@@ -4673,6 +5097,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-setools-4.4.0-9.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-setools-4.4.0-9.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-setools-4.4.0-9.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-setools-4.4.0-9.fc37.x86_64.rpm",
         ],
     )
     
@@ -4684,6 +5109,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-setuptools-62.6.0-2.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-setuptools-62.6.0-2.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-setuptools-62.6.0-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/python3-setuptools-62.6.0-2.fc37.noarch.rpm",
         ],
     )
     
@@ -4695,6 +5121,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/q/qemu-common-7.0.0-15.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/q/qemu-common-7.0.0-15.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/q/qemu-common-7.0.0-15.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/q/qemu-common-7.0.0-15.fc37.x86_64.rpm",
         ],
     )
     
@@ -4706,6 +5133,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/q/qemu-system-x86-core-7.0.0-15.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/q/qemu-system-x86-core-7.0.0-15.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/q/qemu-system-x86-core-7.0.0-15.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/q/qemu-system-x86-core-7.0.0-15.fc37.x86_64.rpm",
         ],
     )
     
@@ -4717,6 +5145,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.8-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.8-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.8-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.8-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4728,6 +5157,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/readline-8.2-2.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/readline-8.2-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/readline-8.2-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/readline-8.2-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -4739,6 +5169,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-229-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-229-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-229-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-229-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4750,6 +5181,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-4.18.0-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-4.18.0-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-4.18.0-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-4.18.0-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -4761,6 +5193,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-libs-4.18.0-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-libs-4.18.0-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-libs-4.18.0-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-libs-4.18.0-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -4772,6 +5205,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-plugin-selinux-4.18.0-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-plugin-selinux-4.18.0-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-plugin-selinux-4.18.0-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/r/rpm-plugin-selinux-4.18.0-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -4783,6 +5217,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.5-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.5-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.5-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.5-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4794,6 +5229,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rsync-3.2.7-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rsync-3.2.7-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rsync-3.2.7-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rsync-3.2.7-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -4805,6 +5241,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-24-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-24-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-24-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-24-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4816,6 +5253,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/seabios-bin-1.16.2-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/seabios-bin-1.16.2-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/seabios-bin-1.16.2-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/seabios-bin-1.16.2-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4827,6 +5265,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/seavgabios-bin-1.16.2-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/seavgabios-bin-1.16.2-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/seavgabios-bin-1.16.2-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/seavgabios-bin-1.16.2-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4838,6 +5277,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/sed-4.8-11.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/sed-4.8-11.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/sed-4.8-11.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/sed-4.8-11.fc37.x86_64.rpm",
         ],
     )
     
@@ -4849,6 +5289,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.19-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.19-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.19-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.19-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4860,6 +5301,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.19-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.19-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.19-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.19-1.fc37.noarch.rpm",
         ],
     )
     
@@ -4871,6 +5313,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/setup-2.14.1-2.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/setup-2.14.1-2.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/setup-2.14.1-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/setup-2.14.1-2.fc37.noarch.rpm",
         ],
     )
     
@@ -4882,6 +5325,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/sgabios-bin-0.20180715git-9.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/sgabios-bin-0.20180715git-9.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/sgabios-bin-0.20180715git-9.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/sgabios-bin-0.20180715git-9.fc37.noarch.rpm",
         ],
     )
     
@@ -4893,6 +5337,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/shadow-utils-4.12.3-6.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/shadow-utils-4.12.3-6.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/shadow-utils-4.12.3-6.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/shadow-utils-4.12.3-6.fc37.x86_64.rpm",
         ],
     )
     
@@ -4904,6 +5349,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/snappy-1.1.9-5.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/snappy-1.1.9-5.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/snappy-1.1.9-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/snappy-1.1.9-5.fc37.x86_64.rpm",
         ],
     )
     
@@ -4915,6 +5361,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/sqlite-libs-3.40.0-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/sqlite-libs-3.40.0-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/sqlite-libs-3.40.0-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/sqlite-libs-3.40.0-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -4926,6 +5373,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
         ],
     )
     
@@ -4937,6 +5385,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-libs-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-libs-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-libs-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-libs-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
         ],
     )
     
@@ -4948,39 +5397,43 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-tools-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-tools-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-tools-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-tools-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
         ],
     )
     
     rpm(
-        name = "systemd-0__251.13-6.fc37.x86_64",
-        sha256 = "d1191eb3a0149638e395591d2004cd6a5d852e5712ab06c4beb7cfd77e2e2488",
+        name = "systemd-0__251.14-2.fc37.x86_64",
+        sha256 = "ec407a50153db3d466ed6063bc9274ce73192197e08e22ee88f7c364036ffc66",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.13-6.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.13-6.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.13-6.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.13-6.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.14-2.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.14-2.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.14-2.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.14-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.14-2.fc37.x86_64.rpm",
         ],
     )
     
     rpm(
-        name = "systemd-libs-0__251.13-6.fc37.x86_64",
-        sha256 = "20aa751dfa2c65cf5a3cad75867d863ed562694c8d30a317814d3c6e4a0a3e6a",
+        name = "systemd-libs-0__251.14-2.fc37.x86_64",
+        sha256 = "37934c2adce2bf1559a8b74a9e6c62510acb0d0653ab5d80b2676f69388beee5",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.13-6.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.13-6.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.13-6.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.13-6.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.14-2.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.14-2.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.14-2.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.14-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.14-2.fc37.x86_64.rpm",
         ],
     )
     
     rpm(
-        name = "systemd-pam-0__251.13-6.fc37.x86_64",
-        sha256 = "788dc48f363aaaf40e004475278db7b6408cbe21e20663ca4ed9540b5070ff2a",
+        name = "systemd-pam-0__251.14-2.fc37.x86_64",
+        sha256 = "c3f416c1d6cb05491f61e4f9cf2e976b0ccda4cb3eebc2c1b6dfa633e876bbef",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.13-6.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.13-6.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.13-6.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.13-6.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.14-2.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.14-2.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.14-2.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.14-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.14-2.fc37.x86_64.rpm",
         ],
     )
     
@@ -4992,6 +5445,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/systemtap-sdt-devel-4.8~pre16594741g5bdc37b9-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/systemtap-sdt-devel-4.8~pre16594741g5bdc37b9-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/systemtap-sdt-devel-4.8~pre16594741g5bdc37b9-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/systemtap-sdt-devel-4.8~pre16594741g5bdc37b9-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -5003,6 +5457,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/t/tar-1.34-6.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/t/tar-1.34-6.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/t/tar-1.34-6.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/t/tar-1.34-6.fc37.x86_64.rpm",
         ],
     )
     
@@ -5014,6 +5469,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-0.3.15-7.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-0.3.15-7.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-0.3.15-7.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-0.3.15-7.fc37.x86_64.rpm",
         ],
     )
     
@@ -5025,6 +5481,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-lib-0.3.15-7.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-lib-0.3.15-7.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-lib-0.3.15-7.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-lib-0.3.15-7.fc37.x86_64.rpm",
         ],
     )
     
@@ -5036,6 +5493,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/t/tzdata-2022g-1.fc37.noarch.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/t/tzdata-2022g-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/t/tzdata-2022g-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/t/tzdata-2022g-1.fc37.noarch.rpm",
         ],
     )
     
@@ -5047,6 +5505,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/u/unbound-libs-1.17.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/u/unbound-libs-1.17.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/u/unbound-libs-1.17.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/u/unbound-libs-1.17.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -5058,6 +5517,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/unzip-6.0-58.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/unzip-6.0-58.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/unzip-6.0-58.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/unzip-6.0-58.fc37.x86_64.rpm",
         ],
     )
     
@@ -5069,6 +5529,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/util-linux-2.38.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/util-linux-2.38.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/util-linux-2.38.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/util-linux-2.38.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -5080,6 +5541,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/util-linux-core-2.38.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/util-linux-core-2.38.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/util-linux-core-2.38.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/u/util-linux-core-2.38.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -5091,6 +5553,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.3-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.3-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.3-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.3-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -5102,6 +5565,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.3-4.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.3-4.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.3-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.3-4.fc37.x86_64.rpm",
         ],
     )
     
@@ -5113,6 +5577,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/x/xxhash-libs-0.8.1-3.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/x/xxhash-libs-0.8.1-3.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/x/xxhash-libs-0.8.1-3.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/x/xxhash-libs-0.8.1-3.fc37.x86_64.rpm",
         ],
     )
     
@@ -5124,6 +5589,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xz-5.4.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/x/xz-5.4.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/x/xz-5.4.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/x/xz-5.4.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -5135,6 +5601,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xz-libs-5.4.1-1.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/x/xz-libs-5.4.1-1.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/x/xz-libs-5.4.1-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/x/xz-libs-5.4.1-1.fc37.x86_64.rpm",
         ],
     )
     
@@ -5146,6 +5613,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/y/yajl-2.1.0-19.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/y/yajl-2.1.0-19.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/y/yajl-2.1.0-19.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/y/yajl-2.1.0-19.fc37.x86_64.rpm",
         ],
     )
     
@@ -5157,6 +5625,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zip-3.0-33.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zip-3.0-33.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zip-3.0-33.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zip-3.0-33.fc37.x86_64.rpm",
         ],
     )
     
@@ -5168,6 +5637,7 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zlib-1.2.12-5.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zlib-1.2.12-5.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zlib-1.2.12-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zlib-1.2.12-5.fc37.x86_64.rpm",
         ],
     )
     
@@ -5179,5 +5649,6 @@ def sandbox_dependencies():
             "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zlib-devel-1.2.12-5.fc37.x86_64.rpm",
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zlib-devel-1.2.12-5.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zlib-devel-1.2.12-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/z/zlib-devel-1.2.12-5.fc37.x86_64.rpm",
         ],
     )
