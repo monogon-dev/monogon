@@ -113,3 +113,8 @@ EOF
 
 mv ${DIR}/BUILD.bazel.in ${DIR}/BUILD.bazel
 rm ${DIR}/repositories.bzl.in
+
+
+# Mirror everything
+bazel ${BAZEL_ARGS} \
+  run //third_party/sandboxroot/mirror sync

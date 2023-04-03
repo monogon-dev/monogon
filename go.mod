@@ -66,6 +66,7 @@ replace github.com/sassoftware/go-rpmutils v0.1.1 => github.com/rmohr/go-rpmutil
 replace github.com/vishvananda/netlink => github.com/monogon-dev/netlink v0.0.0-20230125113930-88977c3ff4b3
 
 require (
+	cloud.google.com/go/storage v1.28.0
 	github.com/adrg/xdg v0.4.0
 	github.com/bazelbuild/rules_go v0.30.0
 	github.com/cavaliergopher/cpio v1.0.1
@@ -144,6 +145,11 @@ require (
 	k8s.io/kubectl v0.0.0
 	k8s.io/kubelet v0.0.0
 	k8s.io/kubernetes v1.24.2
+)
+
+require (
+	cloud.google.com/go v0.107.0 // indirect
+	cloud.google.com/go/iam v0.8.0 // indirect
 )
 
 require (
@@ -376,7 +382,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v0.20.0 // indirect
 	go.opentelemetry.io/otel/trace v1.3.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.11.0 // indirect
-	go.starlark.net v0.0.0-20210223155950-e043a3d3c984 // indirect
+	go.starlark.net v0.0.0-20210223155950-e043a3d3c984
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
 	golang.org/x/arch v0.0.0-20190927153633-4e8777c89be4 // indirect
