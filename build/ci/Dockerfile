@@ -13,6 +13,14 @@ RUN dnf -y upgrade && \
 # (dotnet-runtime-5.0 and jq are required for the GitHub Actions runner)
 # (golang is required for us to build bazelisk - see below)
 
+# Install gcloud tooling
+RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-424.0.0-linux-x86_64.tar.gz && \
+    tar -xf google-cloud-cli-424.0.0-linux-x86_64.tar.gz && \
+    mv google-cloud-sdk /opt/ && \
+    /opt/google-cloud-sdk/install.sh
+
+ENV PATH="/opt/google-cloud-sdk/bin:${PATH}"
+
 # Create CI build user. It is used by CI infrastructure to run build agents as.
 # The newly created user will have a UID of 500, and a corresponding CI group
 # of GID 500 will be created as well. This UID:GID pair's numeric values are
