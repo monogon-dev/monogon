@@ -5,6 +5,7 @@ package util
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -31,6 +32,9 @@ func TestEventual(t *testing.T, name string, ctx context.Context, timeout time.D
 			if err == ctx.Err() {
 				t.Fatal(lastErr)
 			}
+			if errors.Is(err, &PermanentError{}) {
+				t.Fatal(err)
+			}
 			lastErr = err
 			select {
 			case <-ctx.Done():
@@ -39,4 +43,38 @@ func TestEventual(t *testing.T, name string, ctx context.Context, timeout time.D
 			}
 		}
 	})
+}
+
+// PermanentError can be returned inside TestEventual to indicate that the test
+// is 'stuck', that it will not make progress anymore and that it should be
+// failed immediately.
+type PermanentError struct {
+	Err error
+}
+
+func (p *PermanentError) Error() string {
+	return fmt.Sprintf("test permanently failed: %v", p.Err)
+}
+
+func (p *PermanentError) Unwrap() error {
+	return p.Err
+}
+
+func (p *PermanentError) Is(o error) bool {
+	op, ok := o.(*PermanentError)
+	if !ok {
+		return false
+	}
+	if p.Err == nil || op.Err == nil {
+		return true
+	}
+	return errors.Is(p.Err, op.Err)
+}
+
+// Permanent wraps the given error into a PermanentError, which will cause
+// TestEventual to immediately fail the test it's returned within.
+func Permanent(err error) error {
+	return &PermanentError{
+		Err: err,
+	}
 }

@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+
+go_library(
+    name = "selftest",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/metropolis/test/e2e/selftest",
+    visibility = ["//visibility:private"],
+)
+
+go_image(
+    name = "selftest_image",
+    embed = [":selftest"],
+    pure = "on",
+    visibility = ["//metropolis/node:__pkg__"],
+)

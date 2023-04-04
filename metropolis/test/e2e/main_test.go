@@ -279,6 +279,39 @@ func TestE2E(t *testing.T) {
 					return fmt.Errorf("pod is not ready: %v", events.Items[0].Message)
 				}
 			})
+			util.TestEventual(t, "In-cluster self-test job", ctx, smallTestTimeout, func(ctx context.Context) error {
+				_, err := clientSet.BatchV1().Jobs("default").Create(ctx, makeSelftestSpec("selftest"), metav1.CreateOptions{})
+				return err
+			})
+			util.TestEventual(t, "In-cluster self-test job passed", ctx, smallTestTimeout, func(ctx context.Context) error {
+				res, err := clientSet.BatchV1().Jobs("default").Get(ctx, "selftest", metav1.GetOptions{})
+				if err != nil {
+					return err
+				}
+				if res.Status.Failed > 0 {
+					pods, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{
+						LabelSelector: "job-name=selftest",
+					})
+					if err != nil {
+						return util.Permanent(fmt.Errorf("job failed but failed to find pod: %w", err))
+					}
+					if len(pods.Items) < 1 {
+						return fmt.Errorf("job failed but pod does not exist")
+					}
+					lines, err := getPodLogLines(ctx, clientSet, pods.Items[0].Name, 1)
+					if err != nil {
+						return fmt.Errorf("job failed but could not get logs: %w", err)
+					}
+					if len(lines) > 0 {
+						return util.Permanent(fmt.Errorf("job failed, last log line: %s", lines[0]))
+					}
+					return util.Permanent(fmt.Errorf("job failed, empty log"))
+				}
+				if res.Status.Succeeded > 0 {
+					return nil
+				}
+				return fmt.Errorf("job still running")
+			})
 			if os.Getenv("HAVE_NESTED_KVM") != "" {
 				util.TestEventual(t, "Pod for KVM/QEMU smoke test", ctx, smallTestTimeout, func(ctx context.Context) error {
 					runcRuntimeClass := "runc"

@@ -17,11 +17,16 @@
 package e2e
 
 import (
+	"bytes"
+	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"io"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -91,6 +96,34 @@ func makeTestDeploymentSpec(name string) *appsv1.Deployment {
 	}
 }
 
+// makeSelftestSpec generates a Job spec for the E2E self-test image.
+func makeSelftestSpec(name string) *batchv1.Job {
+	one := int32(1)
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: name},
+		Spec: batchv1.JobSpec{
+			BackoffLimit: &one,
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"job-name": name,
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:            "test",
+							ImagePullPolicy: corev1.PullNever,
+							Image:           "bazel/metropolis/test/e2e/selftest:selftest_image",
+						},
+					},
+					RestartPolicy: corev1.RestartPolicyOnFailure,
+				},
+			},
+		},
+	}
+}
+
 // makeTestStatefulSet generates a StatefulSet spec
 func makeTestStatefulSet(name string, volumeMode corev1.PersistentVolumeMode) *appsv1.StatefulSet {
 	return &appsv1.StatefulSet{
@@ -134,4 +167,23 @@ func makeTestStatefulSet(name string, volumeMode corev1.PersistentVolumeMode) *a
 			},
 		},
 	}
+}
+
+func getPodLogLines(ctx context.Context, cs kubernetes.Interface, podName string, nlines int64) ([]string, error) {
+	logsR := cs.CoreV1().Pods("default").GetLogs(podName, &corev1.PodLogOptions{
+		TailLines: &nlines,
+	})
+	logs, err := logsR.Stream(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("stream failed: %w", err)
+	}
+	var buf bytes.Buffer
+	_, err = io.Copy(&buf, logs)
+	if err != nil {
+		return nil, fmt.Errorf("copy failed: %w", err)
+	}
+	lineStr := strings.Trim(buf.String(), "\n")
+	lines := strings.Split(lineStr, "\n")
+	lines = lines[len(lines)-int(nlines):]
+	return lines, nil
 }
