@@ -2,9 +2,6 @@
 // executed by Jenkins for presubmit checks, ie. checks that run against an
 // open Gerrit change request.
 
-// TODO(leo): remove once CI image has been updated.
-def gazelle_build = "curl -o ~/bazelisk https://storage.googleapis.com/monogon-infra-public/bazelisk-v1.15.0 && chmod +x ~/bazelisk"
-
 pipeline {
     agent none
     options {
@@ -24,7 +21,6 @@ pipeline {
                         gerritCheck checks: ['jenkins:test': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
                         echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
-                        sh gazelle_build
                         sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk test //..."
                         sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk test -c dbg //..."
                     }
@@ -49,7 +45,6 @@ pipeline {
                         gerritCheck checks: ['jenkins:gazelle': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
                         echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
-                        sh gazelle_build
                         sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk run //:gazelle-update-repos"
                         sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk run //:gazelle -- update"
                         sh "JENKINS_NODE_COOKIE=dontKillMe ~/bazelisk run //:go -- mod tidy"
