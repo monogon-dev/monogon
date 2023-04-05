@@ -10,15 +10,24 @@ import (
 
 	"go.etcd.io/etcd/client/pkg/v3/testutil"
 	"go.etcd.io/etcd/tests/v3/integration"
+	"go.uber.org/zap"
+
+	"source.monogon.dev/metropolis/pkg/logtree"
 )
 
 // TestManaged ensures Managed Certificates work, including re-ensuring
 // certificates with the same data and issuing subordinate certificates.
 func TestManaged(t *testing.T) {
+	lt := logtree.New()
+	logtree.PipeAllToTest(t, lt)
 	tb, cancel := testutil.NewTestingTBProthesis("pki-managed")
 	defer cancel()
 	cluster := integration.NewClusterV3(tb, &integration.ClusterConfig{
 		Size: 1,
+		LoggerBuilder: func(memberName string) *zap.Logger {
+			dn := logtree.DN("etcd." + memberName)
+			return logtree.Zapify(lt.MustLeveledFor(dn), zap.WarnLevel)
+		},
 	})
 	cl := cluster.Client(0)
 	defer cluster.Terminate(tb)
@@ -103,10 +112,16 @@ func TestManaged(t *testing.T) {
 // re-Ensuring certificates with the same public key, and attempting to re-issue
 // the same certificate with a different public key (which should fail).
 func TestExternal(t *testing.T) {
+	lt := logtree.New()
+	logtree.PipeAllToTest(t, lt)
 	tb, cancel := testutil.NewTestingTBProthesis("pki-managed")
 	defer cancel()
 	cluster := integration.NewClusterV3(tb, &integration.ClusterConfig{
 		Size: 1,
+		LoggerBuilder: func(memberName string) *zap.Logger {
+			dn := logtree.DN("etcd." + memberName)
+			return logtree.Zapify(lt.MustLeveledFor(dn), zap.WarnLevel)
+		},
 	})
 	cl := cluster.Client(0)
 	defer cluster.Terminate(tb)

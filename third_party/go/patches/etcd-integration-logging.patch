@@ -1,0 +1,44 @@
+Implement LoggerBuilder override in etcd integration library. That library is
+generally not designed to be consumed by outside code, and we should migrate
+off of it instead. But that's a future Monogon problem.
+
+diff -ur io_etcd_go_etcd_tests_v3.orig/integration/cluster.go io_etcd_go_etcd_tests_v3/integration/cluster.go
+--- io_etcd_go_etcd_tests_v3.orig/integration/cluster.go	2023-04-05 10:18:09.220532258 +0200
++++ io_etcd_go_etcd_tests_v3/integration/cluster.go	2023-04-05 10:26:36.870901710 +0200
+@@ -171,6 +170,7 @@
+ 
+ 	WatchProgressNotifyInterval time.Duration
+ 	CorruptCheckTime            time.Duration
++	LoggerBuilder func(memberName string) *zap.Logger
+ }
+ 
+ type cluster struct {
+@@ -334,6 +335,7 @@
+ 			leaseCheckpointInterval:     c.cfg.LeaseCheckpointInterval,
+ 			WatchProgressNotifyInterval: c.cfg.WatchProgressNotifyInterval,
+ 			CorruptCheckTime:            c.cfg.CorruptCheckTime,
++			LoggerBuilder:               c.cfg.LoggerBuilder,
+ 		})
+ 	m.DiscoveryURL = c.cfg.DiscoveryURL
+ 	if c.cfg.UseGRPC {
+@@ -638,6 +640,7 @@
+ 	leaseCheckpointPersist      bool
+ 	WatchProgressNotifyInterval time.Duration
+ 	CorruptCheckTime            time.Duration
++	LoggerBuilder               func(memberName string) *zap.Logger
+ }
+ 
+ // mustNewMember return an inited member with the given name. If peerTLS is
+@@ -747,7 +750,11 @@
+ 
+ 	m.V2Deprecation = config.V2_DEPR_DEFAULT
+ 	m.grpcServerRecorder = &grpc_testing.GrpcRecorder{}
+-	m.Logger = memberLogger(t, mcfg.name)
++	if mcfg.LoggerBuilder != nil {
++		m.Logger = mcfg.LoggerBuilder(mcfg.name)
++	} else {
++		m.Logger = memberLogger(t, mcfg.name)
++	}
+ 	t.Cleanup(func() {
+ 		// if we didn't cleanup the logger, the consecutive test
+ 		// might reuse this (t).

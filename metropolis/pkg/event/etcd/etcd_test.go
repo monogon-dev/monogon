@@ -16,10 +16,13 @@ import (
 	"go.etcd.io/etcd/client/pkg/v3/testutil"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/tests/v3/integration"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/grpclog"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/pkg/event"
+	"source.monogon.dev/metropolis/pkg/logtree"
 )
 
 var (
@@ -29,14 +32,22 @@ var (
 
 // TestMain brings up a 3 node etcd cluster for tests to use.
 func TestMain(m *testing.M) {
+	// This logtree's data is not output anywhere.
+	lt := logtree.New()
+
 	cfg := integration.ClusterConfig{
 		Size:                 3,
 		GRPCKeepAliveMinTime: time.Millisecond,
+		LoggerBuilder: func(memberName string) *zap.Logger {
+			dn := logtree.DN("etcd." + memberName)
+			return logtree.Zapify(lt.MustLeveledFor(dn), zap.WarnLevel)
+		},
 	}
 	tb, cancel := testutil.NewTestingTBProthesis("curator")
 	defer cancel()
 	flag.Parse()
 	integration.BeforeTestExternal(tb)
+	grpclog.SetLoggerV2(logtree.GRPCify(lt.MustLeveledFor("grpc")))
 	cluster = integration.NewClusterV3(tb, &cfg)
 	endpoints = make([]string, 3)
 	for i := range endpoints {

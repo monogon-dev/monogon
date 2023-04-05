@@ -79,7 +79,9 @@ go_test(
         "@io_etcd_go_etcd_client_v3//:client",
         "@io_etcd_go_etcd_tests_v3//integration",
         "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//grpclog",
         "@org_golang_google_grpc//test/bufconn",
         "@org_golang_google_protobuf//proto",
+        "@org_uber_go_zap//:zap",
     ],
 )

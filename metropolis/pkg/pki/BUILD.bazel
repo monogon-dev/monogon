@@ -28,7 +28,9 @@ go_test(
     embed = [":pki"],
     deps = [
         "//metropolis/node/core/consensus/client",
+        "//metropolis/pkg/logtree",
         "@io_etcd_go_etcd_client_pkg_v3//testutil",
         "@io_etcd_go_etcd_tests_v3//integration",
+        "@org_uber_go_zap//:zap",
     ],
 )

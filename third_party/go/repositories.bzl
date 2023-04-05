@@ -6198,6 +6198,10 @@ def go_repositories():
     go_repository(
         name = "io_etcd_go_etcd_tests_v3",
         importpath = "go.etcd.io/etcd/tests/v3",
+        patch_args = ["-p1"],
+        patches = [
+            "//third_party/go/patches:etcd-integration-logging.patch",
+        ],
         sum = "h1:wiYG8vbDwZO2UatQE9Z3GIv2z52jGg5DvEkTDXm090c=",
         version = "v3.5.4",
     )

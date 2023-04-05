@@ -9,11 +9,14 @@ import (
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/tests/v3/integration"
+	"go.uber.org/zap"
+	"google.golang.org/grpc/grpclog"
 
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event"
+	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
@@ -44,7 +47,7 @@ func (d *dut) cleanup() {
 
 // newDut creates a new dut harness for a curator instance, connected to a given
 // etcd endpoint.
-func newDut(ctx context.Context, t *testing.T, endpoint string, n *identity.NodeCredentials) *dut {
+func newDut(ctx context.Context, lt *logtree.LogTree, t *testing.T, endpoint string, n *identity.NodeCredentials) *dut {
 	t.Helper()
 	// Create new etcd client to the given endpoint.
 	cli, err := clientv3.New(clientv3.Config{
@@ -53,6 +56,7 @@ func newDut(ctx context.Context, t *testing.T, endpoint string, n *identity.Node
 		DialKeepAliveTime:    1 * time.Second,
 		DialKeepAliveTimeout: 1 * time.Second,
 		Context:              ctx,
+		Logger:               logtree.Zapify(lt.MustLeveledFor("client"), zap.WarnLevel),
 	})
 	if err != nil {
 		t.Fatalf("clientv3.New: %v", err)
@@ -175,12 +179,20 @@ func (s dutSet) wait(ctx context.Context, f func(s dutSetStatus) bool) (dutSetSt
 // of them respond correctly to election, partitioning and subsequent
 // re-election.
 func TestLeaderElectionStatus(t *testing.T) {
+	lt := logtree.New()
+	logtree.PipeAllToTest(t, lt)
+
 	ctx, ctxC := context.WithCancel(context.Background())
 	cfg := integration.ClusterConfig{
 		Size:                 3,
 		GRPCKeepAliveMinTime: time.Millisecond,
+		LoggerBuilder: func(memberName string) *zap.Logger {
+			dn := logtree.DN("etcd." + memberName)
+			return logtree.Zapify(lt.MustLeveledFor(dn), zap.WarnLevel)
+		},
 	}
 	integration.BeforeTestExternal(t)
+	grpclog.SetLoggerV2(logtree.GRPCify(lt.MustLeveledFor("grpc")))
 	cluster = integration.NewClusterV3(t, &cfg)
 	t.Cleanup(func() {
 		ctxC()
@@ -208,7 +220,7 @@ func TestLeaderElectionStatus(t *testing.T) {
 	dutC := make(chan *dut)
 	supervisor.TestHarness(t, func(ctx context.Context) error {
 		for e, n := range endpointToNum {
-			dutC <- newDut(ctx, t, e, ephemeral.Nodes[n])
+			dutC <- newDut(ctx, lt, t, e, ephemeral.Nodes[n])
 		}
 		close(dutC)
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
