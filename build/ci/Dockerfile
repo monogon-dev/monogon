@@ -6,6 +6,7 @@ RUN dnf -y upgrade && \
 	dotnet-runtime-6.0 \
 	jq \
 	tini \
+    patch \
     golang && \
     dnf clean all
 
