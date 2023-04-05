@@ -163,3 +163,7 @@ func (l *LineBuffer) Close() error {
 	}
 	return nil
 }
+
+func (l *LineBuffer) Sync() error {
+	return nil
+}
