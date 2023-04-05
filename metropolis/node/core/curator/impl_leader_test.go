@@ -44,6 +44,8 @@ import (
 // implementations without the overhead of having to wait for a leader election.
 func fakeLeader(t *testing.T) fakeLeaderData {
 	t.Helper()
+	lt := logtree.New()
+	logtree.PipeAllToTest(t, lt)
 	// Set up context whose cancel function will be returned to the user for
 	// terminating all harnesses started by this function.
 	ctx, ctxC := context.WithCancel(context.Background())
@@ -144,9 +146,6 @@ func fakeLeader(t *testing.T) fakeLeaderData {
 		consensus: consensus.TestServiceHandle(t, cluster.Client(0)),
 	}
 	leader := newCuratorLeader(leadership, &nodeCredentials.Node)
-
-	lt := logtree.New()
-	logtree.PipeAllToStderr(t, lt)
 
 	// Create a curator gRPC server which performs authentication as per the created
 	// ServerSecurity and is backed by the created leader.

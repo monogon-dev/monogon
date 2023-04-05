@@ -57,7 +57,7 @@ func TestHarness(t testing.TB, r func(ctx context.Context) error) (context.Cance
 		verbose = true
 	}
 	if verbose {
-		logtree.PipeAllToStderr(t, lt)
+		logtree.PipeAllToTest(t, lt)
 	}
 
 	sup := New(ctx, func(ctx context.Context) error {

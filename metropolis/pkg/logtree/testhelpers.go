@@ -2,17 +2,15 @@ package logtree
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"testing"
 )
 
-// PipeAllToStderr starts a goroutine that will forward all logtree entries
-// into stderr, in the canonical logtree payload representation.
+// PipeAllToTest starts a goroutine that will forward all logtree entries
+// t.Logf(), in the canonical logtree payload representation.
 //
 // It's designed to be used in tests, and will automatically stop when the
 // test/benchmark it's running in exits.
-func PipeAllToStderr(t testing.TB, lt *LogTree) {
+func PipeAllToTest(t testing.TB, lt *LogTree) {
 	t.Helper()
 
 	reader, err := lt.Read("", WithChildren(), WithStream())
@@ -26,12 +24,13 @@ func PipeAllToStderr(t testing.TB, lt *LogTree) {
 	t.Cleanup(ctxC)
 
 	go func() {
+		t.Helper()
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case p := <-reader.Stream:
-				fmt.Fprintf(os.Stderr, "%s\n", p.String())
+				t.Logf("%s", p.String())
 			}
 		}
 	}()
