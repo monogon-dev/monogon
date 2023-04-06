@@ -8,11 +8,17 @@ type outEdges[Node comparable] map[Node]bool
 // Its nodes have type T. An empty Graph object is ready to use.
 type Graph[T comparable] struct {
 	nodes map[T]outEdges[T]
+	// Set of nodes added explicitly, used to check for references to nodes
+	// which haven't been added explicitly.
+	addedNodes map[T]bool
 }
 
 func (g *Graph[T]) ensureNodes() {
 	if g.nodes == nil {
 		g.nodes = make(map[T]outEdges[T])
+	}
+	if g.addedNodes == nil {
+		g.addedNodes = make(map[T]bool)
 	}
 }
 
@@ -20,6 +26,14 @@ func (g *Graph[T]) ensureNodes() {
 // case it does nothing.
 func (g *Graph[T]) AddNode(n T) {
 	g.ensureNodes()
+	g.addedNodes[n] = true
+	g.addNodeImplicit(n)
+}
+
+// addNodeImplicit adds the node n to the graph if it does not already exist
+// without marking it as being explicitly added and without ensuring that
+// g.nodes is populated.
+func (g *Graph[T]) addNodeImplicit(n T) {
 	if _, ok := g.nodes[n]; !ok {
 		g.nodes[n] = make(outEdges[T])
 	}
@@ -27,11 +41,43 @@ func (g *Graph[T]) AddNode(n T) {
 
 // AddEdge adds the directed edge from the from node to the to node to the
 // graph if it does not already exist, in which case it does nothing.
+// If nodes from and/or to do not already exist, they are added implicitly.
 func (g *Graph[T]) AddEdge(from, to T) {
 	g.ensureNodes()
-	g.AddNode(from)
-	g.AddNode(to)
+	g.addNodeImplicit(from)
+	g.addNodeImplicit(to)
 	g.nodes[from][to] = true
+}
+
+// ImplicitNodeReferences returns a map of nodes with the set of their incoming
+// and outgoing references for all nodes which were referenced in an AddEdge
+// call but not added via an explicit AddNode. If the length of the returned map
+// is zero, all referenced nodes were explicitly added. This can be used to
+// check for bad references in dependency trees.
+func (g *Graph[T]) ImplicitNodeReferences() map[T]map[T]bool {
+	out := make(map[T]map[T]bool)
+	for n, outEdges := range g.nodes {
+		if !g.addedNodes[n] {
+			if out[n] == nil {
+				out[n] = make(map[T]bool)
+			}
+			// Add all outgoing edges, the refernces from these must come from
+			// reverse dependencies as this node was never added.
+			for e := range outEdges {
+				out[n][e] = true
+			}
+		}
+		for e := range outEdges {
+			// Add incoming edges to unreferenced nodes.
+			if !g.addedNodes[e] {
+				if out[e] == nil {
+					out[e] = make(map[T]bool)
+				}
+				out[e][n] = true
+			}
+		}
+	}
+	return out
 }
 
 var ErrCycle = errors.New("graph has at least one cycle")

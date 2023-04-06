@@ -22,6 +22,52 @@ func TestBasic(t *testing.T) {
 	validateSolution(t, g, solution)
 }
 
+func TestImplicitNodesEmpty(t *testing.T) {
+	var g Graph[int]
+	g.AddNode(5)
+	g.AddNode(10)
+	g.AddEdge(5, 10)
+
+	out := g.ImplicitNodeReferences()
+	if len(out) != 0 {
+		t.Errorf("expected no implicit nodes, got %d", len(out))
+	}
+}
+
+func TestImplicitNodesForward(t *testing.T) {
+	var g Graph[int]
+	g.AddNode(5)
+	g.AddEdge(5, 10)
+
+	out := g.ImplicitNodeReferences()
+	if len(out) != 1 {
+		t.Errorf("expected 1 implicit node, got %d", len(out))
+	}
+	if len(out[10]) != 1 {
+		t.Error("expected node 10 to be implicit")
+	}
+	if !out[10][5] {
+		t.Errorf("expected node 10 to be referenced by node 5")
+	}
+}
+
+func TestImplicitNodesBackwards(t *testing.T) {
+	var g Graph[int]
+	g.AddNode(10)
+	g.AddEdge(5, 10)
+
+	out := g.ImplicitNodeReferences()
+	if len(out) != 1 {
+		t.Errorf("expected 1 implicit node, got %d", len(out))
+	}
+	if len(out[5]) != 1 {
+		t.Error("expected node 5 to be implicit")
+	}
+	if !out[5][10] {
+		t.Errorf("expected node 5 to be referenced by node 10")
+	}
+}
+
 // Fuzzer can be run with
 // bazel test //go/algorithm/toposort:toposort_test
 //   --test_arg=-test.fuzz=FuzzTopoSort
