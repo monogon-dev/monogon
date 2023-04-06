@@ -59,7 +59,7 @@ func (a *AgentConfig) RegisterFlags() {
 		}
 		data, err := os.ReadFile(val)
 		if err != nil {
-			return fmt.Errorf("could not read -agent_executable_path: %w", err)
+			return fmt.Errorf("could not read: %w", err)
 		}
 		a.Executable = data
 		return nil
