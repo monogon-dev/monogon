@@ -1,4 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
 
 go_binary(
     name = "test_agent",
@@ -17,4 +18,11 @@ go_library(
         "//cloud/agent/api",
         "@org_golang_google_protobuf//proto",
     ],
+)
+
+# Used by container_images, forces a static build of the test_agent.
+static_binary_tarball(
+    name = "test_agent_layer",
+    executable = ":test_agent",
+    visibility = ["//visibility:public"],
 )
