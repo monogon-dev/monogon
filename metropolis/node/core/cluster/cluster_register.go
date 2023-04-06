@@ -164,12 +164,11 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 		time.Sleep(time.Second)
 	}
 
-	// Node is now UP, build client and report it to downstream code.
+	// Node is now UP, build client/credentials and save them to ESP.
 	creds, err := identity.NewNodeCredentials(priv, certBytes, caCertBytes)
 	if err != nil {
 		return fmt.Errorf("NewNodeCredentials failed after receiving certificate from cluster: %w", err)
 	}
-	m.roleServer.ProvideRegisterData(*creds, register.ClusterDirectory)
 
 	// Save Node Credentials
 	if err = creds.Save(&m.storageRoot.Data.Node.Credentials); err != nil {
@@ -190,6 +189,10 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 		return err
 	}
 	unix.Sync()
+
+	// All synced up, we can now let downstream know about the creds, which in turn
+	// will start heartbeating the cluster and running role-specific jobs.
+	m.roleServer.ProvideRegisterData(*creds, register.ClusterDirectory)
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)
