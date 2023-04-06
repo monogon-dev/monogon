@@ -2,6 +2,7 @@ package component
 
 import (
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"net/url"
@@ -141,7 +142,15 @@ func (d *CockroachConfig) MigrateUp() error {
 	if err != nil {
 		return err
 	}
-	return m.Up()
+	err = m.Up()
+	switch {
+	case err == nil:
+		return nil
+	case errors.Is(err, migrate.ErrNoChange):
+		return nil
+	default:
+		return err
+	}
 }
 
 // MigrateDownDangerDanger removes all data from the database by performing a
