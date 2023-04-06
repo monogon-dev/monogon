@@ -122,7 +122,6 @@ func Unmarshal(table *bufio.Reader) (*Table, error) {
 			}
 			tbl.SystemInformationRaw = &systemInfo
 		case structTypeBaseboardInformation:
-			fmt.Println(s)
 			var baseboardInfo BaseboardInformationRaw
 			if err := UnmarshalStructureRaw(s, &baseboardInfo); err != nil {
 				return nil, fmt.Errorf("failed unmarshaling Baseboard Information: %w", err)
