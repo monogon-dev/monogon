@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	_ "net/http"
@@ -144,6 +143,7 @@ func TestE2E(t *testing.T) {
 				}
 				return nil
 			})
+			util.TestEventual(t, "Heartbeat test successful", ctx, 20*time.Second, cluster.AllNodesHealthy)
 			util.TestEventual(t, "Node rejoin successful", ctx, 60*time.Second, func(ctx context.Context) error {
 				// Ensure nodes rejoin the cluster after a reboot by reboting the 1st node.
 				if err := cluster.RebootNode(ctx, 1); err != nil {
@@ -151,40 +151,7 @@ func TestE2E(t *testing.T) {
 				}
 				return nil
 			})
-			util.TestEventual(t, "Heartbeat test successful", ctx, 60*time.Second, func(ctx context.Context) error {
-				// Ensure all cluster nodes are capable of sending heartbeat updates.
-				// This test assumes the expected count of nodes is already present in
-				// the cluster.
-				for {
-					srvN, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
-					if err != nil {
-						return fmt.Errorf("GetNodes: %w", err)
-					}
-
-					// Count the unhealthy nodes.
-					var unhealthy int
-					for {
-						node, err := srvN.Recv()
-						if err == io.EOF {
-							break
-						}
-						if err != nil {
-							return fmt.Errorf("GetNodes.Recv: %w", err)
-						}
-
-						if node.Health != apb.Node_HEALTHY {
-							unhealthy++
-						}
-					}
-
-					// If all nodes tested in this iteration are healthy, the test has
-					// been passed.
-					if unhealthy == 0 {
-						break
-					}
-				}
-				return nil
-			})
+			util.TestEventual(t, "Heartbeat test successful", ctx, 20*time.Second, cluster.AllNodesHealthy)
 		})
 		t.Run("Kubernetes", func(t *testing.T) {
 			t.Parallel()

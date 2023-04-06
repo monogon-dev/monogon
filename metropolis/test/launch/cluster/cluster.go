@@ -18,6 +18,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -1098,4 +1099,29 @@ func (c *Cluster) KubernetesControllerNodeAddresses(ctx context.Context) ([]stri
 		res = append(res, n.Status.ExternalAddress)
 	}
 	return res, nil
+}
+
+func (c *Cluster) AllNodesHealthy(ctx context.Context) error {
+	// Get an authenticated owner client within the cluster.
+	curC, err := c.CuratorClient()
+	if err != nil {
+		return err
+	}
+	mgmt := apb.NewManagementClient(curC)
+	nodes, err := getNodes(ctx, mgmt)
+	if err != nil {
+		return err
+	}
+
+	var unhealthy []string
+	for _, node := range nodes {
+		if node.Health == apb.Node_HEALTHY {
+			continue
+		}
+		unhealthy = append(unhealthy, node.Id)
+	}
+	if len(unhealthy) == 0 {
+		return nil
+	}
+	return fmt.Errorf("nodes unhealthy: %s", strings.Join(unhealthy, ", "))
 }
