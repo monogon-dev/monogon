@@ -21,10 +21,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
-	"syscall"
+
+	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/metropolis/pkg/fileargs"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -39,6 +41,7 @@ const corefileBase = `
 	
     cache 30
     loadbalance
+    reload 10s
 `
 
 type Service struct {
@@ -46,6 +49,7 @@ type Service struct {
 	directives            map[string]ExtraDirective
 	cmd                   *exec.Cmd
 	args                  *fileargs.FileArgs
+	signalChan            chan os.Signal
 	// stateMu guards access to the directives, cmd and args fields
 	stateMu sync.Mutex
 }
@@ -59,6 +63,7 @@ func New(directiveRegistration chan *ExtraDirective) *Service {
 	return &Service{
 		directives:            map[string]ExtraDirective{},
 		directiveRegistration: directiveRegistration,
+		signalChan:            make(chan os.Signal),
 	}
 }
 
@@ -115,7 +120,7 @@ func (s *Service) runCoreDNS(ctx context.Context) error {
 	}
 
 	s.stateMu.Unlock()
-	return supervisor.RunCommand(ctx, s.cmd)
+	return supervisor.RunCommand(ctx, s.cmd, supervisor.SignalChan(s.signalChan))
 }
 
 // runRegistration runs the background registration runnable which has a
@@ -141,12 +146,17 @@ func (s *Service) processRegistration(ctx context.Context, d *ExtraDirective) {
 	} else {
 		s.directives[d.ID] = *d
 	}
-	// If the process is not currenty running we're relying on corefile
-	// regeneration on startup
-	if s.cmd != nil && s.cmd.Process != nil && s.cmd.ProcessState == nil {
-		s.args.ArgPath("Corefile", s.makeCorefile(s.args))
-		if err := s.cmd.Process.Signal(syscall.SIGUSR1); err != nil {
-			supervisor.Logger(ctx).Warningf("Failed to send SIGUSR1 to CoreDNS for reload: %v", err)
-		}
+	s.args.ArgPath("Corefile", s.makeCorefile(s.args))
+	if s.args.Error() != nil {
+		supervisor.Logger(ctx).Errorf("error creating new Corefile: %v", s.args.Error())
+	}
+	// If the signal sending thread is not ready, do nothing. Sending signals is
+	// unreliable anyways as the handler might not be installed yet or another
+	// reload might be in progress. Doing it this way saves a significant amount
+	// of complexity.
+	select {
+	case s.signalChan <- unix.SIGUSR1:
+	default:
+		supervisor.Logger(ctx).Infof("Reload signal could not be sent, relying on restart/reload to pick up changes")
 	}
 }
