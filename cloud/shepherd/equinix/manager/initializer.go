@@ -3,7 +3,9 @@ package manager
 import (
 	"context"
 	"crypto/ed25519"
+	"crypto/x509"
 	"encoding/hex"
+	"encoding/pem"
 	"errors"
 	"flag"
 	"fmt"
@@ -41,6 +43,11 @@ type AgentConfig struct {
 	// Endpoint is the address Agent will use to contact the BMaaS
 	// infrastructure. Must be set.
 	Endpoint string
+	// EndpointCACertificate is an optional DER-encoded (but not PEM-armored) X509
+	// certificate used to populate the trusted CA store of the agent. It should be
+	// set to the CA certificate of the endpoint if not using a system-trusted CA
+	// certificate.
+	EndpointCACertificate []byte
 
 	// SSHTimeout is the amount of time set aside for the initializing
 	// SSH session to run its course. Upon timeout, the iteration would be
@@ -66,6 +73,25 @@ func (a *AgentConfig) RegisterFlags() {
 	})
 	flag.StringVar(&a.TargetPath, "agent_target_path", "/root/agent", "Filesystem path where the agent will be uploaded to and ran from")
 	flag.StringVar(&a.Endpoint, "agent_endpoint", "", "Address of BMDB Server to which the agent will attempt to connect")
+	flag.Func("agent_endpoint_ca_certificate_path", "Path to PEM X509 CA certificate that the agent endpoint is serving with. If not set, the agent will attempt to use system CA certificates to authenticate the endpoint.", func(val string) error {
+		if val == "" {
+			return nil
+		}
+		data, err := os.ReadFile(val)
+		if err != nil {
+			return fmt.Errorf("could not read: %w", err)
+		}
+		block, _ := pem.Decode(data)
+		if block.Type != "CERTIFICATE" {
+			return fmt.Errorf("not a certificate")
+		}
+		_, err = x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return fmt.Errorf("invalid certificate: %w", err)
+		}
+		a.EndpointCACertificate = block.Bytes
+		return nil
+	})
 	flag.DurationVar(&a.SSHConnectTimeout, "agent_ssh_connect_timeout", 2*time.Second, "Timeout for connecting over SSH to a machine")
 	flag.DurationVar(&a.SSHExecTimeout, "agent_ssh_exec_timeout", 60*time.Second, "Timeout for connecting over SSH to a machine")
 }
@@ -301,6 +327,7 @@ func (i *Initializer) startAgent(ctx context.Context, sgn ssh.Signer, d *packngo
 	imsg := apb.TakeoverInit{
 		MachineId:     mid.String(),
 		BmaasEndpoint: i.agentConfig.Endpoint,
+		CaCertificate: i.agentConfig.EndpointCACertificate,
 	}
 	imsgb, err := proto.Marshal(&imsg)
 	if err != nil {
