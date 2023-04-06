@@ -35,7 +35,7 @@ container_image(
     entrypoint = ["/app/cloud/shepherd/equinix/manager/server/server_/server"],
     tars = [
         ":server_layer",
-        "//cloud/shepherd/equinix/manager/test_agent:test_agent_layer",
+        "//cloud/takeover:takeover_layer",
     ],
     visibility = ["//visibility:public"],
     workdir = "/app",

@@ -1,5 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("//metropolis/node/build/mkucode:def.bzl", "cpio_ucode")
+load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
 
 go_library(
     name = "takeover_lib",
@@ -35,4 +36,11 @@ cpio_ucode(
         "@linux-firmware//:amd_ucode": "AuthenticAMD",
         "@intel_ucode//:fam6h": "GenuineIntel",
     },
+)
+
+# Used by container_images, forces a static build of the test_agent.
+static_binary_tarball(
+    name = "takeover_layer",
+    executable = ":takeover",
+    visibility = ["//visibility:public"],
 )
