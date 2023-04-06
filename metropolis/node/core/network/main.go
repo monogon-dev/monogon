@@ -84,6 +84,13 @@ func (s *Service) Watch() event.Watcher[*Status] {
 	return s.status.Watch()
 }
 
+// Value returns the underlying event.Value for the network service status.
+//
+// TODO(q3k): just expose s.status directly and remove the Watch and Event methods.
+func (s *Service) Value() event.Value[*Status] {
+	return &s.status
+}
+
 // ConfigureDNS sets a DNS ExtraDirective on the built-in DNS server of the
 // network Service. See //metropolis/node/core/network/dns for more
 // information.

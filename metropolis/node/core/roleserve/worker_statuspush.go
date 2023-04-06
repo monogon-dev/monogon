@@ -8,10 +8,12 @@ import (
 	"google.golang.org/protobuf/encoding/prototext"
 
 	common "source.monogon.dev/metropolis/node"
-	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/network"
+	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -22,6 +24,8 @@ type workerStatusPush struct {
 
 	// clusterMembership will be read.
 	clusterMembership *memory.Value[*ClusterMembership]
+	// clusterDirectorySaved will be read.
+	clusterDirectorySaved *memory.Value[bool]
 }
 
 // workerStatusPushChannels contain all the channels between the status pusher's
@@ -132,6 +136,16 @@ func (s *workerStatusPush) run(ctx context.Context) error {
 	supervisor.Run(ctx, "map-cluster-membership", func(ctx context.Context) error {
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
 
+		// Do not submit heartbeat until we've got the cluster directory saved.
+		//
+		// TODO(q3k): add a node status field for this instead.
+		supervisor.Logger(ctx).Infof("Waiting for cluster directory to be saved...")
+		cdw := s.clusterDirectorySaved.Watch()
+		_, err := cdw.Get(ctx, event.Filter(func(t bool) bool { return t }))
+		if err != nil {
+			return fmt.Errorf("getting cluster directory state failed: %w", err)
+		}
+
 		var conn *grpc.ClientConn
 		defer func() {
 			if conn != nil {
@@ -141,7 +155,7 @@ func (s *workerStatusPush) run(ctx context.Context) error {
 
 		w := s.clusterMembership.Watch()
 		defer w.Close()
-		supervisor.Logger(ctx).Infof("Waiting for cluster membership...")
+		supervisor.Logger(ctx).Infof("Cluster directory saved, waiting for cluster membership...")
 		for {
 			cm, err := w.Get(ctx, FilterHome())
 			if err != nil {

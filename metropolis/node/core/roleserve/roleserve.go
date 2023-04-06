@@ -80,11 +80,12 @@ type Config struct {
 type Service struct {
 	Config
 
-	ClusterMembership memory.Value[*ClusterMembership]
-	KubernetesStatus  memory.Value[*KubernetesStatus]
-	bootstrapData     memory.Value[*bootstrapData]
-	localRoles        memory.Value[*cpb.NodeRoles]
-	podNetwork        memory.Value[*clusternet.Prefixes]
+	ClusterMembership     memory.Value[*ClusterMembership]
+	KubernetesStatus      memory.Value[*KubernetesStatus]
+	bootstrapData         memory.Value[*bootstrapData]
+	localRoles            memory.Value[*cpb.NodeRoles]
+	podNetwork            memory.Value[*clusternet.Prefixes]
+	clusterDirectorySaved memory.Value[bool]
 
 	controlPlane *workerControlPlane
 	statusPush   *workerStatusPush
@@ -93,6 +94,7 @@ type Service struct {
 	rolefetch    *workerRoleFetch
 	nodeMgmt     *workerNodeMgmt
 	clusternet   *workerClusternet
+	hostsfile    *workerHostsfile
 }
 
 // New creates a Role Server services from a Config.
@@ -112,7 +114,8 @@ func New(c Config) *Service {
 	s.statusPush = &workerStatusPush{
 		network: s.Network,
 
-		clusterMembership: &s.ClusterMembership,
+		clusterMembership:     &s.ClusterMembership,
+		clusterDirectorySaved: &s.clusterDirectorySaved,
 	}
 
 	s.heartbeat = &workerHeartbeat{
@@ -142,11 +145,19 @@ func New(c Config) *Service {
 		clusterMembership: &s.ClusterMembership,
 		logTree:           s.LogTree,
 	}
+
 	s.clusternet = &workerClusternet{
 		storageRoot: s.StorageRoot,
 
 		clusterMembership: &s.ClusterMembership,
 		podNetwork:        &s.podNetwork,
+	}
+
+	s.hostsfile = &workerHostsfile{
+		storageRoot:           s.StorageRoot,
+		network:               s.Network,
+		clusterMembership:     &s.ClusterMembership,
+		clusterDirectorySaved: &s.clusterDirectorySaved,
 	}
 
 	return s
@@ -197,6 +208,7 @@ func (s *Service) ProvideJoinData(credentials identity.NodeCredentials, director
 		pubkey:         credentials.PublicKey(),
 		resolver:       s.Resolver,
 	})
+	s.clusterDirectorySaved.Set(true)
 }
 
 // Run the Role Server service, which uses intermediary workload launchers to
@@ -209,6 +221,7 @@ func (s *Service) Run(ctx context.Context) error {
 	supervisor.Run(ctx, "rolefetch", s.rolefetch.run)
 	supervisor.Run(ctx, "nodemgmt", s.nodeMgmt.run)
 	supervisor.Run(ctx, "clusternet", s.clusternet.run)
+	supervisor.Run(ctx, "hostsfile", s.hostsfile.run)
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 
 	<-ctx.Done()

@@ -1,4 +1,4 @@
-// hostsfile implements a service which owns and writes all node-local
+// Package hostsfile implements a service which owns and writes all node-local
 // files/interfaces used by the system to resolve the local node's name and the
 // names of other nodes in the cluster:
 //
@@ -27,11 +27,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
-	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
-	"source.monogon.dev/metropolis/node/core/roleserve"
+	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -44,10 +45,13 @@ type Config struct {
 	Ephemeral *localstorage.EphemeralDirectory
 	// ESP is the root of the node's EFI System Partition.
 	ESP *localstorage.ESPDirectory
-
-	// Roleserver is an instance of the roleserver service which will be queried for
-	// ClusterMembership and a Curator client.
-	Roleserver *roleserve.Service
+	// NodeID of the node the service is running on.
+	NodeID string
+	// Curator gRPC client authenticated as local node.
+	Curator ipb.CuratorClient
+	// ClusterDirectorySaved will be written with a boolean indicating whether the
+	// ClusterDirectory has been successfully persisted to the ESP.
+	ClusterDirectorySaved event.Value[bool]
 }
 
 // Service is the hostsfile service instance. See package-level documentation
@@ -55,10 +59,6 @@ type Config struct {
 type Service struct {
 	Config
 
-	// localC is a channel populated by the local sub-runnable with the newest
-	// available information about the local node's address. It is automatically
-	// created and closed by Run.
-	localC chan string
 	// clusterC is a channel populated by the cluster sub-runnable with the newest
 	// available information about the cluster nodes. It is automatically created and
 	// closed by Run.
@@ -129,21 +129,12 @@ func (m nodeMap) clusterDirectory(ctx context.Context) *cpb.ClusterDirectory {
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	s.localC = make(chan string)
-	defer close(s.localC)
+	s.ClusterDirectorySaved.Set(false)
+
+	localC := make(chan *network.Status)
 	s.clusterC = make(chan nodeMap)
-	defer close(s.clusterC)
 
-	cmw := s.Roleserver.ClusterMembership.Watch()
-	defer cmw.Close()
-	supervisor.Logger(ctx).Infof("Waiting for node ID...")
-	nodeID, err := roleserve.GetNodeID(ctx, cmw)
-	if err != nil {
-		return err
-	}
-	supervisor.Logger(ctx).Infof("Got node ID, starting...")
-
-	if err := supervisor.Run(ctx, "local", s.runLocal); err != nil {
+	if err := supervisor.Run(ctx, "local", event.Pipe(s.Network.Value(), localC)); err != nil {
 		return err
 	}
 	if err := supervisor.Run(ctx, "cluster", s.runCluster); err != nil {
@@ -152,10 +143,10 @@ func (s *Service) Run(ctx context.Context) error {
 
 	// Immediately update machine-id and hostname, we don't need network addresses
 	// for that.
-	if err := s.Ephemeral.MachineID.Write([]byte(nodeID), 0644); err != nil {
+	if err := s.Ephemeral.MachineID.Write([]byte(s.NodeID), 0644); err != nil {
 		return fmt.Errorf("failed to write /ephemeral/machine-id: %w", err)
 	}
-	if err := unix.Sethostname([]byte(nodeID)); err != nil {
+	if err := unix.Sethostname([]byte(s.NodeID)); err != nil {
 		return fmt.Errorf("failed to set runtime hostname: %w", err)
 	}
 	// Immediately write an /etc/hosts just containing localhost, even if we don't
@@ -172,13 +163,17 @@ func (s *Service) Run(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case u := <-s.localC:
+		case st := <-localC:
 			// Ignore spurious updates.
-			if nodes[nodeID].address == u {
-				break
+			if st.ExternalAddress == nil {
+				continue
+			}
+			u := st.ExternalAddress.String()
+			if nodes[s.NodeID].address == u {
+				continue
 			}
 			supervisor.Logger(ctx).Infof("Got new local address: %s", u)
-			nodes[nodeID] = nodeInfo{
+			nodes[s.NodeID] = nodeInfo{
 				address: u,
 				local:   true,
 			}
@@ -196,7 +191,7 @@ func (s *Service) Run(ctx context.Context) error {
 				// We're not interested in what the cluster thinks about our local node, as that
 				// might be outdated (eg. when we haven't yet reported a new local address to
 				// the cluster).
-				if id == nodeID {
+				if id == s.NodeID {
 					continue
 				}
 				if nodes[id].address == info.address {
@@ -218,8 +213,8 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 
 		// Check that we are self-resolvable.
-		if _, err := net.ResolveIPAddr("ip", nodeID); err != nil {
-			supervisor.Logger(ctx).Errorf("Failed to self-resolve %q: %v", nodeID, err)
+		if _, err := net.ResolveIPAddr("ip", s.NodeID); err != nil {
+			supervisor.Logger(ctx).Errorf("Failed to self-resolve %q: %v", s.NodeID, err)
 		}
 
 		// Update this node's ClusterDirectory.
@@ -233,22 +228,7 @@ func (s *Service) Run(ctx context.Context) error {
 			return err
 		}
 		unix.Sync()
-	}
-}
-
-// runLocal updates s.localC with the IP address of the local node, as retrieved
-// from the network service.
-func (s *Service) runLocal(ctx context.Context) error {
-	nw := s.Network.Watch()
-	for {
-		ns, err := nw.Get(ctx)
-		if err != nil {
-			return err
-		}
-		addr := ns.ExternalAddress.String()
-		if addr != "" {
-			s.localC <- addr
-		}
+		s.ClusterDirectorySaved.Set(true)
 	}
 }
 
@@ -257,24 +237,7 @@ func (s *Service) runLocal(ctx context.Context) error {
 // reflects the up-to-date view of the cluster returned from the Curator Watch
 // call, including any node deletions.
 func (s *Service) runCluster(ctx context.Context) error {
-	cmw := s.Roleserver.ClusterMembership.Watch()
-	defer cmw.Close()
-
-	supervisor.Logger(ctx).Infof("Waiting for cluster membership...")
-	cm, err := cmw.Get(ctx, roleserve.FilterHome())
-	if err != nil {
-		return err
-	}
-	supervisor.Logger(ctx).Infof("Got cluster membership, starting...")
-
-	con, err := cm.DialCurator()
-	if err != nil {
-		return err
-	}
-	defer con.Close()
-	cur := ipb.NewCuratorClient(con)
-
-	w, err := cur.Watch(ctx, &ipb.WatchRequest{
+	w, err := s.Curator.Watch(ctx, &ipb.WatchRequest{
 		Kind: &ipb.WatchRequest_NodesInCluster_{
 			NodesInCluster: &ipb.WatchRequest_NodesInCluster{},
 		},

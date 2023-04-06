@@ -30,7 +30,6 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/node/core/network"
-	"source.monogon.dev/metropolis/node/core/network/hostsfile"
 	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	timesvc "source.monogon.dev/metropolis/node/core/time"
@@ -158,19 +157,6 @@ func main() {
 		})
 		if err := supervisor.Run(ctx, "role", rs.Run); err != nil {
 			return fmt.Errorf("failed to start role service: %w", err)
-		}
-
-		// Start the hostsfile service.
-		hostsfileSvc := hostsfile.Service{
-			Config: hostsfile.Config{
-				Roleserver: rs,
-				Network:    networkSvc,
-				Ephemeral:  &root.Ephemeral,
-				ESP:        &root.ESP,
-			},
-		}
-		if err := supervisor.Run(ctx, "hostsfile", hostsfileSvc.Run); err != nil {
-			return fmt.Errorf("failed to start hostsfile service: %w", err)
 		}
 
 		if err := runDebugService(ctx, rs, lt, root); err != nil {
