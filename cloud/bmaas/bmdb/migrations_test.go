@@ -38,3 +38,22 @@ func TestMigrateUpDown(t *testing.T) {
 		t.Fatalf("Second down migration failed: %v", err)
 	}
 }
+
+// TestMigrateTwice makes sure we don't hit https://review.monogon.dev/1502 again.
+func TestMigrateTwice(t *testing.T) {
+	// Start with an empty database.
+	b := dut()
+	_, err := b.Open(false)
+	if err != nil {
+		t.Fatalf("Starting empty database failed: %v", err)
+	}
+
+	// Migrations go up.
+	if err := b.Database.MigrateUp(); err != nil {
+		t.Fatalf("Initial up migration failed: %v", err)
+	}
+	// Migrations go up again.
+	if err := b.Database.MigrateUp(); err != nil {
+		t.Fatalf("Initial up migration failed: %v", err)
+	}
+}
