@@ -4935,6 +4935,7 @@ def go_repositories():
         patches = [
             # Going upstream as https://github.com/vishvananda/netlink/pull/850
             "//third_party/go/patches:netlink-permhwaddr.patch",
+            "//third_party/go/patches:netlink-use-rtm_setlink.patch",
         ],
         replace = "github.com/monogon-dev/netlink",
         sum = "h1:y05BDqZ6q3if6pYBHJcnQRUd92ihzBEJde/S4fpKEAM=",

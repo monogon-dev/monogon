@@ -68,13 +68,14 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 			return fmt.Errorf("interface %q: %w", i.Name, err)
 		}
 		newLink.Attrs().Name = i.Name
-		// Set link administratively up
-		newLink.Attrs().Flags |= unix.IFF_UP
 		if i.Mtu != 0 {
 			newLink.Attrs().MTU = int(i.Mtu)
 		}
 		if nameParentMap[i.Name] != "" {
 			newLink.Attrs().MasterIndex = nameLinkMap[nameParentMap[i.Name]].Attrs().Index
+		} else {
+			// Set link administratively up if no MasterIndex has been set.
+			newLink.Attrs().Flags |= net.FlagUp
 		}
 		if newLink.Attrs().Index == -1 {
 			if err := netlink.LinkAdd(newLink); err != nil {
@@ -192,7 +193,7 @@ func listHostDeviceIfaces() ([]deviceIfData, error) {
 
 	for _, link := range links {
 		if link.Attrs().EncapType == "loopback" {
-			continue
+			netlink.LinkSetUp(link)
 		}
 		d, ok := link.(*netlink.Device)
 		if !ok {
