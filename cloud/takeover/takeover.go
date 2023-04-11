@@ -35,6 +35,7 @@ import (
 	"source.monogon.dev/metropolis/pkg/bootparam"
 	"source.monogon.dev/metropolis/pkg/kexec"
 	netdump "source.monogon.dev/net/dump"
+	netapi "source.monogon.dev/net/proto"
 )
 
 //go:embed third_party/linux/bzImage
@@ -96,6 +97,14 @@ func setupTakeover() (*api.TakeoverSuccess, error) {
 	netconf, warnings, err := netdump.Dump()
 	if err != nil {
 		return nil, fmt.Errorf("failed to dump network configuration: %w", err)
+	}
+
+	if len(netconf.Nameserver) == 0 {
+		netconf.Nameserver = []*netapi.Nameserver{{
+			Ip: "8.8.8.8",
+		}, {
+			Ip: "1.1.1.1",
+		}}
 	}
 
 	// Generate agent private key

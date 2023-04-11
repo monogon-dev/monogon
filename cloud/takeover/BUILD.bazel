@@ -17,6 +17,7 @@ go_library(
         "//metropolis/pkg/bootparam",
         "//metropolis/pkg/kexec",
         "//net/dump",
+        "//net/proto",
         "@com_github_cavaliergopher_cpio//:cpio",
         "@com_github_pierrec_lz4_v4//:lz4",
         "@org_golang_google_protobuf//proto",
