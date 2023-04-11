@@ -17,6 +17,7 @@ go_library(
         "//cloud/bmaas/server/api",
         "//metropolis/node/build/mkimage/osimage",
         "//metropolis/node/core/network",
+        "//metropolis/pkg/bootparam",
         "//metropolis/pkg/efivarfs",
         "//metropolis/pkg/logtree",
         "//metropolis/pkg/nvme",

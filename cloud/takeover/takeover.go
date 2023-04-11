@@ -130,10 +130,9 @@ func setupTakeover() (*api.TakeoverSuccess, error) {
 	agentParams := bootparam.Params{
 		bootparam.Param{Param: "quiet"},
 		bootparam.Param{Param: "init", Value: "/init"},
-		// Always add "default" console on x86
-		bootparam.Param{Param: "console", Value: "ttyS0,115200"},
 	}
 
+	var customConsoles bool
 	cmdline, err := os.ReadFile("/proc/cmdline")
 	if err != nil {
 		warnings = append(warnings, fmt.Errorf("unable to read current kernel command line: %w", err))
@@ -145,9 +144,14 @@ func setupTakeover() (*api.TakeoverSuccess, error) {
 			for _, p := range params {
 				if p.Param == "console" {
 					agentParams = append(agentParams, p)
+					customConsoles = true
 				}
 			}
 		}
+	}
+	if !customConsoles {
+		// Add the "default" console on x86
+		agentParams = append(agentParams, bootparam.Param{Param: "console", Value: "ttyS0,115200"})
 	}
 	agentCmdline, err := bootparam.Marshal(agentParams, "")
 	// Stage agent payload into kernel memory

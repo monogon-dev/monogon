@@ -5,22 +5,36 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 
 	"golang.org/x/sys/unix"
 
+	"source.monogon.dev/metropolis/pkg/bootparam"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
+var validTTYRegexp = regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+
 func main() {
 	setupMounts()
 
-	// Set up logger for the Agent. Currently logs everything to /dev/tty0 and
-	// /dev/ttyS0.
-	consoles := []string{"/dev/tty0", "/dev/ttyS0"}
+	// Set up logger for the Agent. Parse consoles from the kernel command line
+	// as well as adding the two standard tty0/ttyS0 consoles.
+	consoles := make(map[string]bool)
+	cmdline, err := os.ReadFile("/proc/cmdline")
+	if err == nil {
+		params, _, err := bootparam.Unmarshal(string(cmdline))
+		if err == nil {
+			consoles = params.Consoles()
+		}
+	}
+	consoles["tty0"] = true
+	consoles["ttyS0"] = true
+
 	lt := logtree.New()
-	for _, p := range consoles {
-		f, err := os.OpenFile(p, os.O_WRONLY, 0)
+	for p := range consoles {
+		f, err := os.OpenFile("/dev/"+p, os.O_WRONLY, 0)
 		if err != nil {
 			continue
 		}
