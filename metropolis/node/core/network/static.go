@@ -18,6 +18,7 @@ import (
 	"source.monogon.dev/go/algorithm/toposort"
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
+	"source.monogon.dev/metropolis/node/core/network/dns"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	netpb "source.monogon.dev/net/proto"
@@ -115,6 +116,18 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 		}
 		l.Infof("Configured interface %q", i.Name)
 	}
+	var nsIPList []net.IP
+	for _, ns := range s.StaticConfig.Nameserver {
+		nsIP := net.ParseIP(ns.Ip)
+		if nsIP == nil {
+			l.Warningf("failed to parse %q as nameserver IP", ns.Ip)
+		}
+		nsIPList = append(nsIPList, nsIP)
+	}
+	if len(nsIPList) > 0 {
+		s.ConfigureDNS(dns.NewUpstreamDirective(nsIPList))
+	}
+
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)
 	return nil
