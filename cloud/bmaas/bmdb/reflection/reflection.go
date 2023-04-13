@@ -381,7 +381,10 @@ func (r *TagField) Scan(src any) error {
 		if !ok {
 			return fmt.Errorf("SQL type %q, but got %+v", r.Type.NativeType, src)
 		}
-		r.bytes = &src2
+		// Copy the bytes, as they are otherwise going to be reused by the pq library.
+		copied := make([]byte, len(src2))
+		copy(copied[:], src2)
+		r.bytes = &copied
 	case "USER-DEFINED":
 		switch r.Type.NativeUDTName {
 		case "provider":
