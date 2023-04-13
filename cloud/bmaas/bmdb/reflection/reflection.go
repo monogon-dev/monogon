@@ -17,7 +17,11 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/klog/v2"
+
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
 )
 
 // GetMachinesOpts influences the behaviour of GetMachines.
@@ -321,12 +325,19 @@ type TagField struct {
 	text  *string
 	bytes *[]byte
 	time  *time.Time
+	proto proto.Message
 }
 
 // HumanValue returns a human-readable (best effort) representation of the field
 // value.
 func (r *TagField) HumanValue() string {
 	switch {
+	case r.proto != nil:
+		opts := prototext.MarshalOptions{
+			Multiline: true,
+			Indent:    "\t",
+		}
+		return opts.Format(r.proto)
 	case r.text != nil:
 		return *r.text
 	case r.bytes != nil:
@@ -385,6 +396,16 @@ func (r *TagField) Scan(src any) error {
 		copied := make([]byte, len(src2))
 		copy(copied[:], src2)
 		r.bytes = &copied
+
+		if r.Type.ProtoType != nil {
+			msg := r.Type.ProtoType.New().Interface()
+			err := proto.Unmarshal(*r.bytes, msg)
+			if err != nil {
+				klog.Warningf("Could not unmarshal %s: %v", r.Type.NativeName, err)
+			} else {
+				r.proto = msg
+			}
+		}
 	case "USER-DEFINED":
 		switch r.Type.NativeUDTName {
 		case "provider":

@@ -7,7 +7,11 @@ import (
 	"strings"
 
 	"github.com/iancoleman/strcase"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"k8s.io/klog/v2"
+
+	"source.monogon.dev/cloud/bmaas/server/api"
 )
 
 // Schema contains information about the tag types in a BMDB. It also contains an
@@ -60,11 +64,27 @@ type TagFieldType struct {
 	// NativeUDTName is the CockroachDB user-defined-type name of this field. This is
 	// only valid if NativeType is 'USER-DEFINED'.
 	NativeUDTName string
+	// ProtoType is set non-nil if the field is a serialized protobuf of the same
+	// type as the given protoreflect.Message.
+	ProtoType protoreflect.Message
+}
+
+// knownProtoFields is a mapping from column name of a field containing a
+// serialized protobuf to an instance of a proto.Message that will be used to
+// parse that column's data.
+//
+// Just mapping from column name is fine enough for now as we have mostly unique
+// column names, and these column names uniquely map to a single type.
+var knownProtoFields = map[string]proto.Message{
+	"hardware_report_raw": &api.AgentHardwareReport{},
 }
 
 // HumanType returns a human-readable representation of the field's type. This is
 // not well-defined, and should be used only informatively.
 func (r *TagFieldType) HumanType() string {
+	if r.ProtoType != nil {
+		return fmt.Sprintf("%s", r.ProtoType.Descriptor().FullName())
+	}
 	switch r.NativeType {
 	case "USER-DEFINED":
 		return r.NativeUDTName
@@ -134,11 +154,15 @@ func Reflect(ctx context.Context, db *sql.DB) (*Schema, error) {
 				foundMachineID = true
 				continue
 			}
-			tag.Fields = append(tag.Fields, TagFieldType{
+			field := TagFieldType{
 				NativeName:    column_name,
 				NativeType:    data_type,
 				NativeUDTName: udt_name,
-			})
+			}
+			if t, ok := knownProtoFields[column_name]; ok {
+				field.ProtoType = t.ProtoReflect()
+			}
+			tag.Fields = append(tag.Fields, field)
 		}
 
 		// Make sure there's a machine_id key in the table, then remove it.

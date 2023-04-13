@@ -8,9 +8,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/proto"
 
+	apb "source.monogon.dev/cloud/agent/api"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	"source.monogon.dev/cloud/bmaas/bmdb/reflection"
+	"source.monogon.dev/cloud/bmaas/server/api"
 )
 
 // TestReflection exercises the BMDB reflection schema reflection and data
@@ -204,6 +207,79 @@ func TestReflection(t *testing.T) {
 		machine := res.Data[0]
 		if _, ok := machine.Work["UnitTest1"]; !ok {
 			t.Errorf("Expected UnitTest1 work item on machine")
+		}
+	}
+}
+
+// TestReflectionProtoFields ensures that the basic proto field introspection
+// functionality works.
+func TestReflectionProtoFields(t *testing.T) {
+	s := dut()
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	bmdb, err := s.Open(true)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	sess, err := bmdb.StartSession(ctx)
+	if err != nil {
+		t.Fatalf("StartSession: %v", err)
+	}
+	var machine model.Machine
+	err = sess.Transact(ctx, func(q *model.Queries) error {
+		machine, err = q.NewMachine(ctx)
+		if err != nil {
+			return err
+		}
+
+		report := &api.AgentHardwareReport{
+			Report: &apb.Node{
+				Manufacturer:         "Charles Babbage",
+				Product:              "Analytical Engine",
+				SerialNumber:         "183701",
+				MemoryInstalledBytes: 14375,
+				MemoryUsableRatio:    1.0,
+				Cpu: []*apb.CPU{
+					{
+						Architecture:    nil,
+						HardwareThreads: 1,
+						Cores:           1,
+					},
+				},
+			},
+			Warning: []string{"something went wrong"},
+		}
+		b, _ := proto.Marshal(report)
+		return q.MachineSetHardwareReport(ctx, model.MachineSetHardwareReportParams{
+			MachineID:         machine.MachineID,
+			HardwareReportRaw: b,
+		})
+	})
+	if err != nil {
+		t.Fatalf("Failed to submit hardware report: %v", err)
+	}
+
+	schem, err := bmdb.Reflect(ctx)
+	if err != nil {
+		t.Fatalf("Failed to reflect on database: %v", err)
+	}
+
+	machines, err := schem.GetMachines(ctx, &reflection.GetMachinesOpts{FilterMachine: &machine.MachineID, Strict: true})
+	if err != nil {
+		t.Fatalf("Failed to get machine: %v", err)
+	}
+	if len(machines.Data) != 1 {
+		t.Errorf("Expected one machine, got %d", len(machines.Data))
+	} else {
+		machine := machines.Data[0]
+		ty := machine.Tags["HardwareReport"].Field("hardware_report_raw").Type.HumanType()
+		if want, got := "cloud.bmaas.server.api.AgentHardwareReport", ty; want != got {
+			t.Errorf("Mismatch in type: wanted %q, got %q", want, got)
+		}
+		v := machine.Tags["HardwareReport"].Field("hardware_report_raw").HumanValue()
+		if !strings.Contains(v, "manufacturer:") {
+			t.Errorf("Invalid serialized prototext: %s", v)
 		}
 	}
 }

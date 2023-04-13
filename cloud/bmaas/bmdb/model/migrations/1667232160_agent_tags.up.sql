@@ -49,6 +49,7 @@ CREATE TABLE machine_agent_heartbeat (
 -- Usually a report is submitted only once after an agent has been started.
 CREATE TABLE machine_hardware_report (
     machine_id UUID NOT NULL REFERENCES machines(machine_id) ON DELETE RESTRICT,
+    -- Serialized proto of type cloud.bmaas.server.api.AgentHardwareReport.
     hardware_report_raw BYTES NOT NULL,
     CONSTRAINT "primary" PRIMARY KEY(machine_id)
 );

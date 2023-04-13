@@ -33,9 +33,12 @@ go_test(
     ],
     embed = [":bmdb"],
     deps = [
+        "//cloud/agent/api",
         "//cloud/bmaas/bmdb/model",
         "//cloud/bmaas/bmdb/reflection",
+        "//cloud/bmaas/server/api",
         "//cloud/lib/component",
         "@com_github_google_uuid//:uuid",
+        "@org_golang_google_protobuf//proto",
     ],
 )
