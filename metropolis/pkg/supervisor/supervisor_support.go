@@ -21,7 +21,9 @@ package supervisor
 
 import (
 	"context"
+	"errors"
 	"net"
+	"os"
 	"os/exec"
 
 	"google.golang.org/grpc"
@@ -63,9 +65,13 @@ func RunCommand(ctx context.Context, cmd *exec.Cmd, opts ...RunCommandOption) er
 	Signal(ctx, SignalHealthy)
 
 	var parseKLog bool
+	var signal <-chan os.Signal
 	for _, opt := range opts {
 		if opt.parseKlog {
 			parseKLog = true
+		}
+		if opt.signal != nil {
+			signal = opt.signal
 		}
 	}
 
@@ -83,13 +89,40 @@ func RunCommand(ctx context.Context, cmd *exec.Cmd, opts ...RunCommandOption) er
 		cmd.Stdout = RawLogger(ctx)
 		cmd.Stderr = RawLogger(ctx)
 	}
-	err := cmd.Run()
+	err := cmd.Start()
+	if err != nil {
+		return err
+	}
+
+	exited := make(chan struct{})
+	if signal != nil {
+		go func() {
+			for {
+				var err error
+				select {
+				case s := <-signal:
+					err = cmd.Process.Signal(s)
+				case <-exited:
+					return
+				}
+				if err != nil && !errors.Is(err, os.ErrProcessDone) {
+					Logger(ctx).Warningf("Failed sending signal to process: %v", err)
+				}
+			}
+		}()
+	}
+
+	err = cmd.Wait()
+	if signal != nil {
+		exited <- struct{}{}
+	}
 	Logger(ctx).Infof("Command returned: %v", err)
 	return err
 }
 
 type RunCommandOption struct {
 	parseKlog bool
+	signal    <-chan os.Signal
 }
 
 // ParseKLog signals that the command being run will return klog-compatible
@@ -98,5 +131,33 @@ type RunCommandOption struct {
 func ParseKLog() RunCommandOption {
 	return RunCommandOption{
 		parseKlog: true,
+	}
+}
+
+// SignalChan takes a channel which can be used to send signals to the
+// supervised process.
+//
+// The given channel will be read from as long as the underlying process is
+// running. If the process doesn't start successfully the channel will not be
+// read. When the process exits, the channel will stop being read.
+//
+// With the above in mind, and also taking into account the inherent lack of
+// reliability in delivering any process-handled signals in POSIX/Linux, it is
+// recommended to use unbuffered channels, always write to them in a non-blocking
+// fashion (eg. in a select { ... default: } block), and to not rely only on the
+// signal delivery mechanism for the intended behaviour.
+//
+// For example, if the signals are used to trigger some configuration reload,
+// these configuration reloads should either be verified and signal delivery should
+// be retried until confirmed successful, or there should be a backup periodic
+// reload performed by the target process independently of signal-based reload
+// triggers.
+//
+// Another example: if the signal delivered is a SIGTERM used to gracefully
+// terminate some process, it should be attempted to be delivered a number of
+// times before finally SIGKILLing the process.
+func SignalChan(s <-chan os.Signal) RunCommandOption {
+	return RunCommandOption{
+		signal: s,
 	}
 }
