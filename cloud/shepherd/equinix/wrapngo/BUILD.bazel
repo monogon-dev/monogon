@@ -19,7 +19,7 @@ go_library(
 go_test(
     name = "wrapngo_test",
     timeout = "eternal",
-    srcs = ["wrapngo_test.go"],
+    srcs = ["wrapngo_live_test.go"],
     args = ["-test.v"],
     embed = [":wrapngo"],
     deps = [
