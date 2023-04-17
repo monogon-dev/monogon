@@ -65,7 +65,11 @@ type injectContextRoundTripper struct {
 func (r *injectContextRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	klog.V(5).Infof("Request -> %v", req.URL.String())
 	res, err := r.original.RoundTrip(req.WithContext(r.ctx))
-	klog.V(5).Infof("Response <- %v", res.Status)
+	if err != nil {
+		klog.V(5).Infof("HTTP error <- %v", err)
+	} else {
+		klog.V(5).Infof("Response <- %v", res.Status)
+	}
 	return res, err
 }
 
