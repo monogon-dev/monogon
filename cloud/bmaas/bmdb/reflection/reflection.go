@@ -111,6 +111,7 @@ func (r *Schema) GetMachines(ctx context.Context, opts *GetMachinesOpts) (*Refle
 		q = append(q, "WHERE machines.machine_id = $1")
 		args = append(args, *opts.FilterMachine)
 	}
+	q = append(q, "ORDER BY machines.machine_id")
 
 	rows, err := r.db.QueryContext(ctx, strings.Join(q, "\n"), args...)
 	if err != nil {
