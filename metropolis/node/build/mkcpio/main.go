@@ -182,11 +182,14 @@ func main() {
 		case *fsspec.SymbolicLink:
 			if err := cpioWriter.WriteHeader(&cpio.Header{
 				// Symlinks are 0777 by definition (from man 7 symlink on Linux)
-				Mode:     0777 | cpio.TypeSymlink,
-				Name:     strings.TrimPrefix(i.Path, "/"),
-				Linkname: i.TargetPath,
+				Mode: 0777 | cpio.TypeSymlink,
+				Name: strings.TrimPrefix(i.Path, "/"),
+				Size: int64(len(i.TargetPath)),
 			}); err != nil {
 				log.Fatalf("Failed to write cpio header for symlink %q: %v", i.Path, err)
+			}
+			if _, err := cpioWriter.Write([]byte(i.TargetPath)); err != nil {
+				log.Fatalf("Failed to write cpio symlink %q: %v", i.Path, err)
 			}
 		case *fsspec.SpecialFile:
 			mode := cpio.FileMode(i.Mode)
