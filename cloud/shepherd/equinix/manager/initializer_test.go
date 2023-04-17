@@ -64,12 +64,16 @@ func (f *fakeSSHConnection) Close() error {
 	return nil
 }
 
-// TestInitializerSmokes makes sure the Initializer doesn't go up in flames on
-// the happy path.
-func TestInitializerSmokes(t *testing.T) {
-	ic := InitializerConfig{
-		DBQueryLimiter: rate.NewLimiter(rate.Every(time.Second), 10),
-	}
+type initializerDut struct {
+	f    *fakequinix
+	i    *Initializer
+	bmdb *bmdb.Connection
+	ctx  context.Context
+}
+
+func newInitializerDut(t *testing.T) *initializerDut {
+	t.Helper()
+
 	_, key, _ := ed25519.GenerateKey(rand.Reader)
 	sc := SharedConfig{
 		ProjectId:    "noproject",
@@ -77,21 +81,22 @@ func TestInitializerSmokes(t *testing.T) {
 		Key:          key,
 		DevicePrefix: "test-",
 	}
-	ac := AgentConfig{
+	ic := InitializerConfig{
+		ControlLoopConfig: ControlLoopConfig{
+			DBQueryLimiter: rate.NewLimiter(rate.Every(time.Second), 10),
+		},
 		Executable:        []byte("beep boop i'm a real program"),
 		TargetPath:        "/fake/path",
 		Endpoint:          "example.com:1234",
 		SSHConnectTimeout: time.Second,
 		SSHExecTimeout:    time.Second,
 	}
+
 	f := newFakequinix(sc.ProjectId, 100)
-	i, err := ic.New(f, &sc, &ac)
+	i, err := NewInitializer(f, ic, &sc)
 	if err != nil {
 		t.Fatalf("Could not create Initializer: %v", err)
 	}
-
-	ctx, ctxC := context.WithCancel(context.Background())
-	defer ctxC()
 
 	b := bmdb.BMDB{
 		Config: bmdb.Config{
@@ -107,12 +112,32 @@ func TestInitializerSmokes(t *testing.T) {
 		t.Fatalf("Could not create in-memory BMDB: %v", err)
 	}
 
+	ctx, ctxC := context.WithCancel(context.Background())
+	t.Cleanup(ctxC)
+
 	if err := sc.SSHEquinixEnsure(ctx, f); err != nil {
 		t.Fatalf("Failed to ensure SSH key: %v", err)
 	}
 
 	i.sshClient = &fakeSSHClient{}
-	go i.Run(ctx, conn)
+	go RunControlLoop(ctx, conn, i)
+
+	return &initializerDut{
+		f:    f,
+		i:    i,
+		bmdb: conn,
+		ctx:  ctx,
+	}
+}
+
+// TestInitializerSmokes makes sure the Initializer doesn't go up in flames on
+// the happy path.
+func TestInitializerSmokes(t *testing.T) {
+	dut := newInitializerDut(t)
+	f := dut.f
+	ctx := dut.ctx
+	conn := dut.bmdb
+	sc := dut.i.sharedConfig
 
 	reservations, _ := f.ListReservations(ctx, sc.ProjectId)
 	kid, err := sc.sshEquinixId(ctx, f)
@@ -160,8 +185,6 @@ func TestInitializerSmokes(t *testing.T) {
 			t.Fatalf("Failed to create BMDB machine: %v", err)
 		}
 	}
-
-	go i.Run(ctx, conn)
 
 	// Expect to find 0 machines needing start.
 	for {

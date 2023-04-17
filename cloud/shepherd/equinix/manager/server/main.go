@@ -22,7 +22,6 @@ type Config struct {
 	BMDB      bmdb.BMDB
 
 	SharedConfig      manager.SharedConfig
-	AgentConfig       manager.AgentConfig
 	ProvisionerConfig manager.ProvisionerConfig
 	InitializerConfig manager.InitializerConfig
 	WebugConfig       webug.Config
@@ -45,7 +44,6 @@ func (c *Config) RegisterFlags() {
 	c.BMDB.Database.RegisterFlags("bmdb")
 
 	c.SharedConfig.RegisterFlags("")
-	c.AgentConfig.RegisterFlags()
 	c.ProvisionerConfig.RegisterFlags()
 	c.InitializerConfig.RegisterFlags()
 	c.WebugConfig.RegisterFlags()
@@ -84,7 +82,7 @@ func main() {
 		klog.Exitf("%v", err)
 	}
 
-	initializer, err := c.InitializerConfig.New(api, &c.SharedConfig, &c.AgentConfig)
+	initializer, err := manager.NewInitializer(api, c.InitializerConfig, &c.SharedConfig)
 	if err != nil {
 		klog.Exitf("%v", err)
 	}
@@ -101,7 +99,7 @@ func main() {
 		}
 	}()
 	go func() {
-		err = initializer.Run(ctx, conn)
+		err = manager.RunControlLoop(ctx, conn, initializer)
 		if err != nil {
 			klog.Exit(err)
 		}

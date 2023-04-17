@@ -52,3 +52,5 @@ INSERT INTO machine_os_installation_report (
     generation = $2
 ;
 
+
+-- name: MachineAgentReset :exec
