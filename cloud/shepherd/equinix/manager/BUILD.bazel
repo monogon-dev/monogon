@@ -7,6 +7,7 @@ go_library(
         "initializer.go",
         "manager.go",
         "provisioner.go",
+        "recoverer.go",
         "shared_config.go",
         "ssh.go",
     ],
@@ -36,6 +37,7 @@ go_test(
         "fakequinix_test.go",
         "initializer_test.go",
         "provisioner_test.go",
+        "recoverer_test.go",
     ],
     data = [
         "//cloud/shepherd/equinix/manager/test_agent",

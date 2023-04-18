@@ -24,6 +24,7 @@ type Config struct {
 	SharedConfig      manager.SharedConfig
 	ProvisionerConfig manager.ProvisionerConfig
 	InitializerConfig manager.InitializerConfig
+	RecovererConfig   manager.RecovererConfig
 	WebugConfig       webug.Config
 	API               wrapngo.Opts
 }
@@ -46,6 +47,7 @@ func (c *Config) RegisterFlags() {
 	c.SharedConfig.RegisterFlags("")
 	c.ProvisionerConfig.RegisterFlags()
 	c.InitializerConfig.RegisterFlags()
+	c.RecovererConfig.RegisterFlags()
 	c.WebugConfig.RegisterFlags()
 	c.API.RegisterFlags()
 }
@@ -87,6 +89,11 @@ func main() {
 		klog.Exitf("%v", err)
 	}
 
+	recoverer, err := manager.NewRecoverer(api, c.RecovererConfig)
+	if err != nil {
+		klog.Exitf("%v", err)
+	}
+
 	conn, err := c.BMDB.Open(true)
 	if err != nil {
 		klog.Exitf("Failed to open BMDB connection: %v", err)
@@ -100,6 +107,12 @@ func main() {
 	}()
 	go func() {
 		err = manager.RunControlLoop(ctx, conn, initializer)
+		if err != nil {
+			klog.Exit(err)
+		}
+	}()
+	go func() {
+		err = manager.RunControlLoop(ctx, conn, recoverer)
 		if err != nil {
 			klog.Exit(err)
 		}

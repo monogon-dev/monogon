@@ -19,6 +19,7 @@ type fakequinix struct {
 	devices      map[string]*packngo.Device
 	reservations map[string]*packngo.HardwareReservation
 	sshKeys      map[string]*packngo.SSHKey
+	reboots      map[string]int
 }
 
 // newFakequinix makes a fakequinix with a given fake project ID and number of
@@ -29,6 +30,7 @@ func newFakequinix(pid string, numReservations int) *fakequinix {
 		devices:      make(map[string]*packngo.Device),
 		reservations: make(map[string]*packngo.HardwareReservation),
 		sshKeys:      make(map[string]*packngo.SSHKey),
+		reboots:      make(map[string]int),
 	}
 
 	for i := 0; i < numReservations; i++ {
@@ -166,6 +168,15 @@ func (f *fakequinix) UpdateSSHKey(_ context.Context, kid string, req *packngo.SS
 	key.Key = *req.Key
 
 	return key, nil
+}
+
+func (f *fakequinix) RebootDevice(_ context.Context, did string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.reboots[did]++
+
+	return nil
 }
 
 func (f *fakequinix) Close() {

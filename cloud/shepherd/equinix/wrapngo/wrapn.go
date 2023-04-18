@@ -113,6 +113,7 @@ type Client interface {
 	// package comment for information on this method's behavior and returned error
 	// values.
 	UpdateSSHKey(ctx context.Context, kid string, req *packngo.SSHKeyUpdateRequest) (*packngo.SSHKey, error)
+	RebootDevice(ctx context.Context, did string) error
 
 	Close()
 }
@@ -313,4 +314,12 @@ func (e *client) getSSHKey(ctx context.Context, id string) (*packngo.SSHKey, err
 		}
 		return k, nil
 	})
+}
+
+func (e *client) RebootDevice(ctx context.Context, did string) error {
+	_, err := wrap(ctx, e, func(cl *packngo.Client) (struct{}, error) {
+		_, err := cl.Devices.Reboot(did)
+		return struct{}{}, err
+	})
+	return err
 }

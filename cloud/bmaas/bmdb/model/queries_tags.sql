@@ -53,4 +53,10 @@ INSERT INTO machine_os_installation_report (
 ;
 
 
--- name: MachineAgentReset :exec
+-- name: MachineDeleteAgentStarted :exec
+DELETE FROM machine_agent_started
+WHERE machine_id = $1;
+
+-- name: MachineDeleteAgentHeartbeat :exec
+DELETE FROM machine_agent_heartbeat
+WHERE machine_id = $1;
