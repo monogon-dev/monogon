@@ -327,20 +327,23 @@ func (p *Provisioner) reconcile(ctx context.Context, sess *bmdb.Session, inProvi
 
 	// Collect all reservations.
 	var toProvision []packngo.HardwareReservation
+	var inUse, notProvisionable, penalized int
 	for _, reservation := range reservations {
-		if !reservation.Provisionable {
+		if reservation.Device != nil {
+			inUse++
 			continue
 		}
-		if reservation.Device != nil {
-			if managed[reservation.Device.ID] {
-				continue
-			}
+		if !reservation.Provisionable {
+			notProvisionable++
+			continue
 		}
 		if p.badReservations.Penalized(reservation.ID) {
+			penalized++
 			continue
 		}
 		toProvision = append(toProvision, reservation)
 	}
+	klog.Infof("Retrieved hardware reservations: %d (total), %d (available), %d (in use), %d (not provisionable), %d (penalized)", len(reservations), len(toProvision), inUse, notProvisionable, penalized)
 
 	// Limit them to MaxCount, if applicable.
 	if p.config.MaxCount != 0 {
