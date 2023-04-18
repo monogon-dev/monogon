@@ -110,6 +110,8 @@ func agentRunnable(ctx context.Context) error {
 	var installationReport *bpb.OSInstallationReport
 	var installationGeneration int64
 	b := backoff.NewExponentialBackOff()
+	// Never stop retrying, there is nothing else to do
+	b.MaxElapsedTime = 0
 	// Main heartbeat loop
 	for {
 		req := bpb.AgentHeartbeatRequest{
