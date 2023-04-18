@@ -213,7 +213,8 @@ func (e *client) CreateDevice(ctx context.Context, r *packngo.DeviceCreateReques
 
 func (e *client) ListDevices(ctx context.Context, pid string) ([]packngo.Device, error) {
 	return wrap(ctx, e, func(cl *packngo.Client) ([]packngo.Device, error) {
-		res, _, err := cl.Devices.List(pid, nil)
+		// to increase the chances of a stable pagination, we sort the devices by hostname
+		res, _, err := cl.Devices.List(pid, &packngo.GetOptions{SortBy: "hostname"})
 		return res, err
 	})
 }
