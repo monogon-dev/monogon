@@ -50,6 +50,10 @@ type ProvisionerConfig struct {
 	//
 	// 20 is decent starting point.
 	ReservationChunkSize uint
+
+	// UseProjectKeys defines if the provisioner adds all ssh keys defined inside
+	// the used project to every new machine. This is only used for debug purposes.
+	UseProjectKeys bool
 }
 
 func (p *ProvisionerConfig) RegisterFlags() {
@@ -59,6 +63,7 @@ func (p *ProvisionerConfig) RegisterFlags() {
 	flagLimiter(&p.DeviceCreationLimiter, "provisioner_device_creation_rate", "5s,1", "Rate limiting for Equinix device/machine creation")
 	flag.BoolVar(&p.Assimilate, "provisioner_assimilate", false, "Assimilate matching machines in Equinix project into BMDB as Provided. Only to be used when manually testing.")
 	flag.UintVar(&p.ReservationChunkSize, "provisioner_reservation_chunk_size", 20, "How many machines will the provisioner attempt to create in a single reconciliation loop iteration")
+	flag.BoolVar(&p.UseProjectKeys, "provisioner_use_project_keys", false, "Add all Equinix project keys to newly provisioned machines, not just the provisioner's managed key. Debug/development only.")
 }
 
 // Provisioner implements the server provisioning logic. Provisioning entails
@@ -397,6 +402,11 @@ func (pr *Provisioner) provision(ctx context.Context, sess *bmdb.Session, rsv pa
 		HardwareReservationID: rsv.ID,
 		ProjectSSHKeys:        []string{kid},
 	}
+	if pr.config.UseProjectKeys {
+		klog.Warningf("INSECURE: Machines will be created with ALL PROJECT SSH KEYS!")
+		req.ProjectSSHKeys = nil
+	}
+
 	nd, err := pr.cl.CreateDevice(ctx, req)
 	if err != nil {
 		return fmt.Errorf("while creating new device within Equinix: %w", err)
