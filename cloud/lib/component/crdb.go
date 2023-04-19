@@ -137,7 +137,7 @@ func (d *CockroachConfig) Connect() (*sql.DB, error) {
 // by this CockroachConfig.
 func (d *CockroachConfig) MigrateUp() error {
 	dsn := d.buildDSN("cockroachdb")
-	klog.Infof("Running migrations on %s...", dsn)
+	klog.Infof("Running migrations up...")
 	m, err := migrate.NewWithSourceInstance("iofs", d.Migrations, dsn)
 	if err != nil {
 		return err
@@ -151,6 +151,17 @@ func (d *CockroachConfig) MigrateUp() error {
 	default:
 		return err
 	}
+}
+
+func (d *CockroachConfig) MigrateUpToIncluding(ver uint) error {
+	dsn := d.buildDSN("cockroachdb")
+	klog.Infof("Running migrations up to %d...", ver)
+	m, err := migrate.NewWithSourceInstance("iofs", d.Migrations, dsn)
+	if err != nil {
+		return err
+	}
+
+	return m.Migrate(ver)
 }
 
 // MigrateDownDangerDanger removes all data from the database by performing a
@@ -171,7 +182,7 @@ func (d *CockroachConfig) MigrateDownDangerDanger() error {
 		return fmt.Errorf("no really, this cannot be run on non-in-memory databases")
 	}
 	dsn := d.buildDSN("cockroachdb")
-	klog.Infof("Running migrations on %s...", dsn)
+	klog.Infof("Running migrations down...")
 	m, err := migrate.NewWithSourceInstance("iofs", d.Migrations, dsn)
 	if err != nil {
 		return err
