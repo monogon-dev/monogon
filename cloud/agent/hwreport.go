@@ -45,6 +45,14 @@ func (c *hwReportContext) gatherSMBIOS() {
 		c.node.Product = smbTbl.SystemInformationRaw.ProductName
 		c.node.SerialNumber = smbTbl.SystemInformationRaw.SerialNumber
 	}
+	if smbTbl.BIOSInformationRaw != nil && smbTbl.BIOSInformationRaw.StructureVersion.AtLeast(2, 2) {
+		uefiSupport := smbTbl.BIOSInformationRaw.BIOSCharacteristicsExtensionByte2&smbios.UEFISpecificationSupported != 0
+		if uefiSupport {
+			c.node.EfiSupport = api.EFISupport_EFI_SUPPORTED
+		} else {
+			c.node.EfiSupport = api.EFISupport_EFI_UNSUPPORTED
+		}
+	}
 	for _, d := range smbTbl.MemoryDevicesRaw {
 		if d.StructureVersion.AtLeast(3, 2) && d.MemoryTechnology != 0x03 {
 			// If MemoryTechnology is available, only count DRAM
@@ -400,6 +408,7 @@ func gatherHWReport() (*api.Node, []error) {
 	hwReportCtx := hwReportContext{
 		node: &api.Node{},
 	}
+	hwReportCtx.node.EfiSupport = api.EFISupport_EFI_UNKNOWN
 
 	hwReportCtx.gatherCPU()
 	hwReportCtx.gatherSMBIOS()
@@ -414,6 +423,10 @@ func gatherHWReport() (*api.Node, []error) {
 	}
 	hwReportCtx.gatherNICs()
 	hwReportCtx.gatherBlockDevices()
+
+	if _, err := os.Stat("/sys/firmware/efi/runtime"); err == nil {
+		hwReportCtx.node.EfiSupport = api.EFISupport_EFI_ENABLED
+	}
 
 	return hwReportCtx.node, hwReportCtx.errors
 }

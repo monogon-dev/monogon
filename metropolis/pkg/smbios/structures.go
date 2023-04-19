@@ -12,6 +12,9 @@ const (
 	structTypeMemoryDevice         = 17
 )
 
+// Table 7.1.2.2 Bit 3
+const UEFISpecificationSupported = 1 << 3
+
 // BIOSInformationRaw contains decoded data from the BIOS Information structure
 // (SMBIOS Type 0). See Table 6 in the specification for detailed documentation
 // about the individual fields. Note that structure versions 2.1 and 2.2 are

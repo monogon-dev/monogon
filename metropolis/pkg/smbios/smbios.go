@@ -160,7 +160,10 @@ func (v *Version) String() string {
 
 // AtLeast returns true if the version in v is at least the given version.
 func (v *Version) AtLeast(major, minor uint8) bool {
-	return v.Major >= major && v.Minor >= minor
+	if v.Major > major {
+		return true
+	}
+	return v.Major == major && v.Minor >= minor
 }
 
 // UnmarshalStructureRaw unmarshals a SMBIOS structure into a Go struct which

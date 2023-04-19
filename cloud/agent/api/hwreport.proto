@@ -95,6 +95,27 @@ message CPU {
   string model = 11;
 }
 
+enum EFISupport {
+  // EFI support was not evaluated by the report generator.
+  EFI_INVALID = 0;
+  // It is not known if EFI is supported by the node. EFI runtime services are
+  // not available. This occurs if the report generator generally supports
+  // reporting EFI support, but none of its mechanisms to determine EFI support
+  // returned any data.
+  EFI_UNKNOWN = 1;
+  // The firmware indicates that EFI is not supported by the node. EFI runtime
+  // services are not available.
+  // Note that the firmware indication can be wrong.
+  EFI_UNSUPPORTED = 2;
+  // The firmware indicates that EFI is supported, but EFI runtime services
+  // are not available. This usually means that the hardware report was
+  // generated from a kernel booted in Compatibility Support Mode (CSM).
+  // Note that the firmware indication can be wrong.
+  EFI_SUPPORTED = 3;
+  // EFI and its runtime services are available and working.
+  EFI_ENABLED = 4;
+}
+
 message Node {
   // Manufacturer of the system, taken from DMI.
   string manufacturer = 1;
@@ -102,6 +123,9 @@ message Node {
   string product = 2;
   // Serial number of the system, taken from DMI.
   string serial_number = 3;
+
+  // Information about EFI support in the node firmware.
+  EFISupport efi_support = 13;
 
   // Amount of physical memory installed, in bytes. Determined using DMI (if
   // available and not marked unusable) or memory blocks in sysfs
