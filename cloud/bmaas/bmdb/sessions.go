@@ -69,6 +69,19 @@ type Session struct {
 	ctxC context.CancelFunc
 }
 
+// Expired returns true if this session is expired and will fail all subsequent
+// transactions/work.
+func (s *Session) Expired() bool {
+	return s.ctx.Err() != nil
+}
+
+// expire is a helper which marks this session as expired and returns
+// ErrSessionExpired.
+func (s *Session) expire() error {
+	s.ctxC()
+	return ErrSessionExpired
+}
+
 var (
 	// ErrSessionExpired is returned when attempting to Transact or Work on a
 	// Session that has expired or been canceled. Once a Session starts returning
@@ -102,7 +115,7 @@ func (s *Session) maintainHeartbeat(ctx context.Context) {
 				return fmt.Errorf("when retrieving session: %w", err)
 			}
 			if len(sessions) < 1 {
-				return ErrSessionExpired
+				return s.expire()
 			}
 			err = q.SessionPoke(ctx, s.UUID)
 			if err != nil {
@@ -147,7 +160,7 @@ func (s *Session) Transact(ctx context.Context, fn func(q *model.Queries) error)
 			return fmt.Errorf("when retrieving session: %w", err)
 		}
 		if len(sessions) < 1 {
-			return ErrSessionExpired
+			return s.expire()
 		}
 
 		if err := fn(qtx); err != nil {

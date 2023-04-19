@@ -39,8 +39,7 @@ func (a *agentCallbackService) Heartbeat(ctx context.Context, req *apb.AgentHear
 		return nil, status.Error(codes.InvalidArgument, "machine_id invalid")
 	}
 
-	// TODO(q3k): don't start a session for every RPC.
-	session, err := a.s.bmdb.StartSession(ctx)
+	session, err := a.s.session(ctx)
 	if err != nil {
 		klog.Errorf("Could not start session: %v", err)
 		return nil, status.Error(codes.Unavailable, "could not start session")

@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/cenkalti/backoff/v4"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"k8s.io/klog/v2"
@@ -59,6 +60,49 @@ type Server struct {
 
 	bmdb  *bmdb.Connection
 	acsvc *agentCallbackService
+
+	sessionC chan *bmdb.Session
+}
+
+// sessionWorker emits a valid BMDB session to sessionC as long as ctx is active.
+func (s *Server) sessionWorker(ctx context.Context) {
+	var session *bmdb.Session
+	for {
+		if session == nil || session.Expired() {
+			klog.Infof("Starting new session...")
+			bo := backoff.NewExponentialBackOff()
+			err := backoff.Retry(func() error {
+				var err error
+				session, err = s.bmdb.StartSession(ctx)
+				if err != nil {
+					klog.Errorf("Failed to start session: %v", err)
+					return err
+				} else {
+					return nil
+				}
+			}, backoff.WithContext(bo, ctx))
+			if err != nil {
+				// If something's really wrong just crash.
+				klog.Exitf("Gave up on starting session: %v", err)
+			}
+			klog.Infof("New session: %s", session.UUID)
+		}
+
+		select {
+		case <-ctx.Done():
+			return
+		case s.sessionC <- session:
+		}
+	}
+}
+
+func (s *Server) session(ctx context.Context) (*bmdb.Session, error) {
+	select {
+	case sess := <-s.sessionC:
+		return sess, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 func (s *Server) startPublic(ctx context.Context) {
@@ -109,6 +153,8 @@ func (s *Server) Start(ctx context.Context) {
 		s: s,
 	}
 	s.bmdb = conn
+	s.sessionC = make(chan *bmdb.Session)
+	go s.sessionWorker(ctx)
 	s.startInternalGRPC(ctx)
 	s.startPublic(ctx)
 	go func() {
