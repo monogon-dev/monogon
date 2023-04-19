@@ -45,12 +45,20 @@ func (s *server) viewMachines(w http.ResponseWriter, r *http.Request, args ...st
 	}
 	duration := time.Since(start)
 
+	tagCount := make(map[string]int)
+	for _, d := range res.Data {
+		for _, t := range d.Tags {
+			tagCount[t.Type.Name()]++
+		}
+	}
+
 	type params struct {
 		Base       baseParams
 		Query      string
 		Machines   []*reflection.Machine
 		NMachines  int
 		RenderTime time.Duration
+		TagCount   map[string]int
 	}
 	err = templates.ExecuteTemplate(w, "machines.html", &params{
 		Base:       s.makeBase(),
@@ -58,6 +66,7 @@ func (s *server) viewMachines(w http.ResponseWriter, r *http.Request, args ...st
 		Machines:   res.Data,
 		NMachines:  len(res.Data),
 		RenderTime: duration,
+		TagCount:   tagCount,
 	})
 	if err != nil {
 		klog.Errorf("Template rendering failed: %v", err)

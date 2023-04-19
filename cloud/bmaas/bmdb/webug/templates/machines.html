@@ -31,6 +31,18 @@
     </tr>
     {{ end -}}
 </table>
+<table>
+    <tr>
+        {{ range $name, $count := .TagCount -}}
+        <th>{{ $name }}</th>
+        {{ end -}}
+    </tr>
+    <tr>
+        {{ range $name, $count := .TagCount -}}
+        <td>{{ $count }}</td>
+        {{ end -}}
+    </tr>
+</table>
 <p class="small faint mono">
     {{ .NMachines }} rows, rendered in {{ .RenderTime }}. Query: {{ .Query }}
 </p>
