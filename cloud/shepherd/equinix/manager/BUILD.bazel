@@ -10,6 +10,7 @@ go_library(
         "recoverer.go",
         "shared_config.go",
         "ssh.go",
+        "updater.go",
     ],
     importpath = "source.monogon.dev/cloud/shepherd/equinix/manager",
     visibility = ["//visibility:public"],
@@ -38,6 +39,7 @@ go_test(
         "initializer_test.go",
         "provisioner_test.go",
         "recoverer_test.go",
+        "updater_test.go",
     ],
     data = [
         "//cloud/shepherd/equinix/manager/test_agent",

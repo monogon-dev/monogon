@@ -57,9 +57,6 @@ func (f *fakequinix) GetDevice(_ context.Context, pid, did string, _ *packngo.Li
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	if pid != f.pid {
-		return nil, f.notFound()
-	}
 	val := f.devices[did]
 	if val == nil {
 		return nil, f.notFound()
@@ -95,8 +92,22 @@ func (f *fakequinix) CreateDevice(_ context.Context, request *packngo.DeviceCrea
 	}
 
 	dev := &packngo.Device{
-		ID:       uuid.New().String(),
-		State:    "very fake",
+		ID:    uuid.New().String(),
+		State: "active",
+		HardwareReservation: &packngo.HardwareReservation{
+			ID: rid,
+		},
+		Network: []*packngo.IPAddressAssignment{
+			{
+				IpAddressCommon: packngo.IpAddressCommon{
+					Public:  true,
+					Address: "1.2.3.4",
+				},
+			},
+		},
+		Facility: &packngo.Facility{
+			Code: "wad",
+		},
 		Hostname: request.Hostname,
 		OS: &packngo.OS{
 			Name: request.OS,

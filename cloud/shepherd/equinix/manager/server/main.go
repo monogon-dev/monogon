@@ -25,6 +25,7 @@ type Config struct {
 	ProvisionerConfig manager.ProvisionerConfig
 	InitializerConfig manager.InitializerConfig
 	RecovererConfig   manager.RecovererConfig
+	UpdaterConfig     manager.UpdaterConfig
 	WebugConfig       webug.Config
 	API               wrapngo.Opts
 }
@@ -48,6 +49,7 @@ func (c *Config) RegisterFlags() {
 	c.ProvisionerConfig.RegisterFlags()
 	c.InitializerConfig.RegisterFlags()
 	c.RecovererConfig.RegisterFlags()
+	c.UpdaterConfig.RegisterFlags()
 	c.WebugConfig.RegisterFlags()
 	c.API.RegisterFlags()
 }
@@ -94,6 +96,11 @@ func main() {
 		klog.Exitf("%v", err)
 	}
 
+	updater, err := c.UpdaterConfig.New(api)
+	if err != nil {
+		klog.Exitf("%v", err)
+	}
+
 	conn, err := c.BMDB.Open(true)
 	if err != nil {
 		klog.Exitf("Failed to open BMDB connection: %v", err)
@@ -113,6 +120,12 @@ func main() {
 	}()
 	go func() {
 		err = manager.RunControlLoop(ctx, conn, recoverer)
+		if err != nil {
+			klog.Exit(err)
+		}
+	}()
+	go func() {
+		err = updater.Run(ctx, conn)
 		if err != nil {
 			klog.Exit(err)
 		}

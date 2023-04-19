@@ -409,7 +409,7 @@ func (r *TagField) Scan(src any) error {
 		}
 	case "USER-DEFINED":
 		switch r.Type.NativeUDTName {
-		case "provider":
+		case "provider", "provider_status":
 			src2, ok := src.([]byte)
 			if !ok {
 				return fmt.Errorf("SQL type %q, but got %+v", r.Type.NativeType, src)

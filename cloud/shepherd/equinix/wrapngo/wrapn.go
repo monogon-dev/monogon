@@ -79,7 +79,7 @@ type Opts struct {
 func (o *Opts) RegisterFlags() {
 	flag.StringVar(&o.User, "equinix_api_username", "", "Username for Equinix API")
 	flag.StringVar(&o.APIKey, "equinix_api_key", "", "Key/token/password for Equinix API")
-	flag.IntVar(&o.Parallelism, "equinix_parallelism", 1, "How many parallel connections to the Equinix API will be allowed")
+	flag.IntVar(&o.Parallelism, "equinix_parallelism", 3, "How many parallel connections to the Equinix API will be allowed")
 }
 
 // Client is a limited interface of methods that the Shepherd uses on Equinix. It

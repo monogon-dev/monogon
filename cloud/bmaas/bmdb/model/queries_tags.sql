@@ -60,3 +60,13 @@ WHERE machine_id = $1;
 -- name: MachineDeleteAgentHeartbeat :exec
 DELETE FROM machine_agent_heartbeat
 WHERE machine_id = $1;
+
+-- name: MachineUpdateProviderStatus :exec
+UPDATE machine_provided
+SET
+    provider_reservation_id = COALESCE($3, provider_reservation_id),
+    provider_ip_address = COALESCE($4, provider_ip_address),
+    provider_location = COALESCE($5, provider_location),
+    provider_status = COALESCE($6, provider_status)
+WHERE provider_id = $1
+AND   provider = $2;
