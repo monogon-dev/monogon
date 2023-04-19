@@ -54,13 +54,27 @@ INSERT INTO work_history (
 -- name: WorkBackoffInsert :exec
 -- Upsert a backoff for a given machine/process.
 INSERT INTO work_backoff (
-    machine_id, process, cause, until
+    machine_id, process, cause, until, last_interval_seconds
 ) VALUES (
-    $1, $2, $3, now() + (sqlc.arg(seconds)::int * interval '1 second')
+    $1, $2, $3,
+    now() + (sqlc.arg(seconds)::int * interval '1 second'),
+    sqlc.arg(seconds)::bigint
 ) ON CONFLICT (machine_id, process) DO UPDATE SET
     cause = $3,
-    until = now() + (sqlc.arg(seconds)::int * interval '1 second')
+    until = now() + (sqlc.arg(seconds)::int * interval '1 second'),
+    last_interval_seconds = sqlc.arg(seconds)::bigint
 ;
+
+-- name: WorkBackoffDelete :exec
+DELETE FROM work_backoff
+WHERE machine_id = $1
+  AND process = $2;
+
+-- name: WorkBackoffOf :many
+SELECT *
+FROM work_backoff
+WHERE machine_id = $1
+  AND process = $2;
 
 -- name: ListHistoryOf :many
 -- Retrieve full audit history of a machine.

@@ -64,8 +64,10 @@ func TestReflection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	to := time.Hour
-	w.Fail(ctx, &to, "failure test")
+	backoff := Backoff{
+		Initial: time.Hour,
+	}
+	w.Fail(ctx, &backoff, "failure test")
 
 	// On another machine, create a failure with a 1 second backoff.
 	w, err = sess.Work(ctx, model.ProcessUnitTest1, func(q *model.Queries) ([]uuid.UUID, error) {
@@ -74,11 +76,13 @@ func TestReflection(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	to = time.Second
-	w.Fail(ctx, &to, "failure test")
+	backoff = Backoff{
+		Initial: time.Second,
+	}
+	w.Fail(ctx, &backoff, "failure test")
 	// Later on in the test we must wait for this backoff to actually elapse. Start
 	// counting now.
-	elapsed := time.NewTicker(to * 1)
+	elapsed := time.NewTicker(time.Second * 1)
 	defer elapsed.Stop()
 
 	// On another machine, create work and don't finish it yet.

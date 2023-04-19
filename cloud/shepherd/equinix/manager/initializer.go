@@ -154,10 +154,7 @@ func (c *Initializer) getMachines(ctx context.Context, q *model.Queries, limit i
 func (c *Initializer) processMachine(ctx context.Context, t *task) error {
 	dev, err := c.cl.GetDevice(ctx, c.sharedConfig.ProjectId, t.machine.ProviderID)
 	if err != nil {
-		klog.Errorf("failed to fetch device %q: %v", t.machine.ProviderID, err)
-		d := 30 * time.Second
-		err = t.work.Fail(ctx, &d, "failed to fetch device from equinix")
-		return err
+		return fmt.Errorf("while fetching device %q: %v", t.machine.ProviderID, err)
 	}
 
 	// Start the agent.

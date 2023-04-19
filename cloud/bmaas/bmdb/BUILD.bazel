@@ -23,6 +23,7 @@ go_library(
 go_test(
     name = "bmdb_test",
     srcs = [
+        "backoff_test.go",
         "migrations_test.go",
         "queries_test.go",
         "reflection_test.go",
@@ -38,6 +39,7 @@ go_test(
         "//cloud/bmaas/bmdb/reflection",
         "//cloud/bmaas/server/api",
         "//cloud/lib/component",
+        "@com_github_google_go_cmp//cmp",
         "@com_github_google_uuid//:uuid",
         "@org_golang_google_protobuf//proto",
     ],

@@ -208,6 +208,7 @@ var (
 // The returned Work object is _not_ goroutine safe.
 func (s *Session) Work(ctx context.Context, process model.Process, fn func(q *model.Queries) ([]uuid.UUID, error)) (*Work, error) {
 	var mid *uuid.UUID
+	var exisingingBackoff *existingBackoff
 	err := s.Transact(ctx, func(q *model.Queries) error {
 		mids, err := fn(q)
 		if err != nil {
@@ -237,6 +238,25 @@ func (s *Session) Work(ctx context.Context, process model.Process, fn func(q *mo
 		if err != nil {
 			return fmt.Errorf("could not insert history event: %w", err)
 		}
+		backoffs, err := q.WorkBackoffOf(ctx, model.WorkBackoffOfParams{
+			MachineID: mids[0],
+			Process:   process,
+		})
+		if err != nil {
+			return fmt.Errorf("could not get backoffs: %w", err)
+		}
+		if len(backoffs) > 0 {
+			// If the backoff exists but the last interval is null (e.g. is from a previous
+			// version of the schema when backoffs had no interval data) pretend it doesn't
+			// exist. Then the backoff mechanism can restart from a clean slate and populate
+			// a new, full backoff row.
+			if backoff := backoffs[0]; backoff.LastIntervalSeconds.Valid {
+				klog.Infof("Existing backoff: %d seconds", backoff.LastIntervalSeconds.Int64)
+				exisingingBackoff = &existingBackoff{
+					lastInterval: time.Second * time.Duration(backoff.LastIntervalSeconds.Int64),
+				}
+			}
+		}
 		return nil
 	})
 	if err != nil {
@@ -247,7 +267,185 @@ func (s *Session) Work(ctx context.Context, process model.Process, fn func(q *mo
 		Machine: *mid,
 		s:       s,
 		process: process,
+		backoff: exisingingBackoff,
 	}, nil
+}
+
+// existingBackoff contains backoff information retrieved from a work item that
+// has previously failed with a backoff.
+type existingBackoff struct {
+	// lastInterval is the last interval as stored in the backoff table.
+	lastInterval time.Duration
+}
+
+// Backoff describes the configuration of backoff for a failed work item. It can
+// be passed to Work.Fail to cause an item to not be processed again (to be 'in
+// backoff') for a given period of time. Exponential backoff can be configured so
+// that subsequent failures of a process will have exponentially increasing
+// backoff periods, up to some maximum length.
+//
+// The underlying unit of backoff period length in the database is one second.
+// What that means is that all effective calculated backoff periods must be an
+// integer number of seconds. This is performed by always rounding up this period
+// to the nearest second. A side effect of this is that with exponential backoff,
+// non-integer exponents will be less precisely applied for small backoff values,
+// e.g. an exponent of 1.1 with initial backoff of 1s will generate the following
+// sequence of backoff periods:
+//
+// 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17
+//
+// Which corresponds to the following approximate multipliers in between periods:
+//
+// 2.00, 1.50, 1.33, 1.25, 1.20, 1.17, 1.14, 1.12, 1.11, 1.10, 1.18, 1.15, 1.13
+//
+// Thus, the exponent value should be treated more as a limit that the sequence
+// of periods will approach than a hard rule for calculating the periods.
+// However, if the exponent is larger than 1 (i.e. any time exponential backoff
+// is requested), this guarantees that the backoff won't get 'stuck' on a
+// repeated period value due to a rounding error.
+//
+// A zero backoff structure is valid and represents a non-exponential backoff of
+// one second.
+//
+// A partially filled structure is also valid. See the field comments for more
+// information about how fields are capped if not set. The described behaviour
+// allows for two useful shorthands:
+//
+//  1. If only Initial is set, then the backoff is non-exponential and will always
+//     be of value Initial (or whatever the previous period already persisted the
+//     database).
+//  2. If only Maximum and Exponent are set, the backoff will be exponential,
+//     starting at one second, and exponentially increasing to Maximum.
+//
+// It is recommended to construct Backoff structures as const values and treat
+// them as read-only 'descriptors', one per work kind / process.
+//
+// One feature currently missing from the Backoff implementation is jitter. This
+// might be introduced in the future if deemed necessary.
+type Backoff struct {
+	// Initial backoff period, used for the backoff if this item failed for the first
+	// time (i.e. has not had a Finish call in between two Fail calls).
+	//
+	// Subsequent calls will ignore this field if the backoff is exponential. If
+	// non-exponential, the initial time will always override whatever was previously
+	// persisted in the database, i.e. the backoff will always be of value 'Initial'.
+	//
+	// Cannot be lower than one second. If it is, it will be capped to it.
+	Initial time.Duration `u:"initial"`
+
+	// Maximum time for backoff. If the calculation of the next back off period
+	// (based on the Exponent and last backoff value) exceeds this maximum, it will
+	// be capped to it.
+	//
+	// Maximum is not persisted in the database. Instead, it is always read from this
+	// structure.
+	//
+	// Cannot be lower than Initial. If it is, it will be capped to it.
+	Maximum time.Duration `u:"maximum"`
+
+	// Exponent used for next backoff calculation. Any time a work item fails
+	// directly after another failure, the previous backoff period will be multiplied
+	// by the exponent to yield the new backoff period. The new period will then be
+	// capped to Maximum.
+	//
+	// Exponent is not persisted in the database. Instead, it is always read from
+	// this structure.
+	//
+	// Cannot be lower than 1.0. If it is, it will be capped to it.
+	Exponent float64 `u:"exponent"`
+}
+
+// normalized copies the given backoff and returns a 'normalized' version of it,
+// with the 'when zero/unset' rules described in the Backoff documentation
+// strings.
+func (b *Backoff) normalized() *Backoff {
+	c := *b
+
+	if c.Exponent < 1.0 {
+		c.Exponent = 1.0
+	}
+	if c.Initial < time.Second {
+		c.Initial = time.Second
+	}
+	if c.Maximum < c.Initial {
+		c.Maximum = c.Initial
+	}
+	return &c
+}
+
+func (b *Backoff) simple() bool {
+	// Non-normalized simple backoffs will have a zero exponent.
+	if b.Exponent == 0.0 {
+		return true
+	}
+	// Normalized simple backoffs will have a 1.0 exponent.
+	if b.Exponent == 1.0 {
+		return true
+	}
+	return false
+}
+
+// next calculates the backoff period based on a backoff descriptor and previous
+// existing backoff information. Both or either can be nil.
+func (b *Backoff) next(e *existingBackoff) int64 {
+	second := time.Second.Nanoseconds()
+
+	// Minimum interval is one second. Start with that.
+	last := second
+	// Then, if we have a previous interval, and it's greater than a second, use that
+	// as the last interval.
+	if e != nil {
+		if previous := e.lastInterval.Nanoseconds(); previous > second {
+			last = previous
+		}
+	}
+
+	// If no backoff is configured, go with either the minimum of one second, or
+	// whatever the last previous interval was.
+	if b == nil {
+		return last / second
+	}
+
+	// Make a copy of the backoff descriptor, normalizing as necessary.
+	c := b.normalized()
+
+	// Simple backoffs always return Initial.
+	if b.simple() {
+		return c.Initial.Nanoseconds() / second
+	}
+
+	// If there is no existing backoff, return the initial backoff value directly.
+	if e == nil {
+		return c.Initial.Nanoseconds() / second
+	}
+
+	// Start out with the persisted interval.
+	next := last
+	// If by any chance we persisted an interval less than one second, clamp it.
+	if next < second {
+		next = second
+	}
+
+	// Multiply by exponent from descriptor.
+	next = int64(float64(next) * c.Exponent)
+
+	// Handle overflows. If multiplying by a positive number resulted in a lower
+	// value than what we started with, it means we overflowed and wrapped around. If
+	// so, clamp to maximum.
+	if next < last {
+		next = c.Maximum.Nanoseconds()
+	}
+
+	// Clamp to maximum.
+	if next > c.Maximum.Nanoseconds() {
+		next = c.Maximum.Nanoseconds()
+	}
+	// Round up to the nearest second.
+	if next%second == 0 {
+		return next / second
+	} else {
+		return next/second + 1
+	}
 }
 
 // Work being performed on a machine.
@@ -261,6 +459,8 @@ type Work struct {
 	done bool
 	// process that this work performs.
 	process model.Process
+
+	backoff *existingBackoff
 }
 
 // Cancel the Work started on a machine. If the work has already been finished
@@ -318,6 +518,13 @@ func (w *Work) Finish(ctx context.Context, fn func(q *model.Queries) error) erro
 		if err != nil {
 			return err
 		}
+		err = q.WorkBackoffDelete(ctx, model.WorkBackoffDeleteParams{
+			MachineID: w.Machine,
+			Process:   w.process,
+		})
+		if err != nil {
+			return err
+		}
 		err = q.WorkHistoryInsert(ctx, model.WorkHistoryInsertParams{
 			MachineID: w.Machine,
 			Process:   w.process,
@@ -330,12 +537,28 @@ func (w *Work) Finish(ctx context.Context, fn func(q *model.Queries) error) erro
 	})
 }
 
-// Fail work and introduce backoff for a given duration (if given backoff is
-// non-nil). As long as that backoff is active, no further work for this
-// machine/process will be started. The given cause is an operator-readable
+// Fail work and introduce backoff. The given cause is an operator-readable
 // string that will be persisted alongside the backoff and the work history/audit
 // table.
-func (w *Work) Fail(ctx context.Context, backoff *time.Duration, cause string) error {
+//
+// The backoff describes a period during which the same process will not be
+// retried on this machine until its expiration.
+//
+// The given backoff is a structure which describes both the initial backoff
+// period if the work failed for the first time, and a mechanism to exponentially
+// increase the backoff period if that work failed repeatedly. The work is
+// defined to have failed repeatedly if it only resulted in Cancel/Fail calls
+// without any Finish calls in the meantime.
+//
+// Only the last backoff period is persisted in the database. The exponential
+// backoff behaviour (including its maximum time) is always calculated based on
+// the given backoff structure.
+//
+// If nil, the backoff defaults to a non-exponential, one second backoff. This is
+// the minimum designed to keep the system chugging along without repeatedly
+// trying a failed job in a loop. However, the backoff should generally be set to
+// some well engineered value to prevent spurious retries.
+func (w *Work) Fail(ctx context.Context, backoff *Backoff, cause string) error {
 	if w.done {
 		return fmt.Errorf("already finished")
 	}
@@ -362,17 +585,16 @@ func (w *Work) Fail(ctx context.Context, backoff *time.Duration, cause string) e
 		if err != nil {
 			return err
 		}
-		if backoff != nil && backoff.Seconds() >= 1.0 {
-			seconds := int64(backoff.Seconds())
-			klog.Infof("Adding backoff for %q on machine %q (%d seconds)", w.process, w.Machine, seconds)
-			return q.WorkBackoffInsert(ctx, model.WorkBackoffInsertParams{
-				MachineID: w.Machine,
-				Process:   w.process,
-				Seconds:   seconds,
-				Cause:     cause,
-			})
-		} else {
-			return nil
+		if backoff == nil {
+			klog.Warningf("Nil backoff for %q on machine %q: defaulting to one second non-exponential.", w.process, w.Machine)
 		}
+		seconds := backoff.next(w.backoff)
+		klog.Infof("Adding backoff for %q on machine %q: %d seconds", w.process, w.Machine, seconds)
+		return q.WorkBackoffInsert(ctx, model.WorkBackoffInsertParams{
+			MachineID: w.Machine,
+			Process:   w.process,
+			Cause:     cause,
+			Seconds:   seconds,
+		})
 	})
 }

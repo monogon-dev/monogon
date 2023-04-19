@@ -192,8 +192,12 @@ func (r *controlLoopRunner) runInSession(ctx context.Context, sess *bmdb.Session
 
 	if err := r.loop.processMachine(ctx, t); err != nil {
 		klog.Errorf("Failed to process machine %s: %v", t.machine.MachineID, err)
-		d := 1 * time.Minute
-		err = t.work.Fail(ctx, &d, fmt.Sprintf("failed to process: %v", err))
+		backoff := bmdb.Backoff{
+			Initial:  time.Minute,
+			Maximum:  2 * time.Hour,
+			Exponent: 1.1,
+		}
+		err = t.work.Fail(ctx, &backoff, fmt.Sprintf("failed to process: %v", err))
 		return err
 	}
 	return nil
