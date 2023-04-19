@@ -247,7 +247,7 @@ efistub_external(
 load("//third_party/libpg_query:external.bzl", "libpg_query_external")
 libpg_query_external(
     name = "libpg_query",
-    version = "13-2.1.2",
+    version = "13-2.2.0",
 )
 
 register_toolchains("//:host_python")

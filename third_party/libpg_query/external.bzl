@@ -2,7 +2,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 def libpg_query_external(name, version):
     sums = {
-        "13-2.1.2": "101a7851ee065d824fe06e300b78355a79bd5411864de707761282a0c57a0a97",
+        "13-2.2.0": "07916be1a2b780dee6feed936aaa04ccee2a3afde8570a6920c3a839c87539c6",
     }
     http_archive(
         name = name,

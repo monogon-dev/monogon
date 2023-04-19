@@ -95,8 +95,8 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/kevinburke/go-bindata v3.23.0+incompatible
-	github.com/kyleconroy/sqlc v1.15.0
-	github.com/lib/pq v1.10.6
+	github.com/kyleconroy/sqlc v1.17.2
+	github.com/lib/pq v1.10.7
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mdlayher/ethtool v0.0.0-20211028163843-288d040e9d60
 	github.com/mdlayher/genetlink v1.2.0
@@ -111,7 +111,7 @@ require (
 	github.com/rekby/gpt v0.0.0-20200614112001-7da10aec5566
 	github.com/rmohr/bazeldnf v0.5.4
 	github.com/sbezverk/nfproxy v0.0.0-20210112155058-0d98b4a69f0c
-	github.com/spf13/cobra v1.5.0
+	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.1
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
@@ -122,7 +122,7 @@ require (
 	go.etcd.io/etcd/server/v3 v3.5.4
 	go.etcd.io/etcd/tests/v3 v3.5.4
 	go.uber.org/multierr v1.8.0
-	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
+	golang.org/x/crypto v0.6.0
 	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
 	golang.org/x/net v0.7.0
@@ -150,6 +150,8 @@ require (
 require (
 	cloud.google.com/go v0.107.0 // indirect
 	cloud.google.com/go/iam v0.8.0 // indirect
+	github.com/bytecodealliance/wasmtime-go/v5 v5.0.0 // indirect
+	github.com/cubicdaiya/gonp v1.0.4 // indirect
 )
 
 require (
@@ -190,7 +192,6 @@ require (
 	github.com/bazelbuild/buildtools v0.0.0-20201023142455-8a8e1e724705 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
-	github.com/bytecodealliance/wasmtime-go v0.39.0 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
@@ -274,7 +275,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/heketi/heketi v10.3.0+incompatible // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/infobloxopen/go-trees v0.0.0-20200715205103-96a057b8dfb9 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -325,7 +326,7 @@ require (
 	github.com/oschwald/geoip2-golang v1.7.0 // indirect
 	github.com/oschwald/maxminddb-golang v1.9.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
-	github.com/pganalyze/pg_query_go/v2 v2.1.2 // indirect
+	github.com/pganalyze/pg_query_go/v2 v2.2.0 // indirect
 	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pingcap/errors v0.11.5-0.20210425183316-da1aaba5fb63 // indirect
