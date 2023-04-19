@@ -86,7 +86,9 @@ func (o *Opts) RegisterFlags() {
 // is provided to allow for dependency injection of a fake equinix API for tests.
 type Client interface {
 	// GetDevice wraps packngo's cl.Devices.Get.
-	GetDevice(ctx context.Context, pid, did string) (*packngo.Device, error)
+	//
+	// TODO(q3k): remove unused pid parameter.
+	GetDevice(ctx context.Context, pid, did string, opts *packngo.ListOptions) (*packngo.Device, error)
 	// ListDevices wraps packngo's cl.Device.List.
 	ListDevices(ctx context.Context, pid string) ([]packngo.Device, error)
 	// CreateDevice attempts to create a new device according to the provided
@@ -220,9 +222,9 @@ func (e *client) ListDevices(ctx context.Context, pid string) ([]packngo.Device,
 	})
 }
 
-func (e *client) GetDevice(ctx context.Context, pid, did string) (*packngo.Device, error) {
+func (e *client) GetDevice(ctx context.Context, pid, did string, opts *packngo.ListOptions) (*packngo.Device, error) {
 	return wrap(ctx, e, func(cl *packngo.Client) (*packngo.Device, error) {
-		d, _, err := cl.Devices.Get(did, nil)
+		d, _, err := cl.Devices.Get(did, opts)
 		return d, err
 	})
 }

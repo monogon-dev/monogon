@@ -70,7 +70,7 @@ func (l *liveTestClient) awaitDeviceState(t *testing.T, id string, states ...str
 	t.Helper()
 
 	for {
-		d, err := l.cl.GetDevice(l.ctx, l.apipid, id)
+		d, err := l.cl.GetDevice(l.ctx, l.apipid, id, nil)
 		if err != nil {
 			if errors.Is(err, os.ErrDeadlineExceeded) {
 				continue
@@ -277,7 +277,7 @@ func TestLiveAPI(t *testing.T) {
 			t.Skip("the test device couldn't have been created - skipping...")
 		}
 
-		d, err := cl.GetDevice(ctx, ltc.apipid, testDevice.ID)
+		d, err := cl.GetDevice(ctx, ltc.apipid, testDevice.ID, nil)
 		if err != nil {
 			t.Fatalf("while fetching device info: %v", err)
 		}
@@ -315,7 +315,7 @@ func TestLiveAPI(t *testing.T) {
 		if err := cl.deleteDevice(ctx, testDevice.ID); err != nil {
 			t.Fatalf("while deleting a device: %v", err)
 		}
-		d, err := cl.GetDevice(ctx, ltc.apipid, testDevice.ID)
+		d, err := cl.GetDevice(ctx, ltc.apipid, testDevice.ID, nil)
 		if err != nil && !IsNotFound(err) {
 			t.Fatalf("while fetching device info: %v", err)
 		}

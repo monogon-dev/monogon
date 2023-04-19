@@ -53,7 +53,7 @@ func (f *fakequinix) notFound() error {
 	}
 }
 
-func (f *fakequinix) GetDevice(_ context.Context, pid, did string) (*packngo.Device, error) {
+func (f *fakequinix) GetDevice(_ context.Context, pid, did string, _ *packngo.ListOptions) (*packngo.Device, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 

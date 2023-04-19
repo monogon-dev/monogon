@@ -152,7 +152,7 @@ func (c *Initializer) getMachines(ctx context.Context, q *model.Queries, limit i
 }
 
 func (c *Initializer) processMachine(ctx context.Context, t *task) error {
-	dev, err := c.cl.GetDevice(ctx, c.sharedConfig.ProjectId, t.machine.ProviderID)
+	dev, err := c.cl.GetDevice(ctx, c.sharedConfig.ProjectId, t.machine.ProviderID, nil)
 	if err != nil {
 		return fmt.Errorf("while fetching device %q: %v", t.machine.ProviderID, err)
 	}
