@@ -411,7 +411,7 @@ func (pr *Provisioner) provision(ctx context.Context, sess *bmdb.Session, rsv pa
 	if err != nil {
 		return fmt.Errorf("while creating new device within Equinix: %w", err)
 	}
-	klog.Infof("Created a new device within Equinix (PID: %s).", nd.ID)
+	klog.Infof("Created a new device within Equinix (RID: %s, PID: %s, HOST: %s)", rsv.ID, nd.ID, hostname)
 
 	err = pr.assimilate(ctx, sess, nd.ID)
 	if err != nil {
