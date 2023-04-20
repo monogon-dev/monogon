@@ -1,0 +1,36 @@
+A few virtual drivers (bonding, dummy) predate netlink (~2003), which means that
+the kernel had no way to dynamically create network interfaces.
+The solution was kernel module paramter which statically precreated a list of
+these virtual interfaces. The number was generally set to 1 by default, meaning
+that loading the module creates one of its interface.
+
+For compatibility with legacy userspaces this is still kept around. We could
+set the parameters to zero, but doing that everywhere is a pain. This just
+patches the default values to zero.
+
+diff --git a/drivers/net/dummy.c b/drivers/net/dummy.c
+index c4b1b0aa438a..06b00f7a8eab 100644
+--- a/drivers/net/dummy.c
++++ b/drivers/net/dummy.c
+@@ -43,7 +43,7 @@
+ 
+ #define DRV_NAME	"dummy"
+ 
+-static int numdummies = 1;
++static int numdummies = 0;
+ 
+ /* fake multicast ability */
+ static void set_multicast_list(struct net_device *dev)
+diff --git a/include/uapi/linux/if_bonding.h b/include/uapi/linux/if_bonding.h
+index d174914a837d..bf8e2af101a3 100644
+--- a/include/uapi/linux/if_bonding.h
++++ b/include/uapi/linux/if_bonding.h
+@@ -82,7 +82,7 @@
+ #define BOND_STATE_ACTIVE       0   /* link is active */
+ #define BOND_STATE_BACKUP       1   /* link is backup */
+ 
+-#define BOND_DEFAULT_MAX_BONDS  1   /* Default maximum number of devices to support */
++#define BOND_DEFAULT_MAX_BONDS  0   /* Default maximum number of devices to support */
+ 
+ #define BOND_DEFAULT_TX_QUEUES 16   /* Default number of tx queues per device */
+ 
