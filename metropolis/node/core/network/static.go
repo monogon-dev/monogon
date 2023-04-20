@@ -78,7 +78,7 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 			// Set link administratively up if no MasterIndex has been set.
 			newLink.Attrs().Flags |= net.FlagUp
 		}
-		if newLink.Attrs().Index == -1 {
+		if newLink.Attrs().Index <= 0 {
 			if err := netlink.LinkAdd(newLink); err != nil {
 				return fmt.Errorf("failed to add link %q: %w", i.Name, err)
 			}
