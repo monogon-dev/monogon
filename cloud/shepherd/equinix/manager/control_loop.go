@@ -26,12 +26,17 @@ type task struct {
 	// work is a machine lock facilitated by BMDB that prevents machines from
 	// being processed by multiple workers at the same time.
 	work *bmdb.Work
+	// backoff is configured from processInfo.defaultBackoff but can be overridden by
+	// processMachine to set a different backoff policy for specific failure modes.
+	backoff bmdb.Backoff
 }
 
 // controlLoop is implemented by any component which should act as a BMDB-based
 // control loop. Implementing these methods allows the given component to be
 // started using RunControlLoop.
 type controlLoop interface {
+	getProcessInfo() processInfo
+
 	// getMachines must return the list of machines ready to be processed by the
 	// control loop for a given control loop implementation.
 	getMachines(ctx context.Context, q *model.Queries, limit int32) ([]model.MachineProvided, error)
@@ -43,6 +48,11 @@ type controlLoop interface {
 	// embedded by the control loop component. If not embedded, this method will have
 	// to be implemented, too.
 	getControlLoopConfig() *ControlLoopConfig
+}
+
+type processInfo struct {
+	process        model.Process
+	defaultBackoff bmdb.Backoff
 }
 
 // ControlLoopConfig should be embedded the every component which acts as a
@@ -135,10 +145,12 @@ type controlLoopRunner struct {
 // run the control loops(s) (depending on opts.Parallelism) blocking the current
 // goroutine until the given context expires and all provisioners quit.
 func (r *controlLoopRunner) run(ctx context.Context, conn *bmdb.Connection) error {
+	pinfo := r.loop.getProcessInfo()
+
 	eg := errgroup.Group{}
 	for j := 0; j < r.config.Parallelism; j += 1 {
 		eg.Go(func() error {
-			return r.runOne(ctx, conn)
+			return r.runOne(ctx, conn, &pinfo)
 		})
 	}
 	return eg.Wait()
@@ -146,7 +158,7 @@ func (r *controlLoopRunner) run(ctx context.Context, conn *bmdb.Connection) erro
 
 // run the control loop blocking the current goroutine until the given context
 // expires.
-func (r *controlLoopRunner) runOne(ctx context.Context, conn *bmdb.Connection) error {
+func (r *controlLoopRunner) runOne(ctx context.Context, conn *bmdb.Connection, pinfo *processInfo) error {
 	var err error
 
 	// Maintain a BMDB session as long as possible.
@@ -159,7 +171,7 @@ func (r *controlLoopRunner) runOne(ctx context.Context, conn *bmdb.Connection) e
 			}
 		}
 		// Inside that session, run the main logic.
-		err := r.runInSession(ctx, sess)
+		err := r.runInSession(ctx, sess, pinfo)
 
 		switch {
 		case err == nil:
@@ -180,8 +192,8 @@ func (r *controlLoopRunner) runOne(ctx context.Context, conn *bmdb.Connection) e
 // runInSession executes one iteration of the control loop within a BMDB session.
 // This control loop attempts to start or re-start the agent on any machines that
 // need this per the BMDB.
-func (r *controlLoopRunner) runInSession(ctx context.Context, sess *bmdb.Session) error {
-	t, err := r.source(ctx, sess)
+func (r *controlLoopRunner) runInSession(ctx context.Context, sess *bmdb.Session, pinfo *processInfo) error {
+	t, err := r.source(ctx, sess, pinfo)
 	if err != nil {
 		return fmt.Errorf("could not source machine: %w", err)
 	}
@@ -192,12 +204,7 @@ func (r *controlLoopRunner) runInSession(ctx context.Context, sess *bmdb.Session
 
 	if err := r.loop.processMachine(ctx, t); err != nil {
 		klog.Errorf("Failed to process machine %s: %v", t.machine.MachineID, err)
-		backoff := bmdb.Backoff{
-			Initial:  time.Minute,
-			Maximum:  2 * time.Hour,
-			Exponent: 1.1,
-		}
-		err = t.work.Fail(ctx, &backoff, fmt.Sprintf("failed to process: %v", err))
+		err = t.work.Fail(ctx, &t.backoff, fmt.Sprintf("failed to process: %v", err))
 		return err
 	}
 	return nil
@@ -207,11 +214,11 @@ func (r *controlLoopRunner) runInSession(ctx context.Context, sess *bmdb.Session
 // control loop, locked by a work item. If both task and error are nil, then
 // there are no machines needed to be initialized. The returned work item in task
 // _must_ be canceled or finished by the caller.
-func (r *controlLoopRunner) source(ctx context.Context, sess *bmdb.Session) (*task, error) {
+func (r *controlLoopRunner) source(ctx context.Context, sess *bmdb.Session, pinfo *processInfo) (*task, error) {
 	r.config.DBQueryLimiter.Wait(ctx)
 
 	var machine *model.MachineProvided
-	work, err := sess.Work(ctx, model.ProcessShepherdAccess, func(q *model.Queries) ([]uuid.UUID, error) {
+	work, err := sess.Work(ctx, pinfo.process, func(q *model.Queries) ([]uuid.UUID, error) {
 		machines, err := r.loop.getMachines(ctx, q, 1)
 		if err != nil {
 			return nil, err
@@ -234,5 +241,6 @@ func (r *controlLoopRunner) source(ctx context.Context, sess *bmdb.Session) (*ta
 	return &task{
 		machine: machine,
 		work:    work,
+		backoff: pinfo.defaultBackoff,
 	}, nil
 }

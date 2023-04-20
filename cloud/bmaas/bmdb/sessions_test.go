@@ -201,7 +201,7 @@ func TestWorkBackoff(t *testing.T) {
 			if time.Now().After(deadline) {
 				t.Fatalf("Deadline expired")
 			}
-			work, err := session.Work(ctx, model.ProcessShepherdAccess, func(q *model.Queries) ([]uuid.UUID, error) {
+			work, err := session.Work(ctx, model.ProcessShepherdAgentStart, func(q *model.Queries) ([]uuid.UUID, error) {
 				machines, err := q.GetMachinesForAgentStart(ctx, 1)
 				if err != nil {
 					return nil, err
@@ -274,7 +274,7 @@ func TestWorkBackoff(t *testing.T) {
 			var err error
 			backoffs, err = q.WorkBackoffOf(ctx, model.WorkBackoffOfParams{
 				MachineID: machine.MachineID,
-				Process:   model.ProcessShepherdAccess,
+				Process:   model.ProcessShepherdAgentStart,
 			})
 			return err
 		})
@@ -350,7 +350,7 @@ func TestAgentStartWorkflow(t *testing.T) {
 	doneC := make(chan struct{})
 	errC := make(chan error)
 	go func() {
-		work, err := session.Work(ctx, model.ProcessShepherdAccess, func(q *model.Queries) ([]uuid.UUID, error) {
+		work, err := session.Work(ctx, model.ProcessShepherdAgentStart, func(q *model.Queries) ([]uuid.UUID, error) {
 			machines, err := q.GetMachinesForAgentStart(ctx, 1)
 			if err != nil {
 				return nil, err
@@ -384,8 +384,11 @@ func TestAgentStartWorkflow(t *testing.T) {
 		errC <- err
 	}()
 	<-startedC
+
 	// Work on the machine has started. Attempting to get more machines now should
 	// return no machines.
+
+	// Mutual exclusion with AgentStart:
 	err = session.Transact(ctx, func(q *model.Queries) error {
 		machines, err := q.GetMachinesForAgentStart(ctx, 1)
 		if err != nil {
@@ -399,6 +402,22 @@ func TestAgentStartWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to retrieve machines for start in parallel: %v", err)
 	}
+
+	// Mutual exclusion with Recovery:
+	err = session.Transact(ctx, func(q *model.Queries) error {
+		machines, err := q.GetMachineForAgentRecovery(ctx, 1)
+		if err != nil {
+			return err
+		}
+		if len(machines) > 0 {
+			t.Errorf("Expected no machines ready for agent recovery.")
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Failed to retrieve machines for recovery in parallel: %v", err)
+	}
+
 	// Finish working on machine.
 	close(doneC)
 	err = <-errC
@@ -446,7 +465,7 @@ func TestAgentStartWorkflow(t *testing.T) {
 		if want, got := machine, el.MachineID; want.String() != got.String() {
 			t.Errorf("Wanted %d history event machine ID to be %s, got %s", i, want, got)
 		}
-		if want, got := model.ProcessShepherdAccess, el.Process; want != got {
+		if want, got := model.ProcessShepherdAgentStart, el.Process; want != got {
 			t.Errorf("Wanted %d history event process to be %s, got %s", i, want, got)
 		}
 	}
@@ -498,7 +517,7 @@ func TestAgentStartWorkflowParallel(t *testing.T) {
 	})
 
 	workOnce := func(ctx context.Context, workerID int, session *Session) error {
-		work, err := session.Work(ctx, model.ProcessShepherdAccess, func(q *model.Queries) ([]uuid.UUID, error) {
+		work, err := session.Work(ctx, model.ProcessShepherdAgentStart, func(q *model.Queries) ([]uuid.UUID, error) {
 			machines, err := q.GetMachinesForAgentStart(ctx, 1)
 			if err != nil {
 				return nil, err

@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"source.monogon.dev/cloud/bmaas/bmdb"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	ecl "source.monogon.dev/cloud/shepherd/equinix/wrapngo"
 )
@@ -38,6 +39,17 @@ func NewRecoverer(cl ecl.Client, rc RecovererConfig) (*Recoverer, error) {
 		RecovererConfig: rc,
 		cl:              cl,
 	}, nil
+}
+
+func (r *Recoverer) getProcessInfo() processInfo {
+	return processInfo{
+		process: model.ProcessShepherdRecovery,
+		defaultBackoff: bmdb.Backoff{
+			Initial:  1 * time.Minute,
+			Maximum:  1 * time.Hour,
+			Exponent: 1.2,
+		},
+	}
 }
 
 func (r *Recoverer) getMachines(ctx context.Context, q *model.Queries, limit int32) ([]model.MachineProvided, error) {

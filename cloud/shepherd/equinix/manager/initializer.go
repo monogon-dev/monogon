@@ -20,6 +20,7 @@ import (
 	"k8s.io/klog/v2"
 
 	apb "source.monogon.dev/cloud/agent/api"
+	"source.monogon.dev/cloud/bmaas/bmdb"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	ecl "source.monogon.dev/cloud/shepherd/equinix/wrapngo"
 )
@@ -145,6 +146,17 @@ func NewInitializer(cl ecl.Client, ic InitializerConfig, sc *SharedConfig) (*Ini
 		sshClient:    &PlainSSHClient{},
 		signer:       signer,
 	}, nil
+}
+
+func (c *Initializer) getProcessInfo() processInfo {
+	return processInfo{
+		process: model.ProcessShepherdAgentStart,
+		defaultBackoff: bmdb.Backoff{
+			Initial:  5 * time.Minute,
+			Maximum:  4 * time.Hour,
+			Exponent: 1.2,
+		},
+	}
 }
 
 func (c *Initializer) getMachines(ctx context.Context, q *model.Queries, limit int32) ([]model.MachineProvided, error) {

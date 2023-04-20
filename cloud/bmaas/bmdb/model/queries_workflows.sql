@@ -12,8 +12,8 @@ SELECT
     machine_provided.*
 FROM machines
 INNER JOIN machine_provided ON machines.machine_id = machine_provided.machine_id
-LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process = 'ShepherdAccess'
-LEFT JOIN work_backoff ON machines.machine_id = work_backoff.machine_id AND work_backoff.until > now() AND work_backoff.process = 'ShepherdAccess'
+LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process IN ('ShepherdAccess', 'ShepherdAgentStart', 'ShepherdRecovery')
+LEFT JOIN work_backoff ON machines.machine_id = work_backoff.machine_id AND work_backoff.until > now() AND work_backoff.process = 'ShepherdAgentStart'
 LEFT JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
 WHERE
   machine_agent_started.machine_id IS NULL
@@ -33,8 +33,8 @@ SELECT
     machine_provided.*
 FROM machines
 INNER JOIN machine_provided ON machines.machine_id = machine_provided.machine_id
-LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process = 'ShepherdAccess'
-LEFT JOIN work_backoff ON machines.machine_id = work_backoff.machine_id AND work_backoff.until > now() AND work_backoff.process = 'ShepherdAccess'
+LEFT JOIN work ON machines.machine_id = work.machine_id AND work.process IN ('ShepherdAccess', 'ShepherdAgentStart', 'ShepherdRecovery')
+LEFT JOIN work_backoff ON machines.machine_id = work_backoff.machine_id AND work_backoff.until > now() AND work_backoff.process = 'ShepherdRecovery'
 LEFT JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
 LEFT JOIN machine_agent_heartbeat ON machines.machine_id = machine_agent_heartbeat.machine_id
 WHERE
