@@ -126,7 +126,9 @@ func agentRunnable(ctx context.Context) error {
 		if installationReport != nil {
 			req.InstallationReport = installationReport
 		}
-		res, err := c.Heartbeat(context.Background(), &req)
+		reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		res, err := c.Heartbeat(reqCtx, &req)
+		cancel()
 		if err != nil {
 			l.Infof("Heartbeat failed: %v", err)
 			time.Sleep(b.NextBackOff())
