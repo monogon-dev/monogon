@@ -22,5 +22,5 @@ go_library(
     name = "common",
     embed = [":common_go_proto"],
     importpath = "source.monogon.dev/metropolis/proto/common",
-    visibility = ["//metropolis:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
