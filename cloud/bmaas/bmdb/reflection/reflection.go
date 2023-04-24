@@ -423,6 +423,13 @@ func (r *TagField) Scan(src any) error {
 			return fmt.Errorf("SQL type %q, but got %+v", r.Type.NativeType, src)
 		}
 		r.time = &src2
+	case "bigint":
+		src2, ok := src.(int64)
+		if !ok {
+			return fmt.Errorf("SQL type %q, but got %+v", r.Type.NativeType, src)
+		}
+		src3 := fmt.Sprintf("%d", src2)
+		r.text = &src3
 	default:
 		return fmt.Errorf("unimplemented SQL type %q", r.Type.NativeType)
 	}

@@ -76,7 +76,8 @@ type TagFieldType struct {
 // Just mapping from column name is fine enough for now as we have mostly unique
 // column names, and these column names uniquely map to a single type.
 var knownProtoFields = map[string]proto.Message{
-	"hardware_report_raw": &api.AgentHardwareReport{},
+	"hardware_report_raw":         &api.AgentHardwareReport{},
+	"os_installation_request_raw": &api.OSInstallationRequest{},
 }
 
 // HumanType returns a human-readable representation of the field's type. This is
@@ -92,6 +93,8 @@ func (r *TagFieldType) HumanType() string {
 		return "timestamp"
 	case "bytea":
 		return "bytes"
+	case "bigint":
+		return "int"
 	default:
 		return r.NativeType
 	}
