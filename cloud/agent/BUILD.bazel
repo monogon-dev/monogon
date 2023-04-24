@@ -25,6 +25,7 @@ go_library(
         "//metropolis/pkg/scsi",
         "//metropolis/pkg/smbios",
         "//metropolis/pkg/supervisor",
+        "//net/proto",
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_mdlayher_ethtool//:ethtool",
         "@com_github_vishvananda_netlink//:netlink",

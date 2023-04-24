@@ -156,7 +156,7 @@ func agentRunnable(ctx context.Context) error {
 			installationReport = &bpb.OSInstallationReport{
 				Generation: res.InstallationRequest.Generation,
 			}
-			if err := install(res.InstallationRequest, l, isEFIBoot); err != nil {
+			if err := install(res.InstallationRequest, agentInit.NetworkConfig, l, isEFIBoot); err != nil {
 				l.Errorf("Installation failed: %v", err)
 				installationReport.Result = &bpb.OSInstallationReport_Error_{
 					Error: &bpb.OSInstallationReport_Error{

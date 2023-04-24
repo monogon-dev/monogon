@@ -15,23 +15,31 @@ import (
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	"source.monogon.dev/metropolis/pkg/efivarfs"
 	"source.monogon.dev/metropolis/pkg/logtree"
+	npb "source.monogon.dev/net/proto"
 )
 
 // install dispatches OSInstallationRequests to the appropriate installer
 // method
-func install(req *bpb.OSInstallationRequest, l logtree.LeveledLogger, isEFIBoot bool) error {
+func install(req *bpb.OSInstallationRequest, netConfig *npb.Net, l logtree.LeveledLogger, isEFIBoot bool) error {
 	switch reqT := req.Type.(type) {
 	case *bpb.OSInstallationRequest_Metropolis:
-		return installMetropolis(reqT.Metropolis, l, isEFIBoot)
+		return installMetropolis(reqT.Metropolis, netConfig, l, isEFIBoot)
 	default:
 		return errors.New("unknown installation request type")
 	}
 }
 
-func installMetropolis(req *bpb.MetropolisInstallationRequest, l logtree.LeveledLogger, isEFIBoot bool) error {
+func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Net, l logtree.LeveledLogger, isEFIBoot bool) error {
 	if !isEFIBoot {
 		return errors.New("Monogon OS can only be installed on EFI-booted machines, this one is not")
 	}
+
+	// Override the NodeParameters.NetworkConfig with the current NetworkConfig
+	// if it's missing.
+	if req.NodeParameters.NetworkConfig == nil {
+		req.NodeParameters.NetworkConfig = netConfig
+	}
+
 	// Download into a buffer as ZIP files cannot efficiently be read from
 	// HTTP in Go as the ReaderAt has no way of indicating continuous sections,
 	// thus a ton of small range requests would need to be used, causing
