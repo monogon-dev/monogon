@@ -60,6 +60,7 @@ func main() {
 	flag.Parse()
 
 	ctx := clicontext.WithInterrupt(context.Background())
+	c.Component.StartPrometheus(ctx)
 
 	if c.API.APIKey == "" || c.API.User == "" {
 		klog.Exitf("-equinix_api_username and -equinix_api_key must be set")

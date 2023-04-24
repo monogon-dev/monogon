@@ -145,6 +145,8 @@ func (s *Server) startInternalGRPC(ctx context.Context) {
 // Start the BMaaS Server in background goroutines. This should only be called
 // once. The process will exit with debug logs if starting the server failed.
 func (s *Server) Start(ctx context.Context) {
+	s.Config.Component.StartPrometheus(ctx)
+
 	conn, err := s.Config.BMDB.Open(true)
 	if err != nil {
 		klog.Exitf("Failed to connect to BMDB: %v", err)
