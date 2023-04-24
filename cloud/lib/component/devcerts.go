@@ -72,6 +72,7 @@ func (c *ComponentConfig) ensureDevComponent() (certPath, keyPath string) {
 	if err != nil {
 		klog.Exitf("Failed to generate %s serial number: %v", c.ComponentName, err)
 	}
+	cert.ExtKeyUsage = append(cert.ExtKeyUsage, x509.ExtKeyUsageClientAuth)
 	cert.SerialNumber = serialNumber
 	cert.NotBefore = time.Now()
 	cert.NotAfter = pki.UnknownNotAfter
