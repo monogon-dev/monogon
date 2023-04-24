@@ -5,6 +5,7 @@ import (
 	"flag"
 
 	"source.monogon.dev/cloud/bmaas/server"
+	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 )
 
 func main() {
@@ -12,10 +13,7 @@ func main() {
 	s.Config.RegisterFlags()
 	flag.Parse()
 
-	ctx, ctxC := context.WithCancel(context.Background())
-	// TODO: context cancel on interrupt.
-	_ = ctxC
-
+	ctx := clicontext.WithInterrupt(context.Background())
 	s.Start(ctx)
 	select {}
 }

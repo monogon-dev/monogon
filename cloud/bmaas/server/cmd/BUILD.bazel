@@ -7,7 +7,10 @@ go_library(
     srcs = ["main.go"],
     importpath = "source.monogon.dev/cloud/bmaas/server/cmd",
     visibility = ["//visibility:private"],
-    deps = ["//cloud/bmaas/server"],
+    deps = [
+        "//cloud/bmaas/server",
+        "//metropolis/cli/pkg/context",
+    ],
 )
 
 go_binary(
