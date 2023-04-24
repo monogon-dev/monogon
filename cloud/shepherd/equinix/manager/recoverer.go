@@ -9,6 +9,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
+	"source.monogon.dev/cloud/bmaas/bmdb/metrics"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	ecl "source.monogon.dev/cloud/shepherd/equinix/wrapngo"
 )
@@ -49,6 +50,7 @@ func (r *Recoverer) getProcessInfo() processInfo {
 			Maximum:  1 * time.Hour,
 			Exponent: 1.2,
 		},
+		processor: metrics.ProcessorShepherdRecoverer,
 	}
 }
 

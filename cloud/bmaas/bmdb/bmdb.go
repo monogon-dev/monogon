@@ -7,7 +7,12 @@
 // service over gRPC.
 package bmdb
 
-import "source.monogon.dev/cloud/lib/component"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+
+	"source.monogon.dev/cloud/bmaas/bmdb/metrics"
+	"source.monogon.dev/cloud/lib/component"
+)
 
 // BMDB is the Bare Metal Database, a common schema to store information about
 // bare metal machines in CockroachDB. This struct is supposed to be
@@ -30,6 +35,8 @@ import "source.monogon.dev/cloud/lib/component"
 //     machines with some active work being performed on them.
 type BMDB struct {
 	Config
+
+	metrics *metrics.MetricsSet
 }
 
 // Config is the configuration of the BMDB connector.
@@ -43,4 +50,12 @@ type Config struct {
 	// host machine/job information, IP address, etc.) stored alongside the
 	// ComponentName in active Sessions.
 	RuntimeInfo string
+}
+
+// EnableMetrics configures BMDB metrics collection and registers it on the given
+// registry. This method should only be called once, and is not goroutine safe.
+func (b *BMDB) EnableMetrics(registry *prometheus.Registry) {
+	if b.metrics == nil {
+		b.metrics = metrics.New(registry)
+	}
 }

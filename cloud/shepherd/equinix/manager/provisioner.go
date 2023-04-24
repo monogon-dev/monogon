@@ -14,6 +14,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
+	"source.monogon.dev/cloud/bmaas/bmdb/metrics"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	"source.monogon.dev/cloud/lib/sinbin"
 	ecl "source.monogon.dev/cloud/shepherd/equinix/wrapngo"
@@ -116,7 +117,7 @@ func (p *Provisioner) Run(ctx context.Context, conn *bmdb.Connection) error {
 	var err error
 	for {
 		if sess == nil {
-			sess, err = conn.StartSession(ctx)
+			sess, err = conn.StartSession(ctx, bmdb.SessionOption{Processor: metrics.ProcessorShepherdProvisioner})
 			if err != nil {
 				return fmt.Errorf("could not start BMDB session: %w", err)
 			}

@@ -13,6 +13,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
+	"source.monogon.dev/cloud/bmaas/bmdb/metrics"
 	"source.monogon.dev/cloud/bmaas/bmdb/webug"
 	apb "source.monogon.dev/cloud/bmaas/server/api"
 	"source.monogon.dev/cloud/lib/component"
@@ -73,7 +74,7 @@ func (s *Server) sessionWorker(ctx context.Context) {
 			bo := backoff.NewExponentialBackOff()
 			err := backoff.Retry(func() error {
 				var err error
-				session, err = s.bmdb.StartSession(ctx)
+				session, err = s.bmdb.StartSession(ctx, bmdb.SessionOption{Processor: metrics.ProcessorBMSRV})
 				if err != nil {
 					klog.Errorf("Failed to start session: %v", err)
 					return err
@@ -145,6 +146,8 @@ func (s *Server) startInternalGRPC(ctx context.Context) {
 // Start the BMaaS Server in background goroutines. This should only be called
 // once. The process will exit with debug logs if starting the server failed.
 func (s *Server) Start(ctx context.Context) {
+	reg := s.Config.Component.PrometheusRegistry()
+	s.Config.BMDB.EnableMetrics(reg)
 	s.Config.Component.StartPrometheus(ctx)
 
 	conn, err := s.Config.BMDB.Open(true)

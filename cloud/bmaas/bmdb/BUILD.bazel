@@ -10,12 +10,14 @@ go_library(
     importpath = "source.monogon.dev/cloud/bmaas/bmdb",
     visibility = ["//visibility:public"],
     deps = [
+        "//cloud/bmaas/bmdb/metrics",
         "//cloud/bmaas/bmdb/model",
         "//cloud/bmaas/bmdb/reflection",
         "//cloud/lib/component",
         "@com_github_cockroachdb_cockroach_go_v2//crdb",
         "@com_github_google_uuid//:uuid",
         "@com_github_lib_pq//:pq",
+        "@com_github_prometheus_client_golang//prometheus",
         "@io_k8s_klog_v2//:klog",
     ],
 )

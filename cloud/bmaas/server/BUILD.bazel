@@ -10,6 +10,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//cloud/bmaas/bmdb",
+        "//cloud/bmaas/bmdb/metrics",
         "//cloud/bmaas/bmdb/model",
         "//cloud/bmaas/bmdb/webug",
         "//cloud/bmaas/server/api",

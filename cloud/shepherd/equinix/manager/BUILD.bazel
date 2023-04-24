@@ -17,6 +17,7 @@ go_library(
     deps = [
         "//cloud/agent/api",
         "//cloud/bmaas/bmdb",
+        "//cloud/bmaas/bmdb/metrics",
         "//cloud/bmaas/bmdb/model",
         "//cloud/lib/sinbin",
         "//cloud/shepherd/equinix/wrapngo",

@@ -21,6 +21,7 @@ import (
 
 	apb "source.monogon.dev/cloud/agent/api"
 	"source.monogon.dev/cloud/bmaas/bmdb"
+	"source.monogon.dev/cloud/bmaas/bmdb/metrics"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	ecl "source.monogon.dev/cloud/shepherd/equinix/wrapngo"
 )
@@ -156,6 +157,7 @@ func (c *Initializer) getProcessInfo() processInfo {
 			Maximum:  4 * time.Hour,
 			Exponent: 1.2,
 		},
+		processor: metrics.ProcessorShepherdInitializer,
 	}
 }
 

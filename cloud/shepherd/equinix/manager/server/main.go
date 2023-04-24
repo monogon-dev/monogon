@@ -59,6 +59,9 @@ func main() {
 	c.RegisterFlags()
 	flag.Parse()
 
+	registry := c.Component.PrometheusRegistry()
+	c.BMDB.EnableMetrics(registry)
+
 	ctx := clicontext.WithInterrupt(context.Background())
 	c.Component.StartPrometheus(ctx)
 

@@ -15,6 +15,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
+	"source.monogon.dev/cloud/bmaas/bmdb/metrics"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 )
 
@@ -52,6 +53,7 @@ type controlLoop interface {
 
 type processInfo struct {
 	process        model.Process
+	processor      metrics.Processor
 	defaultBackoff bmdb.Backoff
 }
 
@@ -165,7 +167,7 @@ func (r *controlLoopRunner) runOne(ctx context.Context, conn *bmdb.Connection, p
 	var sess *bmdb.Session
 	for {
 		if sess == nil {
-			sess, err = conn.StartSession(ctx)
+			sess, err = conn.StartSession(ctx, bmdb.SessionOption{Processor: pinfo.processor})
 			if err != nil {
 				return fmt.Errorf("could not start BMDB session: %w", err)
 			}
