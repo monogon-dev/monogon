@@ -11,7 +11,7 @@ import "cloud/agent/api/hwreport.proto";
 // certificates proving ownership of an agent keypair.
 service AgentCallback {
   // Heartbeat is called by agents repeatedly to upload a hardware report, signal
-  // liveness and retrieve actions to be prformed on a host.
+  // liveness and retrieve actions to be performed on a host.
   //
   // This isn't a streaming RPC as the current server implementation actually
   // isn't reactive, so it would have to do its own inner polling to create
