@@ -100,7 +100,7 @@ func (c *ComponentConfig) GRPCServerOptions() []grpc.ServerOption {
 	tlsConf := &tls.Config{
 		Certificates: []tls.Certificate{pair},
 		ClientAuth:   tls.RequireAndVerifyClientCert,
-		RootCAs:      certPool,
+		ClientCAs:    certPool,
 	}
 	return []grpc.ServerOption{
 		grpc.Creds(credentials.NewTLS(tlsConf)),
