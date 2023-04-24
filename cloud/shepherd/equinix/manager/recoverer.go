@@ -2,7 +2,9 @@ package manager
 
 import (
 	"context"
+	"flag"
 	"fmt"
+	"time"
 
 	"k8s.io/klog/v2"
 
@@ -12,10 +14,12 @@ import (
 
 type RecovererConfig struct {
 	ControlLoopConfig
+	RebootWaitSeconds int
 }
 
 func (r *RecovererConfig) RegisterFlags() {
 	r.ControlLoopConfig.RegisterFlags("recoverer")
+	flag.IntVar(&r.RebootWaitSeconds, "recoverer_reboot_wait_seconds", 30, "How many seconds to sleep to ensure a reboot happend")
 }
 
 // The Recoverer reboots machines whose agent has stopped sending heartbeats or
@@ -45,6 +49,15 @@ func (r *Recoverer) processMachine(ctx context.Context, t *task) error {
 
 	if err := r.cl.RebootDevice(ctx, t.machine.ProviderID); err != nil {
 		return fmt.Errorf("failed to reboot device: %w", err)
+	}
+
+	// TODO(issue/215): replace this
+	// This is required as Equinix doesn't reboot the machines synchronously
+	// during the API call.
+	select {
+	case <-time.After(time.Duration(r.RebootWaitSeconds) * time.Second):
+	case <-ctx.Done():
+		return fmt.Errorf("while waiting for reboot: %w", ctx.Err())
 	}
 
 	klog.Infof("Removing AgentStarted/AgentHeartbeat (ID: %s, PID: %s)...", t.machine.MachineID, t.machine.ProviderID)
