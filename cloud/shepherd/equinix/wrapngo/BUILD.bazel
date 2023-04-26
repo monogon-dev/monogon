@@ -4,6 +4,7 @@ go_library(
     name = "wrapngo",
     srcs = [
         "duct_tape.go",
+        "metrics.go",
         "wrapn.go",
     ],
     importpath = "source.monogon.dev/cloud/shepherd/equinix/wrapngo",
@@ -12,6 +13,7 @@ go_library(
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_google_uuid//:uuid",
         "@com_github_packethost_packngo//:packngo",
+        "@com_github_prometheus_client_golang//prometheus",
         "@io_k8s_klog_v2//:klog",
     ],
 )

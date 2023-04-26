@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/packethost/packngo"
@@ -26,14 +27,10 @@ import (
 // idempotent logic, as long as it cooperates with the above contract.
 func wrap[U any](ctx context.Context, cl *client, fn func(*packngo.Client) (U, error)) (U, error) {
 	var zero U
-	select {
-	case cl.serializer <- struct{}{}:
-	case <-ctx.Done():
-		return zero, ctx.Err()
+	if err := cl.serializer.up(ctx); err != nil {
+		return zero, err
 	}
-	defer func() {
-		<-cl.serializer
-	}()
+	defer cl.serializer.down()
 
 	bc := backoff.WithContext(cl.o.BackOff(), ctx)
 	pngo, err := cl.clientForContext(ctx)
@@ -60,11 +57,16 @@ func wrap[U any](ctx context.Context, cl *client, fn func(*packngo.Client) (U, e
 type injectContextRoundTripper struct {
 	ctx      context.Context
 	original http.RoundTripper
+	metrics  *metricsSet
 }
 
 func (r *injectContextRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	klog.V(5).Infof("Request -> %v", req.URL.String())
+	start := time.Now()
 	res, err := r.original.RoundTrip(req.WithContext(r.ctx))
+	latency := time.Since(start)
+	r.metrics.onAPIRequestDone(req, res, err, latency)
+
 	if err != nil {
 		klog.V(5).Infof("HTTP error <- %v", err)
 	} else {
@@ -78,6 +80,7 @@ func (c *client) clientForContext(ctx context.Context) (*packngo.Client, error) 
 		Transport: &injectContextRoundTripper{
 			ctx:      ctx,
 			original: http.DefaultTransport,
+			metrics:  c.metrics,
 		},
 	}
 	return packngo.NewClient(packngo.WithAuth(c.username, c.token), packngo.WithHTTPClient(httpcl))

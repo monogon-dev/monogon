@@ -68,6 +68,7 @@ func main() {
 	if c.API.APIKey == "" || c.API.User == "" {
 		klog.Exitf("-equinix_api_username and -equinix_api_key must be set")
 	}
+	c.API.MetricsRegistry = registry
 	api := wrapngo.New(&c.API)
 
 	// These variables are _very_ important to configure correctly, otherwise someone
