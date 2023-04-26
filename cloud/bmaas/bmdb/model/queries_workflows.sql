@@ -8,6 +8,7 @@ WHERE machine_provided.provider = $1;
 -- name: GetMachinesForAgentStart :many
 -- Get machines that need agent started for the first time. Machine can be
 -- assumed to be 'new', with no previous attempts or failures.
+-- ONCHANGE(queries_stats.sql): constraints must be kept in sync with StatsMachinesForAgentStart.
 SELECT
     machine_provided.*
 FROM machines
@@ -34,6 +35,7 @@ LIMIT $1;
 -- some point, or the machine got rebooted or somehow else lost the agent. Assume
 -- some work needs to be performed on the shepherd side to diagnose and recover
 -- whatever state the machine truly is in.
+-- ONCHANGE(queries_stats.sql): constraints must be kept in sync with StatsMachinesForAgentRecovery.
 SELECT
     machine_provided.*
 FROM machines

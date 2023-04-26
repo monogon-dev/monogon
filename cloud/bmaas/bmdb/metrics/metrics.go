@@ -26,6 +26,7 @@ const (
 	ProcessorShepherdRecoverer   Processor = "shepherd-recoverer"
 	ProcessorShepherdUpdater     Processor = "shepherd-updater"
 	ProcessorBMSRV               Processor = "bmsrv"
+	ProcessorScruffyStats        Processor = "scruffy-stats"
 )
 
 // String returns the Prometheus label value for use with the 'processor' label

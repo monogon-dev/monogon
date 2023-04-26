@@ -8,6 +8,7 @@ sqlc_go_library(
     migrations = glob(["migrations/*sql"]),
     queries = [
         "queries_base.sql",
+        "queries_stats.sql",
         "queries_tags.sql",
         "queries_workflows.sql",
     ],
@@ -15,7 +16,10 @@ sqlc_go_library(
 
 go_library(
     name = "model",
-    srcs = ["migrations.go"],
+    srcs = [
+        "interfaces.go",
+        "migrations.go",
+    ],
     embed = [
         ":sqlc_model",  # keep
     ],
