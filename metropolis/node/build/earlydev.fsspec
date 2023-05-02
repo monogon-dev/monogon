@@ -31,7 +31,7 @@ special_file <
 >
 
 
-# Metropolis core logs to /dev/ttyS0 and /dev/tty0 by default, we want
+# Metropolis core logs to /dev/ttyS{0,1} and /dev/tty0 by default, we want
 # these to also be present before devtmpfs is mounted so that minit can
 # log there, too.
 special_file <
@@ -44,5 +44,11 @@ special_file <
     path: "/dev/ttyS0"
     type: CHARACTER_DEV
     major: 4 minor: 64
+    mode: 0660 uid: 0 gid: 0
+>
+special_file <
+    path: "/dev/ttyS1"
+    type: CHARACTER_DEV
+    major: 4 minor: 65
     mode: 0660 uid: 0 gid: 0
 >

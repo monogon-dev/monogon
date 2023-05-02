@@ -112,7 +112,7 @@ verity_image(
 
 efi_unified_kernel_image(
     name = "kernel_efi",
-    cmdline = "console=ttyS0,115200 console=tty0 quiet rootfstype=erofs init=/init",
+    cmdline = "console=ttyS0,115200 console=ttyS1,115200 console=tty0 quiet rootfstype=erofs init=/init",
     initrd = [":ucode"],
     kernel = "//third_party/linux",
     os_release = ":os-release-info",

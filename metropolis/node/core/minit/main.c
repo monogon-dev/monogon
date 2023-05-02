@@ -29,7 +29,7 @@
 
 void handle_signal(pid_t child_pid, int signum);
 
-#define NUM_CONSOLES 3
+#define NUM_CONSOLES 4
 FILE *consoles[NUM_CONSOLES] = {};
 
 // open_consoles populates the consoles array with FILE pointers to opened
@@ -39,6 +39,7 @@ void open_consoles() {
     consoles[0] = fopen("/dev/console", "w");
     consoles[1] = fopen("/dev/tty0", "w");
     consoles[2] = fopen("/dev/ttyS0", "w");
+    consoles[3] = fopen("/dev/ttyS1", "w");
 
     // Set all open consoles to be line-buffered.
     for (int i = 0; i < NUM_CONSOLES; i++) {

@@ -48,7 +48,7 @@ func main() {
 	lt := logtree.New()
 
 	// Set up logger for Metropolis. Currently logs everything to /dev/tty0 and
-	// /dev/ttyS0.
+	// /dev/ttyS{0,1}.
 	consoles := []console{
 		{
 			path:     "/dev/tty0",
@@ -56,6 +56,10 @@ func main() {
 		},
 		{
 			path:     "/dev/ttyS0",
+			maxWidth: 120,
+		},
+		{
+			path:     "/dev/ttyS1",
 			maxWidth: 120,
 		},
 	}
