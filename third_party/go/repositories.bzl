@@ -4326,12 +4326,6 @@ def go_repositories():
     )
 
     go_repository(
-        name = "com_github_rekby_gpt",
-        importpath = "github.com/rekby/gpt",
-        sum = "h1:U4d0m0NdADC5sjaWXeZpDZ/TFvE866u1Js5yP3M3mho=",
-        version = "v0.0.0-20200614112001-7da10aec5566",
-    )
-    go_repository(
         name = "com_github_remyoudompheng_bigfft",
         importpath = "github.com/remyoudompheng/bigfft",
         sum = "h1:OdAsTTz6OkFY5QxjkYwrChwuRruF69c169dPK26NUlk=",

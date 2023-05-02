@@ -108,7 +108,6 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.14
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.10.1
-	github.com/rekby/gpt v0.0.0-20200614112001-7da10aec5566
 	github.com/rmohr/bazeldnf v0.5.4
 	github.com/sbezverk/nfproxy v0.0.0-20210112155058-0d98b4a69f0c
 	github.com/spf13/cobra v1.6.1

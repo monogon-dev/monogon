@@ -22,24 +22,20 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"unsafe"
 
-	"github.com/rekby/gpt"
+	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
 
+	"source.monogon.dev/metropolis/pkg/efivarfs"
+	"source.monogon.dev/metropolis/pkg/gpt"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/pkg/sysfs"
 )
 
-var (
-	// EFIPartitionType is the standardized partition type value for the EFI
-	// ESP partition. The human readable GUID is
-	// C12A7328-F81F-11D2-BA4B-00A0C93EC93B.
-	EFIPartitionType = gpt.PartType{0x28, 0x73, 0x2a, 0xc1, 0x1f, 0xf8, 0xd2, 0x11, 0xba, 0x4b, 0x00, 0xa0, 0xc9, 0x3e, 0xc9, 0x3b}
-
-	// NodeDataPartitionType is the partition type value for a Metropolis Node
-	// data partition. The human-readable GUID is
-	// 9eeec464-6885-414a-b278-4305c51f7966.
-	NodeDataPartitionType = gpt.PartType{0x64, 0xc4, 0xee, 0x9e, 0x85, 0x68, 0x4a, 0x41, 0xb2, 0x78, 0x43, 0x05, 0xc5, 0x1f, 0x79, 0x66}
-)
+// NodeDataPartitionType is the partition type value for a Metropolis Node
+// data partition.
+var NodeDataPartitionType = uuid.MustParse("9eeec464-6885-414a-b278-4305c51f7966")
 
 const (
 	ESPDevicePath     = "/dev/esp"
@@ -50,6 +46,10 @@ const (
 // to ESPDevicePath and NodeDataCryptPath respectively. This doesn't fail if it
 // doesn't find the partitions, only if something goes catastrophically wrong.
 func MakeBlockDevices(ctx context.Context) error {
+	espUUID, err := efivarfs.ReadLoaderDevicePartUUID()
+	if err != nil {
+		supervisor.Logger(ctx).Warningf("No EFI variable for the loader device partition UUID present")
+	}
 	blockdevNames, err := os.ReadDir("/sys/class/block")
 	if err != nil {
 		return fmt.Errorf("failed to read sysfs block class: %w", err)
@@ -65,6 +65,8 @@ func MakeBlockDevices(ctx context.Context) error {
 				return fmt.Errorf("failed to convert uevent: %w", err)
 			}
 			devNodeName := fmt.Sprintf("/dev/%v", ueventData["DEVNAME"])
+			// TODO(lorenz): This extraction code is all a bit hairy, will get
+			// replaced by blockdev shortly.
 			blkdev, err := os.Open(devNodeName)
 			if err != nil {
 				return fmt.Errorf("failed to open block device %v: %w", devNodeName, err)
@@ -74,20 +76,46 @@ func MakeBlockDevices(ctx context.Context) error {
 			if err != nil {
 				continue // This is not a regular block device
 			}
+			var sizeBytes uint64
+			_, _, err = unix.Syscall(unix.SYS_IOCTL, blkdev.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&sizeBytes)))
+			if err != unix.Errno(0) {
+				return fmt.Errorf("failed to get device size: %w", err)
+			}
 			blkdev.Seek(int64(blockSize), 0)
-			table, err := gpt.ReadTable(blkdev, uint64(blockSize))
+			table, err := gpt.Read(blkdev, int64(blockSize), int64(sizeBytes)/int64(blockSize))
 			if err != nil {
 				// Probably just not a GPT-partitioned disk
 				continue
 			}
+			skipDisk := false
+			if espUUID != uuid.Nil {
+				// If we know where we booted from, ignore all disks which do
+				// not contain this partition.
+				skipDisk = true
+				for _, part := range table.Partitions {
+					if part.ID == espUUID {
+						skipDisk = false
+						break
+					}
+				}
+			}
+			if skipDisk {
+				continue
+			}
+			seenTypes := make(map[uuid.UUID]bool)
 			for partNumber, part := range table.Partitions {
-				if part.Type == EFIPartitionType {
+				if seenTypes[part.Type] {
+					return fmt.Errorf("failed to create device node for %s (%s): node for this type already created/multiple partitions found", part.ID.String(), part.Type.String())
+				}
+				if part.Type == gpt.PartitionTypeEFISystem {
+					seenTypes[part.Type] = true
 					err := unix.Mknod(ESPDevicePath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1))))
 					if err != nil && !os.IsExist(err) {
 						return fmt.Errorf("failed to create device node for ESP partition: %w", err)
 					}
 				}
 				if part.Type == NodeDataPartitionType {
+					seenTypes[part.Type] = true
 					err := unix.Mknod(NodeDataCryptPath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1))))
 					if err != nil && !os.IsExist(err) {
 						return fmt.Errorf("failed to create device node for Metropolis node encrypted data partition: %w", err)
