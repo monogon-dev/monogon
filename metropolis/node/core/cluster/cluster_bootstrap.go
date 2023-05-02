@@ -42,7 +42,9 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	} else {
 		var err error
 		cc, err = curator.ClusterConfigurationFromInitial(bootstrap.InitialClusterConfiguration)
-		return fmt.Errorf("invalid initial cluster configuration: %w", err)
+		if err != nil {
+			return fmt.Errorf("invalid initial cluster configuration: %w", err)
+		}
 	}
 
 	tpmUsage, err := cc.NodeTPMUsage(m.haveTPM)
