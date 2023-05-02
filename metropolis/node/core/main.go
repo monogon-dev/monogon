@@ -160,9 +160,9 @@ func main() {
 			} else {
 				logger.Errorf("Unable to load static config, proceeding without it: %v", err)
 			}
-			if err := supervisor.Run(ctx, "network", networkSvc.Run); err != nil {
-				return fmt.Errorf("when starting network: %w", err)
-			}
+		}
+		if err := supervisor.Run(ctx, "network", networkSvc.Run); err != nil {
+			return fmt.Errorf("when starting network: %w", err)
 		}
 		if err := supervisor.Run(ctx, "time", timeSvc.Run); err != nil {
 			return fmt.Errorf("when starting time: %w", err)
