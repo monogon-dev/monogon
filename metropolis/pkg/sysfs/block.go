@@ -26,6 +26,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 // PartUUIDMap returns a mapping between partition UUIDs and block device
@@ -60,12 +62,12 @@ var ErrDevNotFound = errors.New("device not found")
 
 // DeviceByPartUUID returns a block device name, given its corresponding
 // partition UUID.
-func DeviceByPartUUID(uuid string) (string, error) {
+func DeviceByPartUUID(id uuid.UUID) (string, error) {
 	pm, err := PartUUIDMap()
 	if err != nil {
 		return "", err
 	}
-	if bdev, ok := pm[strings.ToLower(uuid)]; ok {
+	if bdev, ok := pm[id.String()]; ok {
 		return bdev, nil
 	}
 	return "", ErrDevNotFound

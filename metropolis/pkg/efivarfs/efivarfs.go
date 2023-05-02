@@ -24,8 +24,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
+	"github.com/google/uuid"
 	"golang.org/x/text/encoding/unicode"
 )
 
@@ -58,20 +58,23 @@ func ExtractString(contents []byte) (string, error) {
 }
 
 // ReadLoaderDevicePartUUID reads the ESP UUID from an EFI variable. It
-// depends on efivarfs being already mounted. It returns a correct lowercase
-// UUID, or an error.
-func ReadLoaderDevicePartUUID() (string, error) {
+// depends on efivarfs being already mounted.
+func ReadLoaderDevicePartUUID() (uuid.UUID, error) {
 	// Read the EFI variable file containing the ESP UUID.
 	espUuidPath := filepath.Join(Path, "LoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f")
 	efiVar, err := os.ReadFile(espUuidPath)
 	if err != nil {
-		return "", fmt.Errorf("couldn't read the LoaderDevicePartUUID file at %q: %w", espUuidPath, err)
+		return uuid.Nil, fmt.Errorf("couldn't read the LoaderDevicePartUUID file at %q: %w", espUuidPath, err)
 	}
 	contents, err := ExtractString(efiVar)
 	if err != nil {
-		return "", fmt.Errorf("couldn't decode an EFI variable: %w", err)
+		return uuid.Nil, fmt.Errorf("couldn't decode an EFI variable: %w", err)
 	}
-	return strings.ToLower(contents), nil
+	out, err := uuid.Parse(contents)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("value in LoaderDevicePartUUID could not be parsed as UUID: %w", err)
+	}
+	return out, nil
 }
 
 // CreateBootEntry creates an EFI boot entry variable and returns its
