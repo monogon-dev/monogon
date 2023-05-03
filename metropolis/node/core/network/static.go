@@ -41,6 +41,8 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 		return err
 	}
 
+	var hasIPv4Autoconfig bool
+
 	nameLinkMap := make(map[string]netlink.Link)
 
 	// interface name -> parent interface name
@@ -92,6 +94,7 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 			if err := s.runDHCPv4(ctx, newLink); err != nil {
 				return fmt.Errorf("error enabling DHCPv4 on %q: %w", newLink.Attrs().Name, err)
 			}
+			hasIPv4Autoconfig = true
 		}
 		if i.Ipv6Autoconfig != nil {
 			err := sysctlOptions{
@@ -126,6 +129,29 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 	}
 	if len(nsIPList) > 0 {
 		s.ConfigureDNS(dns.NewUpstreamDirective(nsIPList))
+	}
+
+	if !hasIPv4Autoconfig {
+		var selectedAddr net.IP
+	ifLoop:
+		for _, i := range s.StaticConfig.Interface {
+			if i.Ipv4Autoconfig != nil {
+				continue
+			}
+			for _, a := range i.Address {
+				ipNet, err := addressOrPrefix(a)
+				if err != nil {
+				}
+				if ipNet.IP.To4() != nil {
+					selectedAddr = ipNet.IP.To4()
+					break ifLoop
+				}
+			}
+		}
+		s.status.Set(&Status{
+			ExternalAddress: selectedAddr,
+			DNSServers:      nsIPList,
+		})
 	}
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
