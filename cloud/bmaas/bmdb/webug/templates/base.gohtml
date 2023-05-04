@@ -62,6 +62,18 @@
         background-color: #e8f8e8;
     }
 
+    /* Colouring of the Machine State in fragment_tag_provided.gohtml. */
+    b.StatusMissing,
+    b.StatusProvisioning,
+    b.StatusProvisioningFailedPermanent,
+    b.StatusStopped
+    {
+        color: red;
+    }
+    b.StatusRunning {
+        color: green;
+    }
+
     /* Generic font style tags for any element. */
     .small {
         font-size: 0.8em;
