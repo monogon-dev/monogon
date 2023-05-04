@@ -23,9 +23,9 @@ import (
 )
 
 var (
-	//go:embed templates/*html
+	//go:embed templates/*.gohtml
 	templateFS embed.FS
-	templates  = template.Must(template.New("base.html").Funcs(templateFuncs).ParseFS(templateFS, "templates/*"))
+	templates  = template.Must(template.New("base.gohtml").Funcs(templateFuncs).ParseFS(templateFS, "templates/*"))
 )
 
 // server holds the state of an active webug interface.

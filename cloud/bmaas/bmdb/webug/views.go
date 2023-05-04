@@ -14,7 +14,7 @@ import (
 )
 
 // baseParams are passed to all rendered templates, and are consumed by tags in
-// templates/base.html.
+// templates/base.gohtml.
 type baseParams struct {
 	// Address to display in page header.
 	BMDBAddress string
@@ -60,7 +60,7 @@ func (s *server) viewMachines(w http.ResponseWriter, r *http.Request, args ...st
 		RenderTime time.Duration
 		TagCount   map[string]int
 	}
-	err = templates.ExecuteTemplate(w, "machines.html", &params{
+	err = templates.ExecuteTemplate(w, "machines.gohtml", &params{
 		Base:       s.makeBase(),
 		Query:      res.Query,
 		Machines:   res.Data,
@@ -151,7 +151,7 @@ func (s *server) viewMachineDetail(w http.ResponseWriter, r *http.Request, args 
 	for i := 0; i < len(history); i += 1 {
 		p.History[i] = history[len(history)-(i+1)]
 	}
-	if err := templates.ExecuteTemplate(w, "machine.html", &p); err != nil {
+	if err := templates.ExecuteTemplate(w, "machine.gohtml", &p); err != nil {
 		klog.Errorf("Template rendering failed: %v", err)
 	}
 }

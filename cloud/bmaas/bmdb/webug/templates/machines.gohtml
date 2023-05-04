@@ -1,4 +1,4 @@
-{{ template "base.html" .Base }}
+{{ template "base.gohtml" .Base }}
 <h2>Machine List</h2>
 <p>
     Click on a Machine ID to explore it further. Commonly viewed tags are expanded.
@@ -25,7 +25,7 @@
         </td>
         <td>
             {{- range $name, $tag := .Tags -}}
-            {{- template "fragment_tag.html" $tag -}}
+            {{- template "fragment_tag.gohtml" $tag -}}
             {{- end -}}
         </td>
     </tr>

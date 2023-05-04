@@ -1,4 +1,4 @@
-{{ template "base.html" .Base }}
+{{ template "base.gohtml" .Base }}
 <h2>Machine {{ .Machine.ID }}</h2>
 
 {{ $sessions := .Sessions }}
@@ -29,7 +29,7 @@
         <table>
             <tr>
                 <th colspan="2">
-                    {{ template "fragment_tag.html" $tag }}
+                    {{ template "fragment_tag.gohtml" $tag }}
                 </th>
             </tr>
             {{ range $tag.Fields }}

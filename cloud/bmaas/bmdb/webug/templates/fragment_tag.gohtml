@@ -1,0 +1,5 @@
+{{- if eq .Type.Name "Provided" -}}
+    {{- template "fragment_tag_provided.gohtml" . -}}
+{{- else -}}
+    {{- template "fragment_tag_default.gohtml" . -}}
+{{- end -}}
