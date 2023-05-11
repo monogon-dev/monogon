@@ -101,11 +101,15 @@ type Client interface {
 	// retry was needed but in the meantime the requested hardware reservation from
 	// which this machine was requested got lost.
 	CreateDevice(ctx context.Context, request *packngo.DeviceCreateRequest) (*packngo.Device, error)
+	RebootDevice(ctx context.Context, did string) error
+	DeleteDevice(ctx context.Context, id string) error
 
 	// ListReservations returns a complete list of hardware reservations associated
 	// with project pid. This is an expensive method that takes a while to execute,
 	// handle with care.
 	ListReservations(ctx context.Context, pid string) ([]packngo.HardwareReservation, error)
+	// MoveReservation moves a reserved device to the given project.
+	MoveReservation(ctx context.Context, hardwareReservationDID, projectID string) (*packngo.HardwareReservation, error)
 
 	// ListSSHKeys wraps packngo's cl.Keys.List.
 	ListSSHKeys(ctx context.Context) ([]packngo.SSHKey, error)
@@ -119,7 +123,6 @@ type Client interface {
 	// package comment for information on this method's behavior and returned error
 	// values.
 	UpdateSSHKey(ctx context.Context, kid string, req *packngo.SSHKeyUpdateRequest) (*packngo.SSHKey, error)
-	RebootDevice(ctx context.Context, did string) error
 
 	Close()
 }
@@ -223,6 +226,39 @@ var (
 	ErrNoReservationProvided = errors.New("hardware reservation must be set")
 )
 
+func (e *client) PowerOffDevice(ctx context.Context, pid string) error {
+	_, err := wrap(ctx, e, func(p *packngo.Client) (*packngo.Response, error) {
+		r, err := p.Devices.PowerOff(pid)
+		if err != nil {
+			return nil, fmt.Errorf("Devices.PowerOff: %w", err)
+		}
+		return r, nil
+	})
+	return err
+}
+
+func (e *client) PowerOnDevice(ctx context.Context, pid string) error {
+	_, err := wrap(ctx, e, func(p *packngo.Client) (*packngo.Response, error) {
+		r, err := p.Devices.PowerOn(pid)
+		if err != nil {
+			return nil, fmt.Errorf("Devices.PowerOn: %w", err)
+		}
+		return r, nil
+	})
+	return err
+}
+
+func (e *client) DeleteDevice(ctx context.Context, id string) error {
+	_, err := wrap(ctx, e, func(p *packngo.Client) (*packngo.Response, error) {
+		r, err := p.Devices.Delete(id, false)
+		if err != nil {
+			return nil, fmt.Errorf("Devices.Delete: %w", err)
+		}
+		return r, nil
+	})
+	return err
+}
+
 func (e *client) CreateDevice(ctx context.Context, r *packngo.DeviceCreateRequest) (*packngo.Device, error) {
 	if r.HardwareReservationID == "" {
 		return nil, ErrNoReservationProvided
@@ -273,6 +309,16 @@ func (e *client) ListDevices(ctx context.Context, pid string) ([]packngo.Device,
 	})
 }
 
+func (e *client) UpdateDevice(ctx context.Context, id string, r *packngo.DeviceUpdateRequest) (*packngo.Device, error) {
+	return wrap(ctx, e, func(p *packngo.Client) (*packngo.Device, error) {
+		d, _, err := p.Devices.Update(id, r)
+		if err != nil {
+			return nil, fmt.Errorf("Devices.Update: %w", err)
+		}
+		return d, nil
+	})
+}
+
 func (e *client) GetDevice(ctx context.Context, pid, did string, opts *packngo.ListOptions) (*packngo.Device, error) {
 	return wrap(ctx, e, func(cl *packngo.Client) (*packngo.Device, error) {
 		d, _, err := cl.Devices.Get(did, opts)
@@ -296,8 +342,18 @@ func (e *client) deleteDevice(ctx context.Context, did string) error {
 
 func (e *client) ListReservations(ctx context.Context, pid string) ([]packngo.HardwareReservation, error) {
 	return wrap(ctx, e, func(cl *packngo.Client) ([]packngo.HardwareReservation, error) {
-		res, _, err := cl.HardwareReservations.List(pid, nil)
+		res, _, err := cl.HardwareReservations.List(pid, &packngo.ListOptions{Includes: []string{"facility", "device"}})
 		return res, err
+	})
+}
+
+func (e *client) MoveReservation(ctx context.Context, hardwareReservationDID, projectID string) (*packngo.HardwareReservation, error) {
+	return wrap(ctx, e, func(cl *packngo.Client) (*packngo.HardwareReservation, error) {
+		hr, _, err := cl.HardwareReservations.Move(hardwareReservationDID, projectID)
+		if err != nil {
+			return nil, fmt.Errorf("HardwareReservations.Move: %w", err)
+		}
+		return hr, err
 	})
 }
 

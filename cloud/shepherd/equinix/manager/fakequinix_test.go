@@ -78,6 +78,28 @@ func (f *fakequinix) ListDevices(_ context.Context, pid string) ([]packngo.Devic
 	return res, nil
 }
 
+// MoveReservation is not implemented in fakequinix
+func (f *fakequinix) MoveReservation(_ context.Context, hardwareReservationDID, projectID string) (*packngo.HardwareReservation, error) {
+	return nil, &packngo.ErrorResponse{
+		Response: &http.Response{
+			StatusCode: http.StatusNotImplemented,
+		},
+	}
+}
+
+func (f *fakequinix) DeleteDevice(_ context.Context, id string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if _, ok := f.devices[id]; !ok {
+		return f.notFound()
+	}
+
+	delete(f.devices, id)
+
+	return nil
+}
+
 func (f *fakequinix) CreateDevice(_ context.Context, request *packngo.DeviceCreateRequest) (*packngo.Device, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
