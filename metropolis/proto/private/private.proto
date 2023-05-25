@@ -18,6 +18,8 @@ syntax = "proto3";
 option go_package = "source.monogon.dev/metropolis/proto/private";
 package metropolis.proto.private;
 
+import "metropolis/proto/common/common.proto";
+
 // Node describes a single node's state in etcd
 // DEPRECATED: this will be moved to //metropolis/node/curator.
 message Node {
@@ -73,4 +75,9 @@ message SealedConfiguration {
     // cluster_ca is the X509 CA certificate of the cluster set during
     // registration and used by nodes joining the cluster.
     bytes cluster_ca = 3;
+    // storage_security is the node storage security that this node has been
+    // created with, and is used to determine the way the local storage (ie.
+    // Metropolis data partition) will be attempted to be mounted on subsequent
+    // node startups.
+    metropolis.proto.common.NodeStorageSecurity storage_security = 4;
 }

@@ -301,6 +301,25 @@ message ClusterConfiguration {
         TPM_MODE_DISABLED = 3;
     }
     TPMMode tpm_mode = 1;
+
+    // storage_security_policy defines which node storage security settings are
+    // accepted by the cluster. Nodes are informed of the cluster policy when
+    // registering into the cluster, alongside a cluster-recommended storage
+    // security setting. The node then reports its selected node storage setting
+    // during its Commit call which the cluster verifies against its policy.
+    enum StorageSecurityPolicy {
+        STORAGE_SECURITY_POLICY_INVALID = 0;
+        // The cluster accepts any storage security.
+        STORAGE_SECURITY_POLICY_PERMISSIVE = 1;
+        // The cluster accepts any storage security that offers encryption.
+        STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION = 2;
+        // The cluster accepts any storage security that offers encryption and
+        // authentication.
+        STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION = 3;
+        // The cluster only accepts unencrypted and unauthenticated node storage.
+        STORAGE_SECURITY_POLICY_NEEDS_INSECURE = 4;
+    }
+    StorageSecurityPolicy storage_security_policy = 2;
 }
 
 // NodeTPMUsage describes whether a node has a TPM2.0 and if it is/should be
@@ -314,4 +333,22 @@ enum NodeTPMUsage {
     NODE_TPM_PRESENT_BUT_UNUSED = 2;
     // This node has a TPM 2.0 and it is being actively used.
     NODE_TPM_PRESENT_AND_USED = 3;
+}
+
+// NodeStorageSecurity describes how a node encrypts and/or authenticates its
+// local storage. In other words, it's a configuration setting for disk
+// encryption (ie. via dm-crypt) and disk integrity (ie. via dm-integrity) of
+// the Metropolis data partition.
+enum NodeStorageSecurity {
+    NODE_STORAGE_SECURITY_INVALID = 0;
+    // The node has unencrypted and unauthenticated disk storage. Its data
+    // partition is a plain XFS partition, and the node's credentials are stored
+    // on it directly.
+    NODE_STORAGE_SECURITY_INSECURE = 1;
+    // The node has encrypted but unauthenticated disk storage. Its data
+    // partition is an XFS partition mounted through dm-crypt.
+    NODE_STORAGE_SECURITY_ENCRYPTED = 2;
+    // The node has encrypted and authenticated storage. Its data
+    // partition is an XFS partition mounted through dm-integrity and dm-crypt.
+    NODE_STORAGE_SECURITY_AUTHENTICATED_ENCRYPTED = 3;
 }

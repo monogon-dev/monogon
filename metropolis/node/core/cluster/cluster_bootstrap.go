@@ -49,11 +49,16 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 
 	tpmUsage, err := cc.NodeTPMUsage(m.haveTPM)
 	if err != nil {
-		return fmt.Errorf("cannot join cluster: %w", err)
+		return fmt.Errorf("cannot bootstrap cluster: %w", err)
 	}
 
-	supervisor.Logger(ctx).Infof("TPM: cluster TPM mode: %s", cc.TPMMode)
-	supervisor.Logger(ctx).Infof("TPM: node TPM usage: %s", tpmUsage)
+	storageSecurity, err := cc.NodeStorageSecurity()
+	if err != nil {
+		return fmt.Errorf("cannot bootstrap cluster: %w", err)
+	}
+
+	supervisor.Logger(ctx).Infof("TPM: cluster policy: %s, node: %s", cc.TPMMode, tpmUsage)
+	supervisor.Logger(ctx).Infof("Storage Security: cluster policy: %s, node: %s", cc.StorageSecurityPolicy, storageSecurity)
 
 	ownerKey := bootstrap.OwnerPublicKey
 	configuration := ppb.SealedConfiguration{}
@@ -71,7 +76,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 			supervisor.Logger(ctx).Infof("Bootstrapping: still waiting for storage....")
 		}
 	}()
-	cuk, err := m.storageRoot.Data.MountNew(&configuration)
+	cuk, err := m.storageRoot.Data.MountNew(&configuration, storageSecurity)
 	close(storageDone)
 	if err != nil {
 		return fmt.Errorf("could not make and mount data partition: %w", err)

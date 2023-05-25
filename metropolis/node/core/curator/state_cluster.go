@@ -20,7 +20,8 @@ var (
 // Cluster is the cluster's configuration, as (un)marshaled to/from
 // common.ClusterConfiguration.
 type Cluster struct {
-	TPMMode cpb.ClusterConfiguration_TPMMode
+	TPMMode               cpb.ClusterConfiguration_TPMMode
+	StorageSecurityPolicy cpb.ClusterConfiguration_StorageSecurityPolicy
 }
 
 // DefaultClusterConfiguration is the default cluster configuration for a newly
@@ -28,7 +29,8 @@ type Cluster struct {
 // user.
 func DefaultClusterConfiguration() *Cluster {
 	return &Cluster{
-		TPMMode: cpb.ClusterConfiguration_TPM_MODE_REQUIRED,
+		TPMMode:               cpb.ClusterConfiguration_TPM_MODE_REQUIRED,
+		StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION,
 	}
 }
 
@@ -84,6 +86,52 @@ func (c *Cluster) NodeTPMUsage(have bool) (usage cpb.NodeTPMUsage, err error) {
 	return
 }
 
+// NodeStorageSecurity returns the recommended NodeStorageSecurity for nodes
+// joining the cluster.
+func (c *Cluster) NodeStorageSecurity() (security cpb.NodeStorageSecurity, err error) {
+	switch c.StorageSecurityPolicy {
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_PERMISSIVE:
+		// TODO(q3k): allow per-node configuration. Be conservative for now.
+		return cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_AUTHENTICATED_ENCRYPTED, nil
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION:
+		return cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_AUTHENTICATED_ENCRYPTED, nil
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION:
+		// TODO(q3k): allow per-node configuration. Be conservative for now.
+		return cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_ENCRYPTED, nil
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE:
+		return cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_INSECURE, nil
+	default:
+		return cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_INVALID, fmt.Errorf("invalid cluster storage policy %d", c.StorageSecurityPolicy)
+	}
+}
+
+// ValidateNodeStorage checks the given NodeStorageSecurity and returns a gRPC
+// status if the security setting is not compliant with the cluster node storage
+// policy.
+func (c *Cluster) ValidateNodeStorage(ns cpb.NodeStorageSecurity) error {
+	switch c.StorageSecurityPolicy {
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_PERMISSIVE:
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE:
+		if ns != cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_INSECURE {
+			return status.Error(codes.FailedPrecondition, "cluster policy requires insecure node storage")
+		}
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION:
+		switch ns {
+		case cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_AUTHENTICATED_ENCRYPTED:
+		case cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_ENCRYPTED:
+		default:
+			return status.Error(codes.FailedPrecondition, "cluster policy requires encrypted node storage")
+		}
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION:
+		if ns != cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_AUTHENTICATED_ENCRYPTED {
+			return status.Error(codes.FailedPrecondition, "cluster policy requires encrypted and authenticated node storage")
+		}
+	default:
+		return status.Error(codes.Internal, "cannot interpret cluster node storage policy")
+	}
+	return nil
+}
+
 func clusterUnmarshal(data []byte) (*Cluster, error) {
 	msg := cpb.ClusterConfiguration{}
 	if err := proto.Unmarshal(data, &msg); err != nil {
@@ -101,8 +149,18 @@ func clusterFromProto(cc *cpb.ClusterConfiguration) (*Cluster, error) {
 		return nil, fmt.Errorf("invalid TpmMode: %v", cc.TpmMode)
 	}
 
+	switch cc.StorageSecurityPolicy {
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_PERMISSIVE:
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION:
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION:
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE:
+	default:
+		return nil, fmt.Errorf("invalid StorageSecurityPolicy: %v", cc.StorageSecurityPolicy)
+	}
+
 	c := &Cluster{
-		TPMMode: cc.TpmMode,
+		TPMMode:               cc.TpmMode,
+		StorageSecurityPolicy: cc.StorageSecurityPolicy,
 	}
 
 	return c, nil
@@ -116,8 +174,19 @@ func (c *Cluster) proto() (*cpb.ClusterConfiguration, error) {
 	default:
 		return nil, fmt.Errorf("invalid TPMMode %d", c.TPMMode)
 	}
+
+	switch c.StorageSecurityPolicy {
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_PERMISSIVE:
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION:
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION:
+	case cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE:
+	default:
+		return nil, fmt.Errorf("invalid StorageSecurityPolicy %d", c.StorageSecurityPolicy)
+	}
+
 	return &cpb.ClusterConfiguration{
-		TpmMode: c.TPMMode,
+		TpmMode:               c.TPMMode,
+		StorageSecurityPolicy: c.StorageSecurityPolicy,
 	}, nil
 }
 

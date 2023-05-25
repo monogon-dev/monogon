@@ -6,6 +6,7 @@ proto_library(
     name = "private_proto",
     srcs = ["private.proto"],
     visibility = ["//metropolis:__subpackages__"],
+    deps = ["//metropolis/proto/common:common_proto"],
 )
 
 go_proto_library(
@@ -13,6 +14,7 @@ go_proto_library(
     importpath = "source.monogon.dev/metropolis/proto/private",
     proto = ":private_proto",
     visibility = ["//metropolis:__subpackages__"],
+    deps = ["//metropolis/proto/common"],
 )
 
 go_library(

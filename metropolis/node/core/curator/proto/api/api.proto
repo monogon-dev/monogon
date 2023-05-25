@@ -262,11 +262,18 @@ message RegisterNodeRequest {
 }
 
 message RegisterNodeResponse {
-    // cluster_configuration is currently returned to the node just for
-    // informative reasons.
+    // cluster_configuration contains, amongst others, the cluster policies.
+    // These can be used by the node to eg. validate whether it is joining a
+    // secure cluster or to pick local settings based on said policies.
     metropolis.proto.common.ClusterConfiguration cluster_configuration = 1;
     // tpm_usage tells the node whether it should use its TPM or not.
     metropolis.proto.common.NodeTPMUsage tpm_usage = 2;
+    // recommended_node_storage_security tells the node what storage security
+    // it should use according to the cluster. However, the node is free to
+    // choose any other storage security setting which still fits the cluster
+    // node storage policy, eg. due to administrative overrides in startup
+    // parameters, available CPU features, etc.
+    metropolis.proto.common.NodeStorageSecurity recommended_node_storage_security = 3;
 }
 
 message CommitNodeRequest {
@@ -274,6 +281,10 @@ message CommitNodeRequest {
     // disk encryption key. The node submits it for safekeeping by the cluster,
     // and keeps the local part (node unlock key, NUK) local, sealed by TPM.
     bytes cluster_unlock_key = 1;
+    // storage_security is the node storage security setting which the node has
+    // implemented as part of its registration flow. The cluster will validate
+    // it against its configured policy.
+    metropolis.proto.common.NodeStorageSecurity storage_security = 2;
 }
 
 message CommitNodeResponse {

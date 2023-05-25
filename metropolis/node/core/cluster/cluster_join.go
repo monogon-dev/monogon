@@ -70,23 +70,38 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 	}
 	cur := ipb.NewCuratorClient(eph)
 
-	// Join the cluster and use the newly obtained CUK to mount the data
-	// partition.
-	var jr *ipb.JoinNodeResponse
-	bo := backoff.NewExponentialBackOff()
-	bo.MaxElapsedTime = 0
-	backoff.Retry(func() error {
-		jr, err = cur.JoinNode(ctx, &ipb.JoinNodeRequest{
-			UsingSealedConfiguration: sealed,
-		})
-		if err != nil {
-			supervisor.Logger(ctx).Warningf("Join failed: %v", err)
-			// This is never used.
-			return fmt.Errorf("join call failed")
+	// Retrieve CUK from cluster and reconstruct encryption key if we're not in
+	// insecure mode.
+	var cuk []byte
+	if sc.StorageSecurity != cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_INSECURE {
+		if want, got := 32, len(sc.NodeUnlockKey); want != got {
+			return fmt.Errorf("sealed configuration has invalid node unlock key (wanted %d bytes, got %d)", want, got)
 		}
-		return nil
-	}, bo)
-	if err := m.storageRoot.Data.MountExisting(sc, jr.ClusterUnlockKey); err != nil {
+
+		// Join the cluster and use the newly obtained CUK to mount the data
+		// partition.
+		var jr *ipb.JoinNodeResponse
+		bo := backoff.NewExponentialBackOff()
+		bo.MaxElapsedTime = 0
+		backoff.Retry(func() error {
+			jr, err = cur.JoinNode(ctx, &ipb.JoinNodeRequest{
+				UsingSealedConfiguration: sealed,
+			})
+			if err != nil {
+				supervisor.Logger(ctx).Warningf("Join failed: %v", err)
+				// This is never used.
+				return fmt.Errorf("join call failed")
+			}
+			return nil
+		}, bo)
+		cuk = jr.ClusterUnlockKey
+
+		if want, got := 32, len(cuk); want != got {
+			return fmt.Errorf("cluster returned invalid cluster unlock key (wanted %d bytes, got %d)", want, got)
+		}
+	}
+
+	if err := m.storageRoot.Data.MountExisting(sc, cuk); err != nil {
 		return fmt.Errorf("while mounting Data: %w", err)
 	}
 

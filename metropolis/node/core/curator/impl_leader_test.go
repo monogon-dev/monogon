@@ -697,6 +697,7 @@ func TestRegistration(t *testing.T) {
 	// Make 'other node' commit itself into the cluster.
 	_, err = cur.CommitNode(ctx, &ipb.CommitNodeRequest{
 		ClusterUnlockKey: []byte("fakefakefakefakefakefakefakefake"),
+		StorageSecurity:  cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_AUTHENTICATED_ENCRYPTED,
 	})
 	if err != nil {
 		t.Fatalf("CommitNode failed: %v", err)
@@ -1528,7 +1529,8 @@ func TestClusterTPMModeSetting(t *testing.T) {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			cl := fakeLeader(t, &fakeLeaderOption{
 				icc: &cpb.ClusterConfiguration{
-					TpmMode: te.mode,
+					TpmMode:               te.mode,
+					StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION,
 				},
 			})
 			// Register node and make sure it's either successful or not, depending on the
@@ -1569,6 +1571,7 @@ func TestClusterTPMModeSetting(t *testing.T) {
 
 			_, err = cur.CommitNode(ctx, &ipb.CommitNodeRequest{
 				ClusterUnlockKey: []byte("fakefakefakefakefakefakefakefake"),
+				StorageSecurity:  cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_AUTHENTICATED_ENCRYPTED,
 			})
 			if err != nil {
 				t.Fatalf("CommitNode failed: %v", err)

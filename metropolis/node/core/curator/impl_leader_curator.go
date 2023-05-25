@@ -326,6 +326,11 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 	if err != nil {
 		return nil, err
 	}
+	nodeStorageSecurity, err := cl.NodeStorageSecurity()
+	if err != nil {
+		rpc.Trace(ctx).Printf("NodeStorageSecurity: %v", err)
+		return nil, status.Error(codes.InvalidArgument, "cannot generate recommended node storage security")
+	}
 
 	// Figure out if node should be using TPM.
 	tpmUsage, err := cl.NodeTPMUsage(req.HaveLocalTpm)
@@ -369,8 +374,9 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 	// Eat error, as we just deserialized this from a proto.
 	clusterConfig, _ := cl.proto()
 	return &ipb.RegisterNodeResponse{
-		ClusterConfiguration: clusterConfig,
-		TpmUsage:             tpmUsage,
+		ClusterConfiguration:           clusterConfig,
+		TpmUsage:                       tpmUsage,
+		RecommendedNodeStorageSecurity: nodeStorageSecurity,
 	}, nil
 }
 
@@ -384,12 +390,30 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 	}
 	pubkey := pi.Unauthenticated.SelfSignedPublicKey
 
+	// First pass check of node storage security, before loading the cluster data and
+	// taking a lock on it.
+	switch req.StorageSecurity {
+	case cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_INSECURE:
+	case cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_ENCRYPTED:
+	case cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_AUTHENTICATED_ENCRYPTED:
+	default:
+		return nil, status.Error(codes.InvalidArgument, "invalid storage_security (is it set?)")
+	}
+
 	// Doing a read-then-write operation below, take lock.
 	//
 	// MVP: This can lock up the cluster if too many RegisterNode calls get issued,
 	// we should either ratelimit these or remove the need to lock.
 	l.muNodes.Lock()
 	defer l.muNodes.Unlock()
+
+	cl, err := clusterLoad(ctx, l.leadership)
+	if err != nil {
+		return nil, err
+	}
+	if err := cl.ValidateNodeStorage(req.StorageSecurity); err != nil {
+		return nil, err
+	}
 
 	// Retrieve the node and act on its current state, either returning early or
 	// mutating it and continuing with the rest of the Commit logic.
@@ -420,8 +444,10 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 
 	// Check the given CUK is valid.
 	// TODO(q3k): unify length with localstorage/crypt keySize.
-	if want, got := 32, len(req.ClusterUnlockKey); want != got {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid ClusterUnlockKey length, wanted %d bytes, got %d", want, got)
+	if req.StorageSecurity != cpb.NodeStorageSecurity_NODE_STORAGE_SECURITY_INSECURE {
+		if want, got := 32, len(req.ClusterUnlockKey); want != got {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid ClusterUnlockKey length, wanted %d bytes, got %d", want, got)
+		}
 	}
 
 	// Generate certificate for node, save new node state, return.

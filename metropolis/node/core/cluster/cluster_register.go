@@ -70,28 +70,10 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	}
 
 	// Validation passed, let's start working on registering us into the cluster.
-
-	// Tell the user what we're doing.
-	supervisor.Logger(ctx).Infof("Registering into existing cluster.")
-	supervisor.Logger(ctx).Infof("  Cluster CA public key: %s", hex.EncodeToString(ca.PublicKey.(ed25519.PublicKey)))
-	supervisor.Logger(ctx).Infof("  Register Ticket: %s", hex.EncodeToString(register.RegisterTicket))
-	supervisor.Logger(ctx).Infof("  Directory:")
-	logClusterDirectory(ctx, register.ClusterDirectory)
-
-	// Mount new storage with generated CUK, MountNew will save NUK into sc, to be
-	// saved into the ESP after successful registration.
-	var sc ppb.SealedConfiguration
-	supervisor.Logger(ctx).Infof("Registering: mounting new storage...")
-	cuk, err := m.storageRoot.Data.MountNew(&sc)
-	if err != nil {
-		return fmt.Errorf("could not make and mount data partition: %w", err)
-	}
-
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return fmt.Errorf("could not generate node keypair: %w", err)
 	}
-	supervisor.Logger(ctx).Infof("Registering: node public key: %s", hex.EncodeToString([]byte(pub)))
 
 	// Build resolver used by the register process, authenticating with ephemeral
 	// credentials. Once the join is complete, the rolesever will start its own
@@ -124,13 +106,22 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	}
 	cur := ipb.NewCuratorClient(eph)
 
+	// TODO(q3k): allow node to pick storage security per given policy
+
+	// Tell the user what we're doing.
+	supervisor.Logger(ctx).Infof("Registering into existing cluster.")
+	supervisor.Logger(ctx).Infof("  Cluster CA public key: %s", hex.EncodeToString(ca.PublicKey.(ed25519.PublicKey)))
+	supervisor.Logger(ctx).Infof("  Node public key: %s", hex.EncodeToString(pub))
+	supervisor.Logger(ctx).Infof("  Register Ticket: %s", hex.EncodeToString(register.RegisterTicket))
+	supervisor.Logger(ctx).Infof("  Directory:")
+	logClusterDirectory(ctx, register.ClusterDirectory)
+
 	// Generate Join Credentials. The private key will be stored in
 	// SealedConfiguration only if RegisterNode succeeds.
 	jpub, jpriv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return fmt.Errorf("could not generate join keypair: %w", err)
 	}
-	sc.JoinKey = jpriv
 	supervisor.Logger(ctx).Infof("Registering: join public key: %s", hex.EncodeToString([]byte(jpub)))
 
 	// Register this node.
@@ -148,7 +139,20 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	if err != nil {
 		return fmt.Errorf("register call failed: %w", err)
 	}
+	storageSecurity := res.RecommendedNodeStorageSecurity
 
+	// Mount new storage with generated CUK, MountNew will save NUK into sc, to be
+	// saved into the ESP after successful registration.
+	var sc ppb.SealedConfiguration
+	supervisor.Logger(ctx).Infof("Registering: mounting new storage...")
+	cuk, err := m.storageRoot.Data.MountNew(&sc, storageSecurity)
+	if err != nil {
+		return fmt.Errorf("could not make and mount data partition: %w", err)
+	}
+	sc.JoinKey = jpriv
+
+	supervisor.Logger(ctx).Infof("Storage Security: cluster policy: %s", res.ClusterConfiguration.StorageSecurityPolicy)
+	supervisor.Logger(ctx).Infof("Storage Security: node: %s", storageSecurity)
 	supervisor.Logger(ctx).Infof("TPM: cluster TPM mode: %s", res.ClusterConfiguration.TpmMode)
 	supervisor.Logger(ctx).Infof("TPM: node TPM usage: %v", res.TpmUsage)
 
@@ -158,6 +162,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	for {
 		resC, err := cur.CommitNode(ctx, &ipb.CommitNodeRequest{
 			ClusterUnlockKey: cuk,
+			StorageSecurity:  storageSecurity,
 		})
 		if err == nil {
 			supervisor.Logger(ctx).Infof("Registering: Commit successful, received certificate")
