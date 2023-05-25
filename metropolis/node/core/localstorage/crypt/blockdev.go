@@ -38,8 +38,8 @@ import (
 var NodeDataPartitionType = uuid.MustParse("9eeec464-6885-414a-b278-4305c51f7966")
 
 const (
-	ESPDevicePath     = "/dev/esp"
-	NodeDataCryptPath = "/dev/data-crypt"
+	ESPDevicePath   = "/dev/esp"
+	NodeDataRawPath = "/dev/data-raw"
 )
 
 // MakeBlockDevices looks for the ESP and the node data partition and maps them
@@ -116,7 +116,7 @@ func MakeBlockDevices(ctx context.Context) error {
 				}
 				if part.Type == NodeDataPartitionType {
 					seenTypes[part.Type] = true
-					err := unix.Mknod(NodeDataCryptPath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1))))
+					err := unix.Mknod(NodeDataRawPath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1))))
 					if err != nil && !os.IsExist(err) {
 						return fmt.Errorf("failed to create device node for Metropolis node encrypted data partition: %w", err)
 					}

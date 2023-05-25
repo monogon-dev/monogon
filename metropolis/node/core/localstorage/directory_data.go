@@ -50,10 +50,11 @@ func (d *DataDirectory) MountExisting(config *ppb.SealedConfiguration, clusterUn
 		key[i] = config.NodeUnlockKey[i] ^ clusterUnlockKey[i]
 	}
 
-	if err := crypt.CryptMap("data", crypt.NodeDataCryptPath, key); err != nil {
+	target, err := crypt.Map("data", crypt.NodeDataRawPath, key, crypt.ModeEncryptedAuthenticated)
+	if err != nil {
 		return err
 	}
-	if err := d.mount(); err != nil {
+	if err := d.mount(target); err != nil {
 		return err
 	}
 	return nil
@@ -102,15 +103,16 @@ func (d *DataDirectory) MountNew(config *ppb.SealedConfiguration) ([]byte, error
 		key[i] = nodeUnlockKey[i] ^ globalUnlockKey[i]
 	}
 
-	if err := crypt.CryptInit("data", crypt.NodeDataCryptPath, key); err != nil {
+	target, err := crypt.Init("data", crypt.NodeDataRawPath, key, crypt.ModeEncryptedAuthenticated)
+	if err != nil {
 		return nil, fmt.Errorf("initializing encrypted block device: %w", err)
 	}
-	mkfsCmd := exec.Command("/bin/mkfs.xfs", "-qKf", "/dev/data")
+	mkfsCmd := exec.Command("/bin/mkfs.xfs", "-qKf", target)
 	if _, err := mkfsCmd.Output(); err != nil {
 		return nil, fmt.Errorf("formatting encrypted block device: %w", err)
 	}
 
-	if err := d.mount(); err != nil {
+	if err := d.mount(target); err != nil {
 		return nil, fmt.Errorf("mounting: %w", err)
 	}
 
@@ -136,10 +138,10 @@ func (d *DataDirectory) MountNew(config *ppb.SealedConfiguration) ([]byte, error
 	return globalUnlockKey, nil
 }
 
-func (d *DataDirectory) mount() error {
+func (d *DataDirectory) mount(path string) error {
 	// TODO(T965): MS_NODEV should definitely be set on the data partition, but as long as the kubelet root
 	// is on there, we can't do it.
-	if err := unix.Mount("/dev/data", d.FullPath(), "xfs", unix.MS_NOEXEC, "pquota"); err != nil {
+	if err := unix.Mount(path, d.FullPath(), "xfs", unix.MS_NOEXEC, "pquota"); err != nil {
 		return fmt.Errorf("mounting data directory: %w", err)
 	}
 	return nil

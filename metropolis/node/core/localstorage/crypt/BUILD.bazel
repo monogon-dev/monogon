@@ -1,14 +1,15 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//metropolis/test/ktest:ktest.bzl", "ktest")
 
 go_library(
     name = "crypt",
     # keep
     srcs = [
         "blockdev.go",
-    ] + select({
-        "//metropolis/node:debug_build": ["crypt_debug.go"],
-        "//conditions:default": ["crypt.go"],
-    }),
+        "crypt.go",
+        "crypt_encryption.go",
+        "crypt_integrity.go",
+    ],
     importpath = "source.monogon.dev/metropolis/node/core/localstorage/crypt",
     visibility = ["//metropolis/node/core/localstorage:__subpackages__"],
     deps = [
@@ -20,4 +21,15 @@ go_library(
         "@com_github_google_uuid//:uuid",
         "@org_golang_x_sys//unix",
     ],
+)
+
+go_test(
+    name = "crypt_test",
+    srcs = ["crypt_test.go"],
+    embed = [":crypt"],
+)
+
+ktest(
+    cmdline = "ramdisk_size=4096",
+    tester = ":crypt_test",
 )
