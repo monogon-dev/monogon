@@ -82,7 +82,7 @@ int main() {
     cprintf(
         "\n"
         "  Metropolis Cluster Operating System\n"
-        "  Copyright 2020-2022 The Monogon Project Authors\n"
+        "  Copyright 2020-2023 The Monogon Project Authors\n"
         "\n"
     );
 
