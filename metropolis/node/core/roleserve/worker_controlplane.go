@@ -1,15 +1,11 @@
 package roleserve
 
 import (
-	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/x509"
 	"fmt"
 	"time"
-
-	"golang.org/x/sys/unix"
-	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/curator"
@@ -21,7 +17,6 @@ import (
 	"source.monogon.dev/metropolis/pkg/pki"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	cpb "source.monogon.dev/metropolis/proto/common"
-	ppb "source.monogon.dev/metropolis/proto/private"
 )
 
 // workerControlPlane is the Control Plane Worker, responsible for maintaining a
@@ -253,11 +248,10 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 
 			// Prepare curator config, notably performing a bootstrap step if necessary. The
 			// preparation will result in a set of node credentials to run the curator with
-			// and a previously used cluster directory to be passed over to the new
+			// nd a previously used cluster directory to be passed over to the new
 			// ClusterMembership, if any.
 			var creds *identity.NodeCredentials
 			var caCert []byte
-			var directory *cpb.ClusterDirectory
 			if b := startup.bootstrap; b != nil {
 				supervisor.Logger(ctx).Infof("Bootstrapping control plane. Waiting for consensus...")
 
@@ -304,6 +298,18 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				if err != nil {
 					return fmt.Errorf("when creating bootstrap node credentials: %w", err)
 				}
+
+				if err = creds.Save(&s.storageRoot.Data.Node.Credentials); err != nil {
+					return fmt.Errorf("while saving node credentials: %w", err)
+				}
+				sc, err := s.storageRoot.ESP.Metropolis.SealedConfiguration.Unseal()
+				if err != nil {
+					return fmt.Errorf("reading sealed configuration failed: %w", err)
+				}
+				sc.ClusterCa = caCert
+				if err = s.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(sc, b.nodeTPMUsage); err != nil {
+					return fmt.Errorf("writing sealed configuration failed: %w", err)
+				}
 				supervisor.Logger(ctx).Infof("Control plane bootstrap complete, starting curator...")
 			} else {
 				// Not bootstrapping, just starting consensus with credentials we already have.
@@ -316,65 +322,11 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				if startup.existingMembership.credentials == nil {
 					panic("no existingMembership.credentials but not bootstrapping either")
 				}
-				if startup.existingMembership.remoteCurators == nil {
-					panic("no existingMembership.remoteCurators but not bootstrapping either")
-				}
 
 				// Use already existing credentials, and pass over already known curators (as
 				// we're not the only node, and we'd like downstream consumers to be able to
 				// keep connecting to existing curators in case the local one fails).
 				creds = startup.existingMembership.credentials
-				directory = startup.existingMembership.remoteCurators
-			}
-
-			// Ensure this node is present in the cluster directory.
-			if directory == nil {
-				directory = &cpb.ClusterDirectory{}
-			}
-			missing := true
-			for _, n := range directory.Nodes {
-				if bytes.Equal(n.PublicKey, creds.PublicKey()) {
-					missing = false
-					break
-				}
-			}
-			if missing {
-				directory.Nodes = append(directory.Nodes, &cpb.ClusterDirectory_Node{
-					PublicKey: creds.PublicKey(),
-					Addresses: []*cpb.ClusterDirectory_Node_Address{
-						{
-							Host: "127.0.0.1",
-						},
-					},
-				})
-			}
-
-			// Save this node's credentials, cluster directory and configuration as
-			// part of the control plane bootstrap process.
-			if b := startup.bootstrap; b != nil && caCert != nil {
-				if err = creds.Save(&s.storageRoot.Data.Node.Credentials); err != nil {
-					return fmt.Errorf("while saving node credentials: %w", err)
-				}
-
-				cdirRaw, err := proto.Marshal(directory)
-				if err != nil {
-					return fmt.Errorf("couldn't marshal ClusterDirectory: %w", err)
-				}
-				if err = s.storageRoot.ESP.Metropolis.ClusterDirectory.Write(cdirRaw, 0644); err != nil {
-					return fmt.Errorf("writing cluster directory failed: %w", err)
-				}
-
-				sc := ppb.SealedConfiguration{
-					NodeUnlockKey: b.nodeUnlockKey,
-					JoinKey:       b.nodePrivateJoinKey,
-					ClusterCa:     caCert,
-				}
-				if err = s.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc, b.nodeTPMUsage); err != nil {
-					return fmt.Errorf("writing sealed configuration failed: %w", err)
-				}
-
-				supervisor.Logger(ctx).Infof("Saved bootstrapped node's credentials.")
-				unix.Sync()
 			}
 
 			// Start curator.
@@ -396,7 +348,6 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				localConsensus: con,
 				localCurator:   cur,
 				credentials:    creds,
-				remoteCurators: directory,
 				pubkey:         creds.PublicKey(),
 				resolver:       s.resolver,
 			})

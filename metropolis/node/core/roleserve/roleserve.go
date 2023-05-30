@@ -172,6 +172,7 @@ func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk
 	// This is the first time we have the node ID, tell the resolver that it's
 	// available on the loopback interface.
 	s.Resolver.AddOverride(nid, resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
+	s.Resolver.AddEndpoint(resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 
 	s.ClusterMembership.Set(&ClusterMembership{
 		pubkey:   pubkey,
@@ -192,12 +193,19 @@ func (s *Service) ProvideRegisterData(credentials identity.NodeCredentials, dire
 	// This is the first time we have the node ID, tell the resolver that it's
 	// available on the loopback interface.
 	s.Resolver.AddOverride(credentials.ID(), resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
+	// Also tell the resolver about all the existing nodes in the cluster we just
+	// registered into.
+	for _, n := range directory.Nodes {
+		// TODO(q3k): only add control plane nodes.
+		for _, addr := range n.Addresses {
+			s.Resolver.AddEndpoint(resolver.NodeByHostPort(addr.Host, uint16(common.CuratorServicePort)))
+		}
+	}
 
 	s.ClusterMembership.Set(&ClusterMembership{
-		remoteCurators: directory,
-		credentials:    &credentials,
-		pubkey:         credentials.PublicKey(),
-		resolver:       s.Resolver,
+		credentials: &credentials,
+		pubkey:      credentials.PublicKey(),
+		resolver:    s.Resolver,
 	})
 }
 
@@ -205,12 +213,19 @@ func (s *Service) ProvideJoinData(credentials identity.NodeCredentials, director
 	// This is the first time we have the node ID, tell the resolver that it's
 	// available on the loopback interface.
 	s.Resolver.AddOverride(credentials.ID(), resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
+	// Also tell the resolver about all the existing nodes in the cluster we just
+	// joined into.
+	for _, n := range directory.Nodes {
+		// TODO(q3k): only add control plane nodes.
+		for _, addr := range n.Addresses {
+			s.Resolver.AddEndpoint(resolver.NodeByHostPort(addr.Host, uint16(common.CuratorServicePort)))
+		}
+	}
 
 	s.ClusterMembership.Set(&ClusterMembership{
-		remoteCurators: directory,
-		credentials:    &credentials,
-		pubkey:         credentials.PublicKey(),
-		resolver:       s.Resolver,
+		credentials: &credentials,
+		pubkey:      credentials.PublicKey(),
+		resolver:    s.Resolver,
 	})
 	s.clusterDirectorySaved.Set(true)
 }

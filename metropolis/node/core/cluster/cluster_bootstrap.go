@@ -24,10 +24,13 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/protobuf/proto"
+
 	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 
 	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 	ppb "source.monogon.dev/metropolis/proto/private"
 )
 
@@ -94,6 +97,38 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 		return fmt.Errorf("could not generate join keypair: %w", err)
 	}
 	supervisor.Logger(ctx).Infof("Bootstrapping: node public join key: %s", hex.EncodeToString([]byte(jpub)))
+
+	directory := &cpb.ClusterDirectory{
+		Nodes: []*cpb.ClusterDirectory_Node{
+			{
+				PublicKey: pub,
+				Addresses: []*cpb.ClusterDirectory_Node_Address{
+					{
+						Host: "127.0.0.1",
+					},
+				},
+			},
+		},
+	}
+	cdirRaw, err := proto.Marshal(directory)
+	if err != nil {
+		return fmt.Errorf("couldn't marshal ClusterDirectory: %w", err)
+	}
+	if err = m.storageRoot.ESP.Metropolis.ClusterDirectory.Write(cdirRaw, 0644); err != nil {
+		return fmt.Errorf("writing cluster directory failed: %w", err)
+	}
+
+	sc := ppb.SealedConfiguration{
+		NodeUnlockKey: nuk,
+		JoinKey:       jpriv,
+		// No ClusterCA yet, that's added by the roleserver after it finishes curator
+		// bootstrap.
+		ClusterCa: nil,
+	}
+	if err = m.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc, tpmUsage); err != nil {
+		return fmt.Errorf("writing sealed configuration failed: %w", err)
+	}
+	supervisor.Logger(ctx).Infof("Saved bootstrapped node's credentials.")
 
 	m.roleServer.ProvideBootstrapData(priv, ownerKey, cuk, nuk, jpriv, cc, tpmUsage)
 
