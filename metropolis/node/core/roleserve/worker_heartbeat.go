@@ -18,29 +18,23 @@ import (
 type workerHeartbeat struct {
 	network *network.Service
 
-	// clusterMembership will be read.
-	clusterMembership *memory.Value[*ClusterMembership]
+	// curatorConnection will be read.
+	curatorConnection *memory.Value[*curatorConnection]
 }
 
 func (s *workerHeartbeat) run(ctx context.Context) error {
 	nw := s.network.Watch()
 	defer nw.Close()
 
-	w := s.clusterMembership.Watch()
+	w := s.curatorConnection.Watch()
 	defer w.Close()
-	supervisor.Logger(ctx).Infof("Waiting for cluster membership...")
-	cm, err := w.Get(ctx, FilterHome())
+	supervisor.Logger(ctx).Infof("Waiting for curator connection...")
+	cc, err := w.Get(ctx)
 	if err != nil {
 		return err
 	}
-	supervisor.Logger(ctx).Infof("Got cluster membership, starting...")
-
-	conn, err := cm.DialCurator()
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	cur := ipb.NewCuratorClient(conn)
+	supervisor.Logger(ctx).Infof("Got curator connection, starting...")
+	cur := ipb.NewCuratorClient(cc.conn)
 
 	stream, err := cur.Heartbeat(ctx)
 	if err != nil {

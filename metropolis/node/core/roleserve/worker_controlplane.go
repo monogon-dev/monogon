@@ -31,22 +31,25 @@ import (
 //     which are REGISTERing into the cluster, as well as already running nodes that
 //     have been assigned the role.
 //
-// In either case, ClusterMembership will be updated to allow connecting to the
-// newly locally running control plane. For nodes that are bootstrapping the
-// cluster, this will be the fist time the rest of the node can reach the
-// Curator. For other cases, this will be the new, preferred way to reach
-// consensus, without having to rely on external Control Plane nodes.
+// In either case, localControlPlane will be updated to allow direct access to
+// the now locally running control plane. For bootstrapping node,
+// curatorConnection is also populated, as that is now the first time the rest of
+// the node services can reach the newly minted cluster control plane.
 type workerControlPlane struct {
 	storageRoot *localstorage.Root
 
 	// bootstrapData will be read.
 	bootstrapData *memory.Value[*bootstrapData]
-	// clusterMembership will be read and written.
-	clusterMembership *memory.Value[*ClusterMembership]
 	// localRoles will be read.
 	localRoles *memory.Value[*cpb.NodeRoles]
-	// resolver will be read and used to populate ClusterMembership.
+	// resolver will be read and used to populate curatorConnection when
+	// bootstrapping consensus.
 	resolver *resolver.Resolver
+
+	// localControlPlane will be written.
+	localControlPlane *memory.Value[*localControlPlane]
+	// curatorConnection will be written.
+	curatorConnection *memory.Value[*curatorConnection]
 }
 
 // controlPlaneStartup is used internally to provide a reduced (as in MapReduce)
@@ -59,19 +62,14 @@ type controlPlaneStartup struct {
 	// bootstrap is set if this node should bootstrap consensus. It contains all
 	// data required to perform this bootstrap step.
 	bootstrap *bootstrapData
-
-	// existingMembership is the ClusterMembership that the node already had
-	// available before deciding to run the Control Plane. This will be used to
-	// carry over existing data from the membership into the new membership as
-	// affected by starting the control plane.
-	existingMembership *ClusterMembership
+	existing  *curatorConnection
 }
 
 // changed informs the Control Plane launcher whether two different
 // controlPlaneStartups differ to the point where a restart of the control plane
 // should happen.
 //
-// Currently this is only true when a node switches to/from having a Control
+// Currently, this is only true when a node switches to/from having a Control
 // Plane role.
 func (c *controlPlaneStartup) changed(o *controlPlaneStartup) bool {
 	hasConsensusA := c.consensusConfig != nil
@@ -90,7 +88,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 	//
 	//     bootstrapData -M-> bootstrapDataC ------.
 	//                                             |
-	// ClusterMambership -M-> clusterMembershipC --R---> startupV
+	// curatorConnection -M-> curatorConnectionC --R---> startupV
 	//                                             |
 	//         NodeRoles -M-> rolesC --------------'
 	//
@@ -100,28 +98,28 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 	// which is okay as long as the entire tree restarts simultaneously (which we
 	// ensure via RunGroup).
 	bootstrapDataC := make(chan *bootstrapData)
-	clusterMembershipC := make(chan *ClusterMembership)
+	curatorConnectionC := make(chan *curatorConnection)
 	rolesC := make(chan *cpb.NodeRoles)
 
 	supervisor.RunGroup(ctx, map[string]supervisor.Runnable{
 		// Plain conversion from Event Value to channel.
 		"map-bootstrap-data": event.Pipe[*bootstrapData](s.bootstrapData, bootstrapDataC),
 		// Plain conversion from Event Value to channel.
-		"map-cluster-membership": event.Pipe[*ClusterMembership](s.clusterMembership, clusterMembershipC, FilterHome()),
+		"map-curator-connection": event.Pipe[*curatorConnection](s.curatorConnection, curatorConnectionC),
 		// Plain conversion from Event Value to channel.
 		"map-roles": event.Pipe[*cpb.NodeRoles](s.localRoles, rolesC),
-		// Provide config from clusterMembership and roles.
+		// Provide config from above.
 		"reduce-config": func(ctx context.Context) error {
 			supervisor.Signal(ctx, supervisor.SignalHealthy)
 			var lr *cpb.NodeRoles
-			var cm *ClusterMembership
+			var cc *curatorConnection
 			var bd *bootstrapData
 			for {
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
 				case lr = <-rolesC:
-				case cm = <-clusterMembershipC:
+				case cc = <-curatorConnectionC:
 				case bd = <-bootstrapDataC:
 				}
 
@@ -138,7 +136,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				//
 				// The only problem is when we remove a ConsensusMember from a node which still
 				// has BootstrapData lingering from first bootup. However, we currently do not
-				// support removing consensus roles (or any roles for that matter).
+				// support removing consensus roles.
 				//
 				// TODO(q3k): support the above edge case. This can be done, for example, by
 				// rewriting the reduction to wait for all data to be available and by
@@ -158,7 +156,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				}
 
 				// Otherwise, try to interpret node roles if available.
-				if lr != nil && cm != nil {
+				if lr != nil && cc != nil {
 					supervisor.Logger(ctx).Infof("Using role assigned by cluster...")
 					role := lr.ConsensusMember
 					if role == nil {
@@ -202,7 +200,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 						consensusConfig: &consensus.Config{
 							Data:           &s.storageRoot.Data.Etcd,
 							Ephemeral:      &s.storageRoot.Ephemeral.Consensus,
-							NodePrivateKey: cm.credentials.TLSCredentials().PrivateKey.(ed25519.PrivateKey),
+							NodePrivateKey: cc.credentials.TLSCredentials().PrivateKey.(ed25519.PrivateKey),
 							JoinCluster: &consensus.JoinCluster{
 								CACertificate:   caCert,
 								NodeCertificate: peerCert,
@@ -213,7 +211,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 								ExistingNodes: nodes,
 							},
 						},
-						existingMembership: cm,
+						existing: cc,
 					})
 				}
 			}
@@ -236,6 +234,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 		// Start Control Plane if we have a config.
 		if startup.consensusConfig == nil {
 			supervisor.Logger(ctx).Infof("No consensus config, not starting up control plane.")
+			s.localControlPlane.Set(nil)
 		} else {
 			supervisor.Logger(ctx).Infof("Got config, starting consensus and curator...")
 
@@ -247,9 +246,8 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 			}
 
 			// Prepare curator config, notably performing a bootstrap step if necessary. The
-			// preparation will result in a set of node credentials to run the curator with
-			// nd a previously used cluster directory to be passed over to the new
-			// ClusterMembership, if any.
+			// preparation will result in a set of node credentials that will be used to
+			// fully continue bringing up this node.
 			var creds *identity.NodeCredentials
 			var caCert []byte
 			if b := startup.bootstrap; b != nil {
@@ -316,17 +314,17 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 
 				// First, run a few assertions. This should never happen with the Map/Reduce
 				// logic above, ideally we would encode this in the type system.
-				if startup.existingMembership == nil {
-					panic("no existingMembership but not bootstrapping either")
+				if startup.existing == nil {
+					panic("no existing curator connection but not bootstrapping either")
 				}
-				if startup.existingMembership.credentials == nil {
-					panic("no existingMembership.credentials but not bootstrapping either")
+				if startup.existing.credentials == nil {
+					panic("no existing.credentials but not bootstrapping either")
 				}
 
 				// Use already existing credentials, and pass over already known curators (as
 				// we're not the only node, and we'd like downstream consumers to be able to
 				// keep connecting to existing curators in case the local one fails).
-				creds = startup.existingMembership.credentials
+				creds = startup.existing.credentials
 			}
 
 			// Start curator.
@@ -340,24 +338,17 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 			}
 
 			supervisor.Signal(ctx, supervisor.SignalHealthy)
-			supervisor.Logger(ctx).Infof("Control plane running, submitting clusterMembership.")
+			supervisor.Logger(ctx).Infof("Control plane running, submitting localControlPlane.")
 
-			// We now have a locally running ControlPlane. Reflect that in a new
-			// ClusterMembership.
-			s.clusterMembership.Set(&ClusterMembership{
-				localConsensus: con,
-				localCurator:   cur,
-				credentials:    creds,
-				pubkey:         creds.PublicKey(),
-				resolver:       s.resolver,
-			})
+			s.localControlPlane.Set(&localControlPlane{consensus: con, curator: cur})
+			if startup.bootstrap != nil {
+				// Feed curatorConnection if bootstrapping to continue the node bringup.
+				s.curatorConnection.Set(newCuratorConnection(creds, s.resolver))
+			}
 		}
 
-		// Restart everything if we get a significantly different config (ie., a config
+		// Restart everything if we get a significantly different config (i.e. a config
 		// whose change would/should either turn up or tear down the Control Plane).
-		//
-		// Not restarting on every single change prevents us from going in a
-		// ClusterMembership -> ClusterDirectory -> ClusterMembership thrashing loop.
 		for {
 			nc, err := w.Get(ctx)
 			if err != nil {

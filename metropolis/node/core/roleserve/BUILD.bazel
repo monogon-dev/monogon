@@ -4,10 +4,7 @@ go_library(
     name = "roleserve",
     srcs = [
         "roleserve.go",
-        "value_bootstrapdata.go",
-        "value_clustermembership.go",
-        "value_kubernetes.go",
-        "value_node.go",
+        "values.go",
         "worker_clusternet.go",
         "worker_controlplane.go",
         "worker_heartbeat.go",
@@ -52,7 +49,10 @@ go_test(
     embed = [":roleserve"],
     deps = [
         "//metropolis/node",
+        "//metropolis/node/core/consensus",
+        "//metropolis/node/core/curator",
         "//metropolis/node/core/curator/proto/api",
+        "//metropolis/node/core/rpc",
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/common",
         "@com_github_cenkalti_backoff_v4//:backoff",

@@ -11,32 +11,27 @@ import (
 )
 
 // workerRoleFetch is the Role Fetcher, an internal bookkeeping service
-// responsible for populating localRoles based on a clusterMembership whenever
+// responsible for populating localRoles based on a curatorConnection whenever
 // the node is HOME and cluster credentials / curator access is available.
 type workerRoleFetch struct {
-	clusterMembership *memory.Value[*ClusterMembership]
+	curatorConnection *memory.Value[*curatorConnection]
 
 	// localRoles will be written.
 	localRoles *memory.Value[*cpb.NodeRoles]
 }
 
 func (s *workerRoleFetch) run(ctx context.Context) error {
-	w := s.clusterMembership.Watch()
+	w := s.curatorConnection.Watch()
 	defer w.Close()
-	supervisor.Logger(ctx).Infof("Waiting for cluster membership...")
-	cm, err := w.Get(ctx, FilterHome())
+	supervisor.Logger(ctx).Infof("Waiting for curator connection...")
+	cc, err := w.Get(ctx)
 	if err != nil {
 		return err
 	}
-	supervisor.Logger(ctx).Infof("Got cluster membership, starting...")
+	supervisor.Logger(ctx).Infof("Got curator connection, starting...")
 
-	nodeID := cm.NodeID()
-	conn, err := cm.DialCurator()
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	cur := ipb.NewCuratorClient(conn)
+	nodeID := cc.nodeID()
+	cur := ipb.NewCuratorClient(cc.conn)
 
 	// Start watch for current node, update localRoles whenever we get something
 	// new.

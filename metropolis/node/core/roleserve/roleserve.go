@@ -31,12 +31,8 @@
 // The Role Server also has to handle the complex bootstrap problem involved in
 // simultaneously accessing the control plane (for node roles and other cluster
 // data) while maintaining (possibly the only one in the cluster) control plane
-// instance. The state of of resolution of this bootstrap problem is maintained
-// within ClusterMembership, which contains critical information about the
-// control plane, like the information required to connect to a Curator (local
-// or remote). It is updated both by external processes (ie. data from the
-// Cluster Enrolment) as well as logic responsible for spawning the control
-// plane.
+// instance. This problem is resolved by using the RPC resolver package which
+// allows dynamic reconfiguration of endpoints as the cluster is running.
 package roleserve
 
 import (
@@ -70,7 +66,7 @@ type Config struct {
 	// resolver is the main, long-lived, authenticated cluster resolver that is used
 	// for all subsequent gRPC calls by the subordinates of the roleserver. It is
 	// created early in the roleserver lifecycle, and is seeded with node
-	// information as the first subordinate runs DialCurator().
+	// information from the ProvideXXX methods.
 	Resolver *resolver.Resolver
 
 	LogTree *logtree.LogTree
@@ -81,12 +77,13 @@ type Config struct {
 type Service struct {
 	Config
 
-	ClusterMembership     memory.Value[*ClusterMembership]
 	KubernetesStatus      memory.Value[*KubernetesStatus]
 	bootstrapData         memory.Value[*bootstrapData]
 	localRoles            memory.Value[*cpb.NodeRoles]
 	podNetwork            memory.Value[*clusternet.Prefixes]
 	clusterDirectorySaved memory.Value[bool]
+	localControlPlane     memory.Value[*localControlPlane]
+	CuratorConnection     memory.Value[*curatorConnection]
 
 	controlPlane *workerControlPlane
 	statusPush   *workerStatusPush
@@ -106,23 +103,26 @@ func New(c Config) *Service {
 	s.controlPlane = &workerControlPlane{
 		storageRoot: s.StorageRoot,
 
-		bootstrapData:     &s.bootstrapData,
-		clusterMembership: &s.ClusterMembership,
-		localRoles:        &s.localRoles,
-		resolver:          s.Resolver,
+		bootstrapData: &s.bootstrapData,
+		localRoles:    &s.localRoles,
+		resolver:      s.Resolver,
+
+		localControlPlane: &s.localControlPlane,
+		curatorConnection: &s.CuratorConnection,
 	}
 
 	s.statusPush = &workerStatusPush{
 		network: s.Network,
 
-		clusterMembership:     &s.ClusterMembership,
+		curatorConnection:     &s.CuratorConnection,
+		localControlPlane:     &s.localControlPlane,
 		clusterDirectorySaved: &s.clusterDirectorySaved,
 	}
 
 	s.heartbeat = &workerHeartbeat{
 		network: s.Network,
 
-		clusterMembership: &s.ClusterMembership,
+		curatorConnection: &s.CuratorConnection,
 	}
 
 	s.kubernetes = &workerKubernetes{
@@ -130,27 +130,28 @@ func New(c Config) *Service {
 		storageRoot: s.StorageRoot,
 
 		localRoles:        &s.localRoles,
-		clusterMembership: &s.ClusterMembership,
+		localControlPlane: &s.localControlPlane,
+		curatorConnection: &s.CuratorConnection,
 
 		kubernetesStatus: &s.KubernetesStatus,
 		podNetwork:       &s.podNetwork,
 	}
 
 	s.rolefetch = &workerRoleFetch{
-		clusterMembership: &s.ClusterMembership,
+		curatorConnection: &s.CuratorConnection,
 
 		localRoles: &s.localRoles,
 	}
 
 	s.nodeMgmt = &workerNodeMgmt{
-		clusterMembership: &s.ClusterMembership,
+		curatorConnection: &s.CuratorConnection,
 		logTree:           s.LogTree,
 	}
 
 	s.clusternet = &workerClusternet{
 		storageRoot: s.StorageRoot,
 
-		clusterMembership: &s.ClusterMembership,
+		curatorConnection: &s.CuratorConnection,
 		podNetwork:        &s.podNetwork,
 		network:           s.Network,
 	}
@@ -158,7 +159,7 @@ func New(c Config) *Service {
 	s.hostsfile = &workerHostsfile{
 		storageRoot:           s.StorageRoot,
 		network:               s.Network,
-		clusterMembership:     &s.ClusterMembership,
+		curatorConnection:     &s.CuratorConnection,
 		clusterDirectorySaved: &s.clusterDirectorySaved,
 	}
 
@@ -174,10 +175,6 @@ func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk
 	s.Resolver.AddOverride(nid, resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 	s.Resolver.AddEndpoint(resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 
-	s.ClusterMembership.Set(&ClusterMembership{
-		pubkey:   pubkey,
-		resolver: s.Resolver,
-	})
 	s.bootstrapData.Set(&bootstrapData{
 		nodePrivateKey:              privkey,
 		initialOwnerKey:             iok,
@@ -194,19 +191,16 @@ func (s *Service) ProvideRegisterData(credentials identity.NodeCredentials, dire
 	// available on the loopback interface.
 	s.Resolver.AddOverride(credentials.ID(), resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 	// Also tell the resolver about all the existing nodes in the cluster we just
-	// registered into.
+	// registered into. The directory passed here was used to issue the initial
+	// Register call, which means at least one of the nodes was running the control
+	// plane and thus can be used to seed the rest of the resolver.
 	for _, n := range directory.Nodes {
-		// TODO(q3k): only add control plane nodes.
 		for _, addr := range n.Addresses {
-			s.Resolver.AddEndpoint(resolver.NodeByHostPort(addr.Host, uint16(common.CuratorServicePort)))
+			s.Resolver.AddEndpoint(resolver.NodeAtAddressWithDefaultPort(addr.Host))
 		}
 	}
 
-	s.ClusterMembership.Set(&ClusterMembership{
-		credentials: &credentials,
-		pubkey:      credentials.PublicKey(),
-		resolver:    s.Resolver,
-	})
+	s.CuratorConnection.Set(newCuratorConnection(&credentials, s.Resolver))
 }
 
 func (s *Service) ProvideJoinData(credentials identity.NodeCredentials, directory *cpb.ClusterDirectory) {
@@ -214,19 +208,16 @@ func (s *Service) ProvideJoinData(credentials identity.NodeCredentials, director
 	// available on the loopback interface.
 	s.Resolver.AddOverride(credentials.ID(), resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 	// Also tell the resolver about all the existing nodes in the cluster we just
-	// joined into.
+	// joined into. The directory passed here was used to issue the initial
+	// Join call, which means at least one of the nodes was running the control
+	// plane and thus can be used to seed the rest of the resolver.
 	for _, n := range directory.Nodes {
-		// TODO(q3k): only add control plane nodes.
 		for _, addr := range n.Addresses {
-			s.Resolver.AddEndpoint(resolver.NodeByHostPort(addr.Host, uint16(common.CuratorServicePort)))
+			s.Resolver.AddEndpoint(resolver.NodeAtAddressWithDefaultPort(addr.Host))
 		}
 	}
 
-	s.ClusterMembership.Set(&ClusterMembership{
-		credentials: &credentials,
-		pubkey:      credentials.PublicKey(),
-		resolver:    s.Resolver,
-	})
+	s.CuratorConnection.Set(newCuratorConnection(&credentials, s.Resolver))
 	s.clusterDirectorySaved.Set(true)
 }
 

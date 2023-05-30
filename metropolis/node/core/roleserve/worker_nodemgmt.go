@@ -10,22 +10,22 @@ import (
 )
 
 type workerNodeMgmt struct {
-	clusterMembership *memory.Value[*ClusterMembership]
+	curatorConnection *memory.Value[*curatorConnection]
 	logTree           *logtree.LogTree
 }
 
 func (s *workerNodeMgmt) run(ctx context.Context) error {
-	w := s.clusterMembership.Watch()
+	w := s.curatorConnection.Watch()
 	defer w.Close()
 	supervisor.Logger(ctx).Infof("Waiting for cluster membership...")
-	cm, err := w.Get(ctx, FilterHome())
+	cc, err := w.Get(ctx)
 	if err != nil {
 		return err
 	}
 
 	supervisor.Logger(ctx).Infof("Got cluster membership, starting...")
 	srv := mgmt.Service{
-		NodeCredentials: cm.credentials,
+		NodeCredentials: cc.credentials,
 		LogTree:         s.logTree,
 	}
 	return srv.Run(ctx)

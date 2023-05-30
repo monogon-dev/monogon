@@ -16,29 +16,23 @@ import (
 type workerClusternet struct {
 	storageRoot *localstorage.Root
 
-	// clusterMembership will be read.
-	clusterMembership *memory.Value[*ClusterMembership]
+	// curatorConnection will be read
+	curatorConnection *memory.Value[*curatorConnection]
 	// podNetwork will be read.
 	podNetwork *memory.Value[*clusternet.Prefixes]
 	network    *network.Service
 }
 
 func (s *workerClusternet) run(ctx context.Context) error {
-	w := s.clusterMembership.Watch()
+	w := s.curatorConnection.Watch()
 	defer w.Close()
-	supervisor.Logger(ctx).Infof("Waiting for cluster membership...")
-	cm, err := w.Get(ctx, FilterHome())
+	supervisor.Logger(ctx).Infof("Waiting for curator connection...")
+	cc, err := w.Get(ctx)
 	if err != nil {
 		return err
 	}
-	supervisor.Logger(ctx).Infof("Got cluster membership, starting...")
-
-	conn, err := cm.DialCurator()
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	cur := ipb.NewCuratorClient(conn)
+	supervisor.Logger(ctx).Infof("Got curator connection, starting...")
+	cur := ipb.NewCuratorClient(cc.conn)
 
 	svc := clusternet.Service{
 		Curator: cur,

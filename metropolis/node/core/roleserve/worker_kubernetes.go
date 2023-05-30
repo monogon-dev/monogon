@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"source.monogon.dev/metropolis/node/core/clusternet"
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/kubernetes"
@@ -31,7 +32,8 @@ type workerKubernetes struct {
 	storageRoot *localstorage.Root
 
 	localRoles        *memory.Value[*cpb.NodeRoles]
-	clusterMembership *memory.Value[*ClusterMembership]
+	localControlPlane *memory.Value[*localControlPlane]
+	curatorConnection *memory.Value[*curatorConnection]
 	kubernetesStatus  *memory.Value[*KubernetesStatus]
 	podNetwork        *memory.Value[*clusternet.Prefixes]
 }
@@ -40,8 +42,10 @@ type workerKubernetes struct {
 // reduced) datum for the main Kubernetes launcher responsible for starting the
 // service, if at all.
 type kubernetesStartup struct {
-	roles      *cpb.NodeRoles
-	membership *ClusterMembership
+	roles   *cpb.NodeRoles
+	lcp     *localControlPlane
+	curator ipb.CuratorClient
+	node    *identity.Node
 }
 
 // changed informs the Kubernetes launcher whether two different
@@ -68,43 +72,39 @@ func (k *kubernetesStartup) controllerChanged(o *kubernetesStartup) bool {
 }
 
 func (s *workerKubernetes) run(ctx context.Context) error {
-	// TODO(q3k): stop depending on local consensus, split up k8s into control plane
-	// and workers.
-
-	// Map/Reduce a *kubernetesStartup from different data sources. This will then
-	// populate an Event Value that the actual launcher will use to start
-	// Kubernetes.
-	//
-	// ClusterMambership -M-> clusterMembershipC --R---> startupV
-	//                                             |
-	//         NodeRoles -M-> rolesC --------------'
-	//
 	var startupV memory.Value[*kubernetesStartup]
 
-	clusterMembershipC := make(chan *ClusterMembership)
+	localControlPlaneC := make(chan *localControlPlane)
+	curatorConnectionC := make(chan *curatorConnection)
 	rolesC := make(chan *cpb.NodeRoles)
 
 	supervisor.RunGroup(ctx, map[string]supervisor.Runnable{
 		// Plain conversion from Event Value to channel.
-		"map-cluster-membership": event.Pipe[*ClusterMembership](s.clusterMembership, clusterMembershipC, FilterHome()),
+		"map-local-control-plane": event.Pipe[*localControlPlane](s.localControlPlane, localControlPlaneC),
+		// Plain conversion from Event Value to channel.
+		"map-curator-connection": event.Pipe[*curatorConnection](s.curatorConnection, curatorConnectionC),
 		// Plain conversion from Event Value to channel.
 		"map-roles": event.Pipe[*cpb.NodeRoles](s.localRoles, rolesC),
-		// Provide config from clusterMembership and roles.
+		// Provide config from the above.
 		"reduce-config": func(ctx context.Context) error {
 			supervisor.Signal(ctx, supervisor.SignalHealthy)
 			var lr *cpb.NodeRoles
-			var cm *ClusterMembership
+			var lcp *localControlPlane
+			var cc *curatorConnection
 			for {
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
 				case lr = <-rolesC:
-				case cm = <-clusterMembershipC:
+				case lcp = <-localControlPlaneC:
+				case cc = <-curatorConnectionC:
 				}
-				if lr != nil && cm != nil {
+				if lr != nil && cc != nil {
 					startupV.Set(&kubernetesStartup{
-						roles:      lr,
-						membership: cm,
+						roles:   lr,
+						lcp:     lcp,
+						node:    &cc.credentials.Node,
+						curator: ipb.NewCuratorClient(cc.conn),
 					})
 				}
 			}
@@ -146,23 +146,22 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 				supervisor.Logger(ctx).Infof("No Kubernetes controller role, not starting.")
 				continue
 			}
-			if d.membership.localConsensus == nil {
+			if !d.lcp.exists() {
 				supervisor.Logger(ctx).Warningf("No local consensus, cannot start.")
 				continue
 			}
 
 			break
 		}
-		supervisor.Logger(ctx).Infof("Waiting for local consensus...")
-		pki, err := kpki.FromLocalConsensus(ctx, d.membership.localConsensus)
+		pki, err := kpki.FromLocalConsensus(ctx, d.lcp.consensus)
 		if err != nil {
 			return fmt.Errorf("getting kubernetes PKI client: %w", err)
 		}
 
-		supervisor.Logger(ctx).Infof("Got data, starting Kubernetes...")
+		supervisor.Logger(ctx).Infof("Starting Kubernetes controller...")
 
 		controller := kubernetes.NewController(kubernetes.ConfigController{
-			Node:           &d.membership.credentials.Node,
+			Node:           d.node,
 			ServiceIPRange: serviceIPRange,
 			ClusterNet:     clusterIPRange,
 			ClusterDomain:  clusterDomain,
@@ -218,12 +217,6 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			break
 		}
 
-		cur, err := d.membership.DialCurator()
-		if err != nil {
-			return fmt.Errorf("could not dial curator: %w", err)
-		}
-		ccli := ipb.NewCuratorClient(cur)
-
 		// Start containerd.
 		containerdSvc := &containerd.Service{
 			EphemeralVolume: &s.storageRoot.Ephemeral.Containerd,
@@ -239,8 +232,8 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 
 			Root:          s.storageRoot,
 			Network:       s.network,
-			NodeID:        d.membership.NodeID(),
-			CuratorClient: ccli,
+			NodeID:        d.node.ID(),
+			CuratorClient: d.curator,
 			PodNetwork:    s.podNetwork,
 		})
 		// Start Kubernetes.

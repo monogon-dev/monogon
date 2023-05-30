@@ -16,8 +16,12 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	common "source.monogon.dev/metropolis/node"
-	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	"source.monogon.dev/metropolis/node/core/consensus"
+	"source.monogon.dev/metropolis/node/core/curator"
+	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -62,10 +66,9 @@ func (f *statusRecordingCurator) expectReports(t *testing.T, want []*ipb.UpdateN
 // expected. It does not exercise the 'map' runnables.
 func TestWorkerStatusPush(t *testing.T) {
 	chans := workerStatusPushChannels{
-		address:       make(chan string),
-		nodeID:        make(chan string),
-		curatorClient: make(chan ipb.CuratorClient),
-		localCurator:  make(chan bool),
+		address:           make(chan string),
+		localControlPlane: make(chan *localControlPlane),
+		curatorConnection: make(chan *curatorConnection),
 	}
 
 	go supervisor.TestHarness(t, func(ctx context.Context) error {
@@ -95,16 +98,20 @@ func TestWorkerStatusPush(t *testing.T) {
 	}
 	defer cl.Close()
 
-	// Actual test code starts here.
+	eph := rpc.NewEphemeralClusterCredentials(t, 1)
+	nodeID := eph.Nodes[0].ID()
 
-	chans.curatorClient <- ipb.NewCuratorClient(cl)
+	// Actual test code starts here.
+	chans.curatorConnection <- &curatorConnection{
+		credentials: eph.Nodes[0],
+		conn:        cl,
+	}
 	cur.expectReports(t, nil)
 
 	// Provide enough data for the first status report to be submitted.
-	chans.nodeID <- "1234"
 	chans.address <- "192.0.2.10"
 	cur.expectReports(t, []*ipb.UpdateNodeStatusRequest{
-		{NodeId: "1234", Status: &cpb.NodeStatus{
+		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
 		}},
 	})
@@ -113,31 +120,37 @@ func TestWorkerStatusPush(t *testing.T) {
 	chans.address <- "192.0.2.10"
 	chans.address <- "192.0.2.11"
 	cur.expectReports(t, []*ipb.UpdateNodeStatusRequest{
-		{NodeId: "1234", Status: &cpb.NodeStatus{
+		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
 		}},
-		{NodeId: "1234", Status: &cpb.NodeStatus{
+		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
 		}},
 	})
 
 	// Enabling and disabling local curator should work.
-	chans.localCurator <- true
-	chans.localCurator <- false
+	chans.localControlPlane <- &localControlPlane{
+		curator:   &curator.Service{},
+		consensus: &consensus.Service{},
+	}
+	chans.localControlPlane <- &localControlPlane{
+		curator:   nil,
+		consensus: nil,
+	}
 	cur.expectReports(t, []*ipb.UpdateNodeStatusRequest{
-		{NodeId: "1234", Status: &cpb.NodeStatus{
+		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
 		}},
-		{NodeId: "1234", Status: &cpb.NodeStatus{
+		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
 		}},
-		{NodeId: "1234", Status: &cpb.NodeStatus{
+		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
 			RunningCurator: &cpb.NodeStatus_RunningCurator{
 				Port: int32(common.CuratorServicePort),
 			},
 		}},
-		{NodeId: "1234", Status: &cpb.NodeStatus{
+		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
 		}},
 	})

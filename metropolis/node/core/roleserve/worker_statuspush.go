@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/prototext"
 
 	common "source.monogon.dev/metropolis/node"
@@ -22,8 +21,10 @@ import (
 type workerStatusPush struct {
 	network *network.Service
 
-	// clusterMembership will be read.
-	clusterMembership *memory.Value[*ClusterMembership]
+	// localControlPlane will be read
+	localControlPlane *memory.Value[*localControlPlane]
+	// curatorConnection will be read.
+	curatorConnection *memory.Value[*curatorConnection]
 	// clusterDirectorySaved will be read.
 	clusterDirectorySaved *memory.Value[bool]
 }
@@ -32,15 +33,9 @@ type workerStatusPush struct {
 // 'map' runnables (waiting on Event Values) and the main loop.
 type workerStatusPushChannels struct {
 	// address of the node, or empty if none. Retrieved from network service.
-	address chan string
-	// nodeID of this node. Populated whenever available from ClusterMembership.
-	nodeID chan string
-	// curatorClient connecting to the cluster, populated whenever available from
-	// ClusterMembership. Used to actually submit the update.
-	curatorClient chan ipb.CuratorClient
-	// localCurator describing whether this node has a locally running curator on
-	// the default port. Retrieved from ClusterMembership.
-	localCurator chan bool
+	address           chan string
+	localControlPlane chan *localControlPlane
+	curatorConnection chan *curatorConnection
 }
 
 // workerStatusPushLoop runs the main loop acting on data received from
@@ -64,25 +59,28 @@ func workerStatusPushLoop(ctx context.Context, chans *workerStatusPushChannels) 
 				changed = true
 			}
 
-		case newNodeID := <-chans.nodeID:
+		case curCon := <-chans.curatorConnection:
+			newNodeID := curCon.nodeID()
 			if nodeID != newNodeID {
 				supervisor.Logger(ctx).Infof("Got new NodeID: %s", newNodeID)
 				nodeID = newNodeID
 				changed = true
 			}
+			if cur == nil {
+				cur = ipb.NewCuratorClient(curCon.conn)
+				supervisor.Logger(ctx).Infof("Got curator connection.")
+				changed = true
+			}
 
-		case cur = <-chans.curatorClient:
-			supervisor.Logger(ctx).Infof("Got curator connection.")
-
-		case localCurator := <-chans.localCurator:
-			if status.RunningCurator == nil && localCurator {
+		case lcp := <-chans.localControlPlane:
+			if status.RunningCurator == nil && lcp.exists() {
 				supervisor.Logger(ctx).Infof("Got new local curator state: running")
 				status.RunningCurator = &cpb.NodeStatus_RunningCurator{
 					Port: int32(common.CuratorServicePort),
 				}
 				changed = true
 			}
-			if status.RunningCurator != nil && !localCurator {
+			if status.RunningCurator != nil && !lcp.exists() {
 				supervisor.Logger(ctx).Infof("Got new local curator state: not running")
 				status.RunningCurator = nil
 				changed = true
@@ -105,10 +103,9 @@ func workerStatusPushLoop(ctx context.Context, chans *workerStatusPushChannels) 
 
 func (s *workerStatusPush) run(ctx context.Context) error {
 	chans := workerStatusPushChannels{
-		address:       make(chan string),
-		nodeID:        make(chan string),
-		curatorClient: make(chan ipb.CuratorClient),
-		localCurator:  make(chan bool),
+		address:           make(chan string),
+		curatorConnection: make(chan *curatorConnection),
+		localControlPlane: make(chan *localControlPlane),
 	}
 
 	// All the channel sends in the map runnables are preemptible by a context
@@ -133,59 +130,8 @@ func (s *workerStatusPush) run(ctx context.Context) error {
 			}
 		}
 	})
-	supervisor.Run(ctx, "map-cluster-membership", func(ctx context.Context) error {
-		supervisor.Signal(ctx, supervisor.SignalHealthy)
-
-		// Do not submit heartbeat until we've got the cluster directory saved.
-		//
-		// TODO(q3k): add a node status field for this instead.
-		supervisor.Logger(ctx).Infof("Waiting for cluster directory to be saved...")
-		cdw := s.clusterDirectorySaved.Watch()
-		_, err := cdw.Get(ctx, event.Filter(func(t bool) bool { return t }))
-		if err != nil {
-			return fmt.Errorf("getting cluster directory state failed: %w", err)
-		}
-
-		var conn *grpc.ClientConn
-		defer func() {
-			if conn != nil {
-				conn.Close()
-			}
-		}()
-
-		w := s.clusterMembership.Watch()
-		defer w.Close()
-		supervisor.Logger(ctx).Infof("Cluster directory saved, waiting for cluster membership...")
-		for {
-			cm, err := w.Get(ctx, FilterHome())
-			if err != nil {
-				return fmt.Errorf("getting cluster membership status failed: %w", err)
-			}
-
-			if conn == nil {
-				conn, err = cm.DialCurator()
-				if err != nil {
-					return fmt.Errorf("when attempting to connect to curator: %w", err)
-				}
-				select {
-				case chans.curatorClient <- ipb.NewCuratorClient(conn):
-				case <-ctx.Done():
-					return ctx.Err()
-				}
-			}
-
-			select {
-			case chans.localCurator <- cm.localCurator != nil:
-			case <-ctx.Done():
-				return ctx.Err()
-			}
-			select {
-			case chans.nodeID <- cm.NodeID():
-			case <-ctx.Done():
-				return ctx.Err()
-			}
-		}
-	})
+	supervisor.Run(ctx, "pipe-local-control-plane", event.Pipe[*localControlPlane](s.localControlPlane, chans.localControlPlane))
+	supervisor.Run(ctx, "pipe-curator-connection", event.Pipe[*curatorConnection](s.curatorConnection, chans.curatorConnection))
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	return workerStatusPushLoop(ctx, &chans)
