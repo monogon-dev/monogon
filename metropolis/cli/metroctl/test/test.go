@@ -107,8 +107,9 @@ func TestMetroctl(t *testing.T) {
 
 	socksRemote := fmt.Sprintf("localhost:%d", cl.Ports[cluster.SOCKSPort])
 	var clusterEndpoints []string
-	for _, ep := range cl.Nodes {
-		clusterEndpoints = append(clusterEndpoints, ep.ManagementAddress)
+	// Use node starting order for endpoints
+	for _, ep := range cl.NodeIDs {
+		clusterEndpoints = append(clusterEndpoints, cl.Nodes[ep].ManagementAddress)
 	}
 
 	ownerPem := pem.EncodeToMemory(&pem.Block{
