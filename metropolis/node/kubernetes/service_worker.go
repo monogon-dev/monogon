@@ -86,6 +86,7 @@ func (s *Worker) Run(ctx context.Context) error {
 		ClusterDomain:      s.c.ClusterDomain,
 		KubeletDirectory:   &s.c.Root.Data.Kubernetes.Kubelet,
 		EphemeralDirectory: &s.c.Root.Ephemeral,
+		ClusterDNS:         []net.IP{node.ContainerDNSIP},
 	}
 
 	// Gather all required material to send over for certficiate issuance to the
@@ -177,43 +178,6 @@ func (s *Worker) Run(ctx context.Context) error {
 		c.informers = informers
 	}
 
-	// Sub-runnable which starts all parts of Kubernetes that depend on the
-	// machine's external IP address. If it changes, the runnable will exit.
-	// TODO(q3k): test this
-	supervisor.Run(ctx, "networked", func(ctx context.Context) error {
-		networkWatch := s.c.Network.Watch()
-		defer networkWatch.Close()
-
-		var status *network.Status
-
-		supervisor.Logger(ctx).Info("Waiting for node networking...")
-		for status == nil || status.ExternalAddress == nil {
-			status, err = networkWatch.Get(ctx)
-			if err != nil {
-				return fmt.Errorf("failed to get network status: %w", err)
-			}
-		}
-		address := status.ExternalAddress
-		supervisor.Logger(ctx).Info("Node has active networking, starting apiserver/kubelet")
-		kubelet.ClusterDNS = []net.IP{address}
-		err := supervisor.RunGroup(ctx, map[string]supervisor.Runnable{
-			"kubelet": kubelet.Run,
-		})
-		if err != nil {
-			return fmt.Errorf("when starting kubelet: %w", err)
-		}
-
-		supervisor.Signal(ctx, supervisor.SignalHealthy)
-
-		for status.ExternalAddress.Equal(address) {
-			status, err = networkWatch.Get(ctx)
-			if err != nil {
-				return fmt.Errorf("when watching for network changes: %w", err)
-			}
-		}
-		return fmt.Errorf("network configuration changed (%s -> %s)", address.String(), status.ExternalAddress.String())
-	})
-
 	csiPlugin := csiPluginServer{
 		KubeletDirectory: &s.c.Root.Data.Kubernetes.Kubelet,
 		VolumesDirectory: &s.c.Root.Data.Volumes,
@@ -250,6 +214,7 @@ func (s *Worker) Run(ctx context.Context) error {
 		{"clusternet", clusternet.Run},
 		{"nfproxy", nfproxy.Run},
 		{"kvmdeviceplugin", kvmDevicePlugin.Run},
+		{"kubelet", kubelet.Run},
 	} {
 		err := supervisor.Run(ctx, sub.name, sub.runnable)
 		if err != nil {

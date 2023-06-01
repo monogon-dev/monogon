@@ -36,9 +36,20 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 		return err
 	}
 
-	hostDevices, err := listHostDeviceIfaces()
+	hostDevices, loopbackLink, err := listHostDeviceIfaces()
 	if err != nil {
 		return err
+	}
+	if loopbackLink == nil {
+		return errors.New("No loopback interface present, weird/broken kernel?")
+	}
+	if err := netlink.LinkSetUp(loopbackLink); err != nil {
+		l.Error("Failed to enable loopback interface: %w", err)
+	}
+	for _, addr := range s.ExtraDNSListenerIPs {
+		if err := netlink.AddrAdd(loopbackLink, singleIPtoNetlinkAddr(addr, "")); err != nil {
+			l.Errorf("Failed to assign extra loopback IP: %v", err)
+		}
 	}
 
 	var hasIPv4Autoconfig bool
@@ -222,17 +233,23 @@ type deviceIfData struct {
 	driver string
 }
 
-func listHostDeviceIfaces() ([]deviceIfData, error) {
+func listHostDeviceIfaces() ([]deviceIfData, netlink.Link, error) {
 	links, err := netlink.LinkList()
 	if err != nil {
-		return nil, fmt.Errorf("failed to list network links: %w", err)
+		return nil, nil, fmt.Errorf("failed to list network links: %w", err)
 	}
 
 	var hostDevices []deviceIfData
 
+	var loopbackLink netlink.Link
+
 	for _, link := range links {
-		if link.Attrs().EncapType == "loopback" {
-			netlink.LinkSetUp(link)
+		// Modern Linux versions always create a loopback device named "lo" with
+		// constant interface index 1 in every network namespace. Since Linux
+		// 3.6 there is a BUG_ON in the loopback driver, asserting that this is
+		// true for every loopback interface created.
+		if link.Attrs().Index == 1 {
+			loopbackLink = link
 		}
 		d, ok := link.(*netlink.Device)
 		if !ok {
@@ -248,7 +265,7 @@ func listHostDeviceIfaces() ([]deviceIfData, error) {
 			driver: driver,
 		})
 	}
-	return hostDevices, nil
+	return hostDevices, loopbackLink, nil
 }
 
 func deviceIfaceFromSpec(it *netpb.Interface_Device, hostDevices []deviceIfData, l logtree.LeveledLogger) (*netlink.Device, error) {

@@ -20,12 +20,14 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"strings"
 	"time"
 
 	"golang.org/x/sys/unix"
 
+	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/cluster"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
@@ -115,6 +117,7 @@ func main() {
 
 	networkSvc := network.New(nil)
 	networkSvc.DHCPVendorClassID = "dev.monogon.metropolis.node.v1"
+	networkSvc.ExtraDNSListenerIPs = []net.IP{node.ContainerDNSIP}
 	timeSvc := timesvc.New()
 
 	// This function initializes a headless Delve if this is a debug build or

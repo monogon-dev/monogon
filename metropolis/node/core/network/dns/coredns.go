@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"strings"
@@ -45,6 +46,8 @@ const corefileBase = `
 `
 
 type Service struct {
+	// Extra IPs the DNS service listens on and serves requests from.
+	ExtraListenerIPs      []net.IP
 	directiveRegistration chan *ExtraDirective
 	directives            map[string]ExtraDirective
 	cmd                   *exec.Cmd
@@ -54,7 +57,8 @@ type Service struct {
 	stateMu sync.Mutex
 }
 
-// New creates a new CoreDNS service.
+// New creates a new CoreDNS service. By default it only listens on the loopback
+// IPs ::1/127.0.0.1, but extra listener IPs can be added in extraListenerIPs.
 // The given channel can then be used to dynamically register and unregister
 // directives in the configuaration.
 // To register a new directive, send an ExtraDirective on the channel. To
@@ -70,6 +74,11 @@ func New(directiveRegistration chan *ExtraDirective) *Service {
 func (s *Service) makeCorefile(fargs *fileargs.FileArgs) []byte {
 	corefile := bytes.Buffer{}
 	corefile.WriteString(corefileBase)
+	bindIPs := []string{"127.0.0.1", "::1"}
+	for _, ip := range s.ExtraListenerIPs {
+		bindIPs = append(bindIPs, ip.String())
+	}
+	fmt.Fprintf(&corefile, "\tbind %s\n", strings.Join(bindIPs, " "))
 	for _, dir := range s.directives {
 		resolvedDir := dir.directive
 		for fname, fcontent := range dir.files {
@@ -92,6 +101,16 @@ func CancelDirective(d *ExtraDirective) *ExtraDirective {
 // Run runs the DNS service consisting of the CoreDNS process and the directive
 // registration process
 func (s *Service) Run(ctx context.Context) error {
+	s.stateMu.Lock()
+	if s.args == nil {
+		args, err := fileargs.New()
+		if err != nil {
+			s.stateMu.Unlock()
+			return fmt.Errorf("failed to create fileargs: %w", err)
+		}
+		s.args = args
+	}
+	s.stateMu.Unlock()
 	supervisor.Run(ctx, "coredns", s.runCoreDNS)
 	supervisor.Run(ctx, "registration", s.runRegistration)
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
@@ -102,21 +121,13 @@ func (s *Service) Run(ctx context.Context) error {
 // runCoreDNS runs the CoreDNS proceess
 func (s *Service) runCoreDNS(ctx context.Context) error {
 	s.stateMu.Lock()
-	args, err := fileargs.New()
-	if err != nil {
-		s.stateMu.Unlock()
-		return fmt.Errorf("failed to create fileargs: %w", err)
-	}
-	defer args.Close()
-	s.args = args
-
 	s.cmd = exec.CommandContext(ctx, "/kubernetes/bin/coredns",
-		args.FileOpt("-conf", "Corefile", s.makeCorefile(args)),
+		s.args.FileOpt("-conf", "Corefile", s.makeCorefile(s.args)),
 	)
 
-	if args.Error() != nil {
+	if s.args.Error() != nil {
 		s.stateMu.Unlock()
-		return fmt.Errorf("failed to use fileargs: %w", err)
+		return fmt.Errorf("failed to use fileargs: %w", s.args.Error())
 	}
 
 	s.stateMu.Unlock()

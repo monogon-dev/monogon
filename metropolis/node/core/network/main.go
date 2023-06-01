@@ -49,6 +49,13 @@ type Service struct {
 	// autoconfiguration.
 	StaticConfig *netpb.Net
 
+	// List of IPs which get configured onto the loopback interface and the
+	// integrated DNS server is serving on. Cannot be changed at runtime.
+	// This is a hack to work around CoreDNS not being able to change listeners
+	// on-the-fly without breaking everything. This will go away once its
+	// frontend got replaced by something which can do that.
+	ExtraDNSListenerIPs []net.IP
+
 	// Vendor Class identifier of the system
 	DHCPVendorClassID string
 
@@ -109,6 +116,30 @@ func (s *Service) Value() event.Value[*Status] {
 // information.
 func (s *Service) ConfigureDNS(d *dns.ExtraDirective) {
 	s.dnsReg <- d
+}
+
+func singleIPtoNetlinkAddr(ip net.IP, label string) *netlink.Addr {
+	var mask net.IPMask
+	if ip.To4() == nil {
+		mask = net.CIDRMask(128, 128) // IPv6 /128
+	} else {
+		mask = net.CIDRMask(32, 32) // IPv4 /32
+	}
+	scope := netlink.SCOPE_UNIVERSE
+	if ip.IsLinkLocalUnicast() {
+		scope = netlink.SCOPE_LINK
+	}
+	if ip.IsLoopback() {
+		scope = netlink.SCOPE_HOST
+	}
+	return &netlink.Addr{
+		IPNet: &net.IPNet{
+			IP:   ip,
+			Mask: mask,
+		},
+		Label: label,
+		Scope: int(scope),
+	}
 }
 
 // nfifname converts an interface name into 16 bytes padded with zeroes (for
@@ -209,6 +240,7 @@ const dscpCS7 = 0x7 << 3
 
 func (s *Service) Run(ctx context.Context) error {
 	logger := supervisor.Logger(ctx)
+	s.dnsSvc.ExtraListenerIPs = s.ExtraDNSListenerIPs
 	supervisor.Run(ctx, "dns", s.dnsSvc.Run)
 
 	earlySysctlOpts := sysctlOptions{
@@ -296,6 +328,11 @@ func (s *Service) runDynamicConfig(ctx context.Context) error {
 		} else if link.Attrs().Name == "lo" {
 			if err := netlink.LinkSetUp(link); err != nil {
 				logger.Errorf("Failed to bring up loopback interface: %v", err)
+			}
+			for _, addr := range s.ExtraDNSListenerIPs {
+				if err := netlink.AddrAdd(link, singleIPtoNetlinkAddr(addr, "")); err != nil {
+					logger.Errorf("Failed to assign extra loopback IP: %v", err)
+				}
 			}
 		}
 	}

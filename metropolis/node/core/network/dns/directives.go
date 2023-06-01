@@ -66,11 +66,13 @@ kubernetes %v in-addr.arpa ip6.arpa {
 // Service Discovery" compliant service under clusterDomain. The given
 // kubeconfig needs at least read access to services, endpoints and
 // endpointslices.
-//   [1] https://github.com/kubernetes/dns/blob/master/docs/specification.md
+//
+//	[1] https://github.com/kubernetes/dns/blob/master/docs/specification.md
 func NewKubernetesDirective(clusterDomain string, kubeconfig []byte) *ExtraDirective {
+	var prefix string
 	return &ExtraDirective{
 		ID:        "k8s-clusterdns",
-		directive: fmt.Sprintf(kubernetesDirective, clusterDomain),
+		directive: prefix + fmt.Sprintf(kubernetesDirective, clusterDomain),
 		files: map[string][]byte{
 			"kubeconfig": kubeconfig,
 		},

@@ -9,6 +9,7 @@ go_library(
     name = "node",
     srcs = [
         "ids.go",
+        "net_ips.go",
         "net_protocols.go",
         "ports.go",
     ],
