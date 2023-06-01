@@ -294,6 +294,7 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
+	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
 	github.com/mdlayher/packet v0.0.0-20220221164757-67998ac0ff93 // indirect
 	github.com/mdlayher/socket v0.2.1 // indirect
 	github.com/miekg/dns v1.1.48 // indirect

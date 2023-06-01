@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "devmgr",
+    srcs = ["devmgr.go"],
+    importpath = "source.monogon.dev/metropolis/node/core/devmgr",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/pkg/kmod",
+        "//metropolis/pkg/supervisor",
+        "@com_github_mdlayher_kobject//:kobject",
+    ],
+)

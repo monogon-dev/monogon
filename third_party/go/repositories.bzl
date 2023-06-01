@@ -3520,6 +3520,13 @@ def go_repositories():
         version = "v1.2.0",
     )
     go_repository(
+        name = "com_github_mdlayher_kobject",
+        importpath = "github.com/mdlayher/kobject",
+        sum = "h1:JmrZTpS0GAyMV4ZQVVH/AS0Y6r2PbnYNSRUuRX+HOLA=",
+        version = "v0.0.0-20200520190114-19ca17470d7d",
+    )
+
+    go_repository(
         name = "com_github_mdlayher_netlink",
         importpath = "github.com/mdlayher/netlink",
         sum = "h1:rOHX5yl7qnlpiVkFWoqccueppMtXzeziFjWAjLg6sz0=",

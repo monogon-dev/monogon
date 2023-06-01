@@ -1542,6 +1542,8 @@ github.com/mdlayher/ethtool v0.0.0-20211028163843-288d040e9d60/go.mod h1:aYbhish
 github.com/mdlayher/genetlink v1.0.0/go.mod h1:0rJ0h4itni50A86M2kHcgS85ttZazNt7a8H2a2cw0Gc=
 github.com/mdlayher/genetlink v1.2.0 h1:4yrIkRV5Wfk1WfpWTcoOlGmsWgQj3OtQN9ZsbrE+XtU=
 github.com/mdlayher/genetlink v1.2.0/go.mod h1:ra5LDov2KrUCZJiAtEvXXZBxGMInICMXIwshlJ+qRxQ=
+github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d h1:JmrZTpS0GAyMV4ZQVVH/AS0Y6r2PbnYNSRUuRX+HOLA=
+github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d/go.mod h1:+SexPO1ZvdbbWUdUnyXEWv3+4NwHZjKhxOmQqHY4Pqc=
 github.com/mdlayher/netlink v0.0.0-20190409211403-11939a169225/go.mod h1:eQB3mZE4aiYnlUsyGGCOpPETfdQq4Jhsgf1fk3cwQaA=
 github.com/mdlayher/netlink v0.0.0-20190516121005-0087c778e469/go.mod h1:gOrA34zDL0K3RsACQe54bDYLF/CeFspQ9m5DOycycQ8=
 github.com/mdlayher/netlink v0.0.0-20190828143259-340058475d09/go.mod h1:KxeJAFOFLG6AjpyDkQ/iIhxygIUKD+vcwqcnu43w/+M=
