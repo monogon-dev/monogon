@@ -20,6 +20,7 @@ import (
 
 	apb "source.monogon.dev/cloud/agent/api"
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
+	"source.monogon.dev/metropolis/node/core/devmgr"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/pkg/pki"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -68,6 +69,9 @@ func agentRunnable(ctx context.Context) error {
 	if agentInit.TakeoverInit == nil {
 		return errors.New("AgentInit takeover_init field is unset, this is not allowed")
 	}
+
+	devmgrSvc := devmgr.New()
+	supervisor.Run(ctx, "devmgr", devmgrSvc.Run)
 
 	networkSvc := network.New(agentInit.NetworkConfig)
 	networkSvc.DHCPVendorClassID = "dev.monogon.cloud.agent.v1"

@@ -24,6 +24,7 @@ go_library(
     deps = [
         "//metropolis/node",
         "//metropolis/node/core/cluster",
+        "//metropolis/node/core/devmgr",
         "//metropolis/node/core/localstorage",
         "//metropolis/node/core/localstorage/declarative",
         "//metropolis/node/core/mgmt",

@@ -10,16 +10,32 @@ def _fsspec_linux_firmware(ctx):
     )
 
     modinfo = ctx.attr.kernel[OutputGroupInfo].modinfo.to_list()[0]
+    modules = ctx.attr.kernel[OutputGroupInfo].modules.to_list()[0]
+
+    meta_out = ctx.actions.declare_file(ctx.label.name + "-meta.pb")
 
     ctx.actions.run(
-        outputs = [fsspec_out],
-        inputs = [fwlist, modinfo, ctx.file.metadata] + ctx.files.firmware_files,
+        outputs = [fsspec_out, meta_out],
+        inputs = [fwlist, modinfo, modules, ctx.file.metadata] + ctx.files.firmware_files,
         tools = [ctx.executable._fwprune],
         executable = ctx.executable._fwprune,
-        arguments = [modinfo.path, fwlist.path, ctx.file.metadata.path, fsspec_out.path],
+        arguments = [
+            "-modinfo",
+            modinfo.path,
+            "-modules",
+            modules.path,
+            "-firmware-file-list",
+            fwlist.path,
+            "-firmware-whence",
+            ctx.file.metadata.path,
+            "-out-meta",
+            meta_out.path,
+            "-out-fsspec",
+            fsspec_out.path,
+        ],
     )
 
-    return [DefaultInfo(files = depset([fsspec_out])), FSSpecInfo(spec = fsspec_out, referenced = ctx.files.firmware_files)]
+    return [DefaultInfo(files = depset([fsspec_out])), FSSpecInfo(spec = fsspec_out, referenced = ctx.files.firmware_files + [modules, meta_out])]
 
 fsspec_linux_firmware = rule(
     implementation = _fsspec_linux_firmware,

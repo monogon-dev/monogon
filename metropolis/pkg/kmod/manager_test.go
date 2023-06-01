@@ -10,7 +10,6 @@ func TestManagerIntegration(t *testing.T) {
 	if os.Getenv("IN_KTEST") != "true" {
 		t.Skip("Not in ktest")
 	}
-	t.Skip("Only works from the final CL in the stack as it has a dep on the new kernel config")
 	mgr, err := NewManagerFromPath("/lib/modules")
 	if err != nil {
 		t.Fatal(err)

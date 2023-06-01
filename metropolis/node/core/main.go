@@ -29,6 +29,7 @@ import (
 
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/cluster"
+	"source.monogon.dev/metropolis/node/core/devmgr"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/node/core/network"
@@ -119,6 +120,7 @@ func main() {
 	networkSvc.DHCPVendorClassID = "dev.monogon.metropolis.node.v1"
 	networkSvc.ExtraDNSListenerIPs = []net.IP{node.ContainerDNSIP}
 	timeSvc := timesvc.New()
+	devmgrSvc := devmgr.New()
 
 	// This function initializes a headless Delve if this is a debug build or
 	// does nothing if it's not
@@ -163,6 +165,9 @@ func main() {
 			} else {
 				logger.Errorf("Unable to load static config, proceeding without it: %v", err)
 			}
+		}
+		if err := supervisor.Run(ctx, "devmgr", devmgrSvc.Run); err != nil {
+			return fmt.Errorf("when starting devmgr: %w", err)
 		}
 		if err := supervisor.Run(ctx, "network", networkSvc.Run); err != nil {
 			return fmt.Errorf("when starting network: %w", err)

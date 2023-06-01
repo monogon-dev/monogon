@@ -16,6 +16,7 @@ go_library(
         "//cloud/agent/api",
         "//cloud/bmaas/server/api",
         "//metropolis/node/build/mkimage/osimage",
+        "//metropolis/node/core/devmgr",
         "//metropolis/node/core/network",
         "//metropolis/pkg/bootparam",
         "//metropolis/pkg/efivarfs",
