@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package metropolis.pkg.kmod;
+
+option go_package = "source.monogon.dev/metropolis/pkg/kmod/spec";
+
+// Module contains important metadata about a Linux kernel module.
+message Module {
+    // Name of the module
+    string name = 1;
+    // Path of the module, relative to the module root.
+    // Unset if built-in.
+    string path = 2;
+    // List of Meta.modules indices on which this module depends.
+    repeated uint32 depends = 3;
+}
+
+message RadixNode {
+    enum Type {
+        // Matches one or more characters literally.
+        LITERAL = 0;
+        // Matches zero or more arbitrary characters.
+        WILDCARD = 1;
+        // Matches exactly one arbitrary character.
+        SINGLE_WILDCARD = 2;
+        // Matches exactly one character between start_byte and end_byte.
+        BYTE_RANGE = 3;
+        // Root matches nothing, but serves a the root node for a radix
+        // tree.
+        ROOT = 4;
+    }
+    Type type = 1;
+
+    // Only valid for LITERAL type
+    string literal = 2;
+
+    // Only valid when BYTE_RANGE type
+    uint32 start_byte = 3;
+    uint32 end_byte = 4;
+
+    // Contains a list of radix nodes which are children of this node.
+    repeated RadixNode children = 5;
+
+    // A list of module indices (in the Meta.modules list) which have
+    // match expressions ending at this node.
+    repeated uint32 module_index = 6;
+}
+
+// Meta contains metadata about all modules in a Linux kernel
+message Meta {
+    // Contains a list of modules, including built-in ones.
+    repeated Module modules = 1;
+
+    // Contains the root node of a radix tree for looking up modules to load
+    // for a given device modalias.
+    RadixNode module_device_matches = 2;
+}

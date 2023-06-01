@@ -1,0 +1,49 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//metropolis/node/build/fwprune:def.bzl", "fsspec_linux_firmware")
+load("//metropolis/test/ktest:ktest.bzl", "ktest")
+
+go_library(
+    name = "kmod",
+    srcs = [
+        "manager.go",
+        "meta.go",
+        "modinfo.go",
+        "radix.go",
+        "syscall.go",
+    ],
+    importpath = "source.monogon.dev/metropolis/pkg/kmod",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/pkg/kmod/spec",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_x_sys//unix",
+    ],
+)
+
+go_test(
+    name = "kmod_test",
+    srcs = [
+        "manager_test.go",
+        "radix_test.go",
+    ],
+    embed = [":kmod"],
+    deps = [
+        "//metropolis/pkg/kmod/spec",
+        "@com_github_google_go_cmp//cmp",
+        "@org_golang_google_protobuf//testing/protocmp",
+    ],
+)
+
+fsspec_linux_firmware(
+    name = "firmware",
+    firmware_files = ["@linux-firmware//:all_files"],
+    kernel = "//metropolis/test/ktest:linux-testing",
+    metadata = "@linux-firmware//:metadata",
+)
+
+ktest(
+    fsspecs = [
+        ":firmware",
+    ],
+    tester = ":kmod_test",
+)
