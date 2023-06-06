@@ -181,7 +181,7 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 	// Generate options for all the file descriptors we'll be passing as virtio "serial
 	// ports"
 	var extraArgs []string
-	for idx, _ := range opts.ExtraChardevs {
+	for idx := range opts.ExtraChardevs {
 		idxStr := strconv.Itoa(idx)
 		id := "extra" + idxStr
 		// That this works is pretty much a hack, but upstream QEMU doesn't have a
@@ -206,7 +206,7 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 			"-chardev", chardevConf.ToOption("pipe"), "-device", deviceConf.ToOption("virtserialport"))
 	}
 
-	for idx, _ := range opts.ExtraNetworkInterfaces {
+	for idx := range opts.ExtraNetworkInterfaces {
 		id := fmt.Sprintf("net%v", idx)
 		netdevConf := QemuValue{
 			"id": {id},
@@ -226,8 +226,10 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 	// kernel, initramfs and command line are mapped into VM memory at boot time and
 	// not loaded from any sort of disk. Booting and shutting off one of these VMs
 	// takes <100ms.
-	baseArgs := []string{"-nodefaults", "-no-user-config", "-nographic", "-no-reboot",
+	baseArgs := []string{
+		"-nodefaults", "-no-user-config", "-nographic", "-no-reboot",
 		"-accel", "kvm", "-cpu", "host",
+		"-m", "1G",
 		// Needed until QEMU updates their bundled qboot version (needs
 		// https://github.com/bonzini/qboot/pull/28)
 		"-bios", "external/com_github_bonzini_qboot/bios.bin",
