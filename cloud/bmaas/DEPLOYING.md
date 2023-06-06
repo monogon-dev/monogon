@@ -18,9 +18,10 @@ sequence upgrades in the following way:
    versions of the components.
 3. Repeat from point 1 until the newest wanted CL version is running.
 
-^ ID ^ Schema range  ^ CL range ^ Notes                        ^
-|  0 | < 1672749980  | >= 0     | Initial production schema.   |
-|  1 | >= 1672768890 | >= 1565  | Exponential backoff support. |
+| ID | Schema range  | CL range | Notes                        |
+|----|---------------|----------|------------------------------|
+| 0  | < 1672749980  | >= 0     | Initial production schema.   |
+| 1  | >= 1672768890 | >= 1565  | Exponential backoff support. |
 
 For example, if the cluster is at version 1200, it should first be upgraded to 
 < 1565 (to reach row 0), then to anything higher than 1565 (to reach row 1).
