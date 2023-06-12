@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/shepherd/equinix/wrapngo"
 )

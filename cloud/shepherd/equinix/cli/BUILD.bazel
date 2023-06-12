@@ -16,7 +16,6 @@ go_library(
         "//metropolis/cli/pkg/context",
         "@com_github_packethost_packngo//:packngo",
         "@com_github_spf13_cobra//:cobra",
-        "@io_k8s_klog//:klog",
         "@io_k8s_klog_v2//:klog",
     ],
 )

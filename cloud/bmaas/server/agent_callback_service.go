@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	apb "source.monogon.dev/cloud/bmaas/server/api"

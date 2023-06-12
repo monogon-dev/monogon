@@ -139,7 +139,6 @@ require (
 	k8s.io/cli-runtime v0.24.2
 	k8s.io/client-go v0.24.2
 	k8s.io/component-base v0.24.2
-	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.60.1
 	k8s.io/kubectl v0.0.0
 	k8s.io/kubelet v0.0.0
@@ -151,6 +150,7 @@ require (
 	cloud.google.com/go/iam v0.8.0 // indirect
 	github.com/bytecodealliance/wasmtime-go/v5 v5.0.0 // indirect
 	github.com/cubicdaiya/gonp v1.0.4 // indirect
+	k8s.io/klog v1.0.0 // indirect
 )
 
 require (
