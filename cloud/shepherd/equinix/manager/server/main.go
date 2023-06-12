@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
 	"source.monogon.dev/cloud/bmaas/bmdb/webug"
@@ -58,6 +58,9 @@ func main() {
 	c := &Config{}
 	c.RegisterFlags()
 	flag.Parse()
+	if flag.NArg() > 0 {
+		klog.Exitf("unexpected positional arguments: %v", flag.Args())
+	}
 
 	registry := c.Component.PrometheusRegistry()
 	c.BMDB.EnableMetrics(registry)

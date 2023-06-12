@@ -14,7 +14,7 @@ go_library(
         "//cloud/shepherd/equinix/manager",
         "//cloud/shepherd/equinix/wrapngo",
         "//metropolis/cli/pkg/context",
-        "@io_k8s_klog//:klog",
+        "@io_k8s_klog_v2//:klog",
     ],
 )
 
