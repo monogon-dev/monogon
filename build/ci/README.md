@@ -10,22 +10,6 @@ public and part of the Monogon repository. In the meantime, this document
 should serve as a public reference that explains how that part works and how it
 integrates with `//build/ci/...` and the project as a whole.
 
-Builder Image & Container
--------------------------
-
-`//build/ci/Dockerfile` describes a 'builder image'. This image contains a
-stable, Fedora-based build environment in which all Monogon components should
-be built. The Jenkins based CI uses the Builder image as a base to run Jenkins agents.
-
-A Monogon SE developer runs `//build/ci/build_ci_image`, which builds the
-Builder Image and pushes it to a container registry. Then, in another
-repository, that image is used as a base to overlay a Jenkins agent on top,
-and then used to run all Jenkins actions.
-
-The build image contains only basic dependencies that are required to bootstrap
-the sandbox sysroot and run the CI agents. All other build-time dependencies
-are managed by Bazel via [third_party/sandboxroot](../../third_party/sandboxroot).
-
 CI usage
 --------
 
