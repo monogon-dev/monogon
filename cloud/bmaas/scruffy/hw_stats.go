@@ -20,6 +20,7 @@ import (
 type hwStatsRunner struct {
 	s *Server
 
+	nodesPerRegion      *prometheus.GaugeVec
 	memoryPerRegion     *prometheus.GaugeVec
 	cpuThreadsPerRegion *prometheus.GaugeVec
 }
@@ -31,6 +32,10 @@ func newHWStatsRunner(s *Server, reg *prometheus.Registry) *hwStatsRunner {
 	hwsr := &hwStatsRunner{
 		s: s,
 
+		nodesPerRegion: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "bmdb_hwstats_region_nodes",
+		}, []string{"provider", "location"}),
+
 		memoryPerRegion: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "bmdb_hwstats_region_ram_bytes",
 		}, []string{"provider", "location"}),
@@ -39,7 +44,7 @@ func newHWStatsRunner(s *Server, reg *prometheus.Registry) *hwStatsRunner {
 			Name: "bmdb_hwstats_region_cpu_threads",
 		}, []string{"provider", "location"}),
 	}
-	reg.MustRegister(hwsr.memoryPerRegion, hwsr.cpuThreadsPerRegion)
+	reg.MustRegister(hwsr.nodesPerRegion, hwsr.memoryPerRegion, hwsr.cpuThreadsPerRegion)
 	return hwsr
 }
 
@@ -67,12 +72,14 @@ func (h *hwStatsRunner) run(ctx context.Context) {
 
 // statsPerRegion are gathered and aggregated (summed) per region.
 type statsPerRegion struct {
+	nodes      uint64
 	ramBytes   uint64
 	numThreads uint64
 }
 
 // add a given AgentHardwareReport to this region's data.
 func (s *statsPerRegion) add(hwrep *api.AgentHardwareReport) {
+	s.nodes++
 	s.ramBytes += uint64(hwrep.Report.MemoryInstalledBytes)
 	for _, cpu := range hwrep.Report.Cpu {
 		s.numThreads += uint64(cpu.HardwareThreads)
@@ -149,6 +156,7 @@ func (h *hwStatsRunner) runOnce(ctx context.Context) error {
 			"location": k.location,
 		}
 
+		h.nodesPerRegion.With(labels).Set(float64(st.nodes))
 		h.memoryPerRegion.With(labels).Set(float64(st.ramBytes))
 		h.cpuThreadsPerRegion.With(labels).Set(float64(st.numThreads))
 	}
