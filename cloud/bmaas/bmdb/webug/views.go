@@ -37,7 +37,7 @@ func (s *server) makeBase() baseParams {
 // viewMachines renders a list of all machines in the BMDB.
 func (s *server) viewMachines(w http.ResponseWriter, r *http.Request, args ...string) {
 	start := time.Now()
-	res, err := s.curSchema().GetMachines(r.Context(), &reflection.GetMachinesOpts{Strict: true})
+	res, err := s.curSchema().GetMachines(r.Context(), &reflection.GetMachinesOpts{Strict: s.strictConsistency})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "could not dump BMDB: %v", err)
@@ -84,7 +84,7 @@ func (s *server) viewMachineDetail(w http.ResponseWriter, r *http.Request, args 
 
 	opts := reflection.GetMachinesOpts{
 		FilterMachine:   &mid,
-		Strict:          true,
+		Strict:          s.strictConsistency,
 		ExpiredBackoffs: true,
 	}
 	res, err := s.curSchema().GetMachines(r.Context(), &opts)

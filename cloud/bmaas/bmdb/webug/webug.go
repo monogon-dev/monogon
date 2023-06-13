@@ -36,6 +36,11 @@ type server struct {
 	schema *reflection.Schema
 	// muSchema locks schema for updates.
 	muSchema sync.RWMutex
+	// strictConsistency, when enabled, makes webug render its views with the 
+	// freshest available data, potentially conflicting with online 
+	// transactions. This should only be enabled during testing, as it tends to 
+	// clog up the database query planner and make everything slow.
+	strictConsistency bool
 }
 
 // curSchema returns the current cached BMDB schema.
@@ -101,14 +106,15 @@ func (s *server) schemaWorker(ctx context.Context) {
 // This is a low-level function useful when tying webug into an existing web
 // application. If you just want to run webug on a separate port that's
 // configured by flags, use Config and Config.RegisterFlags.
-func Register(ctx context.Context, conn *bmdb.Connection, mux *http.ServeMux) error {
+func Register(ctx context.Context, conn *bmdb.Connection, mux *http.ServeMux, enableStrictConsistency bool) error {
 	schema, err := conn.Reflect(ctx)
 	if err != nil {
 		return fmt.Errorf("could not get BMDB schema for webug: %w", err)
 	}
 	s := server{
-		conn:   conn,
-		schema: schema,
+		conn:              conn,
+		schema:            schema,
+		strictConsistency: enableStrictConsistency,
 	}
 	go s.schemaWorker(ctx)
 
@@ -147,11 +153,15 @@ func Register(ctx context.Context, conn *bmdb.Connection, mux *http.ServeMux) er
 type Config struct {
 	// If set, start a webug interface on an HTTP listener bound to the given address.
 	WebugListenAddress string
+
+	// Enables strict consistency
+	WebugDBFetchStrict bool
 }
 
 // RegisterFlags for webug interface.
 func (c *Config) RegisterFlags() {
 	flag.StringVar(&c.WebugListenAddress, "webug_listen_address", "", "Address to start BMDB webug on. If not set, webug will not be started.")
+	flag.BoolVar(&c.WebugDBFetchStrict, "webug_dbfetch_strict", false, "Enables strict consistency")
 }
 
 // Start the webug interface in the foreground if enabled. The returned error
@@ -165,7 +175,7 @@ func (c *Config) Start(ctx context.Context, conn *bmdb.Connection) error {
 		return nil
 	}
 	mux := http.NewServeMux()
-	if err := Register(ctx, conn, mux); err != nil {
+	if err := Register(ctx, conn, mux, c.WebugDBFetchStrict); err != nil {
 		return err
 	}
 
