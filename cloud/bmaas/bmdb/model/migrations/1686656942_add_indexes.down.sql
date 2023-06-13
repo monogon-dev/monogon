@@ -1,0 +1,3 @@
+DROP INDEX work_backoff@process_machine_id_idx;
+DROP INDEX sessions@session_id_deadline_idx;
+DROP INDEX machine_agent_started@agent_public_key_idx;
