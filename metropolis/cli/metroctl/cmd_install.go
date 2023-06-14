@@ -41,6 +41,7 @@ var genusbCmd = &cobra.Command{
 var bootstrap bool
 
 var bootstrapTPMMode string
+var bootstrapStorageSecurityPolicy string
 
 //go:embed metropolis/installer/kernel.efi
 var installer []byte
@@ -56,6 +57,21 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 		tpmMode = cpb.ClusterConfiguration_TPM_MODE_DISABLED
 	default:
 		log.Fatalf("Invalid --bootstrap-tpm-mode (must be one of: required, best-effort, disabled)")
+	}
+
+	var bootstrapStorageSecurity cpb.ClusterConfiguration_StorageSecurityPolicy
+	switch strings.ToLower(bootstrapStorageSecurityPolicy) {
+	case "permissive":
+		bootstrapStorageSecurity = cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_PERMISSIVE
+	case "needs-encryption":
+		bootstrapStorageSecurity = cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION
+	case "needs-encryption-and-authentication":
+		bootstrapStorageSecurity = cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION
+	case "needs-insecure":
+		bootstrapStorageSecurity = cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE
+	default:
+
+		log.Fatalf("Invalid --bootstrap-storage-security (must be one of: permissive, needs-encryption, needs-encryption-and-authentication, needs-insecure)")
 	}
 
 	var bundleReader io.Reader
@@ -101,7 +117,8 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 				ClusterBootstrap: &api.NodeParameters_ClusterBootstrap{
 					OwnerPublicKey: pub,
 					InitialClusterConfiguration: &cpb.ClusterConfiguration{
-						TpmMode: tpmMode,
+						StorageSecurityPolicy: bootstrapStorageSecurity,
+						TpmMode:               tpmMode,
 					},
 				},
 			},
@@ -149,5 +166,6 @@ func init() {
 
 	genusbCmd.Flags().BoolVar(&bootstrap, "bootstrap", false, "Create a bootstrap installer image.")
 	genusbCmd.Flags().StringVar(&bootstrapTPMMode, "bootstrap-tpm-mode", "required", "TPM mode to set on cluster (required, best-effort, disabled)")
+	genusbCmd.Flags().StringVar(&bootstrapStorageSecurityPolicy, "bootstrap-storage-security", "needs-encryption-and-authentication", "Storage security policy to set on cluster (permissive, needs-encryption, needs-encryption-and-authentication, needs-insecure)")
 	installCmd.AddCommand(genusbCmd)
 }
