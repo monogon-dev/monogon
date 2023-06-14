@@ -17,7 +17,11 @@ func nodeEntry(n *apb.Node) entry {
 	state := n.State.String()
 	state = strings.ReplaceAll(state, "NODE_STATE_", "")
 	res.add("state", state)
-	res.add("address", n.Status.ExternalAddress)
+	address := "unknown"
+	if n.Status != nil && n.Status.ExternalAddress != "" {
+		address = n.Status.ExternalAddress
+	}
+	res.add("address", address)
 	res.add("health", n.Health.String())
 
 	var roles []string
