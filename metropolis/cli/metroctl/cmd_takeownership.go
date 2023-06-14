@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"net"
 	"os"
 	"os/exec"
 
@@ -11,7 +10,6 @@ import (
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
-	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
@@ -70,11 +68,11 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 	}
 	// TODO(q3k, issues/144): this only works as long as all nodes are kubernetes controller
 	// nodes. This won't be the case for too long. Figure this out.
-	apiserver := "https://" + net.JoinHostPort(flags.clusterEndpoints[0], node.KubernetesAPIWrappedPort.PortString())
-	if err := core.InstallKubeletConfig(metroctlPath, connectOptions(), "metroctl", apiserver); err != nil {
+	configName := "metroctl"
+	if err := core.InstallKubeletConfig(metroctlPath, connectOptions(), configName, flags.clusterEndpoints[0]); err != nil {
 		log.Fatalf("Failed to install metroctl/k8s integration: %v", err)
 	}
-	log.Println("Success! kubeconfig is set up. You can now run kubectl --context=metropolis ... to access the Kubernetes cluster.")
+	log.Printf("Success! kubeconfig is set up. You can now run kubectl --context=%s ... to access the Kubernetes cluster.", configName)
 }
 
 func init() {

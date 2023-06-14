@@ -121,7 +121,7 @@ At this point you can start exploring Metropolis. Try playing with *kubectl*, or
 
 The cluster state should be reflected by *kubectl* output:
 ```shell
-kubectl --context=metropolis get nodes
+kubectl --context=metroctl get nodes
 
 NAME                                          STATUS   ROLES    AGE   VERSION
 metropolis-4fb5a2aa4eec34080bea02ac8020028d   Ready    <none>   98m   v1.24.0+mngn

@@ -27,7 +27,6 @@ go_library(
         "//metropolis/cli/metroctl/core",
         "//metropolis/cli/pkg/context",
         "//metropolis/cli/pkg/datafile",
-        "//metropolis/node",
         "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
         "//metropolis/pkg/logtree",
