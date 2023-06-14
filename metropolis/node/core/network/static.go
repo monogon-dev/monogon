@@ -31,6 +31,7 @@ var vlanProtoMap = map[netpb.VLAN_Protocol]netlink.VlanProtocol{
 
 func (s *Service) runStaticConfig(ctx context.Context) error {
 	l := supervisor.Logger(ctx)
+	var success bool
 	sortedInterfaces, err := getSortedIfaces(s)
 	if err != nil {
 		return err
@@ -95,10 +96,24 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 			if err := netlink.LinkAdd(newLink); err != nil {
 				return fmt.Errorf("failed to add link %q: %w", i.Name, err)
 			}
+			defer func() {
+				if !success {
+					if err := netlink.LinkDel(newLink); err != nil {
+						l.Errorf("Failed to delete link on teardown: %v", err)
+					}
+				}
+			}()
 		} else {
 			if err := netlink.LinkModify(newLink); err != nil {
 				return fmt.Errorf("failed to modify link %q: %w", i.Name, err)
 			}
+			defer func() {
+				if !success {
+					if err := netlink.LinkSetDown(newLink); err != nil {
+						l.Errorf("Failed to set link down: %v", err)
+					}
+				}
+			}()
 		}
 		nameLinkMap[i.Name] = newLink
 		if i.Ipv4Autoconfig != nil {
@@ -166,6 +181,7 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 	}
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
+	success = true
 	supervisor.Signal(ctx, supervisor.SignalDone)
 	return nil
 }
