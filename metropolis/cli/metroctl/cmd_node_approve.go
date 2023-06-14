@@ -51,7 +51,7 @@ func doApprove(cmd *cobra.Command, args []string) {
 		// If no id was given, just list the nodes pending approval.
 		if len(nodes) != 0 {
 			for _, n := range nodes {
-				fmt.Print(identity.NodeID(n.Pubkey))
+				fmt.Println(identity.NodeID(n.Pubkey))
 			}
 		} else {
 			log.Print("There are no nodes pending approval at this time.")
