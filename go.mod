@@ -108,6 +108,7 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.14
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.10.1
+	github.com/prometheus/node_exporter v1.3.1
 	github.com/rmohr/bazeldnf v0.5.4
 	github.com/sbezverk/nfproxy v0.0.0-20210112155058-0d98b4a69f0c
 	github.com/spf13/cobra v1.6.1
@@ -148,8 +149,28 @@ require (
 require (
 	cloud.google.com/go v0.107.0 // indirect
 	cloud.google.com/go/iam v0.8.0 // indirect
+	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
+	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
+	github.com/beevik/ntp v0.3.0 // indirect
 	github.com/bytecodealliance/wasmtime-go/v5 v5.0.0 // indirect
+	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/cubicdaiya/gonp v1.0.4 // indirect
+	github.com/ema/qdisc v0.0.0-20200603082823-62d0308e3e00 // indirect
+	github.com/go-kit/log v0.2.0 // indirect
+	github.com/go-logfmt/logfmt v0.5.1 // indirect
+	github.com/godbus/dbus v0.0.0-20190422162347-ade71ed3457e // indirect
+	github.com/hashicorp/go-envparse v0.0.0-20200406174449-d9cfd743a15e // indirect
+	github.com/hodgesds/perf-utils v0.4.0 // indirect
+	github.com/illumos/go-kstat v0.0.0-20210513183136-173c9b0a9973 // indirect
+	github.com/jpillora/backoff v1.0.0 // indirect
+	github.com/jsimonetti/rtnetlink v0.0.0-20211022192332-93da33804786 // indirect
+	github.com/lufia/iostat v1.2.0 // indirect
+	github.com/mattn/go-xmlrpc v0.0.3 // indirect
+	github.com/mdlayher/wifi v0.0.0-20200527114002-84f0b9457fdd // indirect
+	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
+	github.com/prometheus/exporter-toolkit v0.7.0 // indirect
+	github.com/soundcloud/go-runit v0.0.0-20150630195641-06ad41a06c4a // indirect
+	gopkg.in/alecthomas/kingpin.v2 v2.2.6 // indirect
 	k8s.io/klog v1.0.0 // indirect
 )
 
@@ -338,7 +359,7 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.34.0 // indirect
-	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/prometheus/procfs v0.7.4-0.20211011103944-1a7a2bd3279f // indirect
 	github.com/quobyte/api v0.1.8 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
@@ -347,7 +368,7 @@ require (
 	github.com/rubiojr/go-vhd v0.0.0-20200706105327-02e210299021 // indirect
 	github.com/russross/blackfriday v1.5.2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/safchain/ethtool v0.0.0-20210803160452-9aa261dae9b1 // indirect
+	github.com/safchain/ethtool v0.1.0 // indirect
 	github.com/sassoftware/go-rpmutils v0.1.1 // indirect
 	github.com/sbezverk/nftableslib v0.0.0-20210111145735-b08b2d804e1f // indirect
 	github.com/seccomp/libseccomp-golang v0.9.2-0.20220502022130-f33da4d89646 // indirect

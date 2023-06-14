@@ -54,6 +54,9 @@ erofs_image(
         "//metropolis/node/core/network/dns:resolv.conf": "/etc/resolv.conf",
         ":os-release-info": "/etc/os-release",
 
+        # Metrics exporters
+        "@com_github_prometheus_node_exporter//:node_exporter": "/metrics/bin/node_exporter",
+
         # Hyperkube
         "//metropolis/node/kubernetes/hyperkube": "/kubernetes/bin/kube",
 

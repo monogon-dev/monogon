@@ -11,5 +11,6 @@ import (
 	_ "github.com/coredns/coredns"
 	_ "github.com/go-delve/delve/cmd/dlv"
 	_ "github.com/opencontainers/runc"
+	_ "github.com/prometheus/node_exporter"
 	_ "gvisor.dev/gvisor/runsc"
 )
