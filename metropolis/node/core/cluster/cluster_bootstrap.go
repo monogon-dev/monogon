@@ -123,7 +123,8 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 		JoinKey:       jpriv,
 		// No ClusterCA yet, that's added by the roleserver after it finishes curator
 		// bootstrap.
-		ClusterCa: nil,
+		ClusterCa:       nil,
+		StorageSecurity: storageSecurity,
 	}
 	if err = m.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc, tpmUsage); err != nil {
 		return fmt.Errorf("writing sealed configuration failed: %w", err)
