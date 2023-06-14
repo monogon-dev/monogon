@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"unsafe"
 
 	"github.com/google/uuid"
@@ -42,6 +43,18 @@ const (
 	NodeDataRawPath = "/dev/data-raw"
 )
 
+// nodePathForPartitionType returns the device node path
+// for a given partition type.
+func nodePathForPartitionType(t uuid.UUID) string {
+	switch t {
+	case gpt.PartitionTypeEFISystem:
+		return ESPDevicePath
+	case NodeDataPartitionType:
+		return NodeDataRawPath
+	}
+	return ""
+}
+
 // MakeBlockDevices looks for the ESP and the node data partition and maps them
 // to ESPDevicePath and NodeDataCryptPath respectively. This doesn't fail if it
 // doesn't find the partitions, only if something goes catastrophically wrong.
@@ -50,79 +63,223 @@ func MakeBlockDevices(ctx context.Context) error {
 	if err != nil {
 		supervisor.Logger(ctx).Warningf("No EFI variable for the loader device partition UUID present")
 	}
-	blockdevNames, err := os.ReadDir("/sys/class/block")
+
+	blockDevs, err := os.ReadDir("/sys/class/block")
 	if err != nil {
 		return fmt.Errorf("failed to read sysfs block class: %w", err)
 	}
-	for _, blockdevName := range blockdevNames {
-		ueventData, err := sysfs.ReadUevents(filepath.Join("/sys/class/block", blockdevName.Name(), "uevent"))
-		if err != nil {
-			return fmt.Errorf("failed to read uevent for block device %v: %w", blockdevName.Name(), err)
+
+	for _, blockDev := range blockDevs {
+		if err := handleBlockDevice(blockDev.Name(), blockDevs, espUUID); err != nil {
+			supervisor.Logger(ctx).Errorf("Failed to create block device %s: %w", blockDev.Name(), err)
 		}
-		if ueventData["DEVTYPE"] == "disk" {
-			majorDev, err := strconv.Atoi(ueventData["MAJOR"])
-			if err != nil {
-				return fmt.Errorf("failed to convert uevent: %w", err)
-			}
-			devNodeName := fmt.Sprintf("/dev/%v", ueventData["DEVNAME"])
-			// TODO(lorenz): This extraction code is all a bit hairy, will get
-			// replaced by blockdev shortly.
-			blkdev, err := os.Open(devNodeName)
-			if err != nil {
-				return fmt.Errorf("failed to open block device %v: %w", devNodeName, err)
-			}
-			defer blkdev.Close()
-			blockSize, err := unix.IoctlGetUint32(int(blkdev.Fd()), unix.BLKSSZGET)
-			if err != nil {
-				continue // This is not a regular block device
-			}
-			var sizeBytes uint64
-			_, _, err = unix.Syscall(unix.SYS_IOCTL, blkdev.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&sizeBytes)))
-			if err != unix.Errno(0) {
-				return fmt.Errorf("failed to get device size: %w", err)
-			}
-			blkdev.Seek(int64(blockSize), 0)
-			table, err := gpt.Read(blkdev, int64(blockSize), int64(sizeBytes)/int64(blockSize))
-			if err != nil {
-				// Probably just not a GPT-partitioned disk
-				continue
-			}
-			skipDisk := false
-			if espUUID != uuid.Nil {
-				// If we know where we booted from, ignore all disks which do
-				// not contain this partition.
-				skipDisk = true
-				for _, part := range table.Partitions {
-					if part.ID == espUUID {
-						skipDisk = false
-						break
-					}
-				}
-			}
-			if skipDisk {
-				continue
-			}
-			seenTypes := make(map[uuid.UUID]bool)
-			for partNumber, part := range table.Partitions {
-				if seenTypes[part.Type] {
-					return fmt.Errorf("failed to create device node for %s (%s): node for this type already created/multiple partitions found", part.ID.String(), part.Type.String())
-				}
-				if part.Type == gpt.PartitionTypeEFISystem {
-					seenTypes[part.Type] = true
-					err := unix.Mknod(ESPDevicePath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1))))
-					if err != nil && !os.IsExist(err) {
-						return fmt.Errorf("failed to create device node for ESP partition: %w", err)
-					}
-				}
-				if part.Type == NodeDataPartitionType {
-					seenTypes[part.Type] = true
-					err := unix.Mknod(NodeDataRawPath, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(majorDev), uint32(partNumber+1))))
-					if err != nil && !os.IsExist(err) {
-						return fmt.Errorf("failed to create device node for Metropolis node encrypted data partition: %w", err)
-					}
-				}
+	}
+
+	return nil
+}
+
+// handleBlockDevice reads the uevent data and continues to iterate over all
+// partitions to create all required device nodes.
+func handleBlockDevice(diskBlockDev string, blockDevs []os.DirEntry, espUUID uuid.UUID) error {
+	data, err := readUEvent(diskBlockDev)
+	if err != nil {
+		return err
+	}
+
+	// We only care about disks, skip all other dev types.
+	if data["DEVTYPE"] != "disk" {
+		return nil
+	}
+
+	table, err := data.readPartitionTable()
+	if err != nil {
+		return fmt.Errorf("when reading disk info: %w", err)
+	}
+
+	// Not a normal block device or not a gpt table.
+	if table == nil {
+		return nil
+	}
+
+	skipDisk := false
+	if espUUID != uuid.Nil {
+		// If we know where we booted from, ignore all disks which do
+		// not contain this partition.
+		skipDisk = true
+		for _, part := range table.Partitions {
+			if part.ID == espUUID {
+				skipDisk = false
+				break
 			}
 		}
 	}
+	if skipDisk {
+		return nil
+	}
+
+	seenTypes := make(map[uuid.UUID]bool)
+	for _, dev := range blockDevs {
+		if err := handlePartition(diskBlockDev, dev.Name(), table, seenTypes); err != nil {
+			return fmt.Errorf("when creating partition %s: %w", dev.Name(), err)
+		}
+	}
+
 	return nil
+}
+
+func handlePartition(diskBlockDev string, partBlockDev string, table *gpt.Table, seenTypes map[uuid.UUID]bool) error {
+	// Skip all blockdev that dont share the same name/prefix,
+	// also skip the blockdev itself.
+	if !strings.HasPrefix(partBlockDev, diskBlockDev) || partBlockDev == diskBlockDev {
+		return nil
+	}
+
+	data, err := readUEvent(partBlockDev)
+	if err != nil {
+		return err
+	}
+
+	// We only care about partitions, skip all other dev types.
+	if data["DEVTYPE"] != "partition" {
+		return nil
+	}
+
+	pi, err := data.readPartitionInfo()
+	if err != nil {
+		return err
+	}
+
+	// TODO(tim): Is this safe? Are we actually using the partition number for the slice index?
+	part := table.Partitions[pi.partNumber-1]
+
+	nodePath := nodePathForPartitionType(part.Type)
+	if nodePath == "" {
+		// Ignore partitions with an unknown type.
+		return nil
+	}
+
+	if seenTypes[part.Type] {
+		return fmt.Errorf("node for this type (%s) already created/multiple partitions found", part.Type.String())
+	}
+	seenTypes[part.Type] = true
+
+	if err := pi.makeDeviceNode(nodePath); err != nil {
+		return fmt.Errorf("when creating partition node: %w", err)
+	}
+
+	return nil
+}
+
+type partInfo struct {
+	major, minor, partNumber int
+}
+
+// validateDeviceNode tries to open a device node and validates that it
+// has the expected major and minor device numbers. If the path does non exist,
+// no error will be returned.
+func (pi partInfo) validateDeviceNode(path string) error {
+	var s unix.Stat_t
+	if err := unix.Stat(path, &s); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		return fmt.Errorf("inspecting device node %q: %w", path, err)
+	}
+
+	if unix.Major(s.Rdev) != uint32(pi.major) || unix.Minor(s.Rdev) != uint32(pi.minor) {
+		return fmt.Errorf("device node %q exists for different device %d:%d", path, unix.Major(s.Rdev), unix.Minor(s.Rdev))
+	}
+
+	return nil
+}
+
+// makeDeviceNode creates the device node at the given path based on the
+// major and minor device number. If the device node already exists and points
+// to the same device, no error will be returned.
+func (pi partInfo) makeDeviceNode(path string) error {
+	if err := pi.validateDeviceNode(path); err != nil {
+		return err
+	}
+
+	err := unix.Mknod(path, 0600|unix.S_IFBLK, int(unix.Mkdev(uint32(pi.major), uint32(pi.minor))))
+	if err != nil {
+		return fmt.Errorf("create device node %q: %w", path, err)
+	}
+	return nil
+}
+
+func readUEvent(blockName string) (blockUEvent, error) {
+	data, err := sysfs.ReadUevents(filepath.Join("/sys/class/block", blockName, "uevent"))
+	if err != nil {
+		return nil, fmt.Errorf("when reading uevent: %w", err)
+	}
+	return data, nil
+}
+
+type blockUEvent map[string]string
+
+func (b blockUEvent) readUdevKeyInteger(key string) (int, error) {
+	if _, ok := b[key]; !ok {
+		return 0, fmt.Errorf("missing udev value %s", key)
+	}
+
+	v, err := strconv.Atoi(b[key])
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s: %w", key, err)
+	}
+
+	return v, nil
+}
+
+// readPartitionInfo parses all fields for partInfo from a blockUEvent.
+func (b blockUEvent) readPartitionInfo() (pi partInfo, err error) {
+	pi.major, err = b.readUdevKeyInteger("MAJOR")
+	if err != nil {
+		return
+	}
+
+	pi.minor, err = b.readUdevKeyInteger("MINOR")
+	if err != nil {
+		return
+	}
+
+	pi.partNumber, err = b.readUdevKeyInteger("PARTN")
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// readPartitionTable tries to read a GPT partition table based on the blockUEvent
+// data. It returns nil when either the block device is not a regular device
+// or it fails to parse the GPT table.
+func (b blockUEvent) readPartitionTable() (*gpt.Table, error) {
+	// TODO(lorenz): This extraction code is all a bit hairy, will get
+	// replaced by blockdev shortly.
+	blkdev, err := os.Open(fmt.Sprintf("/dev/%v", b["DEVNAME"]))
+	if err != nil {
+		return nil, fmt.Errorf("failed to open block device: %w", err)
+	}
+	defer blkdev.Close()
+
+	blockSize, err := unix.IoctlGetUint32(int(blkdev.Fd()), unix.BLKSSZGET)
+	if err != nil {
+		return nil, nil // This is not a regular block device
+	}
+
+	var sizeBytes uint64
+	_, _, err = unix.Syscall(unix.SYS_IOCTL, blkdev.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&sizeBytes)))
+	if err != unix.Errno(0) {
+		return nil, fmt.Errorf("failed to get device size: %w", err)
+	}
+
+	blkdev.Seek(int64(blockSize), 0)
+	table, err := gpt.Read(blkdev, int64(blockSize), int64(sizeBytes)/int64(blockSize))
+	if err != nil {
+		return nil, nil // Probably just not a GPT-partitioned disk
+	}
+
+	return table, nil
 }
