@@ -181,7 +181,7 @@ func (e *ESPSealedConfiguration) SealSecureBoot(c *ppb.SealedConfiguration, tpmU
 	return nil
 }
 
-func (e *ESPSealedConfiguration) Unseal() (*ppb.SealedConfiguration, error) {
+func (e *ESPSealedConfiguration) Unseal(tpmUsage cpb.NodeTPMUsage) (*ppb.SealedConfiguration, error) {
 	bytes, err := e.Read()
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -190,27 +190,16 @@ func (e *ESPSealedConfiguration) Unseal() (*ppb.SealedConfiguration, error) {
 		return nil, fmt.Errorf("%w: when reading sealed data: %v", ErrSealedUnavailable, err)
 	}
 
-	bytes, err = tpm.Unseal(bytes)
-	if err != nil {
-		return nil, fmt.Errorf("%w: when unsealing: %v", ErrSealedCorrupted, err)
-	}
-
-	config := ppb.SealedConfiguration{}
-	err = proto.Unmarshal(bytes, &config)
-	if err != nil {
-		return nil, fmt.Errorf("%w: when unmarshaling: %v", ErrSealedCorrupted, err)
-	}
-
-	return &config, nil
-}
-
-func (e *ESPSealedConfiguration) ReadUnsafe() (*ppb.SealedConfiguration, error) {
-	bytes, err := e.Read()
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, ErrNoSealed
+	switch tpmUsage {
+	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED:
+		bytes, err = tpm.Unseal(bytes)
+		if err != nil {
+			return nil, fmt.Errorf("%w: when unsealing: %v", ErrSealedCorrupted, err)
 		}
-		return nil, fmt.Errorf("%w: when reading sealed data: %v", ErrSealedUnavailable, err)
+	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_BUT_UNUSED:
+	case cpb.NodeTPMUsage_NODE_TPM_NOT_PRESENT:
+	default:
+		return nil, fmt.Errorf("unknown tpmUsage %d", tpmUsage)
 	}
 
 	config := ppb.SealedConfiguration{}

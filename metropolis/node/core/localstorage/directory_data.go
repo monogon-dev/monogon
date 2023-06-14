@@ -67,9 +67,12 @@ func (d *DataDirectory) MountExisting(config *ppb.SealedConfiguration, clusterUn
 	}
 	d.mounted = true
 
-	key := make([]byte, keySize)
-	for i := uint16(0); i < keySize; i++ {
-		key[i] = config.NodeUnlockKey[i] ^ clusterUnlockKey[i]
+	var key []byte
+	if mode != crypt.ModeInsecure {
+		key = make([]byte, keySize)
+		for i := uint16(0); i < keySize; i++ {
+			key[i] = config.NodeUnlockKey[i] ^ clusterUnlockKey[i]
+		}
 	}
 
 	target, err := crypt.Map("data", crypt.NodeDataRawPath, key, mode)

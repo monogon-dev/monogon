@@ -74,7 +74,7 @@ func (m *Manager) Run(ctx context.Context) error {
 	close(m.oneway)
 
 	// Try sealed configuration first.
-	configuration, err := m.storageRoot.ESP.Metropolis.SealedConfiguration.Unseal()
+	configuration, err := m.storageRoot.ESP.Metropolis.SealedConfiguration.Unseal(cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED)
 	if err == nil {
 		supervisor.Logger(ctx).Info("Sealed configuration present. attempting to join cluster")
 
@@ -88,11 +88,11 @@ func (m *Manager) Run(ctx context.Context) error {
 		return m.join(ctx, configuration, cd, true)
 	}
 
-	if !errors.Is(err, localstorage.ErrNoSealed) {
+	if !errors.Is(err, localstorage.ErrNoSealed) && !errors.Is(err, localstorage.ErrSealedCorrupted) {
 		return fmt.Errorf("unexpected sealed config error: %w", err)
 	}
 
-	configuration, err = m.storageRoot.ESP.Metropolis.SealedConfiguration.ReadUnsafe()
+	configuration, err = m.storageRoot.ESP.Metropolis.SealedConfiguration.Unseal(cpb.NodeTPMUsage_NODE_TPM_NOT_PRESENT)
 	if err == nil {
 		supervisor.Logger(ctx).Info("Non-sealed configuration present. attempting to join cluster")
 

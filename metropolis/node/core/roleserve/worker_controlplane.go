@@ -300,7 +300,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				if err = creds.Save(&s.storageRoot.Data.Node.Credentials); err != nil {
 					return fmt.Errorf("while saving node credentials: %w", err)
 				}
-				sc, err := s.storageRoot.ESP.Metropolis.SealedConfiguration.Unseal()
+				sc, err := s.storageRoot.ESP.Metropolis.SealedConfiguration.Unseal(b.nodeTPMUsage)
 				if err != nil {
 					return fmt.Errorf("reading sealed configuration failed: %w", err)
 				}
