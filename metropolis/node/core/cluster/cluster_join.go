@@ -36,8 +36,6 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 	supervisor.Logger(ctx).Infof("Joining an existing cluster.")
 	supervisor.Logger(ctx).Infof("  Using TPM-secured configuration: %v", sealed)
 	supervisor.Logger(ctx).Infof("  Node Join public key: %s", hpkey)
-	supervisor.Logger(ctx).Infof("  Directory:")
-	logClusterDirectory(ctx, cd)
 
 	// Build resolver used by the join process, authenticating with join
 	// credentials. Once the join is complete, the rolesever will start its own

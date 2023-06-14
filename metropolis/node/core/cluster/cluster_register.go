@@ -113,8 +113,6 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	supervisor.Logger(ctx).Infof("  Cluster CA public key: %s", hex.EncodeToString(ca.PublicKey.(ed25519.PublicKey)))
 	supervisor.Logger(ctx).Infof("  Node public key: %s", hex.EncodeToString(pub))
 	supervisor.Logger(ctx).Infof("  Register Ticket: %s", hex.EncodeToString(register.RegisterTicket))
-	supervisor.Logger(ctx).Infof("  Directory:")
-	logClusterDirectory(ctx, register.ClusterDirectory)
 
 	// Generate Join Credentials. The private key will be stored in
 	// SealedConfiguration only if RegisterNode succeeds.
