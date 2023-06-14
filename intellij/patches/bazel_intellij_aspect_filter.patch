@@ -18,8 +18,8 @@ limitations under the License.
 #  - properly resolve go_library rules that have both source files and embeds.
 #  - allow running test/sync against //... which contains cc_toolchain rules
 #    (see https://github.com/bazelbuild/intellij/issues/1344 )
---- a/intellij_info_impl.bzl
-+++ b/intellij_info_impl.bzl
+--- a/intellij_info_impl_bundled.bzl
++++ b/intellij_info_impl_bundled.bzl
 @@ -13,6 +13,7 @@
      ":make_variables.bzl",
      "expand_make_variables",
