@@ -18,6 +18,8 @@ package e2e
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
@@ -25,6 +27,7 @@ import (
 	"net/http"
 	_ "net/http"
 	_ "net/http/pprof"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -356,6 +359,44 @@ func TestE2E(t *testing.T) {
 					return nil
 				}
 				return fmt.Errorf("job still running")
+			})
+			util.TestEventual(t, "Prometheus node metrics retrieved", ctx, smallTestTimeout, func(ctx context.Context) error {
+				pool := x509.NewCertPool()
+				pool.AddCert(cluster.CACertificate)
+				cl := http.Client{
+					Transport: &http.Transport{
+						TLSClientConfig: &tls.Config{
+							Certificates: []tls.Certificate{cluster.Owner},
+							RootCAs:      pool,
+						},
+						DialContext: func(ctx context.Context, _, addr string) (net.Conn, error) {
+							return cluster.DialNode(ctx, addr)
+						},
+					},
+				}
+				u := url.URL{
+					Scheme: "https",
+					Host:   net.JoinHostPort(cluster.NodeIDs[0], common.MetricsPort.PortString()),
+					Path:   "/metrics/node",
+				}
+				res, err := cl.Get(u.String())
+				if err != nil {
+					return err
+				}
+				defer res.Body.Close()
+				if res.StatusCode != 200 {
+					return fmt.Errorf("status code %d", res.StatusCode)
+				}
+
+				body, err := io.ReadAll(res.Body)
+				if err != nil {
+					return err
+				}
+				needle := "node_uname_info"
+				if !strings.Contains(string(body), needle) {
+					return util.Permanent(fmt.Errorf("could not find %q in returned response", needle))
+				}
+				return nil
 			})
 			if os.Getenv("HAVE_NESTED_KVM") != "" {
 				util.TestEventual(t, "Pod for KVM/QEMU smoke test", ctx, smallTestTimeout, func(ctx context.Context) error {

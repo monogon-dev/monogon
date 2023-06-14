@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "metrics",
+    srcs = [
+        "exporters.go",
+        "metrics.go",
+    ],
+    importpath = "source.monogon.dev/metropolis/node/core/metrics",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node",
+        "//metropolis/node/core/identity",
+        "//metropolis/pkg/logtree",
+        "//metropolis/pkg/supervisor",
+    ],
+)
+
+go_test(
+    name = "metrics_test",
+    srcs = ["metrics_test.go"],
+    data = [
+        # keep
+        "//metropolis/node/core/metrics/fake_exporter",
+    ],
+    embed = [":metrics"],
+    deps = [
+        "//metropolis/cli/pkg/datafile",
+        "//metropolis/node",
+        "//metropolis/node/core/rpc",
+        "//metropolis/pkg/supervisor",
+        "//metropolis/test/util",
+    ],
+)

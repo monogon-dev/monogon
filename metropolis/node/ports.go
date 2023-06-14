@@ -37,6 +37,14 @@ const (
 	// NodeManagement is the TCP port on which the node-local management service
 	// serves gRPC traffic for NodeManagement.
 	NodeManagement Port = 7839
+	// MetricsPort is the TCP port on which the Metrics Service exports
+	// Prometheus-compatible metrics for this node, secured using TLS and the
+	// Cluster/Node certificates.
+	MetricsPort Port = 7840
+	// MetricsNodeListenerPort is the TCP port on which the Prometheus node_exporter
+	// runs, bound to 127.0.0.1. The Metrics Service proxies traffic to it from the
+	// public MetricsPort.
+	MetricsNodeListenerPort Port = 7841
 	// KubernetesAPIPort is the TCP port on which the Kubernetes API is
 	// exposed.
 	KubernetesAPIPort Port = 6443

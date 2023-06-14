@@ -10,6 +10,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
@@ -504,6 +505,9 @@ type Cluster struct {
 	// creation.
 	NodeIDs []string
 
+	// CACertificate is the cluster's CA certificate.
+	CACertificate *x509.Certificate
+
 	// nodesDone is a list of channels populated with the return codes from all the
 	// nodes' qemu instances. It's used by Close to ensure all nodes have
 	// successfully been stopped.
@@ -829,6 +833,12 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		ctxC()
 		return nil, fmt.Errorf("GetClusterInfo: %w", err)
 	}
+	caCert, err := x509.ParseCertificate(resI.CaCertificate)
+	if err != nil {
+		ctxC()
+		return nil, fmt.Errorf("ParseCertificate: %w", err)
+	}
+	cluster.CACertificate = caCert
 
 	// Use the retrieved information to configure the rest of the node options.
 	for i := 1; i < opts.NumNodes; i++ {

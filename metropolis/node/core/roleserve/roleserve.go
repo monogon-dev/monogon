@@ -93,6 +93,7 @@ type Service struct {
 	nodeMgmt     *workerNodeMgmt
 	clusternet   *workerClusternet
 	hostsfile    *workerHostsfile
+	metrics      *workerMetrics
 }
 
 // New creates a Role Server services from a Config.
@@ -161,6 +162,10 @@ func New(c Config) *Service {
 		network:               s.Network,
 		curatorConnection:     &s.CuratorConnection,
 		clusterDirectorySaved: &s.clusterDirectorySaved,
+	}
+
+	s.metrics = &workerMetrics{
+		curatorConnection: &s.CuratorConnection,
 	}
 
 	return s
@@ -232,6 +237,7 @@ func (s *Service) Run(ctx context.Context) error {
 	supervisor.Run(ctx, "nodemgmt", s.nodeMgmt.run)
 	supervisor.Run(ctx, "clusternet", s.clusternet.run)
 	supervisor.Run(ctx, "hostsfile", s.hostsfile.run)
+	supervisor.Run(ctx, "metrics", s.metrics.run)
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 
 	<-ctx.Done()
