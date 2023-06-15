@@ -264,6 +264,13 @@ func (s *Service) runCluster(ctx context.Context) error {
 		for _, t := range ev.NodeTombstones {
 			delete(nodes, t.NodeId)
 		}
-		s.clusterC <- nodes
+
+		// Copy nodemap before passing it over to the main goroutine. The values don't
+		// need to be deep copied as they're not ever changed (only inserted).
+		nodesCopy := make(nodeMap)
+		for k, v := range nodes {
+			nodesCopy[k] = v
+		}
+		s.clusterC <- nodesCopy
 	}
 }
