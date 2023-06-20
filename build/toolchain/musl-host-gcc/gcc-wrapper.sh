@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-exec /usr/bin/gcc "$@" -specs build/toolchain/musl-host-gcc/musl.spec
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+exec /usr/bin/gcc "$@" -specs $SCRIPT_DIR/musl.spec
