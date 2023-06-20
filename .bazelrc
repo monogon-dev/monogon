@@ -43,7 +43,7 @@ test --test_output=errors
 #     build k8s without cloud provider and docker support
 # nowasm:
 #     disable wasm plugin support in sqlc
-build --define gotags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm
+build --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo
 
 # Build with C++17.
 build --cxxopt=-std=c++17
