@@ -175,14 +175,14 @@ func (s *Service) pull(ctx context.Context) error {
 
 		for _, n := range removed {
 			supervisor.Logger(ctx).Infof("Node %s removed, unconfiguring", n.id)
-			if err := s.wg.unconfigurePeer(n); err != nil {
+			if err := s.wg.unconfigurePeer(n.copy()); err != nil {
 				// Do nothing and hope whatever caused this will go away at some point.
 				supervisor.Logger(ctx).Errorf("Node %s couldn't be unconfigured: %v", n.id, err)
 			}
 		}
 		var newNodes []*node
 		for _, n := range updated {
-			newNodes = append(newNodes, n)
+			newNodes = append(newNodes, n.copy())
 			supervisor.Logger(ctx).Infof("Node %s updated: pk %s, address %s, prefixes %v", n.id, n.pubkey, n.address, n.prefixes)
 		}
 		succeeded := 0

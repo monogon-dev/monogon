@@ -59,6 +59,11 @@ type node struct {
 	prefixes []string
 }
 
+func (n *node) copy() *node {
+	n2 := *n
+	return &n2
+}
+
 // update mutates this node to whatever data is held in the given proto Node, and
 // returns true if any data changed.
 func (n *node) update(p *apb.Node) (changed bool) {
