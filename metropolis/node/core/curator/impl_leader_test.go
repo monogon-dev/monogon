@@ -18,7 +18,6 @@ import (
 	"go.etcd.io/etcd/tests/v3/integration"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
 
@@ -63,7 +62,6 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 
 	// Start a single-node etcd cluster.
 	integration.BeforeTestExternal(t)
-	grpclog.SetLoggerV2(logtree.GRPCify(lt.MustLeveledFor("grpc")))
 	cluster := integration.NewClusterV3(t, &integration.ClusterConfig{
 		Size: 1,
 		LoggerBuilder: func(memberName string) *zap.Logger {
