@@ -131,7 +131,7 @@ func (r *Resolver) run(ctx context.Context) error {
 		switch {
 		case req.cmg != nil:
 			// Curator Map Get
-			req.cmg.resC <- curMap
+			req.cmg.resC <- curMap.copy()
 		case req.nu != nil:
 			// Nodes Update
 			for nid, status := range req.nu.nodes {
