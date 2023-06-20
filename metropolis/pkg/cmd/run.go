@@ -72,7 +72,7 @@ func RunCommand(ctx context.Context, path string, args []string, pf func(string)
 		case line := <-lineC:
 			if pf(line) {
 				cmd.Process.Kill()
-				cmd.Wait()
+				<-complC
 				return true, nil
 			}
 		case err := <-complC:
