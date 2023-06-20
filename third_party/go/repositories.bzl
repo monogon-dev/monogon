@@ -885,6 +885,7 @@ def go_repositories():
     go_repository(
         name = "com_github_containerd_containerd",
         build_file_proto_mode = "disable",
+        build_tags = ["no_btrfs"],  # keep
         importpath = "github.com/containerd/containerd",
         patch_args = ["-p1"],
         pre_patches = [
