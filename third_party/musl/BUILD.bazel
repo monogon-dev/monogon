@@ -27,6 +27,7 @@ genrule(
     cmd = """
     OUT=$$PWD/$(RULEDIR)
     (
+        export CFLAGS="-static-pie -fPIC"
         cd {path}
         ./configure --prefix=$$OUT --syslibdir=$$OUT --libdir=$$OUT
         make -j $$(nproc) install-libs
