@@ -103,14 +103,20 @@ func agentRunnable(ctx context.Context) error {
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 
-	report, warnings := gatherHWReport()
-	var warningStrings []string
-	for _, w := range warnings {
-		l.Warningf("Hardware Report Warning: %v", w)
-		warningStrings = append(warningStrings, w.Error())
+	assembleHWReport := func() *bpb.AgentHardwareReport {
+		report, warnings := gatherHWReport()
+		var warningStrings []string
+		for _, w := range warnings {
+			l.Warningf("Hardware Report Warning: %v", w)
+			warningStrings = append(warningStrings, w.Error())
+		}
+		return &bpb.AgentHardwareReport{
+			Report:  report,
+			Warning: warningStrings,
+		}
 	}
 
-	var hwReportSent bool
+	var sentFirstHeartBeat, hwReportSent bool
 	var installationReport *bpb.OSInstallationReport
 	var installationGeneration int64
 	b := backoff.NewExponentialBackOff()
@@ -121,11 +127,8 @@ func agentRunnable(ctx context.Context) error {
 		req := bpb.AgentHeartbeatRequest{
 			MachineId: agentInit.TakeoverInit.MachineId,
 		}
-		if !hwReportSent {
-			req.HardwareReport = &bpb.AgentHardwareReport{
-				Report:  report,
-				Warning: warningStrings,
-			}
+		if sentFirstHeartBeat && !hwReportSent {
+			req.HardwareReport = assembleHWReport()
 		}
 		if installationReport != nil {
 			req.InstallationReport = installationReport
@@ -139,7 +142,10 @@ func agentRunnable(ctx context.Context) error {
 			continue
 		}
 		b.Reset()
-		hwReportSent = true
+		sentFirstHeartBeat = true
+		if req.HardwareReport != nil {
+			hwReportSent = true
+		}
 		if installationReport != nil {
 			l.Infof("Installation report sent successfully, rebooting")
 			// Close connection and wait 1s to make sure that the RST
