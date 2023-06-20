@@ -93,7 +93,7 @@ var (
 		"GetDevice":           {"GET", regexp.MustCompile(`^/devices/[^/]+$`)},
 		"ListDevices":         {"GET", regexp.MustCompile(`^/(organizations|projects)/[^/]+/devices$`)},
 		"CreateDevice":        {"POST", regexp.MustCompile(`^/projects/[^/]+/devices$`)},
-		"ListReservations":    {"GET", regexp.MustCompile(`^/project/[^/]+/hardware-reservations$`)},
+		"ListReservations":    {"GET", regexp.MustCompile(`^/projects/[^/]+/hardware-reservations$`)},
 		"ListSSHKeys":         {"GET", regexp.MustCompile(`^/ssh-keys$`)},
 		"CreateSSHKey":        {"POST", regexp.MustCompile(`^/project/[^/]+/ssh-keys$`)},
 		"GetSSHKey":           {"GET", regexp.MustCompile(`^/ssh-keys/[^/]+$`)},
