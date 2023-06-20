@@ -336,7 +336,8 @@ func (s *Service) Run(ctx context.Context) error {
 		cl:            cl,
 		ca:            s.ca,
 	}
-	s.value.Set(st)
+	st2 := *st
+	s.value.Set(&st2)
 
 	// Wait until server dies for whatever reason, update status when that
 	// happens.
@@ -348,8 +349,10 @@ func (s *Service) Run(ctx context.Context) error {
 		server.Close()
 		err = ctx.Err()
 	}
+
 	st.stopped = true
-	s.value.Set(st)
+	st3 := *st
+	s.value.Set(&st3)
 	return err
 }
 
