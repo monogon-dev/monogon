@@ -26,19 +26,26 @@ information, or even better, just uses cc_library targets.
 load("//build/utils:detect_root.bzl", "detect_root")
 
 
+_new_settings = {
+    # This list should be expanded with any configuration options that end
+    # up reaching this rule with different values across different build
+    # graph paths, but that do not actually influence the kernel build.
+    # Force-setting them to a stable value forces the build configuration
+    # to a stable hash.
+    # See the transition's comment block for more information.
+    "@io_bazel_rules_go//go/config:pure": True,
+    "@io_bazel_rules_go//go/config:static": True,
+
+    "@io_bazel_rules_docker//platforms:image_transition_cpu": "@platforms//cpu:x86_64",
+    "@io_bazel_rules_docker//platforms:image_transition_os": "@platforms//os:linux",
+
+    # Note: this toolchain is not actually used to perform the build.
+    "//command_line_option:platforms": "//build/platforms:linux_amd64_static",
+}
+
+
 def _ignore_unused_configuration_impl(settings, attr):
-    return {
-        # This list should be expanded with any configuration options that end
-        # up reaching this rule with different values across different build
-        # graph paths, but that do not actually influence the kernel build.
-        # Force-setting them to a stable value forces the build configuration
-        # to a stable hash.
-        # See the transition's comment block for more information.
-        "@io_bazel_rules_go//go/config:pure": True,
-        "@io_bazel_rules_go//go/config:static": True,
-        # Note: this toolchain is not actually used to perform the build.
-        "//command_line_option:platforms": "//build/platforms:linux_amd64_static",
-    }
+    return _new_settings
 
 # Transition to flip all known-unimportant but varying configuration options to
 # a known, stable value.
@@ -53,11 +60,7 @@ def _ignore_unused_configuration_impl(settings, attr):
 ignore_unused_configuration = transition(
     implementation = _ignore_unused_configuration_impl,
     inputs = [],
-    outputs = [
-        "@io_bazel_rules_go//go/config:pure",
-        "@io_bazel_rules_go//go/config:static",
-        "//command_line_option:platforms",
-    ],
+    outputs = list(_new_settings.keys()),
 )
 
 
