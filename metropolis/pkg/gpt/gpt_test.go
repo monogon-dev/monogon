@@ -10,19 +10,6 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestUUIDTranspose(t *testing.T) {
-	testUUID := uuid.MustParse("00112233-4455-6677-c899-aabbccddeeff")
-	mixedEndianUUID := mangleUUID(testUUID)
-	expectedMixedEndianUUID := [16]byte{0x33, 0x22, 0x11, 0x00, 0x55, 0x44, 0x77, 0x66, 0xc8, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
-	if mixedEndianUUID != expectedMixedEndianUUID {
-		t.Errorf("mangleUUID(%s) = %x, expected %x", testUUID, mixedEndianUUID, expectedMixedEndianUUID)
-	}
-	roundTrippedUUID := unmangleUUID(mixedEndianUUID)
-	if testUUID != roundTrippedUUID {
-		t.Errorf("unmangleUUID(mangleUUID(%s)) = %s, expected input", testUUID, roundTrippedUUID)
-	}
-}
-
 func TestFreeSpaces(t *testing.T) {
 	cases := []struct {
 		name            string

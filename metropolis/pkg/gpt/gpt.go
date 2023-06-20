@@ -16,6 +16,8 @@ import (
 	"unicode/utf16"
 
 	"github.com/google/uuid"
+
+	"source.monogon.dev/metropolis/pkg/msguid"
 )
 
 var gptSignature = [8]byte{'E', 'F', 'I', ' ', 'P', 'A', 'R', 'T'}
@@ -179,7 +181,7 @@ func WithKeepEmptyEntries() AddOption {
 
 // WithAlignment allows aligning the partition start block to a non-default
 // value. By default, these are aligned to 1MiB.
-//  Only use this flag if you are certain you need it, it can cause quite severe
+// Only use this flag if you are certain you need it, it can cause quite severe
 // performance degradation under certain conditions.
 func WithAlignment(alignmenet int64) AddOption {
 	return func(options *addOptions) {
@@ -439,8 +441,8 @@ func Write(w io.WriteSeeker, gpt *Table) error {
 			p.ID = uuid.New()
 		}
 		rawP := partition{
-			Type:       mangleUUID(p.Type),
-			ID:         mangleUUID(p.ID),
+			Type:       msguid.From(p.Type),
+			ID:         msguid.From(p.ID),
 			FirstBlock: p.FirstBlock,
 			LastBlock:  p.LastBlock,
 			Attributes: uint64(p.Attributes),
@@ -455,7 +457,7 @@ func Write(w io.WriteSeeker, gpt *Table) error {
 		Signature:  gptSignature,
 		Revision:   gptRevision,
 		HeaderSize: uint32(binary.Size(&header{})),
-		ID:         mangleUUID(gpt.ID),
+		ID:         msguid.From(gpt.ID),
 
 		PartitionEntryCount: uint32(slotCount),
 		PartitionEntrySize:  uint32(partSize),
@@ -669,7 +671,7 @@ func readSingleGPT(r io.ReadSeeker, blockSize int64, blockCount int64, headerBlo
 		return nil, errors.New("GPT partition entry table checksum mismatch")
 	}
 	var g Table
-	g.ID = unmangleUUID(hdr.ID)
+	g.ID = msguid.To(hdr.ID)
 	g.BlockSize = blockSize
 	g.BlockCount = blockCount
 	for i := uint32(0); i < hdr.PartitionEntryCount; i++ {
@@ -685,8 +687,8 @@ func readSingleGPT(r io.ReadSeeker, blockSize int64, blockCount int64, headerBlo
 			continue
 		}
 		g.Partitions = append(g.Partitions, &Partition{
-			ID:         unmangleUUID(part.ID),
-			Type:       unmangleUUID(part.Type),
+			ID:         msguid.To(part.ID),
+			Type:       msguid.To(part.Type),
 			Name:       strings.TrimRight(string(utf16.Decode(part.Name[:])), "\x00"),
 			FirstBlock: part.FirstBlock,
 			LastBlock:  part.LastBlock,
@@ -704,24 +706,4 @@ func readSingleGPT(r io.ReadSeeker, blockSize int64, blockCount int64, headerBlo
 	}
 	g.Partitions = g.Partitions[:maxValidPartition+1]
 	return &g, nil
-}
-
-var mixedEndianTranspose = []int{3, 2, 1, 0, 5, 4, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15}
-
-// mangleUUID encodes a normal UUID into a "mixed-endian" UUID. This just means
-// shuffling the bytes around in a specific way. Thank Microsoft for this
-// idiosyncrasy.
-func mangleUUID(u uuid.UUID) (o [16]byte) {
-	for dest, from := range mixedEndianTranspose {
-		o[dest] = u[from]
-	}
-	return
-}
-
-// unmangleUUID does the reverse transformation of mangleUUID
-func unmangleUUID(i [16]byte) (o uuid.UUID) {
-	for from, dest := range mixedEndianTranspose {
-		o[dest] = i[from]
-	}
-	return
 }

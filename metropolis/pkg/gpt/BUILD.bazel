@@ -9,7 +9,10 @@ go_library(
     ],
     importpath = "source.monogon.dev/metropolis/pkg/gpt",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_google_uuid//:uuid"],
+    deps = [
+        "//metropolis/pkg/msguid",
+        "@com_github_google_uuid//:uuid",
+    ],
 )
 
 go_test(
