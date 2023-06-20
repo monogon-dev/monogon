@@ -59,6 +59,11 @@ codegen_compile_actions = [
     ACTION_NAMES.lto_backend,
 ]
 
+executable_link_actions = [
+    ACTION_NAMES.cpp_link_executable,
+    ACTION_NAMES.lto_index_for_executable,
+]
+
 all_link_actions = [
     ACTION_NAMES.cpp_link_executable,
     ACTION_NAMES.cpp_link_dynamic_library,
@@ -114,6 +119,32 @@ def _host_cc_toolchain_impl(ctx):
                         ],
                     ),
                 ] if ctx.attr.is_glibc else []),  # musl just works
+            ),
+        ],
+    )
+    pie_feature = feature(
+        name = "pie",
+        enabled = False,
+        flag_sets = [
+            flag_set(
+                actions = executable_link_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = [
+                            "-static-pie",
+                        ],
+                    ),
+                ]),
+            ),
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = [
+                            "-fPIE",
+                        ],
+                    ),
+                ]),
             ),
         ],
     )
@@ -175,7 +206,12 @@ def _host_cc_toolchain_impl(ctx):
 
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
-        features = [default_link_flags_feature, link_full_libc_feature, cpp_feature],
+        features = [
+            default_link_flags_feature,
+            link_full_libc_feature,
+            cpp_feature,
+            pie_feature,
+        ],
         cxx_builtin_include_directories = ctx.attr.host_includes,
         toolchain_identifier = "k8-toolchain",
         host_system_name = "local",

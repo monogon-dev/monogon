@@ -13,13 +13,13 @@
 libgcc.a%s %:if-exists(libgcc_eh.a%s)
 
 *startfile:
-%{!shared: %R/lib/Scrt1.o} %R/lib/crti.o crtbeginS.o%s
+%{static-pie: %R/lib/rcrt1.o; !shared: %R/lib/Scrt1.o} %R/lib/crti.o crtbeginS.o%s
 
 *endfile:
 crtendS.o%s %R/lib/crtn.o
 
 *link:
--no-dynamic-linker -nostdlib -static %{rdynamic:-export-dynamic}
+%{static-pie: -pie} -no-dynamic-linker -nostdlib -static %{rdynamic:-export-dynamic}
 
 *esp_link:
 
