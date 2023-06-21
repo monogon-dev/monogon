@@ -74,6 +74,10 @@ type nodeInfo struct {
 	address string
 	// local is true if address belongs to the local node.
 	local bool
+	// controlPlane is true if this node can be expected to run the control plane
+	// (for example, it was running it at time of retrieval from the cluster). This
+	// is used to populate the cluster directory ony with control plane nodes.
+	controlPlane bool
 }
 
 // nodeMap is a map from node ID (effectively DNS name) to node IP address.
@@ -111,11 +115,9 @@ func (m nodeMap) hosts(ctx context.Context) []byte {
 func (m nodeMap) clusterDirectory(ctx context.Context) *cpb.ClusterDirectory {
 	var directory cpb.ClusterDirectory
 	for _, ni := range m {
-		// Skip local addresses.
-		if ni.local {
+		if !ni.controlPlane {
 			continue
 		}
-
 		supervisor.Logger(ctx).Infof("ClusterDirectory entry: %s", ni.address)
 		addresses := []*cpb.ClusterDirectory_Node_Address{
 			{Host: ni.address},
@@ -191,7 +193,13 @@ func (s *Service) Run(ctx context.Context) error {
 				// We're not interested in what the cluster thinks about our local node, as that
 				// might be outdated (eg. when we haven't yet reported a new local address to
 				// the cluster).
+
 				if id == s.NodeID {
+					// ... but this is still a good source of information to know whether we're
+					// running the control plane or not.
+					localInfo := nodes[id]
+					localInfo.controlPlane = info.controlPlane
+					nodes[id] = localInfo
 					continue
 				}
 				if nodes[id].address == info.address {
@@ -257,8 +265,9 @@ func (s *Service) runCluster(ctx context.Context) error {
 				continue
 			}
 			nodes[n.Id] = nodeInfo{
-				address: n.Status.ExternalAddress,
-				local:   false,
+				address:      n.Status.ExternalAddress,
+				local:        false,
+				controlPlane: n.Roles.ConsensusMember != nil,
 			}
 		}
 		for _, t := range ev.NodeTombstones {
