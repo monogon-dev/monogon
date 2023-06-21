@@ -131,7 +131,10 @@ func (m nodeMap) clusterDirectory(ctx context.Context) *cpb.ClusterDirectory {
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	s.ClusterDirectorySaved.Set(false)
+	// Let other components know whether a cluster directory has already been
+	// persisted.
+	exists, _ := s.ESP.Metropolis.ClusterDirectory.Exists()
+	s.ClusterDirectorySaved.Set(exists)
 
 	localC := make(chan *network.Status)
 	s.clusterC = make(chan nodeMap)
@@ -159,6 +162,12 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
+
+	// Keep note of whether we have received data from the cluster, and only persist
+	// cluster directory then. Otherwise we risk overriding an already existing
+	// cluster directory with an empty one or one just containing this node.
+	haveRemoteData := false
+
 	// Update nodeMap in a loop, issuing writes/updates when any change occurred.
 	for {
 		changed := false
@@ -209,6 +218,7 @@ func (s *Service) Run(ctx context.Context) error {
 				nodes[id] = info
 				changed = true
 			}
+			haveRemoteData = true
 		}
 
 		if !changed {
@@ -226,17 +236,19 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 
 		// Update this node's ClusterDirectory.
-		supervisor.Logger(ctx).Info("Updating ClusterDirectory.")
-		cd := nodes.clusterDirectory(ctx)
-		cdirRaw, err := proto.Marshal(cd)
-		if err != nil {
-			return fmt.Errorf("couldn't marshal ClusterDirectory: %w", err)
+		if haveRemoteData {
+			supervisor.Logger(ctx).Info("Updating ClusterDirectory.")
+			cd := nodes.clusterDirectory(ctx)
+			cdirRaw, err := proto.Marshal(cd)
+			if err != nil {
+				return fmt.Errorf("couldn't marshal ClusterDirectory: %w", err)
+			}
+			if err = s.ESP.Metropolis.ClusterDirectory.Write(cdirRaw, 0644); err != nil {
+				return err
+			}
+			unix.Sync()
+			s.ClusterDirectorySaved.Set(true)
 		}
-		if err = s.ESP.Metropolis.ClusterDirectory.Write(cdirRaw, 0644); err != nil {
-			return err
-		}
-		unix.Sync()
-		s.ClusterDirectorySaved.Set(true)
 	}
 }
 
