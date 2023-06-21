@@ -139,6 +139,7 @@ func New(c Config) *Service {
 	}
 
 	s.rolefetch = &workerRoleFetch{
+		storageRoot:       s.StorageRoot,
 		curatorConnection: &s.CuratorConnection,
 
 		localRoles: &s.localRoles,

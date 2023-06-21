@@ -89,7 +89,8 @@ type DataDirectory struct {
 
 type DataNodeDirectory struct {
 	declarative.Directory
-	Credentials PKIDirectory `dir:"credentials"`
+	Credentials    PKIDirectory     `dir:"credentials"`
+	PersistedRoles declarative.File `file:"roles.pb"`
 }
 
 type DataEtcdDirectory struct {
