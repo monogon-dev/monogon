@@ -191,25 +191,6 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 		return err
 	}
 
-	// Masquerade/SNAT all traffic going out of the external interface
-	s.nftConn.AddRule(&nftables.Rule{
-		Table: s.natTable,
-		Chain: s.natPostroutingChain,
-		Exprs: []expr.Any{
-			&expr.Meta{Key: expr.MetaKeyOIFNAME, Register: 1},
-			&expr.Cmp{
-				Op:       expr.CmpOpEq,
-				Register: 1,
-				Data:     nfifname(iface.Attrs().Name),
-			},
-			&expr.Masq{},
-		},
-	})
-
-	if err := s.nftConn.Flush(); err != nil {
-		panic(err)
-	}
-
 	return nil
 }
 
@@ -280,8 +261,45 @@ func (s *Service) Run(ctx context.Context) error {
 		Table:    s.natTable,
 		Type:     nftables.ChainTypeNAT,
 	})
+	// SNAT/Masquerade all traffic coming from interfaces starting with
+	// veth going to interfaces not starting with veth.
+	// This NATs all container traffic going out of the host without
+	// affecting anything else and without needing to care about specific
+	// interfaces. Will need to be changed when we support L3 attachments
+	// (BGP, ...).
+	s.nftConn.AddRule(&nftables.Rule{
+		Table: s.natTable,
+		Chain: s.natPostroutingChain,
+		Exprs: []expr.Any{
+			&expr.Meta{
+				Key:      expr.MetaKeyIIFNAME,
+				Register: 8, // covers registers 8-12 (16 bytes/4 regs)
+			},
+			// Check if incoming interface starts with veth
+			&expr.Cmp{
+				Op:       expr.CmpOpEq,
+				Register: 8,
+				Data:     []byte{'v', 'e', 't', 'h'},
+			},
+			&expr.Meta{
+				Key:      expr.MetaKeyOIFNAME,
+				Register: 8, // covers registers 8-12
+			},
+			// Check if outgoing interface doesn't start with veth
+			&expr.Cmp{
+				Op:       expr.CmpOpNeq,
+				Register: 8,
+				Data:     []byte{'v', 'e', 't', 'h'},
+			},
+			&expr.Masq{
+				FullyRandom: true,
+				Persistent:  true,
+			},
+		},
+	})
+
 	if err := s.nftConn.Flush(); err != nil {
-		logger.Fatalf("Failed to set up nftables base chains: %v", err)
+		logger.Fatalf("Failed to set up nftables nat chain: %v", err)
 	}
 
 	sysctlOpts := sysctlOptions{
