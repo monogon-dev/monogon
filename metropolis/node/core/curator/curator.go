@@ -19,10 +19,12 @@ import (
 	"fmt"
 	"time"
 
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/consensus"
+	"source.monogon.dev/metropolis/node/core/consensus/client"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/pkg/event/memory"
@@ -135,6 +137,10 @@ func (s *Service) elect(ctx context.Context) error {
 		return fmt.Errorf("getting consensus client failed: %w", err)
 	}
 
+	if err := s.cleanupPreviousLifetime(ctx, cl); err != nil {
+		supervisor.Logger(ctx).Warningf("Failed to cleanup previous lifetime: %v", err)
+	}
+
 	// Establish a lease/session with etcd.
 	session, err := concurrency.NewSession(cl.ThinClient(ctx),
 		concurrency.WithContext(ctx),
@@ -217,6 +223,70 @@ campaigned:
 		return fmt.Errorf("curator session done")
 	}
 
+}
+
+// cleanupPreviousLifetime checks if we just started up after ungracefully losing
+// our leadership, and attempts to clean up if so.
+//
+// Having the rest of the cluster assume this node is still the leader is not a
+// problem from a correctness point of view (as the node will refuse to serve
+// leader requests with Unimplemented), but it is quite an eyesore to operators,
+// as all nodes just end up having a ton of client processes all complain with
+// odd 'Unimplemented' errors.
+func (s *Service) cleanupPreviousLifetime(ctx context.Context, cl client.Namespaced) error {
+	// Get the active leader key and value.
+	resp, err := cl.Get(ctx, electionPrefix, clientv3.WithFirstCreate()...)
+	if err != nil {
+		return err
+	}
+	if len(resp.Kvs) < 1 {
+		return nil
+	}
+
+	// Check that this key belonged to use by comparing the embedded node ID with our
+	// own node ID.
+	key := string(resp.Kvs[0].Key)
+	rev := resp.Kvs[0].ModRevision
+	var lock ppb.LeaderElectionValue
+	if err := proto.Unmarshal(resp.Kvs[0].Value, &lock); err != nil {
+		return fmt.Errorf("parsing existing lock value failed: %w", err)
+	}
+
+	// Not our node? Nothing to do.
+	if lock.NodeId != s.config.NodeCredentials.ID() {
+		return nil
+	}
+
+	// Now here's the sketchy part: removing the leader election key if we think it
+	// used to be ours.
+	supervisor.Logger(ctx).Infof("Detecting our own stale lock, attempting to remove...")
+
+	// Just removing the key should be correct, as the key encodes the original
+	// session ID that created the leadership key, and the session ID is unique per
+	// leader. So if the key exists, it is guaranteed to have been created and updated
+	// by exactly one session. And having read it earlier, we know it is a session
+	// that was owned by this node, as it proclaimed this node as the leader.
+	//
+	// The only scenario in which this can fail is if we have the same node ID
+	// running more than one curator service and thus more than one leader election.
+	// But that would be a serious programming/design bug and other things would
+	// likely break at this point, anyway.
+	//
+	// For safety, we add a check that it is still the same ModRevision as when we
+	// checked it earlier on, but that's probably unnecessary.
+	txn := cl.Txn(ctx).If(clientv3.Compare(clientv3.ModRevision(key), "=", rev))
+	txn = txn.Then(clientv3.OpDelete(key))
+	resp2, err := txn.Commit()
+	if err != nil {
+		return err
+	}
+	if resp2.Succeeded {
+		supervisor.Logger(ctx).Infof("Cleanup successful")
+	} else {
+		// This will happen if the key expired by itself already.
+		supervisor.Logger(ctx).Warningf("Cleanup failed - maybe our old lease already expired...")
+	}
+	return nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
