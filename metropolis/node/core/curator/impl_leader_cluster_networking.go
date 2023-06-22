@@ -96,7 +96,7 @@ func (l *leaderCurator) UpdateNodeClusterNetworking(ctx context.Context, req *ip
 	}
 
 	// TODO(q3k): unhardcode this and synchronize with Kubernetes code.
-	clusterNet := netip.MustParsePrefix("10.0.0.0/16")
+	clusterNet := netip.MustParsePrefix("10.192.0.0/11")
 
 	// Retrieve node ...
 	node, err := nodeLoad(ctx, l.leadership, id)

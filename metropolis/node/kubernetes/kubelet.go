@@ -110,6 +110,9 @@ func (s *kubeletService) configure(fargs *fileargs.FileArgs) *kubeletconfig.Kube
 		// We're not going to use this, but let's make it point to a
 		// known-empty directory in case anybody manages to trigger it.
 		VolumePluginDir: s.EphemeralDirectory.FlexvolumePlugins.FullPath(),
+		// Currently we allocate a /24 per node, so we can have a maximum of
+		// 253 pods per node.
+		MaxPods: 253,
 	}
 }
 

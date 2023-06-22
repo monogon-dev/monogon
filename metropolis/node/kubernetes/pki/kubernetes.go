@@ -139,7 +139,7 @@ func New(kv clientv3.KV, clusterDomain string) *PKI {
 			"metropolis-kube-apiserver",
 		},
 		// TODO(q3k): add service network internal apiserver address
-		[]net.IP{{10, 0, 255, 1}, {127, 0, 0, 1}},
+		[]net.IP{{10, 224, 0, 1}, {127, 0, 0, 1}},
 	))
 	make(IdCA, APIServerKubeletClient, opki.Client("metropolis:apiserver-kubelet-client", nil))
 	make(IdCA, ControllerManagerClient, opki.Client("system:kube-controller-manager", nil))

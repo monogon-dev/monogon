@@ -113,14 +113,14 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 
 	// TODO(q3k): make these configurable.
 	clusterIPRange := net.IPNet{
-		IP: net.IP{10, 0, 0, 0},
-		// That's a /16.
-		Mask: net.IPMask{0xff, 0xff, 0x00, 0x00},
+		IP: net.IP{10, 192, 0, 0},
+		// That's a /11.
+		Mask: net.IPMask{0xff, 0xe0, 0x00, 0x00},
 	}
 	serviceIPRange := net.IPNet{
-		IP: net.IP{10, 0, 255, 1},
-		// That's a /24.
-		Mask: net.IPMask{0xff, 0xff, 0xff, 0x00},
+		IP: net.IP{10, 224, 0, 1},
+		// That's a /16.
+		Mask: net.IPMask{0xff, 0xff, 0x00, 0x00},
 	}
 
 	// TODO(q3k): remove this once the controller also uses curator-emitted PKI.

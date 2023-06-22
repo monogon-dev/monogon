@@ -37,8 +37,8 @@ func (s *workerClusternet) run(ctx context.Context) error {
 	svc := clusternet.Service{
 		Curator: cur,
 		ClusterNet: net.IPNet{
-			IP:   []byte{10, 0, 0, 0},
-			Mask: net.IPMask{255, 255, 0, 0},
+			IP:   []byte{10, 192, 0, 0},
+			Mask: net.IPMask{255, 224, 0, 0},
 		},
 		DataDirectory:             &s.storageRoot.Data.Kubernetes.ClusterNetworking,
 		LocalKubernetesPodNetwork: s.podNetwork,

@@ -1416,7 +1416,7 @@ func TestUpdateNodeClusterNetworking(t *testing.T) {
 			Clusternet: &cpb.NodeClusterNetworking{
 				WireguardPubkey: "w9RbFvF14pytyraq16IEuMov032XXrPBOQUr59kcxHg=",
 				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
-					{Cidr: "10.0.0.128/16"},
+					{Cidr: "10.192.0.128/16"},
 				},
 			},
 		}, "must be in canonical format"},
@@ -1425,7 +1425,7 @@ func TestUpdateNodeClusterNetworking(t *testing.T) {
 				WireguardPubkey: "w9RbFvF14pytyraq16IEuMov032XXrPBOQUr59kcxHg=",
 				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
 					// Prefix outside of cluster net should not be allowed.
-					{Cidr: "10.0.0.0/15"},
+					{Cidr: "10.192.0.0/10"},
 				},
 			},
 		}, "must be fully contained"},
@@ -1442,10 +1442,10 @@ func TestUpdateNodeClusterNetworking(t *testing.T) {
 			Clusternet: &cpb.NodeClusterNetworking{
 				WireguardPubkey: "GaNXuc/yl8IaXduX6PQ+ZxIG4HtBACubHrRI7rqfA20=",
 				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
-					{Cidr: "10.0.0.0/24"},
+					{Cidr: "10.192.0.0/24"},
 					// Yes, this is allowed.
-					{Cidr: "10.0.0.0/16"},
-					{Cidr: "10.0.12.23/32"},
+					{Cidr: "10.192.0.0/11"},
+					{Cidr: "10.195.12.23/32"},
 					// External address should be allowed.
 					{Cidr: "203.0.113.43/32"},
 				},
@@ -1486,7 +1486,7 @@ func TestUpdateNodeClusterNetworking(t *testing.T) {
 	if want, got := 4, len(cn.Prefixes); want != got {
 		t.Errorf("Wanted %d prefixes, got %d", want, got)
 	} else {
-		for i, want := range []string{"10.0.0.0/24", "10.0.0.0/16", "10.0.12.23/32", "203.0.113.43/32"} {
+		for i, want := range []string{"10.192.0.0/24", "10.192.0.0/11", "10.195.12.23/32", "203.0.113.43/32"} {
 			if got := cn.Prefixes[i].Cidr; want != got {
 				t.Errorf("Prefix %d should be %q, got %q", i, want, got)
 			}
