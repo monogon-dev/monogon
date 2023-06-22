@@ -51,29 +51,29 @@ const (
 // gRPC client connections can use. Usually one ClusterResolver instance should
 // be used per application.
 //
-// .------------------------.        .--------------------------------------.
-// | Metropolis Cluster     |        | Resolver                             |
-// :------------------------:        :--------------------------------------:
-// :                        :        :                                      :
-// : .--------------------. :        :   .----------------.                 :
-// : | curator (follower) |<---.---------| Leader Updater |------------.    :
-// : '--------------------' :  |     :   '----------------'            |    :
-// : .--------------------. :  |     :   .------------------------.    |    :
-// : | curator (follower) |<---:     :   | Processor (CuratorMap) |<-.-'-.  :
-// : '--------------------' :  |     :   '------------------------'  |   |  :
-// : .--------------------.<---'     :   .-----------------.         |   |  :
-// : | curator (leader)   |<-------------| Curator Updater |---------'   |  :
-// : '--------------------' :        :   '-----------------'             |  :
-// :                        :        :                                   |  :
-// '------------------------'        :   .----------.                    |  :
-//                                   :   | Watchers |-.                  |  :
-//                                   :   '----------' |------------------'  :
-//                                   :     '-^--------'                     :
-//                                   :       |  ^                           :
-//                                   :       |  |                           :
-//                                        .---------------.
-//                                        | gRPC channels |
-//                                        '---------------'
+//	.------------------------.        .--------------------------------------.
+//	| Metropolis Cluster     |        | Resolver                             |
+//	:------------------------:        :--------------------------------------:
+//	:                        :        :                                      :
+//	: .--------------------. :        :   .----------------.                 :
+//	: | curator (follower) |<---.---------| Leader Updater |------------.    :
+//	: '--------------------' :  |     :   '----------------'            |    :
+//	: .--------------------. :  |     :   .------------------------.    |    :
+//	: | curator (follower) |<---:     :   | Processor (CuratorMap) |<-.-'-.  :
+//	: '--------------------' :  |     :   '------------------------'  |   |  :
+//	: .--------------------.<---'     :   .-----------------.         |   |  :
+//	: | curator (leader)   |<-------------| Curator Updater |---------'   |  :
+//	: '--------------------' :        :   '-----------------'             |  :
+//	:                        :        :                                   |  :
+//	'------------------------'        :   .----------.                    |  :
+//	                                  :   | Watchers |-.                  |  :
+//	                                  :   '----------' |------------------'  :
+//	                                  :     '-^--------'                     :
+//	                                  :       |  ^                           :
+//	                                  :       |  |                           :
+//	                                       .---------------.
+//	                                       | gRPC channels |
+//	                                       '---------------'
 type Resolver struct {
 	reqC chan *request
 	ctx  context.Context
@@ -223,6 +223,7 @@ func (r *Resolver) runCuratorUpdater(ctx context.Context, opts []grpc.DialOption
 	defer cl.Close()
 
 	cur := apb.NewCuratorClient(cl)
+	prevCurators := make(nodeStatusMap)
 
 	return backoff.RetryNotify(func() error {
 		w, err := cur.Watch(ctx, &apb.WatchRequest{
@@ -245,24 +246,35 @@ func (r *Resolver) runCuratorUpdater(ctx context.Context, opts []grpc.DialOption
 			}
 			bo.Reset()
 
-			// Update internal map.
+			// Update internal map but only care about curators.
 			for _, n := range ev.Nodes {
+				if n.Status == nil || n.Status.RunningCurator == nil {
+					delete(nodes, n.Id)
+					continue
+				}
 				nodes[n.Id] = n.Status
 			}
 			for _, n := range ev.NodeTombstones {
 				delete(nodes, n.NodeId)
 			}
 
-			// Make a copy, this time only curators.
-			curators := make(map[string]*cpb.NodeStatus)
+			// Make a copy to submit to client.
+			curators := make(nodeStatusMap)
 			var curatorNames []string
 			for k, v := range nodes {
-				if v == nil || v.RunningCurator == nil {
+				if v == nil {
 					continue
 				}
 				curators[k] = v
 				curatorNames = append(curatorNames, k)
 			}
+
+			// Only submit an update (and log) if the effective curator map actually changed.
+			if prevCurators.equals(curators) {
+				continue
+			}
+			prevCurators = curators
+
 			r.logger("CURUPDATE: got new curators: %s", strings.Join(curatorNames, ", "))
 
 			select {
