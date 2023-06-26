@@ -291,6 +291,12 @@ func (s *Service) Run(ctx context.Context) error {
 				Register: 8,
 				Data:     []byte{'v', 'e', 't', 'h'},
 			},
+			// Check if outgoing interface isn't clusternet
+			&expr.Cmp{
+				Op:       expr.CmpOpNeq,
+				Register: 8,
+				Data:     []byte{'c', 'l', 'u', 's', 't', 'e', 'r', 'n', 'e', 't'},
+			},
 			&expr.Masq{
 				FullyRandom: true,
 				Persistent:  true,
