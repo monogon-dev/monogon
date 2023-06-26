@@ -315,7 +315,7 @@ func main() {
 	}
 
 	// Create an EFI boot entry for Metropolis.
-	en, err := efivarfs.CreateBootEntry(be)
+	en, err := efivarfs.AddBootEntry(be)
 	if err != nil {
 		panicf("While creating a boot entry: %v", err)
 	}

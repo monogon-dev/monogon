@@ -24,159 +24,121 @@
 package efivarfs
 
 import (
+	"bytes"
+	"encoding/binary"
+	"errors"
 	"fmt"
 	"math"
 	"strings"
-
-	"github.com/google/uuid"
-	"golang.org/x/text/transform"
 )
 
-// Note on binary format of EFI variables:
-// This code follows Section 3 "Boot Manager" of version 2.6 of the UEFI Spec:
-// http://www.uefi.org/sites/default/files/resources/UEFI%20Spec%202_6.pdf
-// It uses the binary representation from the Linux "efivars" filesystem.
-// Specifically, all binary data that is marshaled and unmarshaled is preceded by
-// 4 bytes of "Variable Attributes".
-// All binary data must have exactly the correct length and may not be padded
-// with extra bytes while reading or writing.
+type LoadOptionCategory uint8
 
-// Note on EFI variable attributes:
-// This code ignores all EFI variable attributes when reading.
-// This code always writes variables with the following attributes:
-//   - EFI_VARIABLE_NON_VOLATILE (0x00000001)
-//   - EFI_VARIABLE_BOOTSERVICE_ACCESS (0x00000002)
-//   - EFI_VARIABLE_RUNTIME_ACCESS (0x00000004)
-const defaultAttrsByte0 uint8 = 7
+const (
+	// Boot entries belonging to the Boot category are normal boot entries.
+	LoadOptionCategoryBoot LoadOptionCategory = 0x0
+	// Boot entries belonging to the App category are not booted as part of
+	// the normal boot order, but are only launched via menu or hotkey.
+	// This category is optional for bootloaders to support, before creating
+	// new boot entries of this category firmware support needs to be
+	// confirmed.
+	LoadOptionCategoryApp LoadOptionCategory = 0x1
+)
 
-// BootEntry represents a subset of the contents of a Boot#### EFI variable.
-type BootEntry struct {
-	Description     string // eg. "Linux Boot Manager"
-	Path            string // eg. `\EFI\systemd\systemd-bootx64.efi`
-	PartitionGUID   uuid.UUID
-	PartitionNumber uint32 // Starts with 1
-	PartitionStart  uint64 // LBA
-	PartitionSize   uint64 // LBA
+// LoadOption contains information on a payload to be loaded by EFI.
+type LoadOption struct {
+	// Human-readable description of what this load option loads.
+	// This is what's being shown by the firmware when selecting a boot option.
+	Description string
+	// If set, firmware will skip this load option when it is in BootOrder.
+	// It is unspecificed whether this prevents the user from booting the entry
+	// manually.
+	Inactive bool
+	// If set, this load option will not be shown in any menu for load option
+	// selection. This does not affect other functionality.
+	Hidden bool
+	// Category contains the category of the load entry. The selected category
+	// affects various firmware behaviors, see the individual value
+	// descriptions for more information.
+	Category LoadOptionCategory
+	// Path to the UEFI PE executable to execute when this load option is being
+	// loaded.
+	FilePath DevicePath
+	// OptionalData gets passed as an argument to the executed PE executable.
+	// If zero-length a NULL value is passed to the executable.
+	OptionalData []byte
 }
 
-// Marshal generates the binary representation of a BootEntry (EFI_LOAD_OPTION).
-// Description, DiskGUID and Path must be set.
-// Attributes of the boot entry (EFI_LOAD_OPTION.Attributes, not the same
-// as attributes of an EFI variable) are always set to LOAD_OPTION_ACTIVE.
-func (t *BootEntry) Marshal() ([]byte, error) {
-	if t.Description == "" ||
-		t.PartitionGUID.String() == "00000000-0000-0000-0000-000000000000" ||
-		t.Path == "" ||
-		t.PartitionNumber == 0 ||
-		t.PartitionStart == 0 ||
-		t.PartitionSize == 0 {
-		return nil, fmt.Errorf("missing field, all are required: %+v", *t)
+// Marshal encodes a LoadOption into a binary EFI_LOAD_OPTION.
+func (e *LoadOption) Marshal() ([]byte, error) {
+	var data []byte
+	var attrs uint32
+	attrs |= (uint32(e.Category) & 0x1f) << 8
+	if e.Hidden {
+		attrs |= 0x08
 	}
-
-	// EFI_LOAD_OPTION.FilePathList
-	var dp []byte
-
-	// EFI_LOAD_OPTION.FilePathList[0]
-	dp = append(dp,
-		0x04,       // Type ("Media Device Path")
-		0x01,       // Sub-Type ("Hard Drive")
-		0x2a, 0x00, // Length (always 42 bytes for this type)
-	)
-	dp = append32(dp, t.PartitionNumber)
-	dp = append64(dp, t.PartitionStart)
-	dp = append64(dp, t.PartitionSize)
-	// Append the partition GUID in the EFI format.
-	dp = append(dp, MarshalEFIGUID(t.PartitionGUID)...)
-
-	dp = append(dp,
-		0x02, // Partition Format ("GUID Partition Table")
-		0x02, // Signature Type ("GUID signature")
-	)
-
-	// EFI_LOAD_OPTION.FilePathList[1]
-	enc := Encoding.NewEncoder()
-	bsp := strings.ReplaceAll(t.Path, "/", "\\")
-	path, _, e := transform.Bytes(enc, []byte(bsp))
-	if e != nil {
-		return nil, fmt.Errorf("while encoding Path: %v", e)
+	if !e.Inactive {
+		attrs |= 0x01
 	}
-	path = append16(path, 0) // null terminate string
-	filePathLen := len(path) + 4
-	dp = append(dp,
-		0x04, // Type ("Media Device Path")
-		0x04, // Sub-Type ("File Path")
-	)
-	dp = append16(dp, uint16(filePathLen))
-	dp = append(dp, path...)
-
-	// EFI_LOAD_OPTION.FilePathList[2] ("Device Path End Structure")
-	dp = append(dp,
-		0x7F,       // Type ("End of Hardware Device Path")
-		0xFF,       // Sub-Type ("End Entire Device Path")
-		0x04, 0x00, // Length (always 4 bytes for this type)
-	)
-
-	out := []byte{
-		// EFI variable attributes
-		defaultAttrsByte0, 0x00, 0x00, 0x00,
-
-		// EFI_LOAD_OPTION.Attributes (only LOAD_OPTION_ACTIVE)
-		0x01, 0x00, 0x00, 0x00,
+	data = append32(data, attrs)
+	filePathRaw, err := e.FilePath.Marshal()
+	if err != nil {
+		return nil, fmt.Errorf("failed marshalling FilePath: %w", err)
 	}
-
-	// EFI_LOAD_OPTION.FilePathListLength
-	if len(dp) > math.MaxUint16 {
-		// No need to also check for overflows for Path length field explicitly,
-		// since if that overflows, this field will definitely overflow as well.
-		// There is no explicit length field for Description, so no special
-		// handling is required.
-		return nil, fmt.Errorf("variable too large, use shorter strings")
+	if len(filePathRaw) > math.MaxUint16 {
+		return nil, fmt.Errorf("failed marshalling FilePath: value too big (%d)", len(filePathRaw))
 	}
-	out = append16(out, uint16(len(dp)))
-
-	// EFI_LOAD_OPTION.Description
-	desc, _, e := transform.Bytes(enc, []byte(t.Description))
-	if e != nil {
-		return nil, fmt.Errorf("while encoding Description: %v", e)
+	data = append16(data, uint16(len(filePathRaw)))
+	if strings.IndexByte(e.Description, 0x00) != -1 {
+		return nil, fmt.Errorf("failed to encode Description: contains invalid null bytes")
 	}
-	desc = append16(desc, 0) // null terminate string
-	out = append(out, desc...)
-
-	// EFI_LOAD_OPTION.FilePathList
-	out = append(out, dp...)
-
-	// EFI_LOAD_OPTION.OptionalData is always empty
-
-	return out, nil
+	encodedDesc, err := Encoding.NewEncoder().Bytes([]byte(e.Description))
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode Description: %w", err)
+	}
+	data = append(data, encodedDesc...)
+	data = append(data, 0x00, 0x00) // Final UTF-16/UCS-2 null code
+	data = append(data, filePathRaw...)
+	data = append(data, e.OptionalData...)
+	return data, nil
 }
 
-// UnmarshalBootEntry loads a BootEntry from its binary representation.
-// WARNING: UnmarshalBootEntry only loads the Description field.
-// Everything else is ignored (and not validated if possible)
-func UnmarshalBootEntry(d []byte) (*BootEntry, error) {
-	descOffset := 4 /* EFI Var Attrs */ + 4 /* EFI_LOAD_OPTION.Attributes */ + 2 /*FilePathListLength*/
-	if len(d) < descOffset {
-		return nil, fmt.Errorf("too short: %v bytes", len(d))
+// UnmarshalLoadOption decodes a binary EFI_LOAD_OPTION into a LoadOption.
+func UnmarshalLoadOption(data []byte) (*LoadOption, error) {
+	if len(data) < 6 {
+		return nil, fmt.Errorf("invalid load option: minimum 6 bytes are required, got %d", len(data))
 	}
-	descBytes := []byte{}
-	var foundNull bool
-	for i := descOffset; i+1 < len(d); i += 2 {
-		a := d[i]
-		b := d[i+1]
-		if a == 0 && b == 0 {
-			foundNull = true
-			break
-		}
-		descBytes = append(descBytes, a, b)
+	var opt LoadOption
+	attrs := binary.LittleEndian.Uint32(data[:4])
+	opt.Category = LoadOptionCategory((attrs >> 8) & 0x1f)
+	opt.Hidden = attrs&0x08 != 0
+	opt.Inactive = attrs&0x01 == 0
+	lenPath := binary.LittleEndian.Uint16(data[4:6])
+	// Search for UTF-16 null code
+	nullIdx := bytes.Index(data[6:], []byte{0x00, 0x00})
+	if nullIdx == -1 {
+		return nil, errors.New("no null code point marking end of Description found")
 	}
-	if !foundNull {
-		return nil, fmt.Errorf("didn't find null terminator for Description")
+	descriptionEnd := 6 + nullIdx + 1
+	descriptionRaw := data[6:descriptionEnd]
+	description, err := Encoding.NewDecoder().Bytes(descriptionRaw)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding UTF-16 in Description: %w", err)
 	}
-	descDecoded, _, e := transform.Bytes(Encoding.NewDecoder(), descBytes)
-	if e != nil {
-		return nil, fmt.Errorf("while decoding Description: %v", e)
+	descriptionEnd += 2 // 2 null bytes terminating UTF-16 string
+	opt.Description = string(description)
+	if descriptionEnd+int(lenPath) > len(data) {
+		return nil, fmt.Errorf("declared length of FilePath (%d) overruns available data (%d)", lenPath, len(data)-descriptionEnd)
 	}
-	return &BootEntry{Description: string(descDecoded)}, nil
+	filePathData := data[descriptionEnd : descriptionEnd+int(lenPath)]
+	opt.FilePath, err = UnmarshalDevicePath(filePathData)
+	if err != nil {
+		return nil, fmt.Errorf("failed unmarshaling FilePath: %w", err)
+	}
+	if descriptionEnd+int(lenPath) < len(data) {
+		opt.OptionalData = data[descriptionEnd+int(lenPath):]
+	}
+	return &opt, nil
 }
 
 // BootOrder represents the contents of the BootOrder EFI variable.
@@ -184,7 +146,7 @@ type BootOrder []uint16
 
 // Marshal generates the binary representation of a BootOrder.
 func (t *BootOrder) Marshal() []byte {
-	out := []byte{defaultAttrsByte0, 0x00, 0x00, 0x00}
+	var out []byte
 	for _, v := range *t {
 		out = append16(out, v)
 	}
@@ -193,10 +155,10 @@ func (t *BootOrder) Marshal() []byte {
 
 // UnmarshalBootOrder loads a BootOrder from its binary representation.
 func UnmarshalBootOrder(d []byte) (*BootOrder, error) {
-	if len(d) < 4 || len(d)%2 != 0 {
+	if len(d)%2 != 0 {
 		return nil, fmt.Errorf("invalid length: %v bytes", len(d))
 	}
-	l := (len(d) - 4) / 2
+	l := len(d) / 2
 	out := make(BootOrder, l)
 	for i := 0; i < l; i++ {
 		out[i] = uint16(d[4+2*i]) | uint16(d[4+2*i+1])<<8
@@ -217,18 +179,5 @@ func append32(d []byte, v uint32) []byte {
 		byte(v>>8&0xFF),
 		byte(v>>16&0xFF),
 		byte(v>>24&0xFF),
-	)
-}
-
-func append64(d []byte, v uint64) []byte {
-	return append(d,
-		byte(v&0xFF),
-		byte(v>>8&0xFF),
-		byte(v>>16&0xFF),
-		byte(v>>24&0xFF),
-		byte(v>>32&0xFF),
-		byte(v>>40&0xFF),
-		byte(v>>48&0xFF),
-		byte(v>>56&0xFF),
 	)
 }

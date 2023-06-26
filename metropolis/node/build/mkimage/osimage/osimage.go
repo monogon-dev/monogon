@@ -302,7 +302,7 @@ type Params struct {
 // argument. In case a regular file already exists at params.OutputPath,
 // the function will fail. It returns nil on success or an error, if one
 // did occur.
-func Create(params *Params) (*efivarfs.BootEntry, error) {
+func Create(params *Params) (*efivarfs.LoadOption, error) {
 	// Validate each parameter before use.
 	if params.OutputPath == "" {
 		return nil, fmt.Errorf("image output path must be set")
@@ -377,13 +377,19 @@ func Create(params *Params) (*efivarfs.BootEntry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("couldn't parse the GPT GUID: %w", err)
 	}
-	be := efivarfs.BootEntry{
-		Description:     "Metropolis",
-		Path:            EFIPayloadPath,
-		PartitionGUID:   guid,
-		PartitionNumber: 1,
-		PartitionStart:  esp.Start,
-		PartitionSize:   esp.End - esp.Start + 1,
+	be := efivarfs.LoadOption{
+		Description: "Metropolis",
+		FilePath: efivarfs.DevicePath{
+			&efivarfs.HardDrivePath{
+				PartitionNumber:     1,
+				PartitionStartBlock: esp.Start,
+				PartitionSizeBlocks: esp.End - esp.Start + 1,
+				PartitionMatch: efivarfs.PartitionGPT{
+					PartitionUUID: guid,
+				},
+			},
+			efivarfs.FilePath(EFIPayloadPath),
+		},
 	}
 	// Close the image and return the EFI boot entry.
 	if err := diskImg.File.Close(); err != nil {

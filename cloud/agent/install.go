@@ -120,7 +120,7 @@ func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Ne
 	if err != nil {
 		return err
 	}
-	bootEntryIdx, err := efivarfs.CreateBootEntry(be)
+	bootEntryIdx, err := efivarfs.AddBootEntry(be)
 	if err != nil {
 		return fmt.Errorf("error creating EFI boot entry: %w", err)
 	}

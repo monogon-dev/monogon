@@ -14,24 +14,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This package was written with the aim of easing efivarfs integration.
+// Package efivarfs provides functions to read and manipulate UEFI runtime
+// variables. It uses Linux's efivarfs [1] to access the variables and all
+// functions generally require that this is mounted at
+// "/sys/firmware/efi/efivars".
 //
-// https://www.kernel.org/doc/html/latest/filesystems/efivarfs.html
+// [1] https://www.kernel.org/doc/html/latest/filesystems/efivarfs.html
 package efivarfs
 
 import (
-	"bytes"
+	"encoding/binary"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
-	"path/filepath"
+	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/text/encoding/unicode"
 )
 
 const (
-	Path       = "/sys/firmware/efi/efivars"
-	GlobalGuid = "8be4df61-93ca-11d2-aa0d-00e098032b8c"
+	Path = "/sys/firmware/efi/efivars"
+)
+
+var (
+	// ScopeGlobal is the scope of variables defined by the EFI specification
+	// itself.
+	ScopeGlobal = uuid.MustParse("8be4df61-93ca-11d2-aa0d-00e098032b8c")
+	// ScopeSystemd is the scope of variables defined by Systemd/bootspec.
+	ScopeSystemd = uuid.MustParse("4a67b082-0a4c-41cf-b6c7-440b29bb8c4f")
 )
 
 // Encoding defines the Unicode encoding used by UEFI, which is UCS-2 Little
@@ -39,79 +51,108 @@ const (
 // Spec 2.9, Sections 33.2.6 and 1.8.1.
 var Encoding = unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM)
 
-// ExtractString returns EFI variable data based on raw variable file contents.
-// It returns string-represented data, or an error.
-func ExtractString(contents []byte) (string, error) {
-	// Fail if total length is shorter than attribute length.
-	if len(contents) < 4 {
-		return "", fmt.Errorf("contents too short.")
-	}
-	// Skip attributes, see @linux//Documentation/filesystems:efivarfs.rst for format
-	efiVarData := contents[4:]
-	espUUIDNullTerminated, err := Encoding.NewDecoder().Bytes(efiVarData)
-	if err != nil {
-		// Pass the decoding error unwrapped.
-		return "", err
-	}
-	// Remove the null suffix.
-	return string(bytes.TrimSuffix(espUUIDNullTerminated, []byte{0})), nil
+// Attribute contains a bitset of EFI variable attributes.
+type Attribute uint32
+
+const (
+	// If set the value of the variable is is persistent across resets and
+	// power cycles. Variables without this set cannot be created or modified
+	// after UEFI boot services are terminated.
+	AttrNonVolatile Attribute = 1 << iota
+	// If set allows access to this variable from UEFI boot services.
+	AttrBootserviceAccess
+	// If set allows access to this variable from an operating system after
+	// UEFI boot services are terminated. Variables setting this must also
+	// set AttrBootserviceAccess. This is automatically taken care of by Write
+	// in this package.
+	AttrRuntimeAccess
+	// Marks a variable as being a hardware error record. See UEFI 2.10 section
+	// 8.2.8 for more information about this.
+	AttrHardwareErrorRecord
+	// Deprecated, should not be used for new variables.
+	AttrAuthenticatedWriteAccess
+	// Variable requires special authentication to write. These variables
+	// cannot be written with this package.
+	AttrTimeBasedAuthenticatedWriteAccess
+	// If set in a Write() call, tries to append the data instead of replacing
+	// it completely.
+	AttrAppendWrite
+	// Variable requires special authentication to access and write. These
+	// variables cannot be accessed with this package.
+	AttrEnhancedAuthenticatedAccess
+)
+
+func varPath(scope uuid.UUID, varName string) string {
+	return fmt.Sprintf("/sys/firmware/efi/efivars/%s-%s", varName, scope.String())
 }
 
-// ReadLoaderDevicePartUUID reads the ESP UUID from an EFI variable. It
-// depends on efivarfs being already mounted.
-func ReadLoaderDevicePartUUID() (uuid.UUID, error) {
-	// Read the EFI variable file containing the ESP UUID.
-	espUuidPath := filepath.Join(Path, "LoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f")
-	efiVar, err := os.ReadFile(espUuidPath)
+// Write writes the value of the named variable in the given scope.
+func Write(scope uuid.UUID, varName string, attrs Attribute, value []byte) error {
+	// Write attributes, see @linux//Documentation/filesystems:efivarfs.rst for format
+	f, err := os.OpenFile(varPath(scope, varName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("couldn't read the LoaderDevicePartUUID file at %q: %w", espUuidPath, err)
-	}
-	contents, err := ExtractString(efiVar)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("couldn't decode an EFI variable: %w", err)
-	}
-	out, err := uuid.Parse(contents)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("value in LoaderDevicePartUUID could not be parsed as UUID: %w", err)
-	}
-	return out, nil
-}
-
-// CreateBootEntry creates an EFI boot entry variable and returns its
-// non-negative index on success. It may return an io error.
-func CreateBootEntry(be *BootEntry) (int, error) {
-	// Find the index by looking up the first empty slot.
-	var ep string
-	var n int
-	for ; ; n++ {
-		en := fmt.Sprintf("Boot%04x-%s", n, GlobalGuid)
-		ep = filepath.Join(Path, en)
-		_, err := os.Stat(ep)
-		if os.IsNotExist(err) {
-			break
+		e := err
+		// Unwrap PathError here as we wrap our own parameter message around it
+		var perr *fs.PathError
+		if errors.As(err, &perr) {
+			e = perr.Err
 		}
-		if err != nil {
-			return -1, err
-		}
+		return fmt.Errorf("writing %q in scope %s: %w", varName, scope, e)
 	}
-
-	// Create the boot variable.
-	bem, err := be.Marshal()
-	if err != nil {
-		return -1, fmt.Errorf("while marshaling the EFI boot entry: %w", err)
+	// Required by UEFI 2.10 Section 8.2.3:
+	// Runtime access to a data variable implies boot service access. Attributes
+	// that have EFI_VARIABLE_RUNTIME_ACCESS set must also have
+	// EFI_VARIABLE_BOOTSERVICE_ACCESS set. The caller is responsible for
+	// following this rule.
+	if attrs&AttrRuntimeAccess != 0 {
+		attrs |= AttrBootserviceAccess
 	}
-	if err := os.WriteFile(ep, bem, 0644); err != nil {
-		return -1, fmt.Errorf("while creating a boot entry variable: %w", err)
+	// Linux wants everything in on write, so assemble an intermediate buffer
+	buf := make([]byte, len(value)+4)
+	binary.LittleEndian.PutUint32(buf[:4], uint32(attrs))
+	copy(buf[4:], value)
+	_, err = f.Write(buf)
+	if err1 := f.Close(); err1 != nil && err == nil {
+		err = err1
 	}
-	return n, nil
+	return err
 }
 
-// SetBootOrder replaces contents of the boot order variable with the order
-// specified in ord. It may return an io error.
-func SetBootOrder(ord *BootOrder) error {
-	op := filepath.Join(Path, fmt.Sprintf("BootOrder-%s", GlobalGuid))
-	if err := os.WriteFile(op, ord.Marshal(), 0644); err != nil {
-		return fmt.Errorf("while creating a boot order variable: %w", err)
+// Read reads the value of the named variable in the given scope.
+func Read(scope uuid.UUID, varName string) ([]byte, Attribute, error) {
+	val, err := os.ReadFile(varPath(scope, varName))
+	if err != nil {
+		e := err
+		// Unwrap PathError here as we wrap our own parameter message around it
+		var perr *fs.PathError
+		if errors.As(err, &perr) {
+			e = perr.Err
+		}
+		return nil, Attribute(0), fmt.Errorf("reading %q in scope %s: %w", varName, scope, e)
 	}
-	return nil
+	if len(val) < 4 {
+		return nil, Attribute(0), fmt.Errorf("reading %q in scope %s: malformed, less than 4 bytes long", varName, scope)
+	}
+	return val[4:], Attribute(binary.LittleEndian.Uint32(val[:4])), nil
+}
+
+// List lists all variable names present for a given scope sorted by their names
+// in Go's "native" string sort order.
+func List(scope uuid.UUID) ([]string, error) {
+	vars, err := os.ReadDir(Path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list variable directory: %w", err)
+	}
+	var outVarNames []string
+	suffix := fmt.Sprintf("-%v", scope)
+	for _, v := range vars {
+		if v.IsDir() {
+			continue
+		}
+		if !strings.HasSuffix(v.Name(), suffix) {
+			continue
+		}
+		outVarNames = append(outVarNames, strings.TrimSuffix(v.Name(), suffix))
+	}
+	return outVarNames, nil
 }
