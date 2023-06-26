@@ -250,14 +250,14 @@ func TestE2E(t *testing.T) {
 					return fmt.Errorf("pod is not ready: %v", events.Items[0].Message)
 				}
 			})
-			util.TestEventual(t, "Simple deployment with runc", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Simple deployment with gvisor", ctx, largeTestTimeout, func(ctx context.Context) error {
 				deployment := makeTestDeploymentSpec("test-deploy-2")
-				var runcStr = "runc"
-				deployment.Spec.Template.Spec.RuntimeClassName = &runcStr
+				gvisorStr := "gvisor"
+				deployment.Spec.Template.Spec.RuntimeClassName = &gvisorStr
 				_, err := clientSet.AppsV1().Deployments("default").Create(ctx, deployment, metav1.CreateOptions{})
 				return err
 			})
-			util.TestEventual(t, "Simple deployment is running on runc", ctx, largeTestTimeout, func(ctx context.Context) error {
+			util.TestEventual(t, "Simple deployment is running on gvisor", ctx, largeTestTimeout, func(ctx context.Context) error {
 				res, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{LabelSelector: "name=test-deploy-2"})
 				if err != nil {
 					return err
