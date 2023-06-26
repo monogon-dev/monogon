@@ -284,8 +284,22 @@ func (r *Resolver) runCuratorUpdater(ctx context.Context, opts []grpc.DialOption
 			}
 		}
 	}, backoff.WithContext(bo, ctx), func(err error, t time.Duration) {
-		r.logger("CURUPDATE: error in loop: %v", err)
-		r.logger("CURUPDATE: retrying in %s...", t.String())
+		c := make(chan *responseDebug)
+		r.reqC <- &request{dbg: &requestDebug{resC: c}}
+		dbg := <-c
+		var msg []string
+		for k, v := range dbg.curmap.curators {
+			msg = append(msg, fmt.Sprintf("curator: %s/%s", k, v.endpoint))
+		}
+		for k, _ := range dbg.curmap.seeds {
+			msg = append(msg, fmt.Sprintf("seed: %s", k))
+		}
+		if dbg.leader != nil {
+			msg = append(msg, fmt.Sprintf("leader: %s/%s", dbg.leader.nodeID, dbg.leader.endpoint.endpoint))
+		}
+
+		r.logger("CURUPDATE: error in loop: %v, retrying in %s...", err, t.String())
+		r.logger("CURUPDATE: processor state: %s", strings.Join(msg, ", "))
 	})
 }
 

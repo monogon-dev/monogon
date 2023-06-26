@@ -23,6 +23,7 @@ type request struct {
 	ds    *requestDialOptionsSet
 	sub   *requestSubscribe
 	unsub *requestUnsubscribe
+	dbg   *requestDebug
 }
 
 // requestCuratorMapGet is received from any subsystem which wants to
@@ -108,6 +109,22 @@ type requestDialOptionsSet struct {
 // the current leader.
 type requestSubscribe struct {
 	resC chan *responseSubscribe
+}
+
+// requestDebug is received from the curator updater on failure, and is used to
+// provide the user with up-to-date debug information about the processor's state
+// at time of failure.
+type requestDebug struct {
+	resC chan *responseDebug
+}
+
+type responseDebug struct {
+	// curmap is the copy of the curator map as seen by the processor at time of
+	// request.
+	curmap *curatorMap
+	// leader is the current leader, if any, as seen by the processor at the time of
+	// the request.
+	leader *requestLeaderUpdate
 }
 
 type responseSubscribe struct {
@@ -240,6 +257,20 @@ func (r *Resolver) run(ctx context.Context) error {
 			if subscribers[req.unsub.id] != nil {
 				close(subscribers[req.unsub.id])
 				delete(subscribers, req.unsub.id)
+			}
+		case req.dbg != nil:
+			// Debug
+			var leader2 *requestLeaderUpdate
+			if leader != nil {
+				endpoint := *leader.endpoint
+				leader2 = &requestLeaderUpdate{
+					nodeID:   leader.nodeID,
+					endpoint: &endpoint,
+				}
+			}
+			req.dbg.resC <- &responseDebug{
+				curmap: curMap.copy(),
+				leader: leader2,
 			}
 		default:
 			panic(fmt.Sprintf("unhandled request: %+v", req))
