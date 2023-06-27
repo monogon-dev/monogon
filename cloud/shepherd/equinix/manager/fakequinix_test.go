@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -76,6 +77,10 @@ func (f *fakequinix) ListDevices(_ context.Context, pid string) ([]packngo.Devic
 		res = append(res, *dev)
 	}
 	return res, nil
+}
+
+func (f *fakequinix) UpdateDevice(ctx context.Context, id string, r *packngo.DeviceUpdateRequest) (*packngo.Device, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 // MoveReservation is not implemented in fakequinix

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/packethost/packngo"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 
@@ -42,6 +43,15 @@ func doDelete(cmd *cobra.Command, args []string) {
 	time.Sleep(5 * time.Second)
 
 	for _, d := range devices {
+		h := "deleted-" + d.Hostname
+		_, err := api.UpdateDevice(ctx, d.ID, &packngo.DeviceUpdateRequest{
+			Hostname: &h,
+		})
+		if err != nil {
+			klog.Infof("failed updating device %s (%s): %v", d.ID, d.Hostname, err)
+			continue
+		}
+
 		klog.Infof("deleting %s (%s)...", d.ID, d.Hostname)
 		if err := api.DeleteDevice(ctx, d.ID); err != nil {
 			klog.Infof("failed deleting device %s (%s): %v", d.ID, d.Hostname, err)

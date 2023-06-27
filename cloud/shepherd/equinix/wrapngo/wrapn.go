@@ -101,6 +101,8 @@ type Client interface {
 	// retry was needed but in the meantime the requested hardware reservation from
 	// which this machine was requested got lost.
 	CreateDevice(ctx context.Context, request *packngo.DeviceCreateRequest) (*packngo.Device, error)
+
+	UpdateDevice(ctx context.Context, id string, request *packngo.DeviceUpdateRequest) (*packngo.Device, error)
 	RebootDevice(ctx context.Context, did string) error
 	DeleteDevice(ctx context.Context, id string) error
 
@@ -301,21 +303,18 @@ func (e *client) CreateDevice(ctx context.Context, r *packngo.DeviceCreateReques
 	})
 }
 
+func (e *client) UpdateDevice(ctx context.Context, id string, r *packngo.DeviceUpdateRequest) (*packngo.Device, error) {
+	return wrap(ctx, e, func(cl *packngo.Client) (*packngo.Device, error) {
+		dev, _, err := cl.Devices.Update(id, r)
+		return dev, err
+	})
+}
+
 func (e *client) ListDevices(ctx context.Context, pid string) ([]packngo.Device, error) {
 	return wrap(ctx, e, func(cl *packngo.Client) ([]packngo.Device, error) {
 		// to increase the chances of a stable pagination, we sort the devices by hostname
 		res, _, err := cl.Devices.List(pid, &packngo.GetOptions{SortBy: "hostname"})
 		return res, err
-	})
-}
-
-func (e *client) UpdateDevice(ctx context.Context, id string, r *packngo.DeviceUpdateRequest) (*packngo.Device, error) {
-	return wrap(ctx, e, func(p *packngo.Client) (*packngo.Device, error) {
-		d, _, err := p.Devices.Update(id, r)
-		if err != nil {
-			return nil, fmt.Errorf("Devices.Update: %w", err)
-		}
-		return d, nil
 	})
 }
 
