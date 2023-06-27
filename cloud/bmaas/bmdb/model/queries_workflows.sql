@@ -45,7 +45,7 @@ LEFT JOIN work_backoff ON machines.machine_id = work_backoff.machine_id AND work
 INNER JOIN machine_agent_started ON machines.machine_id = machine_agent_started.machine_id
 LEFT JOIN machine_agent_heartbeat ON machines.machine_id = machine_agent_heartbeat.machine_id
 LEFT JOIN machine_os_installation_request ON machines.machine_id = machine_os_installation_request.machine_id
-LEFT JOIN machine_os_installation_report ON machines.machine_id = machine_os_installation_report.machine_id
+LEFT JOIN machine_os_installation_report ON machines.machine_id = machine_os_installation_report.machine_id AND machine_os_installation_report.os_installation_result = 'Success'
 WHERE
   -- Do not recover machines that have a fulfilled OS installation request.
   (

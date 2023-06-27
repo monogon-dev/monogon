@@ -10,9 +10,10 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	aapi "source.monogon.dev/cloud/agent/api"
+	"source.monogon.dev/cloud/bmaas/server/api"
+
 	"source.monogon.dev/cloud/bmaas/bmdb"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
-	"source.monogon.dev/cloud/bmaas/server/api"
 	"source.monogon.dev/cloud/lib/component"
 )
 
@@ -197,8 +198,9 @@ func (m *fillerMachine) build() filler {
 		}
 		if m.installationReportGeneration != nil {
 			err = q.MachineSetOSInstallationReport(ctx, model.MachineSetOSInstallationReportParams{
-				MachineID:  mach.MachineID,
-				Generation: *m.installationReportGeneration,
+				MachineID:            mach.MachineID,
+				Generation:           *m.installationReportGeneration,
+				OsInstallationResult: model.MachineOsInstallationResultSuccess,
 			})
 			if err != nil {
 				return err

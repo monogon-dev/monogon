@@ -11,9 +11,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
+	apb "source.monogon.dev/cloud/bmaas/server/api"
+
 	"source.monogon.dev/cloud/bmaas/bmdb"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
-	apb "source.monogon.dev/cloud/bmaas/server/api"
 	"source.monogon.dev/cloud/lib/component"
 	"source.monogon.dev/metropolis/node/core/rpc"
 )
@@ -215,7 +216,7 @@ func TestOSInstallationFlow(t *testing.T) {
 	}
 
 	// Submit a report, expect no more request.
-	hbr, err = heartbeat(machine.MachineID, &apb.OSInstallationReport{Generation: 123})
+	hbr, err = heartbeat(machine.MachineID, &apb.OSInstallationReport{Generation: 123, Result: &apb.OSInstallationReport_Success_{}})
 	if err != nil {
 		t.Fatalf("heartbeat: %v", err)
 	}

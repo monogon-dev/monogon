@@ -14,8 +14,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"k8s.io/klog/v2"
 
-	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	apb "source.monogon.dev/cloud/bmaas/server/api"
+
+	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	"source.monogon.dev/metropolis/node/core/rpc"
 )
 
@@ -81,10 +82,18 @@ func (a *agentCallbackService) Heartbeat(ctx context.Context, req *apb.AgentHear
 		}
 	}
 
+	var installRaw []byte
+	if req.InstallationReport != nil {
+		installRaw, err = proto.Marshal(req.InstallationReport)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "could not serialize installation report: %v", err)
+		}
+	}
+
 	// Upsert heartbeat time and hardware report.
 	err = session.Transact(ctx, func(q *model.Queries) error {
 		// Upsert hardware report if submitted.
-		if hwraw != nil {
+		if len(hwraw) != 0 {
 			err = q.MachineSetHardwareReport(ctx, model.MachineSetHardwareReportParams{
 				MachineID:         machineId,
 				HardwareReportRaw: hwraw,
@@ -94,10 +103,21 @@ func (a *agentCallbackService) Heartbeat(ctx context.Context, req *apb.AgentHear
 			}
 		}
 		// Upsert os installation report if submitted.
-		if req.InstallationReport != nil {
+		if len(installRaw) != 0 {
+			var result model.MachineOsInstallationResult
+			switch req.InstallationReport.Result.(type) {
+			case *apb.OSInstallationReport_Success_:
+				result = model.MachineOsInstallationResultSuccess
+			case *apb.OSInstallationReport_Error_:
+				result = model.MachineOsInstallationResultError
+			default:
+				return fmt.Errorf("unknown installation report result: %T", req.InstallationReport.Result)
+			}
 			err = q.MachineSetOSInstallationReport(ctx, model.MachineSetOSInstallationReportParams{
-				MachineID:  machineId,
-				Generation: req.InstallationReport.Generation,
+				MachineID:               machineId,
+				Generation:              req.InstallationReport.Generation,
+				OsInstallationResult:    result,
+				OsInstallationReportRaw: installRaw,
 			})
 		}
 		return q.MachineSetAgentHeartbeat(ctx, model.MachineSetAgentHeartbeatParams{

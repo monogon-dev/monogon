@@ -78,6 +78,7 @@ type TagFieldType struct {
 var knownProtoFields = map[string]proto.Message{
 	"hardware_report_raw":         &api.AgentHardwareReport{},
 	"os_installation_request_raw": &api.OSInstallationRequest{},
+	"os_installation_report_raw":  &api.OSInstallationReport{},
 }
 
 // HumanType returns a human-readable representation of the field's type. This is

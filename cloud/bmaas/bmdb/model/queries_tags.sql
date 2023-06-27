@@ -45,11 +45,13 @@ INSERT INTO machine_os_installation_request (
 
 -- name: MachineSetOSInstallationReport :exec
 INSERT INTO machine_os_installation_report (
-    machine_id, generation
+    machine_id, generation, os_installation_result, os_installation_report_raw
 ) VALUES (
-    $1, $2
+    $1, $2, $3, $4
 ) ON CONFLICT (machine_id) DO UPDATE SET
-    generation = $2
+    generation = $2,
+    os_installation_result = $3,
+    os_installation_report_raw = $4
 ;
 
 

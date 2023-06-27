@@ -1,0 +1,5 @@
+ALTER TABLE machine_os_installation_report
+DROP COLUMN os_installation_result,
+DROP COLUMN os_installation_report_raw;
+
+DROP TYPE machine_os_installation_result;

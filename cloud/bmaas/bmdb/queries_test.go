@@ -109,8 +109,9 @@ func TestAgentStart(t *testing.T) {
 	// remain a candidate.
 	if err = session.Transact(ctx, func(q *model.Queries) error {
 		if err := q.MachineSetOSInstallationReport(ctx, model.MachineSetOSInstallationReportParams{
-			MachineID:  machine.MachineID,
-			Generation: 9,
+			MachineID:            machine.MachineID,
+			Generation:           9,
+			OsInstallationResult: model.MachineOsInstallationResultSuccess,
 		}); err != nil {
 			return err
 		}
@@ -124,8 +125,9 @@ func TestAgentStart(t *testing.T) {
 	// be a candidate anymore.
 	if err = session.Transact(ctx, func(q *model.Queries) error {
 		if err := q.MachineSetOSInstallationReport(ctx, model.MachineSetOSInstallationReportParams{
-			MachineID:  machine.MachineID,
-			Generation: 10,
+			MachineID:            machine.MachineID,
+			Generation:           10,
+			OsInstallationResult: model.MachineOsInstallationResultSuccess,
 		}); err != nil {
 			return err
 		}
@@ -229,8 +231,9 @@ func TestAgentRecovery(t *testing.T) {
 			}
 			if scenario.reportGeneration != 0 {
 				if err := q.MachineSetOSInstallationReport(ctx, model.MachineSetOSInstallationReportParams{
-					MachineID:  machine.MachineID,
-					Generation: scenario.reportGeneration,
+					MachineID:            machine.MachineID,
+					Generation:           scenario.reportGeneration,
+					OsInstallationResult: model.MachineOsInstallationResultSuccess,
 				}); err != nil {
 					return fmt.Errorf("MachineSetOSInstallationReport: %w", err)
 				}
