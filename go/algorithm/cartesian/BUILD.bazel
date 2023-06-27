@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cartesian",
+    srcs = ["cartesian.go"],
+    importpath = "source.monogon.dev/go/algorithm/cartesian",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "cartesian_test",
+    srcs = ["cartesian_test.go"],
+    embed = [":cartesian"],
+    deps = ["@com_github_google_go_cmp//cmp"],
+)
