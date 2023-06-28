@@ -33,8 +33,6 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	common "source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/test/e2e"
 	"source.monogon.dev/metropolis/test/launch/cluster"
 )
 
@@ -106,8 +104,7 @@ func main() {
 		log.Fatalf("Failed to launch cluster: %v", err)
 	}
 	log.Println("Cluster initialized")
-	// TODO(q3k): use SOCKS proxy instead.
-	clientSet, err := e2e.GetKubeClientSet(cl, cl.Ports[uint16(common.KubernetesAPIWrappedPort)])
+	clientSet, err := cl.GetKubeClientSet()
 	if err != nil {
 		log.Fatalf("Failed to get clientSet: %v", err)
 	}

@@ -19,8 +19,6 @@ package e2e
 import (
 	"bytes"
 	"context"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"io"
 	"strings"
@@ -32,32 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-
-	"source.monogon.dev/metropolis/test/launch/cluster"
 )
-
-// GetKubeClientSet gets a Kubernetes client set accessing the Metropolis
-// Kubernetes authenticating proxy using the cluster owner identity.
-// It currently has access to everything (i.e. the cluster-admin role)
-// via the owner-admin binding.
-func GetKubeClientSet(cluster *cluster.Cluster, port uint16) (kubernetes.Interface, error) {
-	pkcs8Key, err := x509.MarshalPKCS8PrivateKey(cluster.Owner.PrivateKey)
-	if err != nil {
-		// We explicitly pass an Ed25519 private key in, so this can't happen
-		panic(err)
-	}
-	var clientConfig = rest.Config{
-		Host: fmt.Sprintf("localhost:%v", port),
-		TLSClientConfig: rest.TLSClientConfig{
-			ServerName: "kubernetes.default.svc",
-			Insecure:   true,
-			CertData:   pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cluster.Owner.Certificate[0]}),
-			KeyData:    pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: pkcs8Key}),
-		},
-	}
-	return kubernetes.NewForConfig(&clientConfig)
-}
 
 // makeTestDeploymentSpec generates a Deployment spec for a single pod running
 // NGINX with a readiness probe. This allows verifying that the control plane
