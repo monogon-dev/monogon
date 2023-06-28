@@ -56,11 +56,13 @@ type csiPluginServer struct {
 func (s *csiPluginServer) Run(ctx context.Context) error {
 	s.logger = supervisor.Logger(ctx)
 
+	// Try to remove socket if an unclean shutdown happened.
+	os.Remove(s.KubeletDirectory.Plugins.VFS.FullPath())
+
 	pluginListener, err := net.ListenUnix("unix", &net.UnixAddr{Name: s.KubeletDirectory.Plugins.VFS.FullPath(), Net: "unix"})
 	if err != nil {
 		return fmt.Errorf("failed to listen on CSI socket: %w", err)
 	}
-	pluginListener.SetUnlinkOnClose(true)
 
 	pluginServer := grpc.NewServer()
 	csi.RegisterIdentityServer(pluginServer, s)
@@ -71,11 +73,13 @@ func (s *csiPluginServer) Run(ctx context.Context) error {
 		return err
 	}
 
+	// Try to remove socket if an unclean shutdown happened
+	os.Remove(s.KubeletDirectory.PluginsRegistry.VFSReg.FullPath())
+
 	registrationListener, err := net.ListenUnix("unix", &net.UnixAddr{Name: s.KubeletDirectory.PluginsRegistry.VFSReg.FullPath(), Net: "unix"})
 	if err != nil {
 		return fmt.Errorf("failed to listen on CSI registration socket: %w", err)
 	}
-	registrationListener.SetUnlinkOnClose(true)
 
 	registrationServer := grpc.NewServer()
 	pluginregistration.RegisterRegistrationServer(registrationServer, s)

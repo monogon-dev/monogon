@@ -162,11 +162,13 @@ func (k *Plugin) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to create KVM device node: %v", err)
 	}
 
+	// Try to remove socket if an unclean shutdown happened
+	os.Remove(k.KubeletDirectory.Plugins.KVM.FullPath())
+
 	pluginListener, err := net.ListenUnix("unix", &net.UnixAddr{Name: k.KubeletDirectory.Plugins.KVM.FullPath(), Net: "unix"})
 	if err != nil {
 		return fmt.Errorf("failed to listen on device plugin socket: %w", err)
 	}
-	pluginListener.SetUnlinkOnClose(true)
 
 	pluginServer := grpc.NewServer()
 	deviceplugin.RegisterDevicePluginServer(pluginServer, k)
@@ -174,11 +176,13 @@ func (k *Plugin) Run(ctx context.Context) error {
 		return err
 	}
 
+	// Try to remove socket if an unclean shutdown happened
+	os.Remove(k.KubeletDirectory.PluginsRegistry.KVMReg.FullPath())
+
 	registrationListener, err := net.ListenUnix("unix", &net.UnixAddr{Name: k.KubeletDirectory.PluginsRegistry.KVMReg.FullPath(), Net: "unix"})
 	if err != nil {
 		return fmt.Errorf("failed to listen on registration socket: %w", err)
 	}
-	registrationListener.SetUnlinkOnClose(true)
 
 	registrationServer := grpc.NewServer()
 	pluginregistration.RegisterRegistrationServer(registrationServer, k)
