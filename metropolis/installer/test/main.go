@@ -126,12 +126,10 @@ func TestMain(m *testing.M) {
 	installer := datafile.MustGet("metropolis/installer/test/kernel.efi")
 	bundle := datafile.MustGet("metropolis/installer/test/testos/testos_bundle.zip")
 	iargs := mctl.MakeInstallerImageArgs{
-		Installer:     bytes.NewBuffer(installer),
-		InstallerSize: uint64(len(installer)),
-		TargetPath:    installerImage,
-		NodeParams:    &api.NodeParameters{},
-		Bundle:        bytes.NewBuffer(bundle),
-		BundleSize:    uint64(len(bundle)),
+		Installer:  bytes.NewReader(installer),
+		TargetPath: installerImage,
+		NodeParams: &api.NodeParameters{},
+		Bundle:     bytes.NewReader(bundle),
 	}
 	if err := mctl.MakeInstallerImage(iargs); err != nil {
 		log.Fatalf("Couldn't create the installer image at %q: %v", installerImage, err)
@@ -217,7 +215,10 @@ func TestInstall(t *testing.T) {
 	defer ctxC()
 
 	// Prepare the block device image the installer will install to.
-	storagePath, err := getStorage(4096 + 128 + 128 + 1)
+	// Needs enough storage for a 4096 MiB system partition, a 128 MiB ESP and
+	// a 128MiB data partition. In addition at the start and end we need 1MiB
+	// for GPT headers and alignment.
+	storagePath, err := getStorage(4096 + 128 + 128 + 2)
 	defer os.Remove(storagePath)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -246,18 +247,18 @@ func TestInstall(t *testing.T) {
 	// Check that the first partition is likely to be a valid ESP.
 	pi := ti.GetPartitions()
 	esp := (pi[0]).(*gpt.Partition)
-	if esp.Name != osimage.ESPVolumeLabel || esp.Start == 0 || esp.End == 0 {
+	if esp.Name != osimage.ESPLabel || esp.Start == 0 || esp.End == 0 {
 		t.Error("The node's ESP GPT entry looks off.")
 	}
 	// Verify the system partition's GPT entry.
 	system := (pi[1]).(*gpt.Partition)
-	if system.Name != osimage.SystemVolumeLabel || system.Start == 0 || system.End == 0 {
+	if system.Name != osimage.SystemLabel || system.Start == 0 || system.End == 0 {
 		t.Error("The node's system partition GPT entry looks off.")
 	}
 	// Verify the data partition's GPT entry.
 	data := (pi[2]).(*gpt.Partition)
-	if data.Name != osimage.DataVolumeLabel || data.Start == 0 || data.End == 0 {
-		t.Errorf("The node's data partition GPT entry looks off.")
+	if data.Name != osimage.DataLabel || data.Start == 0 || data.End == 0 {
+		t.Errorf("The node's data partition GPT entry looks off: %+v", data)
 	}
 	// Verify that there are no more partitions.
 	fourth := (pi[3]).(*gpt.Partition)

@@ -5,7 +5,11 @@ go_library(
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/node/build/mkimage",
     visibility = ["//visibility:private"],
-    deps = ["//metropolis/node/build/mkimage/osimage"],
+    deps = [
+        "//metropolis/node/build/mkimage/osimage",
+        "//metropolis/pkg/blkio",
+        "//metropolis/pkg/blockdev",
+    ],
 )
 
 go_binary(

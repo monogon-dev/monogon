@@ -62,6 +62,7 @@ func (r *Root) Start(ctx context.Context) error {
 		r.Ephemeral.Consensus,
 		r.Ephemeral.Containerd, r.Ephemeral.Containerd.Tmp, r.Ephemeral.Containerd.RunSC, r.Ephemeral.Containerd.IPAM,
 		r.Ephemeral.FlexvolumePlugins,
+		r.ESP.Metropolis,
 	} {
 		err := d.MkdirAll(0700)
 		if err != nil {

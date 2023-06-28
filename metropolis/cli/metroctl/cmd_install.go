@@ -15,6 +15,8 @@ import (
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/cli/pkg/datafile"
+	"source.monogon.dev/metropolis/pkg/blkio"
+	"source.monogon.dev/metropolis/pkg/fat32"
 	"source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
@@ -49,30 +51,21 @@ type externalFile struct {
 	size   uint64
 }
 
-func external(name, datafilePath string, flag *string) *externalFile {
+func external(name, datafilePath string, flag *string) fat32.SizedReader {
 	if flag == nil || *flag == "" {
 		df, err := datafile.Get(datafilePath)
 		if err != nil {
 			log.Fatalf("No %s specified", name)
 		}
-		return &externalFile{
-			reader: bytes.NewReader(df),
-			size:   uint64(len(df)),
-		}
+		return bytes.NewReader(df)
 	}
 
-	f, err := os.Open(*bundlePath)
+	f, err := blkio.NewFileReader(*bundlePath)
 	if err != nil {
 		log.Fatalf("Failed to open specified %s: %v", name, err)
 	}
-	st, err := f.Stat()
-	if err != nil {
-		log.Fatalf("Failed to stat specified %s: %v", name, err)
-	}
-	return &externalFile{
-		reader: f,
-		size:   uint64(st.Size()),
-	}
+
+	return f
 }
 
 func doGenUSB(cmd *cobra.Command, args []string) {
@@ -154,12 +147,10 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 	}
 
 	installerImageArgs := core.MakeInstallerImageArgs{
-		TargetPath:    args[0],
-		Installer:     installer.reader,
-		InstallerSize: installer.size,
-		NodeParams:    params,
-		Bundle:        bundle.reader,
-		BundleSize:    bundle.size,
+		TargetPath: args[0],
+		Installer:  installer,
+		NodeParams: params,
+		Bundle:     bundle,
 	}
 
 	log.Printf("Generating installer image (this can take a while, see issues/92).")

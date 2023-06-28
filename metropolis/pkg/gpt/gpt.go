@@ -10,13 +10,13 @@ import (
 	"errors"
 	"fmt"
 	"hash/crc32"
-	"io"
 	"sort"
 	"strings"
 	"unicode/utf16"
 
 	"github.com/google/uuid"
 
+	"source.monogon.dev/metropolis/pkg/blockdev"
 	"source.monogon.dev/metropolis/pkg/msguid"
 )
 
@@ -57,8 +57,6 @@ type partition struct {
 var (
 	PartitionTypeEFISystem = uuid.MustParse("C12A7328-F81F-11D2-BA4B-00A0C93EC93B")
 )
-
-var zeroUUID = [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 // Attribute is a bitfield of attributes set on a partition. Bits 0 to 47 are
 // reserved for UEFI specification use and all current assignments are in the
@@ -112,6 +110,8 @@ type Partition struct {
 	LastBlock uint64
 	// Bitset of attributes of this partition.
 	Attributes Attribute
+
+	*blockdev.Section
 }
 
 // SizeBlocks returns the size of the partition in blocks
@@ -125,7 +125,16 @@ func (p *Partition) IsUnused() bool {
 	if p == nil {
 		return true
 	}
-	return p.Type == zeroUUID
+	return p.Type == uuid.Nil
+}
+
+// New returns an empty table on the given block device.
+// It does not read any existing GPT on the disk (use Read for that), nor does
+// it write anything until Write is called.
+func New(b blockdev.BlockDev) (*Table, error) {
+	return &Table{
+		b: b,
+	}, nil
 }
 
 type Table struct {
@@ -142,17 +151,13 @@ type Table struct {
 	// with BIOS booting is not required. Only useful on x86 systems.
 	BootCode []byte
 
-	// BlockSize contains the logical block size of the block device. It must
-	// be a power of two equal to or larger than 512.
-	BlockSize int64
-	// BlockCount contains the number of logical blocks on the block device.
-	// BlockCount times BlockSize is the size of the block device in bytes.
-	BlockCount int64
-
 	// Partitions contains the list of partitions in this table. This is
 	// artificially limited to 128 partitions.
 	Partitions []*Partition
+
+	b blockdev.BlockDev
 }
+
 type addOptions struct {
 	preferEnd        bool
 	keepEmptyEntries bool
@@ -195,23 +200,23 @@ func WithAlignment(alignmenet int64) AddOption {
 // By default, AddPartition aligns FirstBlock to 1MiB boundaries, but this can
 // be overridden using WithAlignment.
 func (g *Table) AddPartition(p *Partition, size int64, options ...AddOption) error {
-	if g.BlockSize < 512 {
-		return errors.New("block size is smaller than 512 bytes, this is unsupported")
-	}
+	blockSize := g.b.BlockSize()
 	var opts addOptions
 	// Align to 1MiB or the block size, whichever is bigger
 	opts.alignment = 1 * 1024 * 1024
-	if g.BlockSize > opts.alignment {
-		opts.alignment = g.BlockSize
+	if blockSize > opts.alignment {
+		opts.alignment = blockSize
 	}
 	for _, o := range options {
 		o(&opts)
 	}
-	if opts.alignment%g.BlockSize != 0 {
-		return fmt.Errorf("requested alignment (%d bytes) is not an integer multiple of the block size (%d), unable to align", opts.alignment, g.BlockSize)
+	if opts.alignment%blockSize != 0 {
+		return fmt.Errorf("requested alignment (%d bytes) is not an integer multiple of the block size (%d), unable to align", opts.alignment, blockSize)
 	}
-	// Number of blocks the partition should occupy, rounded up.
-	blocks := (size + g.BlockSize - 1) / g.BlockSize
+	if p.ID == uuid.Nil {
+		p.ID = uuid.New()
+	}
+
 	fs, _, err := g.GetFreeSpaces()
 	if err != nil {
 		return fmt.Errorf("unable to determine free space: %v", err)
@@ -222,13 +227,28 @@ func (g *Table) AddPartition(p *Partition, size int64, options ...AddOption) err
 			fs[i], fs[j] = fs[j], fs[i]
 		}
 	}
+	// Number of blocks the partition should occupy, rounded up.
+	blocks := (size + blockSize - 1) / blockSize
+	if size == -1 {
+		var largestFreeSpace int64
+		for _, freeInt := range fs {
+			intSz := freeInt[1] - freeInt[0]
+			if intSz > largestFreeSpace {
+				largestFreeSpace = intSz
+			}
+		}
+		blocks = largestFreeSpace
+	}
 	var maxFreeBlocks int64
 	for _, freeInt := range fs {
 		start := freeInt[0]
 		end := freeInt[1]
 		freeBlocks := end - start
 		// Align start properly
-		paddingBlocks := (-start) % (opts.alignment / g.BlockSize)
+		alignTo := (opts.alignment / blockSize)
+		// Go doesn't implement the euclidean modulus, thus this construction
+		// is necessary.
+		paddingBlocks := ((alignTo - start) % alignTo) % alignTo
 		freeBlocks -= paddingBlocks
 		start += paddingBlocks
 		if maxFreeBlocks < freeBlocks {
@@ -237,13 +257,13 @@ func (g *Table) AddPartition(p *Partition, size int64, options ...AddOption) err
 		if freeBlocks >= blocks {
 			if !opts.preferEnd {
 				p.FirstBlock = uint64(start)
-				p.LastBlock = uint64(start + blocks)
+				p.LastBlock = uint64(start + blocks - 1)
 			} else {
 				// Realign FirstBlock. This will always succeed as
 				// there is enough space to align to the start.
-				moveLeft := (end - blocks - 1) % (opts.alignment / g.BlockSize)
+				moveLeft := (end - blocks - 1) % (opts.alignment / blockSize)
 				p.FirstBlock = uint64(end - (blocks + 1 + moveLeft))
-				p.LastBlock = uint64(end - (1 + moveLeft))
+				p.LastBlock = uint64(end - (2 + moveLeft))
 			}
 			newPartPos := -1
 			if !opts.keepEmptyEntries {
@@ -259,6 +279,7 @@ func (g *Table) AddPartition(p *Partition, size int64, options ...AddOption) err
 			} else {
 				g.Partitions[newPartPos] = p
 			}
+			p.Section = blockdev.NewSection(g.b, int64(p.FirstBlock), int64(p.LastBlock)+1)
 			return nil
 		}
 	}
@@ -269,15 +290,17 @@ func (g *Table) AddPartition(p *Partition, size int64, options ...AddOption) err
 // FirstUsableBlock returns the first usable (i.e. a partition can start there)
 // block.
 func (g *Table) FirstUsableBlock() int64 {
-	partitionEntryBlocks := (16384 + g.BlockSize - 1) / g.BlockSize
+	blockSize := g.b.BlockSize()
+	partitionEntryBlocks := (16384 + blockSize - 1) / blockSize
 	return 2 + partitionEntryBlocks
 }
 
 // LastUsableBlock returns the last usable (i.e. a partition can end there)
 // block. This block is inclusive.
 func (g *Table) LastUsableBlock() int64 {
-	partitionEntryBlocks := (16384 + g.BlockSize - 1) / g.BlockSize
-	return g.BlockCount - (2 + partitionEntryBlocks)
+	blockSize := g.b.BlockSize()
+	partitionEntryBlocks := (16384 + blockSize - 1) / blockSize
+	return g.b.BlockCount() - (2 + partitionEntryBlocks)
 }
 
 // GetFreeSpaces returns a slice of tuples, each containing a half-closed
@@ -299,6 +322,8 @@ func (g *Table) GetFreeSpaces() ([][2]int64, bool, error) {
 	// of its cyclomatic complexity and O(n*log n) is tiny for even very big
 	// partition tables.
 
+	blockCount := g.b.BlockCount()
+
 	// startBlocks contains the start blocks (inclusive) of all occupied
 	// intervals.
 	var startBlocks []int64
@@ -312,7 +337,7 @@ func (g *Table) GetFreeSpaces() ([][2]int64, bool, error) {
 
 	// Reserve the alternate GPT interval (needs +1 for exclusive interval)
 	startBlocks = append(startBlocks, g.LastUsableBlock()+1)
-	endBlocks = append(endBlocks, g.BlockCount)
+	endBlocks = append(endBlocks, blockCount)
 
 	for i, part := range g.Partitions {
 		if part.IsUnused() {
@@ -324,7 +349,7 @@ func (g *Table) GetFreeSpaces() ([][2]int64, bool, error) {
 		if part.FirstBlock > part.LastBlock {
 			return nil, false, fmt.Errorf("partition %d has a LastBlock smaller than its FirstBlock, its interval is [%d, %d]", i, part.FirstBlock, part.LastBlock)
 		}
-		if part.FirstBlock >= uint64(g.BlockCount) || part.LastBlock >= uint64(g.BlockCount) {
+		if part.FirstBlock >= uint64(blockCount) || part.LastBlock >= uint64(blockCount) {
 			return nil, false, fmt.Errorf("partition %d exceeds the block count of the block device", i)
 		}
 		startBlocks = append(startBlocks, int64(part.FirstBlock))
@@ -398,14 +423,14 @@ func Overhead(blockSize int64) int64 {
 	return 3 + (2 * partitionEntryBlocks)
 }
 
-// Write writes a list of GPT partitions with a protective MBR to the given
-// WriteSeeker. It must have a defined end, i.e. w.Seek(-x, io.SeekEnd) must
-// seek to x bytes before the end of the disk. If gpt.ID or any of the
-// partition IDs are the all-zero UUID, a new random one is generated and
-// written back. If the output is supposed to be reproducible, generate the
-// UUIDs beforehand.
-func Write(w io.WriteSeeker, gpt *Table) error {
-	if gpt.BlockSize < 512 {
+// Write writes the two GPTs, first the alternate, then the primary to the
+// block device. If gpt.ID or any of the partition IDs are the all-zero UUID,
+// new random ones are generated and written back. If the output is supposed
+// to be reproducible, generate the UUIDs beforehand.
+func (gpt *Table) Write() error {
+	blockSize := gpt.b.BlockSize()
+	blockCount := gpt.b.BlockCount()
+	if blockSize < 512 {
 		return errors.New("block size is smaller than 512 bytes, this is unsupported")
 	}
 	// Layout looks as follows:
@@ -414,30 +439,30 @@ func Write(w io.WriteSeeker, gpt *Table) error {
 	// Block 2-(16384 bytes): GPT partition entries
 	// Block (16384 bytes)-n: GPT partition entries alternate copy
 	// Block n: GPT Header alternate copy
-	if len(gpt.Partitions) > 128 {
-		return errors.New("Bigger-than default GPTs (>128 partitions) are unimplemented")
+	partitionEntryCount := 128
+	if len(gpt.Partitions) > partitionEntryCount {
+		return errors.New("bigger-than default GPTs (>128 partitions) are unimplemented")
 	}
 
-	partitionEntryBlocks := (16384 + gpt.BlockSize - 1) / gpt.BlockSize
-	if gpt.BlockCount < 3+(2*partitionEntryBlocks) {
+	partitionEntryBlocks := (16384 + blockSize - 1) / blockSize
+	if blockCount < 3+(2*partitionEntryBlocks) {
 		return errors.New("not enough blocks to write GPT")
 	}
 
-	if gpt.ID == zeroUUID {
+	if gpt.ID == uuid.Nil {
 		gpt.ID = uuid.New()
 	}
 
 	partSize := binary.Size(partition{})
-	slotCount := 128
-
 	var partitionEntriesData bytes.Buffer
-	for i := 0; i < slotCount; i++ {
+	for i := 0; i < partitionEntryCount; i++ {
 		if len(gpt.Partitions) <= i || gpt.Partitions[i] == nil {
+			// Write an empty entry
 			partitionEntriesData.Write(make([]byte, partSize))
 			continue
 		}
 		p := gpt.Partitions[i]
-		if p.ID == zeroUUID {
+		if p.ID == uuid.Nil {
 			p.ID = uuid.New()
 		}
 		rawP := partition{
@@ -459,11 +484,11 @@ func Write(w io.WriteSeeker, gpt *Table) error {
 		HeaderSize: uint32(binary.Size(&header{})),
 		ID:         msguid.From(gpt.ID),
 
-		PartitionEntryCount: uint32(slotCount),
+		PartitionEntryCount: uint32(partitionEntryCount),
 		PartitionEntrySize:  uint32(partSize),
 
 		FirstUsableBlock: uint64(2 + partitionEntryBlocks),
-		LastUsableBlock:  uint64(gpt.BlockCount - (2 + partitionEntryBlocks)),
+		LastUsableBlock:  uint64(blockCount - (2 + partitionEntryBlocks)),
 	}
 	hdr.PartitionEntriesCRC32 = crc32.ChecksumIEEE(partitionEntriesData.Bytes())
 
@@ -477,38 +502,36 @@ func Write(w io.WriteSeeker, gpt *Table) error {
 	// this problem.
 
 	// Alternate header
-	if _, err := w.Seek((gpt.LastUsableBlock()+1)*gpt.BlockSize, io.SeekStart); err != nil {
-		return fmt.Errorf("failed to seek to end of block device: %w", err)
-	}
-	hdr.HeaderBlock = uint64(gpt.BlockCount - 1)
+	hdr.HeaderBlock = uint64(blockCount - 1)
 	hdr.AlternateHeaderBlock = 1
-	hdr.PartitionEntriesStartBlock = uint64(gpt.BlockCount - (1 + partitionEntryBlocks))
+	hdr.PartitionEntriesStartBlock = uint64(blockCount - (1 + partitionEntryBlocks))
 
 	hdrChecksum.Reset()
 	hdr.HeaderCRC32 = 0
 	binary.Write(hdrChecksum, binary.LittleEndian, &hdr)
 	hdr.HeaderCRC32 = hdrChecksum.Sum32()
 
-	if _, err := w.Write(partitionEntriesData.Bytes()); err != nil {
+	for partitionEntriesData.Len()%int(blockSize) != 0 {
+		partitionEntriesData.WriteByte(0x00)
+	}
+	if _, err := gpt.b.WriteAt(partitionEntriesData.Bytes(), int64(hdr.PartitionEntriesStartBlock)*blockSize); err != nil {
 		return fmt.Errorf("failed to write alternate partition entries: %w", err)
 	}
-	if _, err := w.Seek((gpt.BlockCount-1)*gpt.BlockSize, io.SeekStart); err != nil {
-		return fmt.Errorf("failed to seek to end of block device: %w", err)
-	}
 
-	if err := binary.Write(w, binary.LittleEndian, &hdr); err != nil {
-		return fmt.Errorf("failed to write alternate header: %w", err)
+	var hdrRaw bytes.Buffer
+	if err := binary.Write(&hdrRaw, binary.LittleEndian, &hdr); err != nil {
+		return fmt.Errorf("failed to encode alternate header: %w", err)
 	}
-	if _, err := w.Write(make([]byte, gpt.BlockSize-int64(binary.Size(hdr)))); err != nil {
-		return fmt.Errorf("failed to write padding: %v", err)
+	for hdrRaw.Len()%int(blockSize) != 0 {
+		hdrRaw.WriteByte(0x00)
+	}
+	if _, err := gpt.b.WriteAt(hdrRaw.Bytes(), (blockCount-1)*blockSize); err != nil {
+		return fmt.Errorf("failed to write alternate header: %v", err)
 	}
 
 	// Primary header
-	if _, err := w.Seek(0, io.SeekStart); err != nil {
-		return fmt.Errorf("failed to seek to end of block device: %w", err)
-	}
 	hdr.HeaderBlock = 1
-	hdr.AlternateHeaderBlock = uint64(gpt.BlockCount - 1)
+	hdr.AlternateHeaderBlock = uint64(blockCount - 1)
 	hdr.PartitionEntriesStartBlock = 2
 
 	hdrChecksum.Reset()
@@ -516,33 +539,39 @@ func Write(w io.WriteSeeker, gpt *Table) error {
 	binary.Write(hdrChecksum, binary.LittleEndian, &hdr)
 	hdr.HeaderCRC32 = hdrChecksum.Sum32()
 
-	if err := makeProtectiveMBR(w, gpt.BlockCount, gpt.BootCode); err != nil {
-		return fmt.Errorf("failed to write first block: %w", err)
+	hdrRaw.Reset()
+
+	if err := makeProtectiveMBR(&hdrRaw, blockCount, gpt.BootCode); err != nil {
+		return fmt.Errorf("failed creating protective MBR: %w", err)
+	}
+	for hdrRaw.Len()%int(blockSize) != 0 {
+		hdrRaw.WriteByte(0x00)
+	}
+	if err := binary.Write(&hdrRaw, binary.LittleEndian, &hdr); err != nil {
+		panic(err)
+	}
+	for hdrRaw.Len()%int(blockSize) != 0 {
+		hdrRaw.WriteByte(0x00)
+	}
+	hdrRaw.Write(partitionEntriesData.Bytes())
+	for hdrRaw.Len()%int(blockSize) != 0 {
+		hdrRaw.WriteByte(0x00)
 	}
 
-	if err := binary.Write(w, binary.LittleEndian, &hdr); err != nil {
-		return fmt.Errorf("failed to write primary header: %w", err)
-	}
-	if _, err := w.Write(make([]byte, gpt.BlockSize-int64(binary.Size(hdr)))); err != nil {
-		return fmt.Errorf("failed to write padding: %v", err)
-	}
-	if _, err := w.Write(partitionEntriesData.Bytes()); err != nil {
-		return fmt.Errorf("failed to write primary partition entries: %w", err)
+	if _, err := gpt.b.WriteAt(hdrRaw.Bytes(), 0); err != nil {
+		return fmt.Errorf("failed to write primary GPT: %w", err)
 	}
 	return nil
 }
 
-// Read reads a Table from a block device given its block size and count.
-func Read(r io.ReadSeeker, blockSize int64, blockCount int64) (*Table, error) {
-	if Overhead(blockSize) > blockCount {
+// Read reads a Table from a block device.
+func Read(r blockdev.BlockDev) (*Table, error) {
+	if Overhead(r.BlockSize()) > r.BlockCount() {
 		return nil, errors.New("disk cannot contain a GPT as the block count is too small to store one")
 	}
-	if _, err := r.Seek(0, io.SeekStart); err != nil {
-		return nil, fmt.Errorf("failed to seek to block 0: %w", err)
-	}
-	zeroBlock := make([]byte, blockSize)
-	if _, err := io.ReadFull(r, zeroBlock); err != nil {
-		return nil, fmt.Errorf("failed to read first two blocks: %w", err)
+	zeroBlock := make([]byte, r.BlockSize())
+	if _, err := r.ReadAt(zeroBlock, 0); err != nil {
+		return nil, fmt.Errorf("failed to read first block: %w", err)
 	}
 
 	var m mbr
@@ -594,9 +623,9 @@ func Read(r io.ReadSeeker, blockSize int64, blockCount int64) (*Table, error) {
 		bootCode = bytes.TrimRight(m.BootCode[:], "\x00")
 	}
 	// Read the primary GPT. If it is damaged and/or broken, read the alternate.
-	primaryGPT, err := readSingleGPT(r, blockSize, blockCount, 1)
+	primaryGPT, err := readSingleGPT(r, 1)
 	if err != nil {
-		alternateGPT, err2 := readSingleGPT(r, blockSize, blockCount, blockCount-1)
+		alternateGPT, err2 := readSingleGPT(r, r.BlockCount()-1)
 		if err2 != nil {
 			return nil, fmt.Errorf("failed to read both GPTs: primary GPT (%v), secondary GPT (%v)", err, err2)
 		}
@@ -607,12 +636,9 @@ func Read(r io.ReadSeeker, blockSize int64, blockCount int64) (*Table, error) {
 	return primaryGPT, nil
 }
 
-func readSingleGPT(r io.ReadSeeker, blockSize int64, blockCount int64, headerBlockPos int64) (*Table, error) {
-	if _, err := r.Seek(blockSize*headerBlockPos, io.SeekStart); err != nil {
-		return nil, fmt.Errorf("failed to seek to block %d: %w", headerBlockPos, err)
-	}
-	hdrBlock := make([]byte, blockSize)
-	if _, err := io.ReadFull(r, hdrBlock); err != nil {
+func readSingleGPT(r blockdev.BlockDev, headerBlockPos int64) (*Table, error) {
+	hdrBlock := make([]byte, r.BlockSize())
+	if _, err := r.ReadAt(hdrBlock, r.BlockSize()*headerBlockPos); err != nil {
 		return nil, fmt.Errorf("failed to read GPT header block: %w", err)
 	}
 	hdrBlockReader := bytes.NewReader(hdrBlock)
@@ -626,7 +652,7 @@ func readSingleGPT(r io.ReadSeeker, blockSize int64, blockCount int64, headerBlo
 	if hdr.HeaderSize < uint32(binary.Size(hdr)) {
 		return nil, fmt.Errorf("GPT header size is too small, likely corrupted")
 	}
-	if int64(hdr.HeaderSize) > blockSize {
+	if int64(hdr.HeaderSize) > r.BlockSize() {
 		return nil, fmt.Errorf("GPT header size is bigger than block size, likely corrupted")
 	}
 	// Use reserved bytes to hash, but do not expose them to the user.
@@ -650,7 +676,7 @@ func readSingleGPT(r io.ReadSeeker, blockSize int64, blockCount int64, headerBlo
 	if hdr.PartitionEntrySize < uint32(binary.Size(partition{})) {
 		return nil, errors.New("partition entry size too small")
 	}
-	if hdr.PartitionEntriesStartBlock > uint64(blockCount) {
+	if hdr.PartitionEntriesStartBlock > uint64(r.BlockCount()) {
 		return nil, errors.New("partition entry start block is out of range")
 	}
 	// Sanity-check total size of the partition entry area. Otherwise, this is a
@@ -661,10 +687,7 @@ func readSingleGPT(r io.ReadSeeker, blockSize int64, blockCount int64, headerBlo
 		return nil, errors.New("partition entry area bigger than 4MiB, refusing to read")
 	}
 	partitionEntryData := make([]byte, hdr.PartitionEntrySize*hdr.PartitionEntryCount)
-	if _, err := r.Seek(blockSize*int64(hdr.PartitionEntriesStartBlock), io.SeekStart); err != nil {
-		return nil, fmt.Errorf("failed to seek to partition entry start block: %w", err)
-	}
-	if _, err := io.ReadFull(r, partitionEntryData); err != nil {
+	if _, err := r.ReadAt(partitionEntryData, r.BlockSize()*int64(hdr.PartitionEntriesStartBlock)); err != nil {
 		return nil, fmt.Errorf("failed to read partition entries: %w", err)
 	}
 	if crc32.ChecksumIEEE(partitionEntryData) != hdr.PartitionEntriesCRC32 {
@@ -672,8 +695,6 @@ func readSingleGPT(r io.ReadSeeker, blockSize int64, blockCount int64, headerBlo
 	}
 	var g Table
 	g.ID = msguid.To(hdr.ID)
-	g.BlockSize = blockSize
-	g.BlockCount = blockCount
 	for i := uint32(0); i < hdr.PartitionEntryCount; i++ {
 		entryReader := bytes.NewReader(partitionEntryData[i*hdr.PartitionEntrySize : (i+1)*hdr.PartitionEntrySize])
 		var part partition
@@ -682,7 +703,7 @@ func readSingleGPT(r io.ReadSeeker, blockSize int64, blockCount int64, headerBlo
 		}
 		// If the partition type is the all-zero UUID, this slot counts as
 		// unused.
-		if part.Type == zeroUUID {
+		if part.Type == uuid.Nil {
 			g.Partitions = append(g.Partitions, nil)
 			continue
 		}
@@ -705,5 +726,6 @@ func readSingleGPT(r io.ReadSeeker, blockSize int64, blockCount int64, headerBlo
 		}
 	}
 	g.Partitions = g.Partitions[:maxValidPartition+1]
+	g.b = r
 	return &g, nil
 }

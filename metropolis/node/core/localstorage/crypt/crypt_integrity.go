@@ -7,6 +7,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"source.monogon.dev/metropolis/pkg/blockdev"
 	"source.monogon.dev/metropolis/pkg/devicemapper"
 )
 
@@ -25,20 +26,19 @@ func integrityDMName(name string) string {
 // This is described in further detail in
 // https://docs.kernel.org/admin-guide/device-mapper/dm-integrity.html.
 func readIntegrityDataSectors(path string) (uint64, error) {
-	integrityPartition, err := os.Open(path)
+	integrityPartition, err := blockdev.Open(path)
 	if err != nil {
 		return 0, err
 	}
 	defer integrityPartition.Close()
+
+	firstBlock := make([]byte, integrityPartition.BlockSize())
+	if _, err = integrityPartition.ReadAt(firstBlock, 0); err != nil {
+		return 0, err
+	}
 	// Based on structure defined in
 	//   https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/md/dm-integrity.c#n59
-	if _, err := integrityPartition.Seek(16, 0); err != nil {
-		return 0, err
-	}
-	var providedDataSectors uint64
-	if err := binary.Read(integrityPartition, binary.LittleEndian, &providedDataSectors); err != nil {
-		return 0, err
-	}
+	providedDataSectors := binary.LittleEndian.Uint64(firstBlock[16:24])
 
 	// Let's perform some simple checks on the read value to make sure the returned
 	// data isn't corrupted or has been tampered with.
@@ -47,17 +47,8 @@ func readIntegrityDataSectors(path string) (uint64, error) {
 		return 0, fmt.Errorf("invalid data sector count of zero")
 	}
 
-	underlyingSizeBytes, err := getSizeBytes(path)
-	if err != nil {
-		return 0, fmt.Errorf("getting underlying block device size failed: %w", err)
-	}
-	underlyingBlockSize, err := getBlockSize(path)
-	if err != nil {
-		return 0, fmt.Errorf("getting underlying block device block size failed: %w", err)
-	}
-	underlyingSectors := underlyingSizeBytes / uint64(underlyingBlockSize)
-	if providedDataSectors > underlyingSectors {
-		return 0, fmt.Errorf("device claims %d data sectors but underlying device only has %d", providedDataSectors, underlyingSectors)
+	if providedDataSectors > uint64(integrityPartition.BlockCount()) {
+		return 0, fmt.Errorf("device claims %d data sectors but underlying device only has %d", providedDataSectors, integrityPartition.BlockCount())
 	}
 	return providedDataSectors, nil
 }

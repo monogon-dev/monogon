@@ -23,7 +23,7 @@ import (
 	"archive/zip"
 	"errors"
 	"fmt"
-	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,6 +33,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
+	"source.monogon.dev/metropolis/pkg/blockdev"
 	"source.monogon.dev/metropolis/pkg/efivarfs"
 	"source.monogon.dev/metropolis/pkg/sysfs"
 )
@@ -113,16 +114,13 @@ probeLoop:
 
 		// Skip devices of insufficient size.
 		devPath := filepath.Join("/dev", devInfo.Name())
-		dev, err := os.Open(devPath)
+		dev, err := blockdev.Open(devPath)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't open a block device at %q: %w", devPath, err)
 		}
-		size, err := unix.IoctlGetInt(int(dev.Fd()), unix.BLKGETSIZE64)
+		devSize := uint64(dev.BlockCount() * dev.BlockSize())
 		dev.Close()
-		if err != nil {
-			return nil, fmt.Errorf("couldn't probe the size of %q: %w", devPath, err)
-		}
-		if uint64(size) < minSize {
+		if devSize < minSize {
 			continue
 		}
 
@@ -131,51 +129,19 @@ probeLoop:
 	return suitable, nil
 }
 
-// rereadPartitionTable causes the kernel to read the partition table present
-// in the block device at blkdevPath. It may return an error.
-func rereadPartitionTable(blkdevPath string) error {
-	dev, err := os.Open(blkdevPath)
-	if err != nil {
-		return fmt.Errorf("couldn't open the block device at %q: %w", blkdevPath, err)
-	}
-	defer dev.Close()
-	ret, err := unix.IoctlRetInt(int(dev.Fd()), unix.BLKRRPART)
-	if err != nil {
-		return fmt.Errorf("while doing an ioctl: %w", err)
-	}
-	if syscall.Errno(ret) == unix.EINVAL {
-		return fmt.Errorf("got an EINVAL from BLKRRPART ioctl")
-	}
-	return nil
+// FileSizedReader is a small adapter from fs.File to fs.SizedReader
+// Panics on Stat() failure, so should only be used with sources where Stat()
+// cannot fail.
+type FileSizedReader struct {
+	fs.File
 }
 
-// initializeSystemPartition writes image contents to the node's system
-// partition using the block device abstraction layer as opposed to slower
-// go-diskfs. tgtBlkdev must contain a path pointing to the block device
-// associated with the system partition. It may return an error.
-func initializeSystemPartition(image io.Reader, tgtBlkdev string) error {
-	// Check that tgtBlkdev points at an actual block device.
-	info, err := os.Stat(tgtBlkdev)
+func (f FileSizedReader) Size() int64 {
+	stat, err := f.Stat()
 	if err != nil {
-		return fmt.Errorf("couldn't stat the system partition at %q: %w", tgtBlkdev, err)
+		panic(err)
 	}
-	if info.Mode()&os.ModeDevice == 0 {
-		return fmt.Errorf("system partition path %q doesn't point to a block device", tgtBlkdev)
-	}
-
-	// Get the system partition's file descriptor.
-	sys, err := os.OpenFile(tgtBlkdev, os.O_WRONLY, 0600)
-	if err != nil {
-		return fmt.Errorf("couldn't open the system partition at %q: %w", tgtBlkdev, err)
-	}
-	defer sys.Close()
-	// Copy the system partition contents. Use a bigger buffer to optimize disk
-	// writes.
-	buf := make([]byte, mib)
-	if _, err := io.CopyBuffer(sys, image, buf); err != nil {
-		return fmt.Errorf("couldn't copy partition contents: %w", err)
-	}
-	return nil
+	return stat.Size()
 }
 
 func main() {
@@ -260,15 +226,9 @@ func main() {
 			// whenever it's writing to block devices, such as now.
 			Data: 128,
 		},
-		// Due to a bug in go-diskfs causing slow writes, SystemImage is explicitly
-		// marked unused here, as system partition contents will be written using
-		// a workaround below instead.
-		// TODO(mateusz@monogon.tech): Address that bug either by patching go-diskfs
-		// or rewriting osimage.
-		SystemImage: nil,
-
-		EFIPayload:     efiPayload,
-		NodeParameters: nodeParameters,
+		SystemImage:    systemImage,
+		EFIPayload:     FileSizedReader{efiPayload},
+		NodeParameters: FileSizedReader{nodeParameters},
 	}
 	// Calculate the minimum target size based on the installation parameters.
 	minSize := uint64((installParams.PartitionSize.ESP +
@@ -287,7 +247,12 @@ func main() {
 	tgtBlkdevName := blkDevs[0]
 	// Update the osimage parameters with a path pointing at the target device.
 	tgtBlkdevPath := filepath.Join("/dev", tgtBlkdevName)
-	installParams.OutputPath = tgtBlkdevPath
+
+	tgtBlockDev, err := blockdev.Open(tgtBlkdevPath)
+	if err != nil {
+		panicf("error opening target device: %v", err)
+	}
+	installParams.Output = tgtBlockDev
 
 	// Use osimage to partition the target block device and set up its ESP.
 	// Create will return an EFI boot entry on success.
@@ -295,23 +260,6 @@ func main() {
 	be, err := osimage.Create(&installParams)
 	if err != nil {
 		panicf("While installing: %v", err)
-	}
-	// The target device's partition table has just been updated. Re-read it to
-	// make the node system partition reachable through /dev.
-	if err := rereadPartitionTable(tgtBlkdevPath); err != nil {
-		panicf("While re-reading the partition table of %q: %v", tgtBlkdevPath, err)
-	}
-	// Look up the node's system partition path to be later used in the
-	// initialization step. It's always the second partition, right after
-	// the ESP.
-	sysBlkdevName, err := sysfs.PartitionBlockDevice(tgtBlkdevName, 2)
-	if err != nil {
-		panicf("While looking up the system partition: %v", err)
-	}
-	sysBlkdevPath := filepath.Join("/dev", sysBlkdevName)
-	// Copy the system partition contents.
-	if err := initializeSystemPartition(systemImage, sysBlkdevPath); err != nil {
-		panicf("While initializing the system partition at %q: %v", sysBlkdevPath, err)
 	}
 
 	// Create an EFI boot entry for Metropolis.
@@ -325,6 +273,7 @@ func main() {
 	}
 
 	// Reboot.
+	tgtBlockDev.Close()
 	unix.Sync()
 	logf("Installation completed. Rebooting.")
 	unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART)

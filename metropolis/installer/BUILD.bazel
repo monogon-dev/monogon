@@ -13,6 +13,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//metropolis/node/build/mkimage/osimage",
+        "//metropolis/pkg/blockdev",
         "//metropolis/pkg/efivarfs",
         "//metropolis/pkg/sysfs",
         "@org_golang_x_sys//unix",

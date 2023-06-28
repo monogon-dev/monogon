@@ -7,6 +7,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"source.monogon.dev/metropolis/pkg/blockdev"
 	"source.monogon.dev/metropolis/pkg/devicemapper"
 )
 
@@ -19,14 +20,11 @@ func encryptionDMName(name string) string {
 }
 
 func mapEncryption(name, underlying string, encryptionKey []byte, authenticated bool) (string, error) {
-	sizeBytes, err := getSizeBytes(underlying)
+	blkdev, err := blockdev.Open(underlying)
 	if err != nil {
-		return "", fmt.Errorf("getting size of block device failed: %w", err)
+		return "", fmt.Errorf("opening underlying block device failed: %w", err)
 	}
-	blockSize, err := getBlockSize(underlying)
-	if err != nil {
-		return "", fmt.Errorf("getting block size failed: %w", err)
-	}
+	defer blkdev.Close()
 
 	optParams := []string{
 		"no_read_workqueue", "no_write_workqueue",
@@ -49,7 +47,7 @@ func mapEncryption(name, underlying string, encryptionKey []byte, authenticated 
 
 	cryptDev, err := devicemapper.CreateActiveDevice(encryptionDMName(name), false, []devicemapper.Target{
 		{
-			Length:     sizeBytes / uint64(blockSize),
+			Length:     uint64(blkdev.BlockCount()),
 			Type:       "crypt",
 			Parameters: params,
 		},

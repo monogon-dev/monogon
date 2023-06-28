@@ -36,13 +36,9 @@
 package crypt
 
 import (
-	"errors"
 	"fmt"
-	"os"
-	"syscall"
-	"unsafe"
 
-	"golang.org/x/sys/unix"
+	"source.monogon.dev/metropolis/pkg/blockdev"
 )
 
 // Mode of block device encryption and/or authentication, if any. See the
@@ -91,37 +87,6 @@ func (m Mode) authenticated() bool {
 		return false
 	}
 	panic("invalid mode " + m)
-}
-
-// getSizeBytes returns the size of a block device in bytes.
-func getSizeBytes(path string) (uint64, error) {
-	blkdev, err := os.Open(path)
-	if err != nil {
-		return 0, fmt.Errorf("failed to open block device: %w", err)
-	}
-	defer blkdev.Close()
-
-	var sizeBytes uint64
-	_, _, err = unix.Syscall(unix.SYS_IOCTL, blkdev.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&sizeBytes)))
-	if err != unix.Errno(0) {
-		return 0, fmt.Errorf("failed to get device size: %w", err)
-	}
-	return sizeBytes, nil
-}
-
-// getBlockSize returns the size of a block device's sector in bytes.
-func getBlockSize(path string) (uint32, error) {
-	blkdev, err := os.Open(path)
-	if err != nil {
-		return 0, fmt.Errorf("failed to open block device: %w", err)
-	}
-	defer blkdev.Close()
-
-	blockSize, err := unix.IoctlGetUint32(int(blkdev.Fd()), unix.BLKSSZGET)
-	if err != nil {
-		return 0, fmt.Errorf("BLKSSZGET: %w", err)
-	}
-	return blockSize, nil
 }
 
 // Map sets up an underlying block device (at path 'underlying') for access.
@@ -236,30 +201,14 @@ func Init(name, underlying string, encryptionKey []byte, mode Mode) (string, err
 
 	// Zero out device if authentication is enabled.
 	if mode.authenticated() {
-		blockSize, err := getBlockSize(device)
+		blkdev, err := blockdev.Open(device)
 		if err != nil {
 			return "", err
 		}
-
-		blkdev, err := os.OpenFile(device, unix.O_DIRECT|os.O_WRONLY, 0000)
+		err = blkdev.Zero(0, blkdev.BlockCount()*blkdev.BlockSize())
+		blkdev.Close()
 		if err != nil {
-			return "", fmt.Errorf("failed to open new device for zeroing: %w", err)
-		}
-
-		// Use a multiple of the block size to make the initial zeroing faster.
-		zeroedBuf := make([]byte, blockSize*256)
-		for {
-			_, err := blkdev.Write(zeroedBuf)
-			if errors.Is(err, syscall.ENOSPC) {
-				break
-			}
-			if err != nil {
-				blkdev.Close()
-				return "", fmt.Errorf("failed to zero-initalize new device: %w", err)
-			}
-		}
-		if err := blkdev.Close(); err != nil {
-			return "", fmt.Errorf("failed to close initialized device: %w", err)
+			return "", fmt.Errorf("failed to zero-initalize new device: %w", err)
 		}
 	}
 

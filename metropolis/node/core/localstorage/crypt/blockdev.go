@@ -23,11 +23,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"unsafe"
 
 	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
 
+	"source.monogon.dev/metropolis/pkg/blockdev"
 	"source.monogon.dev/metropolis/pkg/efivarfs"
 	"source.monogon.dev/metropolis/pkg/gpt"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -91,14 +91,15 @@ func handleBlockDevice(diskBlockDev string, blockDevs []os.DirEntry, espUUID uui
 		return nil
 	}
 
-	table, err := data.readPartitionTable()
+	blkdev, err := blockdev.Open(fmt.Sprintf("/dev/%v", data["DEVNAME"]))
 	if err != nil {
-		return fmt.Errorf("when reading disk info: %w", err)
+		return fmt.Errorf("failed to open block device: %w", err)
 	}
+	defer blkdev.Close()
 
-	// Not a normal block device or not a gpt table.
-	if table == nil {
-		return nil
+	table, err := gpt.Read(blkdev)
+	if err != nil {
+		return nil // Probably just not a GPT-partitioned disk
 	}
 
 	skipDisk := false
@@ -149,7 +150,6 @@ func handlePartition(diskBlockDev string, partBlockDev string, table *gpt.Table,
 		return err
 	}
 
-	// TODO(tim): Is this safe? Are we actually using the partition number for the slice index?
 	part := table.Partitions[pi.partNumber-1]
 
 	nodePath := nodePathForPartitionType(part.Type)
@@ -250,36 +250,4 @@ func (b blockUEvent) readPartitionInfo() (pi partInfo, err error) {
 	}
 
 	return
-}
-
-// readPartitionTable tries to read a GPT partition table based on the blockUEvent
-// data. It returns nil when either the block device is not a regular device
-// or it fails to parse the GPT table.
-func (b blockUEvent) readPartitionTable() (*gpt.Table, error) {
-	// TODO(lorenz): This extraction code is all a bit hairy, will get
-	// replaced by blockdev shortly.
-	blkdev, err := os.Open(fmt.Sprintf("/dev/%v", b["DEVNAME"]))
-	if err != nil {
-		return nil, fmt.Errorf("failed to open block device: %w", err)
-	}
-	defer blkdev.Close()
-
-	blockSize, err := unix.IoctlGetUint32(int(blkdev.Fd()), unix.BLKSSZGET)
-	if err != nil {
-		return nil, nil // This is not a regular block device
-	}
-
-	var sizeBytes uint64
-	_, _, err = unix.Syscall(unix.SYS_IOCTL, blkdev.Fd(), unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&sizeBytes)))
-	if err != unix.Errno(0) {
-		return nil, fmt.Errorf("failed to get device size: %w", err)
-	}
-
-	blkdev.Seek(int64(blockSize), 0)
-	table, err := gpt.Read(blkdev, int64(blockSize), int64(sizeBytes)/int64(blockSize))
-	if err != nil {
-		return nil, nil // Probably just not a GPT-partitioned disk
-	}
-
-	return table, nil
 }

@@ -32,6 +32,8 @@ import (
 	"os"
 
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
+	"source.monogon.dev/metropolis/pkg/blkio"
+	"source.monogon.dev/metropolis/pkg/blockdev"
 )
 
 func main() {
@@ -40,26 +42,27 @@ func main() {
 		efiPayload  string
 		systemImage string
 		nodeParams  string
+		outputPath  string
+		diskUUID    string
 		cfg         osimage.Params
 	)
 	flag.StringVar(&efiPayload, "efi", "", "Path to the UEFI payload used")
 	flag.StringVar(&systemImage, "system", "", "Path to the system partition image used")
 	flag.StringVar(&nodeParams, "node_parameters", "", "Path to Node Parameters to be written to the ESP (default: don't write Node Parameters)")
-	flag.StringVar(&cfg.OutputPath, "out", "", "Path to the resulting disk image or block device")
-	flag.Uint64Var(&cfg.PartitionSize.Data, "data_partition_size", 2048, "Override the data partition size (default 2048 MiB). Used only when generating image files.")
-	flag.Uint64Var(&cfg.PartitionSize.ESP, "esp_partition_size", 128, "Override the ESP partition size (default: 128MiB)")
-	flag.Uint64Var(&cfg.PartitionSize.System, "system_partition_size", 1024, "Override the System partition size (default: 1024MiB)")
-	flag.StringVar(&cfg.DiskGUID, "GUID", "", "Disk GUID marked in the resulting image's partition table (default: randomly generated)")
+	flag.StringVar(&outputPath, "out", "", "Path to the resulting disk image or block device")
+	flag.Int64Var(&cfg.PartitionSize.Data, "data_partition_size", 2048, "Override the data partition size (default 2048 MiB). Used only when generating image files.")
+	flag.Int64Var(&cfg.PartitionSize.ESP, "esp_partition_size", 128, "Override the ESP partition size (default: 128MiB)")
+	flag.Int64Var(&cfg.PartitionSize.System, "system_partition_size", 1024, "Override the System partition size (default: 1024MiB)")
+	flag.StringVar(&diskUUID, "GUID", "", "Disk GUID marked in the resulting image's partition table (default: randomly generated)")
 	flag.Parse()
 
 	// Open the input files for osimage.Create, fill in reader objects and
 	// metadata in osimage.Params.
 	// Start with the EFI Payload the OS will boot from.
-	p, err := os.Open(efiPayload)
+	p, err := blkio.NewFileReader(efiPayload)
 	if err != nil {
 		log.Fatalf("while opening the EFI payload at %q: %v", efiPayload, err)
 	}
-	defer p.Close()
 	cfg.EFIPayload = p
 
 	// Attempt to open the system image if its path is set. In case the path
@@ -76,12 +79,17 @@ func main() {
 
 	// Attempt to open the node parameters file if its path is set.
 	if nodeParams != "" {
-		np, err := os.Open(nodeParams)
+		np, err := blkio.NewFileReader(nodeParams)
 		if err != nil {
 			log.Fatalf("while opening node parameters at %q: %v", nodeParams, err)
 		}
-		defer np.Close()
 		cfg.NodeParameters = np
+	}
+
+	// TODO(#254): Build and use dynamically-grown block devices
+	cfg.Output, err = blockdev.CreateFile(outputPath, 512, 10*1024*1024)
+	if err != nil {
+		panic(err)
 	}
 
 	// Write the parametrized OS image.

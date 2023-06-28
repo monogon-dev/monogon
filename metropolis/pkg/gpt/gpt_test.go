@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+
+	"source.monogon.dev/metropolis/pkg/blockdev"
 )
 
 func TestFreeSpaces(t *testing.T) {
@@ -50,11 +52,12 @@ func TestFreeSpaces(t *testing.T) {
 	// debug.
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			g := Table{
-				BlockSize:  512,
-				BlockCount: 2048, // 0.5KiB * 2048 = 1MiB
-				Partitions: c.parts,
+			d := blockdev.MustNewMemory(512, 2048) // 1MiB
+			g, err := New(d)
+			if err != nil {
+				panic(err)
 			}
+			g.Partitions = c.parts
 			fs, overlap, err := g.GetFreeSpaces()
 			if err != nil {
 				t.Fatal(err)
@@ -78,35 +81,32 @@ func TestRoundTrip(t *testing.T) {
 	if os.Getenv("IN_KTEST") == "true" {
 		t.Skip("In ktest")
 	}
+	d := blockdev.MustNewMemory(512, 2048) // 1 MiB
+
 	g := Table{
-		ID:         uuid.NewSHA1(zeroUUID, []byte("test")),
-		BlockSize:  512,
-		BlockCount: 2048,
-		BootCode:   []byte("just some test code"),
+		ID:       uuid.NewSHA1(uuid.Nil, []byte("test")),
+		BootCode: []byte("just some test code"),
 		Partitions: []*Partition{
 			nil,
 			// This emoji is very complex and exercises UTF16 surrogate encoding
 			// and composing.
-			{Name: "Test 🏃‍♂️", FirstBlock: 10, LastBlock: 19, Type: PartitionTypeEFISystem, ID: uuid.NewSHA1(zeroUUID, []byte("test1")), Attributes: AttrNoBlockIOProto},
+			{Name: "Test 🏃‍♂️", FirstBlock: 10, LastBlock: 19, Type: PartitionTypeEFISystem, ID: uuid.NewSHA1(uuid.Nil, []byte("test1")), Attributes: AttrNoBlockIOProto},
 			nil,
-			{Name: "Test2", FirstBlock: 20, LastBlock: 49, Type: PartitionTypeEFISystem, ID: uuid.NewSHA1(zeroUUID, []byte("test2")), Attributes: 0},
+			{Name: "Test2", FirstBlock: 20, LastBlock: 49, Type: PartitionTypeEFISystem, ID: uuid.NewSHA1(uuid.Nil, []byte("test2")), Attributes: 0},
 		},
+		b: d,
 	}
-	f, err := os.CreateTemp("", "")
-	if err != nil {
-		t.Fatalf("Failed to create temporary file: %v", err)
+	if err := g.Write(); err != nil {
+		t.Fatalf("Error while writing Table: %v", err)
 	}
-	defer os.Remove(f.Name())
-	if err := Write(f, &g); err != nil {
-		t.Fatalf("Error while wrinting Table: %v", err)
-	}
-	f.Seek(0, io.SeekStart)
+
 	originalHash := sha256.New()
-	if _, err := io.Copy(originalHash, f); err != nil {
+	sr1 := io.NewSectionReader(d, 0, d.BlockSize()*d.BlockCount())
+	if _, err := io.CopyBuffer(originalHash, sr1, make([]byte, d.OptimalBlockSize())); err != nil {
 		panic(err)
 	}
 
-	g2, err := Read(f, 512, 2048)
+	g2, err := Read(d)
 	if err != nil {
 		t.Fatalf("Failed to read back GPT: %v", err)
 	}
@@ -114,23 +114,20 @@ func TestRoundTrip(t *testing.T) {
 		t.Errorf("Disk UUID changed when reading back: %v", err)
 	}
 	// Destroy primary GPT
-	f.Seek(1*g.BlockSize, io.SeekStart)
-	f.Write(make([]byte, 512))
-	f.Seek(0, io.SeekStart)
-	g3, err := Read(f, 512, 2048)
+	d.Zero(1*d.BlockSize(), 5*d.BlockSize())
+	g3, err := Read(d)
 	if err != nil {
 		t.Fatalf("Failed to read back GPT with primary GPT destroyed: %v", err)
 	}
 	if g3.ID != g.ID {
 		t.Errorf("Disk UUID changed when reading back: %v", err)
 	}
-	f.Seek(0, io.SeekStart)
-	if err := Write(f, g3); err != nil {
+	if err := g3.Write(); err != nil {
 		t.Fatalf("Error while writing back GPT: %v", err)
 	}
-	f.Seek(0, io.SeekStart)
 	rewrittenHash := sha256.New()
-	if _, err := io.Copy(rewrittenHash, f); err != nil {
+	sr2 := io.NewSectionReader(d, 0, d.BlockSize()*d.BlockCount())
+	if _, err := io.CopyBuffer(rewrittenHash, sr2, make([]byte, d.OptimalBlockSize())); err != nil {
 		panic(err)
 	}
 	if !bytes.Equal(originalHash.Sum([]byte{}), rewrittenHash.Sum([]byte{})) {

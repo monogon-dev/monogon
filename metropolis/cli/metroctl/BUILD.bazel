@@ -46,6 +46,8 @@ go_library(
         "//metropolis/cli/pkg/datafile",
         "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
+        "//metropolis/pkg/blkio",
+        "//metropolis/pkg/fat32",
         "//metropolis/pkg/logtree",
         "//metropolis/proto/api",
         "//metropolis/proto/common",

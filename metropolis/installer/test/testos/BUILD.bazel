@@ -17,7 +17,7 @@ verity_image(
 
 efi_unified_kernel_image(
     name = "kernel_efi",
-    cmdline = "loglevel=0 console=ttyS0 init=/init",
+    cmdline = "quiet console=ttyS0 init=/init",
     kernel = "//third_party/linux",
     verity = ":verity_rootfs",
 )

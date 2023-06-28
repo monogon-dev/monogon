@@ -18,6 +18,7 @@ go_library(
         "//metropolis/node/build/mkimage/osimage",
         "//metropolis/node/core/devmgr",
         "//metropolis/node/core/network",
+        "//metropolis/pkg/blockdev",
         "//metropolis/pkg/bootparam",
         "//metropolis/pkg/efivarfs",
         "//metropolis/pkg/logtree",

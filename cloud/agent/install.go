@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"path/filepath"
 
@@ -13,10 +14,26 @@ import (
 
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
+	"source.monogon.dev/metropolis/pkg/blockdev"
 	"source.monogon.dev/metropolis/pkg/efivarfs"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	npb "source.monogon.dev/net/proto"
 )
+
+// FileSizedReader is a small adapter from fs.File to fs.SizedReader
+// Panics on Stat() failure, so should only be used with sources where Stat()
+// cannot fail.
+type FileSizedReader struct {
+	fs.File
+}
+
+func (f FileSizedReader) Size() int64 {
+	stat, err := f.Stat()
+	if err != nil {
+		panic(err)
+	}
+	return stat.Size()
+}
 
 // install dispatches OSInstallationRequests to the appropriate installer
 // method
@@ -104,6 +121,11 @@ func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Ne
 		return fmt.Errorf("failed marshaling: %w", err)
 	}
 
+	rootDev, err := blockdev.Open(filepath.Join("/dev", req.RootDevice))
+	if err != nil {
+		return fmt.Errorf("failed to open root device: %w", err)
+	}
+
 	installParams := osimage.Params{
 		PartitionSize: osimage.PartitionSizeInfo{
 			ESP:    128,
@@ -111,9 +133,9 @@ func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Ne
 			Data:   128,
 		},
 		SystemImage:    systemImage,
-		EFIPayload:     efiPayload,
+		EFIPayload:     FileSizedReader{efiPayload},
 		NodeParameters: bytes.NewReader(nodeParamsRaw),
-		OutputPath:     filepath.Join("/dev", req.RootDevice),
+		Output:         rootDev,
 	}
 
 	be, err := osimage.Create(&installParams)
