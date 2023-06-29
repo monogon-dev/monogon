@@ -103,14 +103,32 @@ func (s *Service) push(ctx context.Context, kubeC chan *Prefixes, netC chan *net
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 
 	var kubePrefixes *Prefixes
+	var prevKubePrefixes *Prefixes
+
 	var localAddr net.IP
+	var prevLocalAddr net.IP
+
 	for {
+		kubeChanged := false
+		localChanged := false
+
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case kubePrefixes = <-kubeC:
+			if !kubePrefixes.Equal(prevKubePrefixes) {
+				kubeChanged = true
+			}
 		case n := <-netC:
 			localAddr = n.ExternalAddress
+			if !localAddr.Equal(prevLocalAddr) {
+				localChanged = true
+			}
+		}
+
+		// Ignore spurious updates.
+		if !localChanged && !kubeChanged {
+			continue
 		}
 
 		// Prepare prefixes to submit to cluster.
@@ -128,7 +146,7 @@ func (s *Service) push(ctx context.Context, kubeC chan *Prefixes, netC chan *net
 			prefixes.Update(kubePrefixes)
 		}
 
-		supervisor.Logger(ctx).Infof("Submitting prefixes: %s", prefixes)
+		supervisor.Logger(ctx).Infof("Submitting prefixes: %s (kube update: %v, local update: %v)", prefixes, kubeChanged, localChanged)
 
 		err := backoff.Retry(func() error {
 			_, err := s.Curator.UpdateNodeClusterNetworking(ctx, &apb.UpdateNodeClusterNetworkingRequest{
@@ -145,6 +163,10 @@ func (s *Service) push(ctx context.Context, kubeC chan *Prefixes, netC chan *net
 		if err != nil {
 			return fmt.Errorf("couldn't update curator: %w", err)
 		}
+
+		prevKubePrefixes = kubePrefixes
+		prevLocalAddr = localAddr
+
 	}
 }
 
@@ -200,6 +222,12 @@ func (s *Service) pull(ctx context.Context) error {
 		} else {
 			succeeded = len(newNodes)
 		}
-		supervisor.Logger(ctx).Infof("Successfully updated %d out of %d nodes", succeeded, len(newNodes))
+
+		if len(newNodes) != 0 {
+			supervisor.Logger(ctx).Infof("Successfully updated %d out of %d nodes", succeeded, len(newNodes))
+
+			numNodes, numPrefixes := nodes.stats()
+			supervisor.Logger(ctx).Infof("Total: %d nodes, %d prefixes.", numNodes, numPrefixes)
+		}
 	}
 }

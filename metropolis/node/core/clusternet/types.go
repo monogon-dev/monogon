@@ -44,11 +44,20 @@ func (p *Prefixes) Update(o *Prefixes) {
 
 // String returns a stringified, comma-dalimited representation of the prefixes.
 func (p *Prefixes) String() string {
+	if p == nil {
+		return ""
+	}
+
 	var strs []string
 	for _, pp := range *p {
 		strs = append(strs, pp.String())
 	}
+	sort.Strings(strs)
 	return strings.Join(strs, ", ")
+}
+
+func (p *Prefixes) Equal(o *Prefixes) bool {
+	return p.String() == o.String()
 }
 
 // node is used for internal statekeeping in the cluster networking service.
@@ -105,6 +114,16 @@ func newNodemap() *nodeMap {
 	return &nodeMap{
 		nodes: make(map[string]*node),
 	}
+}
+
+func (n *nodeMap) stats() (nodes int, prefixes int) {
+	nodes = len(n.nodes)
+
+	for _, node := range n.nodes {
+		prefixes += len(node.prefixes)
+	}
+
+	return
 }
 
 // update updates the nodeMap from the given Curator WatchEvent, interpreting
