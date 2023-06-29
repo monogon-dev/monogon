@@ -69,9 +69,11 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 		if e.Action == kobject.Add {
 			if e.Values["MODALIAS"] != "" {
-				if err := modMgr.LoadModulesForDevice(e.Values["MODALIAS"]); err != nil {
-					l.Errorf("Error loading kernel modules: %w", err)
-				}
+				go func(e *kobject.Event) {
+					if err := modMgr.LoadModulesForDevice(e.Values["MODALIAS"]); err != nil {
+						l.Errorf("Error loading kernel modules: %w", err)
+					}
+				}(e)
 			}
 		}
 	}
