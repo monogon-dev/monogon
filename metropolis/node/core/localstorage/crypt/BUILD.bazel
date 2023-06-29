@@ -13,6 +13,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/localstorage/crypt",
     visibility = ["//metropolis/node/core/localstorage:__subpackages__"],
     deps = [
+        "//metropolis/node/core/update",
         "//metropolis/pkg/blockdev",
         "//metropolis/pkg/devicemapper",
         "//metropolis/pkg/efivarfs",

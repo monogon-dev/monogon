@@ -110,6 +110,13 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 	}
 	m.roleServer.ProvideJoinData(creds, cd)
 
+	// After successfully joining cluster, mark boot as successful.
+	// This allows the update service to mark the currently-booted slot as good
+	// if an update has been performed.
+	if err := m.updateService.MarkBootSuccessful(); err != nil {
+		supervisor.Logger(ctx).Errorf("Failed to mark boot as successful: %v", err)
+	}
+
 	supervisor.Logger(ctx).Infof("Joined the cluster.")
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)

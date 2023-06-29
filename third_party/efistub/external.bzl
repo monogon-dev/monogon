@@ -14,6 +14,7 @@ def efistub_external(name, version):
         patches = [
             "//third_party/efistub/patches:use-sysv-for-kernel.patch",
             "//third_party/efistub/patches:remove-wrong-cmdline-assertion.patch",
+            "//third_party/efistub/patches:ab-slot-handling.patch",
         ],
         urls = ["https://github.com/systemd/systemd/archive/%s.zip" % version],
     )

@@ -327,7 +327,7 @@ verity_image = rule(
         ),
         "rootfs_partlabel": attr.string(
             doc = "GPT partition label of the rootfs to be used with dm-mod.create.",
-            default = "PARTLABEL=METROPOLIS-SYSTEM",
+            default = "PARTLABEL=METROPOLIS-SYSTEM-X",
         ),
         "_mkverity": attr.label(
             doc = "The mkverity executable needed to generate the image.",

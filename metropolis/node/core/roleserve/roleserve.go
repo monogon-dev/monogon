@@ -46,6 +46,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
+	"source.monogon.dev/metropolis/node/core/update"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -68,6 +69,9 @@ type Config struct {
 	// created early in the roleserver lifecycle, and is seeded with node
 	// information from the ProvideXXX methods.
 	Resolver *resolver.Resolver
+
+	// Update is a handle to the update service, used by workloads.
+	Update *update.Service
 
 	LogTree *logtree.LogTree
 }
@@ -148,6 +152,7 @@ func New(c Config) *Service {
 	s.nodeMgmt = &workerNodeMgmt{
 		curatorConnection: &s.CuratorConnection,
 		logTree:           s.LogTree,
+		updateService:     s.Update,
 	}
 
 	s.clusternet = &workerClusternet{

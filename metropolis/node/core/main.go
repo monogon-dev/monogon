@@ -36,6 +36,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	timesvc "source.monogon.dev/metropolis/node/core/time"
+	"source.monogon.dev/metropolis/node/core/update"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/pkg/tpm"
@@ -132,6 +133,10 @@ func main() {
 		panic(fmt.Errorf("when placing root FS: %w", err))
 	}
 
+	updateSvc := &update.Service{
+		Logger: lt.MustLeveledFor("update"),
+	}
+
 	// Make context for supervisor. We cancel it when we reach the trapdoor.
 	ctxS, ctxC := context.WithCancel(context.Background())
 
@@ -145,7 +150,7 @@ func main() {
 	// services related to the node's roles.
 	init := func(ctx context.Context) error {
 		// Start storage and network - we need this to get anything else done.
-		if err := root.Start(ctx); err != nil {
+		if err := root.Start(ctx, updateSvc); err != nil {
 			return fmt.Errorf("cannot start root FS: %w", err)
 		}
 		nodeParams, err := getNodeParams(ctx, root)
@@ -187,6 +192,7 @@ func main() {
 			Network:     networkSvc,
 			Resolver:    res,
 			LogTree:     lt,
+			Update:      updateSvc,
 		})
 		if err := supervisor.Run(ctx, "role", rs.Run); err != nil {
 			return fmt.Errorf("failed to start role service: %w", err)
@@ -198,7 +204,7 @@ func main() {
 
 		// Start cluster manager. This kicks off cluster membership machinery,
 		// which will either start a new cluster, enroll into one or join one.
-		m := cluster.NewManager(root, networkSvc, rs, nodeParams, haveTPM)
+		m := cluster.NewManager(root, networkSvc, rs, updateSvc, nodeParams, haveTPM)
 		return m.Run(ctx)
 	}
 

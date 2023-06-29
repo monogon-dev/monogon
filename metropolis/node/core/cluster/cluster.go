@@ -33,6 +33,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/roleserve"
+	"source.monogon.dev/metropolis/node/core/update"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -42,6 +43,7 @@ type Manager struct {
 	storageRoot    *localstorage.Root
 	networkService *network.Service
 	roleServer     *roleserve.Service
+	updateService  *update.Service
 	nodeParams     *apb.NodeParameters
 	haveTPM        bool
 
@@ -51,11 +53,12 @@ type Manager struct {
 // NewManager creates a new cluster Manager. The given localstorage Root must
 // be places, but not yet started (and will be started as the Manager makes
 // progress). The given network Service must already be running.
-func NewManager(storageRoot *localstorage.Root, networkService *network.Service, rs *roleserve.Service, nodeParams *apb.NodeParameters, haveTPM bool) *Manager {
+func NewManager(storageRoot *localstorage.Root, networkService *network.Service, rs *roleserve.Service, updateService *update.Service, nodeParams *apb.NodeParameters, haveTPM bool) *Manager {
 	return &Manager{
 		storageRoot:    storageRoot,
 		networkService: networkService,
 		roleServer:     rs,
+		updateService:  updateService,
 		nodeParams:     nodeParams,
 		haveTPM:        haveTPM,
 		oneway:         make(chan struct{}),

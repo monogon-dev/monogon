@@ -218,6 +218,16 @@ service NodeManagement {
       need: PERMISSION_READ_NODE_LOGS
     };
   }
+  // UpdateNode updates the node operating system to a new version.
+  //
+  // Metropolis uses a side-by-side (A/B) update process. This method installs
+  // the OS from the given bundle into the inactive slot, activates that slot
+  // and then (optionally) reboots to activate it.
+  rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse) {
+    option (metropolis.proto.ext.authorization) = {
+      need: PERMISSION_UPDATE_NODE
+    };
+  }
 }
 
 message GetLogsRequest {
@@ -260,3 +270,15 @@ message GetLogsResponse {
   // might change in the future, so this behaviour cannot be depended upon.
   repeated metropolis.proto.common.LogEntry stream_entries = 2;
 }
+
+message UpdateNodeRequest {
+  // An HTTPS URL to a Metropolis bundle containing the new OS to install.
+  string bundle_url = 1;
+
+  // If set, do not reboot the node after installation. This means the updated
+  // version will not be active until the node has been rebooted via another
+  // method.
+  bool no_reboot = 2;
+}
+
+message UpdateNodeResponse {}

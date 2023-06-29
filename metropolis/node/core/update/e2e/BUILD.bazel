@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "e2e_test",
+    srcs = ["e2e_test.go"],
+    data = [
+        # For emulation
+        "//third_party/edk2:firmware",
+        # For the initial image creation
+        "//metropolis/node/core/update/e2e/testos:verity_rootfs_x",
+        "//metropolis/node/core/update/e2e/testos:kernel_efi_x",
+        # For the two update tests
+        "//metropolis/node/core/update/e2e/testos:testos_bundle_y",
+        "//metropolis/node/core/update/e2e/testos:testos_bundle_z",
+    ],
+    deps = [
+        "//metropolis/cli/pkg/datafile",
+        "//metropolis/node/build/mkimage/osimage",
+        "//metropolis/pkg/blkio",
+        "//metropolis/pkg/blockdev",
+    ],
+)

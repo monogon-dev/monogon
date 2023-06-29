@@ -27,6 +27,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
 
+	"source.monogon.dev/metropolis/node/core/update"
 	"source.monogon.dev/metropolis/pkg/blockdev"
 	"source.monogon.dev/metropolis/pkg/efivarfs"
 	"source.monogon.dev/metropolis/pkg/gpt"
@@ -38,9 +39,16 @@ import (
 // data partition.
 var NodeDataPartitionType = uuid.MustParse("9eeec464-6885-414a-b278-4305c51f7966")
 
+var (
+	SystemAType = uuid.MustParse("ee96054b-f6d0-4267-aaaa-724b2afea74c")
+	SystemBType = uuid.MustParse("ee96054b-f6d0-4267-bbbb-724b2afea74c")
+)
+
 const (
-	ESPDevicePath   = "/dev/esp"
-	NodeDataRawPath = "/dev/data-raw"
+	ESPDevicePath     = "/dev/esp"
+	NodeDataRawPath   = "/dev/data-raw"
+	SystemADevicePath = "/dev/system-a"
+	SystemBDevicePath = "/dev/system-b"
 )
 
 // nodePathForPartitionType returns the device node path
@@ -51,6 +59,10 @@ func nodePathForPartitionType(t uuid.UUID) string {
 		return ESPDevicePath
 	case NodeDataPartitionType:
 		return NodeDataRawPath
+	case SystemAType:
+		return SystemADevicePath
+	case SystemBType:
+		return SystemBDevicePath
 	}
 	return ""
 }
@@ -58,7 +70,7 @@ func nodePathForPartitionType(t uuid.UUID) string {
 // MakeBlockDevices looks for the ESP and the node data partition and maps them
 // to ESPDevicePath and NodeDataCryptPath respectively. This doesn't fail if it
 // doesn't find the partitions, only if something goes catastrophically wrong.
-func MakeBlockDevices(ctx context.Context) error {
+func MakeBlockDevices(ctx context.Context, updateSvc *update.Service) error {
 	espUUID, err := efivarfs.ReadLoaderDevicePartUUID()
 	if err != nil {
 		supervisor.Logger(ctx).Warningf("No EFI variable for the loader device partition UUID present")
@@ -70,7 +82,7 @@ func MakeBlockDevices(ctx context.Context) error {
 	}
 
 	for _, blockDev := range blockDevs {
-		if err := handleBlockDevice(blockDev.Name(), blockDevs, espUUID); err != nil {
+		if err := handleBlockDevice(blockDev.Name(), blockDevs, espUUID, updateSvc); err != nil {
 			supervisor.Logger(ctx).Errorf("Failed to create block device %s: %w", blockDev.Name(), err)
 		}
 	}
@@ -80,7 +92,7 @@ func MakeBlockDevices(ctx context.Context) error {
 
 // handleBlockDevice reads the uevent data and continues to iterate over all
 // partitions to create all required device nodes.
-func handleBlockDevice(diskBlockDev string, blockDevs []os.DirEntry, espUUID uuid.UUID) error {
+func handleBlockDevice(diskBlockDev string, blockDevs []os.DirEntry, espUUID uuid.UUID, updateSvc *update.Service) error {
 	data, err := readUEvent(diskBlockDev)
 	if err != nil {
 		return err
@@ -120,7 +132,7 @@ func handleBlockDevice(diskBlockDev string, blockDevs []os.DirEntry, espUUID uui
 
 	seenTypes := make(map[uuid.UUID]bool)
 	for _, dev := range blockDevs {
-		if err := handlePartition(diskBlockDev, dev.Name(), table, seenTypes); err != nil {
+		if err := handlePartition(diskBlockDev, dev.Name(), table, seenTypes, updateSvc); err != nil {
 			return fmt.Errorf("when creating partition %s: %w", dev.Name(), err)
 		}
 	}
@@ -128,7 +140,7 @@ func handleBlockDevice(diskBlockDev string, blockDevs []os.DirEntry, espUUID uui
 	return nil
 }
 
-func handlePartition(diskBlockDev string, partBlockDev string, table *gpt.Table, seenTypes map[uuid.UUID]bool) error {
+func handlePartition(diskBlockDev string, partBlockDev string, table *gpt.Table, seenTypes map[uuid.UUID]bool, updateSvc *update.Service) error {
 	// Skip all blockdev that dont share the same name/prefix,
 	// also skip the blockdev itself.
 	if !strings.HasPrefix(partBlockDev, diskBlockDev) || partBlockDev == diskBlockDev {
@@ -151,6 +163,8 @@ func handlePartition(diskBlockDev string, partBlockDev string, table *gpt.Table,
 	}
 
 	part := table.Partitions[pi.partNumber-1]
+
+	updateSvc.ProvideESP("/esp", part.ID, uint32(pi.partNumber))
 
 	nodePath := nodePathForPartitionType(part.Type)
 	if nodePath == "" {

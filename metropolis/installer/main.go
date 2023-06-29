@@ -217,7 +217,7 @@ func main() {
 	installParams := osimage.Params{
 		PartitionSize: osimage.PartitionSizeInfo{
 			// ESP is the size of the node ESP partition, expressed in mebibytes.
-			ESP: 128,
+			ESP: 384,
 			// System is the size of the node system partition, expressed in
 			// mebibytes.
 			System: 4096,

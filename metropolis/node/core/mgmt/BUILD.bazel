@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "mgmt.go",
         "svc_logs.go",
+        "update.go",
     ],
     importpath = "source.monogon.dev/metropolis/node/core/mgmt",
     visibility = ["//visibility:public"],
@@ -12,6 +13,7 @@ go_library(
         "//metropolis/node",
         "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
+        "//metropolis/node/core/update",
         "//metropolis/pkg/logtree",
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/api",
@@ -19,6 +21,7 @@ go_library(
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//status",
+        "@org_golang_x_sys//unix",
     ],
 )
 

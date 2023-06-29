@@ -32,6 +32,7 @@ go_library(
         "//metropolis/node/core/roleserve",
         "//metropolis/node/core/rpc/resolver",
         "//metropolis/node/core/time",
+        "//metropolis/node/core/update",
         "//metropolis/pkg/logtree",
         "//metropolis/pkg/pstore",
         "//metropolis/pkg/supervisor",

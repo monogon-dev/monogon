@@ -25,16 +25,17 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/localstorage/crypt"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
+	"source.monogon.dev/metropolis/node/core/update"
 )
 
-func (r *Root) Start(ctx context.Context) error {
+func (r *Root) Start(ctx context.Context, updateSvc *update.Service) error {
 	r.Data.flagLock.Lock()
 	defer r.Data.flagLock.Unlock()
 	if r.Data.canMount {
 		return fmt.Errorf("cannot re-start root storage")
 	}
 	// TODO(q3k): turn this into an Ensure call
-	err := crypt.MakeBlockDevices(ctx)
+	err := crypt.MakeBlockDevices(ctx, updateSvc)
 	if err != nil {
 		return fmt.Errorf("MakeBlockDevices: %w", err)
 	}

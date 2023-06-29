@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"source.monogon.dev/metropolis/node/core/mgmt"
+	"source.monogon.dev/metropolis/node/core/update"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -12,6 +13,7 @@ import (
 type workerNodeMgmt struct {
 	curatorConnection *memory.Value[*curatorConnection]
 	logTree           *logtree.LogTree
+	updateService     *update.Service
 }
 
 func (s *workerNodeMgmt) run(ctx context.Context) error {
@@ -27,6 +29,7 @@ func (s *workerNodeMgmt) run(ctx context.Context) error {
 	srv := mgmt.Service{
 		NodeCredentials: cc.credentials,
 		LogTree:         s.logTree,
+		UpdateService:   s.updateService,
 	}
 	return srv.Run(ctx)
 }

@@ -12,6 +12,7 @@ import (
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/node/core/update"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 
@@ -24,6 +25,8 @@ type Service struct {
 	NodeCredentials *identity.NodeCredentials
 	// LogTree from which NodeManagement.Logs will be served.
 	LogTree *logtree.LogTree
+	// Update service handle for performing updates via the API.
+	UpdateService *update.Service
 
 	// Automatically populated on Run.
 	LogService

@@ -19,6 +19,7 @@
 package osimage
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -39,11 +40,14 @@ var (
 )
 
 const (
-	SystemLabel = "METROPOLIS-SYSTEM"
-	DataLabel   = "METROPOLIS-NODE-DATA"
-	ESPLabel    = "ESP"
+	SystemALabel = "METROPOLIS-SYSTEM-A"
+	SystemBLabel = "METROPOLIS-SYSTEM-B"
+	DataLabel    = "METROPOLIS-NODE-DATA"
+	ESPLabel     = "ESP"
 
 	EFIPayloadPath = "/EFI/BOOT/BOOTx64.EFI"
+	EFIBootAPath   = "/EFI/metropolis/boot-a.efi"
+	EFIBootBPath   = "/EFI/metropolis/boot-b.efi"
 	nodeParamsPath = "metropolis/parameters.pb"
 )
 
@@ -112,7 +116,16 @@ func Create(params *Params) (*efivarfs.LoadOption, error) {
 	rootInode := fat32.Inode{
 		Attrs: fat32.AttrDirectory,
 	}
-	if err := rootInode.PlaceFile(strings.TrimPrefix(EFIPayloadPath, "/"), params.EFIPayload); err != nil {
+	efiPayload, err := io.ReadAll(params.EFIPayload)
+	if err != nil {
+		return nil, fmt.Errorf("while reading EFIPayload: %w", err)
+	}
+	if err := rootInode.PlaceFile(strings.TrimPrefix(EFIBootAPath, "/"), bytes.NewReader(efiPayload)); err != nil {
+		return nil, err
+	}
+	// Also place a copy of the boot file at the autodiscovery path. This will
+	// always boot slot A.
+	if err := rootInode.PlaceFile(strings.TrimPrefix(EFIPayloadPath, "/"), bytes.NewReader(efiPayload)); err != nil {
 		return nil, err
 	}
 	if params.NodeParameters != nil {
@@ -132,13 +145,20 @@ func Create(params *Params) (*efivarfs.LoadOption, error) {
 	if params.PartitionSize.System != 0 && params.SystemImage != nil {
 		systemPartitionA := gpt.Partition{
 			Type: SystemAType,
-			Name: SystemLabel,
+			Name: SystemALabel,
 		}
 		if err := tbl.AddPartition(&systemPartitionA, params.PartitionSize.System*Mi); err != nil {
 			return nil, fmt.Errorf("failed to allocate system partition A: %w", err)
 		}
 		if _, err := io.Copy(blockdev.NewRWS(systemPartitionA), params.SystemImage); err != nil {
 			return nil, fmt.Errorf("failed to write system partition A: %w", err)
+		}
+		systemPartitionB := gpt.Partition{
+			Type: SystemBType,
+			Name: SystemBLabel,
+		}
+		if err := tbl.AddPartition(&systemPartitionB, params.PartitionSize.System*Mi); err != nil {
+			return nil, fmt.Errorf("failed to allocate system partition B: %w", err)
 		}
 	} else if params.PartitionSize.System == 0 && params.SystemImage != nil {
 		// Safeguard against contradicting parameters.
@@ -171,7 +191,7 @@ func Create(params *Params) (*efivarfs.LoadOption, error) {
 					PartitionUUID: esp.ID,
 				},
 			},
-			efivarfs.FilePath(EFIPayloadPath),
+			efivarfs.FilePath(EFIBootAPath),
 		},
 	}, nil
 }

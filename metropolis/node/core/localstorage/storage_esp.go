@@ -37,6 +37,23 @@ import (
 type ESPDirectory struct {
 	declarative.Directory
 	Metropolis ESPMetropolisDirectory `dir:"metropolis"`
+	EFI        ESPEFIDirectory        `dir:"ESP"`
+}
+
+type ESPEFIDirectory struct {
+	declarative.Directory
+	Boot       ESPBootDirectory          `dir:"BOOT"`
+	Metropolis ESPEFIMetropolisDirectory `dir:"metropolis"`
+}
+
+type ESPEFIMetropolisDirectory struct {
+	declarative.Directory
+	BootA declarative.File `file:"boot-a.efi"`
+	BootB declarative.File `file:"boot-b.efi"`
+}
+
+type ESPBootDirectory struct {
+	declarative.Directory
 }
 
 // ESPMetropolisDirectory is the directory inside the EFI System Partition where

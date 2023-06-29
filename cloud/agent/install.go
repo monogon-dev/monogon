@@ -128,7 +128,7 @@ func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Ne
 
 	installParams := osimage.Params{
 		PartitionSize: osimage.PartitionSizeInfo{
-			ESP:    128,
+			ESP:    384,
 			System: 4096,
 			Data:   128,
 		},

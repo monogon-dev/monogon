@@ -166,8 +166,8 @@ func TestMetropolisInstallE2E(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer os.Remove(rootDisk.Name())
-	// Create a 5GiB sparse root disk
-	if err := unix.Ftruncate(int(rootDisk.Fd()), 5*GiB); err != nil {
+	// Create a 10GiB sparse root disk
+	if err := unix.Ftruncate(int(rootDisk.Fd()), 10*GiB); err != nil {
 		t.Fatalf("ftruncate failed: %v", err)
 	}
 

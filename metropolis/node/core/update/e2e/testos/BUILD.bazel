@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load(":testos.bzl", "testos")
+
+testos(variant = "x")
+
+testos(variant = "y")
+
+testos(variant = "z")
+
+go_library(
+    name = "testos_lib",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/metropolis/node/core/update/e2e/testos",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//metropolis/node/build/mkimage/osimage",
+        "//metropolis/node/core/network",
+        "//metropolis/node/core/update",
+        "//metropolis/pkg/blockdev",
+        "//metropolis/pkg/gpt",
+        "//metropolis/pkg/logtree",
+        "//metropolis/pkg/supervisor",
+        "@org_golang_x_sys//unix",
+    ],
+)
+
+go_binary(
+    name = "testos",
+    embed = [":testos_lib"],
+    visibility = ["//visibility:public"],
+)

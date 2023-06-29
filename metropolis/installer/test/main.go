@@ -215,10 +215,10 @@ func TestInstall(t *testing.T) {
 	defer ctxC()
 
 	// Prepare the block device image the installer will install to.
-	// Needs enough storage for a 4096 MiB system partition, a 128 MiB ESP and
-	// a 128MiB data partition. In addition at the start and end we need 1MiB
-	// for GPT headers and alignment.
-	storagePath, err := getStorage(4096 + 128 + 128 + 2)
+	// Needs enough storage for two 4096 MiB system partitions, a 384 MiB ESP
+	// and a 128 MiB data partition. In addition at the start and end we need
+	// 1MiB for GPT headers and alignment.
+	storagePath, err := getStorage(4096*2 + 384 + 128 + 2)
 	defer os.Remove(storagePath)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -252,16 +252,21 @@ func TestInstall(t *testing.T) {
 	}
 	// Verify the system partition's GPT entry.
 	system := (pi[1]).(*gpt.Partition)
-	if system.Name != osimage.SystemLabel || system.Start == 0 || system.End == 0 {
+	if system.Name != osimage.SystemALabel || system.Start == 0 || system.End == 0 {
+		t.Error("The node's system partition GPT entry looks off.")
+	}
+	// Verify the system partition's GPT entry.
+	systemB := (pi[2]).(*gpt.Partition)
+	if systemB.Name != osimage.SystemBLabel || systemB.Start == 0 || systemB.End == 0 {
 		t.Error("The node's system partition GPT entry looks off.")
 	}
 	// Verify the data partition's GPT entry.
-	data := (pi[2]).(*gpt.Partition)
+	data := (pi[3]).(*gpt.Partition)
 	if data.Name != osimage.DataLabel || data.Start == 0 || data.End == 0 {
 		t.Errorf("The node's data partition GPT entry looks off: %+v", data)
 	}
 	// Verify that there are no more partitions.
-	fourth := (pi[3]).(*gpt.Partition)
+	fourth := (pi[4]).(*gpt.Partition)
 	if fourth.Name != "" || fourth.Start != 0 || fourth.End != 0 {
 		t.Error("The resulting node image contains more partitions than expected.")
 	}

@@ -6,6 +6,7 @@ go_binary(
     visibility = [
         "//metropolis/installer/test/testos:__pkg__",
         "//metropolis/node:__pkg__",
+        "//metropolis/node/core/update/e2e/testos:__pkg__",
     ],
 )
 
