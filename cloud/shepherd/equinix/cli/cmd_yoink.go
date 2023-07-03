@@ -89,7 +89,7 @@ func doYoink(cmd *cobra.Command, args []string) {
 	mtypes := make(map[configDC]int)
 
 	var matchingReservations []packngo.HardwareReservation
-	reqType := configDC{config: strings.ToLower(args[0]), dc: strings.ToLower(args[1])}
+	reqType := configDC{config: strings.ToLower(spec), dc: strings.ToLower(metro)}
 
 	klog.Infof("Got %d reservations", len(reservations))
 	for _, r := range reservations {
@@ -139,7 +139,7 @@ func doYoink(cmd *cobra.Command, args []string) {
 			klog.Exitf("failed reading input: %v", err)
 		}
 
-		atoi, err := strconv.Atoi(read)
+		atoi, err := strconv.Atoi(strings.TrimSpace(read))
 		if err != nil {
 			klog.Exitf("failed parsing number: %v", err)
 		}
@@ -152,7 +152,7 @@ func doYoink(cmd *cobra.Command, args []string) {
 	}
 
 	klog.Infof("Note: It can be normal for a device move to fail for project validation issues. This is a known issue and can be ignored")
-	for _, r := range matchingReservations {
+	for _, r := range matchingReservations[:count] {
 		if r.Device != nil {
 			klog.Warningf("Deleting server %s (%s) on %s", r.Device.ID, r.Device.Hostname, r.ID)
 
