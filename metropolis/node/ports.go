@@ -16,7 +16,9 @@
 
 package node
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // Port is a TCP and/or UDP port number reserved for and used by Metropolis
 // node code.
@@ -59,6 +61,20 @@ const (
 	// builds only). Not to be confused with DebugServicePort.
 	DebuggerPort Port = 2345
 )
+
+var SystemPorts = []Port{
+	CuratorServicePort,
+	ConsensusPort,
+	DebugServicePort,
+	WireGuardPort,
+	NodeManagement,
+	MetricsPort,
+	MetricsNodeListenerPort,
+	KubernetesAPIPort,
+	KubernetesAPIWrappedPort,
+	KubernetesWorkerLocalAPIPort,
+	DebuggerPort,
+}
 
 func (p Port) String() string {
 	switch p {

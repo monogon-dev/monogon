@@ -6525,6 +6525,7 @@ def go_repositories():
             "//third_party/go/patches:k8s-fix-logs-path.patch",
             "//third_party/go/patches:k8s-drop-legacy-log-path.patch",
             "//third_party/go/patches:k8s-jose-semver-fix.patch",
+            "//third_party/go/patches:k8s-reserve-metropolis-ports.patch",
         ],
         sum = "h1:AyjtHzSysliKR04Km91njmk2yaKmOa3ZISQZCIGUnVI=",
         version = "v1.24.2",

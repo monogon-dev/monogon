@@ -14,7 +14,10 @@ go_library(
         "ports.go",
     ],
     importpath = "source.monogon.dev/metropolis/node",
-    visibility = ["//metropolis:__subpackages__"],
+    visibility = [
+        "//metropolis:__subpackages__",
+        "@io_k8s_kubernetes//pkg/registry:__subpackages__",
+    ],
     deps = ["@com_github_vishvananda_netlink//:netlink"],
 )
 
