@@ -4,6 +4,7 @@ go_library(
     name = "metroctl_lib",
     srcs = [
         "cmd_install.go",
+        "cmd_k8s_configure.go",
         "cmd_k8scredplugin.go",
         "cmd_node.go",
         "cmd_node_approve.go",
