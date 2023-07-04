@@ -7,11 +7,11 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 
 http_archive(
     name = "bazel_skylib",
+    sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
         "https://github.com/bazelbuild/bazel-skylib/releases/download/1.3.0/bazel-skylib-1.3.0.tar.gz",
     ],
-    sha256 = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506",
 )
 
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
@@ -28,7 +28,9 @@ versions.check(minimum_bazel_version = "5.4.0")
 # (host_cc_toolchain won't care about //build/platforms/linkmode, but musl_host_toolchain won't
 # match anything unless its linkmode is set).
 register_toolchains("//build/toolchain/musl-host-gcc:musl_host_toolchain")
+
 register_toolchains("//build/toolchain/llvm-efi:efi_k8_toolchain")
+
 register_toolchains("//build/toolchain:host_cc_toolchain")
 
 # Go and Gazelle
@@ -65,6 +67,7 @@ load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_depe
 load("//third_party/go:repositories.bzl", "go_repositories")
 
 # gazelle:repository_macro third_party/go/repositories.bzl%go_repositories
+# gazelle:repository go_repository name=dev_source_monogon importpath=source.monogon.dev
 go_repositories()
 
 go_rules_dependencies()
@@ -93,16 +96,17 @@ http_archive(
 load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
 rules_proto_dependencies()
+
 rules_proto_toolchains()
 
 # Build packages
 http_archive(
     name = "rules_pkg",
+    sha256 = "eea0f59c28a9241156a47d7a8e32db9122f3d50b505fae0f33de6ce4d9b61834",
     urls = [
         "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.8.0/rules_pkg-0.8.0.tar.gz",
         "https://github.com/bazelbuild/rules_pkg/releases/download/0.8.0/rules_pkg-0.8.0.tar.gz",
     ],
-    sha256 = "eea0f59c28a9241156a47d7a8e32db9122f3d50b505fae0f33de6ce4d9b61834",
 )
 
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
@@ -245,6 +249,7 @@ efistub_external(
 )
 
 load("//third_party/libpg_query:external.bzl", "libpg_query_external")
+
 libpg_query_external(
     name = "libpg_query",
     version = "13-2.2.0",
@@ -327,17 +332,17 @@ musl_sysroot_repositories()
 # tests, not be redistributed!
 http_archive(
     name = "cockroach",
-    urls = [
-        # TODO: select() to pick other host architectures.
-        "https://binaries.cockroachdb.com/cockroach-v22.1.6.linux-amd64.tgz",
-    ],
-    sha256 = "0821cff5770400fb94c8b6c2ab338d96f4114fbf2b3206bc8a6dcf62f9c0f4ea",
-    strip_prefix = "cockroach-v22.1.6.linux-amd64",
     build_file_content = """
 exports_files([
     "cockroach"
 ])
 """,
+    sha256 = "0821cff5770400fb94c8b6c2ab338d96f4114fbf2b3206bc8a6dcf62f9c0f4ea",
+    strip_prefix = "cockroach-v22.1.6.linux-amd64",
+    urls = [
+        # TODO: select() to pick other host architectures.
+        "https://binaries.cockroachdb.com/cockroach-v22.1.6.linux-amd64.tgz",
+    ],
 )
 
 # bazeldnf is used to generate our sandbox root.
