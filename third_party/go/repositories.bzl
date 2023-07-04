@@ -6260,9 +6260,6 @@ def go_repositories():
         name = "io_etcd_go_etcd_pkg_v3",
         importpath = "go.etcd.io/etcd/pkg/v3",
         patch_args = ["-p1"],
-        pre_patches = [
-            "//third_party/go/patches:etcd-fix-stub.patch",
-        ],
         sum = "h1:V5Dvl7S39ZDwjkKqJG2BfXgxZ3QREqqKifWQgIw5IM0=",
         version = "v3.5.4",
     )
