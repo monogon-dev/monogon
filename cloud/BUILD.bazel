@@ -7,6 +7,7 @@ container_bundle(
         "gcr.io/monogon-infra/cloud/apigw:{IMAGE_TAG}": "//cloud/apigw:apigw_container",
         "gcr.io/monogon-infra/cloud/shepherd/equinix:{IMAGE_TAG}": "//cloud/shepherd/equinix/manager/server:server_container",
         "gcr.io/monogon-infra/cloud/bmsrv:{IMAGE_TAG}": "//cloud/bmaas/server/cmd:cmd_container",
+        "gcr.io/monogon-infra/cloud/scruffy:{IMAGE_TAG}": "//cloud/bmaas/scruffy/cmd:cmd_container",
     },
 )
 
