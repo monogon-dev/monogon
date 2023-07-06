@@ -320,7 +320,7 @@ func main() {
 		panicf("While creating a boot entry: %v", err)
 	}
 	// Erase the preexisting boot order, leaving Metropolis as the only option.
-	if err := efivarfs.SetBootOrder(&efivarfs.BootOrder{uint16(en)}); err != nil {
+	if err := efivarfs.SetBootOrder(efivarfs.BootOrder{uint16(en)}); err != nil {
 		panicf("While adjusting the boot order: %v", err)
 	}
 

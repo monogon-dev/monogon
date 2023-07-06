@@ -110,12 +110,12 @@ func SetBootEntry(idx int, be *LoadOption) error {
 
 // SetBootOrder replaces contents of the boot order variable with the order
 // specified in ord.
-func SetBootOrder(ord *BootOrder) error {
+func SetBootOrder(ord BootOrder) error {
 	return Write(ScopeGlobal, "BootOrder", AttrNonVolatile|AttrRuntimeAccess, ord.Marshal())
 }
 
 // GetBootOrder returns the current boot order of the system.
-func GetBootOrder() (*BootOrder, error) {
+func GetBootOrder() (BootOrder, error) {
 	raw, _, err := Read(ScopeGlobal, "BootOrder")
 	if err != nil {
 		return nil, err

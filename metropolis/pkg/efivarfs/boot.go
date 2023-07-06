@@ -154,16 +154,16 @@ func (t *BootOrder) Marshal() []byte {
 }
 
 // UnmarshalBootOrder loads a BootOrder from its binary representation.
-func UnmarshalBootOrder(d []byte) (*BootOrder, error) {
+func UnmarshalBootOrder(d []byte) (BootOrder, error) {
 	if len(d)%2 != 0 {
 		return nil, fmt.Errorf("invalid length: %v bytes", len(d))
 	}
 	l := len(d) / 2
 	out := make(BootOrder, l)
 	for i := 0; i < l; i++ {
-		out[i] = uint16(d[4+2*i]) | uint16(d[4+2*i+1])<<8
+		out[i] = uint16(d[2*i]) | uint16(d[2*i+1])<<8
 	}
-	return &out, nil
+	return out, nil
 }
 
 func append16(d []byte, v uint16) []byte {

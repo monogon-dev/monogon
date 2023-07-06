@@ -124,7 +124,7 @@ func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Ne
 	if err != nil {
 		return fmt.Errorf("error creating EFI boot entry: %w", err)
 	}
-	if err := efivarfs.SetBootOrder(&efivarfs.BootOrder{uint16(bootEntryIdx)}); err != nil {
+	if err := efivarfs.SetBootOrder(efivarfs.BootOrder{uint16(bootEntryIdx)}); err != nil {
 		return fmt.Errorf("error setting EFI boot order: %w", err)
 	}
 	l.Info("Metropolis installation completed")
