@@ -15,11 +15,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"go.etcd.io/etcd/tests/v3/integration"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
@@ -534,11 +537,52 @@ func TestWatchNodesInCluster(t *testing.T) {
 	}
 	fakeNodeID := identity.NodeID(fakeNodePub)
 	fakeNodeKey, _ := nodeEtcdPrefix.Key(fakeNodeID)
+
 	fakeNode := &ppb.Node{
 		PublicKey: fakeNodePub,
 		Roles:     &cpb.NodeRoles{},
+		Status: &cpb.NodeStatus{
+			ExternalAddress: "1.2.3.4",
+			RunningCurator: &cpb.NodeStatus_RunningCurator{
+				Port: 1337,
+			},
+			Timestamp: timestamppb.New(time.Now()),
+		},
+		Clusternet: &cpb.NodeClusterNetworking{
+			WireguardPubkey: "deadbeef",
+			Prefixes: []*cpb.NodeClusterNetworking_Prefix{
+				{
+					Cidr: "10.0.0.0/8",
+				},
+			},
+		},
 	}
+
+	// Check a given node against fakeNode.
+	checkFakeNode := func(n *ipb.Node) bool {
+		t.Helper()
+		okay := true
+		if n.Id != fakeNodeID {
+			t.Errorf("Wanted faked node ID %q, got %q", fakeNodeID, n.Id)
+			okay = false
+		}
+		if diff := cmp.Diff(fakeNode.Status, n.Status, protocmp.Transform()); diff != "" {
+			t.Errorf("Status differs: %s", diff)
+			okay = false
+		}
+		if diff := cmp.Diff(fakeNode.Clusternet, n.Clusternet, protocmp.Transform()); diff != "" {
+			t.Errorf("Clusternet differs: %s", diff)
+			okay = false
+		}
+		if diff := cmp.Diff(fakeNode.Roles, n.Roles, protocmp.Transform()); diff != "" {
+			t.Errorf("Roles differs: %s", diff)
+			okay = false
+		}
+		return okay
+	}
+
 	fakeNodeInit, err := proto.Marshal(fakeNode)
+
 	if err != nil {
 		t.Fatalf("Marshal: %v", err)
 	}
@@ -553,9 +597,7 @@ func TestWatchNodesInCluster(t *testing.T) {
 		if n == nil {
 			continue
 		}
-		if n.Id != fakeNodeID {
-			t.Errorf("Wanted faked node ID %q, got %q", fakeNodeID, n.Id)
-		}
+		checkFakeNode(n)
 		break
 	}
 
@@ -581,6 +623,7 @@ func TestWatchNodesInCluster(t *testing.T) {
 	if n := nodes[fakeNodeID]; n == nil {
 		t.Errorf("Node %q should exist, got %v", fakeNodeID, n)
 	}
+	checkFakeNode(nodes[fakeNodeID])
 	if len(nodes) != 2 {
 		t.Errorf("Exptected two nodes in map, got %d", len(nodes))
 	}

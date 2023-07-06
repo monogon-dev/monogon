@@ -126,11 +126,7 @@ func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, 
 	// TODO(q3k): formalize message limits, set const somewhere.
 	we := &ipb.WatchEvent{}
 	for _, n := range nodes {
-		we.Nodes = append(we.Nodes, &ipb.Node{
-			Id:     n.ID(),
-			Roles:  n.proto().Roles,
-			Status: n.status,
-		})
+		n.appendToEvent(we)
 		if proto.Size(we) > (2 << 20) {
 			if err := srv.Send(we); err != nil {
 				return err
@@ -193,17 +189,23 @@ func nodeValueConverter(key, value []byte) (*nodeAtID, error) {
 	return &res, nil
 }
 
+// appendToId records a node state represented by Node into a Curator
+// WatchEvent.
+func (n *Node) appendToEvent(ev *ipb.WatchEvent) {
+	np := n.proto()
+	ev.Nodes = append(ev.Nodes, &ipb.Node{
+		Id:         n.ID(),
+		Roles:      np.Roles,
+		Status:     np.Status,
+		Clusternet: np.Clusternet,
+	})
+}
+
 // appendToId records a node update represented by nodeAtID into a Curator
 // WatchEvent, either a Node or NodeTombstone.
 func (kv nodeAtID) appendToEvent(ev *ipb.WatchEvent) {
 	if node := kv.value; node != nil {
-		np := node.proto()
-		ev.Nodes = append(ev.Nodes, &ipb.Node{
-			Id:         node.ID(),
-			Roles:      np.Roles,
-			Status:     np.Status,
-			Clusternet: np.Clusternet,
-		})
+		node.appendToEvent(ev)
 	} else {
 		ev.NodeTombstones = append(ev.NodeTombstones, &ipb.WatchEvent_NodeTombstone{
 			NodeId: kv.id,
