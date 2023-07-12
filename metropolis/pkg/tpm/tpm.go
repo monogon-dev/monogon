@@ -286,7 +286,7 @@ func Unseal(data []byte) ([]byte, error) {
 	// Logging this for auditing purposes
 	pcrList := []string{}
 	for _, pcr := range sealedBytes.SealedKey.Pcrs {
-		pcrList = append(pcrList, string(pcr))
+		pcrList = append(pcrList, strconv.FormatUint(uint64(pcr), 10))
 	}
 	tpm.logger.Infof("Attempting to unseal key protected with PCRs %s", strings.Join(pcrList, ","))
 	unsealedKey, err := srk.Unseal(sealedBytes.SealedKey, tpm2tools.UnsealOpts{})
