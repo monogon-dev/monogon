@@ -36,6 +36,7 @@ import (
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	"google.golang.org/grpc"
 	corev1 "k8s.io/api/core/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
@@ -392,6 +393,48 @@ func TestE2EKubernetes(t *testing.T) {
 			return nil
 		}
 		return fmt.Errorf("job still running")
+	})
+	util.TestEventual(t, "Start NodePort test setup", ctx, smallTestTimeout, func(ctx context.Context) error {
+		_, err := clientSet.AppsV1().Deployments("default").Create(ctx, makeHTTPServerDeploymentSpec("nodeport-server"), metav1.CreateOptions{})
+		if err != nil && !kerrors.IsAlreadyExists(err) {
+			return err
+		}
+		_, err = clientSet.CoreV1().Services("default").Create(ctx, makeHTTPServerNodePortService("nodeport-server"), metav1.CreateOptions{})
+		if err != nil && !kerrors.IsAlreadyExists(err) {
+			return err
+		}
+		return nil
+	})
+	util.TestEventual(t, "NodePort accessible from all nodes", ctx, smallTestTimeout, func(ctx context.Context) error {
+		nodes, err := clientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return err
+		}
+		// Use a new client for each attempt
+		hc := http.Client{
+			Timeout: 2 * time.Second,
+			Transport: &http.Transport{
+				Dial: cluster.SOCKSDialer.Dial,
+			},
+		}
+		for _, n := range nodes.Items {
+			var addr string
+			for _, a := range n.Status.Addresses {
+				if a.Type == corev1.NodeInternalIP {
+					addr = a.Address
+				}
+			}
+			u := url.URL{Scheme: "http", Host: addr, Path: "/"}
+			res, err := hc.Get(u.String())
+			if err != nil {
+				return fmt.Errorf("failed getting from node %q: %w", n.Name, err)
+			}
+			if res.StatusCode != http.StatusOK {
+				return fmt.Errorf("getting from node %q: HTTP %d", n.Name, res.StatusCode)
+			}
+			t.Logf("Got response from %q", n.Name)
+		}
+		return nil
 	})
 	if os.Getenv("HAVE_NESTED_KVM") != "" {
 		util.TestEventual(t, "Pod for KVM/QEMU smoke test", ctx, smallTestTimeout, func(ctx context.Context) error {

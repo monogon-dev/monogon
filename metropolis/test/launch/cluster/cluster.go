@@ -579,9 +579,9 @@ type Cluster struct {
 	socketDir   string
 	metroctlDir string
 
-	// socksDialer is used by DialNode to establish connections to nodes via the
+	// SOCKSDialer is used by DialNode to establish connections to nodes via the
 	// SOCKS server ran by nanoswitch.
-	socksDialer proxy.Dialer
+	SOCKSDialer proxy.Dialer
 
 	// authClient is a cached authenticated owner connection to a Curator
 	// instance within the cluster.
@@ -881,7 +881,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		socketDir:   sd,
 		metroctlDir: md,
 
-		socksDialer: socksDialer,
+		SOCKSDialer: socksDialer,
 
 		ctxT: ctxT,
 		ctxC: ctxC,
@@ -1159,7 +1159,7 @@ func (c *Cluster) DialNode(_ context.Context, addr string) (net.Conn, error) {
 	}
 	// Already an IP address?
 	if net.ParseIP(host) != nil {
-		return c.socksDialer.Dial("tcp", addr)
+		return c.SOCKSDialer.Dial("tcp", addr)
 	}
 
 	// Otherwise, expect a node name.
@@ -1168,7 +1168,7 @@ func (c *Cluster) DialNode(_ context.Context, addr string) (net.Conn, error) {
 		return nil, fmt.Errorf("unknown node %q", host)
 	}
 	addr = net.JoinHostPort(node.ManagementAddress, port)
-	return c.socksDialer.Dial("tcp", addr)
+	return c.SOCKSDialer.Dial("tcp", addr)
 }
 
 // GetKubeClientSet gets a Kubernetes client set accessing the Metropolis

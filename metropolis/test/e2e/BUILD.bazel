@@ -21,6 +21,7 @@ localregistry_manifest(
     name = "testimages_manifest",
     images = [
         "//metropolis/test/e2e/selftest:selftest_image",
+        "//metropolis/test/e2e/httpserver:httpserver_image",
         "//metropolis/vm/smoketest:smoketest_image",
     ],
 )
@@ -48,6 +49,7 @@ go_test(
         "//metropolis/test/util",
         "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/api/errors",
         "@io_k8s_apimachinery//pkg/api/resource",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
         "@io_k8s_kubernetes//pkg/api/v1/pod",
