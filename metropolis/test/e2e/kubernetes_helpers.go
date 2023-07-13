@@ -86,8 +86,8 @@ func makeSelftestSpec(name string) *batchv1.Job {
 					Containers: []corev1.Container{
 						{
 							Name:            "test",
-							ImagePullPolicy: corev1.PullNever,
-							Image:           "bazel/metropolis/test/e2e/selftest:selftest_image",
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							Image:           "test.monogon.internal/metropolis/test/e2e/selftest/selftest_image",
 						},
 					},
 					RestartPolicy: corev1.RestartPolicyOnFailure,

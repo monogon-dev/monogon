@@ -39,9 +39,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 
+	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/pkg/localregistry"
 	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/launch/cluster"
@@ -69,9 +71,15 @@ func TestE2ECore(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), globalTestTimeout)
 	defer cancel()
 
+	lr, err := localregistry.FromBazelManifest(datafile.MustGet("metropolis/test/e2e/testimages_manifest.prototxt"))
+	if err != nil {
+		t.Fatalf("Creating test image registry failed: %v", err)
+	}
+
 	// Launch cluster.
 	clusterOptions := cluster.ClusterOptions{
-		NumNodes: 2,
+		NumNodes:      2,
+		LocalRegistry: lr,
 	}
 	cluster, err := cluster.LaunchCluster(ctx, clusterOptions)
 	if err != nil {
@@ -182,9 +190,15 @@ func TestE2EKubernetes(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), globalTestTimeout)
 	defer cancel()
 
+	lr, err := localregistry.FromBazelManifest(datafile.MustGet("metropolis/test/e2e/testimages_manifest.prototxt"))
+	if err != nil {
+		t.Fatalf("Creating test image registry failed: %v", err)
+	}
+
 	// Launch cluster.
 	clusterOptions := cluster.ClusterOptions{
-		NumNodes: 2,
+		NumNodes:      2,
+		LocalRegistry: lr,
 	}
 	cluster, err := cluster.LaunchCluster(ctx, clusterOptions)
 	if err != nil {
@@ -374,7 +388,7 @@ func TestE2EKubernetes(t *testing.T) {
 					Containers: []corev1.Container{{
 						Name:            "vm-smoketest",
 						ImagePullPolicy: corev1.PullNever,
-						Image:           "bazel/metropolis/vm/smoketest:smoketest_container",
+						Image:           "test.monogon.internal/metropolis/vm/smoketest:smoketest_container",
 						Resources: corev1.ResourceRequirements{
 							Limits: corev1.ResourceList{
 								"devices.monogon.dev/kvm": *resource.NewQuantity(1, ""),

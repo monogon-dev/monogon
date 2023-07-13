@@ -12,5 +12,5 @@ go_image(
     name = "selftest_image",
     embed = [":selftest"],
     pure = "on",
-    visibility = ["//metropolis/node:__pkg__"],
+    visibility = ["//metropolis/test/e2e:__pkg__"],
 )

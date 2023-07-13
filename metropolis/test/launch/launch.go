@@ -114,6 +114,21 @@ func ConflictFreePortMap(ports []uint16) (PortMap, error) {
 	return portMap, nil
 }
 
+// GuestServiceMap maps an IP/port combination inside the virtual guest network
+// to a TCPAddr reachable by the host. If the guest connects to the virtual
+// address/port, this connection gets forwarded to the host.
+type GuestServiceMap map[*net.TCPAddr]net.TCPAddr
+
+// ToQemuForwards generates QEMU guestfwd values (https://qemu.weilnetz.de/doc/qemu-
+// doc.html#:~:text=guestfwd=) for all mapped addresses.
+func (p GuestServiceMap) ToQemuForwards() []string {
+	var guestfwdOptions []string
+	for guestAddr, hostAddr := range p {
+		guestfwdOptions = append(guestfwdOptions, fmt.Sprintf("tcp:%s-tcp:%s", guestAddr.String(), hostAddr.String()))
+	}
+	return guestfwdOptions
+}
+
 // NewSocketPair creates a new socket pair. By connecting both ends to different
 // instances you can connect them with a virtual "network cable". The ends can be
 // passed into the ConnectToSocket option.
@@ -164,6 +179,10 @@ type MicroVMOptions struct {
 	// PortMap contains ports that are mapped to the host through the built-in SLIRP
 	// network interface.
 	PortMap PortMap
+
+	// GuestServiceMap contains TCP services made available in the guest virtual
+	// network which are running on the host.
+	GuestServiceMap GuestServiceMap
 
 	// DisableHostNetworkInterface disables the SLIRP-backed host network interface
 	// that is normally the first network interface. If this is set PortMap is ignored.
@@ -256,6 +275,9 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 		}
 		if opts.PortMap != nil {
 			qemuNetConfig["hostfwd"] = opts.PortMap.ToQemuForwards()
+		}
+		if opts.GuestServiceMap != nil {
+			qemuNetConfig["guestfwd"] = opts.GuestServiceMap.ToQemuForwards()
 		}
 
 		baseArgs = append(baseArgs, "-netdev", qemuNetConfig.ToOption(qemuNetType),

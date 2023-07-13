@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -40,6 +41,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
+	"source.monogon.dev/metropolis/pkg/localregistry"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	"source.monogon.dev/metropolis/test/launch"
@@ -148,7 +150,7 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 
 	// Create the TPM state directory and initialize all files required by swtpm.
 	tpmt := filepath.Join(stdp, "tpm")
-	if err := os.Mkdir(tpmt, 0755); err != nil {
+	if err := os.Mkdir(tpmt, 0o755); err != nil {
 		return nil, fmt.Errorf("while creating the TPM directory: %w", err)
 	}
 	tpms, err := datafile.ResolveRunfile("metropolis/node/tpm")
@@ -275,7 +277,8 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 	tpmSocketPath := filepath.Join(r.sd, "tpm-socket")
 	fwVarPath := filepath.Join(r.ld, "OVMF_VARS.fd")
 	storagePath := filepath.Join(r.ld, "node.img")
-	qemuArgs := []string{"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "4096",
+	qemuArgs := []string{
+		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "4096",
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
 		"-drive", "if=pflash,format=raw,readonly,file=external/edk2/OVMF_CODE.fd",
 		"-drive", "if=pflash,format=raw,file=" + fwVarPath,
@@ -286,7 +289,8 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 		"-tpmdev", "emulator,id=tpm0,chardev=chrtpm",
 		"-device", "tpm-tis,tpmdev=tpm0",
 		"-device", "virtio-rng-pci",
-		"-serial", "stdio"}
+		"-serial", "stdio",
+	}
 
 	if !options.AllowReboot {
 		qemuArgs = append(qemuArgs, "-no-reboot")
@@ -298,7 +302,7 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 		if err != nil {
 			return fmt.Errorf("failed to encode node paraeters: %w", err)
 		}
-		if err := os.WriteFile(parametersPath, parametersRaw, 0644); err != nil {
+		if err := os.WriteFile(parametersPath, parametersRaw, 0o644); err != nil {
 			return fmt.Errorf("failed to write node parameters: %w", err)
 		}
 		qemuArgs = append(qemuArgs, "-fw_cfg", "name=dev.monogon.metropolis/parameters.pb,file="+parametersPath)
@@ -495,6 +499,11 @@ type ClusterOptions struct {
 	// bootstrapping them. The nodes' address information in Cluster.Nodes will be
 	// incomplete.
 	LeaveNodesNew bool
+
+	// Optional local registry which will be made available to the cluster to
+	// pull images from. This is a more efficient alternative to preseeding all
+	// images used for testing.
+	LocalRegistry *localregistry.Server
 }
 
 // Cluster is the running Metropolis cluster launched using the LaunchCluster
@@ -638,7 +647,7 @@ func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certif
 }
 
 func NewSerialFileLogger(p string) (io.ReadWriter, error) {
-	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE, 0600)
+	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE, 0o600)
 	if err != nil {
 		return nil, err
 	}
@@ -688,7 +697,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	// Make a list of channels that will be populated by all running node qemu
 	// processes.
 	done := make([]chan error, opts.NumNodes)
-	for i, _ := range done {
+	for i := range done {
 		done[i] = make(chan error, 1)
 	}
 
@@ -732,6 +741,31 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		done[0] <- err
 	}()
 
+	localRegistryAddr := net.TCPAddr{
+		IP:   net.IPv4(10, 42, 0, 82),
+		Port: 5000,
+	}
+
+	var guestSvcMap launch.GuestServiceMap
+	if opts.LocalRegistry != nil {
+		l, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1)})
+		if err != nil {
+			ctxC()
+			return nil, fmt.Errorf("failed to create TCP listener for local registry: %w", err)
+		}
+		s := http.Server{
+			Handler: opts.LocalRegistry,
+		}
+		go s.Serve(l)
+		go func() {
+			<-ctxT.Done()
+			s.Close()
+		}()
+		guestSvcMap = launch.GuestServiceMap{
+			&localRegistryAddr: *l.Addr().(*net.TCPAddr),
+		}
+	}
+
 	// Launch nanoswitch.
 	portMap, err := launch.ConflictFreePortMap(ClusterPorts)
 	if err != nil {
@@ -757,6 +791,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			InitramfsPath:          "metropolis/test/nanoswitch/initramfs.cpio.lz4",
 			ExtraNetworkInterfaces: switchPorts,
 			PortMap:                portMap,
+			GuestServiceMap:        guestSvcMap,
 			SerialPort:             serialPort,
 			PcapDump:               path.Join(ld, "nanoswitch.pcap"),
 		}); err != nil {
@@ -1108,7 +1143,7 @@ func (c *Cluster) GetKubeClientSet() (kubernetes.Interface, error) {
 	}
 
 	host := net.JoinHostPort(c.NodeIDs[0], node.KubernetesAPIWrappedPort.PortString())
-	var clientConfig = rest.Config{
+	clientConfig := rest.Config{
 		Host: host,
 		TLSClientConfig: rest.TLSClientConfig{
 			// TODO(q3k): use CA certificate

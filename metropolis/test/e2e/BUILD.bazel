@@ -1,4 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//metropolis/pkg/localregistry:def.bzl", "localregistry_manifest")
 
 go_library(
     name = "e2e",
@@ -16,11 +17,20 @@ go_library(
     ],
 )
 
+localregistry_manifest(
+    name = "testimages_manifest",
+    images = [
+        "//metropolis/test/e2e/selftest:selftest_image",
+        "//metropolis/vm/smoketest:smoketest_container",
+    ],
+)
+
 go_test(
     name = "e2e_test",
     size = "large",
     srcs = ["main_test.go"],
     data = [
+        ":testimages_manifest",
         "//metropolis/node:image",
         "//metropolis/node:swtpm_data",
         "//third_party/edk2:firmware",
@@ -28,9 +38,11 @@ go_test(
     embed = [":e2e"],
     rundir = ".",
     deps = [
+        "//metropolis/cli/pkg/datafile",
         "//metropolis/node",
         "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
+        "//metropolis/pkg/localregistry",
         "//metropolis/proto/api",
         "//metropolis/test/launch",
         "//metropolis/test/launch/cluster",
