@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package monogon.metropolis.pkg.localregistry;
+
+option go_package = "source.monogon.dev/metropolis/pkg/localregistry/spec";
+
+// BlobDescriptor is metadata for a single registry blob. Analogous to a
+// distribution.Descriptor in Go.
+message BlobDescriptor {
+    // Path to the file in the build directory.
+    string file_path = 1;
+    // Path to a file containing the SHA256 digest of the blob.
+    string digest_path = 2;
+}
+
+// Single image metadata
+message Image {
+    // Name of the image (no domain or tag, just slash-separated path)
+    string name = 1;
+    // Config blob
+    BlobDescriptor config = 2;
+    // Layer blobs in order
+    repeated BlobDescriptor layers = 3;
+}
+
+// Main message
+message Manifest {
+    // List of images for the local registry
+    repeated Image images = 1;
+}
