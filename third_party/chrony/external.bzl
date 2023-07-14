@@ -22,7 +22,7 @@ def chrony_external(name):
 
     http_archive(
         name = name,
-        sha256 = "61a1b0879432695735a1e2a14e5d1ae499d3be15099c767501fbe695f46861da",
+        sha256 = "ed76f2d3f9347ac6221a91ad4bd553dd0565ac188cd7490d0801d08f7171164c",
         build_file = "@//third_party/chrony:chrony.bzl",
         strip_prefix = "chrony-" + version,
         patch_args = ["-p1"],
@@ -30,5 +30,5 @@ def chrony_external(name):
             "//third_party/chrony/patches:disable_defaults.patch",
             "//third_party/chrony/patches:support_fixed_uids.patch",
         ],
-        urls = ["https://git.tuxfamily.org/chrony/chrony.git/snapshot/chrony-%s.tar.gz" % version],
+        urls = ["https://download.tuxfamily.org/chrony/chrony-%s.tar.gz" % version],
     )
