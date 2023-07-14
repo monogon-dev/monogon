@@ -32,7 +32,7 @@ The following distributions are known to work:
 - Ubuntu >= 20.04
 - Debian >= 11
 - RHEL / Alma / Rocky >= 8.4
-- NixOS >= 22.05 (see below)
+- NixOS >= 23.05 (see below)
 
 You can use this snippet to install the official Bazelisk release binary to `/usr/local/bin`:
 
@@ -76,8 +76,11 @@ be built and tested without root privileges or other dangerous capabilities.
 
 ### NixOS
 
-Bazelisk and rules_go does not work on NixOS since its prebuilt binaries are dynamically linked,
-so we cannot bootstrap the sandbox. We recommend building in a "normal" container.
+We fully support building on NixOS, and we provide a `shell.nix` file to make it easy:
+
+    nix-shell --pure
+
+(just don't look at it too closely unless you want toolchain-themed nightmares)
 
 ## IntelliJ
 
