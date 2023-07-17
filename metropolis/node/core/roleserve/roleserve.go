@@ -167,6 +167,7 @@ func New(c Config) *Service {
 
 	s.metrics = &workerMetrics{
 		curatorConnection: &s.CuratorConnection,
+		localRoles:        &s.localRoles,
 	}
 
 	return s

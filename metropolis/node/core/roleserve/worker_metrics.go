@@ -3,9 +3,13 @@ package roleserve
 import (
 	"context"
 
+	cpb "source.monogon.dev/metropolis/proto/common"
+
 	"source.monogon.dev/metropolis/node/core/metrics"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 )
 
 // workerMetrics runs the Metrics Service, which runs local Prometheus collectors
@@ -14,6 +18,7 @@ import (
 // over HTTPS using the Cluster CA.
 type workerMetrics struct {
 	curatorConnection *memory.Value[*curatorConnection]
+	localRoles        *memory.Value[*cpb.NodeRoles]
 }
 
 func (s *workerMetrics) run(ctx context.Context) error {
@@ -29,6 +34,8 @@ func (s *workerMetrics) run(ctx context.Context) error {
 
 	svc := metrics.Service{
 		Credentials: cc.credentials,
+		Curator:     ipb.NewCuratorClient(cc.conn),
+		LocalRoles:  s.localRoles,
 	}
 	return svc.Run(ctx)
 }
