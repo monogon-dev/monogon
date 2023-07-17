@@ -1,6 +1,6 @@
 diff --git a/pkg/registry/core/service/portallocator/allocator.go b/pkg/registry/core/service/portallocator/allocator.go
 --- a/pkg/registry/core/service/portallocator/allocator.go	(revision f66044f4361b9f1f96f0053dd46cb7dce5e990a8)
-+++ b/pkg/registry/core/service/portallocator/allocator.go	(revision f42349f2a3ed203fc06462b9f28e90c0b857cb42)
++++ b/pkg/registry/core/service/portallocator/allocator.go	(revision bdd789d982712179c6a849ceed7f12e063b3fce3)
 @@ -25,6 +25,7 @@
  	"k8s.io/kubernetes/pkg/registry/core/service/allocator"
 
@@ -22,3 +22,34 @@ diff --git a/pkg/registry/core/service/portallocator/allocator.go b/pkg/registry
  	return a, err
  }
 
+diff --git a/pkg/registry/core/service/portallocator/controller/repair.go b/pkg/registry/core/service/portallocator/controller/repair.go
+--- a/pkg/registry/core/service/portallocator/controller/repair.go	(revision f66044f4361b9f1f96f0053dd46cb7dce5e990a8)
++++ b/pkg/registry/core/service/portallocator/controller/repair.go	(revision bdd789d982712179c6a849ceed7f12e063b3fce3)
+@@ -21,6 +21,8 @@
+ 	"fmt"
+ 	"time"
+
++	"source.monogon.dev/metropolis/node"
++
+ 	corev1 "k8s.io/api/core/v1"
+ 	"k8s.io/apimachinery/pkg/api/errors"
+ 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+@@ -123,6 +126,18 @@
+ 		return fmt.Errorf("unable to refresh the port block: %v", err)
+ 	}
+
++	// pretend that metropolis system ports are in use by an actual service
++	var metropolisService corev1.Service
++	for _, p := range node.SystemPorts {
++		metropolisService.Spec.Ports = append(metropolisService.Spec.Ports, corev1.ServicePort{
++			Name:     p.String(),
++			Protocol: corev1.ProtocolTCP,
++			Port:     int32(p),
++			NodePort: int32(p),
++		})
++	}
++	list.Items = append(list.Items, metropolisService)
++
+ 	rebuilt, err := portallocator.NewInMemory(c.portRange)
+ 	if err != nil {
+ 		return fmt.Errorf("unable to create port allocator: %v", err)
