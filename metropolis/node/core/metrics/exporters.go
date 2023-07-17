@@ -36,6 +36,10 @@ var DefaultExporters = []Exporter{
 		Executable: "/metrics/bin/node_exporter",
 		Arguments: []string{
 			"--web.listen-address=127.0.0.1:" + node.MetricsNodeListenerPort.PortString(),
+			"--collector.buddyinfo",
+			"--collector.zoneinfo",
+			"--collector.tcpstat",
+			"--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|data/kubernetes/kubelet/pods/.+|tmp/.+|ephermal/containerd/.+)($|/)",
 		},
 	},
 }
