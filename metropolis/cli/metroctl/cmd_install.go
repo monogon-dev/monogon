@@ -25,6 +25,7 @@ var installCmd = &cobra.Command{
 }
 
 var bundlePath = installCmd.PersistentFlags().StringP("bundle", "b", "", "Path to the Metropolis bundle to be installed")
+var installerPath = installCmd.PersistentFlags().StringP("installer", "i", "", "Path to the Metropolis installer to use when installing")
 
 var genusbCmd = &cobra.Command{
 	Use:     "genusb target",
@@ -43,8 +44,36 @@ var bootstrap bool
 var bootstrapTPMMode string
 var bootstrapStorageSecurityPolicy string
 
-//go:embed metropolis/installer/kernel.efi
-var installer []byte
+type externalFile struct {
+	reader io.Reader
+	size   uint64
+}
+
+func external(name, datafilePath string, flag *string) *externalFile {
+	if flag == nil || *flag == "" {
+		df, err := datafile.Get(datafilePath)
+		if err != nil {
+			log.Fatalf("No %s specified", name)
+		}
+		return &externalFile{
+			reader: bytes.NewReader(df),
+			size:   uint64(len(df)),
+		}
+	}
+
+	f, err := os.Open(*bundlePath)
+	if err != nil {
+		log.Fatalf("Failed to open specified %s: %v", name, err)
+	}
+	st, err := f.Stat()
+	if err != nil {
+		log.Fatalf("Failed to stat specified %s: %v", name, err)
+	}
+	return &externalFile{
+		reader: f,
+		size:   uint64(st.Size()),
+	}
+}
 
 func doGenUSB(cmd *cobra.Command, args []string) {
 	var tpmMode cpb.ClusterConfiguration_TPMMode
@@ -74,30 +103,8 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 		log.Fatalf("Invalid --bootstrap-storage-security (must be one of: permissive, needs-encryption, needs-encryption-and-authentication, needs-insecure)")
 	}
 
-	var bundleReader io.Reader
-	var bundleSize uint64
-	if bundlePath == nil || *bundlePath == "" {
-		// Attempt Bazel runfile bundle if not explicitly set
-		bundle, err := datafile.Get("metropolis/node/bundle.zip")
-		if err != nil {
-			log.Fatalf("No bundle specified and fallback to runfiles failed: %v", err)
-		}
-		bundleReader = bytes.NewReader(bundle)
-		bundleSize = uint64(len(bundle))
-	} else {
-		// Load bundle from specified path
-		bundle, err := os.Open(*bundlePath)
-		if err != nil {
-			log.Fatalf("Failed to open specified bundle: %v", err)
-		}
-		bundleStat, err := bundle.Stat()
-		if err != nil {
-			log.Fatalf("Failed to stat specified bundle: %v", err)
-		}
-		bundleReader = bundle
-		bundleSize = uint64(bundleStat.Size())
-	}
-
+	bundle := external("bundle", "metropolis/node/bundle.zip", bundlePath)
+	installer := external("installer", "metropolis/installer/kernel.efi", installerPath)
 	ctx := clicontext.WithInterrupt(context.Background())
 
 	// TODO(lorenz): Have a key management story for this
@@ -148,11 +155,11 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 
 	installerImageArgs := core.MakeInstallerImageArgs{
 		TargetPath:    args[0],
-		Installer:     bytes.NewReader(installer),
-		InstallerSize: uint64(len(installer)),
+		Installer:     installer.reader,
+		InstallerSize: installer.size,
 		NodeParams:    params,
-		Bundle:        bundleReader,
-		BundleSize:    bundleSize,
+		Bundle:        bundle.reader,
+		BundleSize:    bundle.size,
 	}
 
 	log.Printf("Generating installer image (this can take a while, see issues/92).")

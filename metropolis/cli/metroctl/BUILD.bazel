@@ -18,10 +18,8 @@ go_library(
         "table_node.go",
     ],
     data = [
-        "//metropolis/node:bundle",
-    ],
-    embedsrcs = [
         "//metropolis/installer:kernel",  #keep
+        "//metropolis/node:bundle",
     ],
     importpath = "source.monogon.dev/metropolis/cli/metroctl",
     visibility = ["//visibility:private"],
