@@ -8,7 +8,6 @@ go_library(
     ],
     importpath = "source.monogon.dev/metropolis/node/core/identity",
     visibility = ["//visibility:public"],
-    deps = ["//metropolis/node/core/localstorage"],
 )
 
 go_test(

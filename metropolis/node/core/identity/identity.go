@@ -7,8 +7,6 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
-
-	"source.monogon.dev/metropolis/node/core/localstorage"
 )
 
 // Node is the public part of the credentials of a node. They are
@@ -110,14 +108,19 @@ func (n *NodeCredentials) TLSCredentials() tls.Certificate {
 	}
 }
 
+type PKIDirectory interface {
+	ReadAll() (ca, cert *x509.Certificate, key ed25519.PrivateKey, err error)
+	WriteAll(cert []byte, key ed25519.PrivateKey, ca []byte) error
+}
+
 // Save stores the given node credentials in local storage.
-func (n *NodeCredentials) Save(d *localstorage.PKIDirectory) error {
+func (n *NodeCredentials) Save(d PKIDirectory) error {
 	return d.WriteAll(n.node.Raw, n.private, n.ca.Raw)
 }
 
 // Read initializes NodeCredentials' contents with the data stored in the
 // PKIDirectory d. It may return an I/O error, or a parsing error.
-func (n *NodeCredentials) Read(d *localstorage.PKIDirectory) error {
+func (n *NodeCredentials) Read(d PKIDirectory) error {
 	ca, cert, key, err := d.ReadAll()
 	if err != nil {
 		return err
