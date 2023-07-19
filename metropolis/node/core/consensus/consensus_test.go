@@ -21,12 +21,16 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"fmt"
+	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/test/util"
 )
 
 type boilerplate struct {
@@ -72,6 +76,43 @@ func prep(t *testing.T) *boilerplate {
 func (b *boilerplate) close() {
 	b.ctxC()
 	os.RemoveAll(b.tmpdir)
+}
+
+func TestEtcdMetrics(t *testing.T) {
+	b := prep(t)
+	defer b.close()
+	etcd := New(Config{
+		Data:           &b.root.Data.Etcd,
+		Ephemeral:      &b.root.Ephemeral.Consensus,
+		NodePrivateKey: b.privkey,
+		testOverrides: testOverrides{
+			externalPort:    2345,
+			etcdMetricsPort: 4100,
+		},
+	})
+
+	ctxC, _ := supervisor.TestHarness(t, etcd.Run)
+	defer ctxC()
+
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	util.TestEventual(t, "metrics-reachable", ctx, 10*time.Second, func(ctx context.Context) error {
+		req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:4100/metrics", nil)
+		if err != nil {
+			return err
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return fmt.Errorf("Get: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("StatusCode: wanted 200, got %d", resp.StatusCode)
+		}
+		return nil
+	})
 }
 
 func TestBootstrap(t *testing.T) {
@@ -214,6 +255,7 @@ func TestJoin(t *testing.T) {
 		testOverrides: testOverrides{
 			externalPort:    3000,
 			externalAddress: "localhost",
+			etcdMetricsPort: 3100,
 		},
 	})
 	ctxC, _ := supervisor.TestHarness(t, etcd.Run)
@@ -253,6 +295,7 @@ func TestJoin(t *testing.T) {
 		testOverrides: testOverrides{
 			externalPort:    3001,
 			externalAddress: "localhost",
+			etcdMetricsPort: 3101,
 		},
 	})
 	ctxC, _ = supervisor.TestHarness(t, etcd2.Run)

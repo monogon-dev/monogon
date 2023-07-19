@@ -48,6 +48,7 @@ go_test(
         "//metropolis/pkg/logbuffer",
         "//metropolis/pkg/logtree",
         "//metropolis/pkg/supervisor",
+        "//metropolis/test/util",
         "@com_github_google_go_cmp//cmp",
     ],
 )

@@ -75,6 +75,8 @@ type testOverrides struct {
 	externalPort int
 	// externalAddress overrides the address of the node, which is usually its ID.
 	externalAddress string
+	// etcdMetricsPort overrides the default etcd metrics port used by the node.
+	etcdMetricsPort int
 }
 
 // build takes a Config and returns an etcd embed.Config.
@@ -94,6 +96,10 @@ func (c *Config) build(enablePeers bool) *embed.Config {
 		host = c.testOverrides.externalAddress
 		extraNames = append(extraNames, host)
 	}
+	etcdPort := int(node.MetricsEtcdListenerPort)
+	if p := c.testOverrides.etcdMetricsPort; p != 0 {
+		etcdPort = p
+	}
 
 	cfg := embed.NewConfig()
 
@@ -102,6 +108,9 @@ func (c *Config) build(enablePeers bool) *embed.Config {
 	cfg.InitialClusterToken = "METROPOLIS"
 	cfg.Logger = "zap"
 	cfg.LogOutputs = []string{c.Ephemeral.ServerLogsFIFO.FullPath()}
+	cfg.ListenMetricsUrls = []url.URL{
+		{Scheme: "http", Host: net.JoinHostPort("127.0.0.1", fmt.Sprintf("%d", etcdPort))},
+	}
 
 	cfg.Dir = c.Data.Data.FullPath()
 

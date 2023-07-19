@@ -42,6 +42,10 @@ var DefaultExporters = []Exporter{
 			"--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|data/kubernetes/kubelet/pods/.+|tmp/.+|ephermal/containerd/.+)($|/)",
 		},
 	},
+	{
+		Name: "etcd",
+		Port: node.MetricsEtcdListenerPort,
+	},
 }
 
 // forward a given HTTP request to this exporter.

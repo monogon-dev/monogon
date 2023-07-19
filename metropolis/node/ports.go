@@ -47,6 +47,10 @@ const (
 	// runs, bound to 127.0.0.1. The Metrics Service proxies traffic to it from the
 	// public MetricsPort.
 	MetricsNodeListenerPort Port = 7841
+	// MetricsEtcdListenerPort is the TCP port on which the etcd exporter
+	// runs, bound to 127.0.0.1. The Metrics Service proxies traffic to it from the
+	// public MetricsPort.
+	MetricsEtcdListenerPort Port = 7842
 	// KubernetesAPIPort is the TCP port on which the Kubernetes API is
 	// exposed.
 	KubernetesAPIPort Port = 6443
@@ -70,6 +74,7 @@ var SystemPorts = []Port{
 	NodeManagement,
 	MetricsPort,
 	MetricsNodeListenerPort,
+	MetricsEtcdListenerPort,
 	KubernetesAPIPort,
 	KubernetesAPIWrappedPort,
 	KubernetesWorkerLocalAPIPort,
