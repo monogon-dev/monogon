@@ -1,4 +1,18 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load(":defs.bzl", "buildkind")
+
+buildkind(
+    name = "buildkind",
+    build_setting_default = "full",
+)
+
+# True if user requested a lite build via --//metropolis/cli/metroctl:buildkind=lite .
+config_setting(
+    name = "buildkind_lite",
+    flag_values = {
+        ":buildkind": "lite",
+    },
+)
 
 go_library(
     name = "metroctl_lib",
@@ -17,10 +31,13 @@ go_library(
         "table.go",
         "table_node.go",
     ],
-    data = [
-        "//metropolis/installer:kernel",  #keep
-        "//metropolis/node:bundle",
-    ],
+    data = select({
+        ":buildkind_lite": [],
+        "//conditions:default": [
+            "//metropolis/installer:kernel",
+            "//metropolis/node:bundle",
+        ],
+    }),
     importpath = "source.monogon.dev/metropolis/cli/metroctl",
     visibility = ["//visibility:private"],
     deps = [
