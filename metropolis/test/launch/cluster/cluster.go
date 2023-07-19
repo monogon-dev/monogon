@@ -35,6 +35,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
+	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
+
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	"source.monogon.dev/metropolis/node"
@@ -42,8 +45,6 @@ import (
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/pkg/localregistry"
-	apb "source.monogon.dev/metropolis/proto/api"
-	cpb "source.monogon.dev/metropolis/proto/common"
 	"source.monogon.dev/metropolis/test/launch"
 )
 
@@ -114,6 +115,7 @@ var NodePorts = []node.Port{
 	node.KubernetesAPIWrappedPort,
 	node.CuratorServicePort,
 	node.DebuggerPort,
+	node.MetricsPort,
 }
 
 // setupRuntime creates the node's QEMU runtime directory, together with all
