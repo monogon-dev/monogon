@@ -110,6 +110,10 @@ func (s *Service) Run(ctx context.Context) error {
 
 	// Start all exporters as sub-runnables.
 	for _, exporter := range s.Exporters {
+		if exporter.Executable == "" {
+			continue
+		}
+
 		cmd := exec.CommandContext(ctx, exporter.Executable, exporter.Arguments...)
 		err := supervisor.Run(ctx, exporter.Name, func(ctx context.Context) error {
 			return supervisor.RunCommand(ctx, cmd)
@@ -117,7 +121,6 @@ func (s *Service) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("running %s failed: %w", exporter.Name, err)
 		}
-
 	}
 
 	// And register all exporter forwarding functions on a mux.
