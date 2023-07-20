@@ -1,11 +1,14 @@
 package metrics
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
+
+	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/pkg/logtree"
@@ -21,6 +24,10 @@ type Exporter struct {
 	Name string
 	// Port on which this exporter will be running.
 	Port node.Port
+	// ServerName used to verify the tls connection.
+	ServerName string
+	// TLSConfigFunc is used to configure tls authentication
+	TLSConfigFunc func(*Service, *Exporter) *tls.Config
 	// Executable to run to start the exporter.
 	Executable string
 	// Arguments to start the exporter. The exporter should listen at 127.0.0.1 and
@@ -46,10 +53,28 @@ var DefaultExporters = []Exporter{
 		Name: "etcd",
 		Port: node.MetricsEtcdListenerPort,
 	},
+	{
+		Name:          "kubernetes-scheduler",
+		Port:          constants.KubeSchedulerPort,
+		ServerName:    "kube-scheduler.local",
+		TLSConfigFunc: (*Service).kubeTLSConfig,
+	},
+	{
+		Name:          "kubernetes-controller-manager",
+		Port:          constants.KubeControllerManagerPort,
+		ServerName:    "kube-controller-manager.local",
+		TLSConfigFunc: (*Service).kubeTLSConfig,
+	},
+}
+
+func (s *Service) kubeTLSConfig(e *Exporter) *tls.Config {
+	c := s.KubeTLSConfig.Clone()
+	c.ServerName = e.ServerName
+	return c
 }
 
 // forward a given HTTP request to this exporter.
-func (e *Exporter) forward(logger logtree.LeveledLogger, w http.ResponseWriter, r *http.Request) {
+func (e *Exporter) forward(s *Service, logger logtree.LeveledLogger, w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	outreq := r.Clone(ctx)
 
@@ -57,6 +82,12 @@ func (e *Exporter) forward(logger logtree.LeveledLogger, w http.ResponseWriter, 
 		Scheme: "http",
 		Host:   net.JoinHostPort("127.0.0.1", e.Port.PortString()),
 		Path:   "/metrics",
+	}
+
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	if e.TLSConfigFunc != nil {
+		outreq.URL.Scheme = "https"
+		transport.TLSClientConfig = e.TLSConfigFunc(s, e)
 	}
 	logger.V(1).Infof("%s: forwarding %s to %s", r.RemoteAddr, r.URL.String(), outreq.URL.String())
 
@@ -66,7 +97,7 @@ func (e *Exporter) forward(logger logtree.LeveledLogger, w http.ResponseWriter, 
 	if outreq.Body != nil {
 		defer outreq.Body.Close()
 	}
-	res, err := http.DefaultTransport.RoundTrip(outreq)
+	res, err := transport.RoundTrip(outreq)
 	if err != nil {
 		logger.Errorf("%s: forwarding to %q failed: %v", r.RemoteAddr, e.Name, err)
 		w.WriteHeader(502)

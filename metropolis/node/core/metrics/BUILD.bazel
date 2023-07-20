@@ -16,6 +16,7 @@ go_library(
         "//metropolis/pkg/logtree",
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/common",
+        "@io_k8s_kubernetes//cmd/kubeadm/app/constants",
     ],
 )
 

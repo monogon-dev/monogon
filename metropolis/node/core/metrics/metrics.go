@@ -44,6 +44,10 @@ type Service struct {
 	// LocalRoles contains the local node roles which gets listened on and
 	// is required to decide whether or not to start the discovery routine
 	LocalRoles *memory.Value[*cpb.NodeRoles]
+	// KubeTLSConfig provides the tls.Config for authenticating against kubernetes
+	// services.
+	KubeTLSConfig *tls.Config
+
 	// List of Exporters to run and to forward HTTP requests to. If not set, defaults
 	// to DefaultExporters.
 	Exporters []Exporter
@@ -130,7 +134,7 @@ func (s *Service) Run(ctx context.Context) error {
 		exporter := exporter
 
 		mux.HandleFunc(exporter.externalPath(), func(w http.ResponseWriter, r *http.Request) {
-			exporter.forward(logger, w, r)
+			exporter.forward(s, logger, w, r)
 		})
 
 		logger.Infof("Registered exporter %q", exporter.Name)
