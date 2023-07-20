@@ -50,6 +50,8 @@ go_test(
     name = "roleserve_test",
     srcs = ["worker_statuspush_test.go"],
     embed = [":roleserve"],
+    # TODO: https://github.com/monogon-dev/monogon/issues/250
+    flaky = True,
     deps = [
         "//metropolis/node",
         "//metropolis/node/core/consensus",
