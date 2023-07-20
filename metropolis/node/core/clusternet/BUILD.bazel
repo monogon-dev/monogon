@@ -41,11 +41,9 @@ go_test(
         "//metropolis/pkg/event/memory",
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/common",
+        "//metropolis/test/util",
         "@com_zx2c4_golang_wireguard_wgctrl//:wgctrl",
         "@com_zx2c4_golang_wireguard_wgctrl//wgtypes",
-        "@org_golang_google_grpc//:go_default_library",
-        "@org_golang_google_grpc//credentials/insecure",
-        "@org_golang_google_grpc//test/bufconn",
     ],
 )
 

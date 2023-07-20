@@ -3,14 +3,22 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "util",
     srcs = [
+        "curator.go",
         "rpc.go",
         "runners.go",
     ],
     importpath = "source.monogon.dev/metropolis/test/util",
     visibility = ["//metropolis:__subpackages__"],
     deps = [
+        "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/identity",
+        "//metropolis/pkg/event/memory",
         "//metropolis/pkg/pki",
+        "//metropolis/proto/common",
         "//metropolis/test/launch",
+        "@com_zx2c4_golang_wireguard_wgctrl//wgtypes",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//credentials/insecure",
+        "@org_golang_google_grpc//test/bufconn",
     ],
 )

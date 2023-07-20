@@ -1,7 +1,6 @@
 package clusternet
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"os"
@@ -12,9 +11,6 @@ import (
 
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/test/bufconn"
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/localstorage"
@@ -22,100 +18,10 @@ import (
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/test/util"
 
 	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
-	cpb "source.monogon.dev/metropolis/proto/common"
 )
-
-// testCurator is a shim Curator implementation that serves pending Watch
-// requests based on data submitted to a channel.
-type testCurator struct {
-	apb.UnimplementedCuratorServer
-
-	watchC    chan *apb.WatchEvent
-	updateReq memory.Value[*apb.UpdateNodeClusterNetworkingRequest]
-}
-
-// Watch implements a minimum Watch which just returns all nodes at once.
-func (t *testCurator) Watch(_ *apb.WatchRequest, srv apb.Curator_WatchServer) error {
-	ctx := srv.Context()
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case ev := <-t.watchC:
-			if err := srv.Send(ev); err != nil {
-				return err
-			}
-		}
-	}
-}
-
-func (t *testCurator) UpdateNodeClusterNetworking(ctx context.Context, req *apb.UpdateNodeClusterNetworkingRequest) (*apb.UpdateNodeClusterNetworkingResponse, error) {
-	t.updateReq.Set(req)
-	return &apb.UpdateNodeClusterNetworkingResponse{}, nil
-}
-
-// nodeWithPrefix submits a given node/key/address with prefixes to the Watch
-// event channel.
-func (t *testCurator) nodeWithPrefixes(key wgtypes.Key, id, address string, prefixes ...string) {
-	var p []*cpb.NodeClusterNetworking_Prefix
-	for _, prefix := range prefixes {
-		p = append(p, &cpb.NodeClusterNetworking_Prefix{Cidr: prefix})
-	}
-	n := &apb.Node{
-		Id: id,
-		Status: &cpb.NodeStatus{
-			ExternalAddress: address,
-		},
-		Clusternet: &cpb.NodeClusterNetworking{
-			WireguardPubkey: key.PublicKey().String(),
-			Prefixes:        p,
-		},
-	}
-	t.watchC <- &apb.WatchEvent{
-		Nodes: []*apb.Node{
-			n,
-		},
-	}
-}
-
-// deleteNode submits a given node for deletion to the Watch event channel.
-func (t *testCurator) deleteNode(id string) {
-	t.watchC <- &apb.WatchEvent{
-		NodeTombstones: []*apb.WatchEvent_NodeTombstone{
-			{
-				NodeId: id,
-			},
-		},
-	}
-}
-
-// makeTestCurator returns a working testCurator alongside a grpc connection to
-// it.
-func makeTestCurator(t *testing.T) (*testCurator, *grpc.ClientConn) {
-	cur := &testCurator{
-		watchC: make(chan *apb.WatchEvent),
-	}
-
-	srv := grpc.NewServer()
-	apb.RegisterCuratorServer(srv, cur)
-	externalLis := bufconn.Listen(1024 * 1024)
-	go func() {
-		if err := srv.Serve(externalLis); err != nil {
-			t.Fatalf("GRPC serve failed: %v", err)
-		}
-	}()
-	withLocalDialer := grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
-		return externalLis.Dial()
-	})
-	cl, err := grpc.Dial("local", withLocalDialer, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		t.Fatalf("Dialing GRPC failed: %v", err)
-	}
-
-	return cur, cl
-}
 
 // fakeWireguard implements wireguard while keeping peer information internally.
 type fakeWireguard struct {
@@ -177,7 +83,7 @@ func TestClusternetBasic(t *testing.T) {
 		t.Fatalf("Failed to generate private key: %v", err)
 	}
 
-	cur, cl := makeTestCurator(t)
+	cur, cl := util.MakeTestCurator(t)
 	defer cl.Close()
 	curator := apb.NewCuratorClient(cl)
 
@@ -245,7 +151,7 @@ func TestClusternetBasic(t *testing.T) {
 	}
 
 	// Start with a single node.
-	cur.nodeWithPrefixes(key1, "metropolis-fake-1", "1.2.3.4")
+	cur.NodeWithPrefixes(key1, "metropolis-fake-1", "1.2.3.4")
 	assertStateEventual(map[string]*node{
 		"metropolis-fake-1": {
 			pubkey:   key1.PublicKey().String(),
@@ -254,7 +160,7 @@ func TestClusternetBasic(t *testing.T) {
 		},
 	})
 	// Change the node's peer address.
-	cur.nodeWithPrefixes(key1, "metropolis-fake-1", "1.2.3.5")
+	cur.NodeWithPrefixes(key1, "metropolis-fake-1", "1.2.3.5")
 	assertStateEventual(map[string]*node{
 		"metropolis-fake-1": {
 			pubkey:   key1.PublicKey().String(),
@@ -263,7 +169,7 @@ func TestClusternetBasic(t *testing.T) {
 		},
 	})
 	// Add another node.
-	cur.nodeWithPrefixes(key2, "metropolis-fake-2", "1.2.3.6")
+	cur.NodeWithPrefixes(key2, "metropolis-fake-2", "1.2.3.6")
 	assertStateEventual(map[string]*node{
 		"metropolis-fake-1": {
 			pubkey:   key1.PublicKey().String(),
@@ -280,8 +186,8 @@ func TestClusternetBasic(t *testing.T) {
 	wg.muNodes.Lock()
 	wg.failNextUpdate = true
 	wg.muNodes.Unlock()
-	cur.nodeWithPrefixes(key1, "metropolis-fake-1", "1.2.3.5", "10.100.10.0/24", "10.100.20.0/24")
-	cur.nodeWithPrefixes(key2, "metropolis-fake-2", "1.2.3.6", "10.100.30.0/24", "10.100.40.0/24")
+	cur.NodeWithPrefixes(key1, "metropolis-fake-1", "1.2.3.5", "10.100.10.0/24", "10.100.20.0/24")
+	cur.NodeWithPrefixes(key2, "metropolis-fake-2", "1.2.3.6", "10.100.30.0/24", "10.100.40.0/24")
 	assertStateEventual(map[string]*node{
 		"metropolis-fake-1": {
 			pubkey:  key1.PublicKey().String(),
@@ -299,7 +205,7 @@ func TestClusternetBasic(t *testing.T) {
 		},
 	})
 	// Delete one of the nodes.
-	cur.deleteNode("metropolis-fake-1")
+	cur.DeleteNode("metropolis-fake-1")
 	assertStateEventual(map[string]*node{
 		"metropolis-fake-2": {
 			pubkey:  key2.PublicKey().String(),
