@@ -31,11 +31,16 @@ type schedulerConfig struct {
 	kubeConfig []byte
 	serverCert []byte
 	serverKey  []byte
+	rootCA     []byte
 }
 
 func getPKISchedulerConfig(ctx context.Context, kpki *pki.PKI) (*schedulerConfig, error) {
 	var config schedulerConfig
 	var err error
+	config.rootCA, _, err = kpki.Certificate(ctx, pki.IdCA)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ID root CA: %w", err)
+	}
 	config.serverCert, config.serverKey, err = kpki.Certificate(ctx, pki.Scheduler)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get scheduler serving certificate: %w", err)
@@ -60,6 +65,8 @@ func runScheduler(config schedulerConfig) supervisor.Runnable {
 				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.serverCert})),
 			args.FileOpt("--tls-private-key-file", "server-key.pem",
 				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serverKey})),
+			args.FileOpt("--client-ca-file", "root-ca.pem",
+				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.rootCA})),
 		)
 		if args.Error() != nil {
 			return fmt.Errorf("failed to use fileargs: %w", err)
