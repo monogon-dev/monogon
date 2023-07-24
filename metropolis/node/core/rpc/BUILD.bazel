@@ -15,7 +15,6 @@ go_library(
     deps = [
         "//metropolis/node/core/identity",
         "//metropolis/pkg/logtree",
-        "//metropolis/pkg/pki",
         "//metropolis/proto/api",
         "//metropolis/proto/ext",
         "@org_golang_google_grpc//:go_default_library",

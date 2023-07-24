@@ -14,9 +14,19 @@ import (
 	"google.golang.org/grpc/status"
 
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/pkg/pki"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
+
+// UnknownNotAfter is a copy of //metroplis/pkg/pki.UnknownNotAfter.
+//
+// We copy it so that we can decouple the rpc package from the pki package, the
+// former being used by metroctl (and thus needing to be portable), the latter
+// having a dependency on fileargs (which isn't portable). The correct solution
+// here is to clarify portability policy of each workspace path, and apply it.
+// But this will do for now.
+//
+// TODO(issues/252): clean up and merge this back.
+var UnknownNotAfter = time.Unix(253402300799, 0)
 
 type verifyPeerCertificate func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
 
@@ -70,7 +80,7 @@ func NewEphemeralCredentials(private ed25519.PrivateKey, ca *x509.Certificate) (
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		NotBefore:    time.Now(),
-		NotAfter:     pki.UnknownNotAfter,
+		NotAfter:     UnknownNotAfter,
 
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
