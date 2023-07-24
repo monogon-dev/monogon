@@ -14,7 +14,6 @@ import (
 
 	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	"source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/test/util"
 )
@@ -46,7 +45,7 @@ func TestMetricsForwarder(t *testing.T) {
 		},
 	}
 
-	eph := rpc.NewEphemeralClusterCredentials(t, 1)
+	eph := util.NewEphemeralClusterCredentials(t, 1)
 
 	svc := Service{
 		Credentials: eph.Nodes[0],

@@ -2,8 +2,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "util",
-    srcs = ["runners.go"],
+    srcs = [
+        "rpc.go",
+        "runners.go",
+    ],
     importpath = "source.monogon.dev/metropolis/test/util",
     visibility = ["//metropolis:__subpackages__"],
-    deps = ["//metropolis/test/launch"],
+    deps = [
+        "//metropolis/node/core/identity",
+        "//metropolis/pkg/pki",
+        "//metropolis/test/launch",
+    ],
 )

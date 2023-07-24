@@ -27,7 +27,6 @@ go_test(
     deps = [
         "//metropolis/cli/pkg/datafile",
         "//metropolis/node",
-        "//metropolis/node/core/rpc",
         "//metropolis/pkg/supervisor",
         "//metropolis/test/util",
     ],

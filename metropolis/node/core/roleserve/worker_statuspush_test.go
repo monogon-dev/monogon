@@ -18,8 +18,8 @@ import (
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/curator"
-	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/test/util"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -98,7 +98,7 @@ func TestWorkerStatusPush(t *testing.T) {
 	}
 	defer cl.Close()
 
-	eph := rpc.NewEphemeralClusterCredentials(t, 1)
+	eph := util.NewEphemeralClusterCredentials(t, 1)
 	nodeID := eph.Nodes[0].ID()
 
 	// Actual test code starts here.

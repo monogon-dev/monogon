@@ -19,6 +19,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	"source.monogon.dev/metropolis/test/util"
 )
 
 // fakeCuratorClusterAware is a fake curator implementation that has a vague
@@ -104,7 +105,7 @@ func TestResolverSimple(t *testing.T) {
 
 	// Make three nodes for testing, each with its own bufconn listener.
 	numCurators := 3
-	eph := rpc.NewEphemeralClusterCredentials(t, numCurators)
+	eph := util.NewEphemeralClusterCredentials(t, numCurators)
 
 	listeners := make([]net.Listener, numCurators)
 	for i := 0; i < numCurators; i++ {

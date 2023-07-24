@@ -15,6 +15,7 @@ import (
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	apb "source.monogon.dev/metropolis/proto/api"
 	epb "source.monogon.dev/metropolis/proto/ext"
+	"source.monogon.dev/metropolis/test/util"
 )
 
 // testImplementations implements a subset of test cluster services by returning
@@ -32,7 +33,7 @@ func TestExternalServerSecurity(t *testing.T) {
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
 
-	eph := NewEphemeralClusterCredentials(t, 1)
+	eph := util.NewEphemeralClusterCredentials(t, 1)
 	permissions := make(Permissions)
 	for k, v := range nodePermissions {
 		permissions[k] = v

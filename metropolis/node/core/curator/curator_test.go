@@ -14,10 +14,10 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/test/util"
 )
 
 var (
@@ -216,7 +216,7 @@ func TestLeaderElectionStatus(t *testing.T) {
 	}
 
 	// Start a new supervisor in which we create all curator DUTs.
-	ephemeral := rpc.NewEphemeralClusterCredentials(t, 3)
+	ephemeral := util.NewEphemeralClusterCredentials(t, 3)
 	dutC := make(chan *dut)
 	supervisor.TestHarness(t, func(ctx context.Context) error {
 		for e, n := range endpointToNum {
