@@ -133,14 +133,14 @@ load("//third_party/linux:external.bzl", "linux_external")
 
 linux_external(
     name = "linux",
-    version = "5.15.104",
+    version = "5.15.122",
 )
 
 load("//third_party/linux-firmware:external.bzl", "linux_firmware_external")
 
 linux_firmware_external(
     name = "linux-firmware",
-    version = "20230310",
+    version = "b6ea35ff6b9869470a0c68813f1668acb3d356a8",
 )
 
 load("//third_party/intel_ucode:external.bzl", "intel_ucode_external")
