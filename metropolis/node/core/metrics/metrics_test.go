@@ -201,7 +201,7 @@ func TestDiscovery(t *testing.T) {
 			return fmt.Errorf("Get(%q): code %d", url, res.StatusCode)
 		}
 		body, _ := io.ReadAll(res.Body)
-		want := `[{"targets":["1.2.3.4"],"labels":{"consensus_member":"true","kubernetes_controller":"false","kubernetes_worker":"false"}}]`
+		want := `[{"targets":["1.2.3.4"],"labels":{"__meta_metropolis_role_consensus_member":"true","__meta_metropolis_role_kubernetes_controller":"false","__meta_metropolis_role_kubernetes_worker":"false"}}]`
 		if !strings.Contains(string(body), want) {
 			return util.Permanent(fmt.Errorf("did not find expected value %q in %q", want, string(body)))
 		}

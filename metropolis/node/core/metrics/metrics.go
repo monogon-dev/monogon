@@ -252,9 +252,9 @@ func (s *Service) watch(ctx context.Context) error {
 			s.sdResp = append(s.sdResp, sdTarget{
 				Targets: []string{n.Status.ExternalAddress},
 				Labels: map[string]string{
-					"kubernetes_worker":     fmt.Sprintf("%t", n.Roles.KubernetesWorker != nil),
-					"consensus_member":      fmt.Sprintf("%t", n.Roles.ConsensusMember != nil),
-					"kubernetes_controller": fmt.Sprintf("%t", n.Roles.KubernetesController != nil),
+					"__meta_metropolis_role_kubernetes_worker":     fmt.Sprintf("%t", n.Roles.KubernetesWorker != nil),
+					"__meta_metropolis_role_kubernetes_controller": fmt.Sprintf("%t", n.Roles.KubernetesController != nil),
+					"__meta_metropolis_role_consensus_member":      fmt.Sprintf("%t", n.Roles.ConsensusMember != nil),
 				},
 			})
 		}
