@@ -12,12 +12,18 @@ go_library(
         "net_ips.go",
         "net_protocols.go",
         "ports.go",
+        "version.go",
     ],
     importpath = "source.monogon.dev/metropolis/node",
     visibility = [
         "//metropolis:__subpackages__",
         "@io_k8s_kubernetes//pkg/registry:__subpackages__",
     ],
+    x_defs = {
+        "BuildCommit": "{STABLE_METROPOLIS_gitCommit}",
+        "BuildTreeState": "{STABLE_METROPOLIS_gitTreeState}",
+        "BuildVersion": "{STABLE_METROPOLIS_version}",
+    },
     deps = ["@com_github_vishvananda_netlink//:netlink"],
 )
 

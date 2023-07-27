@@ -24,12 +24,16 @@ IMAGE_TAG=${IMAGE_TAG:-${USER:-unknown}-$(date +%s)}
 cat <<EOF
 KUBERNETES_gitCommit $(git rev-parse "HEAD^{commit}")
 KUBERNETES_gitTreeState $KUBERNETES_gitTreeState
-STABLE_KUBERNETES_gitVersion $KUBERNETES_gitVersion
-STABLE_KUBERNETES_gitMajor $KUBERNETES_gitMajor
-STABLE_KUBERNETES_gitMinor $KUBERNETES_gitMinor
 KUBERNETES_buildDate $(date \
   ${SOURCE_DATE_EPOCH:+"--date=@${SOURCE_DATE_EPOCH}"} \
  -u +'%Y-%m-%dT%H:%M:%SZ')
+STABLE_KUBERNETES_gitVersion $KUBERNETES_gitVersion
+STABLE_KUBERNETES_gitMajor $KUBERNETES_gitMajor
+STABLE_KUBERNETES_gitMinor $KUBERNETES_gitMinor
+
+STABLE_METROPOLIS_gitCommit $(git rev-parse "HEAD^{commit}")
+STABLE_METROPOLIS_gitTreeState $KUBERNETES_gitTreeState
 STABLE_METROPOLIS_version $METROPOLIS_VERSION
+
 IMAGE_TAG $IMAGE_TAG
 EOF

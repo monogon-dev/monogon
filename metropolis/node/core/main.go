@@ -110,6 +110,7 @@ func main() {
 	}
 
 	logger.Info("Starting Metropolis node init")
+	logger.Infof("Version: %s", node.Version)
 
 	haveTPM := true
 	if err := tpm.Initialize(logger); err != nil {
