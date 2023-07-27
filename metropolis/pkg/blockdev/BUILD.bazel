@@ -4,6 +4,7 @@ go_library(
     name = "blockdev",
     srcs = [
         "blockdev.go",
+        "blockdev_darwin.go",
         "blockdev_linux.go",
         "memory.go",
     ],
@@ -11,6 +12,12 @@ go_library(
     visibility = ["//visibility:public"],
     deps = select({
         "@io_bazel_rules_go//go/platform:android": [
+            "@org_golang_x_sys//unix",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "@org_golang_x_sys//unix",
+        ],
+        "@io_bazel_rules_go//go/platform:ios": [
             "@org_golang_x_sys//unix",
         ],
         "@io_bazel_rules_go//go/platform:linux": [
