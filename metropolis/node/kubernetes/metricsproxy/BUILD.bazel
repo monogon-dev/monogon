@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "metricsproxy",
+    srcs = ["metricsproxy.go"],
+    importpath = "source.monogon.dev/metropolis/node/kubernetes/metricsproxy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node",
+        "//metropolis/node/kubernetes/pki",
+        "//metropolis/pkg/supervisor",
+        "@io_k8s_kubernetes//cmd/kubeadm/app/constants",
+    ],
+)

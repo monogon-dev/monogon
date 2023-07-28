@@ -2,18 +2,14 @@ package roleserve
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 
 	"source.monogon.dev/metropolis/node/core/metrics"
-	kpki "source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
-
-	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 )
 
 // workerMetrics runs the Metrics Service, which runs local Prometheus collectors
@@ -37,53 +33,47 @@ func (s *workerMetrics) run(ctx context.Context) error {
 	}
 	supervisor.Logger(ctx).Infof("Got curator connection, starting...")
 
-	lw := s.localControlplane.Watch()
-	defer lw.Close()
-	cp, err := lw.Get(ctx)
-	if err != nil {
-		return err
-	}
-
-	pki, err := kpki.FromLocalConsensus(ctx, cp.consensus)
-	if err != nil {
-		return err
-	}
-
-	// TODO(q3k): move this to IssueCertificates and replace with dedicated certificate
-	cert, key, err := pki.Certificate(ctx, kpki.Master)
-	if err != nil {
-		return fmt.Errorf("could not load certificate %q from PKI: %w", kpki.Master, err)
-	}
-	parsedKey, err := x509.ParsePKCS8PrivateKey(key)
-	if err != nil {
-		return fmt.Errorf("failed to parse key for cert %q: %w", kpki.Master, err)
-	}
-
-	caCert, _, err := pki.Certificate(ctx, kpki.IdCA)
-	if err != nil {
-		return fmt.Errorf("could not load certificate %q from PKI: %w", kpki.IdCA, err)
-	}
-	parsedCACert, err := x509.ParseCertificate(caCert)
-	if err != nil {
-		return fmt.Errorf("failed to parse cert %q: %w", kpki.IdCA, err)
-	}
-
-	rootCAs := x509.NewCertPool()
-	rootCAs.AddCert(parsedCACert)
-
-	kubeTLSConfig := &tls.Config{
-		RootCAs: rootCAs,
-		Certificates: []tls.Certificate{{
-			Certificate: [][]byte{cert},
-			PrivateKey:  parsedKey,
-		}},
-	}
-
 	svc := metrics.Service{
-		Credentials:   cc.credentials,
-		Curator:       ipb.NewCuratorClient(cc.conn),
-		LocalRoles:    s.localRoles,
-		KubeTLSConfig: kubeTLSConfig,
+		Credentials: cc.credentials,
+		Discovery: metrics.Discovery{
+			Curator: ipb.NewCuratorClient(cc.conn),
+		},
 	}
+
+	err = supervisor.Run(ctx, "watch-consensus", func(ctx context.Context) error {
+		isConsensusMember := func(roles *cpb.NodeRoles) bool {
+			return roles.ConsensusMember != nil
+		}
+
+		w := s.localRoles.Watch()
+		defer w.Close()
+
+		r, err := w.Get(ctx)
+		if err != nil {
+			return err
+		}
+
+		if isConsensusMember(r) {
+			if err := supervisor.Run(ctx, "discovery", svc.Discovery.Run); err != nil {
+				return err
+			}
+		}
+
+		for {
+			nr, err := w.Get(ctx)
+			if err != nil {
+				return err
+			}
+
+			changed := isConsensusMember(r) != isConsensusMember(nr)
+			if changed {
+				return fmt.Errorf("restarting")
+			}
+		}
+	})
+	if err != nil {
+		return err
+	}
+
 	return svc.Run(ctx)
 }

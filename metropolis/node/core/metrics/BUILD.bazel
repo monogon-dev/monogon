@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "metrics",
     srcs = [
+        "discovery.go",
         "exporters.go",
         "metrics.go",
     ],
@@ -12,11 +13,7 @@ go_library(
         "//metropolis/node",
         "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/identity",
-        "//metropolis/pkg/event/memory",
-        "//metropolis/pkg/logtree",
         "//metropolis/pkg/supervisor",
-        "//metropolis/proto/common",
-        "@io_k8s_kubernetes//cmd/kubeadm/app/constants",
     ],
 )
 
@@ -32,9 +29,8 @@ go_test(
         "//metropolis/cli/pkg/datafile",
         "//metropolis/node",
         "//metropolis/node/core/curator/proto/api",
-        "//metropolis/pkg/event/memory",
+        "//metropolis/pkg/freeport",
         "//metropolis/pkg/supervisor",
-        "//metropolis/proto/common",
         "//metropolis/test/util",
         "@com_zx2c4_golang_wireguard_wgctrl//wgtypes",
     ],

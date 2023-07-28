@@ -1,17 +1,12 @@
 package metrics
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/url"
-
-	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 
 	"source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 // An Exporter is a Prometheus binary running under the Metrics service which
@@ -24,10 +19,6 @@ type Exporter struct {
 	Name string
 	// Port on which this exporter will be running.
 	Port node.Port
-	// ServerName used to verify the tls connection.
-	ServerName string
-	// TLSConfigFunc is used to configure tls authentication
-	TLSConfigFunc func(*Service, *Exporter) *tls.Config
 	// Executable to run to start the exporter.
 	Executable string
 	// Arguments to start the exporter. The exporter should listen at 127.0.0.1 and
@@ -36,7 +27,7 @@ type Exporter struct {
 }
 
 // DefaultExporters are the exporters which we run by default in Metropolis.
-var DefaultExporters = []Exporter{
+var DefaultExporters = []*Exporter{
 	{
 		Name:       "node",
 		Port:       node.MetricsNodeListenerPort,
@@ -54,56 +45,42 @@ var DefaultExporters = []Exporter{
 		Port: node.MetricsEtcdListenerPort,
 	},
 	{
-		Name:          "kubernetes-scheduler",
-		Port:          constants.KubeSchedulerPort,
-		ServerName:    "kube-scheduler.local",
-		TLSConfigFunc: (*Service).kubeTLSConfig,
+		Name: "kubernetes-scheduler",
+		Port: node.MetricsKubeSchedulerListenerPort,
 	},
 	{
-		Name:          "kubernetes-controller-manager",
-		Port:          constants.KubeControllerManagerPort,
-		ServerName:    "kube-controller-manager.local",
-		TLSConfigFunc: (*Service).kubeTLSConfig,
+		Name: "kubernetes-controller-manager",
+		Port: node.MetricsKubeControllerManagerListenerPort,
 	},
 }
 
-func (s *Service) kubeTLSConfig(e *Exporter) *tls.Config {
-	c := s.KubeTLSConfig.Clone()
-	c.ServerName = e.ServerName
-	return c
-}
-
-// forward a given HTTP request to this exporter.
-func (e *Exporter) forward(s *Service, logger logtree.LeveledLogger, w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	outreq := r.Clone(ctx)
-
-	outreq.URL = &url.URL{
-		Scheme: "http",
-		Host:   net.JoinHostPort("127.0.0.1", e.Port.PortString()),
-		Path:   "/metrics",
-	}
-
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	if e.TLSConfigFunc != nil {
-		outreq.URL.Scheme = "https"
-		transport.TLSClientConfig = e.TLSConfigFunc(s, e)
-	}
-	logger.V(1).Infof("%s: forwarding %s to %s", r.RemoteAddr, r.URL.String(), outreq.URL.String())
-
-	if r.ContentLength == 0 {
-		outreq.Body = nil
-	}
-	if outreq.Body != nil {
-		defer outreq.Body.Close()
-	}
-	res, err := transport.RoundTrip(outreq)
-	if err != nil {
-		logger.Errorf("%s: forwarding to %q failed: %v", r.RemoteAddr, e.Name, err)
-		w.WriteHeader(502)
-		fmt.Fprintf(w, "could not reach exporter")
+func (e *Exporter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, fmt.Sprintf("method %q not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
+
+	ctx := r.Context()
+
+	// We are supplying the http.Server with a BaseContext that contains the
+	// context from our runnable which contains the logger.
+	logger := supervisor.Logger(ctx)
+
+	url := "http://127.0.0.1:" + e.Port.PortString() + "/metrics"
+	outReq, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		logger.Errorf("%s: forwarding to %q failed: %v", r.RemoteAddr, e.Name, err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	res, err := http.DefaultTransport.RoundTrip(outReq)
+	if err != nil {
+		logger.Errorf("%s: forwarding to %q failed: %v", r.RemoteAddr, e.Name, err)
+		http.Error(w, "could not reach exporter", http.StatusBadGateway)
+		return
+	}
+	defer res.Body.Close()
 
 	copyHeader(w.Header(), res.Header)
 	w.WriteHeader(res.StatusCode)
@@ -112,7 +89,6 @@ func (e *Exporter) forward(s *Service, logger logtree.LeveledLogger, w http.Resp
 		logger.Errorf("%s: copying response from %q failed: %v", r.RemoteAddr, e.Name, err)
 		return
 	}
-	res.Body.Close()
 }
 
 func copyHeader(dst, src http.Header) {

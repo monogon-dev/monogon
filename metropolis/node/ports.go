@@ -48,9 +48,17 @@ const (
 	// public MetricsPort.
 	MetricsNodeListenerPort Port = 7841
 	// MetricsEtcdListenerPort is the TCP port on which the etcd exporter
-	// runs, bound to 127.0.0.1. The Metrics Service proxies traffic to it from the
+	// runs, bound to 127.0.0.1. The metrics service proxies traffic to it from the
 	// public MetricsPort.
 	MetricsEtcdListenerPort Port = 7842
+	// MetricsKubeSchedulerListenerPort is the TCP port on which the proxy for
+	// the kube-scheduler runs, bound to 127.0.0.1. The metrics service proxies
+	// traffic to it from the public MetricsPort.
+	MetricsKubeSchedulerListenerPort Port = 7843
+	// MetricsKubeControllerManagerListenerPort is the TCP port on which the
+	// proxy for the controller-manager runs, bound to 127.0.0.1. The metrics
+	// service proxies traffic to it from the public MetricsPort.
+	MetricsKubeControllerManagerListenerPort Port = 7844
 	// KubernetesAPIPort is the TCP port on which the Kubernetes API is
 	// exposed.
 	KubernetesAPIPort Port = 6443

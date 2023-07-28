@@ -15,40 +15,42 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
-	cpb "source.monogon.dev/metropolis/proto/common"
 
 	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	"source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/pkg/event/memory"
+	"source.monogon.dev/metropolis/pkg/freeport"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/test/util"
 )
+
+func fakeExporter(name, value string) *Exporter {
+	path, _ := datafile.ResolveRunfile("metropolis/node/core/metrics/fake_exporter/fake_exporter_/fake_exporter")
+
+	p, closer, err := freeport.AllocateTCPPort()
+	if err != nil {
+		panic(err)
+	}
+	defer closer.Close()
+	port := node.Port(p)
+
+	return &Exporter{
+		Name:       name,
+		Port:       port,
+		Executable: path,
+		Arguments: []string{
+			"-listen", "127.0.0.1:" + port.PortString(),
+			"-value", value,
+		},
+	}
+}
 
 // TestMetricsForwarder exercises the metrics forwarding functionality of the
 // metrics service. That is, it makes sure that the service starts some fake
 // exporters and then forwards HTTP traffic to them.
 func TestMetricsForwarder(t *testing.T) {
-	path, _ := datafile.ResolveRunfile("metropolis/node/core/metrics/fake_exporter/fake_exporter_/fake_exporter")
-
-	exporters := []Exporter{
-		{
-			Name:       "test1",
-			Port:       node.Port(8081),
-			Executable: path,
-			Arguments: []string{
-				"-listen", "127.0.0.1:8081",
-				"-value", "100",
-			},
-		},
-		{
-			Name:       "test2",
-			Port:       node.Port(8082),
-			Executable: path,
-			Arguments: []string{
-				"-listen", "127.0.0.1:8082",
-				"-value", "200",
-			},
-		},
+	exporters := []*Exporter{
+		fakeExporter("test1", "100"),
+		fakeExporter("test2", "200"),
 	}
 
 	eph := util.NewEphemeralClusterCredentials(t, 1)
@@ -135,14 +137,30 @@ func TestDiscovery(t *testing.T) {
 
 	svc := Service{
 		Credentials:       eph.Nodes[0],
-		Curator:           apb.NewCuratorClient(ccl),
-		LocalRoles:        &memory.Value[*cpb.NodeRoles]{},
-		Exporters:         []Exporter{},
+		Discovery:         Discovery{Curator: apb.NewCuratorClient(ccl)},
 		enableDynamicAddr: true,
 		dynamicAddr:       make(chan string),
 	}
 
-	supervisor.TestHarness(t, svc.Run)
+	enableDiscovery := make(chan bool)
+	supervisor.TestHarness(t, func(ctx context.Context) error {
+		if err := supervisor.Run(ctx, "metrics", svc.Run); err != nil {
+			return err
+		}
+
+		err := supervisor.Run(ctx, "discovery", func(ctx context.Context) error {
+			<-enableDiscovery
+			return svc.Discovery.Run(ctx)
+		})
+		if err != nil {
+			return err
+		}
+
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
+		supervisor.Signal(ctx, supervisor.SignalDone)
+		return nil
+	})
+
 	addr := <-svc.dynamicAddr
 
 	pool := x509.NewCertPool()
@@ -174,15 +192,14 @@ func TestDiscovery(t *testing.T) {
 			return fmt.Errorf("Get(%q): %v", url, err)
 		}
 		defer res.Body.Close()
-		if res.StatusCode != http.StatusNotImplemented {
+		if res.StatusCode != http.StatusServiceUnavailable {
 			return fmt.Errorf("Get(%q): code %d", url, res.StatusCode)
 		}
 		return nil
 	})
 
-	// First set the local roles to be a consensus member which starts a watcher,
-	// create a fake node after that
-	svc.LocalRoles.Set(&cpb.NodeRoles{ConsensusMember: &cpb.NodeRoles_ConsensusMember{}})
+	// First start the watcher, create a fake node after that
+	enableDiscovery <- true
 	curator.NodeWithPrefixes(wgtypes.Key{}, "metropolis-fake-1", "1.2.3.4")
 
 	util.TestEventual(t, "active-discovery", ctx, 10*time.Second, func(ctx context.Context) error {

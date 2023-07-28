@@ -32,6 +32,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/network/dns"
 	"source.monogon.dev/metropolis/node/kubernetes/authproxy"
+	"source.monogon.dev/metropolis/node/kubernetes/metricsproxy"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -156,6 +157,10 @@ func (s *Controller) Run(ctx context.Context) error {
 		Node: s.c.Node,
 	}
 
+	metricsProxy := metricsproxy.Service{
+		KPKI: s.c.KPKI,
+	}
+
 	for _, sub := range []struct {
 		name     string
 		runnable supervisor.Runnable
@@ -164,6 +169,7 @@ func (s *Controller) Run(ctx context.Context) error {
 		{"scheduler", runScheduler(*schedulerConfig)},
 		{"reconciler", reconciler.Maintain(clientSet)},
 		{"authproxy", authProxy.Run},
+		{"metricsproxy", metricsProxy.Run},
 	} {
 		err := supervisor.Run(ctx, sub.name, sub.runnable)
 		if err != nil {
