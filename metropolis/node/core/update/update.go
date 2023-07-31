@@ -14,13 +14,13 @@ import (
 	"strconv"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	"source.monogon.dev/metropolis/pkg/blockdev"
 	"source.monogon.dev/metropolis/pkg/efivarfs"
+	"source.monogon.dev/metropolis/pkg/gpt"
 	"source.monogon.dev/metropolis/pkg/logtree"
 )
 
@@ -29,10 +29,11 @@ import (
 type Service struct {
 	// Path to the mount point of the EFI System Partition (ESP).
 	ESPPath string
-	// UUID of the ESP System Partition.
-	ESPUUID uuid.UUID
+	// gpt.Partition of the ESP System Partition.
+	ESPPart *gpt.Partition
 	// Partition number (1-based) of the ESP in the GPT partitions array.
 	ESPPartNumber uint32
+
 	// Logger service for the update service.
 	Logger logtree.LeveledLogger
 }
@@ -84,10 +85,10 @@ var slotRegexp = regexp.MustCompile(`PARTLABEL=METROPOLIS-SYSTEM-([AB])`)
 
 // ProvideESP is a convenience function for providing information about the
 // ESP after the update service has been instantiated.
-func (s *Service) ProvideESP(path string, partUUID uuid.UUID, partNum uint32) {
+func (s *Service) ProvideESP(path string, partNum uint32, part *gpt.Partition) {
 	s.ESPPath = path
 	s.ESPPartNumber = partNum
-	s.ESPUUID = partUUID
+	s.ESPPart = part
 }
 
 // CurrentlyRunningSlot returns the slot the current system is booted from.
@@ -146,7 +147,7 @@ func (s *Service) getOrMakeBootEntry(existing map[int]*efivarfs.LoadOption, slot
 		switch p := e.FilePath[0].(type) {
 		case *efivarfs.HardDrivePath:
 			gptMatch, ok := p.PartitionMatch.(*efivarfs.PartitionGPT)
-			if ok && gptMatch.PartitionUUID != s.ESPUUID {
+			if ok && gptMatch.PartitionUUID != s.ESPPart.ID {
 				// Not related to our ESP
 				continue
 			}
@@ -166,9 +167,11 @@ func (s *Service) getOrMakeBootEntry(existing map[int]*efivarfs.LoadOption, slot
 		Description: fmt.Sprintf("Metropolis Slot %s", slot),
 		FilePath: efivarfs.DevicePath{
 			&efivarfs.HardDrivePath{
-				PartitionNumber: s.ESPPartNumber,
+				PartitionNumber:     s.ESPPartNumber,
+				PartitionStartBlock: s.ESPPart.FirstBlock,
+				PartitionSizeBlocks: s.ESPPart.SizeBlocks(),
 				PartitionMatch: efivarfs.PartitionGPT{
-					PartitionUUID: s.ESPUUID,
+					PartitionUUID: s.ESPPart.ID,
 				},
 			},
 			efivarfs.FilePath(slot.EFIBootPath()),

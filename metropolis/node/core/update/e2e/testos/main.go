@@ -109,7 +109,7 @@ func testosRunnable(ctx context.Context) error {
 			if err := unix.Mount(fmt.Sprintf("/dev/vda%d", pn+1), "/esp", "vfat", unix.MS_SYNC, ""); err != nil {
 				return fmt.Errorf("unable to mkdir ESP mountpoint: %w", err)
 			}
-			updateSvc.ProvideESP("/esp", p.ID, uint32(pn+1))
+			updateSvc.ProvideESP("/esp", uint32(pn+1), p)
 		case osimage.SystemAType:
 			if err := unix.Symlink(fmt.Sprintf("/dev/vda%d", pn+1), "/dev/system-a"); err != nil {
 				return fmt.Errorf("failed to symlink system-a: %w", err)
