@@ -123,8 +123,11 @@ func testosRunnable(ctx context.Context) error {
 	if err := updateSvc.MarkBootSuccessful(); err != nil {
 		supervisor.Logger(ctx).Errorf("error marking boot successful: %w", err)
 	}
+	_, err = os.Stat("/sys/firmware/qemu_fw_cfg/by_name/use_kexec/raw")
+	useKexec := err == nil
+	supervisor.Logger(ctx).Infof("Kexec: %v", useKexec)
 	if Variant != "Z" {
-		if err := updateSvc.InstallBundle(ctx, "http://10.42.0.5:80/bundle.bin"); err != nil {
+		if err := updateSvc.InstallBundle(ctx, "http://10.42.0.5:80/bundle.bin", useKexec); err != nil {
 			supervisor.Logger(ctx).Errorf("Error installing new bundle: %v", err)
 		}
 	}
@@ -132,6 +135,10 @@ func testosRunnable(ctx context.Context) error {
 	supervisor.Logger(ctx).Info("Installed bundle successfully, powering off")
 	unix.Sync()
 	time.Sleep(1 * time.Second)
-	unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
+	if useKexec && Variant != "Z" {
+		unix.Reboot(unix.LINUX_REBOOT_CMD_KEXEC)
+	} else {
+		unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
+	}
 	return nil
 }

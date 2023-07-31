@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sync"
 
 	"google.golang.org/grpc"
 
@@ -27,6 +28,8 @@ type Service struct {
 	LogTree *logtree.LogTree
 	// Update service handle for performing updates via the API.
 	UpdateService *update.Service
+	// Serialized UpdateNode RPCs
+	updateMutex sync.Mutex
 
 	// Automatically populated on Run.
 	LogService

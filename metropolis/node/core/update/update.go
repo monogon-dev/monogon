@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"debug/pe"
 	"errors"
 	"fmt"
 	"io"
@@ -12,8 +13,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/cenkalti/backoff/v4"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -21,6 +24,7 @@ import (
 	"source.monogon.dev/metropolis/pkg/blockdev"
 	"source.monogon.dev/metropolis/pkg/efivarfs"
 	"source.monogon.dev/metropolis/pkg/gpt"
+	"source.monogon.dev/metropolis/pkg/kexec"
 	"source.monogon.dev/metropolis/pkg/logtree"
 )
 
@@ -177,6 +181,7 @@ func (s *Service) getOrMakeBootEntry(existing map[int]*efivarfs.LoadOption, slot
 			efivarfs.FilePath(slot.EFIBootPath()),
 		},
 	}
+	s.Logger.Infof("Recreated boot entry %s", newEntry.Description)
 	newIdx, err := efivarfs.AddBootEntry(newEntry)
 	if err == nil {
 		existing[newIdx] = newEntry
@@ -274,7 +279,7 @@ func openSystemSlot(slot Slot) (*blockdev.Device, error) {
 // InstallBundle installs the bundle at the given HTTP(S) URL into the currently
 // inactive slot and sets that slot to boot next. If it doesn't return an error,
 // a reboot boots into the new slot.
-func (s *Service) InstallBundle(ctx context.Context, bundleURL string) error {
+func (s *Service) InstallBundle(ctx context.Context, bundleURL string, withKexec bool) error {
 	if s.ESPPath == "" {
 		return errors.New("no ESP information provided to update service, cannot continue")
 	}
@@ -353,8 +358,14 @@ func (s *Service) InstallBundle(ctx context.Context, bundleURL string) error {
 		return fmt.Errorf("failed setting boot entry %d active: %w", targetSlotBootEntryIdx, err)
 	}
 
-	if err := efivarfs.SetBootNext(uint16(targetSlotBootEntryIdx)); err != nil {
-		return fmt.Errorf("failed to set BootNext variable: %w", err)
+	if withKexec {
+		if err := s.stageKexec(bootFile, targetSlot); err != nil {
+			return fmt.Errorf("while kexec staging: %w", err)
+		}
+	} else {
+		if err := efivarfs.SetBootNext(uint16(targetSlotBootEntryIdx)); err != nil {
+			return fmt.Errorf("failed to set BootNext variable: %w", err)
+		}
 	}
 
 	return nil
@@ -385,6 +396,65 @@ func (*Service) tryDownloadBundle(ctx context.Context, bundleURL string, bundleR
 	if _, err := bundleRaw.ReadFrom(bundleRes.Body); err != nil {
 		bundleRaw.Reset()
 		return err
+	}
+	return nil
+}
+
+// newMemfile creates a new file which is not located on a specific filesystem,
+// but is instead backed by anonymous memory.
+func newMemfile(name string, flags int) (*os.File, error) {
+	fd, err := unix.MemfdCreate(name, flags)
+	if err != nil {
+		return nil, fmt.Errorf("memfd_create: %w", err)
+	}
+	return os.NewFile(uintptr(fd), name), nil
+}
+
+// stageKexec stages the kernel, command line and initramfs if available for
+// a future kexec. It extracts the relevant data from the EFI boot executable.
+func (s *Service) stageKexec(bootFile io.ReaderAt, targetSlot Slot) error {
+	bootPE, err := pe.NewFile(bootFile)
+	if err != nil {
+		return fmt.Errorf("unable to open bootFile as PE: %w", err)
+	}
+	var cmdlineRaw []byte
+	cmdlineSection := bootPE.Section(".cmdline")
+	if cmdlineSection == nil {
+		return fmt.Errorf("no .cmdline section in boot PE")
+	}
+	cmdlineRaw, err = cmdlineSection.Data()
+	if err != nil {
+		return fmt.Errorf("while reading .cmdline PE section: %w", err)
+	}
+	cmdline := string(bytes.TrimRight(cmdlineRaw, "\x00"))
+	cmdline = strings.ReplaceAll(cmdline, "METROPOLIS-SYSTEM-X", fmt.Sprintf("METROPOLIS-SYSTEM-%s", targetSlot))
+	kernelFile, err := newMemfile("kernel", 0)
+	if err != nil {
+		return fmt.Errorf("failed to create kernel memfile: %w", err)
+	}
+	defer kernelFile.Close()
+	kernelSection := bootPE.Section(".linux")
+	if kernelSection == nil {
+		return fmt.Errorf("no .linux section in boot PE")
+	}
+	if _, err := io.Copy(kernelFile, kernelSection.Open()); err != nil {
+		return fmt.Errorf("while copying .linux PE section: %w", err)
+	}
+
+	initramfsSection := bootPE.Section(".initrd")
+	var initramfsFile *os.File
+	if initramfsSection != nil && initramfsSection.Size > 0 {
+		initramfsFile, err = newMemfile("initramfs", 0)
+		if err != nil {
+			return fmt.Errorf("failed to create initramfs memfile: %w", err)
+		}
+		defer initramfsFile.Close()
+		if _, err := io.Copy(initramfsFile, initramfsSection.Open()); err != nil {
+			return fmt.Errorf("while copying .initrd PE section: %w", err)
+		}
+	}
+	if err := kexec.FileLoad(kernelFile, initramfsFile, cmdline); err != nil {
+		return fmt.Errorf("while staging new kexec kernel: %w", err)
 	}
 	return nil
 }

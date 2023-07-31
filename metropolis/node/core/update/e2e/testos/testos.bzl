@@ -27,7 +27,7 @@ def testos(variant):
 
     efi_unified_kernel_image(
         name = "kernel_efi_" + variant,
-        cmdline = "console=ttyS0 init=/init",
+        cmdline = "console=ttyS0 quiet rootfstype=erofs init=/init loadpin.exclude=kexec-image,kexec-initramfs",
         kernel = "//third_party/linux",
         verity = ":verity_rootfs_" + variant,
         visibility = ["//metropolis/node/core/update/e2e:__pkg__"],

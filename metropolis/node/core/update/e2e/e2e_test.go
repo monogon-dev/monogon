@@ -26,29 +26,20 @@ const Mi = 1024 * 1024
 
 var variantRegexp = regexp.MustCompile(`TESTOS_VARIANT=([A-Z])`)
 
-func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string) {
-	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	qemuCmdLaunch := exec.CommandContext(ctx, "qemu-system-x86_64", qemuArgs...)
-	stdoutPipe, err := qemuCmdLaunch.StdoutPipe()
+func stdoutHandler(t *testing.T, cmd *exec.Cmd, cancel context.CancelFunc, testosStarted chan string) {
+	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
 		t.Fatal(err)
 	}
-	stderrPipe, err := qemuCmdLaunch.StderrPipe()
-	if err != nil {
-		t.Fatal(err)
-	}
-	testosStarted := make(chan string, 1)
+	s := bufio.NewScanner(stdoutPipe)
 	go func() {
-		s := bufio.NewScanner(stdoutPipe)
 		for s.Scan() {
 			if strings.HasPrefix(s.Text(), "[") {
 				continue
 			}
 			errIdx := strings.Index(s.Text(), "Error installing new bundle")
 			if errIdx != -1 {
-				t.Error(s.Text()[errIdx:])
+				cancel()
 			}
 			t.Log("vm: " + s.Text())
 			if m := variantRegexp.FindStringSubmatch(s.Text()); len(m) == 2 {
@@ -59,8 +50,15 @@ func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string)
 			}
 		}
 	}()
+}
+
+func stderrHandler(t *testing.T, cmd *exec.Cmd) {
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := bufio.NewScanner(stderrPipe)
 	go func() {
-		s := bufio.NewScanner(stderrPipe)
 		for s.Scan() {
 			if strings.HasPrefix(s.Text(), "[") {
 				continue
@@ -68,6 +66,16 @@ func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string)
 			t.Log("qemu: " + s.Text())
 		}
 	}()
+}
+
+func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	qemuCmdLaunch := exec.CommandContext(ctx, "qemu-system-x86_64", qemuArgs...)
+	testosStarted := make(chan string, 1)
+	stdoutHandler(t, qemuCmdLaunch, cancel, testosStarted)
+	stderrHandler(t, qemuCmdLaunch)
 	if err := qemuCmdLaunch.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +93,7 @@ func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string)
 		case <-procExit:
 			return
 		case <-ctx.Done():
-			t.Log("Canceled VM")
+			t.Error("Timed out waiting for VM to exit")
 			cancel()
 			<-procExit
 			return
@@ -98,31 +106,60 @@ func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string)
 	}
 }
 
-func TestABUpdateSequence(t *testing.T) {
+type bundleServing struct {
+	t              *testing.T
+	bundlePaths    map[string]string
+	bundleFilePath string
+	// Protects bundleFilePath above
+	m sync.Mutex
+}
+
+func (b *bundleServing) setNextBundle(variant string) {
+	b.m.Lock()
+	defer b.m.Unlock()
+	p, ok := b.bundlePaths[variant]
+	if !ok {
+		b.t.Fatalf("no bundle for variant %s available", variant)
+		return
+	}
+	b.bundleFilePath = p
+}
+
+// setup sets up an an HTTP server for serving bundles which can be controlled
+// through the returned bundleServing struct as well as the initial boot disk
+// and EFI variable storage. It also returns the required QEMU arguments to
+// boot the initial TestOS.
+func setup(t *testing.T) (*bundleServing, []string) {
+	t.Helper()
 	blobAddr := net.TCPAddr{
 		IP:   net.IPv4(10, 42, 0, 5),
 		Port: 80,
 	}
 
-	var nextBundlePathToInstall string
-	var nbpMutex sync.Mutex
+	b := bundleServing{
+		t:           t,
+		bundlePaths: make(map[string]string),
+	}
 
 	m := http.NewServeMux()
 	bundleYPath, err := datafile.ResolveRunfile("metropolis/node/core/update/e2e/testos/testos_bundle_y.zip")
 	if err != nil {
 		t.Fatal(err)
 	}
+	b.bundlePaths["Y"] = bundleYPath
 	bundleZPath, err := datafile.ResolveRunfile("metropolis/node/core/update/e2e/testos/testos_bundle_z.zip")
 	if err != nil {
 		t.Fatal(err)
 	}
+	b.bundlePaths["Z"] = bundleZPath
 	m.HandleFunc("/bundle.bin", func(w http.ResponseWriter, req *http.Request) {
-		nbpMutex.Lock()
-		bundleFilePath := nextBundlePathToInstall
-		nbpMutex.Unlock()
+		b.m.Lock()
+		bundleFilePath := b.bundleFilePath
+		b.m.Unlock()
 		if bundleFilePath == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("No next bundle set in the test harness"))
+			return
 		}
 		http.ServeFile(w, req, bundleFilePath)
 	})
@@ -130,6 +167,7 @@ func TestABUpdateSequence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() { blobLis.Close() })
 	blobListenAddr := blobLis.Addr().(*net.TCPAddr)
 	go http.Serve(blobLis, m)
 
@@ -139,7 +177,7 @@ func TestABUpdateSequence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(rootDevPath)
+	t.Cleanup(func() { os.Remove(rootDevPath) })
 	defer rootDisk.Close()
 
 	ovmfVarsPath, err := datafile.ResolveRunfile("external/edk2/OVMF_VARS.fd")
@@ -181,18 +219,20 @@ func TestABUpdateSequence(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("unable to generate starting point image: %v", err)
 	}
-	rootDisk.Close()
 
 	blobGuestFwd := fmt.Sprintf("guestfwd=tcp:%s-tcp:127.0.0.1:%d", blobAddr.String(), blobListenAddr.Port)
 
-	ovmfVars, err := os.CreateTemp("", "agent-ovmf-vars")
+	ovmfVars, err := os.CreateTemp("", "ab-ovmf-vars")
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer ovmfVars.Close()
+	t.Cleanup(func() { os.Remove(ovmfVars.Name()) })
 	ovmfVarsTmpl, err := os.Open(ovmfVarsPath)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer ovmfVarsTmpl.Close()
 	if _, err := io.Copy(ovmfVars, ovmfVarsTmpl); err != nil {
 		t.Fatal(err)
 	}
@@ -207,25 +247,75 @@ func TestABUpdateSequence(t *testing.T) {
 		"-device", "virtio-net-pci,netdev=net0,mac=22:d5:8e:76:1d:07",
 		"-device", "virtio-rng-pci",
 		"-serial", "stdio",
-		"-trace", "pflash*",
 		"-no-reboot",
 	}
-	// Install Bundle Y next
-	nbpMutex.Lock()
-	nextBundlePathToInstall = bundleYPath
-	nbpMutex.Unlock()
+	return &b, qemuArgs
+}
+
+func TestABUpdateSequenceReboot(t *testing.T) {
+	bsrv, qemuArgs := setup(t)
 
 	t.Log("Launching X image to install Y")
+	bsrv.setNextBundle("Y")
 	runAndCheckVariant(t, "X", qemuArgs)
 
-	// Install Bundle Z next
-	nbpMutex.Lock()
-	nextBundlePathToInstall = bundleZPath
-	nbpMutex.Unlock()
-
 	t.Log("Launching Y on slot B to install Z on slot A")
+	bsrv.setNextBundle("Z")
 	runAndCheckVariant(t, "Y", qemuArgs)
 
 	t.Log("Launching Z on slot A")
 	runAndCheckVariant(t, "Z", qemuArgs)
+}
+
+func TestABUpdateSequenceKexec(t *testing.T) {
+	bsrv, qemuArgs := setup(t)
+	qemuArgs = append(qemuArgs, "-fw_cfg", "name=use_kexec,string=1")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	qemuCmdLaunch := exec.CommandContext(ctx, "qemu-system-x86_64", qemuArgs...)
+	testosStarted := make(chan string, 1)
+	stdoutHandler(t, qemuCmdLaunch, cancel, testosStarted)
+	stderrHandler(t, qemuCmdLaunch)
+	if err := qemuCmdLaunch.Start(); err != nil {
+		t.Fatal(err)
+	}
+	procExit := make(chan error)
+	go func() {
+		procExit <- qemuCmdLaunch.Wait()
+		close(procExit)
+	}()
+	var expectedVariant = "X"
+	for {
+		select {
+		case variant := <-testosStarted:
+			if variant != expectedVariant {
+				t.Fatalf("expected variant %s to launch, got %s", expectedVariant, variant)
+			}
+			switch expectedVariant {
+			case "X":
+				expectedVariant = "Y"
+			case "Y":
+				expectedVariant = "Z"
+			case "Z":
+				// We're done, wait for everything to wind down and return
+				select {
+				case <-procExit:
+					return
+				case <-ctx.Done():
+					t.Error("Timed out waiting for VM to exit")
+					cancel()
+					<-procExit
+					return
+				}
+			}
+			bsrv.setNextBundle(expectedVariant)
+			t.Logf("Got %s, installing %s", variant, expectedVariant)
+		case err := <-procExit:
+			t.Fatalf("QEMU exited unexpectedly: %v", err)
+			return
+		case <-ctx.Done():
+			t.Fatalf("Waiting for TestOS variant %s launch timed out", expectedVariant)
+		}
+	}
 }

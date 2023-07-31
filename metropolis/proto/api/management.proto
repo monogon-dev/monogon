@@ -271,14 +271,26 @@ message GetLogsResponse {
   repeated metropolis.proto.common.LogEntry stream_entries = 2;
 }
 
+enum ActivationMode {
+  ACTIVATION_INVALID = 0;
+  // The new bundle is not activated immediately. It gets activated on the next
+  // reboot/reset.
+  ACTIVATION_NONE = 1;
+  // The node is rebooted immediately to activate the new image.
+  ACTIVATION_REBOOT = 2;
+  // The node uses kexec to activate the new image immediately without fully
+  // rebooting.
+  ACTIVATION_KEXEC = 3;
+}
+
 message UpdateNodeRequest {
   // An HTTPS URL to a Metropolis bundle containing the new OS to install.
   string bundle_url = 1;
 
-  // If set, do not reboot the node after installation. This means the updated
-  // version will not be active until the node has been rebooted via another
-  // method.
-  bool no_reboot = 2;
+  reserved 2;
+
+  // Specifies how the updated image should be activated.
+  ActivationMode activation_mode = 3;
 }
 
 message UpdateNodeResponse {}
