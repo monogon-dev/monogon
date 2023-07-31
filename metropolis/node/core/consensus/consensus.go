@@ -90,6 +90,7 @@ import (
 	"crypto/ed25519"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"fmt"
 	"math/big"
 	"net"
@@ -405,7 +406,7 @@ func (s *Service) bootstrap(ctx context.Context, fifoPath string) error {
 	select {
 	case <-server.Server.ReadyNotify():
 	case <-ctx.Done():
-		return fmt.Errorf("when waiting for bootstrap etcd: %w", err)
+		return errors.New("timed out waiting for etcd to become ready")
 	}
 
 	// ... create a client to it ...
