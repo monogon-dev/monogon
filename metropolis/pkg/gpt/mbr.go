@@ -40,7 +40,7 @@ func makeProtectiveMBR(w io.Writer, blockCount int64, bootCode []byte) error {
 				StartingCHS:   toCHS(1),
 				Type:          0xEE, // Table/Protective MBR
 				StartingBlock: 1,
-				SizeInBlocks:  representedBlockCount,
+				SizeInBlocks:  representedBlockCount - 1,
 				EndingCHS:     toCHS(blockCount + 1),
 			},
 			{},
