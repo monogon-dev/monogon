@@ -33,7 +33,7 @@ go_library(
 
 efi_unified_kernel_image(
     name = "kernel",
-    cmdline = "loglevel=0 console=ttyS0",
+    cmdline = "quiet console=ttyS0",
     initrd = ["//metropolis/installer:initramfs"],
     kernel = "//third_party/linux",
     visibility = ["//visibility:private"],
