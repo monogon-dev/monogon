@@ -164,7 +164,9 @@ func handlePartition(diskBlockDev string, partBlockDev string, table *gpt.Table,
 
 	part := table.Partitions[pi.partNumber-1]
 
-	updateSvc.ProvideESP("/esp", uint32(pi.partNumber), part)
+	if part.Type == gpt.PartitionTypeEFISystem {
+		updateSvc.ProvideESP("/esp", uint32(pi.partNumber), part)
+	}
 
 	nodePath := nodePathForPartitionType(part.Type)
 	if nodePath == "" {
