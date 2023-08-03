@@ -28,6 +28,7 @@ func (s *Service) UpdateNode(ctx context.Context, req *apb.UpdateNodeRequest) (*
 		// TODO(#253): Tell Supervisor to shut down gracefully and reboot
 		go func() {
 			time.Sleep(10 * time.Second)
+			unix.Unmount(s.UpdateService.ESPPath, 0)
 			unix.Sync()
 			if req.ActivationMode == apb.ActivationMode_ACTIVATION_KEXEC {
 				unix.Reboot(unix.LINUX_REBOOT_CMD_KEXEC)
