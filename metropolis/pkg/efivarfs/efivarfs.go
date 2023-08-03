@@ -89,7 +89,7 @@ func varPath(scope uuid.UUID, varName string) string {
 // Write writes the value of the named variable in the given scope.
 func Write(scope uuid.UUID, varName string, attrs Attribute, value []byte) error {
 	// Write attributes, see @linux//Documentation/filesystems:efivarfs.rst for format
-	f, err := os.OpenFile(varPath(scope, varName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	f, err := os.OpenFile(varPath(scope, varName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		e := err
 		// Unwrap PathError here as we wrap our own parameter message around it
