@@ -143,29 +143,9 @@ func (s *Service) getAllBootEntries() (map[int]*efivarfs.LoadOption, error) {
 }
 
 func (s *Service) getOrMakeBootEntry(existing map[int]*efivarfs.LoadOption, slot Slot) (int, error) {
-	for idx, e := range existing {
-		if len(e.FilePath) != 2 {
-			// Not our entry
-			continue
-		}
-		switch p := e.FilePath[0].(type) {
-		case *efivarfs.HardDrivePath:
-			gptMatch, ok := p.PartitionMatch.(*efivarfs.PartitionGPT)
-			if ok && gptMatch.PartitionUUID != s.ESPPart.ID {
-				// Not related to our ESP
-				continue
-			}
-		default:
-			continue
-		}
-		switch p := e.FilePath[1].(type) {
-		case efivarfs.FilePath:
-			if string(p) == slot.EFIBootPath() {
-				return idx, nil
-			}
-		default:
-			continue
-		}
+	idx, ok := s.findBootEntry(existing, slot)
+	if ok {
+		return idx, nil
 	}
 	newEntry := &efivarfs.LoadOption{
 		Description: fmt.Sprintf("Metropolis Slot %s", slot),
@@ -187,6 +167,34 @@ func (s *Service) getOrMakeBootEntry(existing map[int]*efivarfs.LoadOption, slot
 		existing[newIdx] = newEntry
 	}
 	return newIdx, err
+}
+
+func (s *Service) findBootEntry(existing map[int]*efivarfs.LoadOption, slot Slot) (int, bool) {
+	for idx, e := range existing {
+		if len(e.FilePath) != 2 {
+			// Not our entry
+			continue
+		}
+		switch p := e.FilePath[0].(type) {
+		case *efivarfs.HardDrivePath:
+			gptMatch, ok := p.PartitionMatch.(efivarfs.PartitionGPT)
+			if !(ok && gptMatch.PartitionUUID == s.ESPPart.ID) {
+				// Not related to our ESP
+				continue
+			}
+		default:
+			continue
+		}
+		switch p := e.FilePath[1].(type) {
+		case efivarfs.FilePath:
+			if string(p) == slot.EFIBootPath() {
+				return idx, true
+			}
+		default:
+			continue
+		}
+	}
+	return 0, false
 }
 
 // MarkBootSuccessful must be called after each boot if some implementation-
