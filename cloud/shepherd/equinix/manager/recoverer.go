@@ -55,7 +55,10 @@ func (r *Recoverer) getProcessInfo() processInfo {
 }
 
 func (r *Recoverer) getMachines(ctx context.Context, q *model.Queries, limit int32) ([]model.MachineProvided, error) {
-	return q.GetMachineForAgentRecovery(ctx, limit)
+	return q.GetMachineForAgentRecovery(ctx, model.GetMachineForAgentRecoveryParams{
+		Limit:    limit,
+		Provider: model.ProviderEquinix,
+	})
 }
 
 func (r *Recoverer) processMachine(ctx context.Context, t *task) error {

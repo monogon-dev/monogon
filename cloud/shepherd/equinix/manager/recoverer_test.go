@@ -121,7 +121,10 @@ func TestRecoverySmokes(t *testing.T) {
 		var machines []model.MachineProvided
 		err = sess.Transact(ctx, func(q *model.Queries) error {
 			var err error
-			machines, err = q.GetMachineForAgentRecovery(ctx, 100)
+			machines, err = q.GetMachineForAgentRecovery(ctx, model.GetMachineForAgentRecoveryParams{
+				Limit:    100,
+				Provider: model.ProviderEquinix,
+			})
 			return err
 		})
 		if err != nil {
@@ -144,7 +147,10 @@ func TestRecoverySmokes(t *testing.T) {
 	var machines []model.MachineProvided
 	err = sess.Transact(ctx, func(q *model.Queries) error {
 		var err error
-		machines, err = q.GetMachinesForAgentStart(ctx, 100)
+		machines, err = q.GetMachinesForAgentStart(ctx, model.GetMachinesForAgentStartParams{
+			Limit:    100,
+			Provider: model.ProviderEquinix,
+		})
 		return err
 	})
 	if err != nil {

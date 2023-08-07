@@ -27,6 +27,7 @@ WHERE
   )
   AND work.machine_id IS NULL
   AND work_backoff.machine_id IS NULL
+  AND machine_provided.provider = $2
 LIMIT $1;
 
 -- name: GetMachineForAgentRecovery :many
@@ -66,6 +67,7 @@ WHERE
   )
   AND work.machine_id IS NULL
   AND work_backoff.machine_id IS NULL
+  AND machine_provided.provider = $2
 LIMIT $1;
 
 -- name: AuthenticateAgentConnection :many

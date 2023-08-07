@@ -20,6 +20,7 @@ import (
 	"k8s.io/klog/v2"
 
 	apb "source.monogon.dev/cloud/agent/api"
+
 	"source.monogon.dev/cloud/bmaas/bmdb"
 	"source.monogon.dev/cloud/bmaas/bmdb/metrics"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
@@ -162,7 +163,10 @@ func (c *Initializer) getProcessInfo() processInfo {
 }
 
 func (c *Initializer) getMachines(ctx context.Context, q *model.Queries, limit int32) ([]model.MachineProvided, error) {
-	return q.GetMachinesForAgentStart(ctx, limit)
+	return q.GetMachinesForAgentStart(ctx, model.GetMachinesForAgentStartParams{
+		Limit:    limit,
+		Provider: model.ProviderEquinix,
+	})
 }
 
 func (c *Initializer) processMachine(ctx context.Context, t *task) error {

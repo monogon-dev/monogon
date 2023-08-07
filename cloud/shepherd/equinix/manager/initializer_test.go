@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	apb "source.monogon.dev/cloud/agent/api"
+
 	"source.monogon.dev/cloud/bmaas/bmdb"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	"source.monogon.dev/cloud/lib/component"
@@ -193,7 +194,10 @@ func TestInitializerSmokes(t *testing.T) {
 		var machines []model.MachineProvided
 		err = sess.Transact(ctx, func(q *model.Queries) error {
 			var err error
-			machines, err = q.GetMachinesForAgentStart(ctx, 100)
+			machines, err = q.GetMachinesForAgentStart(ctx, model.GetMachinesForAgentStartParams{
+				Limit:    100,
+				Provider: model.ProviderEquinix,
+			})
 			return err
 		})
 		if err != nil {

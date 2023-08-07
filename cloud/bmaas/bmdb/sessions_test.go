@@ -202,7 +202,10 @@ func TestWorkBackoff(t *testing.T) {
 				t.Fatalf("Deadline expired")
 			}
 			work, err := session.Work(ctx, model.ProcessShepherdAgentStart, func(q *model.Queries) ([]uuid.UUID, error) {
-				machines, err := q.GetMachinesForAgentStart(ctx, 1)
+				machines, err := q.GetMachinesForAgentStart(ctx, model.GetMachinesForAgentStartParams{
+					Limit:    1,
+					Provider: model.ProviderEquinix,
+				})
 				if err != nil {
 					return nil, err
 				}
@@ -238,7 +241,10 @@ func TestWorkBackoff(t *testing.T) {
 		var machines []model.MachineProvided
 		var err error
 		err = session.Transact(ctx, func(q *model.Queries) error {
-			machines, err = q.GetMachinesForAgentStart(ctx, 1)
+			machines, err = q.GetMachinesForAgentStart(ctx, model.GetMachinesForAgentStartParams{
+				Limit:    1,
+				Provider: model.ProviderEquinix,
+			})
 			if err != nil {
 				return err
 			}
@@ -351,7 +357,10 @@ func TestAgentStartWorkflow(t *testing.T) {
 	errC := make(chan error)
 	go func() {
 		work, err := session.Work(ctx, model.ProcessShepherdAgentStart, func(q *model.Queries) ([]uuid.UUID, error) {
-			machines, err := q.GetMachinesForAgentStart(ctx, 1)
+			machines, err := q.GetMachinesForAgentStart(ctx, model.GetMachinesForAgentStartParams{
+				Limit:    1,
+				Provider: model.ProviderEquinix,
+			})
 			if err != nil {
 				return nil, err
 			}
@@ -390,7 +399,10 @@ func TestAgentStartWorkflow(t *testing.T) {
 
 	// Mutual exclusion with AgentStart:
 	err = session.Transact(ctx, func(q *model.Queries) error {
-		machines, err := q.GetMachinesForAgentStart(ctx, 1)
+		machines, err := q.GetMachinesForAgentStart(ctx, model.GetMachinesForAgentStartParams{
+			Limit:    1,
+			Provider: model.ProviderEquinix,
+		})
 		if err != nil {
 			return err
 		}
@@ -405,7 +417,10 @@ func TestAgentStartWorkflow(t *testing.T) {
 
 	// Mutual exclusion with Recovery:
 	err = session.Transact(ctx, func(q *model.Queries) error {
-		machines, err := q.GetMachineForAgentRecovery(ctx, 1)
+		machines, err := q.GetMachineForAgentRecovery(ctx, model.GetMachineForAgentRecoveryParams{
+			Limit:    1,
+			Provider: model.ProviderEquinix,
+		})
 		if err != nil {
 			return err
 		}
@@ -427,7 +442,10 @@ func TestAgentStartWorkflow(t *testing.T) {
 	// That machine has its agent started, so we still expect no work to have to be
 	// done.
 	err = session.Transact(ctx, func(q *model.Queries) error {
-		machines, err := q.GetMachinesForAgentStart(ctx, 1)
+		machines, err := q.GetMachinesForAgentStart(ctx, model.GetMachinesForAgentStartParams{
+			Limit:    1,
+			Provider: model.ProviderEquinix,
+		})
 		if err != nil {
 			return err
 		}
@@ -518,7 +536,10 @@ func TestAgentStartWorkflowParallel(t *testing.T) {
 
 	workOnce := func(ctx context.Context, workerID int, session *Session) error {
 		work, err := session.Work(ctx, model.ProcessShepherdAgentStart, func(q *model.Queries) ([]uuid.UUID, error) {
-			machines, err := q.GetMachinesForAgentStart(ctx, 1)
+			machines, err := q.GetMachinesForAgentStart(ctx, model.GetMachinesForAgentStartParams{
+				Limit:    1,
+				Provider: model.ProviderEquinix,
+			})
 			if err != nil {
 				return nil, err
 			}

@@ -42,7 +42,10 @@ func TestAgentStart(t *testing.T) {
 	expectCandidates := func(want int) {
 		t.Helper()
 		if err := session.Transact(ctx, func(q *model.Queries) error {
-			candidates, err := q.GetMachinesForAgentStart(ctx, 1)
+			candidates, err := q.GetMachinesForAgentStart(ctx, model.GetMachinesForAgentStartParams{
+				Limit:    1,
+				Provider: model.ProviderEquinix,
+			})
 			if err != nil {
 				t.Fatalf("Could not retrieve machines for agent start: %v", err)
 			}
@@ -246,7 +249,10 @@ func TestAgentRecovery(t *testing.T) {
 
 		found := false
 		if err := session.Transact(ctx, func(q *model.Queries) error {
-			candidates, err := q.GetMachineForAgentRecovery(ctx, 100)
+			candidates, err := q.GetMachineForAgentRecovery(ctx, model.GetMachineForAgentRecoveryParams{
+				Limit:    100,
+				Provider: model.ProviderEquinix,
+			})
 			if err != nil {
 				return fmt.Errorf("GetMachinesForAgentRecovery: %w", err)
 			}
