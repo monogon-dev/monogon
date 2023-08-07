@@ -135,7 +135,8 @@ func (s *Service) getAllBootEntries() (map[int]*efivarfs.LoadOption, error) {
 		}
 		e, err := efivarfs.GetBootEntry(int(idx))
 		if err != nil {
-			return nil, fmt.Errorf("failed to get boot entry %d: %w", idx, err)
+			s.Logger.Warningf("Unable to get boot entry %d, skipping: %v", idx, err)
+			continue
 		}
 		res[int(idx)] = e
 	}
