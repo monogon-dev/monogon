@@ -81,8 +81,12 @@ func TestMarshalExamples(t *testing.T) {
 			if !bytes.Equal(got, c.expected) {
 				t.Fatalf("expected %x, got %x", c.expected, got)
 			}
-			if _, err := UnmarshalDevicePath(got); err != nil {
+			_, rest, err := UnmarshalDevicePath(got)
+			if err != nil {
 				t.Errorf("failed to unmarshal value again: %v", err)
+			}
+			if len(rest) != 0 {
+				t.Errorf("rest is non-zero after single valid device path: %x", rest)
 			}
 		})
 	}

@@ -264,14 +264,16 @@ func (d DevicePath) Marshal() ([]byte, error) {
 	return buf, nil
 }
 
-// UnmarshalDevicePath parses a binary device path.
-func UnmarshalDevicePath(data []byte) (DevicePath, error) {
+// UnmarshalDevicePath parses a binary device path until it encounters an end
+// device path structure. It returns that device path (excluding the final end
+// device path marker) as well as all all data following the end marker.
+func UnmarshalDevicePath(data []byte) (DevicePath, []byte, error) {
 	rest := data
 	var p DevicePath
 	for {
 		if len(rest) < 4 {
 			if len(rest) != 0 {
-				return nil, fmt.Errorf("dangling bytes at the end of device path: %x", rest)
+				return nil, nil, fmt.Errorf("dangling bytes at the end of device path: %x", rest)
 			}
 			break
 		}
@@ -279,13 +281,18 @@ func UnmarshalDevicePath(data []byte) (DevicePath, error) {
 		subT := rest[1]
 		dataLen := binary.LittleEndian.Uint16(rest[2:4])
 		if int(dataLen) > len(rest) {
-			return nil, fmt.Errorf("path element larger than rest of buffer: %d > %d", dataLen, len(rest))
+			return nil, nil, fmt.Errorf("path element larger than rest of buffer: %d > %d", dataLen, len(rest))
 		}
 		if dataLen < 4 {
-			return nil, fmt.Errorf("path element must be at least 4 bytes (header), length indicates %d", dataLen)
+			return nil, nil, fmt.Errorf("path element must be at least 4 bytes (header), length indicates %d", dataLen)
 		}
 		elemData := rest[4:dataLen]
 		rest = rest[dataLen:]
+
+		// End of Device Path
+		if t == 0x7f && subT == 0xff {
+			return p, rest, nil
+		}
 
 		unmarshal, ok := pathElementUnmarshalMap[[2]byte{t, subT}]
 		if !ok {
@@ -298,26 +305,12 @@ func UnmarshalDevicePath(data []byte) (DevicePath, error) {
 		}
 		elem, err := unmarshal(elemData)
 		if err != nil {
-			return nil, fmt.Errorf("failed decoding path element %d: %w", len(p), err)
+			return nil, nil, fmt.Errorf("failed decoding path element %d: %w", len(p), err)
 		}
 		p = append(p, elem)
 	}
-	var endOfPathIdx int
-	for i, e := range p {
-		if e.typ() == 0x7f && e.subType() == 0xff {
-			endOfPathIdx = i
-			break
-		}
+	if len(p) == 0 {
+		return nil, nil, errors.New("empty DevicePath without End Of Path element")
 	}
-	switch {
-	case len(p) == 0:
-		return nil, errors.New("empty DevicePath without End Of Path element")
-	case endOfPathIdx == -1:
-		return nil, fmt.Errorf("got DevicePath with %d elements, but without End Of Path element", len(p))
-	case endOfPathIdx != len(p)-1:
-		return nil, fmt.Errorf("got DevicePath with %d elements with End Of Path element at %d (wanted as last element)", len(p), endOfPathIdx)
-	}
-	p = p[:len(p)-1]
-
-	return p, nil
+	return nil, nil, fmt.Errorf("got DevicePath with %d elements, but without End Of Path element", len(p))
 }

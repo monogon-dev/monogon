@@ -64,6 +64,9 @@ type LoadOption struct {
 	// Path to the UEFI PE executable to execute when this load option is being
 	// loaded.
 	FilePath DevicePath
+	// ExtraPaths contains additional device paths with vendor-specific
+	// behavior. Can generally be left empty.
+	ExtraPaths []DevicePath
 	// OptionalData gets passed as an argument to the executed PE executable.
 	// If zero-length a NULL value is passed to the executable.
 	OptionalData []byte
@@ -85,8 +88,15 @@ func (e *LoadOption) Marshal() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed marshalling FilePath: %w", err)
 	}
+	for _, ep := range e.ExtraPaths {
+		epRaw, err := ep.Marshal()
+		if err != nil {
+			return nil, fmt.Errorf("failed marshalling ExtraPath: %w", err)
+		}
+		filePathRaw = append(filePathRaw, epRaw...)
+	}
 	if len(filePathRaw) > math.MaxUint16 {
-		return nil, fmt.Errorf("failed marshalling FilePath: value too big (%d)", len(filePathRaw))
+		return nil, fmt.Errorf("failed marshalling FilePath/ExtraPath: value too big (%d)", len(filePathRaw))
 	}
 	data = append16(data, uint16(len(filePathRaw)))
 	if strings.IndexByte(e.Description, 0x00) != -1 {
@@ -131,10 +141,19 @@ func UnmarshalLoadOption(data []byte) (*LoadOption, error) {
 		return nil, fmt.Errorf("declared length of FilePath (%d) overruns available data (%d)", lenPath, len(data)-descriptionEnd)
 	}
 	filePathData := data[descriptionEnd : descriptionEnd+int(lenPath)]
-	opt.FilePath, err = UnmarshalDevicePath(filePathData)
+	opt.FilePath, filePathData, err = UnmarshalDevicePath(filePathData)
 	if err != nil {
 		return nil, fmt.Errorf("failed unmarshaling FilePath: %w", err)
 	}
+	for len(filePathData) > 0 {
+		var extraPath DevicePath
+		extraPath, filePathData, err = UnmarshalDevicePath(filePathData)
+		if err != nil {
+			return nil, fmt.Errorf("failed unmarshaling ExtraPath: %w", err)
+		}
+		opt.ExtraPaths = append(opt.ExtraPaths, extraPath)
+	}
+
 	if descriptionEnd+int(lenPath) < len(data) {
 		opt.OptionalData = data[descriptionEnd+int(lenPath):]
 	}
