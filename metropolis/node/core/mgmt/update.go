@@ -25,16 +25,22 @@ func (s *Service) UpdateNode(ctx context.Context, req *apb.UpdateNodeRequest) (*
 		return nil, status.Errorf(codes.Unavailable, "error installing update: %v", err)
 	}
 	if req.ActivationMode != apb.ActivationMode_ACTIVATION_NONE {
-		// TODO(#253): Tell Supervisor to shut down gracefully and reboot
+
+		methodString, method := "reboot", unix.LINUX_REBOOT_CMD_RESTART
+		if req.ActivationMode == apb.ActivationMode_ACTIVATION_KEXEC {
+			methodString = "kexec"
+			method = unix.LINUX_REBOOT_CMD_KEXEC
+		}
+
+		s.LogTree.MustLeveledFor("update").Infof("activating update with method: %s", methodString)
+
 		go func() {
+			// TODO(#253): Tell Supervisor to shut down gracefully and reboot
 			time.Sleep(10 * time.Second)
+			s.LogTree.MustLeveledFor("update").Info("activating now...")
 			unix.Unmount(s.UpdateService.ESPPath, 0)
 			unix.Sync()
-			if req.ActivationMode == apb.ActivationMode_ACTIVATION_KEXEC {
-				unix.Reboot(unix.LINUX_REBOOT_CMD_KEXEC)
-			} else {
-				unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART)
-			}
+			unix.Reboot(method)
 		}()
 	}
 
