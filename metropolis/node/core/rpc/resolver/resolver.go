@@ -311,9 +311,10 @@ func (r *Resolver) runLeaderUpdater(ctx context.Context, opts []grpc.DialOption)
 	bo.MaxElapsedTime = 0
 	bo.MaxInterval = 10 * time.Second
 
-	return backoff.RetryNotify(func() error {
+	err := backoff.RetryNotify(func() error {
 		curMap := r.curatorMap()
 		for _, endpoint := range curMap.candidates() {
+			r.logger("FINDLEADER: trying via %s...", endpoint)
 			ok := r.watchLeaderVia(ctx, endpoint, opts)
 			if ok {
 				bo.Reset()
@@ -323,6 +324,8 @@ func (r *Resolver) runLeaderUpdater(ctx context.Context, opts []grpc.DialOption)
 	}, backoff.WithContext(bo, ctx), func(err error, t time.Duration) {
 		r.logger("FINDLEADER: error in loop: %v, retrying in %s...", err, t.String())
 	})
+	r.logger("FINDLEADER: exiting: %v", err)
+	return err
 }
 
 // watchLeaderVia connects to the endpoint defined by 'via' and attempts to
@@ -358,6 +361,7 @@ func (r *Resolver) watchLeaderVia(ctx context.Context, via string, opts []grpc.D
 	}
 	ok := false
 	for {
+		r.logger("WATCHLEADER: receiving...")
 		leaderInfo, err := cur.Recv()
 		if err == io.EOF {
 			r.logger("WATCHLEADER: connection with %s closed", via)
@@ -367,6 +371,7 @@ func (r *Resolver) watchLeaderVia(ctx context.Context, via string, opts []grpc.D
 			r.logger("WATCHLEADER: connection with %s failed: %v", via, err)
 			return ok
 		}
+		r.logger("WATCHLEADER: received: %+v", leaderInfo)
 
 		curMap := r.curatorMap()
 
