@@ -80,6 +80,16 @@ type nodeInfo struct {
 	controlPlane bool
 }
 
+func (n *nodeInfo) equals(o *nodeInfo) bool {
+	if n.address != o.address {
+		return false
+	}
+	if n.controlPlane != o.controlPlane {
+		return false
+	}
+	return true
+}
+
 // nodeMap is a map from node ID (effectively DNS name) to node IP address.
 type nodeMap map[string]nodeInfo
 
@@ -203,18 +213,22 @@ func (s *Service) Run(ctx context.Context) error {
 				// might be outdated (eg. when we haven't yet reported a new local address to
 				// the cluster).
 
+				existing := nodes[id]
+
 				if id == s.NodeID {
 					// ... but this is still a good source of information to know whether we're
 					// running the control plane or not.
-					localInfo := nodes[id]
-					localInfo.controlPlane = info.controlPlane
-					nodes[id] = localInfo
+					if existing.controlPlane != info.controlPlane {
+						changed = true
+						existing.controlPlane = info.controlPlane
+						nodes[id] = existing
+					}
 					continue
 				}
-				if nodes[id].address == info.address {
+				if existing.equals(&info) {
 					continue
 				}
-				supervisor.Logger(ctx).Infof("Got new cluster address: %s is %s", id, info.address)
+				supervisor.Logger(ctx).Infof("Update for node %s: address %s, control plane %v", id, info.address, info.controlPlane)
 				nodes[id] = info
 				changed = true
 			}
