@@ -35,6 +35,8 @@ go_test(
         "@cockroach",
     ],
     embed = [":bmdb"],
+    # TODO: https://github.com/monogon-dev/monogon/issues/213
+    flaky = True,
     deps = [
         "//cloud/agent/api",
         "//cloud/bmaas/bmdb/model",
