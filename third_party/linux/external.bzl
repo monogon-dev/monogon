@@ -25,6 +25,7 @@ def linux_external(name, version):
         "5.15.32": "1463cdfa223088610dd65d3eadeffa44ec49746091b8ae8ddac6f3070d17df86",
         "5.15.104": "71c532ce09992e470f3259ffeb38d2b5bba990c243a559e4726a57412bd36b54",
         "5.15.122": "38755801cd1ce229a8c0a0536d29aa37acea8a8aa13fa438e19fbf9d6293342d",
+        "5.15.125": "150f3846b76cd23a6135f49cef71372bade5a06e851cb4f8558df8b862d8fec7",
     }
     http_archive(
         name = name,
