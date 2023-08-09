@@ -94,6 +94,17 @@ func TestEtcdMetrics(t *testing.T) {
 	ctxC, _ := supervisor.TestHarness(t, etcd.Run)
 	defer ctxC()
 
+	w := etcd.Watch()
+	// Wait until etcd state is populated as the metrics endpoint comes up
+	// before the bootstrap process is complete. The test context then gets
+	// cancelled as the test has succeeded, but the consensus runnable is not
+	// done bootstrapping, causing it to return an error and TestHarness to fail
+	// the test.
+	_, err := w.Get(b.ctx)
+	if err != nil {
+		t.Fatalf("status get failed: %v", err)
+	}
+
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
 
