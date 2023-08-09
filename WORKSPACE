@@ -147,7 +147,7 @@ load("//third_party/intel_ucode:external.bzl", "intel_ucode_external")
 
 intel_ucode_external(
     name = "intel_ucode",
-    version = "20230214",
+    version = "20230808",
 )
 
 load("//third_party/edk2:external.bzl", "edk2_external")
