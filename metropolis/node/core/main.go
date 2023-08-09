@@ -185,6 +185,14 @@ func main() {
 			return fmt.Errorf("when starting pstore: %w", err)
 		}
 
+		// The kernel does of course not run in this runnable, only the log pipe
+		// runs in it.
+		if err := supervisor.Run(ctx, "kernel", func(ctx context.Context) error {
+			return logtree.KmsgPipe(ctx, supervisor.Logger(ctx))
+		}); err != nil {
+			return fmt.Errorf("when starting kernel log pipe: %w", err)
+		}
+
 		// Start the role service. The role service connects to the curator and runs
 		// all node-specific role code (eg. Kubernetes services).
 		//   supervisor.Logger(ctx).Infof("Starting role service...")
@@ -281,6 +289,11 @@ func consoleFilter(p *logtree.LogEntry) bool {
 	}
 	if strings.HasPrefix(s, "root.role.kubernetes.run.kubernetes.scheduler") {
 		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+	}
+	if strings.HasPrefix(s, "root.kernel") {
+		// Linux writes high-severity logs directly to the console anyways and
+		// its low-severity logs are too verbose.
+		return false
 	}
 	if strings.HasPrefix(s, "supervisor") {
 		return p.Leveled.Severity().AtLeast(logtree.WARNING)
