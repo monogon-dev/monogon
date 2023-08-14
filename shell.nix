@@ -10,7 +10,7 @@ let
     # Fancy colorful PS1 to make people notice easily they're in the Monogon Nix shell.
     PS1='\[\033]0;\u/monogon:\w\007\]'
     if type -P dircolors >/dev/null ; then
-      PS1+='\[\033[01;37m\]\u/monogon\[\033[01;36m\] \w \$\[\033[00m\] '
+      PS1+='\[\033[01;35m\]\u/monogon\[\033[01;36m\] \w \$\[\033[00m\] '
     fi
     export PS1
 
