@@ -34,6 +34,7 @@ in
   name = "monogon-nix";
   targetPkgs = pkgs: with pkgs; [
     git
+    buildifier
     (stdenv.mkDerivation {
       name = "bazel";
       src = builtins.fetchurl  {
