@@ -76,11 +76,10 @@ be built and tested without root privileges or other dangerous capabilities.
 
 ### NixOS
 
-We fully support building on NixOS, and we provide a `shell.nix` file to make it easy:
+We fully support building on NixOS, and we provide a `shell.nix` file to make it easy. Just run `nix-shell` in the
+project root! This will drop you into a shell with all dependencies installed, and you can run `bazel ...` as usual.
 
-    nix-shell --pure
-
-(just don't look at it too closely unless you want toolchain-themed nightmares)
+If you're using IntelliJ, you have to run IntelliJ _inside_ the Nix shell.
 
 ## IntelliJ
 

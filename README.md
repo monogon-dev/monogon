@@ -9,7 +9,7 @@ This is the main repository containing the source code for the [Monogon Platform
 Our build environment is self-contained and requires only minimal host dependencies:
 
 - A Linux machine or VM.
-- [Bazelisk](https://github.com/bazelbuild/bazelisk) >= v1.15.0
+- [Bazelisk](https://github.com/bazelbuild/bazelisk) >= v1.15.0 (or a working Nix environment).
 - A reasonably recent kernel with user namespaces enabled.
 - Working KVM with access to `/dev/kvm` (if you want to run tests).
 
