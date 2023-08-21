@@ -15,7 +15,7 @@ import (
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
-	"source.monogon.dev/metropolis/pkg/event"
+	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
@@ -42,21 +42,20 @@ type listener struct {
 	// etcd is a client to the locally running consensus (etcd) server which is used
 	// both for storing lock/leader election status and actual Curator data.
 	etcd client.Namespaced
-	// electionWatch is a function that returns an active electionWatcher for the
-	// listener to use when determining local leadership. As the listener may
-	// restart on error, this factory-function is used instead of an electionWatcher
-	// directly.
-	electionWatch func() event.Watcher[*electionStatus]
 
 	consensus consensus.ServiceHandle
+	status    *memory.Value[*electionStatus]
 }
 
 // run is the listener runnable. It listens on the Curator's gRPC socket, either
 // by starting a leader or follower instance.
 func (l *listener) run(ctx context.Context) error {
+
 	// First, figure out what we're ought to be running by watching the election and
 	// waiting for a result.
-	w := l.electionWatch()
+	w := l.status.Watch()
+	defer w.Close()
+
 	supervisor.Logger(ctx).Infof("Waiting for election status...")
 	st, err := w.Get(ctx)
 	if err != nil {
@@ -116,9 +115,9 @@ func (l *listener) run(ctx context.Context) error {
 
 		// Create a follower instance and serve it over gRPC.
 		follower := &curatorFollower{
-			lock:       st.follower.lock,
 			etcd:       l.etcd,
 			followerID: l.node.ID(),
+			status:     l.status,
 		}
 		cpb.RegisterCuratorLocalServer(srv, follower)
 	}
@@ -159,10 +158,6 @@ func (l *listener) run(ctx context.Context) error {
 			}
 			if nst.follower == nil {
 				return fmt.Errorf("this curator stopped being a follower, quitting")
-			}
-			if nst.follower.lock.NodeId != st.follower.lock.NodeId {
-				// TODO(q3k): don't restart then, just update the server's lock
-				return fmt.Errorf("leader changed from %q to %q, quitting", st.follower.lock.NodeId, nst.follower.lock.NodeId)
 			}
 		}
 	default:

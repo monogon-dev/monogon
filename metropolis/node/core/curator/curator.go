@@ -325,10 +325,10 @@ func (s *Service) Run(ctx context.Context) error {
 	// the Curator API to consumers, dispatching to either a locally running leader,
 	// or forwarding to a remotely running leader.
 	lis := listener{
-		node:          s.config.NodeCredentials,
-		electionWatch: s.status.Watch,
-		consensus:     s.config.Consensus,
-		etcd:          etcd,
+		node:      s.config.NodeCredentials,
+		etcd:      etcd,
+		consensus: s.config.Consensus,
+		status:    &s.status,
 	}
 	if err := supervisor.Run(ctx, "listener", lis.run); err != nil {
 		return fmt.Errorf("when starting listener: %w", err)
