@@ -1,3 +1,4 @@
+{ command ? "bash --noprofile --norc" }:
 # If you're on NixOS, use me! `nix-shell --pure`.
 with import (fetchTarball {
   # nixpkgs 23.05 as of 2023/07/19
@@ -27,7 +28,12 @@ let
     # stripped by (host_)action_env.
     export BAZEL_SH=/bin/bash
 
-    exec bash --noprofile --norc "$@"
+    # Allow passing a custom command via env since nix-shell doesn't support
+    # this yet: https://github.com/NixOS/nix/issues/534
+    if [ ! -n "$COMMAND" ]; then
+        COMMAND="bash --noprofile --norc"
+    fi
+    exec $COMMAND
   '';
 in
 (pkgs.buildFHSUserEnv {
