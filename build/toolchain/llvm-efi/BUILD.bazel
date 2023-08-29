@@ -9,9 +9,14 @@ filegroup(
     srcs = ["fltused.o"],
 )
 
+filegroup(
+    name = "all",
+    srcs = [":fltused"],
+)
+
 cc_toolchain(
     name = "efi_k8_cc_toolchain",
-    all_files = ":empty",
+    all_files = ":all",
     ar_files = ":empty",
     as_files = ":empty",
     compiler_files = ":empty",
