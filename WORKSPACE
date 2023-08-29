@@ -130,13 +130,51 @@ rules_pkg_dependencies()
 # Rust rules
 http_archive(
     name = "rules_rust",
-    sha256 = "aaaa4b9591a5dad8d8907ae2dbe6e0eb49e6314946ce4c7149241648e56a1277",
-    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.16.1/rules_rust-v0.16.1.tar.gz"],
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party:rust-uefi-platform.patch",
+    ],
+    sha256 = "9d04e658878d23f4b00163a72da3db03ddb451273eb347df7d7c50838d698f49",
+    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.26.0/rules_rust-v0.26.0.tar.gz"],
 )
 
-load("@rules_rust//rust:repositories.bzl", "rust_repositories")
+load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_repository_set")
 
-rust_repositories()
+rules_rust_dependencies()
+
+# Rust Toolchains
+rust_repository_set(
+    name = "rust_linux_x86_64",
+    edition = "2021",
+    exec_triple = "x86_64-unknown-linux-gnu",
+    extra_target_triples = [
+        "x86_64-unknown-linux-gnu",
+        "x86_64-unknown-uefi",
+    ],
+    versions = ["1.71.0"],  # Default for rules_go 0.26.
+)
+
+rust_repository_set(
+    name = "rust_macos_x86_64",
+    edition = "2021",
+    exec_triple = "x86_64-apple-darwin",
+    extra_target_triples = [
+        "x86_64-unknown-linux-gnu",
+        "x86_64-unknown-uefi",
+    ],
+    versions = ["1.71.0"],  # Default for rules_go 0.26.
+)
+
+rust_repository_set(
+    name = "rust_macos_arm64",
+    edition = "2021",
+    exec_triple = "aarch64-apple-darwin",
+    extra_target_triples = [
+        "x86_64-unknown-linux-gnu",
+        "x86_64-unknown-uefi",
+    ],
+    versions = ["1.71.0"],  # Default for rules_go 0.26.
+)
 
 load("//third_party/rust/cargo:crates.bzl", "raze_fetch_remote_crates")
 
