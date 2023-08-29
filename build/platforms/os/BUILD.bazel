@@ -1,9 +1,0 @@
-package(
-    default_visibility = ["//visibility:public"],
-)
-
-# EFI preboot environment
-constraint_value(
-    name = "efi",
-    constraint_setting = "@platforms//os:os",
-)

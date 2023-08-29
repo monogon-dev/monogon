@@ -24,6 +24,20 @@ load("@bazel_skylib//lib:versions.bzl", "versions")
 
 versions.check(minimum_bazel_version = "5.4.0")
 
+# Explicitly include platforms to patch it
+http_archive(
+    name = "platforms",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party:platforms-add-uefi.patch",
+    ],
+    sha256 = "3a561c99e7bdbe9173aa653fd579fe849f1d8d67395780ab4770b1f381431d51",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/platforms/releases/download/0.0.7/platforms-0.0.7.tar.gz",
+        "https://github.com/bazelbuild/platforms/releases/download/0.0.7/platforms-0.0.7.tar.gz",
+    ],
+)
+
 # Register our custom CC toolchains. Order matters - more specific toolchains must be registered first.
 # (host_cc_toolchain won't care about //build/platforms/linkmode, but musl_host_toolchain won't
 # match anything unless its linkmode is set).

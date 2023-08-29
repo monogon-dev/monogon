@@ -11,7 +11,7 @@ platform(
 platform(
     name = "efi_amd64",
     constraint_values = [
-        "//build/platforms/os:efi",
+        "@platforms//os:uefi",
         "@platforms//cpu:x86_64",
     ],
 )

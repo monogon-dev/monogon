@@ -1,0 +1,25 @@
+From 8ea54f72ba3cc8a76fec436d0ce61433a01791cb Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Tue, 29 Aug 2023 18:45:54 +0200
+Subject: [PATCH] Add UEFI OS
+
+---
+ os/BUILD | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/os/BUILD b/os/BUILD
+index 1d9fedb..d68f485 100644
+--- a/os/BUILD
++++ b/os/BUILD
+@@ -116,3 +116,8 @@ constraint_value(
+     name = "chromiumos",
+     constraint_setting = ":os",
+ )
++
++constraint_value(
++    name = "uefi",
++    constraint_setting = ":os",
++)
+-- 
+2.41.0
+

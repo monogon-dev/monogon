@@ -39,7 +39,7 @@ toolchain(
     ],
     target_compatible_with = [
         "@platforms//cpu:x86_64",
-        "//build/platforms/os:efi",
+        "@platforms//os:uefi",
     ],
     toolchain = ":efi_k8_cc_toolchain",
     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
