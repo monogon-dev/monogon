@@ -1,5 +1,5 @@
---- a/BUILD.bazel  2022-03-21 17:04:56.160536936 +0100
-+++ b/BUILD.bazel   2022-03-21 17:05:52.439616250 +0100
+--- a/BUILD.bazel
++++ b/BUILD.bazel
 @@ -6,6 +6,9 @@
          "seccomp.go",
          "seccomp_internal.go",

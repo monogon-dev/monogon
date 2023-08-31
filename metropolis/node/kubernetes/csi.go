@@ -25,11 +25,11 @@ import (
 	"regexp"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
@@ -279,7 +279,7 @@ func (*csiPluginServer) GetPluginCapabilities(ctx context.Context, req *csi.GetP
 }
 
 func (s *csiPluginServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*csi.ProbeResponse, error) {
-	return &csi.ProbeResponse{Ready: &wrappers.BoolValue{Value: true}}, nil
+	return &csi.ProbeResponse{Ready: &wrapperspb.BoolValue{Value: true}}, nil
 }
 
 // Registration endpoints

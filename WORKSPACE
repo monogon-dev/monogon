@@ -48,19 +48,16 @@ register_toolchains("//build/toolchain/llvm-efi:efi_k8_toolchain")
 register_toolchains("//build/toolchain:host_cc_toolchain")
 
 # Go and Gazelle
-
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
 http_archive(
     name = "io_bazel_rules_go",
     patch_args = ["-p1"],
     patches = [
         "//third_party/go/patches:rules_go_absolute_embedsrc.patch",
     ],
-    sha256 = "56d8c5a5c91e1af73eca71a6fab2ced959b67c86d12ba37feedb0a2dfea441a6",
+    sha256 = "278b7ff5a826f3dc10f04feaf0b70d48b68748ccd512d7f98bf442077f043fe3",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.37.0/rules_go-v0.37.0.zip",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.37.0/rules_go-v0.37.0.zip",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.41.0/rules_go-v0.41.0.zip",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.41.0/rules_go-v0.41.0.zip",
     ],
 )
 
@@ -70,10 +67,10 @@ http_archive(
     patches = [
         "//third_party/gazelle:add-prepatching.patch",
     ],
-    sha256 = "5982e5463f171da99e3bdaeff8c0f48283a7a5f396ec5282910b9e8a49c0dd7e",
+    sha256 = "29218f8e0cebe583643cbf93cae6f971be8a2484cdcfa1e45057658df8d54002",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.25.0/bazel-gazelle-v0.25.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.25.0/bazel-gazelle-v0.25.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.32.0/bazel-gazelle-v0.32.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.32.0/bazel-gazelle-v0.32.0.tar.gz",
     ],
 )
 
@@ -87,7 +84,7 @@ go_repositories()
 go_rules_dependencies()
 
 go_register_toolchains(
-    go_version = "1.18.10",
+    go_version = "1.21.0",
     nogo = "@dev_source_monogon//build/analysis:nogo",
 )
 
@@ -112,6 +109,26 @@ load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_
 rules_proto_dependencies()
 
 rules_proto_toolchains()
+
+# GRPC
+http_archive(
+    name = "com_github_grpc_grpc",
+    patch_args = ["-p1"],
+    patches = ["//third_party/go/patches:grpc_extra_deps.patch"],
+    sha256 = "ec125d7fdb77ecc25b01050a0d5d32616594834d3fe163b016768e2ae42a2df6",
+    strip_prefix = "grpc-1.52.1",
+    urls = [
+        "https://github.com/grpc/grpc/archive/v1.52.1.tar.gz",
+    ],
+)
+
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
+
+grpc_deps()
+
+load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
+
+grpc_extra_deps()
 
 # Build packages
 http_archive(

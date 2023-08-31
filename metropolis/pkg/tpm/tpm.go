@@ -31,17 +31,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	tpm2tools "github.com/google/go-tpm-tools/client"
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpmutil"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/sys/unix"
+	"google.golang.org/protobuf/proto"
+
+	tpmpb "source.monogon.dev/metropolis/pkg/tpm/proto"
 
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/sysfs"
-	tpmpb "source.monogon.dev/metropolis/pkg/tpm/proto"
 )
 
 var (

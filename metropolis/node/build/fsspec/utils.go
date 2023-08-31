@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
 // ReadMergeSpecs reads FSSpecs from all files in paths and merges them into
@@ -18,7 +18,7 @@ func ReadMergeSpecs(paths []string) (*FSSpec, error) {
 		}
 
 		var spec FSSpec
-		if err := proto.UnmarshalText(string(specRaw), &spec); err != nil {
+		if err := prototext.Unmarshal(specRaw, &spec); err != nil {
 			return nil, fmt.Errorf("failed to parse spec %q: %w", p, err)
 		}
 		for _, f := range spec.File {

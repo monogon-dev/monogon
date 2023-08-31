@@ -26,6 +26,11 @@
       "external/bazel_gazelle/walk": "third_party"
     }
   },
+  "shift": {
+    "exclude_files": {
+      "external/dev_gvisor_gvisor/": "third_party"
+    }
+  },
   "unsafeptr": {
     "exclude_files": {
       "external/com_github_modern_go_reflect2/": "third_party",

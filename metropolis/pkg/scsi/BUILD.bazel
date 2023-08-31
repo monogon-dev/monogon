@@ -10,7 +10,6 @@ go_library(
         "scsi.go",
         "scsi_linux.go",
         "scsi_linux_defs.go",
-        "scsi_linux_defs1.go",
         "sensekeydata.go",
     ],
     cgo = True,

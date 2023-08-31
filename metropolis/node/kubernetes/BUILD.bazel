@@ -39,7 +39,6 @@ go_library(
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/api",
         "@com_github_container_storage_interface_spec//lib/go/csi",
-        "@io_bazel_rules_go//proto/wkt:wrappers_go_proto",
         "@io_k8s_api//core/v1:core",
         "@io_k8s_api//storage/v1:storage",
         "@io_k8s_apimachinery//pkg/api/errors",
@@ -60,6 +59,7 @@ go_library(
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//status",
+        "@org_golang_google_protobuf//types/known/wrapperspb",
         "@org_golang_x_sys//unix",
     ],
 )

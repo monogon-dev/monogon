@@ -14,7 +14,7 @@ go_library(
     embed = [":fsspec_go_proto"],
     importpath = "source.monogon.dev/metropolis/node/build/fsspec",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_golang_protobuf//proto:go_default_library"],
+    deps = ["@org_golang_google_protobuf//encoding/prototext"],
 )
 
 go_proto_library(

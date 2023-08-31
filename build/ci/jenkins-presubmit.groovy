@@ -24,7 +24,7 @@ pipeline {
                         sh "JENKINS_NODE_COOKIE=dontKillMe bazelisk test //..."
                         sh "JENKINS_NODE_COOKIE=dontKillMe bazelisk build  --//metropolis/cli/metroctl:buildkind=lite --platforms=@io_bazel_rules_go//go/toolchain:darwin_arm64 //metropolis/cli/metroctl"
                         sh "JENKINS_NODE_COOKIE=dontKillMe bazelisk build  --//metropolis/cli/metroctl:buildkind=lite --platforms=@io_bazel_rules_go//go/toolchain:darwin_amd64 //metropolis/cli/metroctl"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe bazelisk test -c dbg //..."
+                        sh "JENKINS_NODE_COOKIE=dontKillMe bazelisk test --config dbg //..."
                     }
                     post {
                         success {

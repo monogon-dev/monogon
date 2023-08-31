@@ -23,11 +23,11 @@ Refer to [SETUP.md](./SETUP.md) for detailed instructions.
 
 Build CLI and node image:
 
-    bazel build //metropolis/cli/dbg //:launch -c dbg
+    bazel build //metropolis/cli/dbg //:launch --config dbg
 
 Launch an ephemeral test node:
 
-    bazel test //:launch -c dbg --test_output=streamed
+    bazel test //:launch --config dbg --test_output=streamed
     
 Run a kubectl command while the test is running:
 
@@ -37,4 +37,4 @@ Run a kubectl command while the test is running:
 
 Run full test suite:
 
-    bazel test -c dbg //...
+    bazel test --config dbg //...

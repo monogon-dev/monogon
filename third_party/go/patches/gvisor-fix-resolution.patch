@@ -8,3 +8,4 @@
 +        "@io_bazel_rules_go//go/tools/coverdata",
      ],
  )
+

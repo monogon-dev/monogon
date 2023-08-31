@@ -1,60 +1,40 @@
-From bf6362aa01dd00c82996dcabfb1cb20d7919c552 Mon Sep 17 00:00:00 2001
-From: Lorenz Brun <lorenz@nexantic.com>
-Date: Wed, 22 Jul 2020 09:46:56 +0200
+From cdcf80bafba0ff61527a710899002936e2b117d6 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Thu, 31 Aug 2023 15:52:06 +0200
 Subject: [PATCH] Add support for prepatching
 
 ---
- internal/go_repository.bzl | 14 +++++++++++---
- 1 file changed, 11 insertions(+), 3 deletions(-)
+ internal/go_repository.bzl | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
 diff --git a/internal/go_repository.bzl b/internal/go_repository.bzl
-index 9928fa8..a3af13d 100644
+index cb0ac74..5a2a9e2 100644
 --- a/internal/go_repository.bzl
 +++ b/internal/go_repository.bzl
-@@ -213,6 +213,8 @@ def _go_repository_impl(ctx):
+@@ -257,6 +257,11 @@ def _go_repository_impl(ctx):
          if ctx.attr.debug_mode and result.stderr:
              print("fetch_repo: " + result.stderr)
  
-+    patch(ctx, True)
++    # TODO(lorenz): Replace this with patch() once the patches argument no longer gets merged with
++    # the attribute pulled from ctx.
++    for p in ctx.attr.pre_patches:
++        ctx.patch(p, 1)
 +
      # Repositories are fetched. Determine if build file generation is needed.
      build_file_names = ctx.attr.build_file_name.split(",")
      existing_build_file = ""
-@@ -474,6 +476,10 @@ go_repository = repository_rule(
+@@ -538,6 +543,11 @@ go_repository = repository_rule(
              Gazelle directives.""",
          ),
  
 +        # Patches to apply before running gazelle.
-+        "pre_patches": attr.label_list(),
-+        "pre_patch_cmds": attr.string_list(default = []),
++        "pre_patches": attr.label_list(
++            doc = "A list of patches to apply to the repository before gazelle runs.",
++        ),
 +
          # Patches to apply after running gazelle.
          "patches": attr.label_list(
              doc = "A list of patches to apply to the repository after gazelle runs.",
-@@ -504,10 +510,11 @@ go_repository = repository_rule(
- """See repository.md#go-repository for full documentation."""
- 
- # Copied from @bazel_tools//tools/build_defs/repo:utils.bzl
--def patch(ctx):
-+def patch(ctx, pre_mode = False):
-     """Implementation of patching an already extracted repository"""
-     bash_exe = ctx.os.environ["BAZEL_SH"] if "BAZEL_SH" in ctx.os.environ else "bash"
--    for patchfile in ctx.attr.patches:
-+    patches = ctx.attr.patches if not pre_mode else ctx.attr.pre_patches
-+    for patchfile in patches:
-         command = "{patchtool} {patch_args} < {patchfile}".format(
-             patchtool = ctx.attr.patch_tool,
-             patchfile = ctx.path(patchfile),
-@@ -520,7 +527,8 @@ def patch(ctx):
-         if st.return_code:
-             fail("Error applying patch %s:\n%s%s" %
-                  (str(patchfile), st.stderr, st.stdout))
--    for cmd in ctx.attr.patch_cmds:
-+    patch_cmds = ctx.attr.patch_cmds if not pre_mode else ctx.attr.pre_patch_cmds
-+    for cmd in patch_cmds:
-         st = ctx.execute([bash_exe, "-c", cmd])
-         if st.return_code:
-             fail("Error applying patch command %s:\n%s%s" %
 -- 
-2.25.1
+2.41.0
 

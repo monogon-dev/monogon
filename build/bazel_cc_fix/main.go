@@ -40,8 +40,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/mattn/go-shellwords"
+	"google.golang.org/protobuf/encoding/prototext"
 
 	"source.monogon.dev/build/bazel_cc_fix/ccfixspec"
 )
@@ -329,7 +329,7 @@ func main() {
 	}
 	specRaw, err := os.ReadFile(*specPath)
 	var spec ccfixspec.CCFixSpec
-	if err := proto.UnmarshalText(string(specRaw), &spec); err != nil {
+	if err := prototext.Unmarshal(specRaw, &spec); err != nil {
 		log.Fatalf("failed to load spec: %v", err)
 	}
 

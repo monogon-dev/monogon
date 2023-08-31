@@ -1,6 +1,6 @@
-From bf861ce45721791336b617a44844613bb74c677a Mon Sep 17 00:00:00 2001
-From: Lorenz Brun <lorenz@monogon.tech>
-Date: Tue, 22 Mar 2022 00:52:48 +0100
+From 2aaae27bbcdae1c917441932fb79b6f6b6e0ebcd Mon Sep 17 00:00:00 2001
+From: Tim Windelschmidt <tim@monogon.tech>
+Date: Tue, 12 Sep 2023 14:33:58 +0200
 Subject: [PATCH] containerd 1.6 compatibility
 
 ---
@@ -24,10 +24,10 @@ index da2e21598..d0d14dd24 100644
  		}
  	} else if !e.stdio.IsNull() {
 diff --git a/pkg/shim/proc/init.go b/pkg/shim/proc/init.go
-index 6bf090813..76df1101a 100644
+index fcdc8e2bc..f2aaf6c2a 100644
 --- a/pkg/shim/proc/init.go
 +++ b/pkg/shim/proc/init.go
-@@ -152,7 +152,7 @@ func (p *Init) Create(ctx context.Context, r *CreateConfig) (err error) {
+@@ -155,7 +155,7 @@ func (p *Init) Create(ctx context.Context, r *CreateConfig) (err error) {
  		if err != nil {
  			return fmt.Errorf("failed to retrieve console master: %w", err)
  		}
@@ -37,7 +37,7 @@ index 6bf090813..76df1101a 100644
  			return fmt.Errorf("failed to start console copy: %w", err)
  		}
 diff --git a/pkg/shim/service.go b/pkg/shim/service.go
-index 68966afdf..772168052 100644
+index a6904e1ae..964a152c9 100644
 --- a/pkg/shim/service.go
 +++ b/pkg/shim/service.go
 @@ -50,7 +50,7 @@ import (
@@ -46,13 +46,13 @@ index 68966afdf..772168052 100644
  	"gvisor.dev/gvisor/pkg/cleanup"
 -	"gvisor.dev/gvisor/pkg/shim/runtimeoptions/v14"
 +	v14 "gvisor.dev/gvisor/pkg/shim/runtimeoptions/v14"
- 
+
  	"gvisor.dev/gvisor/pkg/shim/proc"
  	"gvisor.dev/gvisor/pkg/shim/runsc"
 @@ -189,7 +189,7 @@ type service struct {
- 	shimAddress string
- }
- 
+
+ var _ shim.Shim = (*service)(nil)
+
 -func (s *service) newCommand(ctx context.Context, containerdBinary, containerdAddress string) (*exec.Cmd, error) {
 +func (s *service) newCommand(ctx context.Context, id, containerdBinary, containerdAddress string) (*exec.Cmd, error) {
  	ns, err := namespaces.NamespaceRequired(ctx)
@@ -69,12 +69,12 @@ index 68966afdf..772168052 100644
 @@ -219,14 +220,14 @@ func (s *service) newCommand(ctx context.Context, containerdBinary, containerdAd
  	return cmd, nil
  }
- 
+
 -func (s *service) StartShim(ctx context.Context, id, containerdBinary, containerdAddress, containerdTTRPCAddress string) (string, error) {
 -	log.L.Debugf("StartShim, id: %s, binary: %q, address: %q", id, containerdBinary, containerdAddress)
 +func (s *service) StartShim(ctx context.Context, opts shim.StartOpts) (string, error) {
 +	log.L.Debugf("StartShim, id: %s, binary: %q, address: %q", opts.ID, opts.ContainerdBinary, opts.Address)
- 
+
 -	cmd, err := s.newCommand(ctx, containerdBinary, containerdAddress)
 +	cmd, err := s.newCommand(ctx, opts.ID, opts.ContainerdBinary, opts.Address)
  	if err != nil {
@@ -103,12 +103,12 @@ index fb2f8b062..52c82ca90 100644
 @@ -33,7 +33,7 @@ type linuxPlatform struct {
  	epoller *console.Epoller
  }
- 
+
 -func (p *linuxPlatform) CopyConsole(ctx context.Context, console console.Console, stdin, stdout, stderr string, wg *sync.WaitGroup) (console.Console, error) {
 +func (p *linuxPlatform) CopyConsole(ctx context.Context, console console.Console, id, stdin, stdout, stderr string, wg *sync.WaitGroup) (console.Console, error) {
  	if p.epoller == nil {
  		return nil, fmt.Errorf("uninitialized epoller")
  	}
--- 
-2.25.1
+--
+2.41.0
 

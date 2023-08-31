@@ -1,3 +1,6 @@
+# Set compilation mode (-c) to debug when running with --config debug.
+build:dbg --compilation_mode=dbg
+
 # Enable strict_action_env (use static PATH and do not inherit environment variables).
 # This avoids unnecessary cache invalidations.
 build --incompatible_strict_action_env=true
@@ -55,6 +58,10 @@ test --test_output=errors
 # nowasm:
 #     disable wasm plugin support in sqlc
 build --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo
+
+# kvm_debug:
+#     prevent stackoverflows for gvisor
+build:dbg --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo,kvm_debug
 
 # Build with C++17.
 build --cxxopt=-std=c++17
