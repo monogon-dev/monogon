@@ -6,9 +6,6 @@ import (
 	"io"
 )
 
-// Replace with errors.ErrUnsupported once we migrate to Go 1.21
-var ErrUnsupported = errors.New("unsupported")
-
 var ErrNotBlockDevice = errors.New("not a block device")
 
 // BlockDev represents a generic block device made up of equally-sized blocks.

@@ -48,7 +48,7 @@ func (d *Device) BlockSize() int64 {
 func (d *Device) Discard(startByte int64, endByte int64) error {
 	// Can be implemented using DKIOCUNMAP, but needs x/sys/unix extension.
 	// Not mandatory, so this is fine for now.
-	return ErrUnsupported
+	return errors.ErrUnsupported
 }
 
 func (d *Device) OptimalBlockSize() int64 {
@@ -158,7 +158,7 @@ func (d *File) BlockSize() int64 {
 
 func (d *File) Discard(startByte int64, endByte int64) error {
 	// Can be supported in the future via fnctl.
-	return ErrUnsupported
+	return errors.ErrUnsupported
 }
 
 func (d *File) OptimalBlockSize() int64 {

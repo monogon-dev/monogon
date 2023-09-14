@@ -51,7 +51,7 @@ func (d *Device) Discard(startByte int64, endByte int64) error {
 		return ctrlErr
 	}
 	if err == unix.EOPNOTSUPP {
-		return ErrUnsupported
+		return errors.ErrUnsupported
 	}
 	if err != unix.Errno(0) {
 		return fmt.Errorf("failed to discard: %w", err)
@@ -213,7 +213,7 @@ func (d *File) Discard(startByte int64, endByte int64) error {
 		return ctrlErr
 	}
 	if errors.Is(err, unix.EOPNOTSUPP) {
-		return ErrUnsupported
+		return errors.ErrUnsupported
 	}
 	if err != unix.Errno(0) {
 		return fmt.Errorf("failed to discard: %w", err)
