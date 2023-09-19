@@ -1,4 +1,4 @@
-package main
+package clitable
 
 import (
 	"bytes"
@@ -8,26 +8,26 @@ import (
 
 // TestTableLayout performs a smoke test of the table layout functionality.
 func TestTableLayout(t *testing.T) {
-	tab := table{}
+	tab := Table{}
 
-	e := entry{}
-	e.add("id", "short")
-	e.add("labels", "")
-	tab.add(e)
+	e := Entry{}
+	e.Add("id", "short")
+	e.Add("labels", "")
+	tab.Add(e)
 
-	e = entry{}
-	e.add("whoops", "only in second")
-	e.add("labels", "bar")
-	e.add("id", "this one is a very long one")
-	tab.add(e)
+	e = Entry{}
+	e.Add("whoops", "only in second")
+	e.Add("labels", "bar")
+	e.Add("id", "this one is a very long one")
+	tab.Add(e)
 
-	e = entry{}
-	e.add("id", "normal length")
-	e.add("labels", "foo")
-	tab.add(e)
+	e = Entry{}
+	e.Add("id", "normal length")
+	e.Add("labels", "foo")
+	tab.Add(e)
 
 	buf := bytes.NewBuffer(nil)
-	tab.print(buf, nil)
+	tab.Print(buf, nil)
 
 	golden := `
 ID                            LABELS   WHOOPS           

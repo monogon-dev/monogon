@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load(":defs.bzl", "buildkind")
 
 buildkind(
@@ -28,7 +28,6 @@ go_library(
         "cmd_takeownership.go",
         "main.go",
         "rpc.go",
-        "table.go",
         "table_node.go",
     ],
     data = select({
@@ -41,6 +40,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/cli/metroctl",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/clitable",
         "//metropolis/cli/metroctl/core",
         "//metropolis/cli/pkg/context",
         "//metropolis/cli/pkg/datafile",
@@ -63,10 +63,4 @@ go_binary(
     name = "metroctl",
     embed = [":metroctl_lib"],
     visibility = ["//visibility:public"],
-)
-
-go_test(
-    name = "metroctl_test",
-    srcs = ["table_test.go"],
-    embed = [":metroctl_lib"],
 )

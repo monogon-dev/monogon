@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "clitable",
+    srcs = ["table.go"],
+    importpath = "source.monogon.dev/go/clitable",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "clitable_test",
+    srcs = ["table_test.go"],
+    embed = [":clitable"],
+)

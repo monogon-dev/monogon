@@ -5,24 +5,25 @@ import (
 	"sort"
 	"strings"
 
+	"source.monogon.dev/go/clitable"
 	"source.monogon.dev/metropolis/node/core/identity"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
-func nodeEntry(n *apb.Node) entry {
-	res := entry{}
+func nodeEntry(n *apb.Node) clitable.Entry {
+	res := clitable.Entry{}
 
-	res.add("node id", identity.NodeID(n.Pubkey))
+	res.Add("node id", identity.NodeID(n.Pubkey))
 	state := n.State.String()
 	state = strings.ReplaceAll(state, "NODE_STATE_", "")
-	res.add("state", state)
+	res.Add("state", state)
 	address := "unknown"
 	if n.Status != nil && n.Status.ExternalAddress != "" {
 		address = n.Status.ExternalAddress
 	}
-	res.add("address", address)
-	res.add("health", n.Health.String())
+	res.Add("address", address)
+	res.Add("health", n.Health.String())
 
 	var roles []string
 	if n.Roles.ConsensusMember != nil {
@@ -35,7 +36,7 @@ func nodeEntry(n *apb.Node) entry {
 		roles = append(roles, "KubernetesWorker")
 	}
 	sort.Strings(roles)
-	res.add("roles", strings.Join(roles, ","))
+	res.Add("roles", strings.Join(roles, ","))
 
 	tpm := "unk"
 	switch n.TpmUsage {
@@ -46,10 +47,10 @@ func nodeEntry(n *apb.Node) entry {
 	case cpb.NodeTPMUsage_NODE_TPM_NOT_PRESENT:
 		tpm = "no"
 	}
-	res.add("tpm", tpm)
+	res.Add("tpm", tpm)
 
 	tshs := n.TimeSinceHeartbeat.GetSeconds()
-	res.add("heartbeat", fmt.Sprintf("%ds", tshs))
+	res.Add("heartbeat", fmt.Sprintf("%ds", tshs))
 
 	return res
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"source.monogon.dev/go/clitable"
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/node/core/identity"
@@ -173,7 +174,7 @@ func printNodes(nodes []*apb.Node, args []string, onlyColumns map[string]bool) {
 		}
 	}
 
-	var t table
+	var t clitable.Table
 	for _, n := range nodes {
 		// Filter the information we want client-side.
 		if len(qids) != 0 {
@@ -182,8 +183,8 @@ func printNodes(nodes []*apb.Node, args []string, onlyColumns map[string]bool) {
 				continue
 			}
 		}
-		t.add(nodeEntry(n))
+		t.Add(nodeEntry(n))
 	}
 
-	t.print(o, onlyColumns)
+	t.Print(o, onlyColumns)
 }
