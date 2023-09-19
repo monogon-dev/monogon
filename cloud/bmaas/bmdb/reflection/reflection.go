@@ -22,6 +22,8 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protopath"
+	"google.golang.org/protobuf/reflect/protorange"
 )
 
 // GetMachinesOpts influences the behaviour of GetMachines.
@@ -318,6 +320,24 @@ func (r *Tag) Field(name string) *TagField {
 	return nil
 }
 
+// DisplayOption is an opaque argument used to influence the display style of a
+// tag value when returned from HumanValue.
+type DisplayOption string
+
+const (
+	// DisplaySingleLine limits display to a single line (i.e. don't try to
+	// pretty-print long values by inserting newlines and indents).
+	DisplaySingleLine DisplayOption = "single-line"
+)
+
+func (r *Tag) HumanValue(opts ...DisplayOption) string {
+	var kvs []string
+	for _, field := range r.Fields {
+		kvs = append(kvs, fmt.Sprintf("%s: %s", field.Type.NativeName, field.HumanValue(opts...)))
+	}
+	return strings.Join(kvs, ", ")
+}
+
 // TagField value which is part of a Tag set on a Machine.
 type TagField struct {
 	// Type describing this field.
@@ -331,14 +351,19 @@ type TagField struct {
 
 // HumanValue returns a human-readable (best effort) representation of the field
 // value.
-func (r *TagField) HumanValue() string {
+func (r *TagField) HumanValue(opts ...DisplayOption) string {
 	switch {
 	case r.proto != nil:
-		opts := prototext.MarshalOptions{
+		mopts := prototext.MarshalOptions{
 			Multiline: true,
 			Indent:    "\t",
 		}
-		return opts.Format(r.proto)
+		for _, opt := range opts {
+			if opt == DisplaySingleLine {
+				mopts.Multiline = false
+			}
+		}
+		return mopts.Format(r.proto)
 	case r.text != nil:
 		return *r.text
 	case r.bytes != nil:
@@ -348,6 +373,39 @@ func (r *TagField) HumanValue() string {
 	default:
 		return "<unknown>"
 	}
+}
+
+// Index attempts to index into a structured tag field (currently only protobuf
+// fields) by a 'field.subfield.subsubfield' selector.
+//
+// The selector for Protobuf fields follows the convention from 'protorange',
+// which is a semi-standardized format used in the Protobuf ecosystem. See
+// https://pkg.go.dev/google.golang.org/protobuf/reflect/protorange for more
+// details.
+//
+// An error will be returned if the TagField is not a protobuf field or if the
+// given selector does not point to a known message field.
+func (r *TagField) Index(k string) (string, error) {
+	if r.Type.ProtoType == nil {
+		return "", fmt.Errorf("can only index proto fields")
+	}
+	k = fmt.Sprintf("(%s).%s", r.Type.ProtoType.Descriptor().FullName(), k)
+
+	var res string
+	var found bool
+	ref := r.proto.ProtoReflect()
+	protorange.Range(ref, func(values protopath.Values) error {
+		if values.Path.String() == k {
+			res = values.Index(-1).Value.String()
+			found = true
+		}
+		return nil
+	})
+
+	if !found {
+		return "", fmt.Errorf("protobuf field not found")
+	}
+	return res, nil
 }
 
 // Backoff on a Machine.

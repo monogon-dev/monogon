@@ -15,6 +15,8 @@ go_library(
         "@io_k8s_klog_v2//:klog",
         "@org_golang_google_protobuf//encoding/prototext",
         "@org_golang_google_protobuf//proto",
+        "@org_golang_google_protobuf//reflect/protopath",
+        "@org_golang_google_protobuf//reflect/protorange",
         "@org_golang_google_protobuf//reflect/protoreflect",
     ],
 )

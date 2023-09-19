@@ -285,5 +285,13 @@ func TestReflectionProtoFields(t *testing.T) {
 		if !strings.Contains(v, "manufacturer:") {
 			t.Errorf("Invalid serialized prototext: %s", v)
 		}
+		fv, err := machine.Tags["HardwareReport"].Field("hardware_report_raw").Index("report.cpu[0].cores")
+		if err != nil {
+			t.Errorf("Could not get report.cpu[0].cores from hardware_report_raw: %v", err)
+		} else {
+			if want, got := "1", fv; want != got {
+				t.Errorf("report.cpu[0].cores should be %q, got %q", want, got)
+			}
+		}
 	}
 }
