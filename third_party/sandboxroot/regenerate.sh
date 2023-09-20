@@ -83,8 +83,6 @@ bazeldnf(
 
 EOF
 
-echo > ${DIR}/repositories.bzl.in
-
 # Create new sandbox root
 bazel ${BAZEL_ARGS} \
   run //:bazeldnf -- rpmtree \
@@ -92,28 +90,15 @@ bazel ${BAZEL_ARGS} \
   --name sandbox \
   --nobest \
   --buildfile third_party/sandboxroot/BUILD.bazel.in \
-  --workspace third_party/sandboxroot/repositories.bzl.in \
+  --to-macro third_party/sandboxroot/repositories.bzl%sandbox_dependencies \
   ${PKGS[@]}
 
 # Verify package signatures
 bazel ${BAZEL_ARGS} run //:bazeldnf -- verify \
   --repofile third_party/sandboxroot/repo.yaml \
-  --workspace third_party/sandboxroot/repositories.bzl.in
-
-# Write out repositories.bzl and clean up.
-#
-# Ideally, bazeldnf would support the format natively:
-# https://github.com/rmohr/bazeldnf/issues/26
-cat <<EOF > ${DIR}/repositories.bzl
-load("@bazeldnf//:deps.bzl", "rpm")
-
-def sandbox_dependencies():
-$(cat ${DIR}/repositories.bzl.in | sed 's/^/    /')
-EOF
+  --from-macro third_party/sandboxroot/repositories.bzl%sandbox_dependencies
 
 mv ${DIR}/BUILD.bazel.in ${DIR}/BUILD.bazel
-rm ${DIR}/repositories.bzl.in
-
 
 # Mirror everything
 bazel ${BAZEL_ARGS} \
