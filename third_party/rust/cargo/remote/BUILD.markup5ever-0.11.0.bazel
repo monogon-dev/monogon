@@ -78,9 +78,9 @@ rust_library(
     # buildifier: leave-alone
     deps = [
         ":markup5ever_build_script",
-        "@raze__log__0_4_17//:log",
+        "@raze__log__0_4_20//:log",
         "@raze__phf__0_10_1//:phf",
-        "@raze__string_cache__0_8_4//:string_cache",
+        "@raze__string_cache__0_8_7//:string_cache",
         "@raze__tendril__0_4_3//:tendril",
     ],
 )

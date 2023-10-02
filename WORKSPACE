@@ -150,52 +150,43 @@ http_archive(
     patch_args = ["-p1"],
     patches = [
         "//third_party:rust-uefi-platform.patch",
+        "//third_party:rust-prost-nostd.patch",
     ],
-    sha256 = "9d04e658878d23f4b00163a72da3db03ddb451273eb347df7d7c50838d698f49",
-    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.26.0/rules_rust-v0.26.0.tar.gz"],
+    sha256 = "c46bdafc582d9bd48a6f97000d05af4829f62d5fee10a2a3edddf2f3d9a232c1",
+    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.28.0/rules_rust-v0.28.0.tar.gz"],
 )
 
-load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_repository_set")
+load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains")
 
 rules_rust_dependencies()
 
 # Rust Toolchains
-rust_repository_set(
-    name = "rust_linux_x86_64",
+rust_register_toolchains(
     edition = "2021",
-    exec_triple = "x86_64-unknown-linux-gnu",
     extra_target_triples = [
         "x86_64-unknown-linux-gnu",
         "x86_64-unknown-uefi",
     ],
-    versions = ["1.71.0"],  # Default for rules_go 0.26.
-)
-
-rust_repository_set(
-    name = "rust_macos_x86_64",
-    edition = "2021",
-    exec_triple = "x86_64-apple-darwin",
-    extra_target_triples = [
-        "x86_64-unknown-linux-gnu",
-        "x86_64-unknown-uefi",
-    ],
-    versions = ["1.71.0"],  # Default for rules_go 0.26.
-)
-
-rust_repository_set(
-    name = "rust_macos_arm64",
-    edition = "2021",
-    exec_triple = "aarch64-apple-darwin",
-    extra_target_triples = [
-        "x86_64-unknown-linux-gnu",
-        "x86_64-unknown-uefi",
-    ],
-    versions = ["1.71.0"],  # Default for rules_go 0.26.
+    versions = ["1.71.0"],  # Linking EFI binaries is broken in 1.72
 )
 
 load("//third_party/rust/cargo:crates.bzl", "raze_fetch_remote_crates")
 
 raze_fetch_remote_crates()
+
+load("//third_party/rust_efi/cargo:crates.bzl", "rsefi_fetch_remote_crates")
+
+rsefi_fetch_remote_crates()
+
+load("@rules_rust//proto/prost:repositories.bzl", "rust_prost_dependencies")
+
+rust_prost_dependencies()
+
+load("@rules_rust//proto/prost:transitive_repositories.bzl", "rust_prost_transitive_repositories")
+
+rust_prost_transitive_repositories()
+
+register_toolchains("//build/rust:prost_efi_toolchain")
 
 # third_party external repositories
 load("//third_party/linux:external.bzl", "linux_external")

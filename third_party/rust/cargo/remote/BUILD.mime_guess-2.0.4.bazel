@@ -59,7 +59,7 @@ cargo_build_script(
     version = "2.0.4",
     visibility = ["//visibility:private"],
     deps = [
-        "@raze__unicase__2_6_0//:unicase",
+        "@raze__unicase__2_7_0//:unicase",
     ],
 )
 
@@ -89,7 +89,7 @@ rust_library(
     # buildifier: leave-alone
     deps = [
         ":mime_guess_build_script",
-        "@raze__mime__0_3_16//:mime",
-        "@raze__unicase__2_6_0//:unicase",
+        "@raze__mime__0_3_17//:mime",
+        "@raze__unicase__2_7_0//:unicase",
     ],
 )

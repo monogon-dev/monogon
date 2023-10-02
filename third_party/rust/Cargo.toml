@@ -8,6 +8,7 @@ path = "fake_lib.rs"
 
 [dependencies]
 mdbook = "0"
+protoc-gen-prost = "0.2.3"
 
 [package.metadata.raze]
 workspace_path = "//third_party/rust/cargo"
@@ -17,28 +18,43 @@ targets = [
 ]
 genmode = "Remote"
 
+[package.metadata.raze.crates.prost.'0.11.9']
+data_dependencies = [
+    "README.md",
+]
+
+[package.metadata.raze.crates.protoc-gen-prost.'0.2.3']
+data_dependencies = [
+    "README.md",
+]
+
 [package.metadata.raze.crates.handlebars.'4.3.6']
 data_dependencies = [
     "src/grammar.pest",
 ]
 
-[package.metadata.raze.crates.opener.'0.5.0']
+[package.metadata.raze.crates.opener.'0.6.1']
 data_dependencies = [
     "src/xdg-open",
 ]
 
-[package.metadata.raze.crates.clap.'3.2.23']
+[package.metadata.raze.crates.clap.'4.4.6']
 data_dependencies = [
     "README.md",
     "examples/demo.md",
 ]
 
-[package.metadata.raze.crates.clap_complete.'3.2.5']
+[package.metadata.raze.crates.clap_complete.'4.4.3']
 data_dependencies = [
     "README.md",
 ]
 
-[package.metadata.raze.crates.bstr.'0.2.17']
+[package.metadata.raze.crates.clap_builder.'4.4.6']
+data_dependencies = [
+    "README.md",
+]
+
+[package.metadata.raze.crates.bstr.'1.6.2']
 data_dependencies = [
 	"src/unicode/fsm/grapheme_break_fwd.littleendian.dfa",
 	"src/unicode/fsm/grapheme_break_rev.littleendian.dfa",
@@ -50,7 +66,7 @@ data_dependencies = [
 	"src/unicode/fsm/word_break_fwd.littleendian.dfa",
 ]
 
-[package.metadata.raze.crates.mdbook.'0.4.22']
+[package.metadata.raze.crates.mdbook.'0.4.35']
 data_dependencies = [
     "src/theme/playground_editor/ace.js",
     "src/theme/playground_editor/editor.js",

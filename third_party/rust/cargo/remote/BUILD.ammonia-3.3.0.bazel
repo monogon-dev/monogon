@@ -52,9 +52,9 @@ rust_library(
     deps = [
         "@raze__html5ever__0_26_0//:html5ever",
         "@raze__maplit__1_0_2//:maplit",
-        "@raze__once_cell__1_17_0//:once_cell",
+        "@raze__once_cell__1_18_0//:once_cell",
         "@raze__tendril__0_4_3//:tendril",
-        "@raze__url__2_3_1//:url",
+        "@raze__url__2_4_1//:url",
     ],
 )
 

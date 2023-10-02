@@ -14,7 +14,7 @@ licenses([
 # Aliased targets
 alias(
     name = "cargo_bin_mdbook",
-    actual = "@raze__mdbook__0_4_22//:cargo_bin_mdbook",
+    actual = "@raze__mdbook__0_4_35//:cargo_bin_mdbook",
     tags = [
         "cargo-raze",
         "manual",
@@ -23,7 +23,16 @@ alias(
 
 alias(
     name = "mdbook",
-    actual = "@raze__mdbook__0_4_22//:mdbook",
+    actual = "@raze__mdbook__0_4_35//:mdbook",
+    tags = [
+        "cargo-raze",
+        "manual",
+    ],
+)
+
+alias(
+    name = "protoc_gen_prost",
+    actual = "@raze__protoc_gen_prost__0_2_3//:protoc_gen_prost",
     tags = [
         "cargo-raze",
         "manual",

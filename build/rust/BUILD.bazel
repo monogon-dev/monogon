@@ -1,0 +1,20 @@
+load("@rules_rust//proto/prost:defs.bzl", "rust_prost_toolchain")
+
+rust_prost_toolchain(
+    name = "prost_efi_toolchain_impl",
+    is_nostd = True,
+    prost_plugin = "@raze__protoc_gen_prost__0_2_3//:cargo_bin_protoc_gen_prost",
+    prost_runtime = "@rsefi__prost__0_12_1//:prost",
+    prost_types = "@rsefi__prost_types__0_12_1//:prost_types",
+    proto_compiler = "@com_google_protobuf//:protoc",
+    # This defaults to a non-empty value, which triggers an error that not all
+    # tonic flags are set. We do not want tonic, so explicitly set this to
+    # an empty string.
+    tonic_plugin_flag = "",
+)
+
+toolchain(
+    name = "prost_efi_toolchain",
+    toolchain = "prost_efi_toolchain_impl",
+    toolchain_type = "@rules_rust//proto/prost:toolchain_type",
+)

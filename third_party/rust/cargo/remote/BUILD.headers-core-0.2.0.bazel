@@ -48,6 +48,6 @@ rust_library(
     version = "0.2.0",
     # buildifier: leave-alone
     deps = [
-        "@raze__http__0_2_8//:http",
+        "@raze__http__0_2_9//:http",
     ],
 )

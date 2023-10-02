@@ -37,7 +37,6 @@ rust_library(
     name = "unicode_normalization",
     srcs = glob(["**/*.rs"]),
     crate_features = [
-        "default",
         "std",
     ],
     crate_root = "src/lib.rs",
