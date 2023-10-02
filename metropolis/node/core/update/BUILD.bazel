@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "update",
@@ -7,6 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//metropolis/node/build/mkimage/osimage",
+        "//metropolis/node/core/abloader/spec",
         "//metropolis/pkg/blockdev",
         "//metropolis/pkg/efivarfs",
         "//metropolis/pkg/gpt",
@@ -15,17 +16,7 @@ go_library(
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//status",
+        "@org_golang_google_protobuf//proto",
         "@org_golang_x_sys//unix",
-    ],
-)
-
-go_test(
-    name = "update_test",
-    srcs = ["update_test.go"],
-    embed = [":update"],
-    deps = [
-        "//metropolis/pkg/efivarfs",
-        "//metropolis/pkg/gpt",
-        "@com_github_google_uuid//:uuid",
     ],
 )

@@ -9,6 +9,9 @@ go_library(
         "log.go",
         "main.go",
     ],
+    embedsrcs = [
+        "//metropolis/node/core/abloader",  #keep
+    ],
     importpath = "source.monogon.dev/metropolis/installer",
     visibility = ["//visibility:private"],
     deps = [

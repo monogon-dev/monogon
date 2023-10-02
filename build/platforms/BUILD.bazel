@@ -14,6 +14,7 @@ platform(
         "@platforms//os:uefi",
         "@platforms//cpu:x86_64",
     ],
+    visibility = ["//visibility:public"],
 )
 
 # Linux x86_64 platform with static linking

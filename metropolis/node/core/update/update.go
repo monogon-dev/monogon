@@ -19,8 +19,10 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
+	abloaderpb "source.monogon.dev/metropolis/node/core/abloader/spec"
 	"source.monogon.dev/metropolis/pkg/blockdev"
 	"source.monogon.dev/metropolis/pkg/efivarfs"
 	"source.monogon.dev/metropolis/pkg/gpt"
@@ -143,61 +145,6 @@ func (s *Service) getAllBootEntries() (map[int]*efivarfs.LoadOption, error) {
 	return res, nil
 }
 
-func (s *Service) getOrMakeBootEntry(existing map[int]*efivarfs.LoadOption, slot Slot) (int, error) {
-	idx, ok := s.findBootEntry(existing, slot)
-	if ok {
-		return idx, nil
-	}
-	newEntry := &efivarfs.LoadOption{
-		Description: fmt.Sprintf("Metropolis Slot %s", slot),
-		FilePath: efivarfs.DevicePath{
-			&efivarfs.HardDrivePath{
-				PartitionNumber:     s.ESPPartNumber,
-				PartitionStartBlock: s.ESPPart.FirstBlock,
-				PartitionSizeBlocks: s.ESPPart.SizeBlocks(),
-				PartitionMatch: efivarfs.PartitionGPT{
-					PartitionUUID: s.ESPPart.ID,
-				},
-			},
-			efivarfs.FilePath(slot.EFIBootPath()),
-		},
-	}
-	s.Logger.Infof("Recreated boot entry %s", newEntry.Description)
-	newIdx, err := efivarfs.AddBootEntry(newEntry)
-	if err == nil {
-		existing[newIdx] = newEntry
-	}
-	return newIdx, err
-}
-
-func (s *Service) findBootEntry(existing map[int]*efivarfs.LoadOption, slot Slot) (int, bool) {
-	for idx, e := range existing {
-		if len(e.FilePath) != 2 {
-			// Not our entry
-			continue
-		}
-		switch p := e.FilePath[0].(type) {
-		case *efivarfs.HardDrivePath:
-			gptMatch, ok := p.PartitionMatch.(efivarfs.PartitionGPT)
-			if !(ok && gptMatch.PartitionUUID == s.ESPPart.ID) {
-				// Not related to our ESP
-				continue
-			}
-		default:
-			continue
-		}
-		switch p := e.FilePath[1].(type) {
-		case efivarfs.FilePath:
-			if string(p) == slot.EFIBootPath() {
-				return idx, true
-			}
-		default:
-			continue
-		}
-	}
-	return 0, false
-}
-
 // MarkBootSuccessful must be called after each boot if some implementation-
 // defined criteria for a successful boot are met. If an update has been
 // installed and booted and this function is called, the updated version is
@@ -207,64 +154,24 @@ func (s *Service) MarkBootSuccessful() error {
 	if s.ESPPath == "" {
 		return errors.New("no ESP information provided to update service, cannot continue")
 	}
-	bootEntries, err := s.getAllBootEntries()
-	if err != nil {
-		return fmt.Errorf("while getting boot entries: %w", err)
-	}
-	aIdx, err := s.getOrMakeBootEntry(bootEntries, SlotA)
-	if err != nil {
-		return fmt.Errorf("while ensuring slot A boot entry: %w", err)
-	}
-	bIdx, err := s.getOrMakeBootEntry(bootEntries, SlotB)
-	if err != nil {
-		return fmt.Errorf("while ensuring slot B boot entry: %w", err)
-	}
-
 	activeSlot := s.CurrentlyRunningSlot()
-	firstSlot := SlotInvalid
-
-	ord, err := efivarfs.GetBootOrder()
+	abState, err := s.getABState()
 	if err != nil {
-		return fmt.Errorf("failed to get boot order: %w", err)
-	}
-
-	for _, e := range ord {
-		if int(e) == aIdx {
-			firstSlot = SlotA
-			break
+		s.Logger.Warningf("Error while getting A/B loader state, recreating: %v", err)
+		abState = &abloaderpb.ABLoaderData{
+			ActiveSlot: abloaderpb.Slot(activeSlot),
 		}
-		if int(e) == bIdx {
-			firstSlot = SlotB
-			break
+		err := s.setABState(abState)
+		if err != nil {
+			return fmt.Errorf("while recreating A/B loader state: %w", err)
 		}
 	}
-
-	if firstSlot == SlotInvalid {
-		bootOrder := make(efivarfs.BootOrder, 2)
-		switch activeSlot {
-		case SlotA:
-			bootOrder[0], bootOrder[1] = uint16(aIdx), uint16(bIdx)
-		case SlotB:
-			bootOrder[0], bootOrder[1] = uint16(bIdx), uint16(aIdx)
-		default:
-			return fmt.Errorf("invalid active slot")
-		}
-		efivarfs.SetBootOrder(bootOrder)
-		s.Logger.Infof("Metropolis missing from boot order, recreated it")
-	} else if activeSlot != firstSlot {
-		var aPos, bPos int
-		for i, e := range ord {
-			if int(e) == aIdx {
-				aPos = i
-			}
-			if int(e) == bIdx {
-				bPos = i
-			}
-		}
-		// swap A and B slots in boot order
-		ord[aPos], ord[bPos] = ord[bPos], ord[aPos]
-		if err := efivarfs.SetBootOrder(ord); err != nil {
-			return fmt.Errorf("failed to set boot order to permanently switch slot: %w", err)
+	if Slot(abState.ActiveSlot) != activeSlot {
+		err := s.setABState(&abloaderpb.ABLoaderData{
+			ActiveSlot: abloaderpb.Slot(activeSlot),
+		})
+		if err != nil {
+			return fmt.Errorf("while setting next A/B slot: %w", err)
 		}
 		s.Logger.Infof("Permanently activated slot %v", activeSlot)
 	} else {
@@ -283,6 +190,29 @@ func openSystemSlot(slot Slot) (*blockdev.Device, error) {
 	default:
 		return nil, errors.New("invalid slot identifier given")
 	}
+}
+
+func (s *Service) getABState() (*abloaderpb.ABLoaderData, error) {
+	abDataRaw, err := os.ReadFile(filepath.Join(s.ESPPath, "EFI/metropolis/loader_state.pb"))
+	if err != nil {
+		return nil, err
+	}
+	var abData abloaderpb.ABLoaderData
+	if err := proto.Unmarshal(abDataRaw, &abData); err != nil {
+		return nil, err
+	}
+	return &abData, nil
+}
+
+func (s *Service) setABState(d *abloaderpb.ABLoaderData) error {
+	abDataRaw, err := proto.Marshal(d)
+	if err != nil {
+		return fmt.Errorf("while marshaling: %w", err)
+	}
+	if err := os.WriteFile(filepath.Join(s.ESPPath, "EFI/metropolis/loader_state.pb"), abDataRaw, 0666); err != nil {
+		return err
+	}
+	return nil
 }
 
 // InstallBundle installs the bundle at the given HTTP(S) URL into the currently
@@ -326,22 +256,6 @@ func (s *Service) InstallBundle(ctx context.Context, bundleURL string, withKexec
 	}
 	targetSlot := activeSlot.Other()
 
-	bootEntries, err := s.getAllBootEntries()
-	if err != nil {
-		return fmt.Errorf("while getting boot entries: %w", err)
-	}
-	targetSlotBootEntryIdx, err := s.getOrMakeBootEntry(bootEntries, targetSlot)
-	if err != nil {
-		return fmt.Errorf("while ensuring target slot boot entry: %w", err)
-	}
-	targetSlotBootEntry := bootEntries[targetSlotBootEntryIdx]
-
-	// Disable boot entry while the corresponding slot is being modified.
-	targetSlotBootEntry.Inactive = true
-	if err := efivarfs.SetBootEntry(targetSlotBootEntryIdx, targetSlotBootEntry); err != nil {
-		return fmt.Errorf("failed setting boot entry %d inactive: %w", targetSlotBootEntryIdx, err)
-	}
-
 	systemPart, err := openSystemSlot(targetSlot)
 	if err != nil {
 		return status.Errorf(codes.Internal, "Inactive system slot unavailable: %v", err)
@@ -360,20 +274,17 @@ func (s *Service) InstallBundle(ctx context.Context, bundleURL string, withKexec
 		return fmt.Errorf("failed to write boot file: %w", err)
 	}
 
-	// Reenable target slot boot entry after boot and system have been written
-	// fully. The slot should now be bootable again.
-	targetSlotBootEntry.Inactive = false
-	if err := efivarfs.SetBootEntry(targetSlotBootEntryIdx, targetSlotBootEntry); err != nil {
-		return fmt.Errorf("failed setting boot entry %d active: %w", targetSlotBootEntryIdx, err)
-	}
-
 	if withKexec {
 		if err := s.stageKexec(bootFile, targetSlot); err != nil {
 			return fmt.Errorf("while kexec staging: %w", err)
 		}
 	} else {
-		if err := efivarfs.SetBootNext(uint16(targetSlotBootEntryIdx)); err != nil {
-			return fmt.Errorf("failed to set BootNext variable: %w", err)
+		err := s.setABState(&abloaderpb.ABLoaderData{
+			ActiveSlot: abloaderpb.Slot(activeSlot),
+			NextSlot:   abloaderpb.Slot(targetSlot),
+		})
+		if err != nil {
+			return fmt.Errorf("while setting next A/B slot: %w", err)
 		}
 	}
 

@@ -10,6 +10,9 @@ go_library(
         "install.go",
         "main.go",
     ],
+    embedsrcs = [
+        "//metropolis/node/core/abloader",  #keep
+    ],
     importpath = "source.monogon.dev/cloud/agent",
     visibility = ["//visibility:private"],
     deps = [

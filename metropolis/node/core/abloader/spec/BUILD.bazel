@@ -1,0 +1,30 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_rust//proto/prost:defs.bzl", "rust_prost_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+proto_library(
+    name = "abloader_proto",
+    srcs = ["abloader.proto"],
+    visibility = ["//visibility:public"],
+)
+
+rust_prost_library(
+    name = "abloader_proto_rs",
+    proto = ":abloader_proto",
+    visibility = ["//visibility:public"],
+)
+
+go_proto_library(
+    name = "abloader_go_proto",
+    importpath = "source.monogon.dev/metropolis/node/core/abloader/spec",
+    proto = ":abloader_proto",
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "spec",
+    embed = [":abloader_go_proto"],
+    importpath = "source.monogon.dev/metropolis/node/core/abloader/spec",
+    visibility = ["//visibility:public"],
+)

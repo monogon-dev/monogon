@@ -207,8 +207,18 @@ func setup(t *testing.T) (*bundleServing, []string) {
 	}
 	defer system.Close()
 
+	abloaderPath, err := datafile.ResolveRunfile("metropolis/node/core/abloader/abloader_bin.efi")
+	if err != nil {
+		t.Fatal(err)
+	}
+	loader, err := blkio.NewFileReader(abloaderPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if _, err := osimage.Create(&osimage.Params{
 		Output:      rootDisk,
+		ABLoader:    loader,
 		EFIPayload:  boot,
 		SystemImage: system,
 		PartitionSize: osimage.PartitionSizeInfo{

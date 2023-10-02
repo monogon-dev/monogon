@@ -27,6 +27,8 @@
 package main
 
 import (
+	"bytes"
+	_ "embed"
 	"flag"
 	"log"
 	"os"
@@ -35,6 +37,9 @@ import (
 	"source.monogon.dev/metropolis/pkg/blkio"
 	"source.monogon.dev/metropolis/pkg/blockdev"
 )
+
+//go:embed metropolis/node/core/abloader/abloader_bin.efi
+var abloader []byte
 
 func main() {
 	// Fill in the image parameters based on flags.
@@ -91,6 +96,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	cfg.ABLoader = bytes.NewReader(abloader)
 
 	// Write the parametrized OS image.
 	if _, err := osimage.Create(&cfg); err != nil {

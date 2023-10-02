@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	_ "embed"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -19,6 +20,9 @@ import (
 	"source.monogon.dev/metropolis/pkg/logtree"
 	npb "source.monogon.dev/net/proto"
 )
+
+//go:embed metropolis/node/core/abloader/abloader_bin.efi
+var abloader []byte
 
 // FileSizedReader is a small adapter from fs.File to fs.SizedReader
 // Panics on Stat() failure, so should only be used with sources where Stat()
@@ -134,6 +138,7 @@ func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Ne
 		},
 		SystemImage:    systemImage,
 		EFIPayload:     FileSizedReader{efiPayload},
+		ABLoader:       bytes.NewReader(abloader),
 		NodeParameters: bytes.NewReader(nodeParamsRaw),
 		Output:         rootDev,
 	}

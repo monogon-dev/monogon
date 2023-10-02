@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package monogon.metropolis.node.core.abloader;
+
+enum Slot {
+    NONE = 0;
+    A = 1;
+    B = 2;
+}
+
+// ABLoaderData contains data the A/B loader needs to chose which slot to boot
+// as well as for auto-rollback functionality.
+message ABLoaderData {
+    // The currently-active slot. This slot will be booted unless next_slot is
+    // set to a non-default value.
+    Slot active_slot = 1;
+    // The slot to boot next, but only once. Once the the slot has been selected
+    // to be booted by the loader, this value is reset before booting into that
+    // slot. If the OS boots successfully, it will update the active_slot to
+    // permanently boot from the new slot.
+    Slot next_slot = 2;
+}

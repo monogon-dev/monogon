@@ -9,6 +9,7 @@ go_test(
         # For the initial image creation
         "//metropolis/node/core/update/e2e/testos:verity_rootfs_x",
         "//metropolis/node/core/update/e2e/testos:kernel_efi_x",
+        "//metropolis/node/core/abloader",
         # For the two update tests
         "//metropolis/node/core/update/e2e/testos:testos_bundle_y",
         "//metropolis/node/core/update/e2e/testos:testos_bundle_z",

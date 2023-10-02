@@ -21,6 +21,8 @@ package main
 
 import (
 	"archive/zip"
+	"bytes"
+	_ "embed"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -37,6 +39,9 @@ import (
 	"source.monogon.dev/metropolis/pkg/efivarfs"
 	"source.monogon.dev/metropolis/pkg/sysfs"
 )
+
+//go:embed metropolis/node/core/abloader/abloader_bin.efi
+var abloader []byte
 
 const mib = 1024 * 1024
 
@@ -228,6 +233,7 @@ func main() {
 		},
 		SystemImage:    systemImage,
 		EFIPayload:     FileSizedReader{efiPayload},
+		ABLoader:       bytes.NewReader(abloader),
 		NodeParameters: FileSizedReader{nodeParameters},
 	}
 	// Calculate the minimum target size based on the installation parameters.

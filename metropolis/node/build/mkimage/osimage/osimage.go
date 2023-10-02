@@ -19,7 +19,6 @@
 package osimage
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -72,8 +71,11 @@ type PartitionSizeInfo struct {
 type Params struct {
 	// Output is the block device to which the OS image is written.
 	Output blockdev.BlockDev
+	// ABLoader provides the A/B loader which then loads the EFI loader for the
+	// correct slot.
+	ABLoader fat32.SizedReader
 	// EFIPayload provides contents of the EFI payload file. It must not be
-	// nil.
+	// nil. This gets put into boot slot A.
 	EFIPayload fat32.SizedReader
 	// SystemImage provides contents of the Metropolis system partition.
 	// If nil, no contents will be copied into the partition.
@@ -116,16 +118,11 @@ func Create(params *Params) (*efivarfs.LoadOption, error) {
 	rootInode := fat32.Inode{
 		Attrs: fat32.AttrDirectory,
 	}
-	efiPayload, err := io.ReadAll(params.EFIPayload)
-	if err != nil {
-		return nil, fmt.Errorf("while reading EFIPayload: %w", err)
-	}
-	if err := rootInode.PlaceFile(strings.TrimPrefix(EFIBootAPath, "/"), bytes.NewReader(efiPayload)); err != nil {
+	if err := rootInode.PlaceFile(strings.TrimPrefix(EFIBootAPath, "/"), params.EFIPayload); err != nil {
 		return nil, err
 	}
-	// Also place a copy of the boot file at the autodiscovery path. This will
-	// always boot slot A.
-	if err := rootInode.PlaceFile(strings.TrimPrefix(EFIPayloadPath, "/"), bytes.NewReader(efiPayload)); err != nil {
+	// Place the A/B loader at the EFI bootloader autodiscovery path.
+	if err := rootInode.PlaceFile(strings.TrimPrefix(EFIPayloadPath, "/"), params.ABLoader); err != nil {
 		return nil, err
 	}
 	if params.NodeParameters != nil {
@@ -181,7 +178,7 @@ func Create(params *Params) (*efivarfs.LoadOption, error) {
 
 	// Build an EFI boot entry pointing to the image's ESP.
 	return &efivarfs.LoadOption{
-		Description: "Metropolis Slot A",
+		Description: "Metropolis",
 		FilePath: efivarfs.DevicePath{
 			&efivarfs.HardDrivePath{
 				PartitionNumber:     1,
@@ -191,7 +188,7 @@ func Create(params *Params) (*efivarfs.LoadOption, error) {
 					PartitionUUID: esp.ID,
 				},
 			},
-			efivarfs.FilePath(EFIBootAPath),
+			efivarfs.FilePath(EFIPayloadPath),
 		},
 	}, nil
 }
