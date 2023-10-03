@@ -1,6 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("//metropolis/node/build:def.bzl", "erofs_image", "verity_image")
 load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
+load("//metropolis/node/build/mkimage:def.bzl", "node_image")
 load("//metropolis/node/build/fwprune:def.bzl", "fsspec_linux_firmware")
 load("//metropolis/node/build/mkucode:def.bzl", "cpio_ucode")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
@@ -142,24 +143,10 @@ pkg_zip(
     visibility = ["//visibility:public"],
 )
 
-genrule(
+node_image(
     name = "image",
-    srcs = [
-        ":kernel_efi",
-        ":verity_rootfs",
-    ],
-    outs = [
-        "node.img",
-    ],
-    cmd = """
-    $(location //metropolis/node/build/mkimage) \
-        -efi $(location :kernel_efi) \
-        -system $(location :verity_rootfs) \
-        -out $@
-    """,
-    tools = [
-        "//metropolis/node/build/mkimage",
-    ],
+    kernel = ":kernel_efi",
+    system = ":verity_rootfs",
     visibility = [
         "//metropolis/cli/metroctl/test:__subpackages__",
         "//metropolis/test/e2e:__subpackages__",

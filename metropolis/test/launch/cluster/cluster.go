@@ -130,7 +130,7 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 	}
 
 	// Initialize the node's storage with a prebuilt image.
-	si, err := datafile.ResolveRunfile("metropolis/node/node.img")
+	si, err := datafile.ResolveRunfile("metropolis/node/image.img")
 	if err != nil {
 		return nil, fmt.Errorf("while resolving a path: %w", err)
 	}
@@ -278,7 +278,7 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 
 	tpmSocketPath := filepath.Join(r.sd, "tpm-socket")
 	fwVarPath := filepath.Join(r.ld, "OVMF_VARS.fd")
-	storagePath := filepath.Join(r.ld, "node.img")
+	storagePath := filepath.Join(r.ld, "image.img")
 	qemuArgs := []string{
 		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "4096",
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
