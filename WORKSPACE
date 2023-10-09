@@ -200,7 +200,7 @@ load("//third_party/linux-firmware:external.bzl", "linux_firmware_external")
 
 linux_firmware_external(
     name = "linux-firmware",
-    version = "f2eb058afc57348cde66852272d6bf11da1eef8f",
+    version = "20230919",
 )
 
 load("//third_party/intel_ucode:external.bzl", "intel_ucode_external")

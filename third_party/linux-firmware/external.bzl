@@ -9,6 +9,7 @@ def linux_firmware_external(name, version):
         # 2023-08-09 master for Inception (CVE-2023-20569) and
         # Phantom (CVE-2022-23825)
         "f2eb058afc57348cde66852272d6bf11da1eef8f": "fcd570b8b259049dd84a0326f17a313271962f806ca32dbd9e40cdd9079857d0",
+        "20230919": "1dac602218f83f2c81dd72e599ae6c926901b3d36babccce46cd84293a37e473",
     }
     all_content = """
 filegroup(name = "all_files", srcs = glob(["**"]), visibility = ["//visibility:public"])
