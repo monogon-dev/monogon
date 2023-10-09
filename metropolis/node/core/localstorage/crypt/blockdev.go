@@ -120,6 +120,9 @@ func handleBlockDevice(diskBlockDev string, blockDevs []os.DirEntry, espUUID uui
 		// not contain this partition.
 		skipDisk = true
 		for _, part := range table.Partitions {
+			if part.IsUnused() {
+				continue
+			}
 			if part.ID == espUUID {
 				skipDisk = false
 				break

@@ -152,7 +152,9 @@ type Table struct {
 	BootCode []byte
 
 	// Partitions contains the list of partitions in this table. This is
-	// artificially limited to 128 partitions.
+	// artificially limited to 128 partitions. Holes in the partition list are
+	// represented as nil values. Call IsUnused before checking any other
+	// properties of the partition.
 	Partitions []*Partition
 
 	b blockdev.BlockDev

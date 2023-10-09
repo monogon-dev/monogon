@@ -104,6 +104,9 @@ func testosRunnable(ctx context.Context) error {
 		Logger: supervisor.MustSubLogger(ctx, "update"),
 	}
 	for pn, p := range vdaParts.Partitions {
+		if p.IsUnused() {
+			continue
+		}
 		switch p.Type {
 		case gpt.PartitionTypeEFISystem:
 			if err := unix.Mount(fmt.Sprintf("/dev/vda%d", pn+1), "/esp", "vfat", unix.MS_SYNC, ""); err != nil {
