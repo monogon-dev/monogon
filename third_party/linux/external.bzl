@@ -18,14 +18,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 def linux_external(name, version):
     sums = {
-        "5.4.7": "abc9b21d9146d95853dac35f4c4489a0199aff53ee6eee4b0563d1b37079fcc9",
-        "5.6": "e342b04a2aa63808ea0ef1baab28fc520bd031ef8cf93d9ee4a31d4058fcb622",
-        "5.10.4": "904e396c26e9992a16cd1cc989460171536bed7739bf36049f6eb020ee5d56ec",
-        "5.15.2": "5634033a4981be42d3259f50d5371a2cdc9ace5d9860da67a2879630533ab175",
-        "5.15.32": "1463cdfa223088610dd65d3eadeffa44ec49746091b8ae8ddac6f3070d17df86",
-        "5.15.104": "71c532ce09992e470f3259ffeb38d2b5bba990c243a559e4726a57412bd36b54",
-        "5.15.122": "38755801cd1ce229a8c0a0536d29aa37acea8a8aa13fa438e19fbf9d6293342d",
-        "5.15.125": "150f3846b76cd23a6135f49cef71372bade5a06e851cb4f8558df8b862d8fec7",
+        "6.1.56": "9edefdde32c2298389dcd19566402332b3c2016f5ada17e5820f500b908d478c",
     }
     http_archive(
         name = name,
@@ -38,5 +31,5 @@ def linux_external(name, version):
         ],
         sha256 = sums[version],
         strip_prefix = "linux-" + version,
-        urls = ["https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-%s.tar.xz" % version],
+        urls = ["https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-%s.tar.xz" % version],
     )
