@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "shepherd",
+    srcs = ["shepherd.go"],
+    importpath = "source.monogon.dev/cloud/shepherd",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cloud/bmaas/bmdb",
+        "//cloud/bmaas/bmdb/model",
+    ],
+)

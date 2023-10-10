@@ -1,0 +1,48 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
+
+go_library(
+    name = "mini_lib",
+    srcs = [
+        "main.go",
+        "provider.go",
+        "ssh.go",
+    ],
+    importpath = "source.monogon.dev/cloud/shepherd/mini",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cloud/bmaas/bmdb",
+        "//cloud/bmaas/bmdb/model",
+        "//cloud/bmaas/bmdb/webug",
+        "//cloud/lib/component",
+        "//cloud/shepherd",
+        "//cloud/shepherd/manager",
+        "//metropolis/cli/pkg/context",
+        "@io_k8s_klog_v2//:klog",
+        "@org_golang_x_crypto//ssh",
+    ],
+)
+
+go_binary(
+    name = "mini",
+    embed = [":mini_lib"],
+    visibility = ["//visibility:public"],
+)
+
+static_binary_tarball(
+    name = "mini_layer",
+    executable = ":mini",
+)
+
+container_image(
+    name = "mini_container",
+    base = "@go_image_base//image",
+    entrypoint = ["/app/cloud/shepherd/mini/mini_/mini"],
+    tars = [
+        ":mini_layer",
+        "//cloud/takeover:takeover_layer",
+    ],
+    visibility = ["//visibility:public"],
+    workdir = "/app",
+)

@@ -1,0 +1,77 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
+
+go_library(
+    name = "equinix_lib",
+    srcs = [
+        "main.go",
+        "provider.go",
+        "provider_config.go",
+        "updater.go",
+    ],
+    importpath = "source.monogon.dev/cloud/shepherd/provider/equinix",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//cloud/bmaas/bmdb",
+        "//cloud/bmaas/bmdb/metrics",
+        "//cloud/bmaas/bmdb/model",
+        "//cloud/bmaas/bmdb/webug",
+        "//cloud/equinix/wrapngo",
+        "//cloud/lib/component",
+        "//cloud/lib/sinbin",
+        "//cloud/shepherd",
+        "//cloud/shepherd/manager",
+        "//metropolis/cli/pkg/context",
+        "@com_github_packethost_packngo//:packngo",
+        "@io_k8s_klog_v2//:klog",
+        "@org_golang_x_crypto//ssh",
+    ],
+)
+
+go_test(
+    name = "equinix_test",
+    srcs = [
+        "fakequinix_test.go",
+        "initializer_test.go",
+        "provisioner_test.go",
+        "recoverer_test.go",
+        "updater_test.go",
+    ],
+    data = [
+        "@cockroach",
+    ],
+    embed = [":equinix_lib"],
+    deps = [
+        "//cloud/bmaas/bmdb",
+        "//cloud/bmaas/bmdb/model",
+        "//cloud/lib/component",
+        "//cloud/shepherd/manager",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_packethost_packngo//:packngo",
+        "@org_golang_x_time//rate",
+    ],
+)
+
+go_binary(
+    name = "equinix",
+    embed = [":equinix_lib"],
+    visibility = ["//visibility:public"],
+)
+
+static_binary_tarball(
+    name = "equinix_layer",
+    executable = ":equinix",
+)
+
+container_image(
+    name = "equinix_container",
+    base = "@go_image_base//image",
+    entrypoint = ["/app/cloud/shepherd/provider/equinix/equinix_/equinix"],
+    tars = [
+        ":equinix_layer",
+        "//cloud/takeover:takeover_layer",
+    ],
+    visibility = ["//visibility:public"],
+    workdir = "/app",
+)

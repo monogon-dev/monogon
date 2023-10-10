@@ -1,0 +1,58 @@
+package manager
+
+import (
+	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"fmt"
+	"time"
+
+	"google.golang.org/protobuf/proto"
+
+	apb "source.monogon.dev/cloud/agent/api"
+)
+
+// FakeSSHClient is an SSHClient that pretends to start an agent, but in reality
+// just responds with what an agent would respond on every execution attempt.
+type FakeSSHClient struct{}
+
+type fakeSSHConnection struct{}
+
+func (f *FakeSSHClient) Dial(ctx context.Context, address string, timeout time.Duration) (SSHConnection, error) {
+	return &fakeSSHConnection{}, nil
+}
+
+func (f *fakeSSHConnection) Execute(ctx context.Context, command string, stdin []byte) (stdout []byte, stderr []byte, err error) {
+	var aim apb.TakeoverInit
+	if err := proto.Unmarshal(stdin, &aim); err != nil {
+		return nil, nil, fmt.Errorf("while unmarshaling TakeoverInit message: %v", err)
+	}
+
+	// Agent should send back apb.TakeoverResponse on its standard output.
+	pub, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("while generating agent public key: %v", err)
+	}
+	arsp := apb.TakeoverResponse{
+		Result: &apb.TakeoverResponse_Success{Success: &apb.TakeoverSuccess{
+			InitMessage: &aim,
+			Key:         pub,
+		}},
+	}
+	arspb, err := proto.Marshal(&arsp)
+	if err != nil {
+		return nil, nil, fmt.Errorf("while marshaling TakeoverResponse message: %v", err)
+	}
+	return arspb, nil, nil
+}
+
+func (f *fakeSSHConnection) Upload(ctx context.Context, targetPath string, data []byte) error {
+	if targetPath != "/fake/path" {
+		return fmt.Errorf("unexpected target path in test")
+	}
+	return nil
+}
+
+func (f *fakeSSHConnection) Close() error {
+	return nil
+}
