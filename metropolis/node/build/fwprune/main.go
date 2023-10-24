@@ -182,7 +182,7 @@ func main() {
 				Path:       placedPath,
 				TargetPath: linkTarget,
 			})
-			populatedPaths[placedPath] = true
+			populatedPaths[p] = true
 			// Symlinks are relative to their place, resolve them to be relative
 			// to the firmware root directory.
 			chaseReference(path.Join(path.Dir(p), linkTarget))
@@ -200,7 +200,7 @@ func main() {
 			Mode:       0444,
 			SourcePath: sourcePath,
 		})
-		populatedPaths[path.Join("/lib/firmware", p)] = true
+		populatedPaths[p] = true
 	}
 
 	for _, p := range fwp {
