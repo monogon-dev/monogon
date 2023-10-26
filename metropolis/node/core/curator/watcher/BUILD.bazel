@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "watcher",
+    srcs = [
+        "watch_node.go",
+        "watch_nodes.go",
+    ],
+    importpath = "source.monogon.dev/metropolis/node/core/curator/watcher",
+    visibility = ["//visibility:public"],
+    deps = ["//metropolis/node/core/curator/proto/api"],
+)
