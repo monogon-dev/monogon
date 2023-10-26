@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-export COMMAND="bazel $*"
-nix-shell

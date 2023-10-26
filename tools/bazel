@@ -4,13 +4,26 @@
 set -euo pipefail
 shopt -s nullglob
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# Jump into nix-shell if BAZEL_REAL is set to a /nix/store path and we aren't
+# inside our shell yet.
+if [[ "${BAZEL_REAL:-}" == /nix/store/* && -z "${MONOGON_NIXOS:-}" ]]; then
+  echo "BAZEL_REAL is pointing to a /nix/store path, overriding to nix-shell." >&2
+
+  # Jump to project root since bwrap hangs if we aren't there
+  cd "${DIR}/../"
+
+  export COMMAND="bazel $*"
+  exec nix-shell
+fi
+
 # Short circuit if we're rebuilding the sandbox via third_party/sandboxroot/regenerate.sh.
 if [[ -n ${MONOGON_SYSROOT_REBUILD:-} ]]; then
   echo "Skipping Bazel wrapper" >&2
   exec -a "$0" "${BAZEL_REAL}" "$@"
 fi
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 SANDBOX="${DIR}/../.bazeldnf/sandbox/default"
 BAZEL_ARGS="--noworkspace_rc --bazelrc ${DIR}/../.bazelrc.sandboxroot"
 
