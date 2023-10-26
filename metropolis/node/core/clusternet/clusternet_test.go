@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strings"
+	"slices"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"source.monogon.dev/metropolis/test/util"
 
 	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 // fakeWireguard implements wireguard while keeping peer information internally.
@@ -28,7 +30,7 @@ type fakeWireguard struct {
 	k wgtypes.Key
 
 	muNodes        sync.Mutex
-	nodes          map[string]*node
+	nodes          map[string]*apb.Node
 	failNextUpdate bool
 }
 
@@ -40,27 +42,29 @@ func (f *fakeWireguard) ensureOnDiskKey(_ *localstorage.DataKubernetesClusterNet
 func (f *fakeWireguard) setup(clusterNet *net.IPNet) error {
 	f.muNodes.Lock()
 	defer f.muNodes.Unlock()
-	f.nodes = make(map[string]*node)
+	f.nodes = make(map[string]*apb.Node)
 	return nil
 }
 
-func (f *fakeWireguard) configurePeers(nodes []*node) error {
+func (f *fakeWireguard) configurePeers(nodes []*apb.Node) error {
 	f.muNodes.Lock()
 	defer f.muNodes.Unlock()
+
 	if f.failNextUpdate {
 		f.failNextUpdate = false
 		return fmt.Errorf("synthetic test failure")
 	}
+
 	for _, n := range nodes {
-		f.nodes[n.id] = n
+		f.nodes[n.Id] = n
 	}
 	return nil
 }
 
-func (f *fakeWireguard) unconfigurePeer(n *node) error {
+func (f *fakeWireguard) unconfigurePeer(node *apb.Node) error {
 	f.muNodes.Lock()
 	defer f.muNodes.Unlock()
-	delete(f.nodes, n.id)
+	delete(f.nodes, node.Id)
 	return nil
 }
 
@@ -105,7 +109,7 @@ func TestClusternetBasic(t *testing.T) {
 	}
 	supervisor.TestHarness(t, svc.Run)
 
-	checkState := func(nodes map[string]*node) error {
+	checkState := func(nodes map[string]*apb.Node) error {
 		t.Helper()
 		wg.muNodes.Lock()
 		defer wg.muNodes.Unlock()
@@ -114,16 +118,23 @@ func TestClusternetBasic(t *testing.T) {
 			if !ok {
 				return fmt.Errorf("node %q missing in programmed peers", nid)
 			}
-			if n2.pubkey != n.pubkey {
-				return fmt.Errorf("node %q pubkey mismatch: %q in programmed peers, %q wanted", nid, n2.pubkey, n.pubkey)
+			if got, want := n2.Clusternet.WireguardPubkey, n.Clusternet.WireguardPubkey; got != want {
+				return fmt.Errorf("node %q pubkey mismatch: %q in programmed peers, %q wanted", nid, got, want)
 			}
-			if n2.address != n.address {
-				return fmt.Errorf("node %q address mismatch: %q in programmed peers, %q wanted", nid, n2.address, n.address)
+			if got, want := n2.Status.ExternalAddress, n.Status.ExternalAddress; got != want {
+				return fmt.Errorf("node %q address mismatch: %q in programmed peers, %q wanted", nid, got, want)
 			}
-			p := strings.Join(n.prefixes, ",")
-			p2 := strings.Join(n2.prefixes, ",")
-			if p != p2 {
-				return fmt.Errorf("node %q prefixes mismatch: %v in programmed peers, %v wanted", nid, n2.prefixes, n.prefixes)
+			var p, p2 []string
+			for _, prefix := range n.Clusternet.Prefixes {
+				p = append(p, prefix.Cidr)
+			}
+			for _, prefix := range n2.Clusternet.Prefixes {
+				p2 = append(p2, prefix.Cidr)
+			}
+			sort.Strings(p)
+			sort.Strings(p2)
+			if !slices.Equal(p, p2) {
+				return fmt.Errorf("node %q prefixes mismatch: %v in programmed peers, %v wanted", nid, p2, p)
 			}
 		}
 		for nid, _ := range wg.nodes {
@@ -134,7 +145,7 @@ func TestClusternetBasic(t *testing.T) {
 		return nil
 	}
 
-	assertStateEventual := func(nodes map[string]*node) {
+	assertStateEventual := func(nodes map[string]*apb.Node) {
 		t.Helper()
 		deadline := time.Now().Add(5 * time.Second)
 		for {
@@ -152,34 +163,46 @@ func TestClusternetBasic(t *testing.T) {
 
 	// Start with a single node.
 	cur.NodeWithPrefixes(key1, "metropolis-fake-1", "1.2.3.4")
-	assertStateEventual(map[string]*node{
+	assertStateEventual(map[string]*apb.Node{
 		"metropolis-fake-1": {
-			pubkey:   key1.PublicKey().String(),
-			address:  "1.2.3.4",
-			prefixes: nil,
+			Status: &cpb.NodeStatus{
+				ExternalAddress: "1.2.3.4",
+			},
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: key1.PublicKey().String(),
+			},
 		},
 	})
 	// Change the node's peer address.
 	cur.NodeWithPrefixes(key1, "metropolis-fake-1", "1.2.3.5")
-	assertStateEventual(map[string]*node{
+	assertStateEventual(map[string]*apb.Node{
 		"metropolis-fake-1": {
-			pubkey:   key1.PublicKey().String(),
-			address:  "1.2.3.5",
-			prefixes: nil,
+			Status: &cpb.NodeStatus{
+				ExternalAddress: "1.2.3.5",
+			},
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: key1.PublicKey().String(),
+			},
 		},
 	})
 	// Add another node.
 	cur.NodeWithPrefixes(key2, "metropolis-fake-2", "1.2.3.6")
-	assertStateEventual(map[string]*node{
+	assertStateEventual(map[string]*apb.Node{
 		"metropolis-fake-1": {
-			pubkey:   key1.PublicKey().String(),
-			address:  "1.2.3.5",
-			prefixes: nil,
+			Status: &cpb.NodeStatus{
+				ExternalAddress: "1.2.3.5",
+			},
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: key1.PublicKey().String(),
+			},
 		},
 		"metropolis-fake-2": {
-			pubkey:   key2.PublicKey().String(),
-			address:  "1.2.3.6",
-			prefixes: nil,
+			Status: &cpb.NodeStatus{
+				ExternalAddress: "1.2.3.6",
+			},
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: key2.PublicKey().String(),
+			},
 		},
 	})
 	// Add some prefixes to both nodes, but fail the next configurePeers call.
@@ -188,30 +211,42 @@ func TestClusternetBasic(t *testing.T) {
 	wg.muNodes.Unlock()
 	cur.NodeWithPrefixes(key1, "metropolis-fake-1", "1.2.3.5", "10.100.10.0/24", "10.100.20.0/24")
 	cur.NodeWithPrefixes(key2, "metropolis-fake-2", "1.2.3.6", "10.100.30.0/24", "10.100.40.0/24")
-	assertStateEventual(map[string]*node{
+	assertStateEventual(map[string]*apb.Node{
 		"metropolis-fake-1": {
-			pubkey:  key1.PublicKey().String(),
-			address: "1.2.3.5",
-			prefixes: []string{
-				"10.100.10.0/24", "10.100.20.0/24",
+			Status: &cpb.NodeStatus{
+				ExternalAddress: "1.2.3.5",
+			},
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: key1.PublicKey().String(),
+				// No prefixes as the call failed.
 			},
 		},
 		"metropolis-fake-2": {
-			pubkey:  key2.PublicKey().String(),
-			address: "1.2.3.6",
-			prefixes: []string{
-				"10.100.30.0/24", "10.100.40.0/24",
+			Status: &cpb.NodeStatus{
+				ExternalAddress: "1.2.3.6",
+			},
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: key2.PublicKey().String(),
+				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
+					{Cidr: "10.100.30.0/24"},
+					{Cidr: "10.100.40.0/24"},
+				},
 			},
 		},
 	})
 	// Delete one of the nodes.
 	cur.DeleteNode("metropolis-fake-1")
-	assertStateEventual(map[string]*node{
+	assertStateEventual(map[string]*apb.Node{
 		"metropolis-fake-2": {
-			pubkey:  key2.PublicKey().String(),
-			address: "1.2.3.6",
-			prefixes: []string{
-				"10.100.30.0/24", "10.100.40.0/24",
+			Status: &cpb.NodeStatus{
+				ExternalAddress: "1.2.3.6",
+			},
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: key2.PublicKey().String(),
+				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
+					{Cidr: "10.100.30.0/24"},
+					{Cidr: "10.100.40.0/24"},
+				},
 			},
 		},
 	})
@@ -289,21 +324,31 @@ func TestWireguardIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to generate private key: %v", err)
 	}
-	err = wg.configurePeers([]*node{
+	err = wg.configurePeers([]*apb.Node{
 		{
-			pubkey:  pkeys[0].PublicKey().String(),
-			address: "10.100.0.1",
-			prefixes: []string{
-				"10.0.0.0/24",
-				"10.0.1.0/24",
+			Id: "test-0",
+			Status: &cpb.NodeStatus{
+				ExternalAddress: "10.100.0.1",
+			},
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: pkeys[0].PublicKey().String(),
+				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
+					{Cidr: "10.0.0.0/24"},
+					{Cidr: "10.0.1.0/24"},
+				},
 			},
 		},
 		{
-			pubkey:  pkeys[1].PublicKey().String(),
-			address: "10.100.1.1",
-			prefixes: []string{
-				"10.1.0.0/24",
-				"10.1.1.0/24",
+			Id: "test-1",
+			Status: &cpb.NodeStatus{
+				ExternalAddress: "10.100.1.1",
+			},
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: pkeys[1].PublicKey().String(),
+				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
+					{Cidr: "10.1.0.0/24"},
+					{Cidr: "10.1.1.0/24"},
+				},
 			},
 		},
 	})
@@ -338,17 +383,22 @@ func TestWireguardIntegration(t *testing.T) {
 	}
 
 	// Update one of the peers and check that things got applied.
-	err = wg.configurePeers([]*node{
+	err = wg.configurePeers([]*apb.Node{
 		{
-			pubkey:  pkeys[0].PublicKey().String(),
-			address: "10.100.0.3",
-			prefixes: []string{
-				"10.0.0.0/24",
+			Id: "test-0",
+			Status: &cpb.NodeStatus{
+				ExternalAddress: "10.100.0.3",
+			},
+			Clusternet: &cpb.NodeClusterNetworking{
+				WireguardPubkey: pkeys[0].PublicKey().String(),
+				Prefixes: []*cpb.NodeClusterNetworking_Prefix{
+					{Cidr: "10.0.0.0/24"},
+				},
 			},
 		},
 	})
 	if err != nil {
-		t.Fatalf("Failed to connect to netlink's WireGuard config endpoint: %v", err)
+		t.Fatalf("Failed to update peer: %v", err)
 	}
 	wgDev, err = wgClient.Device(clusterNetDeviceName)
 	if err != nil {
@@ -373,14 +423,18 @@ func TestWireguardIntegration(t *testing.T) {
 	}
 
 	// Remove one of the peers and make sure it's gone.
-	err = wg.unconfigurePeer(&node{
-		pubkey: pkeys[0].PublicKey().String(),
+	err = wg.unconfigurePeer(&apb.Node{
+		Clusternet: &cpb.NodeClusterNetworking{
+			WireguardPubkey: pkeys[0].PublicKey().String(),
+		},
 	})
 	if err != nil {
 		t.Fatalf("Failed to unconfigure peer: %v", err)
 	}
-	err = wg.unconfigurePeer(&node{
-		pubkey: pkeys[0].PublicKey().String(),
+	err = wg.unconfigurePeer(&apb.Node{
+		Clusternet: &cpb.NodeClusterNetworking{
+			WireguardPubkey: pkeys[0].PublicKey().String(),
+		},
 	})
 	if err != nil {
 		t.Fatalf("Failed to unconfigure peer a second time: %v", err)

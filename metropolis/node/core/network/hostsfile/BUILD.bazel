@@ -7,6 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//metropolis/node/core/curator/proto/api",
+        "//metropolis/node/core/curator/watcher",
         "//metropolis/node/core/localstorage",
         "//metropolis/node/core/network",
         "//metropolis/pkg/event",

@@ -20,6 +20,7 @@ go_library(
         "//metropolis/node",
         "//metropolis/node/core/clusternet",
         "//metropolis/node/core/curator/proto/api",
+        "//metropolis/node/core/curator/watcher",
         "//metropolis/node/core/identity",
         "//metropolis/node/core/localstorage",
         "//metropolis/node/core/network",

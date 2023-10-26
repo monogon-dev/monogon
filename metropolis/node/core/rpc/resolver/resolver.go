@@ -13,6 +13,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
+	"source.monogon.dev/metropolis/node/core/curator/watcher"
+
 	common "source.monogon.dev/metropolis/node"
 	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -223,66 +225,54 @@ func (r *Resolver) runCuratorUpdater(ctx context.Context, opts []grpc.DialOption
 	defer cl.Close()
 
 	cur := apb.NewCuratorClient(cl)
-	prevCurators := make(nodeStatusMap)
 
 	return backoff.RetryNotify(func() error {
-		w, err := cur.Watch(ctx, &apb.WatchRequest{
-			Kind: &apb.WatchRequest_NodesInCluster_{
-				NodesInCluster: &apb.WatchRequest_NodesInCluster{},
-			},
-		})
-		if err != nil {
-			return fmt.Errorf("could not watch nodes: %v", err)
-		}
-
 		// Map from node ID to status.
 		nodes := make(map[string]*cpb.NodeStatus)
 
-		// Keep updating map from watcher.
-		for {
-			ev, err := w.Recv()
-			if err != nil {
-				return fmt.Errorf("when receiving node: %w", err)
-			}
-			bo.Reset()
-
-			// Update internal map but only care about curators.
-			for _, n := range ev.Nodes {
-				if n.Status == nil || n.Status.RunningCurator == nil {
-					delete(nodes, n.Id)
-					continue
+		return watcher.WatchNodes(ctx, cur, &watcher.SimpleFollower{
+			FilterFn: func(a *apb.Node) bool {
+				if a.Status == nil {
+					return false
 				}
-				nodes[n.Id] = n.Status
-			}
-			for _, n := range ev.NodeTombstones {
-				delete(nodes, n.NodeId)
-			}
-
-			// Make a copy to submit to client.
-			curators := make(nodeStatusMap)
-			var curatorNames []string
-			for k, v := range nodes {
-				if v == nil {
-					continue
+				if a.Status.ExternalAddress == "" {
+					return false
 				}
-				curators[k] = v
-				curatorNames = append(curatorNames, k)
-			}
-
-			// Only submit an update (and log) if the effective curator map actually changed.
-			if prevCurators.equals(curators) {
-				continue
-			}
-			prevCurators = curators
-
-			r.logger("CURUPDATE: got new curators: %s", strings.Join(curatorNames, ", "))
-
-			select {
-			case r.reqC <- &request{nu: &requestNodesUpdate{nodes: curators}}:
-			case <-ctx.Done():
-				return ctx.Err()
-			}
-		}
+				if a.Status.RunningCurator == nil {
+					return false
+				}
+				return true
+			},
+			EqualsFn: func(a *apb.Node, b *apb.Node) bool {
+				if a.Status.ExternalAddress != b.Status.ExternalAddress {
+					return false
+				}
+				if (a.Status.RunningCurator == nil) != (b.Status.RunningCurator == nil) {
+					return false
+				}
+				return true
+			},
+			OnNewUpdated: func(new *apb.Node) error {
+				nodes[new.Id] = new.Status
+				return nil
+			},
+			OnDeleted: func(prev *apb.Node) error {
+				delete(nodes, prev.Id)
+				return nil
+			},
+			OnBatchDone: func() error {
+				nodesClone := make(map[string]*cpb.NodeStatus)
+				for k, v := range nodes {
+					nodesClone[k] = v
+				}
+				select {
+				case r.reqC <- &request{nu: &requestNodesUpdate{nodes: nodesClone}}:
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+				return nil
+			},
+		})
 	}, backoff.WithContext(bo, ctx), func(err error, t time.Duration) {
 		c := make(chan *responseDebug)
 		r.reqC <- &request{dbg: &requestDebug{resC: c}}

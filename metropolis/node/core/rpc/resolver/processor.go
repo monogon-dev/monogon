@@ -34,47 +34,11 @@ type requestCuratorMapGet struct {
 	resC chan *curatorMap
 }
 
-type nodeStatusMap map[string]*cpb.NodeStatus
-
-func (n nodeStatusMap) equals(o nodeStatusMap) bool {
-	// Check that we have the same keys on both maps.
-	for k, _ := range n {
-		_, ok := o[k]
-		if !ok {
-			return false
-		}
-	}
-	for k, _ := range o {
-		_, ok := n[k]
-		if !ok {
-			return false
-		}
-	}
-	// Keys are equal, compare values.
-	for k, v1 := range n {
-		v2 := o[k]
-
-		cur1 := v1.RunningCurator != nil
-		cur2 := v2.RunningCurator != nil
-		if cur1 != cur2 {
-			return false
-		}
-		if v1.ExternalAddress != v2.ExternalAddress {
-			return false
-		}
-
-		if cur1 && cur2 && v1.RunningCurator.Port != v2.RunningCurator.Port {
-			return false
-		}
-	}
-	return true
-}
-
 // requestNodesUpdate is received from the curator updater, and carries
 // information about the current curators as seen by the cluster control plane.
 type requestNodesUpdate struct {
 	// nodes is a map from node ID to received status
-	nodes nodeStatusMap
+	nodes map[string]*cpb.NodeStatus
 }
 
 // requestSeedAdd is received from AddEndpoint calls. It updates the processor's

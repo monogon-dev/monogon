@@ -12,6 +12,7 @@ go_library(
     deps = [
         "//metropolis/node",
         "//metropolis/node/core/curator/proto/api",
+        "//metropolis/node/core/curator/watcher",
         "//metropolis/proto/common",
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@org_golang_google_grpc//:go_default_library",

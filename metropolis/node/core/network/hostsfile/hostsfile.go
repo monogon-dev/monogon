@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
+	"source.monogon.dev/metropolis/node/core/curator/watcher"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/pkg/event"
@@ -270,41 +271,38 @@ func (s *Service) Run(ctx context.Context) error {
 // reflects the up-to-date view of the cluster returned from the Curator Watch
 // call, including any node deletions.
 func (s *Service) runCluster(ctx context.Context) error {
-	w, err := s.Curator.Watch(ctx, &ipb.WatchRequest{
-		Kind: &ipb.WatchRequest_NodesInCluster_{
-			NodesInCluster: &ipb.WatchRequest_NodesInCluster{},
+	nodes := make(nodeMap)
+	return watcher.WatchNodes(ctx, s.Curator, watcher.SimpleFollower{
+		FilterFn: func(a *ipb.Node) bool {
+			if a.Status == nil || a.Status.ExternalAddress == "" {
+				return false
+			}
+			return true
+		},
+		EqualsFn: func(a *ipb.Node, b *ipb.Node) bool {
+			return a.Status.ExternalAddress == b.Status.ExternalAddress
+		},
+		OnNewUpdated: func(new *ipb.Node) error {
+			nodes[new.Id] = nodeInfo{
+				address:      new.Status.ExternalAddress,
+				local:        false,
+				controlPlane: new.Roles.ConsensusMember != nil,
+			}
+			return nil
+		},
+		OnDeleted: func(prev *ipb.Node) error {
+			delete(nodes, prev.Id)
+			return nil
+		},
+		OnBatchDone: func() error {
+			// Send copy over channel, as we need to decouple the gRPC receiver from the main
+			// processing loop of the worker.
+			nodesCopy := make(nodeMap)
+			for k, v := range nodes {
+				nodesCopy[k] = v
+			}
+			s.clusterC <- nodesCopy
+			return nil
 		},
 	})
-	if err != nil {
-		return fmt.Errorf("curator watch failed: %w", err)
-	}
-
-	nodes := make(nodeMap)
-	for {
-		ev, err := w.Recv()
-		if err != nil {
-			return fmt.Errorf("receive failed: %w", err)
-		}
-		for _, n := range ev.Nodes {
-			if n.Status == nil || n.Status.ExternalAddress == "" {
-				continue
-			}
-			nodes[n.Id] = nodeInfo{
-				address:      n.Status.ExternalAddress,
-				local:        false,
-				controlPlane: n.Roles.ConsensusMember != nil,
-			}
-		}
-		for _, t := range ev.NodeTombstones {
-			delete(nodes, t.NodeId)
-		}
-
-		// Copy nodemap before passing it over to the main goroutine. The values don't
-		// need to be deep copied as they're not ever changed (only inserted).
-		nodesCopy := make(nodeMap)
-		for k, v := range nodes {
-			nodesCopy[k] = v
-		}
-		s.clusterC <- nodesCopy
-	}
 }

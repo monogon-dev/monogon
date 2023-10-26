@@ -50,7 +50,6 @@ import (
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
-
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 

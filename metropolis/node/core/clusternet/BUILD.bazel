@@ -13,6 +13,7 @@ go_library(
     deps = [
         "//metropolis/node",
         "//metropolis/node/core/curator/proto/api",
+        "//metropolis/node/core/curator/watcher",
         "//metropolis/node/core/localstorage",
         "//metropolis/node/core/network",
         "//metropolis/pkg/event",
@@ -27,10 +28,7 @@ go_library(
 
 go_test(
     name = "clusternet_test",
-    srcs = [
-        "clusternet_test.go",
-        "types_test.go",
-    ],
+    srcs = ["clusternet_test.go"],
     embed = [":clusternet"],
     deps = [
         "//metropolis/node",

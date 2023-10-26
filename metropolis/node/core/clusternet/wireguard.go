@@ -10,6 +10,7 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	common "source.monogon.dev/metropolis/node"
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 )
 
@@ -28,8 +29,8 @@ const (
 type wireguard interface {
 	ensureOnDiskKey(dir *localstorage.DataKubernetesClusterNetworkingDirectory) error
 	setup(clusterNet *net.IPNet) error
-	configurePeers(n []*node) error
-	unconfigurePeer(n *node) error
+	configurePeers(nodes []*ipb.Node) error
+	unconfigurePeer(n *ipb.Node) error
 	key() wgtypes.Key
 	close()
 }
@@ -114,31 +115,26 @@ func (s *localWireguard) setup(clusterNet *net.IPNet) error {
 	return nil
 }
 
-// configurePeers creates or updates a peers on the local wireguard interface
+// configurePeers creates or updates peers on the local wireguard interface
 // based on the given nodes.
-//
-// If any node is somehow invalid and causes a parse/reconfiguration error, the
-// function will return an error. The caller should retry with a different set of
-// nodes, performing search/bisection on its own.
-func (s *localWireguard) configurePeers(nodes []*node) error {
+func (s *localWireguard) configurePeers(nodes []*ipb.Node) error {
 	var configs []wgtypes.PeerConfig
-
 	for i, n := range nodes {
-		if s.privKey.PublicKey().String() == n.pubkey {
+		if s.privKey.PublicKey().String() == n.Clusternet.WireguardPubkey {
 			// Node doesn't need to connect to itself
 			continue
 		}
-		pubkeyParsed, err := wgtypes.ParseKey(n.pubkey)
+		pubkeyParsed, err := wgtypes.ParseKey(n.Clusternet.WireguardPubkey)
 		if err != nil {
-			return fmt.Errorf("node %d: failed to parse public-key %q: %w", i, n.pubkey, err)
+			return fmt.Errorf("node %d: failed to parse public-key %q: %w", i, n.Clusternet.WireguardPubkey, err)
 		}
-		addressParsed := net.ParseIP(n.address)
+		addressParsed := net.ParseIP(n.Status.ExternalAddress)
 		if addressParsed == nil {
-			return fmt.Errorf("node %d: failed to parse address %q: %w", i, n.address, err)
+			return fmt.Errorf("node %d: failed to parse address %q: %w", i, n.Status.ExternalAddress, err)
 		}
 		var allowedIPs []net.IPNet
-		for _, prefix := range n.prefixes {
-			_, podNet, err := net.ParseCIDR(prefix)
+		for _, prefix := range n.Clusternet.Prefixes {
+			_, podNet, err := net.ParseCIDR(prefix.Cidr)
 			if err != nil {
 				// Just eat the parse error. Not much we can do here. We have enough validation
 				// in the rest of the system that we shouldn't ever reach this.
@@ -167,10 +163,10 @@ func (s *localWireguard) configurePeers(nodes []*node) error {
 // unconfigurePeer removes the peer from the local WireGuard interface based on
 // the given node. If no peer existed matching the given node, this operation is
 // a no-op.
-func (s *localWireguard) unconfigurePeer(n *node) error {
-	pubkeyParsed, err := wgtypes.ParseKey(n.pubkey)
+func (s *localWireguard) unconfigurePeer(n *ipb.Node) error {
+	pubkeyParsed, err := wgtypes.ParseKey(n.Clusternet.WireguardPubkey)
 	if err != nil {
-		return fmt.Errorf("failed to parse public-key %q: %w", n.pubkey, err)
+		return fmt.Errorf("failed to parse public-key %q: %w", n.Clusternet.WireguardPubkey, err)
 	}
 
 	err = s.wgClient.ConfigureDevice(clusterNetDeviceName, wgtypes.Config{
