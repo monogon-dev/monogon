@@ -22,7 +22,7 @@ bazel_skylib_workspace()
 
 load("@bazel_skylib//lib:versions.bzl", "versions")
 
-versions.check(minimum_bazel_version = "5.4.0")
+versions.check(minimum_bazel_version = "6.4.0")
 
 # Explicitly include platforms to patch it
 http_archive(

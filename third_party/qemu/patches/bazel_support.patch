@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000000..436f8c5cf3
 --- /dev/null
 +++ b/BUILD
-@@ -0,0 +1,1357 @@
+@@ -0,0 +1,1358 @@
 +load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 +load("@rules_python//python:defs.bzl", "py_binary")
 +load("@dev_source_monogon//build/utils:template_file.bzl", "template_file")
@@ -1349,6 +1349,7 @@ index 0000000000..436f8c5cf3
 +    name = "keymap-gen",
 +    srcs = [":renamed-keymap-gen"],
 +    visibility = ["//visibility:public"],
++    imports = [""],
 +)
 +
 +genrule(
@@ -1519,7 +1520,7 @@ new file mode 100644
 index 0000000000..0b4fc8a248
 --- /dev/null
 +++ b/scripts/BUILD
-@@ -0,0 +1,35 @@
+@@ -0,0 +1,38 @@
 +load("@rules_python//python:defs.bzl", "py_binary")
 +
 +py_binary(
@@ -1527,6 +1528,7 @@ index 0000000000..0b4fc8a248
 +    srcs = ["qapi-gen.py"],
 +    visibility = ["//visibility:public"],
 +    deps = ["//scripts/qapi"],
++    imports = [""],
 +)
 +
 +py_binary(
@@ -1536,12 +1538,14 @@ index 0000000000..0b4fc8a248
 +    main = "tracetool.py",
 +    visibility = ["//visibility:public"],
 +    deps = ["//scripts/tracetool"],
++    imports = [""],
 +)
 +
 +py_binary(
 +    name = "block-coroutine-wrapper",
 +    srcs = ["block-coroutine-wrapper.py"],
 +    visibility = ["//visibility:public"],
++    imports = [""],
 +)
 +
 +sh_binary(
@@ -1560,13 +1564,14 @@ new file mode 100644
 index 0000000000..99a5ab2243
 --- /dev/null
 +++ b/scripts/modules/BUILD
-@@ -0,0 +1,7 @@
+@@ -0,0 +1,8 @@
 +load("@rules_python//python:defs.bzl", "py_binary")
 +
 +py_binary(
 +    name = "module_block",
 +    srcs = ["module_block.py"],
-+    visibility = ["//:__subpackages__"]
++    visibility = ["//:__subpackages__"],
++    imports = [""],
 +)
 diff --git a/scripts/qapi/BUILD b/scripts/qapi/BUILD
 new file mode 100644

@@ -40,8 +40,8 @@ in
     (stdenv.mkDerivation {
       name = "bazel";
       src = builtins.fetchurl {
-        url = https://github.com/bazelbuild/bazel/releases/download/5.4.0/bazel-5.4.0-linux-x86_64;
-        sha256 = "1w58m1brwjfwsv48fmd66inry67m4vgb3bwvwmamhdv099v183jg";
+        url = "https://github.com/bazelbuild/bazel/releases/download/6.4.0/bazel-6.4.0-linux-x86_64";
+        sha256 = "11md3cm9pb1449c3i89xy474v1lmzng5vbw6nhbigqx6xxqg7r3r";
       };
       unpackPhase = ''
         true
@@ -81,7 +81,7 @@ in
     curl
     gcc
     binutils
-    openjdk11
+    openjdk21
     patch
     python3
     busybox
