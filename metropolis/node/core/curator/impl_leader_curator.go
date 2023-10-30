@@ -198,6 +198,7 @@ func (n *Node) appendToEvent(ev *ipb.WatchEvent) {
 		Roles:      np.Roles,
 		Status:     np.Status,
 		Clusternet: np.Clusternet,
+		State:      np.FsmState,
 	})
 }
 

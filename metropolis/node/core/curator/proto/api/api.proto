@@ -165,6 +165,8 @@ message Node {
     metropolis.proto.common.NodeStatus status = 3;
     // Cluster networking configuration/status of node, if available.
     metropolis.proto.common.NodeClusterNetworking clusternet = 4;
+    // The node's 'lifecycle' state from the point of view of the cluster.
+    metropolis.proto.common.NodeState state = 5;
 };
 
 // WatchRequest specifies what data the caller is interested in. This influences

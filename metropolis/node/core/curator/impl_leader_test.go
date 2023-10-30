@@ -373,6 +373,7 @@ func TestWatchNodeInCluster(t *testing.T) {
 	fakeNode := &ppb.Node{
 		PublicKey: fakeNodePub,
 		Roles:     &cpb.NodeRoles{},
+		FsmState:  cpb.NodeState_NODE_STATE_UP,
 	}
 	fakeNodeInit, err := proto.Marshal(fakeNode)
 	if err != nil {
@@ -397,6 +398,9 @@ func TestWatchNodeInCluster(t *testing.T) {
 		}
 		if n.Status != nil {
 			t.Errorf("wanted nil status, got %v", n.Status)
+		}
+		if want, got := cpb.NodeState_NODE_STATE_UP, n.State; want != got {
+			t.Errorf("wanted state %s, got %s", want, got)
 		}
 	}
 
