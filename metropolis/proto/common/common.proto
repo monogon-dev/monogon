@@ -85,9 +85,11 @@ enum NodeState {
     // The node is now ready to serve, and its certificate can be used to
     // authenticate its identity cryptographically.
     NODE_STATE_UP = 3;
-    // DISOWNED: the node has been rejected or decommissioned by the cluster.
-    // Any further contact from the node to the cluster will be rejected.
-    NODE_STATE_DISOWNED = 4;
+    // DECOMMISSIONED: The node has successfully been decommissioned and can be
+    // deleted.
+    //
+    // TODO(q3k): add missing -ING states.
+    NODE_STATE_DECOMMISSIONED = 4;
 };
 
 // ClusterState is the state of the cluster from the point of view of a node.

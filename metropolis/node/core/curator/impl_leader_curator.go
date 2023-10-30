@@ -429,10 +429,10 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 	switch node.state {
 	case cpb.NodeState_NODE_STATE_NEW:
 		return nil, status.Error(codes.PermissionDenied, "node is NEW, wait for attestation/approval")
-	case cpb.NodeState_NODE_STATE_DISOWNED:
-		// This node has been since disowned by the cluster for some reason, the
+	case cpb.NodeState_NODE_STATE_DECOMMISSIONED:
+		// This node has been since decommissioned by the cluster for some reason, the
 		// register flow should be aborted.
-		return nil, status.Error(codes.FailedPrecondition, "node is DISOWNED, abort register flow")
+		return nil, status.Error(codes.FailedPrecondition, "node is DECOMMISSIONED, abort register flow")
 	case cpb.NodeState_NODE_STATE_UP:
 		// This can happen due to a network failure when we already handled a
 		// CommitNode, but we weren't able to respond to the user. CommitNode is
