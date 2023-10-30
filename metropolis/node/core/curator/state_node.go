@@ -432,6 +432,40 @@ func nodeSave(ctx context.Context, l *leadership, n *Node) error {
 	return nil
 }
 
+// nodeDestroy removes all traces of a node from etcd. It does not first check
+// whether the node is safe to be removed.
+func nodeDestroy(ctx context.Context, l *leadership, n *Node) error {
+	// Build an etcd operation to save the node with a key based on its ID.
+	id := n.ID()
+	rpc.Trace(ctx).Printf("nodeDestroy(%s)...", id)
+
+	// Get paths for node data and join key.
+	nkey, err := nodeEtcdPrefix.Key(id)
+	if err != nil {
+		rpc.Trace(ctx).Printf("invalid node id: %v", err)
+		return status.Errorf(codes.InvalidArgument, "invalid node id")
+	}
+	jkey, err := n.etcdJoinKeyPath()
+
+	// Delete both.
+	_, err = l.txnAsLeader(ctx,
+		clientv3.OpDelete(nkey),
+		clientv3.OpDelete(jkey),
+	)
+	if err != nil {
+		if rpcErr, ok := rpcError(err); ok {
+			return rpcErr
+		}
+		rpc.Trace(ctx).Printf("could not destroy node: %v", err)
+		return status.Error(codes.Unavailable, "could not destroy node")
+	}
+
+	// TODO(q3k): remove node's data from PKI.
+
+	rpc.Trace(ctx).Printf("nodeDestroy(%s): destroy ok", id)
+	return nil
+}
+
 // nodeIdByJoinKey attempts to fetch a Node ID corresponding to the given Join
 // Key from etcd, within a given active leadership. All returned errors are
 // gRPC statuses that are safe to return to untrusted callers. If the given

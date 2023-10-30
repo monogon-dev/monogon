@@ -70,6 +70,45 @@ service Management {
             need: PERMISSION_UPDATE_NODE_ROLES
         };
     }
+
+    // Decommissioning a node takes it from UP, through
+    //
+    //   1. DECOMMISSION_REQUESTED
+    //      The node will detect this state on the cluster and begin a cleanup
+    //      process which consists of removing either key material or zeroing
+    //      out the data partition, depending on cluster policy. It will report
+    //      to the cluster that it has begun the process, which will take it to
+    //      the next state:
+    //
+    //   2. DECOMMISSIONING
+    //      The node will continue cleanup. After cleanup is successful, it will
+    //      report back to the cluster which will take it to DECOMMISSIONED. The
+    //      node then reboots, and never comes back.
+    //
+    //   3. DECOMMISSIONED
+    //      The node can be removed with a subsequent DeleteNode call.
+    //
+    // TODO(q3k): implement this, possibly iron out the state machine involved.
+    //
+    // The node cannot have any roles assigned to it when it is being
+    // decommissioned: none may be assigned when the decommissioning process is
+    // requested, and none may be added to it while it is decommissioning.
+    rpc DecommissionNode(DecommissionNodeRequest) returns (DecommissionNodeResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_DECOMMISSION_NODE
+        };
+    }
+
+    // Delete a node from the cluster. By default the node must be in the
+    // DECOMMISSIONED state and may not have any roles assigned. However, some
+    // safety bypasses are available for nodes which have become unavailable and
+    // thus cannot be decommissioned correctly - see the request documentation
+    // for more details.
+    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_DELETE_NODE
+        };
+    }
 }
 
 message GetRegisterTicketRequest {
@@ -192,6 +231,90 @@ message UpdateNodeRolesRequest {
 }
 
 message UpdateNodeRolesResponse {
+}
+
+message DecommissionNodeRequest {
+  // node uniquely identifies the node subject to this request.
+  oneof node {
+    // pubkey is the Ed25519 public key of this node, which can be used to
+    // generate the node's ID.
+    bytes pubkey = 1;
+    // id is the human-readable identifier of the node, based on its public
+    // key.
+    string id = 4;
+  }
+}
+
+message DecommissionNodeResponse {
+}
+
+message DeleteNodeRequest {
+  // node uniquely identifies the node subject to this request.
+  oneof node {
+    // pubkey is the Ed25519 public key of this node, which can be used to
+    // generate the node's ID.
+    bytes pubkey = 1;
+    // id is the human-readable identifier of the node, based on its public
+    // key.
+    string id = 2;
+  }
+
+  message SafetyBypassHasRoles {
+  }
+  // If set, safety_bypass_has_roles allows the removal of nodes which still have
+  // roles assigned.
+  //
+  // Danger: removing nodes which still have roles assigned might leave the
+  // cluster in an inconsistent state. Unassigning roles from a nodes via
+  // UpdateNodeRoles ensures consistency.
+  //
+  // It's also advised to never use this option in automated workflows, as this
+  // prevents a runaway automation from removing nodes that are still used for
+  // actual work.
+  //
+  // Nodes which broke down or otherwise become unreachable shouldn't need to
+  // enable this option, as unassigning the role from a node does not require it
+  // to be healthy.
+  //
+  // A short summary of how to deal with possible inconsistencies after removing
+  // a node with roles still assigned:
+  //
+  // 1. KubernetesWorker: remove the node from the Kubernetes cluster via kubectl
+  //    (kubectl delete node metropolis-xxx).
+  // 2. KubernetesController: no cleanup should be necessary.
+  // 3. ConsensusMember:
+  //     a. the cluster still has quorum: remove the node from etcd.
+  //        TODO(q3k): document this
+  //     b. the cluster has no quorum: rebuild the cluster
+  SafetyBypassHasRoles safety_bypass_has_roles = 3;
+
+  message SafetyBypassNotDecommissioned {
+  }
+  // If set, safety_bypass_not_decommissioned will allow to remove nodes that
+  // haven't been yet decommissioned.
+  //
+  // Danger: removing nodes which haven't been decommissioned via
+  // DecommissionNode can leave nodes attempting to reconnect to the cluster,
+  // and does not fully clean up cryptographic material from the node.
+  //
+  // This option will need to be used when a node has broken down, as it's
+  // impossible to move a node from UP to DECOMMISSIONED if that node is
+  // unreachable.
+  //
+  // To clean up after using this option:
+  //
+  // 1. Make sure that the node does not boot back up. The cluster will prevent
+  //    the node from rejoining the cluster, but the node will by itself
+  //    continue to crash and reboot due to a rejection by the cluster.
+  // 2. Zero our the node's ESP to remove any leftover cryptographic requests.
+  //    These secrets are safeguarded according to the cluster's
+  //    StorageSecurityPolicy and NodeTPMUsage. Depending on the settings,
+  //    cleaning up these secrets before letting other systems access the node
+  //    might be critical to maintaining cluster security.
+  SafetyBypassNotDecommissioned safety_bypass_not_decommissioned = 4;
+}
+
+message DeleteNodeResponse {
 }
 
 // NodeManagement runs on every node of the cluster and providers management

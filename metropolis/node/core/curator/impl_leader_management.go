@@ -379,3 +379,83 @@ func (l *leaderManagement) UpdateNodeRoles(ctx context.Context, req *apb.UpdateN
 	}
 	return &apb.UpdateNodeRolesResponse{}, nil
 }
+
+func (l *leaderManagement) DecommissionNode(ctx context.Context, req *apb.DecommissionNodeRequest) (*apb.DecommissionNodeResponse, error) {
+	// Decommissioning is currently unimplemented. We'll get to that soon. For now,
+	// use SafetyBypassNotDecommissioned.
+	return nil, status.Error(codes.Unimplemented, "unimplemented")
+}
+
+func (l *leaderManagement) DeleteNode(ctx context.Context, req *apb.DeleteNodeRequest) (*apb.DeleteNodeResponse, error) {
+	bypassRoles := req.SafetyBypassHasRoles != nil
+	bypassDecommissioned := req.SafetyBypassNotDecommissioned != nil
+
+	// Nodes are identifiable by either of their public keys or (string) node IDs.
+	// In case a public key was provided, convert it to a corresponding node ID
+	// here.
+	var id string
+	switch rid := req.Node.(type) {
+	case *apb.DeleteNodeRequest_Pubkey:
+		if len(rid.Pubkey) != ed25519.PublicKeySize {
+			return nil, status.Errorf(codes.InvalidArgument, "pubkey must be %d bytes long", ed25519.PublicKeySize)
+		}
+		// Convert the pubkey into node ID.
+		id = identity.NodeID(rid.Pubkey)
+	case *apb.DeleteNodeRequest_Id:
+		id = rid.Id
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "exactly one of pubkey or id must be set")
+	}
+
+	// Take l.muNodes before modifying the node.
+	l.muNodes.Lock()
+	defer l.muNodes.Unlock()
+
+	// Find the node matching the requested public key.
+	node, err := nodeLoad(ctx, l.leadership, id)
+	if err == errNodeNotFound {
+		return nil, status.Errorf(codes.NotFound, "node %s not found", id)
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "while loading node %s: %v", id, err)
+	}
+
+	// Check safety assertions.
+	if !bypassRoles {
+		if node.consensusMember != nil {
+			return nil, status.Error(codes.FailedPrecondition, "node still has ConsensusMember role")
+		}
+		if node.kubernetesController != nil {
+			return nil, status.Error(codes.FailedPrecondition, "node still has KubernetesController role")
+		}
+		if node.kubernetesWorker != nil {
+			return nil, status.Error(codes.FailedPrecondition, "node still has KubernetesWorker role")
+		}
+	}
+	switch node.state {
+	case cpb.NodeState_NODE_STATE_NEW:
+		// Okay to remove, NEW node didn't yet receive any data.
+	case cpb.NodeState_NODE_STATE_STANDBY:
+		// Okay to remove, STANDBY node didn't yet receive any data.
+	case cpb.NodeState_NODE_STATE_UP:
+		if !bypassDecommissioned {
+			return nil, status.Error(codes.FailedPrecondition, "node must be decommissioned first")
+		}
+	case cpb.NodeState_NODE_STATE_DECOMMISSIONED:
+		// Always okay to remove a decommissioned node.
+	default:
+		return nil, status.Error(codes.Internal, "node has an invalid internal state")
+
+	}
+
+	// TODO(q3k): ensure deleted nodes are rejected by the leader. Currently the
+	// server-side authentication middleware is completely offline. We should either:
+	//
+	//  1. emit a revocation and distribute it to all nodes
+	//  2. give some additional middleware to the leader that performs online
+	//     verification (which is okay to do on the leader, as the leader always has
+	//     access to cluster data).
+
+	err = nodeDestroy(ctx, l.leadership, node)
+	return &apb.DeleteNodeResponse{}, err
+}

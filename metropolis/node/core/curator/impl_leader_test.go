@@ -1231,6 +1231,105 @@ func TestUpdateNodeRoles(t *testing.T) {
 	}
 }
 
+// TestDeleteNode exercises management.DeleteNode.
+func TestDeleteNode(t *testing.T) {
+	cl := fakeLeader(t)
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	// Create the test nodes.
+	var tn []*Node
+	tn = append(tn, putNode(t, ctx, cl.l, func(n *Node) { n.state = cpb.NodeState_NODE_STATE_UP }))
+	tn = append(tn, putNode(t, ctx, cl.l, func(n *Node) { n.state = cpb.NodeState_NODE_STATE_UP }))
+	tn = append(tn, putNode(t, ctx, cl.l, func(n *Node) { n.state = cpb.NodeState_NODE_STATE_UP }))
+
+	mgmt := apb.NewManagementClient(cl.mgmtConn)
+
+	// Removing all nodes should currently fail because they're not decommissioned.
+	for i, n := range tn {
+		_, err := mgmt.DeleteNode(ctx, &apb.DeleteNodeRequest{
+			Node: &apb.DeleteNodeRequest_Id{
+				Id: n.ID(),
+			},
+		})
+		if err == nil {
+			t.Fatalf("Removing node %d should've failed", i)
+		}
+	}
+
+	// Remove first node with safety bypass.
+	_, err := mgmt.DeleteNode(ctx, &apb.DeleteNodeRequest{
+		Node: &apb.DeleteNodeRequest_Id{
+			Id: tn[0].ID(),
+		},
+		SafetyBypassNotDecommissioned: &apb.DeleteNodeRequest_SafetyBypassNotDecommissioned{},
+	})
+	if err != nil {
+		t.Fatalf("Removing node 0 should've succeeded with safety bypass, got: %v", err)
+	}
+
+	// Give second node some roles.
+	yes := true
+	_, err = mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
+		Node: &apb.UpdateNodeRolesRequest_Id{
+			Id: tn[1].ID(),
+		},
+		KubernetesWorker: &yes,
+	})
+	if err != nil {
+		t.Fatalf("Adding node 1 a role failed: %v", err)
+	}
+
+	// Removing the second node with the NotDecommisioned safety bypass should now
+	// fail, because the node has roles attached to it.
+	_, err = mgmt.DeleteNode(ctx, &apb.DeleteNodeRequest{
+		Node: &apb.DeleteNodeRequest_Id{
+			Id: tn[1].ID(),
+		},
+		SafetyBypassNotDecommissioned: &apb.DeleteNodeRequest_SafetyBypassNotDecommissioned{},
+	})
+	if err == nil {
+		t.Fatal("Removing node 1 should've failed")
+	}
+
+	// Finally, try again with the HasRoles bypass, which should remove the node.
+	_, err = mgmt.DeleteNode(ctx, &apb.DeleteNodeRequest{
+		Node: &apb.DeleteNodeRequest_Id{
+			Id: tn[1].ID(),
+		},
+		SafetyBypassNotDecommissioned: &apb.DeleteNodeRequest_SafetyBypassNotDecommissioned{},
+		SafetyBypassHasRoles:          &apb.DeleteNodeRequest_SafetyBypassHasRoles{},
+	})
+	if err != nil {
+		t.Fatalf("Removing node 1 should've succeeded with safety bypass, got: %v", err)
+	}
+
+	// The cluster should not know anything about nodes 0 and 1 now.
+	nodes, err := mgmt.GetNodes(ctx, &apb.GetNodesRequest{})
+	if err != nil {
+		t.Fatalf("Could not get nodes: %v", err)
+	}
+	foundN2 := false
+	for {
+		n, err := nodes.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("Could not receive node: %v", err)
+		}
+		if n.Id == tn[0].ID() || n.Id == tn[1].ID() {
+			t.Errorf("Found deleted node ID in GetNodes result")
+		}
+		if n.Id == tn[2].ID() {
+			foundN2 = true
+		}
+	}
+	if !foundN2 {
+		t.Errorf("Didn't find node 2 which shouldn't have been deleted")
+	}
+}
+
 // TestGetCurrentLeader ensures that a leader responds with its own information
 // when asked for information about the current leader.
 func TestGetCurrentLeader(t *testing.T) {

@@ -26,6 +26,8 @@ enum Permission {
     PERMISSION_UPDATE_NODE_ROLES = 5;
     PERMISSION_READ_NODE_LOGS = 6;
     PERMISSION_UPDATE_NODE = 7;
+    PERMISSION_DECOMMISSION_NODE = 8;
+    PERMISSION_DELETE_NODE = 9;
 }
 
 // Authorization policy for an RPC method. This message/API does not have the
