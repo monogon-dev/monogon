@@ -146,13 +146,71 @@ var nodeUpdateCmd = &cobra.Command{
 	Args: cobra.ExactArgs(1),
 }
 
+var nodeDeleteCmd = &cobra.Command{
+	Short:   "Deletes a node from the cluster.",
+	Use:     "delete [NodeID] [--bypass-has-roles] [--bypass-not-decommissioned]",
+	Example: "metroctl node delete metropolis-25fa5f5e9349381d4a5e9e59de0215e3",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		bypassHasRoles, err := cmd.Flags().GetBool("bypass-has-roles")
+		if err != nil {
+			return err
+		}
+
+		bypassNotDecommissioned, err := cmd.Flags().GetBool("bypass-not-decommissioned")
+		if err != nil {
+			return err
+		}
+
+		ctx := clicontext.WithInterrupt(context.Background())
+		mgmt := apb.NewManagementClient(dialAuthenticated(ctx))
+
+		nodes, err := core.GetNodes(ctx, mgmt, fmt.Sprintf("node.id==%q", args[0]))
+		if err != nil {
+			return fmt.Errorf("while calling Management.GetNodes: %v", err)
+		}
+
+		if len(nodes) == 0 {
+			return fmt.Errorf("could not find node with id: %s", args[0])
+		}
+
+		if len(nodes) != 1 {
+			return fmt.Errorf("expected one node, got %d", len(nodes))
+		}
+
+		n := nodes[0]
+		log.Printf("deleting node: %s (%s)", n.Id, n.Status.ExternalAddress)
+
+		req := &apb.DeleteNodeRequest{
+			Node: &apb.DeleteNodeRequest_Id{
+				Id: n.Id,
+			},
+		}
+
+		if bypassHasRoles {
+			req.SafetyBypassHasRoles = &apb.DeleteNodeRequest_SafetyBypassHasRoles{}
+		}
+
+		if bypassNotDecommissioned {
+			req.SafetyBypassNotDecommissioned = &apb.DeleteNodeRequest_SafetyBypassNotDecommissioned{}
+		}
+
+		_, err = mgmt.DeleteNode(ctx, req)
+		return err
+	},
+	Args: cobra.ExactArgs(1),
+}
+
 func init() {
 	nodeUpdateCmd.Flags().String("bundle-url", "", "The URL to the new version")
 	nodeUpdateCmd.Flags().String("activation-mode", "reboot", "How the update should be activated (kexec, reboot, none)")
 
+	nodeDeleteCmd.Flags().Bool("bypass-has-roles", false, "Allows to bypass the HasRoles check")
+	nodeDeleteCmd.Flags().Bool("bypass-not-decommissioned", false, "Allows to bypass the NotDecommissioned check")
+
 	nodeCmd.AddCommand(nodeDescribeCmd)
 	nodeCmd.AddCommand(nodeListCmd)
 	nodeCmd.AddCommand(nodeUpdateCmd)
+	nodeCmd.AddCommand(nodeDeleteCmd)
 	rootCmd.AddCommand(nodeCmd)
 }
 
