@@ -20,10 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"os"
-	"path"
 	"strconv"
-	"strings"
 
 	"github.com/google/nftables"
 	"github.com/google/nftables/expr"
@@ -36,6 +33,8 @@ import (
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/pkg/sysctl"
+
 	netpb "source.monogon.dev/net/proto"
 )
 
@@ -194,27 +193,6 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 	return nil
 }
 
-// sysctlOptions contains sysctl options to apply
-type sysctlOptions map[string]string
-
-// apply attempts to apply all options in sysctlOptions. It aborts on the first
-// one which returns an error when applying.
-func (o sysctlOptions) apply() error {
-	for name, value := range o {
-		filePath := path.Join("/proc/sys/", strings.ReplaceAll(name, ".", "/"))
-		optionFile, err := os.OpenFile(filePath, os.O_WRONLY, 0)
-		if err != nil {
-			return fmt.Errorf("failed to set option %v: %w", name, err)
-		}
-		if _, err := optionFile.WriteString(value + "\n"); err != nil {
-			optionFile.Close()
-			return fmt.Errorf("failed to set option %v: %w", name, err)
-		}
-		optionFile.Close() // In a loop, defer'ing could open a lot of FDs
-	}
-	return nil
-}
-
 // RFC2474 Section 4.2.2.1 with reference to RFC791 Section 3.1 (Network
 // Control Precedence)
 const dscpCS7 = 0x7 << 3
@@ -224,7 +202,7 @@ func (s *Service) Run(ctx context.Context) error {
 	s.dnsSvc.ExtraListenerIPs = s.ExtraDNSListenerIPs
 	supervisor.Run(ctx, "dns", s.dnsSvc.Run)
 
-	earlySysctlOpts := sysctlOptions{
+	earlySysctlOpts := sysctl.Options{
 		// Enable strict reverse path filtering on all interfaces (important
 		// for spoofing prevention from Pods with CAP_NET_ADMIN)
 		"net.ipv4.conf.all.rp_filter": "1",
@@ -239,7 +217,7 @@ func (s *Service) Run(ctx context.Context) error {
 		// Make neighbor discovery use DSCP CS7 without ECN
 		"net.ipv6.conf.all.ndisc_tclass": strconv.Itoa(dscpCS7 << 2),
 	}
-	if err := earlySysctlOpts.apply(); err != nil {
+	if err := earlySysctlOpts.Apply(); err != nil {
 		logger.Fatalf("Error configuring early sysctl options: %v", err)
 	}
 	// Choose between autoconfig and static config runnables
@@ -308,7 +286,7 @@ func (s *Service) Run(ctx context.Context) error {
 		logger.Fatalf("Failed to set up nftables nat chain: %v", err)
 	}
 
-	sysctlOpts := sysctlOptions{
+	sysctlOpts := sysctl.Options{
 		// Enable IP forwarding for our pods
 		"net.ipv4.ip_forward": "1",
 
@@ -319,7 +297,7 @@ func (s *Service) Run(ctx context.Context) error {
 		"net.ipv4.tcp_rmem": "4096 87380 16777216",
 		"net.ipv4.tcp_wmem": "4096 87380 16777216",
 	}
-	if err := sysctlOpts.apply(); err != nil {
+	if err := sysctlOpts.Apply(); err != nil {
 		logger.Fatalf("Failed to set up kernel network config: %v", err)
 	}
 

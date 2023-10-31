@@ -21,6 +21,8 @@ import (
 	"source.monogon.dev/metropolis/node/core/network/dns"
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/pkg/sysctl"
+
 	netpb "source.monogon.dev/net/proto"
 )
 
@@ -123,9 +125,9 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 			hasIPv4Autoconfig = true
 		}
 		if i.Ipv6Autoconfig != nil {
-			err := sysctlOptions{
+			err := sysctl.Options{
 				"net.ipv6.conf." + newLink.Attrs().Name + ".accept_ra": "1",
-			}.apply()
+			}.Apply()
 			if err != nil {
 				return fmt.Errorf("failed enabling accept_ra for interface %q: %w", newLink.Attrs().Name, err)
 			}

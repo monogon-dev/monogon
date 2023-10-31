@@ -184,6 +184,9 @@ func main() {
 		if err := supervisor.Run(ctx, "pstore", dumpAndCleanPstore); err != nil {
 			return fmt.Errorf("when starting pstore: %w", err)
 		}
+		if err := supervisor.Run(ctx, "sysctl", nodeSysctls); err != nil {
+			return fmt.Errorf("when applying sysctls: %w", err)
+		}
 
 		// The kernel does of course not run in this runnable, only the log pipe
 		// runs in it.

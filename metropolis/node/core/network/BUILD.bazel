@@ -17,6 +17,7 @@ go_library(
         "//metropolis/pkg/event/memory",
         "//metropolis/pkg/logtree",
         "//metropolis/pkg/supervisor",
+        "//metropolis/pkg/sysctl",
         "//net/proto",
         "@com_github_google_nftables//:nftables",
         "@com_github_google_nftables//expr",

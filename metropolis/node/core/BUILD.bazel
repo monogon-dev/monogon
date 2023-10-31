@@ -9,6 +9,7 @@ go_library(
         "nodeparams.go",
         "panichandler.go",
         "pstore.go",
+        "sysctl.go",
     ] + select({
         "//metropolis/node:debug_build": [
             "debug_service_enabled.go",
@@ -36,6 +37,7 @@ go_library(
         "//metropolis/pkg/logtree",
         "//metropolis/pkg/pstore",
         "//metropolis/pkg/supervisor",
+        "//metropolis/pkg/sysctl",
         "//metropolis/pkg/tpm",
         "//metropolis/proto/api",
         "@com_github_cenkalti_backoff_v4//:backoff",
