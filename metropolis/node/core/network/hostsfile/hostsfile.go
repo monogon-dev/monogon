@@ -112,7 +112,6 @@ func (m nodeMap) hosts(ctx context.Context) []byte {
 	for _, nid := range nodeIdsSorted {
 		addr := m[nid].address
 		line := fmt.Sprintf("%s %s", addr, nid)
-		supervisor.Logger(ctx).Infof("Hosts entry: %s", line)
 		lines = append(lines, []byte(line))
 	}
 	lines = append(lines, []byte(""))
