@@ -2,4 +2,5 @@
 {{- $pid := (.Field "provider_id").HumanValue }}
 {{- $location := (.Field "provider_location").HumanValue }}
 {{- $status := (.Field "provider_status").HumanValue }}
-<b class="Status{{ $status }}">{{ .Type.Name }}</b>({{- $provider }}, {{ $location }}, <a href="/provider/{{ $provider }}/{{ $pid }}" style="font-family: mono">{{ $pid }}</a>)
+{{- $address := (.Field "provider_ip_address").HumanValue }}
+<b class="Status{{ $status }}">{{ .Type.Name }}</b>({{- $provider }}, {{ $location }}, {{ $address }}, <a href="/provider/{{ $provider }}/{{ $pid }}" style="font-family: mono">{{ $pid }}</a>)
