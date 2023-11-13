@@ -139,6 +139,17 @@ func (s *OrderedMap[K, V]) Delete(k K) {
 	delete(s.values, k)
 }
 
+// Clear removes all keys/values from the OrderedMap.
+func (s *OrderedMap[K, V]) Clear() {
+	s.keys = nil
+	s.values = nil
+}
+
+// Count returns the number of keys/values in this OrderedMap.
+func (s *OrderedMap[K, V]) Count() int {
+	return len(s.keys)
+}
+
 // Clone (perform a deep copy) of the OrderedMap, copying all keys and values.
 func (s *OrderedMap[K, V]) Clone() OrderedMap[K, V] {
 	// Short-circuit clone of empty map.

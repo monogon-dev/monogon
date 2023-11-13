@@ -29,6 +29,13 @@ func TestOrderedMap(t *testing.T) {
 	keysEq := func(m *OrderedMap[string, string], keystring string) {
 		t.Helper()
 		keys := strings.Split(keystring, ",")
+		// Support keystring "" indicating an empty map is expected.
+		if len(keystring) == 0 {
+			keys = nil
+		}
+		if want, got := len(keys), m.Count(); want != got {
+			t.Errorf("Wanted count %d, got %d", want, got)
+		}
 		if want, got := keys, m.Keys(); len(want) == len(got) {
 			for i, k := range want {
 				if got[i] != k {
@@ -74,6 +81,9 @@ func TestOrderedMap(t *testing.T) {
 			}
 		}
 	}
+	// Test Clear
+	n.Clear()
+	keysEq(&n, "")
 }
 
 // TestCycleIterator exercises the CycleIterator.
