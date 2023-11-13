@@ -67,7 +67,7 @@ build:dbg --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no
 build --cxxopt=-std=c++17
 
 # Set workspace status file and stamp
-build --stamp --workspace_status_command=./build/print-workspace-status.sh
+build --stamp --workspace_status_command=./build/print-workspace-status.py
 
 # Load CI bazelrc if present.
 try-import %workspace%/ci.bazelrc
