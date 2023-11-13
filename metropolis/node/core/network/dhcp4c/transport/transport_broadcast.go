@@ -26,7 +26,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/mdlayher/raw"
+	"github.com/mdlayher/packet"
 	"golang.org/x/net/bpf"
 )
 
@@ -90,7 +90,7 @@ var bpfFilter = mustAssemble(bpfFilterInstructions)
 // stack fulfilling the specific requirements for broadcasting DHCP packets
 // (like all-zero source address, no ARP, ...)
 type BroadcastTransport struct {
-	rawConn *raw.Conn
+	rawConn *packet.Conn
 	iface   *net.Interface
 }
 
@@ -102,9 +102,8 @@ func (t *BroadcastTransport) Open() error {
 	if t.rawConn != nil {
 		return errors.New("broadcast transport already open")
 	}
-	rawConn, err := raw.ListenPacket(t.iface, uint16(layers.EthernetTypeIPv4), &raw.Config{
-		LinuxSockDGRAM: true,
-		Filter:         bpfFilter,
+	rawConn, err := packet.Listen(t.iface, packet.Datagram, int(layers.EthernetTypeIPv4), &packet.Config{
+		Filter: bpfFilter,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create raw listener: %w", err)
@@ -117,7 +116,7 @@ func (t *BroadcastTransport) Send(payload *dhcpv4.DHCPv4) error {
 	if t.rawConn == nil {
 		return errors.New("broadcast transport closed")
 	}
-	packet := gopacket.NewSerializeBuffer()
+	pkt := gopacket.NewSerializeBuffer()
 	opts := gopacket.SerializeOptions{
 		ComputeChecksums: true,
 		FixLengths:       true,
@@ -144,7 +143,7 @@ func (t *BroadcastTransport) Send(payload *dhcpv4.DHCPv4) error {
 		panic("Invalid layer stackup encountered")
 	}
 
-	err := gopacket.SerializeLayers(packet, opts,
+	err := gopacket.SerializeLayers(pkt, opts,
 		ipLayer,
 		udpLayer,
 		gopacket.Payload(payload.ToBytes()))
@@ -153,7 +152,7 @@ func (t *BroadcastTransport) Send(payload *dhcpv4.DHCPv4) error {
 		return fmt.Errorf("failed to assemble packet: %w", err)
 	}
 
-	_, err = t.rawConn.WriteTo(packet.Bytes(), &raw.Addr{HardwareAddr: layers.EthernetBroadcast})
+	_, err = t.rawConn.WriteTo(pkt.Bytes(), &packet.Addr{HardwareAddr: layers.EthernetBroadcast})
 	if err != nil {
 		return fmt.Errorf("failed to transmit broadcast packet: %w", err)
 	}

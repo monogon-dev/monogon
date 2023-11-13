@@ -104,7 +104,6 @@ require (
 	github.com/mdlayher/ethtool v0.0.0-20211028163843-288d040e9d60
 	github.com/mdlayher/genetlink v1.2.0
 	github.com/mdlayher/netlink v1.6.0
-	github.com/mdlayher/raw v0.1.0
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/opencontainers/runc v1.1.3
 	github.com/packethost/packngo v0.29.0
@@ -169,6 +168,7 @@ require (
 	github.com/jsimonetti/rtnetlink v0.0.0-20211022192332-93da33804786 // indirect
 	github.com/lufia/iostat v1.2.0 // indirect
 	github.com/mattn/go-xmlrpc v0.0.3 // indirect
+	github.com/mdlayher/raw v0.1.0 // indirect
 	github.com/mdlayher/wifi v0.0.0-20200527114002-84f0b9457fdd // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/prometheus/exporter-toolkit v0.7.0 // indirect
@@ -321,7 +321,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
-	github.com/mdlayher/packet v0.0.0-20220221164757-67998ac0ff93 // indirect
+	github.com/mdlayher/packet v0.0.0-20220221164757-67998ac0ff93
 	github.com/mdlayher/socket v0.2.1 // indirect
 	github.com/miekg/dns v1.1.48 // indirect
 	github.com/mindprince/gonvml v0.0.0-20190828220739-9ebdce4bb989 // indirect
