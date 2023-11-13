@@ -7,7 +7,7 @@ package main
 
 import (
 	_ "github.com/kevinburke/go-bindata"
-	_ "github.com/kyleconroy/sqlc/pkg/cli"
+	_ "github.com/sqlc-dev/sqlc/pkg/cli"
 )
 
 func main() {

@@ -151,7 +151,7 @@ sqlc_go_library = rule(
             values = ["postgresql", "cockroachdb"],
         ),
         "_sqlc": attr.label(
-            default = Label("@com_github_kyleconroy_sqlc//cmd/sqlc"),
+            default = Label("@com_github_sqlc_dev_sqlc//cmd/sqlc"),
             allow_single_file = True,
             executable = True,
             cfg = "exec",

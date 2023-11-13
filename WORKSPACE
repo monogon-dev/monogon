@@ -312,7 +312,7 @@ load("//third_party/libpg_query:external.bzl", "libpg_query_external")
 
 libpg_query_external(
     name = "libpg_query",
-    version = "13-2.2.0",
+    version = "15-4.2.3",
 )
 
 register_toolchains("//:host_python")

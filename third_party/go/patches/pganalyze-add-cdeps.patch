@@ -8,6 +8,5 @@
 +        "@libpg_query//:libpg_query",
 +    ],
      clinkopts = [""],
-     copts = ["-Iparser/include -g -fstack-protector -std=gnu99"],
-     importpath = "github.com/pganalyze/pg_query_go/v2/parser",
-
+     copts = ["-Iparser/include -g -fstack-protector -std=gnu99 -Wno-deprecated-non-prototype -Wno-unknown-warning-option"],
+     importpath = "github.com/pganalyze/pg_query_go/v4/parser",
