@@ -69,10 +69,6 @@ replace github.com/vishvananda/netlink => github.com/monogon-dev/netlink v0.0.0-
 // is outdated and gazelle needs it.
 replace github.com/bazelbuild/buildtools => github.com/bazelbuild/buildtools v0.0.0-20231103205921-433ea8554e82
 
-// Custom pin for tidb/parser used by sqlc
-// see issue https://github.com/pingcap/tidb/issues/45976
-replace golang.org/x/exp => golang.org/x/exp v0.0.0-20220428152302-39d4317da171
-
 // Our privflags implementation, going upstream with https://github.com/mdlayher/ethtool/pull/22
 replace github.com/mdlayher/ethtool => github.com/monogon-dev/ethtool v0.0.0-20231122193313-e9c21a3a83cb
 
@@ -86,6 +82,10 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.53.0
 // Update to the latest version before io_k8s_apiextensions_apiserver isn't
 // compatible anymore because of a breaking change.
 replace github.com/google/cel-go => github.com/google/cel-go v0.14.0
+
+// Update to the latest version to prevent additional imports
+// to appear in our dependency graph: https://github.com/golang/go/issues/37175
+replace golang.org/x/exp => golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 
 require (
 	cloud.google.com/go/storage v1.30.1
