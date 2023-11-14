@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/cavaliergopher/cpio"
-	"github.com/pierrec/lz4/v4"
+	"github.com/klauspost/compress/zstd"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -183,7 +183,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	initramfsOrigPath, err := datafile.ResolveRunfile("cloud/agent/initramfs.cpio.lz4")
+	initramfsOrigPath, err := datafile.ResolveRunfile("cloud/agent/initramfs.cpio.zst")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -207,9 +207,11 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	compressedOut := lz4.NewWriter(initramfsFile)
-	compressedOut.Apply(lz4.LegacyOption(true))
-	cpioW := cpio.NewWriter(compressedOut)
+	compressedW, err := zstd.NewWriter(initramfsFile, zstd.WithEncoderLevel(1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	cpioW := cpio.NewWriter(compressedW)
 	cpioW.WriteHeader(&cpio.Header{
 		Name: "/init.pb",
 		Size: int64(len(agentInitRaw)),
@@ -217,7 +219,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	})
 	cpioW.Write(agentInitRaw)
 	cpioW.Close()
-	compressedOut.Close()
+	compressedW.Close()
 
 	grpcGuestFwd := fmt.Sprintf("guestfwd=tcp:%s-tcp:127.0.0.1:%d", grpcAddr.String(), grpcListenAddr.Port)
 	blobGuestFwd := fmt.Sprintf("guestfwd=tcp:%s-tcp:127.0.0.1:%d", blobAddr.String(), blobListenAddr.Port)

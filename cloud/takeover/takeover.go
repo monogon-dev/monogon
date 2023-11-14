@@ -27,7 +27,7 @@ import (
 	"time"
 
 	"github.com/cavaliergopher/cpio"
-	"github.com/pierrec/lz4/v4"
+	"github.com/klauspost/compress/zstd"
 	"golang.org/x/sys/unix"
 	"google.golang.org/protobuf/proto"
 
@@ -44,7 +44,7 @@ var kernel []byte
 //go:embed ucode.cpio
 var ucode []byte
 
-//go:embed cloud/agent/initramfs.cpio.lz4
+//go:embed cloud/agent/initramfs.cpio.zst
 var initramfs []byte
 
 // newMemfile creates a new file which is not located on a specific filesystem,
@@ -124,9 +124,11 @@ func setupTakeover() (*api.TakeoverSuccess, error) {
 	}
 
 	// Append AgentInit spec to initramfs
-	compressedOut := lz4.NewWriter(initramfsFile)
-	compressedOut.Apply(lz4.LegacyOption(true))
-	cpioW := cpio.NewWriter(compressedOut)
+	compressedW, err := zstd.NewWriter(initramfsFile, zstd.WithEncoderLevel(1))
+	if err != nil {
+		return nil, fmt.Errorf("while creating zstd writer: %w", err)
+	}
+	cpioW := cpio.NewWriter(compressedW)
 	cpioW.WriteHeader(&cpio.Header{
 		Name: "/init.pb",
 		Size: int64(len(agentInitRaw)),
@@ -134,7 +136,7 @@ func setupTakeover() (*api.TakeoverSuccess, error) {
 	})
 	cpioW.Write(agentInitRaw)
 	cpioW.Close()
-	compressedOut.Close()
+	compressedW.Close()
 
 	agentParams := bootparam.Params{
 		bootparam.Param{Param: "quiet"},

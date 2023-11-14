@@ -16,7 +16,7 @@ go_test(
         "//metropolis/pkg/pki",
         "//metropolis/proto/api",
         "@com_github_cavaliergopher_cpio//:cpio",
-        "@com_github_pierrec_lz4_v4//:lz4",
+        "@com_github_klauspost_compress//zstd",
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//credentials",
         "@org_golang_google_protobuf//proto",

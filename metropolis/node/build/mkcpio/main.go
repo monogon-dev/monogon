@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/cavaliergopher/cpio"
-	"github.com/pierrec/lz4/v4"
+	"github.com/klauspost/compress/zstd"
 	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/metropolis/node/build/fsspec"
@@ -47,7 +47,7 @@ type place struct {
 	Inode interface{}
 }
 
-// Usage: -out <out-path.cpio.lz4> fsspec-path...
+// Usage: -out <out-path.cpio.zst> fsspec-path...
 func main() {
 	flag.Parse()
 	outFile, err := os.Create(*outPath)
@@ -55,8 +55,10 @@ func main() {
 		log.Fatalf("Failed to open CPIO output file: %v", err)
 	}
 	defer outFile.Close()
-	compressedOut := lz4.NewWriter(outFile)
-	compressedOut.Apply(lz4.LegacyOption(true))
+	compressedOut, err := zstd.NewWriter(outFile)
+	if err != nil {
+		log.Fatalf("While initializing zstd writer: %v", err)
+	}
 	defer compressedOut.Close()
 	cpioWriter := cpio.NewWriter(compressedOut)
 	defer cpioWriter.Close()
@@ -168,7 +170,7 @@ func main() {
 			}); err != nil {
 				log.Fatalf("Failed to write cpio header for file %q: %v", i.Path, err)
 			}
-			if _, err := io.Copy(cpioWriter, inF); err != nil {
+			if n, err := io.Copy(cpioWriter, inF); err != nil || n != inFStat.Size() {
 				log.Fatalf("Failed to copy file %q into cpio: %v", i.SourcePath, err)
 			}
 			inF.Close()

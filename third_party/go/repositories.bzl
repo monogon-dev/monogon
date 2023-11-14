@@ -3180,8 +3180,8 @@ def go_repositories():
     go_repository(
         name = "com_github_klauspost_compress",
         importpath = "github.com/klauspost/compress",
-        sum = "h1:S0OHlFk/Gbon/yauFJ4FfJJF5V0fc5HbBTJazi28pRw=",
-        version = "v1.14.2",
+        sum = "h1:RlWWUY/Dr4fL8qk9YG7DTZ7PDgME2V4csBXA8L/ixi4=",
+        version = "v1.17.2",
     )
     go_repository(
         name = "com_github_klauspost_cpuid",

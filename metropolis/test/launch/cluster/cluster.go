@@ -790,7 +790,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		if err := launch.RunMicroVM(ctxT, &launch.MicroVMOptions{
 			Name:                   "nanoswitch",
 			KernelPath:             "metropolis/test/ktest/vmlinux",
-			InitramfsPath:          "metropolis/test/nanoswitch/initramfs.cpio.lz4",
+			InitramfsPath:          "metropolis/test/nanoswitch/initramfs.cpio.zst",
 			ExtraNetworkInterfaces: switchPorts,
 			PortMap:                portMap,
 			GuestServiceMap:        guestSvcMap,

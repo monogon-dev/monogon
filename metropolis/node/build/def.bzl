@@ -133,7 +133,7 @@ def _fsspec_core_impl(ctx, tool, output_file):
     return
 
 def _node_initramfs_impl(ctx):
-    initramfs_name = ctx.label.name + ".cpio.lz4"
+    initramfs_name = ctx.label.name + ".cpio.zst"
     initramfs = ctx.actions.declare_file(initramfs_name)
 
     _fsspec_core_impl(ctx, ctx.executable._mkcpio, initramfs)

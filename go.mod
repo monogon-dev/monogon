@@ -108,7 +108,6 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/opencontainers/runc v1.1.3
 	github.com/packethost/packngo v0.29.0
-	github.com/pierrec/lz4/v4 v4.1.14
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.10.1
 	github.com/prometheus/node_exporter v1.3.1
@@ -310,7 +309,7 @@ require (
 	github.com/josharian/native v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/karrick/godirwalk v1.16.1 // indirect
-	github.com/klauspost/compress v1.14.2 // indirect
+	github.com/klauspost/compress v1.17.2
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/libopenstorage/openstorage v1.0.0 // indirect
