@@ -48,13 +48,17 @@ func getPermanentHWAddrLegacy(ifName string) (net.HardwareAddr, error) {
 		}
 	}
 	defer unix.Close(fd)
+
+	var ioctlPins runtime.Pinner
+	defer ioctlPins.Unpin()
+
 	var data ethtoolPermAddr
 	data.Cmd = unix.ETHTOOL_GPERMADDR
 	data.Size = uint32(len(data.Data))
+
 	var req ifreq
 	copy(req.ifname[:], ifName)
-	// See //metropolis/pkg/nvme:cmd_linux.go RawCommand notice on the safety
-	// of this.
+	ioctlPins.Pin(&data)
 	req.data = uintptr(unsafe.Pointer(&data))
 	for {
 		_, _, err := unix.Syscall(unix.SYS_IOCTL, uintptr(fd), unix.SIOCETHTOOL, uintptr(unsafe.Pointer(&req)))

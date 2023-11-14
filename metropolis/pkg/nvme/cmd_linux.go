@@ -64,21 +64,13 @@ func (d *Device) RawCommand(cmd *Command) error {
 		cdw15:     cmd.CDW15,
 		timeoutMs: uint32(cmd.Timeout.Milliseconds()),
 	}
-	// NOTE: Currently this is safe (even if the documentation says otherwise)
-	// as the runtime.KeepAlive call below ensures that the GC cannot clean up
-	// the memory segments passed as data and metadata. This is sufficient as
-	// Go's runtime currently does not use a moving GC, meaning that these
-	// pointers do not get invalidated as long as they are considered alive.
-	// In case Go introduces a moving GC, which they might want to do this will
-	// no longer be safe as a GC-initiated move can happen while the syscall is
-	// running, causing the kernel to overwrite random memory of the calling
-	// process. To avoid this, these data structures need to be pinned. But Go
-	// doesn't have a pinning API yet [1], so all I can do is note this here.
-	// [1] https://github.com/golang/go/issues/46787
+	var ioctlPins runtime.Pinner
+	defer ioctlPins.Unpin()
 	if cmd.Data != nil {
 		if len(cmd.Data) > math.MaxUint32 {
 			return errors.New("data buffer larger than uint32, this is unsupported")
 		}
+		ioctlPins.Pin(&cmd.Data[0])
 		cmdRaw.dataLen = uint32(len(cmd.Data))
 		cmdRaw.addr = uint64(uintptr(unsafe.Pointer(&cmd.Data[0])))
 	}
@@ -86,6 +78,7 @@ func (d *Device) RawCommand(cmd *Command) error {
 		if len(cmd.Metadata) > math.MaxUint32 {
 			return errors.New("metadata buffer larger than uint32, this is unsupported")
 		}
+		ioctlPins.Pin(&cmd.Metadata[0])
 		cmdRaw.metadataLen = uint32(len(cmd.Metadata))
 		cmdRaw.metadata = uint64(uintptr(unsafe.Pointer(&cmd.Metadata[0])))
 	}

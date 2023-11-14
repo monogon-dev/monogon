@@ -47,6 +47,13 @@ func (d *Device) RawCommand(c *CommandDataBuffer) error {
 		return errors.New("CDB larger than 2^8 bytes, unable to issue")
 	}
 	var senseBuf [32]byte
+
+	var ioctlPins runtime.Pinner
+	ioctlPins.Pin(&c.Data[0])
+	ioctlPins.Pin(&cdb[0])
+	ioctlPins.Pin(&senseBuf[0])
+	defer ioctlPins.Unpin()
+
 	cmdRaw := sgIOHdr{
 		Interface_id:    'S',
 		Dxfer_direction: dxferDir,
