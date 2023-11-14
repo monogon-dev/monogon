@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
-From 9b6bdecfd07d026eae2c1b62cc8b7b06d14292ee Mon Sep 17 00:00:00 2001
+From b395122005928737cd78a2b46f15c1731f82bc9e Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@brun.one>
 Date: Mon, 25 Jan 2021 17:20:51 +0100
 Subject: [PATCH] Change hardcoded pod logs root dir
@@ -23,10 +23,10 @@ Subject: [PATCH] Change hardcoded pod logs root dir
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/pkg/kubelet/kuberuntime/kuberuntime_manager.go b/pkg/kubelet/kuberuntime/kuberuntime_manager.go
-index eebba49bbbe..c24b3133bcc 100644
+index 49add764798..fef6591a5ba 100644
 --- a/pkg/kubelet/kuberuntime/kuberuntime_manager.go
 +++ b/pkg/kubelet/kuberuntime/kuberuntime_manager.go
-@@ -57,7 +57,7 @@ const (
+@@ -70,7 +70,7 @@ const (
  	// The api version of kubelet runtime api
  	kubeRuntimeAPIVersion = "0.1.0"
  	// The root directory for pod logs
@@ -34,7 +34,7 @@ index eebba49bbbe..c24b3133bcc 100644
 +	podLogsRootDirectory = "/data/kubelet/logs"
  	// A minimal shutdown window for avoiding unnecessary SIGKILLs
  	minimumGracePeriodInSeconds = 2
- 
--- 
-2.25.1
+
+--
+2.41.0
 

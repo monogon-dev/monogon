@@ -1,0 +1,27 @@
+--- a/pkg/explain/v2/BUILD.bazel
++++ b/pkg/explain/v2/BUILD.bazel
+@@ -8,6 +8,9 @@
+         "generator.go",
+         "template.go",
+     ],
++    embedsrcs = [
++        "//pkg/explain/v2/templates:files",
++    ],
+     importpath = "k8s.io/kubectl/pkg/explain/v2",
+     importpath_aliases = ["k8s.io/kubectl/pkg/explain"],
+     visibility = ["//visibility:public"],
+
+--- a/pkg/explain/v2/templates/BUILD.bazel
++++ b/pkg/explain/v2/templates/BUILD.bazel
+@@ -17,4 +17,10 @@
+         "@io_k8s_kube_openapi//pkg/spec3",
+         "@io_k8s_kube_openapi//pkg/validation/spec",
+     ],
++)
++
++filegroup(
++    name = "files",
++    srcs = glob(["*.tmpl"]),
++    visibility = ["//visibility:public"],
+ )
+\ No newline at end of file

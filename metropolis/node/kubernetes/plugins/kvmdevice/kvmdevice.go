@@ -36,7 +36,7 @@ import (
 	"google.golang.org/grpc"
 	corev1 "k8s.io/api/core/v1"
 	deviceplugin "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
-	"k8s.io/kubelet/pkg/apis/pluginregistration/v1"
+	pluginregistration "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/pkg/logtree"

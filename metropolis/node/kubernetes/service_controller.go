@@ -68,6 +68,7 @@ func (s *Controller) Run(ctx context.Context) error {
 		return fmt.Errorf("could not generate controller manager pki config: %w", err)
 	}
 	controllerManagerConfig.clusterNet = s.c.ClusterNet
+	controllerManagerConfig.serviceNet = s.c.ServiceIPRange
 	schedulerConfig, err := getPKISchedulerConfig(ctx, s.c.KPKI)
 	if err != nil {
 		return fmt.Errorf("could not generate scheduler pki config: %w", err)

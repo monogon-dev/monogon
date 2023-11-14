@@ -332,7 +332,7 @@ func (s *Service) Run(ctx context.Context) error {
 	supervisor.Logger(ctx).Infof("etcd server ready")
 
 	st := &Status{
-		localPeerURL:  cfg.APUrls[0].String(),
+		localPeerURL:  cfg.AdvertisePeerUrls[0].String(),
 		localMemberID: uint64(server.Server.ID()),
 		cl:            cl,
 		ca:            s.ca,

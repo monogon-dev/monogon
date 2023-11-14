@@ -85,12 +85,13 @@ func (s *kubeletService) configure(fargs *fileargs.FileArgs) *kubeletconfig.Kube
 	return &kubeletconfig.KubeletConfiguration{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "KubeletConfiguration",
-			APIVersion: kubeletconfig.GroupName + "/v1beta1",
+			APIVersion: kubeletconfig.SchemeGroupVersion.String(),
 		},
-		TLSCertFile:       fargs.ArgPath("server.crt", s.serverCert),
-		TLSPrivateKeyFile: s.KubeletDirectory.PKI.Key.FullPath(),
-		TLSMinVersion:     "VersionTLS13",
-		ClusterDNS:        clusterDNS,
+		ContainerRuntimeEndpoint: "unix://" + s.EphemeralDirectory.Containerd.ClientSocket.FullPath(),
+		TLSCertFile:              fargs.ArgPath("server.crt", s.serverCert),
+		TLSPrivateKeyFile:        s.KubeletDirectory.PKI.Key.FullPath(),
+		TLSMinVersion:            "VersionTLS13",
+		ClusterDNS:               clusterDNS,
 		Authentication: kubeletconfig.KubeletAuthentication{
 			X509: kubeletconfig.KubeletX509Authentication{
 				ClientCAFile: fargs.ArgPath("ca.crt", s.serverCACert),
@@ -135,9 +136,6 @@ func (s *kubeletService) Run(ctx context.Context) error {
 
 	cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kubelet",
 		fargs.FileOpt("--config", "config.json", configRaw),
-		fmt.Sprintf("--container-runtime-endpoint=unix://%s", s.EphemeralDirectory.Containerd.ClientSocket.FullPath()),
-		//TODO: Remove with k8s 1.29 (https://github.com/kubernetes/kubernetes/pull/118544)
-		"--pod-infra-container-image", "preseed.metropolis.internal/node/kubernetes/pause:latest",
 		fargs.FileOpt("--kubeconfig", "kubeconfig", s.kubeconfig),
 		fmt.Sprintf("--root-dir=%s", s.KubeletDirectory.FullPath()),
 	)

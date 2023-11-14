@@ -114,7 +114,7 @@ func (c *Config) build(enablePeers bool) *embed.Config {
 
 	// Client URL, ie. local UNIX socket to listen on for trusted, unauthenticated
 	// traffic.
-	cfg.LCUrls = []url.URL{{
+	cfg.ListenClientUrls = []url.URL{{
 		Scheme: "unix",
 		Path:   c.Ephemeral.ClientSocket.FullPath() + ":0",
 	}}
@@ -126,22 +126,22 @@ func (c *Config) build(enablePeers bool) *embed.Config {
 		cfg.PeerTLSInfo.ClientCertAuth = true
 		cfg.PeerTLSInfo.CRLFile = c.Data.PeerCRL.FullPath()
 
-		cfg.LPUrls = []url.URL{{
+		cfg.ListenPeerUrls = []url.URL{{
 			Scheme: "https",
 			Host:   fmt.Sprintf("[::]:%d", port),
 		}}
-		cfg.APUrls = []url.URL{{
+		cfg.AdvertisePeerUrls = []url.URL{{
 			Scheme: "https",
 			Host:   net.JoinHostPort(host, strconv.Itoa(port)),
 		}}
 	} else {
 		// When not enabling peer traffic, listen on loopback. We would not listen at
 		// all, but etcd seems to prevent us from doing that.
-		cfg.LPUrls = []url.URL{{
+		cfg.ListenPeerUrls = []url.URL{{
 			Scheme: "http",
 			Host:   fmt.Sprintf("127.0.0.1:%d", port),
 		}}
-		cfg.APUrls = []url.URL{{
+		cfg.AdvertisePeerUrls = []url.URL{{
 			Scheme: "http",
 			Host:   fmt.Sprintf("127.0.0.1:%d", port),
 		}}

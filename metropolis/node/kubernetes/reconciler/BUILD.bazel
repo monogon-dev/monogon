@@ -5,7 +5,6 @@ go_library(
     srcs = [
         "reconciler.go",
         "resources_csi.go",
-        "resources_podsecuritypolicy.go",
         "resources_rbac.go",
         "resources_runtimeclass.go",
         "resources_storageclass.go",
@@ -15,8 +14,7 @@ go_library(
     deps = [
         "//metropolis/pkg/supervisor",
         "@io_k8s_api//core/v1:core",
-        "@io_k8s_api//node/v1beta1",
-        "@io_k8s_api//policy/v1beta1",
+        "@io_k8s_api//node/v1:node",
         "@io_k8s_api//rbac/v1:rbac",
         "@io_k8s_api//storage/v1:storage",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",

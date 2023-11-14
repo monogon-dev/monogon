@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
-From f0c9fc613c15e30453295beb25bf73763a4a82df Mon Sep 17 00:00:00 2001
+From 83fe2858cbdff277e416f0ea50366811c81e2382 Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@brun.one>
 Date: Mon, 29 Mar 2021 13:56:06 +0200
 Subject: [PATCH] Removed questionable block device pseudo-locks
@@ -33,10 +33,10 @@ does nothing for us, let's just nuke it instead of rewriting it against //metrop
  1 file changed, 18 deletions(-)
 
 diff --git a/pkg/volume/util/util.go b/pkg/volume/util/util.go
-index 367e05a0d1a..f53f1dcbb4e 100644
+index 601dc646013..5dfdd1ecb02 100644
 --- a/pkg/volume/util/util.go
 +++ b/pkg/volume/util/util.go
-@@ -527,17 +527,6 @@ func MapBlockVolume(
+@@ -511,17 +511,6 @@ func MapBlockVolume(
  		return fmt.Errorf("blkUtil.MapDevice failed. devicePath: %s, podVolumeMapPath:%s, volumeMapName: %s, bindMount: %v: %v",
  			devicePath, podVolumeMapPath, volumeMapName, false, mapErr)
  	}
@@ -53,8 +53,8 @@ index 367e05a0d1a..f53f1dcbb4e 100644
 -
  	return nil
  }
- 
-@@ -551,13 +540,6 @@ func UnmapBlockVolume(
+
+@@ -535,13 +524,6 @@ func UnmapBlockVolume(
  	volumeMapName string,
  	podUID utypes.UID,
  ) error {
@@ -68,6 +68,6 @@ index 367e05a0d1a..f53f1dcbb4e 100644
  	// unmap devicePath from pod volume path
  	unmapDeviceErr := blkUtil.UnmapDevice(podDeviceUnmapPath, volumeMapName, false /* bindMount */)
  	if unmapDeviceErr != nil {
--- 
-2.25.1
+--
+2.41.0
 

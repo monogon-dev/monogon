@@ -1,16 +1,41 @@
-From 243792d1686cba86669bda9bc2c905cb9cd73a0c Mon Sep 17 00:00:00 2001
+From bb611be1b10448316ba21defeede6bec3217febc Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
-Date: Wed, 4 May 2022 18:37:45 +0200
-Subject: [PATCH] Adopt to renamed function in K8s 1.24
+Date: Tue, 14 Nov 2023 13:49:46 +0100
+Subject: [PATCH 1/2] Adapt to K8s 1.28
 
 ---
- pkg/proxy/service.go | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ cmd/nfproxy.go                             | 6 +++---
+ pkg/controller/controller_endpointslice.go | 6 +++---
+ pkg/proxy/cache.go                         | 2 +-
+ pkg/proxy/proxy.go                         | 2 +-
+ pkg/proxy/proxy_endpointslice.go           | 2 +-
+ pkg/proxy/service.go                       | 4 ++--
+ pkg/proxy/tools.go                         | 2 +-
+ 7 files changed, 12 insertions(+), 12 deletions(-)
 
 diff --git a/cmd/nfproxy.go b/cmd/nfproxy.go
 index 66972ab..83d8b01 100644
 --- a/cmd/nfproxy.go
 +++ b/cmd/nfproxy.go
+@@ -44,8 +44,8 @@ import (
+ 	"k8s.io/client-go/kubernetes/scheme"
+ 	"k8s.io/client-go/tools/record"
+ 	"k8s.io/component-base/logs"
++	nodeutil "k8s.io/component-helpers/node/util"
+ 	"k8s.io/klog"
+-	utilnode "k8s.io/kubernetes/pkg/util/node"
+ )
+ 
+ var (
+@@ -111,7 +111,7 @@ func main() {
+ 	}
+ 
+ 	// Create event recorder
+-	hostname, err := utilnode.GetHostname("")
++	hostname, err := nodeutil.GetHostname("")
+ 	if err != nil {
+ 		klog.Errorf("nfproxy failed to get local host name with error: %+v", err)
+ 		os.Exit(1)
 @@ -169,7 +169,7 @@ func main() {
  	// instantiate EndpointSlice controller, otherwise Endpoints controller will be used.
  	var ep epController
@@ -97,6 +122,15 @@ index 9cc10b7..6e91fae 100644
  		onlyNodeLocalEndpoints = true
  	}
  	var stickyMaxAgeSeconds int
+@@ -175,7 +175,7 @@ func newBaseServiceInfo(port *v1.ServicePort, service *v1.Service) *BaseServiceI
+ 		//		topologyKeys:           service.Spec.TopologyKeys,
+ 		svcnft: &nftables.SVCnft{},
+ 	}
+-	if service.Spec.IPFamilies != nil {
++	if len(service.Spec.IPFamilies) > 0 {
+ 		info.ipFamilies = service.Spec.IPFamilies
+ 	} else {
+ 		info.ipFamilies = make([]v1.IPFamily, 1)
 diff --git a/pkg/proxy/tools.go b/pkg/proxy/tools.go
 index 06c4ae3..3f7f0b9 100644
 --- a/pkg/proxy/tools.go
@@ -111,5 +145,5 @@ index 06c4ae3..3f7f0b9 100644
  	"k8s.io/apimachinery/pkg/types"
  	"k8s.io/apimachinery/pkg/util/intstr"
 -- 
-2.25.1
+2.40.1
 

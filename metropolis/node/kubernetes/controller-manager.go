@@ -30,6 +30,7 @@ import (
 
 type controllerManagerConfig struct {
 	clusterNet net.IPNet
+	serviceNet net.IPNet
 	// All PKI-related things are in DER
 	kubeConfig            []byte
 	rootCA                []byte
@@ -78,12 +79,18 @@ func runControllerManager(config controllerManagerConfig) supervisor.Runnable {
 				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.rootCA})),
 			"--use-service-account-credentials=true", // Enables things like PSP enforcement
 			fmt.Sprintf("--cluster-cidr=%v", config.clusterNet.String()),
+			fmt.Sprintf("--service-cluster-ip-range=%v", config.serviceNet.String()),
 			args.FileOpt("--tls-cert-file", "server-cert.pem",
 				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.serverCert})),
 			args.FileOpt("--tls-private-key-file", "server-key.pem",
 				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serverKey})),
 			"--allocate-node-cidrs",
-			"--cluster-cidr="+config.clusterNet.String(),
+			// Disables unused cloud control loops and prevents warnings.
+			"--cloud-provider=external",
+			"--controllers=*,-certificatesigningrequest-signing-controller",
+			// This is intentionally empty, but if unset it tries to mkdir it
+			// in the usual place, generating an error.
+			"--flex-volume-plugin-dir=/kubernetes/conf/flexvolume-plugins",
 		)
 
 		if args.Error() != nil {

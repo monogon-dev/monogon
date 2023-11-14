@@ -18,10 +18,18 @@ package kubernetes
 
 import (
 	"context"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"net"
 	"os/exec"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/apis/apiserver"
+	"k8s.io/kubernetes/plugin/pkg/admission/security/podsecurity"
+	podsecurityadmissionv1 "k8s.io/pod-security-admission/admission/api/v1"
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/localstorage"
@@ -47,6 +55,56 @@ type apiserverService struct {
 	serverCert            []byte
 	serverKey             []byte
 }
+
+func mustWrapUnknownJSON(o schema.ObjectKind) *runtime.Unknown {
+	oRaw, err := json.Marshal(o)
+	if err != nil {
+		panic("While marshaling object into runtime.Unknown: " + err.Error())
+	}
+	var typ runtime.TypeMeta
+	typ.SetGroupVersionKind(o.GroupVersionKind())
+	return &runtime.Unknown{
+		TypeMeta:    typ,
+		Raw:         oRaw,
+		ContentType: runtime.ContentTypeJSON,
+	}
+}
+
+func mustMarshalJSON(o any) []byte {
+	out, err := json.Marshal(o)
+	if err != nil {
+		panic("mustMarshalJSON failed: " + err.Error())
+	}
+	return out
+}
+
+var (
+	podsecurityadmission = &podsecurityadmissionv1.PodSecurityConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: podsecurityadmissionv1.SchemeGroupVersion.String(),
+			Kind:       "PodSecurityConfiguration",
+		},
+		Defaults: podsecurityadmissionv1.PodSecurityDefaults{
+			Enforce: "baseline",
+			Warn:    "baseline",
+			Audit:   "baseline",
+		},
+		Exemptions: podsecurityadmissionv1.PodSecurityExemptions{},
+	}
+
+	admissionConfig = apiserver.AdmissionConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: apiserver.SchemeGroupVersion.String(),
+			Kind:       "AdmissionConfiguration",
+		},
+		Plugins: []apiserver.AdmissionPluginConfiguration{{
+			Name:          podsecurity.PluginName,
+			Configuration: mustWrapUnknownJSON(podsecurityadmission),
+		}},
+	}
+
+	admissionConfigRaw = mustMarshalJSON(admissionConfig)
+)
 
 func (s *apiserverService) loadPKI(ctx context.Context) error {
 	for _, el := range []struct {
@@ -95,7 +153,7 @@ func (s *apiserverService) Run(ctx context.Context) error {
 		"--authorization-mode=Node,RBAC",
 		args.FileOpt("--client-ca-file", "client-ca.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: s.idCA})),
-		"--enable-admission-plugins=NodeRestriction,PodSecurityPolicy",
+		"--enable-admission-plugins=NodeRestriction",
 		"--enable-aggregator-routing=true",
 		fmt.Sprintf("--secure-port=%d", common.KubernetesAPIPort),
 		fmt.Sprintf("--etcd-servers=unix:///%s:0", s.EphemeralConsensusDirectory.ClientSocket.FullPath()),
@@ -126,6 +184,7 @@ func (s *apiserverService) Run(ctx context.Context) error {
 			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: s.serverCert})),
 		args.FileOpt("--tls-private-key-file", "server-key.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: s.serverKey})),
+		args.FileOpt("--admission-control-config-file", "admission-control.json", admissionConfigRaw),
 	)
 	if args.Error() != nil {
 		return err

@@ -1,55 +1,50 @@
-From 2aaae27bbcdae1c917441932fb79b6f6b6e0ebcd Mon Sep 17 00:00:00 2001
-From: Tim Windelschmidt <tim@monogon.tech>
-Date: Tue, 12 Sep 2023 14:33:58 +0200
-Subject: [PATCH] containerd 1.6 compatibility
-
----
- pkg/shim/proc/exec.go     |  2 +-
- pkg/shim/proc/init.go     |  2 +-
- pkg/shim/service.go       | 17 +++++++++--------
- pkg/shim/service_linux.go |  2 +-
- 4 files changed, 12 insertions(+), 11 deletions(-)
-
-diff --git a/pkg/shim/proc/exec.go b/pkg/shim/proc/exec.go
-index da2e21598..d0d14dd24 100644
---- a/pkg/shim/proc/exec.go
-+++ b/pkg/shim/proc/exec.go
-@@ -238,7 +238,7 @@ func (e *execProcess) start(ctx context.Context) error {
- 		if err != nil {
- 			return fmt.Errorf("failed to retrieve console master: %w", err)
- 		}
--		if e.console, err = e.parent.Platform.CopyConsole(ctx, console, e.stdio.Stdin, e.stdio.Stdout, e.stdio.Stderr, &e.wg); err != nil {
-+		if e.console, err = e.parent.Platform.CopyConsole(ctx, console, e.id, e.stdio.Stdin, e.stdio.Stdout, e.stdio.Stderr, &e.wg); err != nil {
- 			return fmt.Errorf("failed to start console copy: %w", err)
- 		}
- 	} else if !e.stdio.IsNull() {
-diff --git a/pkg/shim/proc/init.go b/pkg/shim/proc/init.go
-index fcdc8e2bc..f2aaf6c2a 100644
---- a/pkg/shim/proc/init.go
-+++ b/pkg/shim/proc/init.go
-@@ -155,7 +155,7 @@ func (p *Init) Create(ctx context.Context, r *CreateConfig) (err error) {
- 		if err != nil {
- 			return fmt.Errorf("failed to retrieve console master: %w", err)
- 		}
--		console, err = p.Platform.CopyConsole(ctx, console, r.Stdin, r.Stdout, r.Stderr, &p.wg)
-+		console, err = p.Platform.CopyConsole(ctx, console, r.ID, r.Stdin, r.Stdout, r.Stderr, &p.wg)
- 		if err != nil {
- 			return fmt.Errorf("failed to start console copy: %w", err)
- 		}
 diff --git a/pkg/shim/service.go b/pkg/shim/service.go
-index a6904e1ae..964a152c9 100644
---- a/pkg/shim/service.go
-+++ b/pkg/shim/service.go
-@@ -50,7 +50,7 @@ import (
+--- a/pkg/shim/service.go	(revision fbd632393665c6628221150b74ae50294d9a3695)
++++ b/pkg/shim/service.go	(date 1694133552618)
+@@ -32,6 +32,7 @@
+ 	cgroupsv2 "github.com/containerd/cgroups/v2"
+ 	"github.com/containerd/console"
+ 	"github.com/containerd/containerd/api/events"
++	taskAPI "github.com/containerd/containerd/api/runtime/task/v2"
+ 	"github.com/containerd/containerd/api/types/task"
+ 	"github.com/containerd/containerd/errdefs"
+ 	"github.com/containerd/containerd/log"
+@@ -39,18 +40,20 @@
+ 	"github.com/containerd/containerd/namespaces"
+ 	"github.com/containerd/containerd/pkg/process"
+ 	"github.com/containerd/containerd/pkg/stdio"
++	"github.com/containerd/containerd/protobuf"
+ 	"github.com/containerd/containerd/runtime"
+ 	"github.com/containerd/containerd/runtime/linux/runctypes"
+ 	"github.com/containerd/containerd/runtime/v2/shim"
+-	taskAPI "github.com/containerd/containerd/runtime/v2/task"
+ 	"github.com/containerd/containerd/sys/reaper"
+-	"github.com/containerd/typeurl"
+-	"github.com/gogo/protobuf/types"
+-	specs "github.com/opencontainers/runtime-spec/specs-go"
++	"github.com/containerd/typeurl/v2"
++	"github.com/opencontainers/runtime-spec/specs-go"
  	"github.com/sirupsen/logrus"
  	"golang.org/x/sys/unix"
++	"google.golang.org/protobuf/types/known/emptypb"
++	"google.golang.org/protobuf/types/known/timestamppb"
++
  	"gvisor.dev/gvisor/pkg/cleanup"
 -	"gvisor.dev/gvisor/pkg/shim/runtimeoptions/v14"
 +	v14 "gvisor.dev/gvisor/pkg/shim/runtimeoptions/v14"
 
  	"gvisor.dev/gvisor/pkg/shim/proc"
  	"gvisor.dev/gvisor/pkg/shim/runsc"
-@@ -189,7 +189,7 @@ type service struct {
+@@ -60,7 +63,7 @@
+ )
+
+ var (
+-	empty   = &types.Empty{}
++	empty   = &emptypb.Empty{}
+ 	bufPool = sync.Pool{
+ 		New: func() any {
+ 			buffer := make([]byte, 32<<10)
+@@ -189,7 +192,7 @@
 
  var _ shim.Shim = (*service)(nil)
 
@@ -58,7 +53,7 @@ index a6904e1ae..964a152c9 100644
  	ns, err := namespaces.NamespaceRequired(ctx)
  	if err != nil {
  		return nil, err
-@@ -204,6 +204,7 @@ func (s *service) newCommand(ctx context.Context, containerdBinary, containerdAd
+@@ -204,6 +207,7 @@
  	}
  	args := []string{
  		"-namespace", ns,
@@ -66,7 +61,7 @@ index a6904e1ae..964a152c9 100644
  		"-address", containerdAddress,
  		"-publish-binary", containerdBinary,
  	}
-@@ -219,14 +220,14 @@ func (s *service) newCommand(ctx context.Context, containerdBinary, containerdAd
+@@ -219,14 +223,14 @@
  	return cmd, nil
  }
 
@@ -85,7 +80,7 @@ index a6904e1ae..964a152c9 100644
  	if err != nil {
  		return "", err
  	}
-@@ -280,8 +281,8 @@ func (s *service) StartShim(ctx context.Context, id, containerdBinary, container
+@@ -280,8 +284,8 @@
  	if err := shim.WriteAddress(shimAddressPath, address); err != nil {
  		return "", err
  	}
@@ -96,11 +91,209 @@ index a6904e1ae..964a152c9 100644
  	}
  	cu.Release()
  	return address, nil
+@@ -315,7 +319,7 @@
+ 		log.L.Infof("failed to cleanup rootfs mount: %v", err)
+ 	}
+ 	return &taskAPI.DeleteResponse{
+-		ExitedAt:   time.Now(),
++		ExitedAt:   timestamppb.New(time.Now()),
+ 		ExitStatus: 128 + uint32(unix.SIGKILL),
+ 	}, nil
+ }
+@@ -578,18 +582,18 @@
+ 	}
+ 	return &taskAPI.DeleteResponse{
+ 		ExitStatus: uint32(p.ExitStatus()),
+-		ExitedAt:   p.ExitedAt(),
++		ExitedAt:   timestamppb.New(p.ExitedAt()),
+ 		Pid:        uint32(p.Pid()),
+ 	}, nil
+ }
+
+ // Exec spawns an additional process inside the container.
+-func (s *service) Exec(ctx context.Context, r *taskAPI.ExecProcessRequest) (*types.Empty, error) {
++func (s *service) Exec(ctx context.Context, r *taskAPI.ExecProcessRequest) (*emptypb.Empty, error) {
+ 	resp, err := s.exec(ctx, r)
+ 	return resp, errdefs.ToGRPC(err)
+ }
+
+-func (s *service) exec(ctx context.Context, r *taskAPI.ExecProcessRequest) (*types.Empty, error) {
++func (s *service) exec(ctx context.Context, r *taskAPI.ExecProcessRequest) (*emptypb.Empty, error) {
+ 	log.L.Debugf("Exec, id: %s, execID: %s", r.ID, r.ExecID)
+
+ 	s.mu.Lock()
+@@ -619,12 +623,12 @@
+ }
+
+ // ResizePty resizes the terminal of a process.
+-func (s *service) ResizePty(ctx context.Context, r *taskAPI.ResizePtyRequest) (*types.Empty, error) {
++func (s *service) ResizePty(ctx context.Context, r *taskAPI.ResizePtyRequest) (*emptypb.Empty, error) {
+ 	resp, err := s.resizePty(ctx, r)
+ 	return resp, errdefs.ToGRPC(err)
+ }
+
+-func (s *service) resizePty(ctx context.Context, r *taskAPI.ResizePtyRequest) (*types.Empty, error) {
++func (s *service) resizePty(ctx context.Context, r *taskAPI.ResizePtyRequest) (*emptypb.Empty, error) {
+ 	log.L.Debugf("ResizePty, id: %s, execID: %s, dimension: %dx%d", r.ID, r.ExecID, r.Height, r.Width)
+
+ 	p, err := s.getProcess(r.ExecID)
+@@ -660,14 +664,14 @@
+ 		log.L.Debugf("State failed: %v", err)
+ 		return nil, err
+ 	}
+-	status := task.StatusUnknown
++	status := task.Status_UNKNOWN
+ 	switch st {
+ 	case "created":
+-		status = task.StatusCreated
++		status = task.Status_CREATED
+ 	case "running":
+-		status = task.StatusRunning
++		status = task.Status_RUNNING
+ 	case "stopped":
+-		status = task.StatusStopped
++		status = task.Status_STOPPED
+ 	}
+ 	sio := p.Stdio()
+ 	res := &taskAPI.StateResponse{
+@@ -680,19 +684,19 @@
+ 		Stderr:     sio.Stderr,
+ 		Terminal:   sio.Terminal,
+ 		ExitStatus: uint32(p.ExitStatus()),
+-		ExitedAt:   p.ExitedAt(),
++		ExitedAt:   timestamppb.New(p.ExitedAt()),
+ 	}
+ 	log.L.Debugf("State succeeded, response: %+v", res)
+ 	return res, nil
+ }
+
+ // Pause the container.
+-func (s *service) Pause(ctx context.Context, r *taskAPI.PauseRequest) (*types.Empty, error) {
++func (s *service) Pause(ctx context.Context, r *taskAPI.PauseRequest) (*emptypb.Empty, error) {
+ 	resp, err := s.pause(ctx, r)
+ 	return resp, errdefs.ToGRPC(err)
+ }
+
+-func (s *service) pause(ctx context.Context, r *taskAPI.PauseRequest) (*types.Empty, error) {
++func (s *service) pause(ctx context.Context, r *taskAPI.PauseRequest) (*emptypb.Empty, error) {
+ 	log.L.Debugf("Pause, id: %s", r.ID)
+ 	if s.task == nil {
+ 		log.L.Debugf("Pause error, id: %s: container not created", r.ID)
+@@ -706,12 +710,12 @@
+ }
+
+ // Resume the container.
+-func (s *service) Resume(ctx context.Context, r *taskAPI.ResumeRequest) (*types.Empty, error) {
++func (s *service) Resume(ctx context.Context, r *taskAPI.ResumeRequest) (*emptypb.Empty, error) {
+ 	resp, err := s.resume(ctx, r)
+ 	return resp, errdefs.ToGRPC(err)
+ }
+
+-func (s *service) resume(ctx context.Context, r *taskAPI.ResumeRequest) (*types.Empty, error) {
++func (s *service) resume(ctx context.Context, r *taskAPI.ResumeRequest) (*emptypb.Empty, error) {
+ 	log.L.Debugf("Resume, id: %s", r.ID)
+ 	if s.task == nil {
+ 		log.L.Debugf("Resume error, id: %s: container not created", r.ID)
+@@ -725,12 +729,12 @@
+ }
+
+ // Kill a process with the provided signal.
+-func (s *service) Kill(ctx context.Context, r *taskAPI.KillRequest) (*types.Empty, error) {
++func (s *service) Kill(ctx context.Context, r *taskAPI.KillRequest) (*emptypb.Empty, error) {
+ 	resp, err := s.kill(ctx, r)
+ 	return resp, errdefs.ToGRPC(err)
+ }
+
+-func (s *service) kill(ctx context.Context, r *taskAPI.KillRequest) (*types.Empty, error) {
++func (s *service) kill(ctx context.Context, r *taskAPI.KillRequest) (*emptypb.Empty, error) {
+ 	log.L.Debugf("Kill, id: %s, execID: %s, signal: %d, all: %t", r.ID, r.ExecID, r.Signal, r.All)
+
+ 	p, err := s.getProcess(r.ExecID)
+@@ -772,7 +776,7 @@
+ 				if err != nil {
+ 					return nil, fmt.Errorf("failed to marshal process %d info: %w", pid, err)
+ 				}
+-				pInfo.Info = a
++				pInfo.Info = protobuf.FromAny(a)
+ 				break
+ 			}
+ 		}
+@@ -784,12 +788,12 @@
+ }
+
+ // CloseIO closes the I/O context of a process.
+-func (s *service) CloseIO(ctx context.Context, r *taskAPI.CloseIORequest) (*types.Empty, error) {
++func (s *service) CloseIO(ctx context.Context, r *taskAPI.CloseIORequest) (*emptypb.Empty, error) {
+ 	resp, err := s.closeIO(ctx, r)
+ 	return resp, errdefs.ToGRPC(err)
+ }
+
+-func (s *service) closeIO(ctx context.Context, r *taskAPI.CloseIORequest) (*types.Empty, error) {
++func (s *service) closeIO(ctx context.Context, r *taskAPI.CloseIORequest) (*emptypb.Empty, error) {
+ 	log.L.Debugf("CloseIO, id: %s, execID: %s, stdin: %t", r.ID, r.ExecID, r.Stdin)
+
+ 	p, err := s.getProcess(r.ExecID)
+@@ -805,7 +809,7 @@
+ }
+
+ // Checkpoint checkpoints the container.
+-func (s *service) Checkpoint(ctx context.Context, r *taskAPI.CheckpointTaskRequest) (*types.Empty, error) {
++func (s *service) Checkpoint(ctx context.Context, r *taskAPI.CheckpointTaskRequest) (*emptypb.Empty, error) {
+ 	log.L.Debugf("Checkpoint, id: %s", r.ID)
+ 	return empty, errdefs.ToGRPC(errdefs.ErrNotImplemented)
+ }
+@@ -829,12 +833,12 @@
+ 	}, nil
+ }
+
+-func (s *service) Shutdown(ctx context.Context, r *taskAPI.ShutdownRequest) (*types.Empty, error) {
++func (s *service) Shutdown(ctx context.Context, r *taskAPI.ShutdownRequest) (*emptypb.Empty, error) {
+ 	resp, err := s.shutdown(ctx, r)
+ 	return resp, errdefs.ToGRPC(err)
+ }
+
+-func (s *service) shutdown(ctx context.Context, r *taskAPI.ShutdownRequest) (*types.Empty, error) {
++func (s *service) shutdown(ctx context.Context, r *taskAPI.ShutdownRequest) (*emptypb.Empty, error) {
+ 	log.L.Debugf("Shutdown, id: %s", r.ID)
+ 	s.cancel()
+ 	if s.shimAddress != "" {
+@@ -921,12 +925,12 @@
+ 	}
+ 	log.L.Debugf("Stats success, id: %s: %+v", r.ID, data)
+ 	return &taskAPI.StatsResponse{
+-		Stats: data,
++		Stats: protobuf.FromAny(data),
+ 	}, nil
+ }
+
+ // Update updates a running container.
+-func (s *service) Update(ctx context.Context, r *taskAPI.UpdateTaskRequest) (*types.Empty, error) {
++func (s *service) Update(ctx context.Context, r *taskAPI.UpdateTaskRequest) (*emptypb.Empty, error) {
+ 	return empty, errdefs.ToGRPC(errdefs.ErrNotImplemented)
+ }
+
+@@ -948,7 +952,7 @@
+
+ 	res := &taskAPI.WaitResponse{
+ 		ExitStatus: uint32(p.ExitStatus()),
+-		ExitedAt:   p.ExitedAt(),
++		ExitedAt:   timestamppb.New(p.ExitedAt()),
+ 	}
+ 	log.L.Debugf("Wait succeeded, response: %+v", res)
+ 	return res, nil
+@@ -976,7 +980,7 @@
+ 				ID:          p.ID(),
+ 				Pid:         uint32(p.Pid()),
+ 				ExitStatus:  uint32(e.Status),
+-				ExitedAt:    p.ExitedAt(),
++				ExitedAt:    timestamppb.New(p.ExitedAt()),
+ 			}
+ 			return
+ 		}
 diff --git a/pkg/shim/service_linux.go b/pkg/shim/service_linux.go
-index fb2f8b062..52c82ca90 100644
---- a/pkg/shim/service_linux.go
-+++ b/pkg/shim/service_linux.go
-@@ -33,7 +33,7 @@ type linuxPlatform struct {
+--- a/pkg/shim/service_linux.go	(revision fbd632393665c6628221150b74ae50294d9a3695)
++++ b/pkg/shim/service_linux.go	(date 1694133606275)
+@@ -33,7 +33,7 @@
  	epoller *console.Epoller
  }
 
@@ -109,6 +302,76 @@ index fb2f8b062..52c82ca90 100644
  	if p.epoller == nil {
  		return nil, fmt.Errorf("uninitialized epoller")
  	}
---
-2.41.0
+diff --git a/pkg/shim/proc/types.go b/pkg/shim/proc/types.go
+--- a/pkg/shim/proc/types.go	(revision fbd632393665c6628221150b74ae50294d9a3695)
++++ b/pkg/shim/proc/types.go	(date 1694133223472)
+@@ -18,8 +18,8 @@
+ import (
+ 	"time"
 
+-	runc "github.com/containerd/go-runc"
+-	"github.com/gogo/protobuf/types"
++	"github.com/containerd/go-runc"
++	"google.golang.org/protobuf/types/known/anypb"
+ )
+
+ // Mount holds filesystem mount configuration.
+@@ -49,7 +49,7 @@
+ 	Stdin    string
+ 	Stdout   string
+ 	Stderr   string
+-	Spec     *types.Any
++	Spec     *anypb.Any
+ }
+
+ // Exit is the type of exit events.
+diff --git a/pkg/shim/proc/exec.go b/pkg/shim/proc/exec.go
+--- a/pkg/shim/proc/exec.go	(revision fbd632393665c6628221150b74ae50294d9a3695)
++++ b/pkg/shim/proc/exec.go	(date 1694133514225)
+@@ -29,9 +29,10 @@
+ 	"github.com/containerd/containerd/log"
+ 	"github.com/containerd/containerd/pkg/stdio"
+ 	"github.com/containerd/fifo"
+-	runc "github.com/containerd/go-runc"
+-	specs "github.com/opencontainers/runtime-spec/specs-go"
++	"github.com/containerd/go-runc"
++	"github.com/opencontainers/runtime-spec/specs-go"
+ 	"golang.org/x/sys/unix"
++
+ 	"gvisor.dev/gvisor/pkg/cleanup"
+
+ 	"gvisor.dev/gvisor/pkg/shim/runsc"
+@@ -238,7 +239,7 @@
+ 		if err != nil {
+ 			return fmt.Errorf("failed to retrieve console master: %w", err)
+ 		}
+-		if e.console, err = e.parent.Platform.CopyConsole(ctx, console, e.stdio.Stdin, e.stdio.Stdout, e.stdio.Stderr, &e.wg); err != nil {
++		if e.console, err = e.parent.Platform.CopyConsole(ctx, console, e.id, e.stdio.Stdin, e.stdio.Stdout, e.stdio.Stderr, &e.wg); err != nil {
+ 			return fmt.Errorf("failed to start console copy: %w", err)
+ 		}
+ 	} else if !e.stdio.IsNull() {
+diff --git a/pkg/shim/proc/init.go b/pkg/shim/proc/init.go
+--- a/pkg/shim/proc/init.go	(revision fbd632393665c6628221150b74ae50294d9a3695)
++++ b/pkg/shim/proc/init.go	(date 1694133514234)
+@@ -34,9 +34,10 @@
+ 	"github.com/containerd/containerd/pkg/stdio"
+
+ 	"github.com/containerd/fifo"
+-	runc "github.com/containerd/go-runc"
+-	specs "github.com/opencontainers/runtime-spec/specs-go"
++	"github.com/containerd/go-runc"
++	"github.com/opencontainers/runtime-spec/specs-go"
+ 	"golang.org/x/sys/unix"
++
+ 	"gvisor.dev/gvisor/pkg/shim/runsc"
+ 	"gvisor.dev/gvisor/pkg/shim/utils"
+ )
+@@ -155,7 +156,7 @@
+ 		if err != nil {
+ 			return fmt.Errorf("failed to retrieve console master: %w", err)
+ 		}
+-		console, err = p.Platform.CopyConsole(ctx, console, r.Stdin, r.Stdout, r.Stderr, &p.wg)
++		console, err = p.Platform.CopyConsole(ctx, console, r.ID, r.Stdin, r.Stdout, r.Stderr, &p.wg)
+ 		if err != nil {
+ 			return fmt.Errorf("failed to start console copy: %w", err)
+ 		}

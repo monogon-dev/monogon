@@ -19,7 +19,7 @@ package reconciler
 import (
 	"context"
 
-	node "k8s.io/api/node/v1beta1"
+	node "k8s.io/api/node/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -29,7 +29,7 @@ type resourceRuntimeClasses struct {
 }
 
 func (r resourceRuntimeClasses) List(ctx context.Context) ([]meta.Object, error) {
-	res, err := r.NodeV1beta1().RuntimeClasses().List(ctx, listBuiltins)
+	res, err := r.NodeV1().RuntimeClasses().List(ctx, listBuiltins)
 	if err != nil {
 		return nil, err
 	}
@@ -41,12 +41,12 @@ func (r resourceRuntimeClasses) List(ctx context.Context) ([]meta.Object, error)
 }
 
 func (r resourceRuntimeClasses) Create(ctx context.Context, el meta.Object) error {
-	_, err := r.NodeV1beta1().RuntimeClasses().Create(ctx, el.(*node.RuntimeClass), meta.CreateOptions{})
+	_, err := r.NodeV1().RuntimeClasses().Create(ctx, el.(*node.RuntimeClass), meta.CreateOptions{})
 	return err
 }
 
 func (r resourceRuntimeClasses) Delete(ctx context.Context, name string) error {
-	return r.NodeV1beta1().RuntimeClasses().Delete(ctx, name, meta.DeleteOptions{})
+	return r.NodeV1().RuntimeClasses().Delete(ctx, name, meta.DeleteOptions{})
 }
 
 func (r resourceRuntimeClasses) Expected() []meta.Object {

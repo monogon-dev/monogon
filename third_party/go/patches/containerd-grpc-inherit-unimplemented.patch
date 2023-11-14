@@ -1,0 +1,54 @@
+From d65088ac138e652772c73ce2b19be03b1966c42a Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Tue, 28 Nov 2023 18:05:11 +0100
+Subject: [PATCH] Use Unimplemented implementation for gRPC forward compat
+
+Otherwise any newly-added methods will cause build failures.
+---
+ pkg/cri/instrument/instrumented_service.go | 2 ++
+ pkg/cri/sbserver/service.go                | 2 ++
+ pkg/cri/server/service.go                  | 2 ++
+ 3 files changed, 6 insertions(+)
+
+diff --git a/pkg/cri/instrument/instrumented_service.go b/pkg/cri/instrument/instrumented_service.go
+index 2f388d56d..ce290559c 100644
+--- a/pkg/cri/instrument/instrumented_service.go
++++ b/pkg/cri/instrument/instrumented_service.go
+@@ -61,6 +61,8 @@ type GRPCAlphaServices interface {
+ // instrumentedService wraps service with containerd namespace and logs.
+ type instrumentedService struct {
+ 	c criService
++	runtime.UnimplementedRuntimeServiceServer
++	runtime.UnimplementedImageServiceServer
+ }
+ 
+ func NewService(c criService) GRPCServices {
+diff --git a/pkg/cri/sbserver/service.go b/pkg/cri/sbserver/service.go
+index 9348c6081..9b636aaf8 100644
+--- a/pkg/cri/sbserver/service.go
++++ b/pkg/cri/sbserver/service.go
+@@ -72,6 +72,8 @@ type CRIService interface {
+ 
+ // criService implements CRIService.
+ type criService struct {
++	runtime.UnimplementedRuntimeServiceServer
++	runtime.UnimplementedImageServiceServer
+ 	// config contains all configurations.
+ 	config criconfig.Config
+ 	// imageFSPath is the path to image filesystem.
+diff --git a/pkg/cri/server/service.go b/pkg/cri/server/service.go
+index 5d946f4a2..b56509534 100644
+--- a/pkg/cri/server/service.go
++++ b/pkg/cri/server/service.go
+@@ -70,6 +70,8 @@ type CRIService interface {
+ 
+ // criService implements CRIService.
+ type criService struct {
++	runtime.UnimplementedRuntimeServiceServer
++	runtime.UnimplementedImageServiceServer
+ 	// config contains all configurations.
+ 	config criconfig.Config
+ 	// imageFSPath is the path to image filesystem.
+-- 
+2.42.0
+

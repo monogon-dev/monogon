@@ -14,7 +14,7 @@ This can make import blocks look more pretty.
 diff -ur org_golang_x_tools.orig/internal/imports/fix_test.go org_golang_x_tools/internal/imports/fix_test.go
 --- org_golang_x_tools.orig/internal/imports/fix_test.go	2023-04-03 15:16:24.808998544 +0200
 +++ org_golang_x_tools/internal/imports/fix_test.go	2023-04-03 15:16:56.069290812 +0200
-@@ -552,7 +552,6 @@
+@@ -552,7 +552,6 @@ c = fmt.Printf
  
  import (
  	"fmt"
@@ -22,7 +22,7 @@ diff -ur org_golang_x_tools.orig/internal/imports/fix_test.go org_golang_x_tools
  	"gu"
  
  	"manypackages.com/packagea"
-@@ -643,15 +642,11 @@
+@@ -643,15 +642,11 @@ var _, _, _, _, _ = fmt.Errorf, io.Copy, strings.Contains, renamed_packagea.A, B
  
  import (
  	"fmt"
@@ -40,10 +40,12 @@ diff -ur org_golang_x_tools.orig/internal/imports/fix_test.go org_golang_x_tools
  	_ "manypackages.com/packagec"
  )
  
-@@ -1183,6 +1178,62 @@
- var _, _ = rand.Read, rand.NewZipf
+@@ -1194,6 +1189,62 @@ import (
+ )
  `,
- 	},
+ 		out: `package main
++`,
++	},
 +	{
 +		name: "comment_between_imports_simple",
 +		in: `package main
@@ -98,11 +100,9 @@ diff -ur org_golang_x_tools.orig/internal/imports/fix_test.go org_golang_x_tools
 +
 +	_ "github.com/bar/foo2"
 +)
-+`,
-+	},
+ `,
+ 	},
  }
- 
- func TestSimpleCases(t *testing.T) {
 Only in org_golang_x_tools/internal/imports: fix_test.go.orig
 diff -ur org_golang_x_tools.orig/internal/imports/sortimports.go org_golang_x_tools/internal/imports/sortimports.go
 --- org_golang_x_tools.orig/internal/imports/sortimports.go	2023-04-03 15:16:24.808998544 +0200

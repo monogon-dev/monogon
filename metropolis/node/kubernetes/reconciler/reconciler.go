@@ -114,7 +114,6 @@ type resource interface {
 
 func allResources(clientSet kubernetes.Interface) map[string]resource {
 	return map[string]resource{
-		"psps":                resourcePodSecurityPolicies{clientSet},
 		"clusterroles":        resourceClusterRoles{clientSet},
 		"clusterrolebindings": resourceClusterRoleBindings{clientSet},
 		"storageclasses":      resourceStorageClasses{clientSet},

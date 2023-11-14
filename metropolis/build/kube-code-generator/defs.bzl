@@ -273,7 +273,7 @@ def _codegen_clientset(ctx):
     cg = _cg(ctx, ctx.attr.importpath)
 
     _declare_libraries(cg, {
-        "clientset/versioned": ["clientset.go", "doc.go"],
+        "clientset/versioned": ["clientset.go"],
         "clientset/versioned/fake": ["register.go", "clientset_generated.go"],
         "clientset/versioned/scheme": ["register.go", "doc.go"],
     })

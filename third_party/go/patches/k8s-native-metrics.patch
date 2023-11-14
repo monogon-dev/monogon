@@ -1,7 +1,7 @@
-From 9f2b5274f50a7e4d5ae096e549c0c16addcc447b Mon Sep 17 00:00:00 2001
-From: Lorenz Brun <lorenz@brun.one>
-Date: Tue, 17 Mar 2020 21:41:08 +0100
-Subject: [PATCH 2/5] Add a native volume metrics implementation
+From 2c0e2b40f6caaa432443e3037dd106ccf4f4b4e2 Mon Sep 17 00:00:00 2001
+From: Tim Windelschmidt <tim@monogon.tech>
+Date: Sat, 9 Sep 2023 14:14:48 +0200
+Subject: [PATCH 1/6] Add a native volume metrics implementation
 
 ---
  pkg/volume/metrics_native.go      | 101 +++++++++++++++++++++++++++++
@@ -225,6 +225,6 @@ index 00000000000..2d5546591ce
 +		t.Errorf("Expected error when calling GetMetrics on incorrectly initialized MetricsNative, actual nil")
 +	}
 +}
--- 
-2.25.1
+--
+2.41.0
 

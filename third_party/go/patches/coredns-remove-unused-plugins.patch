@@ -1,4 +1,4 @@
-From 355d38f38cf241b91a862795892bcb87c5729d2e Mon Sep 17 00:00:00 2001
+From e2134787f676554c0eee7d48d405a5e680ceed8b Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
 Date: Wed, 16 Mar 2022 13:39:39 +0100
 Subject: [PATCH] Remove unused plugins
@@ -7,11 +7,11 @@ Subject: [PATCH] Remove unused plugins
  core/dnsserver/zdirectives.go | 7 -------
  core/plugin/zplugin.go        | 7 -------
  plugin.cfg                    | 7 -------
- plugin/kubernetes/setup.go    | 3 ---
- 4 files changed, 24 deletions(-)
+ plugin/kubernetes/setup.go    | 2 +-
+ 4 files changed, 1 insertion(+), 22 deletions(-)
 
 diff --git a/core/dnsserver/zdirectives.go b/core/dnsserver/zdirectives.go
-index bca21718..678c02c6 100644
+index 6d713758..8d46a0a2 100644
 --- a/core/dnsserver/zdirectives.go
 +++ b/core/dnsserver/zdirectives.go
 @@ -11,7 +11,6 @@ package dnsserver
@@ -21,8 +21,8 @@ index bca21718..678c02c6 100644
 -	"geoip",
  	"cancel",
  	"tls",
- 	"reload",
-@@ -20,14 +19,12 @@ var Directives = []string{
+ 	"timeouts",
+@@ -21,14 +20,12 @@ var Directives = []string{
  	"root",
  	"bind",
  	"debug",
@@ -37,7 +37,7 @@ index bca21718..678c02c6 100644
  	"local",
  	"dns64",
  	"acl",
-@@ -43,15 +40,11 @@ var Directives = []string{
+@@ -45,15 +42,11 @@ var Directives = []string{
  	"template",
  	"transfer",
  	"hosts",
@@ -54,7 +54,7 @@ index bca21718..678c02c6 100644
  	"forward",
  	"grpc",
 diff --git a/core/plugin/zplugin.go b/core/plugin/zplugin.go
-index a9167eea..2a5d0b13 100644
+index b97cd85c..67c7ecbc 100644
 --- a/core/plugin/zplugin.go
 +++ b/core/plugin/zplugin.go
 @@ -9,23 +9,18 @@ import (
@@ -81,7 +81,7 @@ index a9167eea..2a5d0b13 100644
  	_ "github.com/coredns/coredns/plugin/grpc"
  	_ "github.com/coredns/coredns/plugin/header"
  	_ "github.com/coredns/coredns/plugin/health"
-@@ -45,12 +40,10 @@ import (
+@@ -45,13 +40,11 @@ import (
  	_ "github.com/coredns/coredns/plugin/reload"
  	_ "github.com/coredns/coredns/plugin/rewrite"
  	_ "github.com/coredns/coredns/plugin/root"
@@ -89,24 +89,25 @@ index a9167eea..2a5d0b13 100644
  	_ "github.com/coredns/coredns/plugin/secondary"
  	_ "github.com/coredns/coredns/plugin/sign"
  	_ "github.com/coredns/coredns/plugin/template"
+ 	_ "github.com/coredns/coredns/plugin/timeouts"
  	_ "github.com/coredns/coredns/plugin/tls"
 -	_ "github.com/coredns/coredns/plugin/trace"
  	_ "github.com/coredns/coredns/plugin/transfer"
- 	_ "github.com/coredns/coredns/plugin/whoami"
- )
+ 	_ "github.com/coredns/coredns/plugin/tsig"
+ 	_ "github.com/coredns/coredns/plugin/view"
 diff --git a/plugin.cfg b/plugin.cfg
-index 628e7141..d4ce1c89 100644
+index 407a668e..0429f5ee 100644
 --- a/plugin.cfg
 +++ b/plugin.cfg
 @@ -20,7 +20,6 @@
  # log:log
- 
+
  metadata:metadata
 -geoip:geoip
  cancel:cancel
  tls:tls
- reload:reload
-@@ -29,14 +28,12 @@ bufsize:bufsize
+ timeouts:timeouts
+@@ -30,14 +29,12 @@ bufsize:bufsize
  root:root
  bind:bind
  debug:debug
@@ -121,7 +122,7 @@ index 628e7141..d4ce1c89 100644
  local:local
  dns64:dns64
  acl:acl
-@@ -52,15 +49,11 @@ minimal:minimal
+@@ -54,15 +51,11 @@ minimal:minimal
  template:template
  transfer:transfer
  hosts:hosts
@@ -138,19 +139,25 @@ index 628e7141..d4ce1c89 100644
  forward:forward
  grpc:grpc
 diff --git a/plugin/kubernetes/setup.go b/plugin/kubernetes/setup.go
-index 5f5ab058..ae1a7cf8 100644
+index 0b988a9a..a07a1194 100644
 --- a/plugin/kubernetes/setup.go
 +++ b/plugin/kubernetes/setup.go
-@@ -17,9 +17,6 @@ import (
- 
+@@ -8,6 +8,7 @@ import (
+ 	"strings"
+
+ 	"github.com/coredns/caddy"
++
+ 	"github.com/coredns/coredns/core/dnsserver"
+ 	"github.com/coredns/coredns/plugin"
+ 	"github.com/coredns/coredns/plugin/pkg/dnsutil"
+@@ -17,7 +18,6 @@ import (
+ 	"github.com/go-logr/logr"
  	"github.com/miekg/dns"
  	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
--	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"       // pull this in here, because we want it excluded if plugin.cfg doesn't have k8s
--	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"      // pull this in here, because we want it excluded if plugin.cfg doesn't have k8s
--	_ "k8s.io/client-go/plugin/pkg/client/auth/openstack" // pull this in here, because we want it excluded if plugin.cfg doesn't have k8s
+-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc" // pull this in here, because we want it excluded if plugin.cfg doesn't have k8s
  	"k8s.io/client-go/tools/clientcmd"
  	"k8s.io/klog/v2"
  )
--- 
-2.25.1
+--
+2.41.0
 
