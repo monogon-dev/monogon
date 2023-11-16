@@ -1,9 +1,8 @@
 package mapsets
 
 import (
+	"cmp"
 	"sort"
-
-	"golang.org/x/exp/constraints"
 )
 
 // OrderedMap is a map from K to V which provides total ordering as defined by
@@ -33,7 +32,7 @@ type OrderedMap[K Key, V any] struct {
 // (string, integers, etc.) already implement it.
 type Key interface {
 	comparable
-	constraints.Ordered
+	cmp.Ordered
 }
 
 func (s *OrderedMap[K, V]) sort() {
