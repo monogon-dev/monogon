@@ -2727,8 +2727,8 @@ def go_repositories():
     go_repository(
         name = "com_github_insomniacslk_dhcp",
         importpath = "github.com/insomniacslk/dhcp",
-        sum = "h1:efcJu2Vzz6DoSq245deWNzTz6l/gsqdphm3FjmI88/g=",
-        version = "v0.0.0-20220119180841-3c283ff8b7dd",
+        sum = "h1:PgxFEySCI41sH0mB7/2XswdXbUykQsRUGod8Rn+NubM=",
+        version = "v0.0.0-20231016090811-6a2c8fbdcc1c",
     )
     go_repository(
         name = "com_github_intel_goresctrl",
@@ -3415,12 +3415,6 @@ def go_repositories():
         version = "v6.2.2",
     )
     go_repository(
-        name = "com_github_mdlayher_ethernet",
-        importpath = "github.com/mdlayher/ethernet",
-        sum = "h1:lez6TS6aAau+8wXUP3G9I3TGlmPFEq2CTxBaRqY6AGE=",
-        version = "v0.0.0-20190606142754-0394541c37b7",
-    )
-    go_repository(
         name = "com_github_mdlayher_ethtool",
         importpath = "github.com/mdlayher/ethtool",
         replace = "github.com/monogon-dev/ethtool",
@@ -3450,12 +3444,6 @@ def go_repositories():
         importpath = "github.com/mdlayher/packet",
         sum = "h1:3Up1NG6LZrsgDVn6X4L9Ge/iyRyxFEFD9o6Pr3Q1nQY=",
         version = "v1.1.2",
-    )
-    go_repository(
-        name = "com_github_mdlayher_raw",
-        importpath = "github.com/mdlayher/raw",
-        sum = "h1:K4PFMVy+AFsp0Zdlrts7yNhxc/uXoPVHi9RzRvtZF2Y=",
-        version = "v0.1.0",
     )
     go_repository(
         name = "com_github_mdlayher_socket",
@@ -4772,8 +4760,8 @@ def go_repositories():
     go_repository(
         name = "com_github_u_root_uio",
         importpath = "github.com/u-root/uio",
-        sum = "h1:BFvcl34IGnw8yvJi8hlqLFo9EshRInwWBs2M5fGWzQA=",
-        version = "v0.0.0-20210528114334-82958018845c",
+        sum = "h1:tHNk7XK9GkmKUR6Gh8gVBKXc2MVSZ4G/NnWLtzw4gNA=",
+        version = "v0.0.0-20230220225925-ffce2a382923",
     )
     go_repository(
         name = "com_github_ugorji_go",
