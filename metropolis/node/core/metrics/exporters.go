@@ -37,6 +37,8 @@ var DefaultExporters = []*Exporter{
 			"--collector.buddyinfo",
 			"--collector.zoneinfo",
 			"--collector.tcpstat",
+			"--collector.netclass.ignored-devices=^(veth.*)$",
+			"--collector.netdev.device-exclude=^(veth.*)$",
 			"--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|data/kubernetes/kubelet/pods/.+|tmp/.+|ephermal/containerd/.+)($|/)",
 		},
 	},
