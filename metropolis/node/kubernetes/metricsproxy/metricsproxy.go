@@ -48,6 +48,12 @@ var services = []*kubernetesExporter{
 		ListenPort: node.MetricsKubeControllerManagerListenerPort,
 		ServerName: "kube-controller-manager.local",
 	},
+	{
+		Name:       "kubernetes-apiserver",
+		TargetPort: node.KubernetesAPIPort,
+		ListenPort: node.MetricsKubeAPIServerListenerPort,
+		ServerName: "kubernetes",
+	},
 }
 
 type metricsService struct {

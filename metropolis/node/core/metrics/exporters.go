@@ -55,6 +55,10 @@ var DefaultExporters = []*Exporter{
 		Name: "kubernetes-controller-manager",
 		Port: node.MetricsKubeControllerManagerListenerPort,
 	},
+	{
+		Name: "kubernetes-apiserver",
+		Port: node.MetricsKubeAPIServerListenerPort,
+	},
 }
 
 func (e *Exporter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
