@@ -77,6 +77,7 @@ func (s *Discovery) Run(ctx context.Context) error {
 					"__meta_metropolis_role_kubernetes_worker":     fmt.Sprintf("%t", new.Roles.KubernetesWorker != nil),
 					"__meta_metropolis_role_kubernetes_controller": fmt.Sprintf("%t", new.Roles.KubernetesController != nil),
 					"__meta_metropolis_role_consensus_member":      fmt.Sprintf("%t", new.Roles.ConsensusMember != nil),
+					"__meta_metropolis_node":                       new.Id,
 				},
 			})
 			return nil
