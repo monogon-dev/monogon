@@ -19,7 +19,6 @@ message Version {
         int64 major = 1;
         int64 minor = 2;
         int64 patch = 3;
-        repeated string prerelease = 4;
     }
     Release release = 1;
 

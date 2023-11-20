@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "stampgo_lib",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/version/stampgo",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//version/spec",
+        "@com_github_coreos_go_semver//semver",
+        "@org_golang_google_protobuf//proto",
+    ],
+)
+
+go_binary(
+    name = "stampgo",
+    embed = [":stampgo_lib"],
+    visibility = ["//visibility:public"],
+)
