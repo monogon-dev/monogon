@@ -1,5 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
+# TODO(q3k): clean this up to just a go_test.
+
 go_test(
     name = "metroctl_test",
     srcs = ["test.go"],
@@ -16,6 +18,8 @@ go_test(
         "//metropolis/pkg/cmd",
         "//metropolis/test/launch/cluster",
         "//metropolis/test/util",
+        "//metropolis/version",
+        "//version",
     ],
 )
 
@@ -29,5 +33,7 @@ go_library(
         "//metropolis/pkg/cmd",
         "//metropolis/test/launch/cluster",
         "//metropolis/test/util",
+        "//metropolis/version",
+        "//version",
     ],
 )

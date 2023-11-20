@@ -11,6 +11,7 @@ import (
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/metropolis/version"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -41,7 +42,9 @@ type workerStatusPushChannels struct {
 // workerStatusPushLoop runs the main loop acting on data received from
 // workerStatusPushChannels.
 func workerStatusPushLoop(ctx context.Context, chans *workerStatusPushChannels) error {
-	status := cpb.NodeStatus{}
+	status := cpb.NodeStatus{
+		Version: version.Version,
+	}
 	var cur ipb.CuratorClient
 	var nodeID string
 

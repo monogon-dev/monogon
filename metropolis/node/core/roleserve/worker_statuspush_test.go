@@ -20,6 +20,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/test/util"
+	mversion "source.monogon.dev/metropolis/version"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -113,6 +114,7 @@ func TestWorkerStatusPush(t *testing.T) {
 	cur.expectReports(t, []*ipb.UpdateNodeStatusRequest{
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
+			Version:         mversion.Version,
 		}},
 	})
 
@@ -122,9 +124,11 @@ func TestWorkerStatusPush(t *testing.T) {
 	cur.expectReports(t, []*ipb.UpdateNodeStatusRequest{
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
+			Version:         mversion.Version,
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
+			Version:         mversion.Version,
 		}},
 	})
 
@@ -140,18 +144,22 @@ func TestWorkerStatusPush(t *testing.T) {
 	cur.expectReports(t, []*ipb.UpdateNodeStatusRequest{
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
+			Version:         mversion.Version,
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
+			Version:         mversion.Version,
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
 			RunningCurator: &cpb.NodeStatus_RunningCurator{
 				Port: int32(common.CuratorServicePort),
 			},
+			Version: mversion.Version,
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
+			Version:         mversion.Version,
 		}},
 	})
 }

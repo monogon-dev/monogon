@@ -9,6 +9,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/identity"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	"source.monogon.dev/version"
 )
 
 func nodeEntry(n *apb.Node) clitable.Entry {
@@ -48,6 +49,10 @@ func nodeEntry(n *apb.Node) clitable.Entry {
 		tpm = "no"
 	}
 	res.Add("tpm", tpm)
+
+	if n.Status.Version != nil {
+		res.Add("version", version.Semver(n.Status.Version))
+	}
 
 	tshs := n.TimeSinceHeartbeat.GetSeconds()
 	res.Add("heartbeat", fmt.Sprintf("%ds", tshs))

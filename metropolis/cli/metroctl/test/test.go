@@ -15,6 +15,8 @@ import (
 	"source.monogon.dev/metropolis/pkg/cmd"
 	"source.monogon.dev/metropolis/test/launch/cluster"
 	"source.monogon.dev/metropolis/test/util"
+	mversion "source.monogon.dev/metropolis/version"
+	"source.monogon.dev/version"
 )
 
 // resolveMetroctl resolves metroctl filesystem path. It will return a correct
@@ -238,10 +240,10 @@ func TestMetroctl(t *testing.T) {
 			line := scanner.Text()
 			t.Logf("Line: %q", line)
 
-			var onid, ostate, onaddr, onstatus, onroles, ontpm string
+			var onid, ostate, onaddr, onstatus, onroles, ontpm, onver string
 			var ontimeout int
 
-			_, err = fmt.Sscanf(line, "%s%s%s%s%s%s%ds", &onid, &ostate, &onaddr, &onstatus, &onroles, &ontpm, &ontimeout)
+			_, err = fmt.Sscanf(line, "%s%s%s%s%s%s%s%ds", &onid, &ostate, &onaddr, &onstatus, &onroles, &ontpm, &onver, &ontimeout)
 			if err != nil {
 				return fmt.Errorf("while parsing metroctl output: %v", err)
 			}
@@ -262,6 +264,9 @@ func TestMetroctl(t *testing.T) {
 			}
 			if want, got := "yes", ontpm; want != got {
 				return fmt.Errorf("node tpm mismatch: wanted %q, got %q", want, got)
+			}
+			if want, got := version.Semver(mversion.Version), onver; want != got {
+				return fmt.Errorf("node version mismatch: wanted %q, got %q", want, got)
 			}
 			if ontimeout < 0 || ontimeout > 30 {
 				return fmt.Errorf("node timeout mismatch")

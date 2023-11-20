@@ -7,6 +7,7 @@ proto_library(
     srcs = ["common.proto"],
     visibility = ["//metropolis:__subpackages__"],
     deps = [
+        "//version/spec:spec_proto",
         "@com_google_protobuf//:timestamp_proto",
     ],
 )
@@ -16,6 +17,7 @@ go_proto_library(
     importpath = "source.monogon.dev/metropolis/proto/common",
     proto = ":common_proto",
     visibility = ["//metropolis:__subpackages__"],
+    deps = ["//version/spec"],
 )
 
 go_library(

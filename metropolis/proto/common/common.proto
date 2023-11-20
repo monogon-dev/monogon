@@ -19,6 +19,7 @@ package metropolis.proto.common;
 option go_package = "source.monogon.dev/metropolis/proto/common";
 
 import "google/protobuf/timestamp.proto";
+import "version/spec/spec.proto";
 
 // NodeRoles are the possible roles that a Metropolis Node should run within the
 // cluster. These are configured by the cluster and can be retrieved through the
@@ -149,6 +150,8 @@ message NodeStatus {
     // timestamp is an epoch number associated with the last status update.
     // It's set with a nanosecond granularity.
     google.protobuf.Timestamp timestamp = 2;
+    // version is the Metropolis version that this node is running.
+    version.spec.Version version = 4;
 }
 
 // The Cluster Directory is information about the network addressing of nodes
