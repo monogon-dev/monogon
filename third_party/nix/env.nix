@@ -87,6 +87,8 @@ in
     busybox
     niv
     google-cloud-sdk
+    qemu_kvm
+    swtpm
   ];
   runScript = wrapper;
 })
