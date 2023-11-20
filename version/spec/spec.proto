@@ -1,0 +1,52 @@
+syntax = "proto3";
+package version.spec;
+option go_package = "source.monogon.dev/version/spec";
+
+// Version of an artifact released from the Monogon monorepo.
+//
+// A few assumptions are made here:
+//  1. The version can be serialized to a SemVer 2.0.0 version string, which can
+//     then be deserialized back to this proto.
+//  2. Not every SemVer 2.0.0 version string can be deserialized back into a
+//     Version, notably only a subset of prerelease labels are supported, and no
+//     build metadata is supported.
+//  3. A Version is valid for a given 'product' built by the monorepo build
+//     system - there's no single Version for the entire repository.
+message Version {
+    // Last release for this artifact. If unset, 0.0.0 is assumed. SemVer
+    // major/minor/patch semantics are observed.
+    message Release {
+        int64 major = 1;
+        int64 minor = 2;
+        int64 patch = 3;
+        repeated string prerelease = 4;
+    }
+    Release release = 1;
+
+    // Information gathered from Git at time of build.
+    message GitInformation {
+        // Hex-encoded commit short hash of the monorepo checked out during
+        // build.
+        //
+        // This will be used to populate the -gXXXXXX prerelease field in the
+        // serialized SemVer format.
+        string commit_hash = 1;
+        // Number of commits since the given Release.
+        //
+        // If non-zero, this will be used to populate the -devY prerelease field
+        // in the serialized SemVer format.
+        uint64 commits_since_release = 2;
+
+        // State of the Git checkout during the build.
+        //
+        // If dirty, this will set the -dirty prerelease field in the serialized
+        // SemVer format.
+        enum BuildTreeState {
+            BUILD_TREE_STATE_INVALID = 0;
+            BUILD_TREE_STATE_CLEAN = 1;
+            BUILD_TREE_STATE_DIRTY = 2;
+        };
+        BuildTreeState build_tree_state = 3;
+    }
+    GitInformation git_information = 2;
+}
