@@ -40,6 +40,8 @@ import (
 	"source.monogon.dev/metropolis/pkg/logtree"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/pkg/tpm"
+	mversion "source.monogon.dev/metropolis/version"
+	"source.monogon.dev/version"
 )
 
 func main() {
@@ -110,7 +112,7 @@ func main() {
 	}
 
 	logger.Info("Starting Metropolis node init")
-	logger.Infof("Version: %s", node.Version)
+	logger.Infof("Version: %s", version.Semver(mversion.Version))
 
 	haveTPM := true
 	if err := tpm.Initialize(logger); err != nil {

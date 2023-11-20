@@ -40,6 +40,8 @@ go_library(
         "//metropolis/pkg/sysctl",
         "//metropolis/pkg/tpm",
         "//metropolis/proto/api",
+        "//metropolis/version",
+        "//version",
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_containerd_containerd//:containerd",
         "@com_github_containerd_containerd//namespaces",
