@@ -59,8 +59,8 @@ const (
 	// proxy for the controller-manager runs, bound to 127.0.0.1. The metrics
 	// service proxies traffic to it from the public MetricsPort.
 	MetricsKubeControllerManagerListenerPort Port = 7844
-	// MetricsKubeControllerManagerListenerPort is the TCP port on which the
-	// proxy for the controller-manager runs, bound to 127.0.0.1. The metrics
+	// MetricsKubeAPIServerListenerPort is the TCP port on which the
+	// proxy for the api-server runs, bound to 127.0.0.1. The metrics
 	// service proxies traffic to it from the public MetricsPort.
 	MetricsKubeAPIServerListenerPort Port = 7845
 	// KubernetesAPIPort is the TCP port on which the Kubernetes API is
