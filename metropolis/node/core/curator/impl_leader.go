@@ -102,7 +102,21 @@ func (l *leadership) txnAsLeader(ctx context.Context, ops ...clientv3.Op) (*clie
 		return nil, fmt.Errorf("when running leader transaction: %w", err)
 	}
 	if !resp.Succeeded {
-		rpc.Trace(ctx).Printf("txnAsLeader(...): rejected (lost leadership)")
+		// Transaction failed because leadership was lost. Log error with
+		// detailed information about lock key, expected revision and found
+		// revision to aid debugging.
+		checkRes, err := l.etcd.Get(ctx, l.lockKey)
+		var lockRev string
+		if err != nil {
+			lockRev = fmt.Sprintf("couldn't check: %v", err)
+		} else {
+			if len(checkRes.Kvs) > 0 {
+				lockRev = fmt.Sprintf("%d", checkRes.Kvs[0].CreateRevision)
+			} else {
+				lockRev = "no revision?"
+			}
+		}
+		rpc.Trace(ctx).Printf("txnAsLeader(...): rejected (lost leadership (key %s should've been at rev %d, is at rev %s)", l.lockKey, l.lockRev, lockRev)
 		return nil, lostLeadership
 	}
 	rpc.Trace(ctx).Printf("txnAsLeader(...): ok")
