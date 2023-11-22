@@ -220,6 +220,11 @@ func (s *Service) Run(ctx context.Context) error {
 	if err := earlySysctlOpts.Apply(); err != nil {
 		logger.Fatalf("Error configuring early sysctl options: %v", err)
 	}
+
+	if err := applyQuirks(logger); err != nil {
+		logger.Errorf("Applying quirks failed, continuing without: %v", err)
+	}
+
 	// Choose between autoconfig and static config runnables
 	if s.StaticConfig == nil {
 		supervisor.Run(ctx, "dynamic", s.runDynamicConfig)

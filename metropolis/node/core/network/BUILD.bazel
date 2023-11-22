@@ -4,6 +4,7 @@ go_library(
     name = "network",
     srcs = [
         "main.go",
+        "quirks.go",
         "static.go",
     ],
     importpath = "source.monogon.dev/metropolis/node/core/network",
@@ -22,6 +23,7 @@ go_library(
         "@com_github_google_nftables//:nftables",
         "@com_github_google_nftables//expr",
         "@com_github_insomniacslk_dhcp//dhcpv4",
+        "@com_github_mdlayher_ethtool//:ethtool",
         "@com_github_vishvananda_netlink//:netlink",
         "@org_golang_x_sys//unix",
     ],
