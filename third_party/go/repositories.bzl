@@ -2217,8 +2217,8 @@ def go_repositories():
     go_repository(
         name = "com_github_google_go_cmp",
         importpath = "github.com/google/go-cmp",
-        sum = "h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=",
-        version = "v0.5.9",
+        sum = "h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=",
+        version = "v0.6.0",
     )
     go_repository(
         name = "com_github_google_go_containerregistry",
@@ -3068,8 +3068,8 @@ def go_repositories():
     go_repository(
         name = "com_github_josharian_native",
         importpath = "github.com/josharian/native",
-        sum = "h1:Ts/E8zCSEsG17dUqv7joXJFybuMLjQfWE04tsBODTxk=",
-        version = "v1.0.0",
+        sum = "h1:uuaP0hAbW7Y4l0ZRQ6C9zfb7Mg1mbFKry/xzDAfmtLA=",
+        version = "v1.1.0",
     )
     go_repository(
         name = "com_github_jpillora_backoff",
@@ -3553,15 +3553,16 @@ def go_repositories():
     go_repository(
         name = "com_github_mdlayher_ethtool",
         importpath = "github.com/mdlayher/ethtool",
-        sum = "h1:tHdB+hQRHU10CfcK0furo6rSNgZ38JT8uPh70c/pFD8=",
-        version = "v0.0.0-20211028163843-288d040e9d60",
+        replace = "github.com/monogon-dev/ethtool",
+        sum = "h1:Y1CNfkifx2lVkPUX7KC4Hn9qIPUoSm3RiWPwEwy6VA8=",
+        version = "v0.0.0-20231122193313-e9c21a3a83cb",
     )
 
     go_repository(
         name = "com_github_mdlayher_genetlink",
         importpath = "github.com/mdlayher/genetlink",
-        sum = "h1:4yrIkRV5Wfk1WfpWTcoOlGmsWgQj3OtQN9ZsbrE+XtU=",
-        version = "v1.2.0",
+        sum = "h1:KdrNKe+CTu+IbZnm/GVUMXSqBBLqcGpRDa0xkQy56gw=",
+        version = "v1.3.2",
     )
     go_repository(
         name = "com_github_mdlayher_kobject",
@@ -3573,14 +3574,14 @@ def go_repositories():
     go_repository(
         name = "com_github_mdlayher_netlink",
         importpath = "github.com/mdlayher/netlink",
-        sum = "h1:rOHX5yl7qnlpiVkFWoqccueppMtXzeziFjWAjLg6sz0=",
-        version = "v1.6.0",
+        sum = "h1:/UtM3ofJap7Vl4QWCPDGXY8d3GIY2UGSDbK+QWmY8/g=",
+        version = "v1.7.2",
     )
     go_repository(
         name = "com_github_mdlayher_packet",
         importpath = "github.com/mdlayher/packet",
-        sum = "h1:elUwhY+HQaIV9kMgmsU9zOF413pDKoo2uFNypgP5SxM=",
-        version = "v0.0.0-20220221164757-67998ac0ff93",
+        sum = "h1:3Up1NG6LZrsgDVn6X4L9Ge/iyRyxFEFD9o6Pr3Q1nQY=",
+        version = "v1.1.2",
     )
 
     go_repository(
@@ -3592,8 +3593,8 @@ def go_repositories():
     go_repository(
         name = "com_github_mdlayher_socket",
         importpath = "github.com/mdlayher/socket",
-        sum = "h1:F2aaOwb53VsBE+ebRS9bLd7yPOfYUMC8lOODdCBDY6w=",
-        version = "v0.2.1",
+        sum = "h1:eM9y2/jlbs1M615oshPQOHZzj6R6wMT7bX5NPiQvn2U=",
+        version = "v0.4.1",
     )
     go_repository(
         name = "com_github_mdlayher_wifi",
@@ -6914,12 +6915,6 @@ def go_repositories():
         sum = "h1:TfdoLivD44QwvssI9Sv1xwa5DcL5XQr4au4sZ2F2NV4=",
         version = "v0.0.0-20220428152302-39d4317da171",
     )
-    go_repository(
-        name = "org_golang_x_exp_typeparams",
-        importpath = "golang.org/x/exp/typeparams",
-        sum = "h1:Jw5wfR+h9mnIYH+OtGT2im5wV1YGGDora5vTv/aa5bE=",
-        version = "v0.0.0-20221208152030-732eee02a75a",
-    )
 
     go_repository(
         name = "org_golang_x_image",
@@ -6970,8 +6965,8 @@ def go_repositories():
     go_repository(
         name = "org_golang_x_sys",
         importpath = "golang.org/x/sys",
-        sum = "h1:eG7RXZHdqOJ1i+0lgLgCpSXAp6M3LYlAo6osgSi0xOM=",
-        version = "v0.11.0",
+        sum = "h1:Af8nKPmuFypiUBjVoU9V20FiaFXOcuZI21p0ycVYYGE=",
+        version = "v0.13.0",
     )
     go_repository(
         name = "org_golang_x_term",
