@@ -42,7 +42,8 @@
       "external/com_github_cilium_ebpf/": "third_party",
       "external/org_golang_x_sys": "third_party",
       "external/net_starlark_go": "third_party",
-      "external/com_github_pingcap_tidb_parser": "third_party"
+      "external/com_github_pingcap_tidb_parser": "third_party",
+      "external/com_github_dennwc_btrfs": "third_party"
     }
   },
   "unusedresult": {

@@ -57,7 +57,9 @@ test --test_output=errors
 #     build k8s without cloud provider and docker support
 # nowasm:
 #     disable wasm plugin support in sqlc
-build --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo
+# nobtrfs:
+#     disable btrfs support in node_exporter
+build --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo,nobtrfs
 
 # kvm_debug:
 #     prevent stackoverflows for gvisor
