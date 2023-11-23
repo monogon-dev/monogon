@@ -40,7 +40,7 @@ var DefaultExporters = []*Exporter{
 			"--collector.cpu.info",
 			"--collector.netclass.ignored-devices=^(veth.*)$",
 			"--collector.netdev.device-exclude=^(veth.*)$",
-			"--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|data/kubernetes/kubelet/pods/.+|tmp/.+|ephermal/containerd/.+)($|/)",
+			"--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|data/kubernetes/kubelet/pods/.+|tmp/.+|ephemeral/containerd/.+)($|/)",
 		},
 	},
 	{
