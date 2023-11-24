@@ -95,12 +95,13 @@ func (s *Service) Run(ctx context.Context) error {
 
 	// Start all exporters as sub-runnables.
 	for _, exporter := range s.Exporters {
+		exporter := exporter
 		if exporter.Executable == "" {
 			continue
 		}
 
-		cmd := exec.CommandContext(ctx, exporter.Executable, exporter.Arguments...)
 		err := supervisor.Run(ctx, exporter.Name, func(ctx context.Context) error {
+			cmd := exec.CommandContext(ctx, exporter.Executable, exporter.Arguments...)
 			return supervisor.RunCommand(ctx, cmd)
 		})
 		if err != nil {
