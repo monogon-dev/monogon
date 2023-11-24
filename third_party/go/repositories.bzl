@@ -4165,6 +4165,7 @@ def go_repositories():
     )
     go_repository(
         name = "com_github_prometheus_node_exporter",
+        build_tags = ["nobtrfs", "nozfs", "notapestats", "norapl"],  # keep
         importpath = "github.com/prometheus/node_exporter",
         sum = "h1:7MVpSdfWrThNo0SlldhUyAVFZ7LWbC9+QJRzB4QmkE8=",
         version = "v1.7.0",

@@ -57,13 +57,13 @@ test --test_output=errors
 #     build k8s without cloud provider and docker support
 # nowasm:
 #     disable wasm plugin support in sqlc
-# nobtrfs:
-#     disable btrfs support in node_exporter
-build --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo,nobtrfs
+# nobtrfs,nozfs,notapestats,norapl:
+#     disable node_exporter features we don't need
+build --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo,nobtrfs,nozfs,notapestats,norapl
 
 # kvm_debug:
 #     prevent stackoverflows for gvisor
-build:dbg --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo,kvm_debug
+build:dbg --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo,nobtrfs,nozfs,notapestats,norapl,kvm_debug
 
 # Build with C++17.
 build --cxxopt=-std=c++17
