@@ -2991,8 +2991,9 @@ def go_repositories():
     go_repository(
         name = "com_github_jsimonetti_rtnetlink",
         importpath = "github.com/jsimonetti/rtnetlink",
-        sum = "h1:hVlNQNRlLDGZz31gBPicsG7Q53rnlsz1l1Ix/9XlpVA=",
-        version = "v1.3.5",
+        replace = "github.com/jsimonetti/rtnetlink",
+        sum = "h1:Z1BF0fRgcETPEa0Kt0MRk3yV5+kF1FWTni6KUFKrq2I=",
+        version = "v1.4.0",
     )
     go_repository(
         name = "com_github_json_iterator_go",

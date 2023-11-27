@@ -72,6 +72,9 @@ replace github.com/bazelbuild/buildtools => github.com/bazelbuild/buildtools v0.
 // Our privflags implementation, going upstream with https://github.com/mdlayher/ethtool/pull/22
 replace github.com/mdlayher/ethtool => github.com/monogon-dev/ethtool v0.0.0-20231122193313-e9c21a3a83cb
 
+// Fixes https://github.com/prometheus/node_exporter/issues/2849
+replace github.com/jsimonetti/rtnetlink => github.com/jsimonetti/rtnetlink v1.4.0
+
 // Upgrade to fix missing constant in x/sys v0.14.0
 // https://github.com/cilium/ebpf/releases/tag/v0.12.3
 replace github.com/cilium/ebpf => github.com/cilium/ebpf v0.12.3
@@ -241,7 +244,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
 	github.com/checkpoint-restore/go-criu/v5 v5.3.0 // indirect
-	github.com/cilium/ebpf v0.11.0 // indirect
+	github.com/cilium/ebpf v0.12.3 // indirect
 	github.com/clusterhq/flocker-go v0.0.0-20160920122132-2b8b7259d313 // indirect
 	github.com/containerd/cgroups v1.0.3 // indirect
 	github.com/containerd/console v1.0.3 // indirect
