@@ -10,8 +10,9 @@
 # 1. Version numbers follow the Semantic Versioning 2.0 spec.
 # 2. Git tags in the form `<product>-vX.Y.Z` will be used as a basis for
 #    versioning a build. If the currently built release is exactly the same as
-#    such a tag, it will be versioned at vX.Y.Z. Otherwise, a -devNNN suffix
-#    will be appended to signify the amount of commits since the release.
+#    such a tag, it will be versioned at vX.Y.Z. Otherwise, a devNNN prerelease
+#    identifier will be appended to signify the amount of commits since the
+#    release.
 # 3. Product git tags are only made up of a major/minor/patch version.
 #    Prerelease and build tags are assigned by the build system and this
 #    script, Git tags have no influence on them.
@@ -74,6 +75,13 @@ class Version:
 
     product: str
     version: str
+    prerelease: [str]
+
+    def __str__(self) -> str:
+        ver = self.version
+        if self.prerelease:
+            ver += "-" + ".".join(self.prerelease)
+        return ver
 
 
 def parse_tag(tag: str, product: str) -> Optional[Version]:
@@ -84,14 +92,14 @@ def parse_tag(tag: str, product: str) -> Optional[Version]:
     # The first release of Metropolis was v0.1, which we extend to v0.1.0.
     if product == "metropolis" and version == "v0.1":
         version = "v0.1.0"
-    # Only care about proper semver tags. Or at least proper enough (this
-    # will still accept v01.01.01 which it probably shouldn't).
+    # Only care about the limited major/minor/patch subset of semver from git
+    # tags. All prerelease identifies will be appended by this code.
     if not re.match(r"^v[0-9]+\.[0-9]+\.[0-9]+$", version):
         return None
-    return Version(product, version)
+    return Version(product, version, [])
 
 
-for product in ["metropolis"]:
+for product in ["metropolis", "cloud"]:
     versions = []
     # Get exact versions from tags.
     for tag in git_tags:
@@ -99,9 +107,17 @@ for product in ["metropolis"]:
         if version is None:
             continue
         versions.append(version)
-    if len(versions) == 0:
+    version = None
+    if len(versions) > 0:
+        # Find the highest version and use that. Lexicographic sort is good enough
+        # for the limited subset of semver we support.
+        versions.sort(reverse=True)
+        version = versions[0]
+
+    if version is None:
         # No exact version found. Use latest tag for the given product and
-        # append a '-devXXX' tag based on number of commits since that tag.
+        # append a 'devXXX' identifier based on number of commits since that
+        # tag.
         for tag in (
             subprocess.check_output(
                 ["git", "tag", "--sort=-refname", "--merged", "HEAD"]
@@ -114,23 +130,31 @@ for product in ["metropolis"]:
             if version is None:
                 continue
             # Found the latest tag for this product. Augment it with the
-            # -devXXX suffix and add it to our versions.
+            # devXXX identifier and add it to our versions.
             count = (
                 subprocess.check_output(["git", "rev-list", tag + "..HEAD", "--count"])
                 .decode()
                 .strip()
             )
-            version.version += f"-dev{count}"
-            versions.append(version)
+            version.prerelease.append(f"dev{count}")
             break
-    if len(versions) == 0:
+
+    if version is None:
         # This product never had a release! Use v0.0.0 as a fallback.
-        versions.append(Version(product, "v0.0.0"))
-    # Find the highest version and use that. Lexicographic sort is good enough
-    # for the limited subset of semver we support.
-    versions.sort(reverse=True)
-    version = versions[0]
-    variables[f"STABLE_MONOGON_{product}_gitVersion"] = version.version
+        version = Version(product, "v0.0.0", [])
+        # ... and count the number of all commits ever to use as the devXXX
+        # prerelease identifier.
+        count = (
+            subprocess.check_output(["git", "rev-list", "HEAD", "--count"])
+            .decode()
+            .strip()
+        )
+        version.prerelease.append(f"dev{count}")
+
+    version.prerelease.append(f"g{git_commit[:8]}")
+    if git_tree_state == "dirty":
+        version.prerelease.append("dirty")
+    variables[f"STABLE_MONOGON_{product}_version"] = str(version)
 
 
 # Special treatment for Kubernetes, which uses these stamp values in its build
@@ -209,7 +233,7 @@ variables["STABLE_KUBERNETES_gitVersion"] = kubernetes_version + "+mngn"
 variables["STABLE_METROPOLIS_gitCommit"] = variables["STABLE_MONOGON_gitCommit"]
 variables["STABLE_METROPOLIS_gitTreeState"] = variables["STABLE_MONOGON_gitTreeState"]
 # Skip the 'v.'.
-variables["STABLE_METROPOLIS_version"] = variables["STABLE_MONOGON_metropolis_gitVersion"][1:]
+variables["STABLE_METROPOLIS_version"] = variables["STABLE_MONOGON_metropolis_version"][1:].split('-')[0]
 
 # Emit variables to stdout for consumption by Bazel and targets.
 for key in sorted(variables.keys()):
