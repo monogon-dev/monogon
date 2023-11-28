@@ -7,8 +7,85 @@ Subject: [PATCH] Adopt to renamed function in K8s 1.24
  pkg/proxy/service.go | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
+diff --git a/cmd/nfproxy.go b/cmd/nfproxy.go
+index 66972ab..83d8b01 100644
+--- a/cmd/nfproxy.go
++++ b/cmd/nfproxy.go
+@@ -169,7 +169,7 @@ func main() {
+ 	// instantiate EndpointSlice controller, otherwise Endpoints controller will be used.
+ 	var ep epController
+ 	if endpointSlice {
+-		ep = controller.NewEndpointSliceController(nfproxy, client, kubeInformerFactory.Discovery().V1beta1().EndpointSlices())
++		ep = controller.NewEndpointSliceController(nfproxy, client, kubeInformerFactory.Discovery().V1().EndpointSlices())
+ 	} else {
+ 		ep = controller.NewEndpointsController(nfproxy, client, kubeInformerFactory.Core().V1().Endpoints())
+ 	}
+diff --git a/pkg/controller/controller_endpointslice.go b/pkg/controller/controller_endpointslice.go
+index ef97ef5..d060a4d 100644
+--- a/pkg/controller/controller_endpointslice.go
++++ b/pkg/controller/controller_endpointslice.go
+@@ -20,9 +20,9 @@ import (
+ 	"fmt"
+ 
+ 	v1 "k8s.io/api/core/v1"
+-	discovery "k8s.io/api/discovery/v1beta1"
++	discovery "k8s.io/api/discovery/v1"
+ 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+-	"k8s.io/client-go/informers/discovery/v1beta1"
++	discoveryv1 "k8s.io/client-go/informers/discovery/v1"
+ 	"k8s.io/client-go/kubernetes"
+ 	"k8s.io/client-go/kubernetes/scheme"
+ 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+@@ -119,7 +119,7 @@ func (c *endpointSliceController) Start(stopCh <-chan struct{}) error {
+ func NewEndpointSliceController(
+ 	proxy proxy.Proxy,
+ 	kubeClientset kubernetes.Interface,
+-	epSliceInformer v1beta1.EndpointSliceInformer) EndpointSliceController {
++	epSliceInformer discoveryv1.EndpointSliceInformer) EndpointSliceController {
+ 
+ 	klog.V(4).Info("Creating event broadcaster for EndpointSlice controller")
+ 	eventBroadcaster := record.NewBroadcaster()
+diff --git a/pkg/proxy/cache.go b/pkg/proxy/cache.go
+index 92d06ca..7ef0e6f 100644
+--- a/pkg/proxy/cache.go
++++ b/pkg/proxy/cache.go
+@@ -21,7 +21,7 @@ import (
+ 	"sync"
+ 
+ 	v1 "k8s.io/api/core/v1"
+-	discovery "k8s.io/api/discovery/v1beta1"
++	discovery "k8s.io/api/discovery/v1"
+ 	"k8s.io/apimachinery/pkg/types"
+ 	"k8s.io/klog"
+ )
+diff --git a/pkg/proxy/proxy.go b/pkg/proxy/proxy.go
+index 7839820..5876784 100644
+--- a/pkg/proxy/proxy.go
++++ b/pkg/proxy/proxy.go
+@@ -22,7 +22,7 @@ import (
+ 	utilnftables "github.com/google/nftables"
+ 	"github.com/sbezverk/nfproxy/pkg/nftables"
+ 	v1 "k8s.io/api/core/v1"
+-	discovery "k8s.io/api/discovery/v1beta1"
++	discovery "k8s.io/api/discovery/v1"
+ 	"k8s.io/apimachinery/pkg/types"
+ 	"k8s.io/client-go/tools/record"
+ 	"k8s.io/klog"
+diff --git a/pkg/proxy/proxy_endpointslice.go b/pkg/proxy/proxy_endpointslice.go
+index 5310ed3..5c97096 100644
+--- a/pkg/proxy/proxy_endpointslice.go
++++ b/pkg/proxy/proxy_endpointslice.go
+@@ -21,7 +21,7 @@ import (
+ 	"time"
+ 
+ 	v1 "k8s.io/api/core/v1"
+-	discovery "k8s.io/api/discovery/v1beta1"
++	discovery "k8s.io/api/discovery/v1"
+ 	"k8s.io/klog"
+ )
+ 
 diff --git a/pkg/proxy/service.go b/pkg/proxy/service.go
-index 9cc10b7..bcf926c 100644
+index 9cc10b7..6e91fae 100644
 --- a/pkg/proxy/service.go
 +++ b/pkg/proxy/service.go
 @@ -152,7 +152,7 @@ func newServiceInfo(port *v1.ServicePort, service *v1.Service, baseInfo *BaseSer
@@ -20,6 +97,19 @@ index 9cc10b7..bcf926c 100644
  		onlyNodeLocalEndpoints = true
  	}
  	var stickyMaxAgeSeconds int
+diff --git a/pkg/proxy/tools.go b/pkg/proxy/tools.go
+index 06c4ae3..3f7f0b9 100644
+--- a/pkg/proxy/tools.go
++++ b/pkg/proxy/tools.go
+@@ -26,7 +26,7 @@ import (
+ 
+ 	utilnftables "github.com/google/nftables"
+ 	v1 "k8s.io/api/core/v1"
+-	discovery "k8s.io/api/discovery/v1beta1"
++	discovery "k8s.io/api/discovery/v1"
+ 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ 	"k8s.io/apimachinery/pkg/types"
+ 	"k8s.io/apimachinery/pkg/util/intstr"
 -- 
 2.25.1
 

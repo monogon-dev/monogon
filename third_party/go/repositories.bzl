@@ -4362,7 +4362,7 @@ def go_repositories():
         name = "com_github_sbezverk_nfproxy",
         importpath = "github.com/sbezverk/nfproxy",
         patch_args = ["-p1"],
-        patches = [
+        pre_patches = [
             "//third_party/go/patches:nfproxy-adopt-to-k8s-1.24.patch",
         ],
         sum = "h1:nlKDckTP5mXfdpUST7l4cU6fGzMlkv/CVg+EVOsClS8=",

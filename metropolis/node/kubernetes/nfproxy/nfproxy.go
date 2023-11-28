@@ -91,7 +91,7 @@ func (s *Service) Run(ctx context.Context) error {
 			options.LabelSelector = labelSelector.String()
 		}))
 
-	endpointSlicesInformer := kubeInformerFactory.Discovery().V1beta1().EndpointSlices()
+	endpointSlicesInformer := kubeInformerFactory.Discovery().V1().EndpointSlices()
 	endpointSlicesInformer.Informer().SetWatchErrorHandler(func(_ *cache.Reflector, err error) {
 		supervisor.Logger(ctx).Errorf("endpoint slices watch error: %v", err)
 	})
