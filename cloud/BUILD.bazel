@@ -4,11 +4,11 @@ load("@io_bazel_rules_docker//contrib:push-all.bzl", "container_push")
 container_bundle(
     name = "cloud_containers",
     images = {
-        "gcr.io/monogon-infra/cloud/apigw:{IMAGE_TAG}": "//cloud/apigw:apigw_container",
-        "gcr.io/monogon-infra/cloud/shepherd/equinix:{IMAGE_TAG}": "//cloud/shepherd/provider/equinix:equinix_container",
-        "gcr.io/monogon-infra/cloud/bmsrv:{IMAGE_TAG}": "//cloud/bmaas/server/cmd:cmd_container",
-        "gcr.io/monogon-infra/cloud/scruffy:{IMAGE_TAG}": "//cloud/bmaas/scruffy/cmd:cmd_container",
-        "gcr.io/monogon-infra/cloud/shepherd/mini:{IMAGE_TAG}": "//cloud/shepherd/mini:mini_container",
+        "gcr.io/monogon-infra/cloud/apigw:{STABLE_MONOGON_cloud_version}": "//cloud/apigw:apigw_container",
+        "gcr.io/monogon-infra/cloud/shepherd/equinix:{STABLE_MONOGON_cloud_version}": "//cloud/shepherd/provider/equinix:equinix_container",
+        "gcr.io/monogon-infra/cloud/bmsrv:{STABLE_MONOGON_cloud_version}": "//cloud/bmaas/server/cmd:cmd_container",
+        "gcr.io/monogon-infra/cloud/scruffy:{STABLE_MONOGON_cloud_version}": "//cloud/bmaas/scruffy/cmd:cmd_container",
+        "gcr.io/monogon-infra/cloud/shepherd/mini:{STABLE_MONOGON_cloud_version}": "//cloud/shepherd/mini:mini_container",
     },
 )
 

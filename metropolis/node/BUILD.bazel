@@ -198,5 +198,5 @@ os_release(
     name = "os-release-info",
     os_id = "metropolis-node",
     os_name = "Metropolis Node",
-    stamp_var = "STABLE_METROPOLIS_version",
+    stamp_var = "STABLE_MONOGON_metropolis_version",
 )

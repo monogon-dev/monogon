@@ -56,14 +56,8 @@ sde = os.environ.get("SOURCE_DATE_EPOCH")
 if sde is not None:
     build_timestamp = int(sde)
 
-# Image tag to use in rules_docker. Since USER might not be set on CI, we have
-# to craft this ourselves.
-user = os.environ.get("USER", "unknown")
-image_tag = f"{user}-{build_timestamp}"
-
 variables["STABLE_MONOGON_gitCommit"] = git_commit
 variables["STABLE_MONOGON_gitTreeState"] = git_tree_state
-variables["IMAGE_TAG"] = image_tag
 
 # Per product. Each product has it's own semver-style version number, which is
 # deduced from git tags.
@@ -227,13 +221,6 @@ variables["KUBERNETES_buildDate"] = datetime.fromtimestamp(
 variables["STABLE_KUBERNETES_gitMajor"] = kubernetes_version_parsed[1]
 variables["STABLE_KUBERNETES_gitMinor"] = kubernetes_version_parsed[2]
 variables["STABLE_KUBERNETES_gitVersion"] = kubernetes_version + "+mngn"
-
-# Backwards compat with existing stamping data as expected by the monorepo codebase.
-# TODO(q3k): remove this once we migrate away into the new versioning data format in metropolis.
-variables["STABLE_METROPOLIS_gitCommit"] = variables["STABLE_MONOGON_gitCommit"]
-variables["STABLE_METROPOLIS_gitTreeState"] = variables["STABLE_MONOGON_gitTreeState"]
-# Skip the 'v.'.
-variables["STABLE_METROPOLIS_version"] = variables["STABLE_MONOGON_metropolis_version"][1:].split('-')[0]
 
 # Emit variables to stdout for consumption by Bazel and targets.
 for key in sorted(variables.keys()):

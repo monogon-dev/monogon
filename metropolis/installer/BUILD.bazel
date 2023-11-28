@@ -44,7 +44,7 @@ os_release(
     name = "installer-release-info",
     os_id = "metropolis-installer",
     os_name = "Metropolis Installer",
-    stamp_var = "STABLE_METROPOLIS_version",
+    stamp_var = "STABLE_MONOGON_metropolis_version",
 )
 
 efi_unified_kernel_image(
