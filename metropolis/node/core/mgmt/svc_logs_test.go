@@ -123,6 +123,7 @@ func TestLogService_Logs_Backlog(t *testing.T) {
 	s.LogTree.MustLeveledFor("main.roleserver.controlplane").Infof("Starting control plane...")
 	s.LogTree.MustLeveledFor("main.roleserver.kubernetes").Infof("Kubernetes version: 1.21.37")
 	s.LogTree.MustLeveledFor("main.roleserver.controlplane").Infof("Starting etcd...")
+	s.LogTree.MustLeveledFor("main.weirdo").Infof("Here comes some invalid utf-8: a\xc5z")
 
 	mkReq := func(dn string, backlog int64) *api.GetLogsRequest {
 		var backlogMode api.GetLogsRequest_BacklogMode
@@ -175,13 +176,19 @@ func TestLogService_Logs_Backlog(t *testing.T) {
 			req:  mkReq("main.roleserver.kubernetes", 0),
 			want: nil,
 		},
-
 		{
 			// Test recursion with backlog.
 			req: mkRecursive(mkReq("main.roleserver", 2)),
 			want: []*cpb.LogEntry{
 				mkLeveledEntry("main.roleserver.kubernetes", "i", "Kubernetes version: 1.21.37"),
 				mkLeveledEntry("main.roleserver.controlplane", "i", "Starting etcd..."),
+			},
+		},
+		{
+			// Test invalid utf-8 in log data
+			req: mkReq("main.weirdo", 1),
+			want: []*cpb.LogEntry{
+				mkLeveledEntry("main.weirdo", "i", "Here comes some invalid utf-8: a<INVALID>z"),
 			},
 		},
 	} {

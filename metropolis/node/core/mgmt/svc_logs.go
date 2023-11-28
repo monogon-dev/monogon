@@ -1,6 +1,8 @@
 package mgmt
 
 import (
+	"strings"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -17,6 +19,42 @@ const (
 // the Service to allow the debug service to reuse this implementation.
 type LogService struct {
 	LogTree *logtree.LogTree
+}
+
+// sanitizedEntries returns a deep copy of the given log entries, but replaces
+// all invalid UTF-8 characters with "<INVALID>".
+func sanitizedEntries(entries []*cpb.LogEntry) []*cpb.LogEntry {
+	res := make([]*cpb.LogEntry, len(entries))
+	for i, entry := range entries {
+		res[i] = &cpb.LogEntry{
+			Dn:   entry.Dn,
+			Kind: nil,
+		}
+		switch k := entry.Kind.(type) {
+		case *cpb.LogEntry_Leveled_:
+			leveled := &cpb.LogEntry_Leveled_{
+				Leveled: &cpb.LogEntry_Leveled{
+					Lines:     make([]string, len(k.Leveled.Lines)),
+					Timestamp: k.Leveled.Timestamp,
+					Severity:  k.Leveled.Severity,
+					Location:  k.Leveled.Location,
+				},
+			}
+			for j, line := range k.Leveled.Lines {
+				leveled.Leveled.Lines[j] = strings.ToValidUTF8(line, "<INVALID>")
+			}
+			res[i].Kind = leveled
+
+		case *cpb.LogEntry_Raw_:
+			res[i].Kind = &cpb.LogEntry_Raw_{
+				Raw: &cpb.LogEntry_Raw{
+					Data:           strings.ToValidUTF8(k.Raw.Data, "<INVALID>"),
+					OriginalLength: k.Raw.OriginalLength,
+				},
+			}
+		}
+	}
+	return res
 }
 
 func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsServer) error {
@@ -113,7 +151,7 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 
 		if len(chunk) >= maxChunkSize {
 			err := srv.Send(&api.GetLogsResponse{
-				BacklogEntries: chunk,
+				BacklogEntries: sanitizedEntries(chunk),
 			})
 			if err != nil {
 				return err
@@ -125,7 +163,7 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 	// Send last chunk of backlog, if present..
 	if len(chunk) > 0 {
 		err := srv.Send(&api.GetLogsResponse{
-			BacklogEntries: chunk,
+			BacklogEntries: sanitizedEntries(chunk),
 		})
 		if err != nil {
 			return err
