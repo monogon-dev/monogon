@@ -68,8 +68,27 @@ func (f *FSPlacement) Write(d []byte, mode os.FileMode) error {
 	// TODO(q3k): ensure that these do not collide with an existing sibling file, or generate this suffix randomly.
 	tmp := f.FullPath() + ".__metropolis_tmp"
 	defer os.Remove(tmp)
-	if err := os.WriteFile(tmp, d, mode); err != nil {
+
+	tf, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE, mode)
+	if err != nil {
+		return fmt.Errorf("temporary file open failed: %w", err)
+	}
+	defer tf.Close()
+	if _, err := tf.Write(d); err != nil {
 		return fmt.Errorf("temporary file write failed: %w", err)
+	}
+
+	// Fsync the source file to guarantee that write is durable. Per Theodore Ts'o:
+	//
+	// > data=ordered only guarantees the avoidance of stale data (e.g., the previous
+	// > contents of a data block showing up after a crash, where the previous data
+	// > could be someone's love letters, medical records, etc.). Without the fsync(2)
+	// > a zero-length file is a valid and possible outcome after the rename.
+	if err := tf.Sync(); err != nil {
+		return fmt.Errorf("temporary file sync failed: %w", err)
+	}
+	if err := tf.Close(); err != nil {
+		return fmt.Errorf("temporary file close failed: %w", err)
 	}
 
 	if err := unix.Rename(tmp, f.FullPath()); err != nil {
