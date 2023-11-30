@@ -108,6 +108,16 @@ func SetBootEntry(idx int, be *LoadOption) error {
 	return Write(ScopeGlobal, fmt.Sprintf("Boot%04X", idx), AttrNonVolatile|AttrRuntimeAccess, bem)
 }
 
+// DeleteBootEntry deletes the boot entry at the given index.
+func DeleteBootEntry(idx int) error {
+	err := Delete(ScopeGlobal, fmt.Sprintf("Boot%04X", idx))
+	if errors.Is(err, fs.ErrNotExist) {
+		// Try non-spec-conforming lowercase entry
+		err = Delete(ScopeGlobal, fmt.Sprintf("Boot%04x", idx))
+	}
+	return err
+}
+
 // SetBootOrder replaces contents of the boot order variable with the order
 // specified in ord.
 func SetBootOrder(ord BootOrder) error {

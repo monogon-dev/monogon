@@ -156,3 +156,9 @@ func List(scope uuid.UUID) ([]string, error) {
 	}
 	return outVarNames, nil
 }
+
+// Delete deletes the given variable name in the given scope. Use with care,
+// some firmware fails to boot if variables it uses are deleted.
+func Delete(scope uuid.UUID, varName string) error {
+	return os.Remove(varPath(scope, varName))
+}
