@@ -4,7 +4,9 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"debug/pe"
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
@@ -119,32 +121,6 @@ func (s *Service) CurrentlyRunningSlot() Slot {
 
 var bootVarRegexp = regexp.MustCompile(`^Boot([0-9A-Fa-f]{4})$`)
 
-func (s *Service) getAllBootEntries() (map[int]*efivarfs.LoadOption, error) {
-	res := make(map[int]*efivarfs.LoadOption)
-	varNames, err := efivarfs.List(efivarfs.ScopeGlobal)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list EFI variables: %w", err)
-	}
-	for _, varName := range varNames {
-		m := bootVarRegexp.FindStringSubmatch(varName)
-		if m == nil {
-			continue
-		}
-		idx, err := strconv.ParseUint(m[1], 16, 16)
-		if err != nil {
-			// This cannot be hit as all regexp matches are parseable.
-			panic(err)
-		}
-		e, err := efivarfs.GetBootEntry(int(idx))
-		if err != nil {
-			s.Logger.Warningf("Unable to get boot entry %d, skipping: %v", idx, err)
-			continue
-		}
-		res[int(idx)] = e
-	}
-	return res, nil
-}
-
 // MarkBootSuccessful must be called after each boot if some implementation-
 // defined criteria for a successful boot are met. If an update has been
 // installed and booted and this function is called, the updated version is
@@ -153,6 +129,12 @@ func (s *Service) getAllBootEntries() (map[int]*efivarfs.LoadOption, error) {
 func (s *Service) MarkBootSuccessful() error {
 	if s.ESPPath == "" {
 		return errors.New("no ESP information provided to update service, cannot continue")
+	}
+	if err := s.fixupEFI(); err != nil {
+		s.Logger.Errorf("Error when checking boot entry configuration: %v", err)
+	}
+	if err := s.fixupPreloader(); err != nil {
+		s.Logger.Errorf("Error when fixing A/B preloader: %v", err)
 	}
 	activeSlot := s.CurrentlyRunningSlot()
 	abState, err := s.getABState()
@@ -375,6 +357,148 @@ func (s *Service) stageKexec(bootFile io.ReaderAt, targetSlot Slot) error {
 	}
 	if err := kexec.FileLoad(kernelFile, initramfsFile, cmdline); err != nil {
 		return fmt.Errorf("while staging new kexec kernel: %w", err)
+	}
+	return nil
+}
+
+//go:embed metropolis/node/core/abloader/abloader_bin.efi
+var abloader []byte
+
+func (s *Service) fixupPreloader() error {
+	abLoaderFile, err := os.Open(filepath.Join(s.ESPPath, osimage.EFIPayloadPath))
+	if err != nil {
+		s.Logger.Warningf("A/B preloader not available, attempting to restore: %v", err)
+	} else {
+		expectedSum := sha256.Sum256(abloader)
+		h := sha256.New()
+		_, err := io.Copy(h, abLoaderFile)
+		abLoaderFile.Close()
+		if err == nil {
+			if bytes.Equal(h.Sum(nil), expectedSum[:]) {
+				// A/B Preloader is present and has correct hash
+				return nil
+			} else {
+				s.Logger.Infof("Replacing A/B preloader with current version: %x %x", h.Sum(nil), expectedSum[:])
+			}
+		} else {
+			s.Logger.Warningf("Error while reading A/B preloader, restoring: %v", err)
+		}
+	}
+	preloader, err := os.Create(filepath.Join(s.ESPPath, "preloader.swp"))
+	if err != nil {
+		return fmt.Errorf("while creating preloader swap file: %w", err)
+	}
+	if _, err := preloader.Write(abloader); err != nil {
+		return fmt.Errorf("while writing preloader swap file: %w", err)
+	}
+	if err := preloader.Sync(); err != nil {
+		return fmt.Errorf("while sync'ing preloader swap file: %w", err)
+	}
+	preloader.Close()
+	if err := os.Rename(filepath.Join(s.ESPPath, "preloader.swp"), filepath.Join(s.ESPPath, osimage.EFIPayloadPath)); err != nil {
+		return fmt.Errorf("while swapping preloader: %w", err)
+	}
+	s.Logger.Info("Successfully wrote current preloader")
+	return nil
+}
+
+// fixupEFI checks for the existence and correctness of the EFI boot entry
+// repairs/recreates it if needed.
+func (s *Service) fixupEFI() error {
+	varNames, err := efivarfs.List(efivarfs.ScopeGlobal)
+	if err != nil {
+		return fmt.Errorf("failed to list EFI variables: %w", err)
+	}
+	var validBootEntryIdx int = -1
+	for _, varName := range varNames {
+		m := bootVarRegexp.FindStringSubmatch(varName)
+		if m == nil {
+			continue
+		}
+		idx, err := strconv.ParseUint(m[1], 16, 16)
+		if err != nil {
+			// This cannot be hit as all regexp matches are parseable.
+			panic(err)
+		}
+		e, err := efivarfs.GetBootEntry(int(idx))
+		if err != nil {
+			s.Logger.Warningf("Unable to get boot entry %d, skipping: %v", idx, err)
+			continue
+		}
+		if len(e.FilePath) != 2 {
+			// Not our entry, ours always have two parts
+			continue
+		}
+		switch p := e.FilePath[0].(type) {
+		case *efivarfs.HardDrivePath:
+			gptMatch, ok := p.PartitionMatch.(*efivarfs.PartitionGPT)
+			if ok && gptMatch.PartitionUUID != s.ESPPart.ID {
+				// Not related to our ESP
+				continue
+			}
+		default:
+			continue
+		}
+		switch p := e.FilePath[1].(type) {
+		case efivarfs.FilePath:
+			if string(p) == osimage.EFIPayloadPath {
+				if validBootEntryIdx == -1 {
+					validBootEntryIdx = int(idx)
+				} else {
+					// Another valid boot entry already exists, delete this one
+					err := efivarfs.DeleteBootEntry(int(idx))
+					if err == nil {
+						s.Logger.Infof("Deleted duplicate boot entry %q", e.Description)
+					} else {
+						s.Logger.Warningf("Error while deleting duplicate boot entry %q: %v", e.Description, err)
+					}
+				}
+			} else if strings.Contains(e.Description, "Metropolis") {
+				err := efivarfs.DeleteBootEntry(int(idx))
+				if err == nil {
+					s.Logger.Infof("Deleted orphaned boot entry %q", e.Description)
+				} else {
+					s.Logger.Warningf("Error while deleting orphaned boot entry %q: %v", e.Description, err)
+				}
+			}
+		default:
+			continue
+		}
+	}
+	if validBootEntryIdx == -1 {
+		validBootEntryIdx, err = efivarfs.AddBootEntry(&efivarfs.LoadOption{
+			Description: "Metropolis",
+			FilePath: efivarfs.DevicePath{
+				&efivarfs.HardDrivePath{
+					PartitionNumber:     1,
+					PartitionStartBlock: s.ESPPart.FirstBlock,
+					PartitionSizeBlocks: s.ESPPart.SizeBlocks(),
+					PartitionMatch: efivarfs.PartitionGPT{
+						PartitionUUID: s.ESPPart.ID,
+					},
+				},
+				efivarfs.FilePath(osimage.EFIPayloadPath),
+			},
+		})
+		if err == nil {
+			s.Logger.Infof("Restored missing EFI boot entry for Metropolis")
+		} else {
+			return fmt.Errorf("while restoring missing EFI boot entry for Metropolis: %v", err)
+		}
+	}
+	bootOrder, err := efivarfs.GetBootOrder()
+	if err != nil {
+		return fmt.Errorf("failed to get EFI boot order: %v", err)
+	}
+	for _, bentry := range bootOrder {
+		if bentry == uint16(validBootEntryIdx) {
+			// Our boot entry is in the boot order, everything's ok
+			return nil
+		}
+	}
+	newBootOrder := append(efivarfs.BootOrder{uint16(validBootEntryIdx)}, bootOrder...)
+	if err := efivarfs.SetBootOrder(newBootOrder); err != nil {
+		return fmt.Errorf("while setting EFI boot order: %w", err)
 	}
 	return nil
 }
