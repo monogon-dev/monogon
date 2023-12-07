@@ -127,6 +127,10 @@ type reservation struct {
 	packngo.HardwareReservation
 }
 
+func (e reservation) Failed() bool {
+	return false
+}
+
 func (e reservation) ID() shepherd.ProviderID {
 	return shepherd.InvalidProviderID
 }
@@ -141,6 +145,10 @@ func (e reservation) State() shepherd.State {
 
 type machine struct {
 	packngo.Device
+}
+
+func (e *machine) Failed() bool {
+	return e.Device.State == "failed"
 }
 
 func (e *machine) ID() shepherd.ProviderID {

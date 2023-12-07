@@ -196,6 +196,19 @@ type providedMachine struct {
 	model.MachineProvided
 }
 
+func (p providedMachine) Failed() bool {
+	if !p.MachineProvided.ProviderStatus.Valid {
+		// If we don't have any ProviderStatus to check for, return false
+		// to trigger the validation inside the reconciler loop.
+		return false
+	}
+	switch p.MachineProvided.ProviderStatus.ProviderStatus {
+	case model.ProviderStatusProvisioningFailedPermanent:
+		return true
+	}
+	return false
+}
+
 func (p providedMachine) ID() shepherd.ProviderID {
 	return shepherd.ProviderID(p.ProviderID)
 }
@@ -247,7 +260,7 @@ func (p *Provisioner) listInBMDB(ctx context.Context, sess *bmdb.Session) ([]she
 
 // resolvePossiblyUsed checks if the state is set to possibly used and finds out
 // which state is the correct one.
-func (p *Provisioner) resolvePossiblyUsed(machine shepherd.Machine, providedMachines map[shepherd.ProviderID]bool) shepherd.State {
+func (p *Provisioner) resolvePossiblyUsed(machine shepherd.Machine, providedMachines map[shepherd.ProviderID]shepherd.Machine) shepherd.State {
 	state, id := machine.State(), machine.ID()
 
 	// Bail out if this isn't a possibly used state.
@@ -276,14 +289,14 @@ func (p *Provisioner) resolvePossiblyUsed(machine shepherd.Machine, providedMach
 func (p *Provisioner) reconcile(ctx context.Context, sess *bmdb.Session, inProvider, bmdbMachines []shepherd.Machine) error {
 	klog.Infof("Reconciling...")
 
-	bmdb := make(map[shepherd.ProviderID]bool)
+	bmdb := make(map[shepherd.ProviderID]shepherd.Machine)
 	for _, machine := range bmdbMachines {
 		// Dont check the state here as its hardcoded to be known used.
-		bmdb[machine.ID()] = true
+		bmdb[machine.ID()] = machine
 	}
 
 	var availableMachines []shepherd.Machine
-	provider := make(map[shepherd.ProviderID]bool)
+	provider := make(map[shepherd.ProviderID]shepherd.Machine)
 	for _, machine := range inProvider {
 		state := p.resolvePossiblyUsed(machine, bmdb)
 
@@ -292,7 +305,7 @@ func (p *Provisioner) reconcile(ctx context.Context, sess *bmdb.Session, inProvi
 			availableMachines = append(availableMachines, machine)
 
 		case shepherd.StateKnownUsed:
-			provider[machine.ID()] = true
+			provider[machine.ID()] = machine
 
 		default:
 			return fmt.Errorf("machine has invalid state (ID: %s, Addr: %s): %s", machine.ID(), machine.Addr(), state)
@@ -301,25 +314,41 @@ func (p *Provisioner) reconcile(ctx context.Context, sess *bmdb.Session, inProvi
 
 	managed := make(map[shepherd.ProviderID]bool)
 
+	// We discovered that a machine mostly fails either when provisioning or
+	// deprovisioning. A already deployed and running machine can only switch
+	// into failed state if any api interaction happend, e.g. rebooting the
+	// machine into recovery mode. If such a machine is returned to the
+	// reconciling loop, it will trigger the badbadnotgood safety switch and
+	// return with an error. To reduce the manual intervention required we
+	// filter out these machines on both sides (bmdb and provider).
+	isBadBadNotGood := func(known map[shepherd.ProviderID]shepherd.Machine, machine shepherd.Machine) bool {
+		// If the machine is missing and not failed, its a bad case.
+		if known[machine.ID()] == nil && !machine.Failed() {
+			return true
+		}
+		return false
+	}
+
 	// Some desynchronization between the BMDB and Provider point of view might be so
 	// bad we shouldn't attempt to do any work, at least not any time soon.
 	badbadnotgood := false
 
 	// Find any machines supposedly managed by us in the provider, but not in the
 	// BMDB.
-	for machine, _ := range provider {
-		if bmdb[machine] {
-			managed[machine] = true
+	for id, machine := range provider {
+		if isBadBadNotGood(bmdb, machine) {
+			klog.Errorf("Provider machine has no corresponding machine in BMDB. (PID: %s)", id)
+			badbadnotgood = true
 			continue
 		}
-		klog.Errorf("Provider machine %s has no corresponding machine in BMDB.", machine)
-		badbadnotgood = true
+
+		managed[id] = true
 	}
 
 	// Find any machines in the BMDB but not in the provider.
-	for machine, _ := range bmdb {
-		if !provider[machine] {
-			klog.Errorf("Provider device ID %s referred to in BMDB (from TODO) but missing in provider.", machine)
+	for id, machine := range bmdb {
+		if isBadBadNotGood(provider, machine) {
+			klog.Errorf("Provider machine referred to in BMDB but missing in provider. (PID: %s)", id)
 			badbadnotgood = true
 		}
 	}

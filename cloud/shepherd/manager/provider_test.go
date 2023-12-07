@@ -21,6 +21,10 @@ type dummyMachine struct {
 	agentStarted bool
 }
 
+func (dm *dummyMachine) Failed() bool {
+	return false
+}
+
 func (dm *dummyMachine) ID() shepherd.ProviderID {
 	return dm.id
 }

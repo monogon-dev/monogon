@@ -73,6 +73,10 @@ type Machine interface {
 	Addr() netip.Addr
 	// State returns the state in which the machine is
 	State() State
+	// Failed should return true if the machine is in a failed state and
+	// should be ignored if there are inconsistencies between the provider
+	// and BMDB.
+	Failed() bool
 }
 
 type CreateMachineRequest struct {

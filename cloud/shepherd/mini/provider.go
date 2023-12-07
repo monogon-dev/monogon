@@ -26,6 +26,10 @@ type machine struct {
 	Location   string              `json:"Location"`
 }
 
+func (d machine) Failed() bool {
+	return false
+}
+
 func (d machine) ID() shepherd.ProviderID {
 	return d.ProviderID
 }

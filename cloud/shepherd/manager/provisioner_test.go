@@ -88,8 +88,8 @@ func TestProvisionerSmokes(t *testing.T) {
 func TestProvisioner_resolvePossiblyUsed(t *testing.T) {
 	const providedMachineID = "provided-machine"
 
-	providedMachines := map[shepherd.ProviderID]bool{
-		providedMachineID: true,
+	providedMachines := map[shepherd.ProviderID]shepherd.Machine{
+		providedMachineID: nil,
 	}
 
 	tests := []struct {
