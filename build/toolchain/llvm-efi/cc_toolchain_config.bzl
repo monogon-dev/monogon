@@ -126,6 +126,7 @@ def _efi_k8_cc_toolchain_impl(ctx):
                             "-Wl,-entry:efi_main",
                             "-Wl,-subsystem:efi_application",
                             "-Wl,/BASE:0x0",
+                            "-Wl,/Brepro",
                             "-nostdlib",
                             "build/toolchain/llvm-efi/fltused.o",
                         ],

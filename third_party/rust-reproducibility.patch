@@ -1,0 +1,134 @@
+Fixes a few issues with rules_rust/rustc reproducibility when the same code is
+being built in slightly different BuildConfigurations.
+
+Even if BuildConfigurations differ only by insignificant (to rules_rust)
+configuration flags, the resulting output directory will be different (keyed by
+an 'ST-hash' which is generated from the configuration).
+
+Unfortunately, rust/rules_rust really likes to embed bazel-out/<dir>/bin paths
+into the binaries by default, thus embedding the ST-hash, thus leading to
+different bit-for-bit binaries when built across two slightly different
+configs.
+
+We fix this by doing two changes:
+
+ 1. We override the codegen metadata hash suffix to not depend on the ST-hash
+    directory name. Otherwise, built rlibs will have a numeric .XXX suffix that
+    changes depending on the ST-hash. We have to do this separately for prost
+    codegen, too.
+ 2. We add a remap path option to rustc that replaces bazel-out/<dir>/bin/ with
+    bin/.
+
+diff --git a/proto/prost/private/prost.bzl b/proto/prost/private/prost.bzl
+index 6cd3d522..56d897b5 100644
+--- a/proto/prost/private/prost.bzl
++++ b/proto/prost/private/prost.bzl
+@@ -128,7 +128,9 @@ def _compile_rust(ctx, attr, crate_name, src, deps, edition):
+       A DepVariantInfo provider.
+     """
+     toolchain = ctx.toolchains["@rules_rust//rust:toolchain_type"]
+-    output_hash = repr(hash(src.path + ".prost"))
++    src_path = src.path.replace(ctx.bin_dir.path, 'bin')
++    print(src.path, src_path)
++    output_hash = repr(hash(src_path + ".prost"))
+ 
+     lib_name = "{prefix}{name}-{lib_hash}{extension}".format(
+         prefix = "lib",
+diff --git a/proto/protobuf/proto.bzl b/proto/protobuf/proto.bzl
+index ca2df8a2..b4bf3335 100644
+--- a/proto/protobuf/proto.bzl
++++ b/proto/protobuf/proto.bzl
+@@ -188,7 +188,7 @@ def _rust_proto_compile(protos, descriptor_sets, imports, crate_name, ctx, is_gr
+     srcs.append(lib_rs)
+ 
+     # And simulate rust_library behavior
+-    output_hash = determine_output_hash(lib_rs, ctx.label)
++    output_hash = determine_output_hash(ctx.bin_dir, lib_rs, ctx.label)
+     rust_lib = ctx.actions.declare_file("%s/lib%s-%s.rlib" % (
+         output_dir,
+         crate_name,
+diff --git a/rust/private/clippy.bzl b/rust/private/clippy.bzl
+index 071ca29c..968a4ad6 100644
+--- a/rust/private/clippy.bzl
++++ b/rust/private/clippy.bzl
+@@ -120,7 +120,7 @@ def _clippy_aspect_impl(target, ctx):
+         dep_info = dep_info,
+         linkstamp_outs = linkstamp_outs,
+         ambiguous_libs = ambiguous_libs,
+-        output_hash = determine_output_hash(crate_info.root, ctx.label),
++        output_hash = determine_output_hash(ctx.bin_dir, crate_info.root, ctx.label),
+         rust_flags = [],
+         out_dir = out_dir,
+         build_env_files = build_env_files,
+diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
+index 014d8d0d..cb783dc9 100644
+--- a/rust/private/rust.bzl
++++ b/rust/private/rust.bzl
+@@ -275,7 +275,7 @@ def _rust_library_common(ctx, crate_type):
+     if crate_type in ["cdylib", "staticlib"]:
+         output_hash = None
+     else:
+-        output_hash = determine_output_hash(crate_root, ctx.label)
++        output_hash = determine_output_hash(ctx.bin_dir, crate_root, ctx.label)
+ 
+     crate_name = compute_crate_name(ctx.workspace_name, ctx.label, toolchain, ctx.attr.crate_name)
+     rust_lib_name = _determine_lib_name(
+@@ -390,7 +390,7 @@ def _rust_test_impl(ctx):
+         # Target is building the crate in `test` config
+         crate = ctx.attr.crate[rust_common.crate_info] if rust_common.crate_info in ctx.attr.crate else ctx.attr.crate[rust_common.test_crate_info].crate
+ 
+-        output_hash = determine_output_hash(crate.root, ctx.label)
++        output_hash = determine_output_hash(ctx.bin_dir, crate.root, ctx.label)
+         output = ctx.actions.declare_file(
+             "test-%s/%s%s" % (
+                 output_hash,
+@@ -441,7 +441,7 @@ def _rust_test_impl(ctx):
+             crate_root = crate_root_src(ctx.attr.name, ctx.files.srcs, crate_root_type)
+         srcs, crate_root = _transform_sources(ctx, ctx.files.srcs, crate_root)
+ 
+-        output_hash = determine_output_hash(crate_root, ctx.label)
++        output_hash = determine_output_hash(ctx.bin_dir, crate_root, ctx.label)
+         output = ctx.actions.declare_file(
+             "test-%s/%s%s" % (
+                 output_hash,
+diff --git a/rust/private/rustc.bzl b/rust/private/rustc.bzl
+index e76c20bd..cebd5a73 100644
+--- a/rust/private/rustc.bzl
++++ b/rust/private/rustc.bzl
+@@ -952,6 +952,10 @@ def construct_arguments(
+     if remap_path_prefix != None:
+         rustc_flags.add("--remap-path-prefix=${{pwd}}={}".format(remap_path_prefix))
+ 
++    # Replace unstable bindir path (based on ST-hash which is in turn based on
++    # build configuration) with a stable bin/ path.
++    rustc_flags.add("--remap-path-prefix={}=bin".format(ctx.bin_dir.path))
++
+     if emit:
+         rustc_flags.add_joined(emit_with_paths, format_joined = "--emit=%s", join_with = ",")
+     if error_format != "json":
+diff --git a/rust/private/utils.bzl b/rust/private/utils.bzl
+index 879e2b62..08ef530f 100644
+--- a/rust/private/utils.bzl
++++ b/rust/private/utils.bzl
+@@ -181,7 +181,7 @@ def abs(value):
+         return -value
+     return value
+ 
+-def determine_output_hash(crate_root, label):
++def determine_output_hash(bin_dir, crate_root, label):
+     """Generates a hash of the crate root file's path.
+ 
+     Args:
+@@ -192,8 +192,11 @@ def determine_output_hash(crate_root, label):
+         str: A string representation of the hash.
+     """
+ 
++    # Remove any unstable BuildConfiguration derived dir fragments to unify
++    # hashes between different configs.
++    crate_root_path = crate_root.path.replace(bin_dir.path, 'bin')
+     # Take the absolute value of hash() since it could be negative.
+-    h = abs(hash(crate_root.path) + hash(repr(label)))
++    h = abs(hash(crate_root_path) + hash(repr(label)))
+     return repr(h)
+ 
+ def get_preferred_artifact(library_to_link, use_pic):
