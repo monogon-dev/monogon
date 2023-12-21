@@ -19,6 +19,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 def linux_external(name, version):
     sums = {
         "6.1.56": "9edefdde32c2298389dcd19566402332b3c2016f5ada17e5820f500b908d478c",
+        "6.1.69": "7e3d2694d18ce502068cc88a430da809abbd17d0773268524ebece442612b541",
     }
     http_archive(
         name = name,
