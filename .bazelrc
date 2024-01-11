@@ -1,14 +1,29 @@
+# Import Aspect bazelrc presets
+import %workspace%/third_party/bazelrc/aspect/bazel7.bazelrc
+import %workspace%/third_party/bazelrc/aspect/convenience.bazelrc
+import %workspace%/third_party/bazelrc/aspect/correctness.bazelrc
+import %workspace%/third_party/bazelrc/aspect/performance.bazelrc
+
+# Allow empty globs as there are a lot until we replace our rust toolchain and
+# qemu BUILD files.
+common --noincompatible_disallow_empty_glob
+
+# Don't warn about too high test timeout as these can vary a lot.
+test --notest_verbose_timeout_warnings
+
 # Set compilation mode (-c) to debug when running with --config debug.
 build:dbg --compilation_mode=dbg
 
-# Enable strict_action_env (use static PATH and do not inherit environment variables).
-# This avoids unnecessary cache invalidations.
-build --incompatible_strict_action_env=true
-
 # Run all spawns in our own hermetic sandbox sysroot.
 build --experimental_use_hermetic_linux_sandbox
+build --sandbox_fake_hostname
+build --sandbox_fake_username
 build --action_env=MONOGON_SANDBOX_DIGEST
 import %workspace%/.bazelrc.sandbox
+
+# Enable revised output directory hash suffix computation
+build --experimental_output_directory_naming_scheme=diff_against_dynamic_baseline
+build --experimental_exec_configuration_distinguisher=off
 
 # Hardwire all action envs to just use /usr/bin from the above sandbox. This is
 # necessary on NixOS Bazel builds, as they really like to inject /nix/store/*
@@ -70,9 +85,6 @@ build --cxxopt=-std=c++17
 
 # Set workspace status file and stamp
 build --stamp --workspace_status_command=./build/print-workspace-status.py
-
-# Load CI bazelrc if present.
-try-import %workspace%/ci.bazelrc
 
 # Load custom per-user settings.
 try-import %workspace%/.bazelrc.user

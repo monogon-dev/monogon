@@ -1,0 +1,5 @@
+The files in this directory are automatically copied from https://github.com/aspect-build/bazel-lib/tree/main/.aspect/bazelrc via `bazel run //third_party/bazelrc/aspect:update_aspect_bazelrc_presets`.
+
+Unless otherwise noted, the files in this directory are licensed under the Apache 2.0 License, see COPYING.
+
+Copyright (c) 2024 github.com/aspect-build/bazel-lib contributors

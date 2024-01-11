@@ -21,10 +21,10 @@ pipeline {
                         gerritCheck checks: ['jenkins:test': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
                         echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel test //..."
-                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel build  --//metropolis/cli/metroctl:buildkind=lite --platforms=@io_bazel_rules_go//go/toolchain:darwin_arm64 //metropolis/cli/metroctl"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel build  --//metropolis/cli/metroctl:buildkind=lite --platforms=@io_bazel_rules_go//go/toolchain:darwin_amd64 //metropolis/cli/metroctl"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel test --config dbg //..."
+                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci test //..."
+                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci build  --//metropolis/cli/metroctl:buildkind=lite --platforms=@io_bazel_rules_go//go/toolchain:darwin_arm64 //metropolis/cli/metroctl"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci build  --//metropolis/cli/metroctl:buildkind=lite --platforms=@io_bazel_rules_go//go/toolchain:darwin_amd64 //metropolis/cli/metroctl"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci test --config dbg //..."
                     }
                     post {
                         success {
@@ -47,9 +47,9 @@ pipeline {
                         gerritCheck checks: ['jenkins:gazelle': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
                         echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel run //:gazelle-update-repos"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel run //:gazelle -- update"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel run //:go -- mod tidy"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci run //:gazelle-update-repos"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci run //:gazelle -- update"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci run //:go -- mod tidy"
 
                         script {
                             def diff = sh script: "git status --porcelain", returnStdout: true

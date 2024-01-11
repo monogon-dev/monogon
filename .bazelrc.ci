@@ -1,0 +1,10 @@
+# Import Aspect bazelrc presets
+import %workspace%/third_party/bazelrc/aspect/ci.bazelrc
+
+# Our Jenkins does not support colors.
+build --color=no
+
+# Dont upload local results to prevent cache poisoning. Whenever we get remote
+# cache for builds, we will only populate it from a builder that runs against
+# all merged main commits.
+build --noremote_upload_local_results
