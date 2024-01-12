@@ -25,10 +25,9 @@ index 61a71c73..ce594522 100644
      "x86_64-unknown-none",
 +    "x86_64-unknown-uefi",
  ]
- 
- SUPPORTED_PLATFORM_TRIPLES = SUPPORTED_T1_PLATFORM_TRIPLES + SUPPORTED_T2_PLATFORM_TRIPLES
+
 @@ -97,6 +99,7 @@ _SYSTEM_TO_BUILTIN_SYS_SUFFIX = {
-     "none": "none",
+     "nto": "qnx",
      "openbsd": "openbsd",
      "solaris": None,
 +    "uefi": "uefi",
@@ -36,31 +35,31 @@ index 61a71c73..ce594522 100644
      "wasi": None,
      "windows": "windows",
 @@ -113,6 +116,7 @@ _SYSTEM_TO_BINARY_EXT = {
-     "ios": "",
-     "linux": "",
+     "nixos": "",
      "none": "",
+     "nto": "",
 +    "uefi": ".efi",
      # This is currently a hack allowing us to have the proper
      # generated extension for the wasm target, similarly to the
      # windows target
 @@ -132,6 +136,7 @@ _SYSTEM_TO_STATICLIB_EXT = {
-     "ios": ".a",
-     "linux": ".a",
+     "nixos": ".a",
      "none": ".a",
+     "nto": ".a",
 +    "uefi": ".lib",
      "unknown": "",
      "wasi": "",
      "windows": ".lib",
 @@ -148,6 +153,7 @@ _SYSTEM_TO_DYLIB_EXT = {
-     "ios": ".dylib",
-     "linux": ".so",
+     "nixos": ".so",
      "none": ".so",
+     "nto": ".a",
 +    "uefi": "", # UEFI doesn't have dynamic linking
      "unknown": ".wasm",
      "wasi": ".wasm",
      "windows": ".dll",
 @@ -191,6 +197,7 @@ _SYSTEM_TO_STDLIB_LINKFLAGS = {
-     "none": [],
+     "nto": [],
      "openbsd": ["-lpthread"],
      "solaris": ["-lsocket", "-lposix4", "-lpthread", "-lresolv"],
 +    "uefi": [],

@@ -10,9 +10,9 @@ rust_binary(
     ],
     deps = [
         "//metropolis/node/core/abloader/spec:abloader_proto_rs",
-        "@rsefi__prost__0_12_1//:prost",
-        "@rsefi__uefi__0_24_0//:uefi",
-        "@rsefi__uefi_services__0_21_0//:uefi_services",
+        "@crate_index_efi//:prost",
+        "@crate_index_efi//:uefi",
+        "@crate_index_efi//:uefi-services",
     ],
 )
 

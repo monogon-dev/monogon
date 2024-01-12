@@ -105,7 +105,7 @@ mdbook_html = rule(
             doc = "The mdbook tool.",
             executable = True,
             cfg = "host",
-            default = "@dev_source_monogon//third_party/rust:cargo_bin_mdbook",
+            default = "@crate_index//:mdbook__mdbook",
         ),
     },
 )

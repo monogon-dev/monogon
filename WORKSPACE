@@ -104,37 +104,61 @@ grpc_extra_deps()
 # Rust rules
 http_archive(
     name = "rules_rust",
+    integrity = "sha256-ZQGWDD5NoySV0eEAfe0HaaU0yxlcMN6jaqVPnYo/A2E=",
     patch_args = ["-p1"],
     patches = [
         "//third_party:rust-uefi-platform.patch",
         "//third_party:rust-prost-nostd.patch",
         "//third_party:rust-reproducibility.patch",
     ],
-    sha256 = "c46bdafc582d9bd48a6f97000d05af4829f62d5fee10a2a3edddf2f3d9a232c1",
-    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.28.0/rules_rust-v0.28.0.tar.gz"],
+    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.38.0/rules_rust-v0.38.0.tar.gz"],
 )
 
 load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains")
 
 rules_rust_dependencies()
 
-# Rust Toolchains
 rust_register_toolchains(
     edition = "2021",
     extra_target_triples = [
+        "x86_64-unknown-uefi",
+    ],
+    versions = ["1.71.0"],
+)
+
+load("@rules_rust//crate_universe:repositories.bzl", "crate_universe_dependencies")
+
+crate_universe_dependencies()
+
+load("@rules_rust//crate_universe:defs.bzl", "crates_repository")
+
+crates_repository(
+    name = "crate_index",
+    cargo_lockfile = "//third_party/rust:Cargo.lock",
+    generate_binaries = True,
+    lockfile = "//third_party/rust:Cargo.Bazel.lock",
+    manifests = ["//third_party/rust:Cargo.toml"],
+)
+
+load("@crate_index//:defs.bzl", "crate_repositories")
+
+crate_repositories()
+
+crates_repository(
+    name = "crate_index_efi",
+    cargo_lockfile = "//third_party/rust_efi:Cargo.lock",
+    generate_binaries = True,
+    lockfile = "//third_party/rust_efi:Cargo.Bazel.lock",
+    manifests = ["//third_party/rust_efi:Cargo.toml"],
+    supported_platform_triples = [
         "x86_64-unknown-linux-gnu",
         "x86_64-unknown-uefi",
     ],
-    versions = ["1.71.0"],  # Linking EFI binaries is broken in 1.72
 )
 
-load("//third_party/rust/cargo:crates.bzl", "raze_fetch_remote_crates")
+load("@crate_index_efi//:defs.bzl", crate_efi_repositories = "crate_repositories")
 
-raze_fetch_remote_crates()
-
-load("//third_party/rust_efi/cargo:crates.bzl", "rsefi_fetch_remote_crates")
-
-rsefi_fetch_remote_crates()
+crate_efi_repositories()
 
 load("@rules_rust//proto/prost:repositories.bzl", "rust_prost_dependencies")
 

@@ -1,6 +1,6 @@
-From 8cc9584796b41c3b5c9d213b751de9762963ebbf Mon Sep 17 00:00:00 2001
-From: Lorenz Brun <lorenz@monogon.tech>
-Date: Mon, 2 Oct 2023 15:35:38 +0200
+From 2aff5ddecae1bbbe85b07c047bc6cbfa2da5ba96 Mon Sep 17 00:00:00 2001
+From: Tim Windelschmidt <tim@monogon.tech>
+Date: Fri, 12 Jan 2024 15:41:50 +0100
 Subject: [PATCH] Support no_std in Prost toolchain
 
 ---
@@ -9,28 +9,28 @@ Subject: [PATCH] Support no_std in Prost toolchain
  2 files changed, 22 insertions(+), 3 deletions(-)
 
 diff --git a/proto/prost/private/prost.bzl b/proto/prost/private/prost.bzl
-index 6cd3d522..ae7ead91 100644
+index 0a9f3500..e3e5e382 100644
 --- a/proto/prost/private/prost.bzl
 +++ b/proto/prost/private/prost.bzl
-@@ -64,6 +64,9 @@ def _compile_proto(ctx, crate_name, proto_info, deps, prost_toolchain, rustfmt_t
+@@ -58,6 +58,9 @@ def _compile_proto(ctx, crate_name, proto_info, deps, prost_toolchain, rustfmt_t
      additional_args.add("--descriptor_set={}".format(proto_info.direct_descriptor_set.path))
      additional_args.add_all(prost_toolchain.prost_opts, format_each = "--prost_opt=%s")
- 
+
 +    if prost_toolchain.is_nostd:
 +        additional_args.add("--is_nostd")
 +
      if prost_toolchain.tonic_plugin:
          tonic_plugin = prost_toolchain.tonic_plugin[DefaultInfo].files_to_run
          additional_args.add(prost_toolchain.tonic_plugin_flag % tonic_plugin.executable.path)
-@@ -371,6 +374,7 @@ def _rust_prost_toolchain_impl(ctx):
+@@ -335,6 +338,7 @@ def _rust_prost_toolchain_impl(ctx):
          tonic_plugin = ctx.attr.tonic_plugin,
          tonic_plugin_flag = ctx.attr.tonic_plugin_flag,
          tonic_runtime = ctx.attr.tonic_runtime,
 +        is_nostd = ctx.attr.is_nostd,
      )]
- 
+
  rust_prost_toolchain = rule(
-@@ -423,6 +427,10 @@ rust_prost_toolchain = rule(
+@@ -387,6 +391,10 @@ rust_prost_toolchain = rule(
              doc = "The Tonic runtime crates to use.",
              providers = [[rust_common.crate_info], [rust_common.crate_group_info]],
          ),
@@ -40,60 +40,60 @@ index 6cd3d522..ae7ead91 100644
 +        ),
      },
  )
- 
+
 diff --git a/proto/prost/private/protoc_wrapper.rs b/proto/prost/private/protoc_wrapper.rs
-index eb0c3319..716ba211 100644
+index f8be6478..44f6ad8e 100644
 --- a/proto/prost/private/protoc_wrapper.rs
 +++ b/proto/prost/private/protoc_wrapper.rs
-@@ -116,7 +116,7 @@ struct Module {
+@@ -117,7 +117,7 @@ struct Module {
  ///     }
  /// }
  /// ```
 -fn generate_lib_rs(prost_outputs: &BTreeSet<PathBuf>, is_tonic: bool) -> String {
 +fn generate_lib_rs(prost_outputs: &BTreeSet<PathBuf>, is_tonic: bool, is_nostd: bool) -> String {
      let mut module_info = BTreeMap::new();
- 
+
      for path in prost_outputs.iter() {
-@@ -188,7 +188,8 @@ fn generate_lib_rs(prost_outputs: &BTreeSet<PathBuf>, is_tonic: bool) -> String
+@@ -189,7 +189,8 @@ fn generate_lib_rs(prost_outputs: &BTreeSet<PathBuf>, is_tonic: bool) -> String
          }
      }
- 
+
 -    let mut content = "// @generated\n\n".to_string();
 +    let mut content = if is_nostd { "#![no_std]\n".to_string() } else { "".to_string() };
 +    content.push_str(&"// @generated\n\n");
      write_module(&mut content, &module_info, "", 0);
      content
  }
-@@ -442,6 +443,9 @@ struct Args {
+@@ -443,6 +444,9 @@ struct Args {
      /// Whether to generate tonic code.
      is_tonic: bool,
- 
+
 +    // Whether to put a no_std tag into the generated code.
 +    is_nostd: bool,
 +
      /// Extra arguments to pass to protoc.
      extra_args: Vec<String>,
  }
-@@ -462,6 +466,7 @@ impl Args {
+@@ -463,6 +467,7 @@ impl Args {
          let mut label: Option<String> = None;
          let mut tonic_or_prost_opts = Vec::new();
          let mut is_tonic = false;
 +        let mut is_nostd = false;
- 
+
          let mut extra_args = Vec::new();
- 
-@@ -487,6 +492,10 @@ impl Args {
+
+@@ -485,6 +490,10 @@ impl Args {
                  is_tonic = true;
-                 continue;
+                 return;
              }
 +            if arg == "--is_nostd" {
 +                is_nostd = true;
-+                continue;
++                return;
 +            }
- 
+
              if !arg.contains('=') {
                  extra_args.push(arg);
-@@ -599,6 +608,7 @@ impl Args {
+@@ -613,6 +622,7 @@ impl Args {
              rustfmt,
              proto_paths,
              is_tonic,
@@ -101,23 +101,23 @@ index eb0c3319..716ba211 100644
              label: label.unwrap(),
              extra_args,
          })
-@@ -704,6 +714,7 @@ fn main() {
+@@ -718,6 +728,7 @@ fn main() {
          rustfmt,
          proto_paths,
          is_tonic,
 +        is_nostd,
          extra_args,
      } = Args::parse().expect("Failed to parse args");
- 
-@@ -816,7 +827,7 @@ fn main() {
+
+@@ -830,7 +841,7 @@ fn main() {
          .expect("Failed to compute proto package info");
- 
+
      // Write outputs
 -    fs::write(&out_librs, generate_lib_rs(&rust_files, is_tonic)).expect("Failed to write file.");
 +    fs::write(&out_librs, generate_lib_rs(&rust_files, is_tonic, is_nostd)).expect("Failed to write file.");
      fs::write(
          package_info_file,
          extern_paths
--- 
-2.41.0
+--
+2.42.0
 
