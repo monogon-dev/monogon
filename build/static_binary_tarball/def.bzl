@@ -68,10 +68,5 @@ static_binary_tarball = rule(
             executable = True,
             allow_files = True,
         ),
-
-        # Allow for transitions to be attached to this rule.
-        "_whitelist_function_transition": attr.label(
-            default = "@bazel_tools//tools/whitelists/function_transition_whitelist",
-        ),
     },
 )

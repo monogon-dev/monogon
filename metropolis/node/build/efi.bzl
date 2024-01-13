@@ -128,10 +128,6 @@ efi_unified_kernel_image = rule(
             executable = True,
             cfg = "exec",
         ),
-        # Allow for transitions to be attached to this rule.
-        "_whitelist_function_transition": attr.label(
-            default = "@bazel_tools//tools/whitelists/function_transition_whitelist",
-        ),
     },
     toolchains = [
         "@bazel_tools//tools/cpp:toolchain_type"

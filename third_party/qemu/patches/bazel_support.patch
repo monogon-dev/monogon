@@ -1367,7 +1367,7 @@ new file mode 100644
 index 0000000000..3a8d50d429
 --- /dev/null
 +++ b/defs.bzl
-@@ -0,0 +1,70 @@
+@@ -0,0 +1,73 @@
 +def _impl_filter_label_contains(ctx):
 +    return [DefaultInfo(
 +        files = depset([f for f in ctx.files.srcs if any([c in f.path for c in ctx.attr.contains])]),
@@ -1415,7 +1415,10 @@ index 0000000000..3a8d50d429
 +            ctx.actions.run(
 +                inputs = ctx.files.src + ctx.files._keymap_gen,
 +                executable = ctx.executable._savestdout,
-+                arguments = [out.path, ctx.files._keymap_gen[0].path, "--lang=glib2", "--varname=qemu_input_map_{}_to_{}".format(_from, _to), "code-map", ctx.files.src[0].path, _from, _to],
++                # Don't use _keymap_gen[0] as this does not call the .py file directly,
++                # instead it would use the wrapper script provided by bazel,
++                # which does not work without more workarounds to provide the correct runfiles.
++                arguments = [out.path, ctx.files._keymap_gen[1].path, "--lang=glib2", "--varname=qemu_input_map_{}_to_{}".format(_from, _to), "code-map", ctx.files.src[0].path, _from, _to],
 +                outputs = [out],
 +            )
 +            outs.append(out)
