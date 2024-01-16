@@ -8,6 +8,8 @@ go_library(
     deps = [
         "//metropolis/pkg/localregistry/spec",
         "@com_github_docker_distribution//:distribution",
+        "@com_github_docker_distribution//manifest/manifestlist",
+        "@com_github_docker_distribution//manifest/ocischema",
         "@com_github_docker_distribution//manifest/schema2",
         "@com_github_docker_distribution//reference",
         "@com_github_opencontainers_go_digest//:go-digest",

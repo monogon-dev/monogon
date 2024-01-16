@@ -1,6 +1,4 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image")
-load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
 
 go_library(
     name = "mini_lib",
@@ -30,15 +28,19 @@ go_binary(
     visibility = ["//visibility:public"],
 )
 
-static_binary_tarball(
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+pkg_tar(
     name = "mini_layer",
-    executable = ":mini",
+    srcs = [":mini"],
 )
 
-container_image(
-    name = "mini_container",
-    base = "@go_image_base//image",
-    entrypoint = ["/app/cloud/shepherd/mini/mini_/mini"],
+load("@rules_oci//oci:defs.bzl", "oci_image")
+
+oci_image(
+    name = "mini_image",
+    base = "@distroless_base",
+    entrypoint = ["/mini"],
     tars = [
         ":mini_layer",
         "//cloud/takeover:takeover_layer",

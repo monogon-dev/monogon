@@ -1,6 +1,4 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image")
-load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
 
 go_library(
     name = "cmd_lib",
@@ -19,15 +17,19 @@ go_binary(
     visibility = ["//visibility:public"],
 )
 
-static_binary_tarball(
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+pkg_tar(
     name = "cmd_layer",
-    executable = ":cmd",
+    srcs = [":cmd"],
 )
 
-container_image(
-    name = "cmd_container",
-    base = "@go_image_base//image",
-    entrypoint = ["/app/cloud/bmaas/scruffy/cmd/cmd_/cmd"],
+load("@rules_oci//oci:defs.bzl", "oci_image")
+
+oci_image(
+    name = "cmd_image",
+    base = "@distroless_base",
+    entrypoint = ["/cmd"],
     tars = [":cmd_layer"],
     visibility = ["//visibility:public"],
     workdir = "/app",

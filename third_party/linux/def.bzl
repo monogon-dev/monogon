@@ -36,9 +36,6 @@ _new_settings = {
     "@io_bazel_rules_go//go/config:pure": True,
     "@io_bazel_rules_go//go/config:static": True,
 
-    "@io_bazel_rules_docker//platforms:image_transition_cpu": "@platforms//cpu:x86_64",
-    "@io_bazel_rules_docker//platforms:image_transition_os": "@platforms//os:linux",
-
     # Note: this toolchain is not actually used to perform the build.
     "//command_line_option:platforms": "//build/platforms:linux_amd64_static",
 }

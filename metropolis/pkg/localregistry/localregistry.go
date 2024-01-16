@@ -10,10 +10,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 
 	"github.com/docker/distribution"
+	"github.com/docker/distribution/manifest/manifestlist"
+	"github.com/docker/distribution/manifest/ocischema"
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/distribution/reference"
 	"github.com/opencontainers/go-digest"
@@ -33,55 +36,76 @@ type blobMeta struct {
 	contentLength int64
 }
 
-func blobFromBazel(s *Server, bd *spec.BlobDescriptor, mediaType string) (distribution.Descriptor, error) {
-	digestRaw, err := os.ReadFile(bd.DigestPath)
+func manifestDescriptorFromBazel(image *spec.Image) (manifestlist.ManifestDescriptor, error) {
+	indexPath := filepath.Join(image.Path, "index.json")
+
+	manifestListRaw, err := os.ReadFile(indexPath)
 	if err != nil {
-		return distribution.Descriptor{}, fmt.Errorf("while opening digest file: %w", err)
+		return manifestlist.ManifestDescriptor{}, fmt.Errorf("while opening manifest list file: %w", err)
 	}
-	stat, err := os.Stat(bd.FilePath)
-	if err != nil {
-		return distribution.Descriptor{}, fmt.Errorf("while stat'ing blob file: %w", err)
+
+	var imageManifestList manifestlist.ManifestList
+	if err := json.Unmarshal(manifestListRaw, &imageManifestList); err != nil {
+		return manifestlist.ManifestDescriptor{}, fmt.Errorf("while unmarshaling manifest list for %q: %w", image.Name, err)
 	}
-	digest := digest.Digest("sha256:" + string(digestRaw))
-	s.blobs[digest] = blobMeta{filePath: bd.FilePath, mediaType: mediaType, contentLength: stat.Size()}
-	return distribution.Descriptor{
-		MediaType: mediaType,
-		Size:      stat.Size(),
-		Digest:    digest,
-	}, nil
+
+	if len(imageManifestList.Manifests) != 1 {
+		return manifestlist.ManifestDescriptor{}, fmt.Errorf("unexpected manifest list length > 1")
+	}
+
+	return imageManifestList.Manifests[0], nil
 }
 
-func FromBazelManifest(m []byte) (*Server, error) {
-	var manifest spec.Manifest
-	if err := prototext.Unmarshal(m, &manifest); err != nil {
+func manifestFromBazel(s *Server, image *spec.Image, md manifestlist.ManifestDescriptor) (ocischema.Manifest, error) {
+	manifestPath := filepath.Join(image.Path, "blobs", md.Digest.Algorithm().String(), md.Digest.Hex())
+	manifestRaw, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return ocischema.Manifest{}, fmt.Errorf("while opening manifest file: %w", err)
+	}
+
+	var imageManifest ocischema.Manifest
+	if err := json.Unmarshal(manifestRaw, &imageManifest); err != nil {
+		return ocischema.Manifest{}, fmt.Errorf("while unmarshaling manifest for %q: %w", image.Name, err)
+	}
+
+	// For Digest lookups
+	s.manifests[image.Name] = manifestRaw
+	s.manifests[md.Digest.String()] = manifestRaw
+
+	return imageManifest, nil
+}
+
+func addBazelBlobFromDescriptor(s *Server, image *spec.Image, dd distribution.Descriptor) {
+	path := filepath.Join(image.Path, "blobs", dd.Digest.Algorithm().String(), dd.Digest.Hex())
+	s.blobs[dd.Digest] = blobMeta{filePath: path, mediaType: dd.MediaType, contentLength: dd.Size}
+}
+
+func FromBazelManifest(mb []byte) (*Server, error) {
+	var bazelManifest spec.Manifest
+	if err := prototext.Unmarshal(mb, &bazelManifest); err != nil {
 		log.Fatalf("failed to parse manifest: %v", err)
 	}
 	s := Server{
 		manifests: make(map[string][]byte),
 		blobs:     make(map[digest.Digest]blobMeta),
 	}
-	for _, i := range manifest.Images {
-		imageManifest := schema2.Manifest{
-			Versioned: schema2.SchemaVersion,
-		}
-		var err error
-		imageManifest.Config, err = blobFromBazel(&s, i.Config, schema2.MediaTypeImageConfig)
+	for _, i := range bazelManifest.Images {
+		md, err := manifestDescriptorFromBazel(i)
 		if err != nil {
-			return nil, fmt.Errorf("while creating blob spec for %q: %w", i.Name, err)
+			return nil, err
 		}
-		for _, l := range i.Layers {
-			ml, err := blobFromBazel(&s, l, schema2.MediaTypeLayer)
-			if err != nil {
-				return nil, fmt.Errorf("while creating blob spec for %q: %w", i.Name, err)
-			}
-			imageManifest.Layers = append(imageManifest.Layers, ml)
-		}
-		s.manifests[i.Name], err = json.Marshal(imageManifest)
+
+		addBazelBlobFromDescriptor(&s, i, md.Descriptor)
+
+		m, err := manifestFromBazel(&s, i, md)
 		if err != nil {
-			return nil, fmt.Errorf("while marshaling image %q manifest: %w", i.Name, err)
+			return nil, err
 		}
-		// For Digest lookups
-		s.manifests[string(digest.Canonical.FromBytes(s.manifests[i.Name]))] = s.manifests[i.Name]
+
+		addBazelBlobFromDescriptor(&s, i, m.Config)
+		for _, l := range m.Layers {
+			addBazelBlobFromDescriptor(&s, i, l)
+		}
 	}
 	return &s, nil
 }

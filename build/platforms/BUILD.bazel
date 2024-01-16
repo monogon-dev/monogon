@@ -5,6 +5,7 @@ platform(
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
     ],
+    visibility = ["//visibility:public"],
 )
 
 # EFI preboot environment for x86_64 machines.
@@ -26,4 +27,5 @@ platform(
         "@platforms//cpu:x86_64",
         "//build/platforms/linkmode:musl-static",
     ],
+    visibility = ["//visibility:public"],
 )
