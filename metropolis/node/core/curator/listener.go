@@ -148,6 +148,9 @@ func (l *listener) run(ctx context.Context) error {
 			if nst.leader == nil {
 				return fmt.Errorf("this curator stopped being a leader, quitting")
 			}
+			if !st.leader.equal(nst.leader) {
+				return fmt.Errorf("this curator got re-elected, quitting")
+			}
 		}
 	case st.follower != nil:
 		supervisor.Logger(ctx).Infof("Follower running until leadership change.")
@@ -158,6 +161,9 @@ func (l *listener) run(ctx context.Context) error {
 			}
 			if nst.follower == nil {
 				return fmt.Errorf("this curator stopped being a follower, quitting")
+			}
+			if !st.follower.equal(nst.follower) {
+				return fmt.Errorf("leader changed, quitting")
 			}
 		}
 	default:

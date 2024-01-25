@@ -91,8 +91,28 @@ type electionStatusLeader struct {
 	lockRev int64
 }
 
+func (e *electionStatusLeader) equal(o *electionStatusLeader) bool {
+	if e.lockKey != o.lockKey {
+		return false
+	}
+	if e.lockRev != o.lockRev {
+		return false
+	}
+	return true
+}
+
 type electionStatusFollower struct {
 	lock *ppb.LeaderElectionValue
+}
+
+func (e *electionStatusFollower) equal(o *electionStatusFollower) bool {
+	if e.lock.NodeId != o.lock.NodeId {
+		return false
+	}
+	if e.lock.Ttl != o.lock.Ttl {
+		return false
+	}
+	return true
 }
 
 // buildLockValue returns a serialized etcd value that will be set by the
