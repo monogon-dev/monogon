@@ -45,7 +45,7 @@ type kubernetesStartup struct {
 	roles   *cpb.NodeRoles
 	lcp     *localControlPlane
 	curator ipb.CuratorClient
-	node    *identity.Node
+	node    *identity.NodeCredentials
 }
 
 // changed informs the Kubernetes launcher whether two different
@@ -103,7 +103,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 					startupV.Set(&kubernetesStartup{
 						roles:   lr,
 						lcp:     lcp,
-						node:    &cc.credentials.Node,
+						node:    cc.credentials,
 						curator: ipb.NewCuratorClient(cc.conn),
 					})
 				}

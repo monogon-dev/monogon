@@ -48,7 +48,7 @@ type ConfigController struct {
 	KPKI    *pki.PKI
 	Root    *localstorage.Root
 	Network *network.Service
-	Node    *identity.Node
+	Node    *identity.NodeCredentials
 }
 
 type Controller struct {

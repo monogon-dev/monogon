@@ -26,8 +26,8 @@ import (
 type Service struct {
 	// KPKI is a reference to the Kubernetes PKI
 	KPKI *pki.PKI
-	// Node contains the node identity
-	Node *identity.Node
+	// Node contains the node credentials
+	Node *identity.NodeCredentials
 }
 
 func (s *Service) getTLSCert(ctx context.Context, name pki.KubeCertificateName) (*tls.Certificate, error) {
@@ -109,10 +109,7 @@ func (s *Service) Run(ctx context.Context) error {
 	standardProxy.ErrorHandler = errorHandler
 	noHTTP2Proxy.ErrorHandler = errorHandler
 
-	serverCert, err := s.getTLSCert(ctx, pki.APIServer)
-	if err != nil {
-		return err
-	}
+	serverCert := s.Node.TLSCredentials()
 	clientCAs := x509.NewCertPool()
 	clientCAs.AddCert(s.Node.ClusterCA())
 	server := &http.Server{
@@ -122,7 +119,7 @@ func (s *Service) Run(ctx context.Context) error {
 			NextProtos:   []string{"h2", "http/1.1"},
 			ClientAuth:   tls.RequireAndVerifyClientCert,
 			ClientCAs:    clientCAs,
-			Certificates: []tls.Certificate{*serverCert},
+			Certificates: []tls.Certificate{serverCert},
 		},
 		// Limits match @io_k8s_apiserver/pkg/server:secure_serving.go Serve()
 		MaxHeaderBytes:    1 << 20,
