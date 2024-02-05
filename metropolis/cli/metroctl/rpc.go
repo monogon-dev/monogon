@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"log"
 
 	"google.golang.org/grpc"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
+	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 )
 
 func dialAuthenticated(ctx context.Context) *grpc.ClientConn {
@@ -20,7 +23,19 @@ func dialAuthenticated(ctx context.Context) *grpc.ClientConn {
 	if len(flags.clusterEndpoints) == 0 {
 		log.Fatal("Please provide at least one cluster endpoint using the --endpoint parameter.")
 	}
-	cc, err := core.DialCluster(ctx, opkey, ocert, flags.proxyAddr, flags.clusterEndpoints, rpcLogger)
+	tlsc := tls.Certificate{
+		Certificate: [][]byte{ocert.Raw},
+		PrivateKey:  opkey,
+	}
+	// TODO(q3k): check remote CA
+	creds := rpc.NewAuthenticatedCredentials(tlsc, rpc.WantInsecure())
+	opts, err := core.DialOpts(ctx, connectOptions())
+	if err != nil {
+		log.Fatalf("While configuring dial options: %v", err)
+	}
+	opts = append(opts, grpc.WithTransportCredentials(creds))
+
+	cc, err := grpc.Dial(resolver.MetropolisControlAddress, opts...)
 	if err != nil {
 		log.Fatalf("While dialing the cluster: %v", err)
 	}

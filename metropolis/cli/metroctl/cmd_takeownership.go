@@ -7,10 +7,12 @@ import (
 	"os/exec"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
@@ -40,7 +42,17 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 		log.Fatalf("Couldn't get owner's key: %v", err)
 	}
 	ctx := clicontext.WithInterrupt(context.Background())
-	cc, err := core.DialCluster(ctx, opk, nil, flags.proxyAddr, flags.clusterEndpoints, rpcLogger)
+	opts, err := core.DialOpts(ctx, connectOptions())
+	if err != nil {
+		log.Fatalf("While configuring cluster dial opts: %v", err)
+	}
+	creds, err := rpc.NewEphemeralCredentials(opk, rpc.WantInsecure())
+	if err != nil {
+		log.Fatalf("While generating ephemeral credentials: %v", err)
+	}
+	opts = append(opts, grpc.WithTransportCredentials(creds))
+
+	cc, err := grpc.Dial(resolver.MetropolisControlAddress, opts...)
 	if err != nil {
 		log.Fatalf("While dialing the cluster: %v", err)
 	}
@@ -50,6 +62,7 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 	if err != nil {
 		log.Fatalf("Failed to retrive owner certificate from cluster: %v", err)
 	}
+
 	if err := core.WriteOwnerCertificate(flags.configPath, ownerCert.Certificate[0]); err != nil {
 		log.Printf("Failed to store retrieved owner certificate: %v", err)
 		log.Fatalln("Sorry, the cluster has been lost as taking ownership cannot be repeated. Fix the reason the file couldn't be written and reinstall the node.")

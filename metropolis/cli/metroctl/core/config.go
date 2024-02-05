@@ -219,6 +219,9 @@ type ConnectOptions struct {
 	// instances that metroctl should use to establish connectivity to a cluster.
 	// These instances should have the ControlPlane role set.
 	Endpoints []string
+	// ResolverLogger can be set to enable verbose logging of the Metropolis RPC
+	// resolver layer.
+	ResolverLogger ResolverLogger
 }
 
 // ToFlags returns the metroctl flags corresponding to the options described by

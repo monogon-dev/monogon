@@ -20,65 +20,36 @@ import (
 
 type ResolverLogger func(format string, args ...interface{})
 
-// DialCluster dials the cluster control address. The owner certificate, and
-// proxy address parameters are optional and can be left nil, and empty,
-// respectively. At least one cluster endpoint must be provided. A missing
-// owner certificate will result in a connection that is authenticated with
-// ephemeral credentials, restricting the available API surface. proxyAddr
-// must point at a SOCKS5 endpoint.
-func DialCluster(ctx context.Context, opkey ed25519.PrivateKey, ocert *x509.Certificate, proxyAddr string, clusterEndpoints []string, rlf ResolverLogger) (*grpc.ClientConn, error) {
-	var dialOpts []grpc.DialOption
-
-	if opkey == nil {
-		return nil, fmt.Errorf("an owner's private key must be provided")
-	}
-	if len(clusterEndpoints) == 0 {
-		return nil, fmt.Errorf("at least one cluster endpoint must be provided")
-	}
-
-	if proxyAddr != "" {
-		socksDialer, err := proxy.SOCKS5("tcp", proxyAddr, nil, proxy.Direct)
+func DialOpts(ctx context.Context, c *ConnectOptions) ([]grpc.DialOption, error) {
+	var opts []grpc.DialOption
+	if c.ProxyServer != "" {
+		socksDialer, err := proxy.SOCKS5("tcp", c.ProxyServer, nil, proxy.Direct)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build a SOCKS dialer: %v", err)
 		}
 		grpcd := func(_ context.Context, addr string) (net.Conn, error) {
 			return socksDialer.Dial("tcp", addr)
 		}
-		dialOpts = append(dialOpts, grpc.WithContextDialer(grpcd))
-	}
-
-	if ocert == nil {
-		creds, err := rpc.NewEphemeralCredentials(opkey, rpc.WantInsecure())
-		if err != nil {
-			return nil, fmt.Errorf("while building ephemeral credentials: %v", err)
-		}
-		dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
-	} else {
-		tlsc := tls.Certificate{
-			Certificate: [][]byte{ocert.Raw},
-			PrivateKey:  opkey,
-		}
-		creds := rpc.NewAuthenticatedCredentials(tlsc, rpc.WantInsecure())
-		dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
+		opts = append(opts, grpc.WithContextDialer(grpcd))
 	}
 
 	var resolverOpts []resolver.ResolverOption
-	if rlf != nil {
-		resolverOpts = append(resolverOpts, resolver.WithLogger(rlf))
+	if c.ResolverLogger != nil {
+		resolverOpts = append(resolverOpts, resolver.WithLogger(c.ResolverLogger))
 	}
+
 	r := resolver.New(ctx, resolverOpts...)
 
-	for _, eps := range clusterEndpoints {
+	if len(c.Endpoints) == 0 {
+		return nil, fmt.Errorf("no cluster endpoints specified")
+	}
+	for _, eps := range c.Endpoints {
 		ep := resolver.NodeByHostPort(eps, uint16(node.CuratorServicePort))
 		r.AddEndpoint(ep)
 	}
-	dialOpts = append(dialOpts, grpc.WithResolvers(r))
+	opts = append(opts, grpc.WithResolvers(r))
 
-	c, err := grpc.Dial(resolver.MetropolisControlAddress, dialOpts...)
-	if err != nil {
-		return nil, fmt.Errorf("could not dial: %v", err)
-	}
-	return c, nil
+	return opts, nil
 }
 
 func DialNode(ctx context.Context, opkey ed25519.PrivateKey, ocert, ca *x509.Certificate, proxyAddr, nodeId, nodeAddr string) (*grpc.ClientConn, error) {

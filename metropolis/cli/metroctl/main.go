@@ -65,8 +65,9 @@ func main() {
 // currently set.
 func connectOptions() *core.ConnectOptions {
 	return &core.ConnectOptions{
-		ProxyServer: flags.proxyAddr,
-		Endpoints:   flags.clusterEndpoints,
-		ConfigPath:  flags.configPath,
+		ConfigPath:     flags.configPath,
+		ProxyServer:    flags.proxyAddr,
+		Endpoints:      flags.clusterEndpoints,
+		ResolverLogger: rpcLogger,
 	}
 }
