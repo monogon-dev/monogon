@@ -53,7 +53,7 @@ func main() {
 	}
 
 	configName := "launch-multi2"
-	if err := metroctl.InstallKubeletConfig(mpath, cl.ConnectOptions(), configName, apiservers[0]); err != nil {
+	if err := metroctl.InstallKubeletConfig(ctx, mpath, cl.ConnectOptions(), configName, apiservers[0]); err != nil {
 		log.Fatalf("InstallKubeletConfig: %v", err)
 	}
 

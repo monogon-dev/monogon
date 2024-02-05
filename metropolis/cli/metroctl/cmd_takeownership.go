@@ -87,7 +87,7 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 	// TODO(q3k, issues/144): this only works as long as all nodes are kubernetes controller
 	// nodes. This won't be the case for too long. Figure this out.
 	configName := "metroctl"
-	if err := core.InstallKubeletConfig(metroctlPath, connectOptions(), configName, flags.clusterEndpoints[0]); err != nil {
+	if err := core.InstallKubeletConfig(ctx, metroctlPath, connectOptions(), configName, flags.clusterEndpoints[0]); err != nil {
 		log.Fatalf("Failed to install metroctl/k8s integration: %v", err)
 	}
 	log.Printf("Success! kubeconfig is set up. You can now run kubectl --context=%s ... to access the Kubernetes cluster.", configName)

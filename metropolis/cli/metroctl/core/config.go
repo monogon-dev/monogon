@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/tls"
@@ -8,11 +9,13 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"net/url"
 	"os"
 	"path/filepath"
 
+	"golang.org/x/net/proxy"
 	clientauthentication "k8s.io/client-go/pkg/apis/clientauthentication/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	clientapi "k8s.io/client-go/tools/clientcmd/api"
@@ -196,9 +199,9 @@ func GetClusterCA(path string) (cert *x509.Certificate, err error) {
 //
 // Kubeconfigs can only take a single Kubernetes server address, so this function
 // similarly only allows you to specify only a single server address.
-func InstallKubeletConfig(metroctlPath string, opts *ConnectOptions, configName, server string) error {
-	ca := clientcmd.NewDefaultPathOptions()
-	config, err := ca.GetStartingConfig()
+func InstallKubeletConfig(ctx context.Context, metroctlPath string, opts *ConnectOptions, configName, server string) error {
+	po := clientcmd.NewDefaultPathOptions()
+	config, err := po.GetStartingConfig()
 	if err != nil {
 		return fmt.Errorf("getting initial config failed: %w", err)
 	}
@@ -226,14 +229,73 @@ change users.metropolis.exec.command to the required path (or just metroctl if u
 	u.Scheme = "https"
 	u.Host = net.JoinHostPort(server, node.KubernetesAPIWrappedPort.PortString())
 
+	// HACK: the Metropolis node certificates only contain the node ID as a SAN. This
+	// means that we can't use some 'global' identifier as the TLSServerName below
+	// that would be the same across all cluster nodes. Unfortunately the Kubeconfig
+	// system only allows for specifying a concrete name, not a regexp or some more
+	// complex validation mechanism for certs.
+	//
+	// The correct fix for this is to issue a new set of certs for the nodes to use,
+	// but that would require implementing a migration mechanism which we don't want
+	// to do as that entire system is getting replaced with SPIFFE based certificates
+	// very soon.
+	//
+	// To get around this, we thus pin the TLSServerName. This works because current
+	// production deployments only use a single node as the Kubernetes endpoint. To
+	// actually get the cert we connect here to the given server and retrieve its
+	// node ID.
+	//
+	// TODO(lorenz): replace as part of SPIFFE authn work
+
+	ca, err := GetClusterCAWithTOFU(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve CA certificate: %w", err)
+	}
+
+	pinnedNameC := make(chan string, 1)
+	connLower, err := opts.Dial("tcp", u.Host)
+	if err != nil {
+		return fmt.Errorf("failed to dial to retrieve server cert: %w", err)
+	}
+	conn := tls.Client(connLower, &tls.Config{
+		InsecureSkipVerify: true,
+		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			if ncerts := len(rawCerts); ncerts != 1 {
+				return fmt.Errorf("expected 1 server cert, got %d", ncerts)
+			}
+			cert, err := x509.ParseCertificate(rawCerts[0])
+			if err != nil {
+				return fmt.Errorf("parsing server certificate failed: %w", err)
+			}
+			if err := cert.CheckSignatureFrom(ca); err != nil {
+				return fmt.Errorf("server certificate verification failed: %w", err)
+			}
+			if nnames := len(cert.DNSNames); nnames != 1 {
+				return fmt.Errorf("expected 1 DNS SAN, got %q", cert.DNSNames)
+			}
+			pinnedNameC <- cert.DNSNames[0]
+			return nil
+		},
+	})
+	if err := conn.Handshake(); err != nil {
+		return fmt.Errorf("failed to connect to retrieve server cert: %w", err)
+	}
+	var pinnedName string
+	select {
+	case pinnedName = <-pinnedNameC:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	log.Printf("Pinning Kubernetes server certificate to %q", pinnedName)
+
+	// Actually configure Kubernetes now.
+
 	config.Clusters[configName] = &clientapi.Cluster{
-		// MVP: This is insecure, but making this work would be wasted effort
-		// as all of it will be replaced by the identity system.
-		// TODO(issues/144): adjust cluster endpoints once have functioning roles
-		// implemented.
-		InsecureSkipTLSVerify: true,
-		Server:                u.String(),
-		ProxyURL:              opts.ProxyURL(),
+		CertificateAuthorityData: pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: ca.Raw}),
+		TLSServerName:            pinnedName,
+		Server:                   u.String(),
+		ProxyURL:                 opts.ProxyURL(),
 	}
 
 	config.Contexts[configName] = &clientapi.Context{
@@ -248,7 +310,7 @@ change users.metropolis.exec.command to the required path (or just metroctl if u
 		config.CurrentContext = configName
 	}
 
-	if err := clientcmd.ModifyConfig(ca, *config, true); err != nil {
+	if err := clientcmd.ModifyConfig(po, *config, true); err != nil {
 		return fmt.Errorf("modifying config failed: %w", err)
 	}
 	return nil
@@ -317,4 +379,16 @@ func (c *ConnectOptions) ProxyURL() string {
 	u.Scheme = "socks5"
 	u.Host = c.ProxyServer
 	return u.String()
+}
+
+func (c *ConnectOptions) Dial(network, addr string) (net.Conn, error) {
+	if c.ProxyServer != "" {
+		socksDialer, err := proxy.SOCKS5("tcp", c.ProxyServer, nil, proxy.Direct)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build a SOCKS dialer: %w", err)
+		}
+		return socksDialer.Dial(network, addr)
+	} else {
+		return net.Dial(network, addr)
+	}
 }
