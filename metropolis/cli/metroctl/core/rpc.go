@@ -48,7 +48,7 @@ func DialCluster(ctx context.Context, opkey ed25519.PrivateKey, ocert *x509.Cert
 	}
 
 	if ocert == nil {
-		creds, err := rpc.NewEphemeralCredentials(opkey, nil)
+		creds, err := rpc.NewEphemeralCredentials(opkey, rpc.WantInsecure())
 		if err != nil {
 			return nil, fmt.Errorf("while building ephemeral credentials: %v", err)
 		}

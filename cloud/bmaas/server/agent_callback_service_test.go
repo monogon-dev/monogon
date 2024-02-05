@@ -58,7 +58,7 @@ func TestAgentCallbackService(t *testing.T) {
 	}
 
 	heartbeat := func(mid uuid.UUID) error {
-		creds, err := rpc.NewEphemeralCredentials(priv, nil)
+		creds, err := rpc.NewEphemeralCredentials(priv, rpc.WantInsecure())
 		if err != nil {
 			t.Fatalf("could not generate ephemeral credentials: %v", err)
 		}
@@ -136,7 +136,7 @@ func TestOSInstallationFlow(t *testing.T) {
 	}
 
 	heartbeat := func(mid uuid.UUID, report *apb.OSInstallationReport) (*apb.AgentHeartbeatResponse, error) {
-		creds, err := rpc.NewEphemeralCredentials(priv, nil)
+		creds, err := rpc.NewEphemeralCredentials(priv, rpc.WantInsecure())
 		if err != nil {
 			t.Fatalf("could not generate ephemeral credentials: %v", err)
 		}

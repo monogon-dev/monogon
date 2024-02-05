@@ -58,7 +58,7 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 		return fmt.Errorf("no remote node available, cannot join cluster")
 	}
 
-	ephCreds, err := rpc.NewEphemeralCredentials(jpriv, ca)
+	ephCreds, err := rpc.NewEphemeralCredentials(jpriv, rpc.WantRemoteCluster(ca))
 	if err != nil {
 		return fmt.Errorf("could not create ephemeral credentials: %w", err)
 	}

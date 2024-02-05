@@ -580,7 +580,7 @@ type NodeInCluster struct {
 func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certificate, *NodeInCluster, error) {
 	// Dial external service.
 	remote := fmt.Sprintf("10.1.0.2:%s", node.CuratorServicePort.PortString())
-	initCreds, err := rpc.NewEphemeralCredentials(InsecurePrivateKey, nil)
+	initCreds, err := rpc.NewEphemeralCredentials(InsecurePrivateKey, rpc.WantInsecure())
 	if err != nil {
 		return nil, nil, fmt.Errorf("NewEphemeralCredentials: %w", err)
 	}

@@ -214,7 +214,7 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 	}
 
 	// Create an ephemeral node gRPC client for the 'other node'.
-	otherEphCreds, err := rpc.NewEphemeralCredentials(otherPriv, ca)
+	otherEphCreds, err := rpc.NewEphemeralCredentials(otherPriv, rpc.WantRemoteCluster(ca))
 	if err != nil {
 		t.Fatalf("NewEphemeralCredentials: %v", err)
 	}
@@ -789,7 +789,7 @@ func TestJoin(t *testing.T) {
 	withLocalDialer := grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
 		return cl.curatorLis.Dial()
 	})
-	ephCreds, err := rpc.NewEphemeralCredentials(jpriv, cl.ca)
+	ephCreds, err := rpc.NewEphemeralCredentials(jpriv, rpc.WantRemoteCluster(cl.ca))
 	if err != nil {
 		t.Fatalf("NewEphemeralCredentials: %v", err)
 	}
@@ -1723,7 +1723,7 @@ func TestClusterTPMModeSetting(t *testing.T) {
 
 			// Node registered as expected. Now make sure it can only join with the same seal
 			// state as it was supposed to use.
-			ephCreds, err := rpc.NewEphemeralCredentials(nodeJoinPriv, cl.ca)
+			ephCreds, err := rpc.NewEphemeralCredentials(nodeJoinPriv, rpc.WantRemoteCluster(cl.ca))
 			if err != nil {
 				t.Fatalf("NewEphemeralCredentials: %v", err)
 			}

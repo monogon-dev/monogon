@@ -106,7 +106,7 @@ func TestExternalServerSecurity(t *testing.T) {
 		t.Fatalf("GenerateKey: %v", err)
 	}
 
-	ephCreds, err := NewEphemeralCredentials(sk, eph.CA)
+	ephCreds, err := NewEphemeralCredentials(sk, WantRemoteCluster(eph.CA))
 	if err != nil {
 		t.Fatalf("NewEphemeralCredentials: %v", err)
 	}

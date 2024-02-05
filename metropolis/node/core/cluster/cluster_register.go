@@ -96,7 +96,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 		return fmt.Errorf("no remote node available, cannot register into cluster")
 	}
 
-	ephCreds, err := rpc.NewEphemeralCredentials(priv, ca)
+	ephCreds, err := rpc.NewEphemeralCredentials(priv, rpc.WantRemoteCluster(ca))
 	if err != nil {
 		return fmt.Errorf("could not create ephemeral credentials: %w", err)
 	}

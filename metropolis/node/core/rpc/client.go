@@ -73,10 +73,10 @@ func verifyFail(err error) verifyPeerCertificate {
 //  2. Escrow of initial owner credentials into a proper manager
 //     certificate
 //
-// If 'ca' is given, the remote side will be cryptographically verified to be a
-// node that's part of the cluster represented by the ca. Otherwise, no
-// verification is performed and this function is unsafe.
-func NewEphemeralCredentials(private ed25519.PrivateKey, ca *x509.Certificate) (credentials.TransportCredentials, error) {
+// The given opts can be used to lock down the remote side of the connection, eg.
+// expecting a given cluster CA certificate or disabling remote side verification
+// by using WantInsecure().
+func NewEphemeralCredentials(private ed25519.PrivateKey, opts ...CredentialsOpt) (credentials.TransportCredentials, error) {
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		NotBefore:    time.Now(),
@@ -94,24 +94,19 @@ func NewEphemeralCredentials(private ed25519.PrivateKey, ca *x509.Certificate) (
 		Certificate: [][]byte{certificateBytes},
 		PrivateKey:  private,
 	}
-	var opts []AuthenticatedCredentialsOpt
-	if ca != nil {
-		opts = append(opts, WantRemoteCluster(ca))
-	} else {
-		opts = append(opts, WantInsecure())
-	}
+	opts = append(opts)
 	return NewAuthenticatedCredentials(certificate, opts...), nil
 }
 
-// AuthenticatedCredentialsOpt are created using WantXXX functions and used in
-// NewAuthenticatedCredentials.
-type AuthenticatedCredentialsOpt struct {
+// CredentialsOpt are created using WantXXX functions and used in
+// NewCredentials.
+type CredentialsOpt struct {
 	wantCA       *x509.Certificate
 	wantNodeID   string
 	insecureOkay bool
 }
 
-func (a *AuthenticatedCredentialsOpt) merge(o *AuthenticatedCredentialsOpt) {
+func (a *CredentialsOpt) merge(o *CredentialsOpt) {
 	if a.wantNodeID == "" && o.wantNodeID != "" {
 		a.wantNodeID = o.wantNodeID
 	}
@@ -129,58 +124,62 @@ func (a *AuthenticatedCredentialsOpt) merge(o *AuthenticatedCredentialsOpt) {
 //
 // This is the bare minimum option required to implement secure connections to
 // clusters.
-func WantRemoteCluster(ca *x509.Certificate) AuthenticatedCredentialsOpt {
-	return AuthenticatedCredentialsOpt{
+func WantRemoteCluster(ca *x509.Certificate) CredentialsOpt {
+	return CredentialsOpt{
 		wantCA: ca,
 	}
 }
 
 // WantRemoteNode enables the verification of the remote node identity when using
-// NewAuthenticatedCredentials. If the connection is not terminated at the node
+// NewCredentials. If the connection is not terminated at the node
 // ID 'id', an error will be returned. For this function to work,
 // WantRemoteCluster must also be set.
-func WantRemoteNode(id string) AuthenticatedCredentialsOpt {
-	return AuthenticatedCredentialsOpt{
+func WantRemoteNode(id string) CredentialsOpt {
+	return CredentialsOpt{
 		wantNodeID: id,
 	}
 }
 
 // WantInsecure disables the verification of the remote side of the connection
-// via NewAuthenticatedCredentials. This is unsafe.
-func WantInsecure() AuthenticatedCredentialsOpt {
-	return AuthenticatedCredentialsOpt{
+// via NewCredentials. This is unsafe.
+func WantInsecure() CredentialsOpt {
+	return CredentialsOpt{
 		insecureOkay: true,
 	}
 }
 
-// NewAuthenticatedCredentials returns gRPC TransportCredentials that can be
-// used to dial a cluster with a given TLS certificate (from node or manager
+// NewAuthenticatedCredentials returns gRPC TransportCredentials that can be used
+// to dial a cluster with a given TLS certificate (from node or manager
 // credentials).
 //
-// The provided AuthenticatedCredentialsOpt specify the verification of the
-// remote side of the connection. When connecting to a cluster (any node), use
-// WantRemoteCluster. If you also want to verify the connection to a particular
-// node, specify WantRemoteNode alongside it. If no verification should be
-// performed use WantInsecure.
+// The provided CredentialsOpt specify the verification of the remote side of the
+// connection. When connecting to a cluster (any node), use WantRemoteCluster. If
+// you also want to verify the connection to a particular node, specify
+// WantRemoteNode alongside it. If no verification should be performed use
+// WantInsecure.
 //
 // The given options are parsed on a first-wins basis.
-func NewAuthenticatedCredentials(cert tls.Certificate, opts ...AuthenticatedCredentialsOpt) credentials.TransportCredentials {
+func NewAuthenticatedCredentials(cert tls.Certificate, opts ...CredentialsOpt) credentials.TransportCredentials {
 	config := &tls.Config{
 		Certificates:       []tls.Certificate{cert},
 		InsecureSkipVerify: true,
 	}
 
-	var merged AuthenticatedCredentialsOpt
+	var merged CredentialsOpt
 	for _, o := range opts {
 		merged.merge(&o)
 	}
 
 	if merged.insecureOkay {
-		if merged.wantNodeID != "" || merged.wantCA != nil {
-			config.VerifyPeerCertificate = verifyFail(fmt.Errorf("WantInsecure specified alongside WantRemoteNode/WantRemoteCluster"))
+		if merged.wantNodeID != "" {
+			config.VerifyPeerCertificate = verifyFail(fmt.Errorf("WantInsecure specified alongside WantRemoteNode"))
+		} else if merged.wantCA != nil {
+			config.VerifyPeerCertificate = verifyFail(fmt.Errorf("WantInsecure specified alongside WantRemoteCluster"))
 		}
 	} else {
 		switch {
+		case merged.wantNodeID == "" && merged.wantCA == nil:
+			config.VerifyPeerCertificate = verifyFail(fmt.Errorf("WantRemoteNode/WantRemoteCluster/WantInsecure not specified"))
 		case merged.wantNodeID != "" && merged.wantCA == nil:
 			config.VerifyPeerCertificate = verifyFail(fmt.Errorf("WantRemoteNode also requires WantRemoteCluster"))
 		case merged.wantCA == nil:
