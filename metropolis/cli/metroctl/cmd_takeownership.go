@@ -31,6 +31,12 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 	if len(flags.clusterEndpoints) != 1 {
 		log.Fatalf("takeownership requires a single cluster endpoint to be provided with the --endpoints parameter.")
 	}
+	ctx := clicontext.WithInterrupt(context.Background())
+
+	ca, err := core.GetClusterCAWithTOFU(ctx, connectOptions())
+	if err != nil {
+		log.Fatalf("Could not retrieve cluster CA: %v", err)
+	}
 
 	// Retrieve the cluster owner's private key, and use it to construct
 	// ephemeral credentials. Then, dial the cluster.
@@ -41,12 +47,11 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 	if err != nil {
 		log.Fatalf("Couldn't get owner's key: %v", err)
 	}
-	ctx := clicontext.WithInterrupt(context.Background())
 	opts, err := core.DialOpts(ctx, connectOptions())
 	if err != nil {
 		log.Fatalf("While configuring cluster dial opts: %v", err)
 	}
-	creds, err := rpc.NewEphemeralCredentials(opk, rpc.WantInsecure())
+	creds, err := rpc.NewEphemeralCredentials(opk, rpc.WantRemoteCluster(ca))
 	if err != nil {
 		log.Fatalf("While generating ephemeral credentials: %v", err)
 	}

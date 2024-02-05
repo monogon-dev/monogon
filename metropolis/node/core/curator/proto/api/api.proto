@@ -342,6 +342,17 @@ service CuratorLocal {
             allow_unauthenticated: true
         };
     }
+
+    // Returns the cluster CA certificate.
+    rpc GetCACertificate(GetCACertificateRequest) returns (GetCACertificateResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            // This call is used by metroctl to perform CA certificate TOFU when
+            // the cluster is being taken over. At that point the request is
+            // unauthenticated. There's no private data in the certificate, so
+            // let's just make it publicly available.
+            allow_unauthenticated: true
+        };
+    }
 }
 
 message GetCurrentLeaderRequest {
@@ -362,6 +373,16 @@ message GetCurrentLeaderResponse {
     int32 leader_port = 3;
     // this_node_id is the Node ID of the node which sent this response.
     string this_node_id = 4;
+}
+
+message GetCACertificateRequest {
+}
+
+message GetCACertificateResponse {
+    // DER-encoded (but not PEM armored) certificate of the Kubernetes
+    // 'identity' CA, which is used to authenticate services users. The
+    // certificates issued below are signed by this CA.
+    bytes identity_ca_certificate = 1;
 }
 
 message IssueCertificateRequest {

@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "core",
     srcs = [
+        "ca_tofu.go",
         "config.go",
         "core.go",
         "install.go",
@@ -12,6 +13,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//metropolis/node",
+        "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/rpc",
         "//metropolis/node/core/rpc/resolver",
         "//metropolis/pkg/blockdev",
@@ -22,6 +24,7 @@ go_library(
         "@io_k8s_client_go//tools/clientcmd",
         "@io_k8s_client_go//tools/clientcmd/api",
         "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//credentials",
         "@org_golang_google_protobuf//proto",
         "@org_golang_x_net//proxy",
     ],

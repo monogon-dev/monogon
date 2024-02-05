@@ -1,19 +1,24 @@
 package curator
 
 import (
+	"context"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
-	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event/memory"
+
+	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 )
 
 type curatorFollower struct {
 	etcd       client.Namespaced
 	followerID string
+	node       identity.Node
 
 	status *memory.Value[*electionStatus]
 }
@@ -73,4 +78,10 @@ func (f *curatorFollower) GetCurrentLeader(_ *cpb.GetCurrentLeaderRequest, srv c
 			return err
 		}
 	}
+}
+
+func (f *curatorFollower) GetCACertificate(ctx context.Context, _ *cpb.GetCACertificateRequest) (*cpb.GetCACertificateResponse, error) {
+	return &cpb.GetCACertificateResponse{
+		IdentityCaCertificate: f.node.ClusterCA().Raw,
+	}, nil
 }

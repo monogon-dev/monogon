@@ -3,6 +3,7 @@ package core
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -26,11 +27,16 @@ const (
 	// OwnerCertificateFileName is the filename of the owner certificate in a
 	// metroctl config directory.
 	OwnerCertificateFileName = "owner.pem"
+	// CACertificateFileName is the filename of the cluster CA certificate in a
+	// metroctl config directory.
+	CACertificateFileName = "ca.pem"
 )
 
 // NoCredentialsError indicates that the requested datum (eg. owner key or owner
 // certificate) is not present in the requested directory.
 var NoCredentialsError = errors.New("owner certificate or key does not exist")
+
+var NoCACertificateError = errors.New("no cluster CA certificate while secure connection was requested")
 
 // A PEM block type for a Metropolis initial owner private key
 const ownerKeyType = "METROPOLIS INITIAL OWNER PRIVATE KEY"
@@ -63,6 +69,16 @@ func WriteOwnerKey(path string, priv ed25519.PrivateKey) error {
 	pemPriv := pem.EncodeToMemory(&pem.Block{Type: ownerKeyType, Bytes: priv})
 	if err := os.WriteFile(filepath.Join(path, OwnerKeyFileName), pemPriv, 0600); err != nil {
 		return fmt.Errorf("when saving key: %w", err)
+	}
+	return nil
+}
+
+// WriteCACertificate writes the given der-encoded X509 certificate to the given
+// metorctl configuration directory path.
+func WriteCACertificate(path string, der []byte) error {
+	pemCert := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+	if err := os.WriteFile(filepath.Join(path, CACertificateFileName), pemCert, 0600); err != nil {
+		return fmt.Errorf("when saving CA certificate: %w", err)
 	}
 	return nil
 }
@@ -133,6 +149,43 @@ func GetOwnerCredentials(path string) (cert *x509.Certificate, key ed25519.Priva
 	return
 }
 
+// GetOwnerTLSCredentials returns a client TLS Certificate for authenticating to
+// the metropolis cluster, based on metroctl configuration at a given path.
+func GetOwnerTLSCredentials(path string) (*tls.Certificate, error) {
+	ocert, opkey, err := GetOwnerCredentials(path)
+	if err != nil {
+		return nil, err
+	}
+	return &tls.Certificate{
+		Certificate: [][]byte{ocert.Raw},
+		PrivateKey:  opkey,
+	}, nil
+}
+
+// GetClusterCA returns the saved cluster CA certificate at the given metoctl
+// configuration path. This does not perform TOFU if the certificate is not
+// present.
+func GetClusterCA(path string) (cert *x509.Certificate, err error) {
+	caCertPEM, err := os.ReadFile(filepath.Join(path, CACertificateFileName))
+	if os.IsNotExist(err) {
+		return nil, NoCACertificateError
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to load CA certificate: %w", err)
+	}
+	block, _ := pem.Decode(caCertPEM)
+	if block == nil {
+		return nil, errors.New("ca.pem contains invalid PEM armoring")
+	}
+	if block.Type != "CERTIFICATE" {
+		return nil, fmt.Errorf("ca.pem contains a PEM block that's not a CERTIFICATE")
+	}
+	cert, err = x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("ca.pem contains an invalid X.509 certificate: %w", err)
+	}
+	return
+}
+
 // InstallKubeletConfig modifies the default kubelet kubeconfig of the host
 // system to be able to connect via a metroctl (and an associated ConnectOptions)
 // to a Kubernetes apiserver at IP address/hostname 'server'.
@@ -172,6 +225,7 @@ change users.metropolis.exec.command to the required path (or just metroctl if u
 	var u url.URL
 	u.Scheme = "https"
 	u.Host = net.JoinHostPort(server, node.KubernetesAPIWrappedPort.PortString())
+
 	config.Clusters[configName] = &clientapi.Cluster{
 		// MVP: This is insecure, but making this work would be wasted effort
 		// as all of it will be replaced by the identity system.
@@ -222,6 +276,10 @@ type ConnectOptions struct {
 	// ResolverLogger can be set to enable verbose logging of the Metropolis RPC
 	// resolver layer.
 	ResolverLogger ResolverLogger
+	// TOFU overrides the trust-on-first-use behaviour for CA certificates for the
+	// connection. If not set, TerminalTOFU is used which will interactively ask the
+	// user to accept a CA certificate using os.Stdin/Stdout.
+	TOFU CertificateTOFU
 }
 
 // ToFlags returns the metroctl flags corresponding to the options described by

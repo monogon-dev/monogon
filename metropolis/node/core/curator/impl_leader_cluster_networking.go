@@ -155,3 +155,9 @@ func (l *leaderCurator) UpdateNodeClusterNetworking(ctx context.Context, req *ip
 
 	return &ipb.UpdateNodeClusterNetworkingResponse{}, nil
 }
+
+func (l *curatorLeader) GetCACertificate(ctx context.Context, _ *ipb.GetCACertificateRequest) (*ipb.GetCACertificateResponse, error) {
+	return &ipb.GetCACertificateResponse{
+		IdentityCaCertificate: l.node.ClusterCA().Raw,
+	}, nil
+}

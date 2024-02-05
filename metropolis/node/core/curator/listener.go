@@ -118,6 +118,7 @@ func (l *listener) run(ctx context.Context) error {
 			etcd:       l.etcd,
 			followerID: l.node.ID(),
 			status:     l.status,
+			node:       l.node.Node,
 		}
 		cpb.RegisterCuratorLocalServer(srv, follower)
 	}

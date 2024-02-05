@@ -23,12 +23,17 @@ func dialAuthenticated(ctx context.Context) *grpc.ClientConn {
 	if len(flags.clusterEndpoints) == 0 {
 		log.Fatal("Please provide at least one cluster endpoint using the --endpoint parameter.")
 	}
+
+	ca, err := core.GetClusterCAWithTOFU(ctx, connectOptions())
+	if err != nil {
+		log.Fatalf("Failed to get cluster CA: %v", err)
+	}
+
 	tlsc := tls.Certificate{
 		Certificate: [][]byte{ocert.Raw},
 		PrivateKey:  opkey,
 	}
-	// TODO(q3k): check remote CA
-	creds := rpc.NewAuthenticatedCredentials(tlsc, rpc.WantInsecure())
+	creds := rpc.NewAuthenticatedCredentials(tlsc, rpc.WantRemoteCluster(ca))
 	opts, err := core.DialOpts(ctx, connectOptions())
 	if err != nil {
 		log.Fatalf("While configuring dial options: %v", err)
@@ -37,7 +42,7 @@ func dialAuthenticated(ctx context.Context) *grpc.ClientConn {
 
 	cc, err := grpc.Dial(resolver.MetropolisControlAddress, opts...)
 	if err != nil {
-		log.Fatalf("While dialing the cluster: %v", err)
+		log.Fatalf("While dialing cluster: %v", err)
 	}
 	return cc
 }

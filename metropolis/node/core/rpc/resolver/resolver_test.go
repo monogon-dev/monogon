@@ -94,6 +94,12 @@ func (t *fakeCuratorClusterAware) GetCurrentLeader(req *ipb.GetCurrentLeaderRequ
 	return ctx.Err()
 }
 
+func (t *fakeCuratorClusterAware) GetCACertificate(ctx context.Context, req *ipb.GetCACertificateRequest) (*ipb.GetCACertificateResponse, error) {
+	return &ipb.GetCACertificateResponse{
+		IdentityCaCertificate: []byte("not a real certificate, a figment of resolver_test.go's imagination"),
+	}, nil
+}
+
 // TestResolverSimple exercises the happy path of the gRPC ResolverBuilder,
 // checking that a single node can be used to bootstrap multiple nodes from, and
 // ensuring that nodes are being dialed in a round-robin fashion.

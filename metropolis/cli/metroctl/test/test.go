@@ -125,6 +125,7 @@ func TestMetroctl(t *testing.T) {
 	commonOpts := []string{
 		"--proxy=" + socksRemote,
 		"--config=.",
+		"--insecure-accept-and-persist-first-encountered-ca",
 	}
 
 	var endpointOpts []string

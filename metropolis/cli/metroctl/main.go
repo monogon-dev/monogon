@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"crypto/x509"
 	"log"
 	"path/filepath"
 
@@ -35,6 +37,10 @@ type metroctlFlags struct {
 	// output is an optional output file path the resulting data will be saved
 	// at. If unspecified, the data will be written to stdout.
 	output string
+	// acceptAnyCA will persist the first encountered (while connecting) CA
+	// certificate of the cluster as the trusted CA certificate for this cluster.
+	// This is unsafe and should only be used for testing.
+	acceptAnyCA bool
 }
 
 var flags metroctlFlags
@@ -47,6 +53,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flags.format, "format", "plaintext", "Data output format")
 	rootCmd.PersistentFlags().StringVar(&flags.filter, "filter", "", "The object filter applied to the output data")
 	rootCmd.PersistentFlags().StringVarP(&flags.output, "output", "o", "", "Redirects output to the specified file")
+	rootCmd.PersistentFlags().BoolVar(&flags.acceptAnyCA, "insecure-accept-and-persist-first-encountered-ca", false, "Accept the first encountered CA while connecting as the trusted CA for future metroctl connections with this config path. This is very insecure and should only be used for testing.")
 }
 
 // rpcLogger passes through the cluster resolver logs, if "--verbose" flag was
@@ -61,13 +68,24 @@ func main() {
 	cobra.CheckErr(rootCmd.Execute())
 }
 
+type acceptall struct{}
+
+func (a *acceptall) Ask(ctx context.Context, _ *core.ConnectOptions, _ *x509.Certificate) (bool, error) {
+	return true, nil
+}
+
 // connectOptions returns core.ConnectOptions as defined by the metroctl flags
 // currently set.
 func connectOptions() *core.ConnectOptions {
+	var tofu core.CertificateTOFU
+	if flags.acceptAnyCA {
+		tofu = &acceptall{}
+	}
 	return &core.ConnectOptions{
 		ConfigPath:     flags.configPath,
 		ProxyServer:    flags.proxyAddr,
 		Endpoints:      flags.clusterEndpoints,
 		ResolverLogger: rpcLogger,
+		TOFU:           tofu,
 	}
 }

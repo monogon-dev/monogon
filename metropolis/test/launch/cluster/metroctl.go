@@ -1,6 +1,8 @@
 package cluster
 
 import (
+	"context"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"os"
@@ -26,6 +28,12 @@ func MetroctlRunfilePath() (string, error) {
 	return path, nil
 }
 
+type acceptall struct{}
+
+func (a *acceptall) Ask(ctx context.Context, _ *metroctl.ConnectOptions, _ *x509.Certificate) (bool, error) {
+	return true, nil
+}
+
 // ConnectOptions returns metroctl.ConnectOptions that describe connectivity to
 // the launched cluster.
 func (c *Cluster) ConnectOptions() *metroctl.ConnectOptions {
@@ -40,6 +48,7 @@ func (c *Cluster) ConnectOptions() *metroctl.ConnectOptions {
 		ConfigPath:  c.metroctlDir,
 		ProxyServer: net.JoinHostPort("127.0.0.1", fmt.Sprintf("%d", c.Ports[SOCKSPort])),
 		Endpoints:   endpoints,
+		TOFU:        &acceptall{},
 	}
 }
 
