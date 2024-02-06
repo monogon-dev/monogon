@@ -30,15 +30,16 @@ import (
 	"testing"
 	"time"
 
-	diskfs "github.com/diskfs/go-diskfs"
+	"github.com/bazelbuild/rules_go/go/runfiles"
+	"github.com/diskfs/go-diskfs"
 	"github.com/diskfs/go-diskfs/disk"
 	"github.com/diskfs/go-diskfs/partition/gpt"
 
+	"source.monogon.dev/metropolis/proto/api"
+
 	mctl "source.monogon.dev/metropolis/cli/metroctl/core"
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	"source.monogon.dev/metropolis/pkg/cmd"
-	"source.monogon.dev/metropolis/proto/api"
 )
 
 // Each variable in this block points to either a test dependency or a side
@@ -123,8 +124,24 @@ func checkEspContents(image *disk.Disk) error {
 func TestMain(m *testing.M) {
 	installerImage = filepath.Join(os.Getenv("TEST_TMPDIR"), "installer.img")
 
-	installer := datafile.MustGet("metropolis/installer/test/kernel.efi")
-	bundle := datafile.MustGet("metropolis/installer/test/testos/testos_bundle.zip")
+	installerPath, err := runfiles.Rlocation("_main/metropolis/installer/test/kernel.efi")
+	if err != nil {
+		log.Fatal(err)
+	}
+	installer, err := os.ReadFile(installerPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bundlePath, err := runfiles.Rlocation("_main/metropolis/installer/test/testos/testos_bundle.zip")
+	if err != nil {
+		log.Fatal(err)
+	}
+	bundle, err := os.ReadFile(bundlePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	iargs := mctl.MakeInstallerImageArgs{
 		Installer:  bytes.NewReader(installer),
 		TargetPath: installerImage,

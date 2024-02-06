@@ -23,9 +23,9 @@ go_test(
     data = ["@com_github_dosfstools_dosfstools//:fsck"],
     embed = [":fat32"],
     deps = [
-        "//metropolis/cli/pkg/datafile",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@org_golang_x_mod//semver",
         "@org_golang_x_sys//unix",
     ],

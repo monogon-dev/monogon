@@ -9,10 +9,10 @@ import (
 	"path"
 	"sort"
 
+	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/kballard/go-shellquote"
 
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
 )
 
 const metroctlRunfile = "metropolis/cli/metroctl/metroctl_/metroctl"
@@ -21,7 +21,7 @@ const metroctlRunfile = "metropolis/cli/metroctl/metroctl_/metroctl"
 // if the built target depends on //metropolis/cli/metroctl. Otherwise, an error
 // is returned.
 func MetroctlRunfilePath() (string, error) {
-	path, err := datafile.ResolveRunfile(metroctlRunfile)
+	path, err := runfiles.Rlocation(metroctlRunfile)
 	if err != nil {
 		return "", fmt.Errorf("//metropolis/cli/metroctl not found in runfiles, did you include it as a data dependency? error: %w", err)
 	}

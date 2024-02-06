@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
+	"github.com/bazelbuild/rules_go/go/runfiles"
 )
 
 func testWithFsck(t *testing.T, rootInode Inode, opts Options) {
 	t.Helper()
-	fsckPath, err := datafile.ResolveRunfile("external/com_github_dosfstools_dosfstools/fsck")
+	fsckPath, err := runfiles.Rlocation("com_github_dosfstools_dosfstools/fsck")
 	if err != nil {
 		t.Fatalf("unable to get path to fsck: %v", err)
 	}

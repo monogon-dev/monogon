@@ -25,6 +25,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/multierr"
 	"golang.org/x/net/proxy"
@@ -39,7 +40,6 @@ import (
 	cpb "source.monogon.dev/metropolis/proto/common"
 
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
@@ -130,7 +130,7 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 	}
 
 	// Initialize the node's storage with a prebuilt image.
-	si, err := datafile.ResolveRunfile("metropolis/node/image.img")
+	si, err := runfiles.Rlocation("_main/metropolis/node/image.img")
 	if err != nil {
 		return nil, fmt.Errorf("while resolving a path: %w", err)
 	}
@@ -141,7 +141,7 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 	}
 
 	// Initialize the OVMF firmware variables file.
-	sv, err := datafile.ResolveRunfile("external/edk2/OVMF_VARS.fd")
+	sv, err := runfiles.Rlocation("edk2/OVMF_VARS.fd")
 	if err != nil {
 		return nil, fmt.Errorf("while resolving a path: %w", err)
 	}
@@ -155,7 +155,7 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 	if err := os.Mkdir(tpmt, 0o755); err != nil {
 		return nil, fmt.Errorf("while creating the TPM directory: %w", err)
 	}
-	tpms, err := datafile.ResolveRunfile("metropolis/node/tpm")
+	tpms, err := runfiles.Rlocation("_main/metropolis/node/tpm")
 	if err != nil {
 		return nil, fmt.Errorf("while resolving a path: %w", err)
 	}
@@ -165,7 +165,7 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 	}
 	for _, file := range tpmf {
 		name := file.Name()
-		src, err := datafile.ResolveRunfile(filepath.Join(tpms, name))
+		src, err := runfiles.Rlocation(filepath.Join(tpms, name))
 		if err != nil {
 			return nil, fmt.Errorf("while resolving a path: %w", err)
 		}

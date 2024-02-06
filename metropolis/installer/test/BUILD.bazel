@@ -21,13 +21,13 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//metropolis/cli/metroctl/core",
-        "//metropolis/cli/pkg/datafile",
         "//metropolis/node/build/mkimage/osimage",
         "//metropolis/pkg/cmd",
         "//metropolis/proto/api",
         "@com_github_diskfs_go_diskfs//:go-diskfs",
         "@com_github_diskfs_go_diskfs//disk",
         "@com_github_diskfs_go_diskfs//partition/gpt",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
     ],
 )
 

@@ -11,18 +11,20 @@ import (
 	"testing"
 	"time"
 
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
+	"github.com/bazelbuild/rules_go/go/runfiles"
+
+	mversion "source.monogon.dev/metropolis/version"
+
 	"source.monogon.dev/metropolis/pkg/cmd"
 	"source.monogon.dev/metropolis/test/launch/cluster"
 	"source.monogon.dev/metropolis/test/util"
-	mversion "source.monogon.dev/metropolis/version"
 	"source.monogon.dev/version"
 )
 
 // resolveMetroctl resolves metroctl filesystem path. It will return a correct
 // path, or terminate test execution.
 func resolveMetroctl() string {
-	path, err := datafile.ResolveRunfile("metropolis/cli/metroctl/metroctl_/metroctl")
+	path, err := runfiles.Rlocation("_main/metropolis/cli/metroctl/metroctl_/metroctl")
 	if err != nil {
 		log.Fatalf("Couldn't resolve metroctl binary: %v", err)
 	}

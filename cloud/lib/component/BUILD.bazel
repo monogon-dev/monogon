@@ -10,7 +10,6 @@ go_library(
     importpath = "source.monogon.dev/cloud/lib/component",
     visibility = ["//visibility:public"],
     deps = [
-        "//metropolis/cli/pkg/datafile",
         "//metropolis/pkg/pki",
         "@com_github_adrg_xdg//:xdg",
         "@com_github_cockroachdb_cockroach_go_v2//testserver",
@@ -21,6 +20,7 @@ go_library(
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_prometheus_client_golang//prometheus/collectors",
         "@com_github_prometheus_client_golang//prometheus/promhttp",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@io_k8s_klog_v2//:klog",
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//credentials",

@@ -15,9 +15,9 @@ go_test(
         "//metropolis/node/core/update/e2e/testos:testos_bundle_z",
     ],
     deps = [
-        "//metropolis/cli/pkg/datafile",
         "//metropolis/node/build/mkimage/osimage",
         "//metropolis/pkg/blkio",
         "//metropolis/pkg/blockdev",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
     ],
 )

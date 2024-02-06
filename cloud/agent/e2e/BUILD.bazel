@@ -12,11 +12,11 @@ go_test(
     deps = [
         "//cloud/agent/api",
         "//cloud/bmaas/server/api",
-        "//metropolis/cli/pkg/datafile",
         "//metropolis/pkg/pki",
         "//metropolis/proto/api",
         "@com_github_cavaliergopher_cpio//:cpio",
         "@com_github_klauspost_compress//zstd",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//credentials",
         "@org_golang_google_protobuf//proto",

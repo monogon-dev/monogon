@@ -16,7 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
+	"github.com/bazelbuild/rules_go/go/runfiles"
+
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	"source.monogon.dev/metropolis/pkg/blkio"
 	"source.monogon.dev/metropolis/pkg/blockdev"
@@ -142,12 +143,12 @@ func setup(t *testing.T) (*bundleServing, []string) {
 	}
 
 	m := http.NewServeMux()
-	bundleYPath, err := datafile.ResolveRunfile("metropolis/node/core/update/e2e/testos/testos_bundle_y.zip")
+	bundleYPath, err := runfiles.Rlocation("_main/metropolis/node/core/update/e2e/testos/testos_bundle_y.zip")
 	if err != nil {
 		t.Fatal(err)
 	}
 	b.bundlePaths["Y"] = bundleYPath
-	bundleZPath, err := datafile.ResolveRunfile("metropolis/node/core/update/e2e/testos/testos_bundle_z.zip")
+	bundleZPath, err := runfiles.Rlocation("_main/metropolis/node/core/update/e2e/testos/testos_bundle_z.zip")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,15 +181,15 @@ func setup(t *testing.T) (*bundleServing, []string) {
 	t.Cleanup(func() { os.Remove(rootDevPath) })
 	defer rootDisk.Close()
 
-	ovmfVarsPath, err := datafile.ResolveRunfile("external/edk2/OVMF_VARS.fd")
+	ovmfVarsPath, err := runfiles.Rlocation("edk2/OVMF_VARS.fd")
 	if err != nil {
 		t.Fatal(err)
 	}
-	ovmfCodePath, err := datafile.ResolveRunfile("external/edk2/OVMF_CODE.fd")
+	ovmfCodePath, err := runfiles.Rlocation("edk2/OVMF_CODE.fd")
 	if err != nil {
 		t.Fatal(err)
 	}
-	bootPath, err := datafile.ResolveRunfile("metropolis/node/core/update/e2e/testos/kernel_efi_x.efi")
+	bootPath, err := runfiles.Rlocation("_main/metropolis/node/core/update/e2e/testos/kernel_efi_x.efi")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,7 +198,7 @@ func setup(t *testing.T) (*bundleServing, []string) {
 		t.Fatal(err)
 	}
 	defer boot.Close()
-	systemXPath, err := datafile.ResolveRunfile("metropolis/node/core/update/e2e/testos/verity_rootfs_x.img")
+	systemXPath, err := runfiles.Rlocation("_main/metropolis/node/core/update/e2e/testos/verity_rootfs_x.img")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -207,7 +208,7 @@ func setup(t *testing.T) (*bundleServing, []string) {
 	}
 	defer system.Close()
 
-	abloaderPath, err := datafile.ResolveRunfile("metropolis/node/core/abloader/abloader_bin.efi")
+	abloaderPath, err := runfiles.Rlocation("_main/metropolis/node/core/abloader/abloader_bin.efi")
 	if err != nil {
 		t.Fatal(err)
 	}

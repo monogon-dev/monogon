@@ -9,14 +9,13 @@ import (
 	"os"
 	"sync"
 
+	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/cockroachdb/cockroach-go/v2/testserver"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/cockroachdb"
 	"github.com/golang-migrate/migrate/v4/source"
 	_ "github.com/lib/pq"
 	"k8s.io/klog/v2"
-
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
 )
 
 // CockroachConfig is the common configuration of a components' connection to
@@ -81,7 +80,7 @@ func (c *CockroachConfig) startInMemory(scheme string) string {
 		opts := []testserver.TestServerOpt{
 			testserver.SecureOpt(),
 		}
-		if path, err := datafile.ResolveRunfile("external/cockroach/cockroach"); err == nil {
+		if path, err := runfiles.Rlocation("cockroach/cockroach"); err == nil {
 			opts = append(opts, testserver.CockroachBinaryPathOpt(path))
 		} else {
 			if os.Getenv("TEST_TMPDIR") != "" {

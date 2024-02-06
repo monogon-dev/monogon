@@ -38,7 +38,6 @@ go_test(
     embed = [":e2e"],
     rundir = ".",
     deps = [
-        "//metropolis/cli/pkg/datafile",
         "//metropolis/node",
         "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
@@ -47,6 +46,7 @@ go_test(
         "//metropolis/test/launch",
         "//metropolis/test/launch/cluster",
         "//metropolis/test/util",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@io_k8s_api//core/v1:core",
         "@io_k8s_apimachinery//pkg/api/resource",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",

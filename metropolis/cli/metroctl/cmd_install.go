@@ -10,15 +10,16 @@ import (
 	"os"
 	"strings"
 
+	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/spf13/cobra"
+
+	"source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	"source.monogon.dev/metropolis/pkg/blkio"
 	"source.monogon.dev/metropolis/pkg/fat32"
-	"source.monogon.dev/metropolis/proto/api"
-	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 var installCmd = &cobra.Command{
@@ -53,9 +54,13 @@ type externalFile struct {
 
 func external(name, datafilePath string, flag *string) fat32.SizedReader {
 	if flag == nil || *flag == "" {
-		df, err := datafile.Get(datafilePath)
+		rPath, err := runfiles.Rlocation(datafilePath)
 		if err != nil {
 			log.Fatalf("No %s specified", name)
+		}
+		df, err := os.ReadFile(rPath)
+		if err != nil {
+			log.Fatalf("Cant read file: %v", err)
 		}
 		return bytes.NewReader(df)
 	}

@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bazelbuild/rules_go/go/runfiles"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/pkg/freeport"
 	"source.monogon.dev/metropolis/pkg/supervisor"
@@ -24,7 +24,7 @@ import (
 )
 
 func fakeExporter(name, value string) *Exporter {
-	path, _ := datafile.ResolveRunfile("metropolis/node/core/metrics/fake_exporter/fake_exporter_/fake_exporter")
+	path, _ := runfiles.Rlocation("_main/metropolis/node/core/metrics/fake_exporter/fake_exporter_/fake_exporter")
 
 	p, closer, err := freeport.AllocateTCPPort()
 	if err != nil {

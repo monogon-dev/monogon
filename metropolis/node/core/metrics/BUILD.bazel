@@ -28,12 +28,12 @@ go_test(
     ],
     embed = [":metrics"],
     deps = [
-        "//metropolis/cli/pkg/datafile",
         "//metropolis/node",
         "//metropolis/node/core/curator/proto/api",
         "//metropolis/pkg/freeport",
         "//metropolis/pkg/supervisor",
         "//metropolis/test/util",
         "@com_zx2c4_golang_wireguard_wgctrl//wgtypes",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
     ],
 )

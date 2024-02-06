@@ -33,18 +33,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bazelbuild/rules_go/go/runfiles"
 	"google.golang.org/grpc"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
+	apb "source.monogon.dev/metropolis/proto/api"
+
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/localregistry"
-	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/launch/cluster"
 	"source.monogon.dev/metropolis/test/util"
@@ -71,11 +72,18 @@ func TestE2ECore(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), globalTestTimeout)
 	defer cancel()
 
-	lr, err := localregistry.FromBazelManifest(datafile.MustGet("metropolis/test/e2e/testimages_manifest.prototxt"))
+	rPath, err := runfiles.Rlocation("_main/metropolis/test/e2e/testimages_manifest.prototxt")
+	if err != nil {
+		t.Fatalf("Resolving registry manifest failed: %v", err)
+	}
+	df, err := os.ReadFile(rPath)
+	if err != nil {
+		t.Fatalf("Reading registry manifest failed: %v", err)
+	}
+	lr, err := localregistry.FromBazelManifest(df)
 	if err != nil {
 		t.Fatalf("Creating test image registry failed: %v", err)
 	}
-
 	// Launch cluster.
 	clusterOptions := cluster.ClusterOptions{
 		NumNodes:      2,
@@ -190,7 +198,15 @@ func TestE2EKubernetes(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), globalTestTimeout)
 	defer cancel()
 
-	lr, err := localregistry.FromBazelManifest(datafile.MustGet("metropolis/test/e2e/testimages_manifest.prototxt"))
+	rPath, err := runfiles.Rlocation("_main/metropolis/test/e2e/testimages_manifest.prototxt")
+	if err != nil {
+		t.Fatalf("Resolving registry manifest failed: %v", err)
+	}
+	df, err := os.ReadFile(rPath)
+	if err != nil {
+		t.Fatalf("Reading registry manifest failed: %v", err)
+	}
+	lr, err := localregistry.FromBazelManifest(df)
 	if err != nil {
 		t.Fatalf("Creating test image registry failed: %v", err)
 	}

@@ -13,13 +13,13 @@ go_test(
     ],
     rundir = ".",
     deps = [
-        "//metropolis/cli/pkg/datafile",
         "//metropolis/node",
         "//metropolis/pkg/cmd",
         "//metropolis/test/launch/cluster",
         "//metropolis/test/util",
         "//metropolis/version",
         "//version",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
     ],
 )
 
@@ -29,11 +29,11 @@ go_library(
     importpath = "source.monogon.dev/metropolis/cli/metroctl/test",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/cli/pkg/datafile",
         "//metropolis/pkg/cmd",
         "//metropolis/test/launch/cluster",
         "//metropolis/test/util",
         "//metropolis/version",
         "//version",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
     ],
 )

@@ -15,12 +15,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/cloud/agent/api"
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
+
 	"source.monogon.dev/metropolis/pkg/fat32"
 	"source.monogon.dev/metropolis/pkg/freeport"
 )
@@ -73,15 +74,15 @@ func TestE2E(t *testing.T) {
 	if err := fat32.WriteFS(cloudInitDataFile, rootInode, fat32.Options{Label: "cidata"}); err != nil {
 		t.Fatal(err)
 	}
-	cloudImagePath, err := datafile.ResolveRunfile("external/debian_11_cloudimage/file/downloaded")
+	cloudImagePath, err := runfiles.Rlocation("debian_11_cloudimage/file/downloaded")
 	if err != nil {
 		t.Fatal(err)
 	}
-	ovmfVarsPath, err := datafile.ResolveRunfile("external/edk2/OVMF_VARS.fd")
+	ovmfVarsPath, err := runfiles.Rlocation("edk2/OVMF_VARS.fd")
 	if err != nil {
 		t.Fatal(err)
 	}
-	ovmfCodePath, err := datafile.ResolveRunfile("external/edk2/OVMF_CODE.fd")
+	ovmfCodePath, err := runfiles.Rlocation("edk2/OVMF_CODE.fd")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +158,7 @@ func TestE2E(t *testing.T) {
 	if err := takeoverFile.Chmod(0o755); err != nil {
 		t.Fatal(err)
 	}
-	takeoverPath, err := datafile.ResolveRunfile("cloud/takeover/takeover_/takeover")
+	takeoverPath, err := runfiles.Rlocation("_main/cloud/takeover/takeover_/takeover")
 	if err != nil {
 		t.Fatal(err)
 	}

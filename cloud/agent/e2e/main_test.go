@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/cavaliergopher/cpio"
 	"github.com/klauspost/compress/zstd"
 	"golang.org/x/sys/unix"
@@ -29,9 +30,9 @@ import (
 
 	apb "source.monogon.dev/cloud/agent/api"
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
-	"source.monogon.dev/metropolis/cli/pkg/datafile"
-	"source.monogon.dev/metropolis/pkg/pki"
 	mpb "source.monogon.dev/metropolis/proto/api"
+
+	"source.monogon.dev/metropolis/pkg/pki"
 )
 
 type fakeServer struct {
@@ -136,7 +137,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	grpcListenAddr := grpcLis.Addr().(*net.TCPAddr)
 
 	m := http.NewServeMux()
-	bundleFilePath, err := datafile.ResolveRunfile("metropolis/installer/test/testos/testos_bundle.zip")
+	bundleFilePath, err := runfiles.Rlocation("_main/metropolis/installer/test/testos/testos_bundle.zip")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,19 +172,19 @@ func TestMetropolisInstallE2E(t *testing.T) {
 		t.Fatalf("ftruncate failed: %v", err)
 	}
 
-	ovmfVarsPath, err := datafile.ResolveRunfile("external/edk2/OVMF_VARS.fd")
+	ovmfVarsPath, err := runfiles.Rlocation("edk2/OVMF_VARS.fd")
 	if err != nil {
 		t.Fatal(err)
 	}
-	ovmfCodePath, err := datafile.ResolveRunfile("external/edk2/OVMF_CODE.fd")
+	ovmfCodePath, err := runfiles.Rlocation("edk2/OVMF_CODE.fd")
 	if err != nil {
 		t.Fatal(err)
 	}
-	kernelPath, err := datafile.ResolveRunfile("third_party/linux/bzImage")
+	kernelPath, err := runfiles.Rlocation("_main/third_party/linux/bzImage")
 	if err != nil {
 		t.Fatal(err)
 	}
-	initramfsOrigPath, err := datafile.ResolveRunfile("cloud/agent/initramfs.cpio.zst")
+	initramfsOrigPath, err := runfiles.Rlocation("_main/cloud/agent/initramfs.cpio.zst")
 	if err != nil {
 		t.Fatal(err)
 	}
