@@ -54,6 +54,5 @@ def ktest(tester, cmdline = "", files = {}, fsspecs = [], files_cc = {}):
             "//metropolis/test/ktest",
             ":test_initramfs",
             "//metropolis/test/ktest:linux-testing",
-            "@com_github_bonzini_qboot//:qboot-bin",
         ],
     )

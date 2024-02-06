@@ -25,6 +25,8 @@ import (
 	"net"
 	"os"
 	"os/exec"
+
+	"github.com/bazelbuild/rules_go/go/runfiles"
 )
 
 func main() {
@@ -47,11 +49,21 @@ func main() {
 		}
 	}()
 
+	qemuPath, err := runfiles.Rlocation("qemu/qemu-x86_64-softmmu")
+	if err != nil {
+		panic(err)
+	}
+
+	// TODO(lorenz): This explicitly doesn't use our own qboot because it cannot be built in a musl configuration.
+	// This will be fixed once we have a proper multi-target toolchain.
+	biosPath, err := runfiles.Rlocation("qemu/pc-bios/qboot.rom")
+	if err != nil {
+		panic(err)
+	}
+
 	baseArgs := []string{"-nodefaults", "-no-user-config", "-nographic", "-no-reboot",
 		"-accel", "kvm", "-cpu", "host",
-		// TODO(lorenz): This explicitly doesn't use our own qboot because it cannot be built in a musl configuration.
-		// This will be fixed once we have a proper multi-target toolchain.
-		"-bios", "external/qemu/pc-bios/qboot.rom",
+		"-bios", biosPath,
 		"-M", "microvm,x-option-roms=off,pic=off,pit=off,rtc=off,isa-serial=off",
 		"-kernel", "metropolis/test/ktest/linux-testing.elf",
 		"-append", "reboot=t console=hvc0 quiet",
@@ -62,7 +74,7 @@ func main() {
 		"-chardev", "socket,id=test,path=metropolis/vm/smoketest,abstract=on",
 		"-device", "virtserialport,chardev=test",
 	}
-	qemuCmd := exec.Command("external/qemu/qemu-x86_64-softmmu", baseArgs...)
+	qemuCmd := exec.Command(qemuPath, baseArgs...)
 	qemuCmd.Stdout = os.Stdout
 	qemuCmd.Stderr = os.Stderr
 	if err := qemuCmd.Run(); err != nil {

@@ -276,13 +276,18 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 		options.Mac = mac
 	}
 
+	ovmfCodePath, err := runfiles.Rlocation("edk2/OVMF_CODE.fd")
+	if err != nil {
+		return err
+	}
+
 	tpmSocketPath := filepath.Join(r.sd, "tpm-socket")
 	fwVarPath := filepath.Join(r.ld, "OVMF_VARS.fd")
 	storagePath := filepath.Join(r.ld, "image.img")
 	qemuArgs := []string{
 		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "4096",
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
-		"-drive", "if=pflash,format=raw,readonly=on,file=external/edk2/OVMF_CODE.fd",
+		"-drive", "if=pflash,format=raw,readonly=on,file=" + ovmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + fwVarPath,
 		"-drive", "if=virtio,format=raw,cache=unsafe,file=" + storagePath,
 		"-netdev", qemuNetConfig.ToOption(qemuNetType),
@@ -332,7 +337,7 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 	tpmEmuCmd.Stderr = os.Stderr
 	tpmEmuCmd.Stdout = os.Stdout
 
-	err := tpmEmuCmd.Start()
+	err = tpmEmuCmd.Start()
 	if err != nil {
 		return fmt.Errorf("failed to start TPM emulator: %w", err)
 	}

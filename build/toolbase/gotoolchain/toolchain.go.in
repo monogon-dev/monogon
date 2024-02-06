@@ -4,37 +4,24 @@ package gotoolchain
 
 import (
 	"fmt"
-	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/bazelbuild/rules_go/go/tools/bazel"
+	"github.com/bazelbuild/rules_go/go/runfiles"
 )
 
 func mustRunfile(s string) string {
-    // When running as a tool (in a genrule, or a test, etc.), bazel.Runfile
-    // does not work. However, ${0}.runfiles/$runfile should be present. If so,
-    // return early and return that. Otherwise, carry on with bazel.Runfile.
-    //
-    // TODO(q3k): dig deeper into this and unify with //metropolis/cli/pkg/datafile.
-
-    // Ignore the error, worst case we get an empty string that will make a
-    // garbage path that won't point to a file.
-    ex, _ := os.Executable()
-    rf := ex + ".runfiles"
-    if _, err := os.Stat(rf); err == nil {
-        parts := strings.Split(s, "/")
-        parts[0] = rf
-        rf = strings.Join(parts, "/")
-        if _, err := os.Stat(rf); err == nil {
-            return rf
-        }
-    }
-
-	res, err := bazel.Runfile(s)
+	// TODO(tim): I couldn't find out why there is a prefix.
+	s = strings.TrimPrefix(s, "external/")
+	res, err := runfiles.Rlocation(s)
 	if err != nil {
 		panic(fmt.Sprintf("runfile %q not found: %v", s, err))
 	}
-	return res
+	abs, err := filepath.Abs(res)
+	if err != nil {
+		panic(fmt.Sprintf("cant make runfile %q absolute: %v", s, err))
+	}
+	return abs
 }
 
 var (

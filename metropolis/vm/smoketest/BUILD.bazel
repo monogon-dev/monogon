@@ -6,6 +6,7 @@ go_library(
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/vm/smoketest",
     visibility = ["//visibility:private"],
+    deps = ["@io_bazel_rules_go//go/runfiles:go_default_library"],
 )
 
 node_initramfs(

@@ -30,6 +30,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/bazelbuild/rules_go/go/runfiles"
 	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/metropolis/pkg/freeport"
@@ -245,13 +246,18 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 	// kernel, initramfs and command line are mapped into VM memory at boot time and
 	// not loaded from any sort of disk. Booting and shutting off one of these VMs
 	// takes <100ms.
+	biosPath, err := runfiles.Rlocation("com_github_bonzini_qboot/bios.bin")
+	if err != nil {
+		return fmt.Errorf("while searching bios: %w", err)
+	}
+
 	baseArgs := []string{
 		"-nodefaults", "-no-user-config", "-nographic", "-no-reboot",
 		"-accel", "kvm", "-cpu", "host",
 		"-m", "1G",
 		// Needed until QEMU updates their bundled qboot version (needs
 		// https://github.com/bonzini/qboot/pull/28)
-		"-bios", "external/com_github_bonzini_qboot/bios.bin",
+		"-bios", biosPath,
 		"-M", "microvm,x-option-roms=off,pic=off,pit=off,rtc=off,isa-serial=off",
 		"-kernel", opts.KernelPath,
 		// We force using a triple-fault reboot strategy since otherwise the kernel first
@@ -303,7 +309,7 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 
 	PrettyPrintQemuArgs(opts.Name, cmd.Args)
 
-	err := cmd.Run()
+	err = cmd.Run()
 	// If it's a context error, just quit. There's no way to tell a
 	// killed-due-to-context vs killed-due-to-external-reason error returned by Run,
 	// so we approximate by looking at the context's status.

@@ -6,7 +6,7 @@ toolchain_library(
     importpath = "source.monogon.dev/build/toolbase/gotoolchain",
     visibility = ["//visibility:public"],
     deps = [
-        "@io_bazel_rules_go//go/tools/bazel:go_default_library",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
     ],
 )
 
