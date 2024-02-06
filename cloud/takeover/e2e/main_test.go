@@ -95,7 +95,7 @@ func TestE2E(t *testing.T) {
 	qemuArgs := []string{
 		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "1024",
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
-		"-drive", "if=pflash,format=raw,readonly,file=" + ovmfCodePath,
+		"-drive", "if=pflash,format=raw,readonly=on,file=" + ovmfCodePath,
 		"-drive", "if=pflash,format=raw,snapshot=on,file=" + ovmfVarsPath,
 		"-drive", "if=virtio,format=qcow2,snapshot=on,cache=unsafe,file=" + cloudImagePath,
 		"-drive", "if=virtio,format=raw,snapshot=on,file=" + cloudInitDataFile.Name(),

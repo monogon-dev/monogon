@@ -62,7 +62,7 @@ func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, e
 		"-m", "512",
 		"-smp", "2",
 		"-cpu", "host",
-		"-drive", "if=pflash,format=raw,readonly,file=external/edk2/OVMF_CODE.fd",
+		"-drive", "if=pflash,format=raw,readonly=on,file=external/edk2/OVMF_CODE.fd",
 		"-drive", "if=pflash,format=raw,snapshot=on,file=external/edk2/OVMF_VARS.fd",
 		"-serial", "stdio",
 		"-no-reboot",

@@ -282,7 +282,7 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 	qemuArgs := []string{
 		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "4096",
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
-		"-drive", "if=pflash,format=raw,readonly,file=external/edk2/OVMF_CODE.fd",
+		"-drive", "if=pflash,format=raw,readonly=on,file=external/edk2/OVMF_CODE.fd",
 		"-drive", "if=pflash,format=raw,file=" + fwVarPath,
 		"-drive", "if=virtio,format=raw,cache=unsafe,file=" + storagePath,
 		"-netdev", qemuNetConfig.ToOption(qemuNetType),
