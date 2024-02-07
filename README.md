@@ -19,6 +19,11 @@ Refer to [SETUP.md](./SETUP.md) for detailed instructions.
 
 ## Monogon OS
 
+The source code lives in `//metropolis` (Metropolis is the codename of Monogon OS).
+
+See the `//metropolis/README.md` for a developer quick start guide, or see
+the [Monogon OS Handbook](https://docs.monogon.dev/metropolis-v0.1/handbook/index.html) for user documentation.
+
 ### Run a single node demo cluster
 
 Build CLI and node image:
