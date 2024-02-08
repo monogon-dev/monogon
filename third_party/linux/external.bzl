@@ -18,8 +18,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 def linux_external(name, version):
     sums = {
-        "6.1.56": "9edefdde32c2298389dcd19566402332b3c2016f5ada17e5820f500b908d478c",
-        "6.1.69": "7e3d2694d18ce502068cc88a430da809abbd17d0773268524ebece442612b541",
+        "6.6.13": "88b89e7dd41ead4e3ab1e411c8bb8d592575acf815cf1df3c0dc57e2e882c0bc",
     }
     http_archive(
         name = name,
@@ -27,7 +26,6 @@ def linux_external(name, version):
         patch_args = ["-p1"],
         patches = [
             "//third_party/linux/external:0001-block-partition-expose-PARTUUID-through-uevent.patch",
-            "//third_party/linux/external:discard-gnu-note-section.patch",
             "//third_party/linux/external:disable-static-ifs.patch",
         ],
         sha256 = sums[version],

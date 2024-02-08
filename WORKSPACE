@@ -175,7 +175,7 @@ load("//third_party/linux:external.bzl", "linux_external")
 
 linux_external(
     name = "linux",
-    version = "6.1.69",
+    version = "6.6.13",
 )
 
 load("//third_party/linux-firmware:external.bzl", "linux_firmware_external")
