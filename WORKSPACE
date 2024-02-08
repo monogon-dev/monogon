@@ -299,23 +299,6 @@ libpg_query_external(
 
 register_toolchains("//:host_python")
 
-http_archive(
-    name = "aspect_bazel_lib",
-    sha256 = "bda4a69fa50411b5feef473b423719d88992514d259dadba7d8218a1d02c7883",
-    strip_prefix = "bazel-lib-2.3.0",
-    url = "https://github.com/aspect-build/bazel-lib/releases/download/v2.3.0/bazel-lib-v2.3.0.tar.gz",
-)
-
-load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
-
-# Required bazel-lib dependencies
-
-aspect_bazel_lib_dependencies()
-
-# Register bazel-lib toolchains
-
-aspect_bazel_lib_register_toolchains()
-
 # Derived from Mozilla NSS, currently needed for containerd to be able to pull images
 http_file(
     name = "cacerts",
