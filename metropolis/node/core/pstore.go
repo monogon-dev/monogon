@@ -23,6 +23,13 @@ func dumpAndCleanPstore(ctx context.Context) error {
 			logger.Warning(line)
 		}
 	}
+	userspaceLines, err := pstore.GetPmsgDump()
+	if err != nil {
+		logger.Errorf("Failed to recover userspace logs from pstore: %v", err)
+	}
+	for _, line := range userspaceLines {
+		logger.Warning(line)
+	}
 	cleanErr := pstore.ClearAll()
 	if cleanErr != nil {
 		logger.Errorf("Failed to clear pstore: %v", err)

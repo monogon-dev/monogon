@@ -1,0 +1,34 @@
+This enables pstore for userspace messages for the ACPI ERST as well as the
+EFI variable pstore backend, both of which are expected to be used frequently
+with Metropolis. We need that to reliably store panics of core processes
+regardless of the system state. This is not enabled upstream, either because
+pmsg was a later addition to pstore or for concerns of accidentally running
+out of pstore space. We work around the limited space issue by always clearing
+pstore after every boot, so this poses little extra risk to us.
+
+diff --git a/drivers/acpi/apei/erst.c b/drivers/acpi/apei/erst.c
+index bf65e3461531..fe2c331b4b99 100644
+--- a/drivers/acpi/apei/erst.c
++++ b/drivers/acpi/apei/erst.c
+@@ -1022,7 +1022,7 @@ static int erst_clearer(struct pstore_record *record);
+ static struct pstore_info erst_info = {
+ 	.owner		= THIS_MODULE,
+ 	.name		= "erst",
+-	.flags		= PSTORE_FLAGS_DMESG,
++	.flags		= PSTORE_FLAGS_DMESG | PSTORE_FLAGS_PMSG,
+ 	.open		= erst_open_pstore,
+ 	.close		= erst_close_pstore,
+ 	.read		= erst_reader,
+diff --git a/drivers/firmware/efi/efi-pstore.c b/drivers/firmware/efi/efi-pstore.c
+index e7b9ec6f8a86..7570499b46e0 100644
+--- a/drivers/firmware/efi/efi-pstore.c
++++ b/drivers/firmware/efi/efi-pstore.c
+@@ -210,7 +210,7 @@ static int efi_pstore_erase(struct pstore_record *record)
+ static struct pstore_info efi_pstore_info = {
+ 	.owner		= THIS_MODULE,
+ 	.name		= KBUILD_MODNAME,
+-	.flags		= PSTORE_FLAGS_DMESG,
++	.flags		= PSTORE_FLAGS_DMESG | PSTORE_FLAGS_PMSG,
+ 	.open		= efi_pstore_open,
+ 	.close		= efi_pstore_close,
+ 	.read		= efi_pstore_read,

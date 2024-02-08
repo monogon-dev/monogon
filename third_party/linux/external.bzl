@@ -27,6 +27,7 @@ def linux_external(name, version):
         patches = [
             "//third_party/linux/external:0001-block-partition-expose-PARTUUID-through-uevent.patch",
             "//third_party/linux/external:disable-static-ifs.patch",
+            "//third_party/linux/external:enable-pmsg.patch",
         ],
         sha256 = sums[version],
         strip_prefix = "linux-" + version,

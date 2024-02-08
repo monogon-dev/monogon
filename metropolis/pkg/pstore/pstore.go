@@ -73,6 +73,8 @@ type KmsgDump struct {
 
 var dmesgFileRegexp = regexp.MustCompile("^dmesg-.*-([0-9]+)")
 
+var pmsgFileRegexp = regexp.MustCompile("^pmsg-.*-([0-9]+)")
+
 type pstoreDmesgFile struct {
 	hdr   pstoreDmesgHeader
 	ctime time.Time
@@ -83,6 +85,32 @@ type pstoreDmesgFile struct {
 // (kernel log) buffer into pstore because of a kernel oops or panic.
 func GetKmsgDumps() ([]KmsgDump, error) {
 	return getKmsgDumpsFromFS(os.DirFS(CanonicalMountPath))
+}
+
+// GetPmsgDump returns lines written into /dev/pmsg0
+func GetPmsgDump() ([]string, error) {
+	var lines []string
+	pstoreEntries, err := os.ReadDir(CanonicalMountPath)
+	if err != nil {
+		return []string{}, fmt.Errorf("failed to list files in pstore: %w", err)
+	}
+	for _, entry := range pstoreEntries {
+		if !pmsgFileRegexp.MatchString(entry.Name()) {
+			continue
+		}
+		f, err := os.Open(filepath.Join(CanonicalMountPath, entry.Name()))
+		if err != nil {
+			return lines, fmt.Errorf("failed to open pstore entry file: %w", err)
+		}
+		// This only closes after all files have been read, but the number of
+		// files is heavily bound by very small amounts of pstore space.
+		defer f.Close()
+		s := bufio.NewScanner(f)
+		for s.Scan() {
+			lines = append(lines, s.Text())
+		}
+	}
+	return lines, nil
 }
 
 // f is injected here for testing

@@ -9,7 +9,6 @@
 package main
 
 import (
-	"io"
 	"os"
 	"unsafe"
 
@@ -55,30 +54,13 @@ func runtimeWrite(fd uintptr, p unsafe.Pointer, n int32) int32 {
 	return int32(err)
 }
 
-const runtimeLogPath = "/esp/core_runtime.log"
-
 func initPanicHandler(lt *logtree.LogTree, consoles []console) {
-	rl := lt.MustRawFor("panichandler")
 	l := lt.MustLeveledFor("panichandler")
 
-	runtimeLogFile, err := os.Open(runtimeLogPath)
-	if err != nil && !os.IsNotExist(err) {
-		l.Errorf("Failed to open runtimeLogFile: %v", err)
-	}
-	if err == nil {
-		if _, err := io.Copy(rl, runtimeLogFile); err != nil {
-			l.Errorf("Failed to log old persistent crash: %v", err)
-		}
-		runtimeLogFile.Close()
-		if err := os.Remove(runtimeLogPath); err != nil {
-			l.Errorf("Failed to delete old persistent runtime crash log: %v", err)
-		}
-	}
-
-	// Setup ESP file.
-	fd, err := unix.Open(runtimeLogPath, os.O_CREATE|os.O_WRONLY, 0)
+	// Setup pstore userspace message buffer
+	fd, err := unix.Open("/dev/pmsg0", os.O_WRONLY, 0)
 	if err != nil {
-		l.Errorf("Failed to open core runtime log file: %v", err)
+		l.Errorf("Failed to open pstore userspace device (pstore probably unavailable): %v", err)
 		l.Warningf("Continuing without persistent panic storage.")
 	} else {
 		runtimeFds = append(runtimeFds, fd)
