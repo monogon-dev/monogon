@@ -75,29 +75,6 @@ alias(
     actual = "@com_github_go_delve_delve//cmd/dlv:dlv",
 )
 
-# Shortcut for launching a single Metropolis node instance in a VM.
-test_suite(
-    name = "launch",
-    tags = ["manual"],
-    tests = [
-        "//metropolis/test/launch/cli/launch",
-    ],
-)
-
-# Shortcut for launching a virtual network a Metropolis cluster consisting of two nodes.
-test_suite(
-    name = "launch-multi2",
-    tags = ["manual"],
-    tests = [
-        "//metropolis/test/launch/cli/launch-multi2",
-    ],
-)
-
-alias(
-    name = "metroctl",
-    actual = "//metropolis/cli/metroctl:metroctl",
-)
-
 alias(
     name = "goimports",
     actual = "@org_golang_x_tools//cmd/goimports:goimports",

@@ -2,9 +2,9 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 
 go_library(
-    name = "launch-multi2_lib",
+    name = "launch-cluster_lib",
     srcs = ["main.go"],
-    importpath = "source.monogon.dev/metropolis/test/launch/cli/launch-multi2",
+    importpath = "source.monogon.dev/metropolis/test/launch/cli/launch-cluster",
     visibility = ["//visibility:private"],
     deps = [
         "//metropolis/cli/metroctl/core",
@@ -14,18 +14,20 @@ go_library(
 )
 
 go_binary(
-    name = "launch-multi2_bin",
+    name = "launch-cluster_bin",
     data = [
         "//metropolis/cli/metroctl",
     ],
-    embed = [":launch-multi2_lib"],
+    embed = [":launch-cluster_lib"],
     visibility = ["//:__pkg__"],
 )
 
+# Wrap the binary in a native_test so that we can run it with the
+# `bazel test` command inside the sandbox.
 native_test(
-    name = "launch-multi2",
-    src = ":launch-multi2_bin",
-    out = "launch-multi2",
+    name = "launch-cluster",
+    src = ":launch-cluster_bin",
+    out = "launch",
     tags = ["manual"],
     visibility = ["//visibility:public"],
 )

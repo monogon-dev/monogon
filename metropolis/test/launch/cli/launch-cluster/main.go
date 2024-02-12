@@ -28,7 +28,7 @@ import (
 func main() {
 	ctx := clicontext.WithInterrupt(context.Background())
 	cl, err := cluster.LaunchCluster(ctx, cluster.ClusterOptions{
-		NumNodes:        2,
+		NumNodes:        3,
 		NodeLogsToFiles: true,
 	})
 	if err != nil {
@@ -52,7 +52,7 @@ func main() {
 		log.Fatalf("Cluster has no Kubernetes controller nodes")
 	}
 
-	configName := "launch-multi2"
+	configName := "launch-cluster"
 	if err := metroctl.InstallKubeletConfig(ctx, mpath, cl.ConnectOptions(), configName, apiservers[0]); err != nil {
 		log.Fatalf("InstallKubeletConfig: %v", err)
 	}
