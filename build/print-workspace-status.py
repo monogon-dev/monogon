@@ -36,7 +36,8 @@ variables: dict[str, str] = {}
 
 # Git build tree status: clean or dirty.
 git_tree_state: str = "clean"
-if subprocess.call(["git", "status", "--porcelain"], stdout=subprocess.PIPE) == 0:
+git_status = subprocess.check_output(["git", "status", "--porcelain"])
+if git_status.decode().strip() != "":
     git_tree_state = "dirty"
 
 # Git commit hash.
