@@ -6346,6 +6346,7 @@ def go_repositories():
         patches = [
             "//third_party/go/patches:k8s-native-metrics.patch",
             "//third_party/go/patches:k8s-removed-block-device-pseudo-locks.patch",
+            "//third_party/go/patches:k8s-add-pause-build-file.patch",
         ],
         pre_patches = [
             "//third_party/go/patches:k8s-fix-logs-path.patch",

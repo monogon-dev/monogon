@@ -29,6 +29,7 @@ import (
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
@@ -135,6 +136,8 @@ func (s *kubeletService) Run(ctx context.Context) error {
 	cmd := exec.CommandContext(ctx, "/kubernetes/bin/kube", "kubelet",
 		fargs.FileOpt("--config", "config.json", configRaw),
 		fmt.Sprintf("--container-runtime-endpoint=unix://%s", s.EphemeralDirectory.Containerd.ClientSocket.FullPath()),
+		//TODO: Remove with k8s 1.29 (https://github.com/kubernetes/kubernetes/pull/118544)
+		"--pod-infra-container-image", "preseed.metropolis.internal/node/kubernetes/pause:latest",
 		fargs.FileOpt("--kubeconfig", "kubeconfig", s.kubeconfig),
 		fmt.Sprintf("--root-dir=%s", s.KubeletDirectory.FullPath()),
 	)

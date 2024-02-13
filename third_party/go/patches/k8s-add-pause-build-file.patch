@@ -1,0 +1,20 @@
+From b524a63f818f74b7fbef0ca0016c61ea454a50bd Mon Sep 17 00:00:00 2001
+From: Tim Windelschmidt <tim@monogon.tech>
+Date: Tue, 13 Feb 2024 15:19:31 +0100
+Subject: [PATCH] add BUILD file for pause container
+
+---
+ build/pause/linux/BUILD.bazel | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 build/pause/linux/BUILD.bazel
+
+diff --git a/build/pause/linux/BUILD.bazel b/build/pause/linux/BUILD.bazel
+new file mode 100644
+index 00000000000..8057dd4a859
+--- /dev/null
++++ b/build/pause/linux/BUILD.bazel
+@@ -0,0 +1 @@
++exports_files(["pause.c"])
+--
+2.42.0
+
