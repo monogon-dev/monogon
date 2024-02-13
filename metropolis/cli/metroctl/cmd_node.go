@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
 	"io"
 	"log"
@@ -94,17 +93,13 @@ var nodeUpdateCmd = &cobra.Command{
 		}
 
 		ctx := clicontext.WithInterrupt(context.Background())
-		mgmt := apb.NewManagementClient(dialAuthenticated(ctx))
 
-		// TODO(q3k): save CA certificate on takeover
-		info, err := mgmt.GetClusterInfo(ctx, &apb.GetClusterInfoRequest{})
+		cacert, err := core.GetClusterCAWithTOFU(ctx, connectOptions())
 		if err != nil {
-			return fmt.Errorf("couldn't get cluster info: %w", err)
+			return fmt.Errorf("could not get CA certificate: %w", err)
 		}
-		cacert, err := x509.ParseCertificate(info.CaCertificate)
-		if err != nil {
-			return fmt.Errorf("remote CA certificate invalid: %w", err)
-		}
+
+		mgmt := apb.NewManagementClient(dialAuthenticated(ctx))
 
 		nodes, err := core.GetNodes(ctx, mgmt, "")
 		if err != nil {

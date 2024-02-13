@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
@@ -79,14 +78,9 @@ unnecessary lines are fetched.
 			return fmt.Errorf("node has no external address")
 		}
 
-		// TODO(q3k): save CA certificate on takeover
-		info, err := mgmt.GetClusterInfo(ctx, &api.GetClusterInfoRequest{})
+		cacert, err := core.GetClusterCAWithTOFU(ctx, connectOptions())
 		if err != nil {
-			return fmt.Errorf("couldn't get cluster info: %w", err)
-		}
-		cacert, err := x509.ParseCertificate(info.CaCertificate)
-		if err != nil {
-			return fmt.Errorf("remote CA certificate invalid: %w", err)
+			return fmt.Errorf("could not get CA certificate: %w", err)
 		}
 
 		fmt.Printf("=== Logs from %s (%s):\n", n.Id, n.Status.ExternalAddress)
