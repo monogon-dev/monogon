@@ -143,7 +143,7 @@ func (s *Service) runPreseed(ctx context.Context) error {
 			for _, img := range importedImages {
 				importedImageNames = append(importedImageNames, img.Name)
 			}
-			logger.Infof("Successfully imported preseeded bundle %s/%s into containerd", namespace, strings.Join(importedImageNames, ","))
+			logger.Infof("Successfully imported preseeded bundle %q into containerd namespace %s", strings.Join(importedImageNames, ","), namespace)
 		}
 	}
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
