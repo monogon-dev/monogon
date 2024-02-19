@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -40,9 +41,29 @@ func (s *Service) UpdateNode(ctx context.Context, req *apb.UpdateNodeRequest) (*
 			s.LogTree.MustLeveledFor("update").Info("activating now...")
 			unix.Unmount(s.UpdateService.ESPPath, 0)
 			unix.Sync()
+			disableNetworkInterfaces()
 			unix.Reboot(method)
 		}()
 	}
 
 	return &apb.UpdateNodeResponse{}, nil
+}
+
+// For kexec it's recommended to disable all physical network interfaces
+// before doing it. This function doesn't return any errors as it's best-
+// effort anyways as we cannot reliably log the error anymore.
+func disableNetworkInterfaces() {
+	links, err := netlink.LinkList()
+	if err != nil {
+		return
+	}
+	for _, link := range links {
+		d, ok := link.(*netlink.Device)
+		if !ok {
+			continue
+		}
+		if err := netlink.LinkSetDown(d); err != nil {
+			continue
+		}
+	}
 }
