@@ -26,41 +26,41 @@ func (p ProviderID) IsValid() bool {
 	return p != InvalidProviderID
 }
 
-// State defines in which state the machine is.
+// Availability defines the availability state according to the provider.
 // See the different states for more information.
-type State int
+type Availability int
 
 const (
-	// StateUndefined is used as a placeholder to prevent that the default
+	// AvailabilityUndefined is used as a placeholder to prevent that the default
 	// value can create any type of bad behaviour.
-	StateUndefined State = iota
-	// StatePossiblyUsed defines the state where a machine is possibly used,
+	AvailabilityUndefined Availability = iota
+	// AvailabilityPossiblyUsed defines the state where a machine is possibly used,
 	// this is a state for use in stateless providers where the shepherd has
 	// to check against the bmdb if Machine.ID is already provisioned or not.
 	// These machines must have a valid ID and Addr.
-	StatePossiblyUsed
-	// StateKnownUnused defines the state where a machine is know to be free,
+	AvailabilityPossiblyUsed
+	// AvailabilityKnownUnused defines the state where a machine is know to be free,
 	// e.g. a hardware reservation at equinix. These machines may not have an
 	// ID or Addr.
-	StateKnownUnused
-	// StateKnownUsed defines the state where a machine is known to be used,
+	AvailabilityKnownUnused
+	// AvailabilityKnownUsed defines the state where a machine is known to be used,
 	// e.g. a deployed machine that is in use. These machines must have a
 	// valid ID and Addr.
-	StateKnownUsed
+	AvailabilityKnownUsed
 )
 
-func (s State) String() string {
-	switch s {
-	case StateUndefined:
+func (a Availability) String() string {
+	switch a {
+	case AvailabilityUndefined:
 		return "Undefined"
-	case StateKnownUnused:
+	case AvailabilityKnownUnused:
 		return "KnownUnused"
-	case StateKnownUsed:
+	case AvailabilityKnownUsed:
 		return "KnownUsed"
-	case StatePossiblyUsed:
+	case AvailabilityPossiblyUsed:
 		return "PossiblyUsed"
 	default:
-		return fmt.Sprintf("<invalid value %d>", s)
+		return fmt.Sprintf("<invalid value %d>", a)
 	}
 }
 
@@ -71,8 +71,8 @@ type Machine interface {
 	// shepherd. It is used to connect to the machine via SSH to execute
 	// all takeover tasks, etc.
 	Addr() netip.Addr
-	// State returns the state in which the machine is
-	State() State
+	// Availability returns the availability of the machine.
+	Availability() Availability
 	// Failed should return true if the machine is in a failed state and
 	// should be ignored if there are inconsistencies between the provider
 	// and BMDB.

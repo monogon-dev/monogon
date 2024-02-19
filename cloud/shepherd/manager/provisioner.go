@@ -225,8 +225,8 @@ func (p providedMachine) Addr() netip.Addr {
 	return addr
 }
 
-func (p providedMachine) State() shepherd.State {
-	return shepherd.StateKnownUsed
+func (p providedMachine) Availability() shepherd.Availability {
+	return shepherd.AvailabilityKnownUsed
 }
 
 // listInBMDB returns all the machines that the BMDB thinks we should be managing.
@@ -258,27 +258,27 @@ func (p *Provisioner) listInBMDB(ctx context.Context, sess *bmdb.Session) ([]she
 	return res, nil
 }
 
-// resolvePossiblyUsed checks if the state is set to possibly used and finds out
-// which state is the correct one.
-func (p *Provisioner) resolvePossiblyUsed(machine shepherd.Machine, providedMachines map[shepherd.ProviderID]shepherd.Machine) shepherd.State {
-	state, id := machine.State(), machine.ID()
+// resolvePossiblyUsed checks if the availability is set to possibly used and
+// resolves it to the correct one.
+func (p *Provisioner) resolvePossiblyUsed(machine shepherd.Machine, providedMachines map[shepherd.ProviderID]shepherd.Machine) shepherd.Availability {
+	state, id := machine.Availability(), machine.ID()
 
-	// Bail out if this isn't a possibly used state.
-	if state != shepherd.StatePossiblyUsed {
+	// Bail out if this isn't possibly used.
+	if state != shepherd.AvailabilityPossiblyUsed {
 		return state
 	}
 
 	// If a machine does not have a valid id, its always seen as unused.
 	if !id.IsValid() {
-		return shepherd.StateKnownUnused
+		return shepherd.AvailabilityKnownUnused
 	}
 
 	// If the machine is not inside the bmdb, it's seen as unused.
 	if _, ok := providedMachines[id]; !ok {
-		return shepherd.StateKnownUnused
+		return shepherd.AvailabilityKnownUnused
 	}
 
-	return shepherd.StateKnownUsed
+	return shepherd.AvailabilityKnownUsed
 }
 
 // reconcile takes a list of machines that the provider thinks we should be
@@ -291,7 +291,7 @@ func (p *Provisioner) reconcile(ctx context.Context, sess *bmdb.Session, inProvi
 
 	bmdb := make(map[shepherd.ProviderID]shepherd.Machine)
 	for _, machine := range bmdbMachines {
-		// Dont check the state here as its hardcoded to be known used.
+		// Dont check the availability here as its hardcoded to be known used.
 		bmdb[machine.ID()] = machine
 	}
 
@@ -301,14 +301,14 @@ func (p *Provisioner) reconcile(ctx context.Context, sess *bmdb.Session, inProvi
 		state := p.resolvePossiblyUsed(machine, bmdb)
 
 		switch state {
-		case shepherd.StateKnownUnused:
+		case shepherd.AvailabilityKnownUnused:
 			availableMachines = append(availableMachines, machine)
 
-		case shepherd.StateKnownUsed:
+		case shepherd.AvailabilityKnownUsed:
 			provider[machine.ID()] = machine
 
 		default:
-			return fmt.Errorf("machine has invalid state (ID: %s, Addr: %s): %s", machine.ID(), machine.Addr(), state)
+			return fmt.Errorf("machine has invalid availability (ID: %s, Addr: %s): %s", machine.ID(), machine.Addr(), state)
 		}
 	}
 
@@ -411,7 +411,7 @@ func (p *Provisioner) reconcile(ctx context.Context, sess *bmdb.Session, inProvi
 			UnusedMachine: machine,
 		})
 		if err != nil {
-			klog.Errorf("while creating new device (ID: %s, Addr: %s, State: %s): %w", machine.ID(), machine.Addr(), machine.State(), err)
+			klog.Errorf("while creating new device (ID: %s, Addr: %s, Availability: %s): %w", machine.ID(), machine.Addr(), machine.Availability(), err)
 			continue
 		}
 		klog.Infof("Created new machine with ID: %s", nd.ID())

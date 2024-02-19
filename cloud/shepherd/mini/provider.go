@@ -38,8 +38,8 @@ func (d machine) Addr() netip.Addr {
 	return d.Address
 }
 
-func (d machine) State() shepherd.State {
-	return shepherd.StatePossiblyUsed
+func (d machine) Availability() shepherd.Availability {
+	return shepherd.AvailabilityPossiblyUsed
 }
 
 func (p *provider) ListMachines(ctx context.Context) ([]shepherd.Machine, error) {

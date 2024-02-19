@@ -139,8 +139,8 @@ func (e reservation) Addr() netip.Addr {
 	return netip.Addr{}
 }
 
-func (e reservation) State() shepherd.State {
-	return shepherd.StateKnownUnused
+func (e reservation) Availability() shepherd.Availability {
+	return shepherd.AvailabilityKnownUnused
 }
 
 type machine struct {
@@ -148,7 +148,7 @@ type machine struct {
 }
 
 func (e *machine) Failed() bool {
-	return e.Device.State == "failed"
+	return e.State == "failed"
 }
 
 func (e *machine) ID() shepherd.ProviderID {
@@ -177,8 +177,8 @@ func (e *machine) Addr() netip.Addr {
 	return a
 }
 
-func (e *machine) State() shepherd.State {
-	return shepherd.StateKnownUsed
+func (e *machine) Availability() shepherd.Availability {
+	return shepherd.AvailabilityKnownUsed
 }
 
 // listReservations doesn't lock the mutex and expects the caller to lock.

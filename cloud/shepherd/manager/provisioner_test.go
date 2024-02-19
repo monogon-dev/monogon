@@ -83,7 +83,7 @@ func TestProvisionerSmokes(t *testing.T) {
 	}
 }
 
-// TestProvisioner_resolvePossiblyUsed makes sure the PossiblyUsed state is
+// TestProvisioner_resolvePossiblyUsed makes sure the PossiblyUsed availability is
 // resolved correctly.
 func TestProvisioner_resolvePossiblyUsed(t *testing.T) {
 	const providedMachineID = "provided-machine"
@@ -93,45 +93,45 @@ func TestProvisioner_resolvePossiblyUsed(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		machineID    shepherd.ProviderID
-		machineState shepherd.State
-		wantedState  shepherd.State
+		name                string
+		machineID           shepherd.ProviderID
+		machineAvailability shepherd.Availability
+		wantedAvailability  shepherd.Availability
 	}{
 		{
-			name:         "skip KnownUsed",
-			machineState: shepherd.StateKnownUsed,
-			wantedState:  shepherd.StateKnownUsed,
+			name:                "skip KnownUsed",
+			machineAvailability: shepherd.AvailabilityKnownUsed,
+			wantedAvailability:  shepherd.AvailabilityKnownUsed,
 		},
 		{
-			name:         "skip KnownUnused",
-			machineState: shepherd.StateKnownUnused,
-			wantedState:  shepherd.StateKnownUnused,
+			name:                "skip KnownUnused",
+			machineAvailability: shepherd.AvailabilityKnownUnused,
+			wantedAvailability:  shepherd.AvailabilityKnownUnused,
 		},
 		{
-			name:         "invalid ID",
-			machineID:    shepherd.InvalidProviderID,
-			machineState: shepherd.StatePossiblyUsed,
-			wantedState:  shepherd.StateKnownUnused,
+			name:                "invalid ID",
+			machineID:           shepherd.InvalidProviderID,
+			machineAvailability: shepherd.AvailabilityPossiblyUsed,
+			wantedAvailability:  shepherd.AvailabilityKnownUnused,
 		},
 		{
-			name:         "valid ID, not in providedMachines",
-			machineID:    "unused-machine",
-			machineState: shepherd.StatePossiblyUsed,
-			wantedState:  shepherd.StateKnownUnused,
+			name:                "valid ID, not in providedMachines",
+			machineID:           "unused-machine",
+			machineAvailability: shepherd.AvailabilityPossiblyUsed,
+			wantedAvailability:  shepherd.AvailabilityKnownUnused,
 		},
 		{
-			name:         "valid ID, in providedMachines",
-			machineID:    providedMachineID,
-			machineState: shepherd.StatePossiblyUsed,
-			wantedState:  shepherd.StateKnownUsed,
+			name:                "valid ID, in providedMachines",
+			machineID:           providedMachineID,
+			machineAvailability: shepherd.AvailabilityPossiblyUsed,
+			wantedAvailability:  shepherd.AvailabilityKnownUsed,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &Provisioner{}
-			if got := p.resolvePossiblyUsed(&dummyMachine{id: tt.machineID, state: tt.machineState}, providedMachines); got != tt.wantedState {
-				t.Errorf("resolvePossiblyUsed() = %v, want %v", got, tt.wantedState)
+			if got := p.resolvePossiblyUsed(&dummyMachine{id: tt.machineID, availability: tt.machineAvailability}, providedMachines); got != tt.wantedAvailability {
+				t.Errorf("resolvePossiblyUsed() = %v, want %v", got, tt.wantedAvailability)
 			}
 		})
 	}

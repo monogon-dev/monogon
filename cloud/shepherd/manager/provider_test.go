@@ -17,7 +17,7 @@ import (
 type dummyMachine struct {
 	id           shepherd.ProviderID
 	addr         netip.Addr
-	state        shepherd.State
+	availability shepherd.Availability
 	agentStarted bool
 }
 
@@ -33,8 +33,8 @@ func (dm *dummyMachine) Addr() netip.Addr {
 	return dm.addr
 }
 
-func (dm *dummyMachine) State() shepherd.State {
-	return dm.state
+func (dm *dummyMachine) Availability() shepherd.Availability {
+	return dm.availability
 }
 
 type dummySSHClient struct {
@@ -106,9 +106,9 @@ func (dp *dummyProvider) createDummyMachines(ctx context.Context, session *bmdb.
 		uid := uuid.Must(uuid.NewRandom())
 		m, err := dp.CreateMachine(ctx, session, shepherd.CreateMachineRequest{
 			UnusedMachine: &dummyMachine{
-				id:    shepherd.ProviderID(uid.String()),
-				state: shepherd.StateKnownUsed,
-				addr:  netip.AddrFrom16(uid),
+				id:           shepherd.ProviderID(uid.String()),
+				availability: shepherd.AvailabilityKnownUsed,
+				addr:         netip.AddrFrom16(uid),
 			},
 		})
 		if err != nil {
@@ -130,9 +130,9 @@ func (dp *dummyProvider) ListMachines(ctx context.Context) ([]shepherd.Machine, 
 	for i := 0; i < unusedMachineCount; i++ {
 		uid := uuid.Must(uuid.NewRandom())
 		machines = append(machines, &dummyMachine{
-			id:    shepherd.ProviderID(uid.String()),
-			state: shepherd.StateKnownUnused,
-			addr:  netip.AddrFrom16(uid),
+			id:           shepherd.ProviderID(uid.String()),
+			availability: shepherd.AvailabilityKnownUnused,
+			addr:         netip.AddrFrom16(uid),
 		})
 	}
 
@@ -175,7 +175,7 @@ func (dp *dummyProvider) CreateMachine(ctx context.Context, session *bmdb.Sessio
 		return nil, err
 	}
 
-	dm.state = shepherd.StateKnownUsed
+	dm.availability = shepherd.AvailabilityKnownUsed
 	dp.machines[dm.id] = dm
 
 	return dm, nil
