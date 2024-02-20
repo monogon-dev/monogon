@@ -57,6 +57,7 @@ func (r resourceCSIDrivers) Delete(ctx context.Context, name string) error {
 }
 
 func (r resourceCSIDrivers) Expected() map[string]interface{} {
+	fsGroupPolicy := storage.FileFSGroupPolicy
 	return map[string]interface{}{
 		csiProvisionerName: &storage.CSIDriver{
 			ObjectMeta: meta.ObjectMeta{
@@ -67,6 +68,8 @@ func (r resourceCSIDrivers) Expected() map[string]interface{} {
 				AttachRequired:       False(),
 				PodInfoOnMount:       False(),
 				VolumeLifecycleModes: []storage.VolumeLifecycleMode{storage.VolumeLifecyclePersistent},
+				// TODO(#288): Make sure this gets applied to existing clusters
+				FSGroupPolicy: &fsGroupPolicy,
 			},
 		},
 	}
