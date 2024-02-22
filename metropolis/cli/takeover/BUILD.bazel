@@ -1,0 +1,64 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
+load("//osbase/build:def.bzl", "node_initramfs")
+load("//osbase/build:def.bzl", "platform_transition_binary")
+
+node_initramfs(
+    name = "initramfs",
+    files = {},
+    fsspecs = [
+        "//osbase/build:earlydev.fsspec",
+        "//third_party:firmware",
+    ],
+    visibility = ["//metropolis/cli/takeover:__subpackages__"],
+)
+
+go_library(
+    name = "takeover_lib",
+    srcs = [
+        "boot.go",
+        "install.go",
+        "main.go",
+        "takeover.go",
+    ],
+    embedsrcs = [
+        "//third_party/linux",  #keep
+        "//third_party:ucode",  #keep
+        ":initramfs",  #keep
+        "//metropolis/node/core/abloader",  #keep
+    ],
+    importpath = "source.monogon.dev/metropolis/cli/takeover",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//go/logging",
+        "//metropolis/node/core/devmgr",
+        "//metropolis/proto/api",
+        "//osbase/blockdev",
+        "//osbase/bootparam",
+        "//osbase/bringup",
+        "//osbase/build/mkimage/osimage",
+        "//osbase/efivarfs",
+        "//osbase/kexec",
+        "//osbase/net/dump",
+        "//osbase/net/proto",
+        "//osbase/supervisor",
+        "@com_github_cavaliergopher_cpio//:cpio",
+        "@com_github_klauspost_compress//zstd",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_x_sys//unix",
+    ],
+)
+
+go_binary(
+    name = "takeover_bin",
+    embed = [":takeover_lib"],
+    pure = "on",
+    visibility = ["//visibility:public"],
+)
+
+platform_transition_binary(
+    name = "takeover",
+    binary = ":takeover_bin",
+    target_platform = "//build/platforms:linux_amd64_static",
+    visibility = ["//visibility:public"],
+)

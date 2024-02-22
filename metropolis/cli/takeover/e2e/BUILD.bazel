@@ -1,0 +1,32 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "e2e_test",
+    srcs = ["main_test.go"],
+    data = [
+        "//metropolis/cli/takeover",
+        "//metropolis/installer/test/testos:testos_bundle",
+        "//third_party/edk2:OVMF_CODE.fd",
+        "//third_party/edk2:OVMF_VARS.fd",
+        "@debian_11_cloudimage//file",
+    ],
+    x_defs = {
+        "xBundleFilePath": "$(rlocationpath //metropolis/installer/test/testos:testos_bundle )",
+        "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
+        "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
+        "xCloudImagePath": "$(rlocationpath @debian_11_cloudimage//file )",
+        # TODO(tim): Hardcoded because of https://github.com/monogon-dev/monogon/issues/316
+        "xTakeoverPath": "_main/metropolis/cli/takeover/takeover/takeover_bin",
+    },
+    deps = [
+        "//go/net/ssh",
+        "//metropolis/proto/api",
+        "//metropolis/test/launch",
+        "//osbase/fat32",
+        "//osbase/freeport",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_x_crypto//ssh",
+        "@org_golang_x_sys//unix",
+    ],
+)

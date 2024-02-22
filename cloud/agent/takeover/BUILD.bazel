@@ -1,5 +1,4 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("//osbase/build/mkucode:def.bzl", "cpio_ucode")
 load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
 load("//osbase/build:def.bzl", "node_initramfs")
 load("//osbase/build/fwprune:def.bzl", "fsspec_linux_firmware")

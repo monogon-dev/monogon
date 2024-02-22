@@ -19,6 +19,7 @@ go_library(
     srcs = [
         "cmd_certs.go",
         "cmd_install.go",
+        "cmd_install_ssh.go",
         "cmd_install_usb.go",
         "cmd_k8s_configure.go",
         "cmd_k8scredplugin.go",
@@ -37,6 +38,7 @@ go_library(
     deps = [
         "//go/clitable",
         "//go/logging",
+        "//go/net/ssh",
         "//metropolis/cli/flagdefs",
         "//metropolis/cli/metroctl/core",
         "//metropolis/node",
@@ -51,13 +53,19 @@ go_library(
         "//osbase/logtree/proto",
         "//version",
         "@com_github_adrg_xdg//:xdg",
+        "@com_github_schollz_progressbar_v3//:progressbar",
         "@com_github_spf13_cobra//:cobra",
         "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
         "@io_k8s_client_go//pkg/apis/clientauthentication/v1:clientauthentication",
         "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_protobuf//proto",
+        "@org_golang_x_crypto//ssh",
+        "@org_golang_x_crypto//ssh/agent",
+        "@org_golang_x_crypto//ssh/terminal",
         "@org_golang_x_net//proxy",
         "@org_golang_x_sync//semaphore",
+        "@org_golang_x_term//:term",
     ],
 )
 
@@ -66,6 +74,7 @@ go_binary(
     data = select({
         ":buildkind_lite": [],
         "//conditions:default": [
+            "//metropolis/cli/takeover",
             "//metropolis/installer:kernel",
             "//metropolis/node:bundle",
         ],
