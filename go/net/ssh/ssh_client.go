@@ -1,4 +1,4 @@
-package manager
+package ssh
 
 import (
 	"bytes"
@@ -12,39 +12,39 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-// SSHClient defines a simple interface to an abstract SSH client. Usually this
-// would be PlainSSHClient, but tests can use this interface to dependency-inject
+// Client defines a simple interface to an abstract SSH client. Usually this
+// would be DirectClient, but tests can use this interface to dependency-inject
 // fake SSH connections.
-type SSHClient interface {
-	// Dial returns an SSHConnection to a given address (host:port pair) with
+type Client interface {
+	// Dial returns an Connection to a given address (host:port pair) with
 	// a timeout for connection.
-	Dial(ctx context.Context, address string, connectTimeout time.Duration) (SSHConnection, error)
+	Dial(ctx context.Context, address string, connectTimeout time.Duration) (Connection, error)
 }
 
-type SSHConnection interface {
+type Connection interface {
 	// Execute a given command on a remote host synchronously, passing in stdin as
 	// input, and returning a captured stdout/stderr. The returned data might be
 	// valid even when err != nil, which might happen if the remote side returned a
 	// non-zero exit code.
 	Execute(ctx context.Context, command string, stdin []byte) (stdout []byte, stderr []byte, err error)
 	// Upload a given blob to a targetPath on the system and make executable.
-	Upload(ctx context.Context, targetPath string, data []byte) error
+	Upload(ctx context.Context, targetPath string, src io.Reader) error
 	// Close this connection.
 	Close() error
 }
 
-// PlainSSHClient implements SSHClient (and SSHConnection) using
+// DirectClient implements Client (and Connection) using
 // golang.org/x/crypto/ssh.
-type PlainSSHClient struct {
+type DirectClient struct {
 	AuthMethod ssh.AuthMethod
 	Username   string
 }
 
-type plainSSHConn struct {
+type directConn struct {
 	cl *ssh.Client
 }
 
-func (p *PlainSSHClient) Dial(ctx context.Context, address string, connectTimeout time.Duration) (SSHConnection, error) {
+func (p *DirectClient) Dial(ctx context.Context, address string, connectTimeout time.Duration) (Connection, error) {
 	d := net.Dialer{
 		Timeout: connectTimeout,
 	}
@@ -69,12 +69,12 @@ func (p *PlainSSHClient) Dial(ctx context.Context, address string, connectTimeou
 		return nil, err
 	}
 	cl := ssh.NewClient(conn2, chanC, reqC)
-	return &plainSSHConn{
+	return &directConn{
 		cl: cl,
 	}, nil
 }
 
-func (p *plainSSHConn) Execute(ctx context.Context, command string, stdin []byte) (stdout []byte, stderr []byte, err error) {
+func (p *directConn) Execute(ctx context.Context, command string, stdin []byte) (stdout []byte, stderr []byte, err error) {
 	sess, err := p.cl.NewSession()
 	if err != nil {
 		return nil, nil, fmt.Errorf("while creating SSH session: %w", err)
@@ -101,14 +101,13 @@ func (p *plainSSHConn) Execute(ctx context.Context, command string, stdin []byte
 	}
 }
 
-func (p *plainSSHConn) Upload(ctx context.Context, targetPath string, data []byte) error {
+func (p *directConn) Upload(ctx context.Context, targetPath string, src io.Reader) error {
 	sc, err := sftp.NewClient(p.cl)
 	if err != nil {
 		return fmt.Errorf("while building sftp client: %w", err)
 	}
 	defer sc.Close()
 
-	acrdr := bytes.NewReader(data)
 	df, err := sc.Create(targetPath)
 	if err != nil {
 		return fmt.Errorf("while creating file on the host: %w", err)
@@ -117,7 +116,7 @@ func (p *plainSSHConn) Upload(ctx context.Context, targetPath string, data []byt
 	doneC := make(chan error, 1)
 
 	go func() {
-		_, err := io.Copy(df, acrdr)
+		_, err := io.Copy(df, src)
 		df.Close()
 		doneC <- err
 	}()
@@ -138,6 +137,6 @@ func (p *plainSSHConn) Upload(ctx context.Context, targetPath string, data []byt
 	return nil
 }
 
-func (p *plainSSHConn) Close() error {
+func (p *directConn) Close() error {
 	return p.cl.Close()
 }

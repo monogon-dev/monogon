@@ -12,6 +12,7 @@ import (
 	"source.monogon.dev/cloud/bmaas/bmdb"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	"source.monogon.dev/cloud/shepherd"
+	"source.monogon.dev/go/net/ssh"
 )
 
 type dummyMachine struct {
@@ -38,17 +39,17 @@ func (dm *dummyMachine) Availability() shepherd.Availability {
 }
 
 type dummySSHClient struct {
-	SSHClient
+	ssh.Client
 	dp *dummyProvider
 }
 
 type dummySSHConnection struct {
-	SSHConnection
+	ssh.Connection
 	m *dummyMachine
 }
 
 func (dsc *dummySSHConnection) Execute(ctx context.Context, command string, stdin []byte) ([]byte, []byte, error) {
-	stdout, stderr, err := dsc.SSHConnection.Execute(ctx, command, stdin)
+	stdout, stderr, err := dsc.Connection.Execute(ctx, command, stdin)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -57,8 +58,8 @@ func (dsc *dummySSHConnection) Execute(ctx context.Context, command string, stdi
 	return stdout, stderr, nil
 }
 
-func (dsc *dummySSHClient) Dial(ctx context.Context, address string, timeout time.Duration) (SSHConnection, error) {
-	conn, err := dsc.SSHClient.Dial(ctx, address, timeout)
+func (dsc *dummySSHClient) Dial(ctx context.Context, address string, timeout time.Duration) (ssh.Connection, error) {
+	conn, err := dsc.Client.Dial(ctx, address, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -77,10 +78,10 @@ func (dsc *dummySSHClient) Dial(ctx context.Context, address string, timeout tim
 	return &dummySSHConnection{conn, m}, nil
 }
 
-func (dp *dummyProvider) sshClient() SSHClient {
+func (dp *dummyProvider) sshClient() ssh.Client {
 	return &dummySSHClient{
-		SSHClient: &FakeSSHClient{},
-		dp:        dp,
+		Client: &FakeSSHClient{},
+		dp:     dp,
 	}
 }
 

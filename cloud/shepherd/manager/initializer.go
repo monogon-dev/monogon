@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/x509"
@@ -23,6 +24,7 @@ import (
 	"source.monogon.dev/cloud/bmaas/bmdb/metrics"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	"source.monogon.dev/cloud/shepherd"
+	"source.monogon.dev/go/net/ssh"
 )
 
 // InitializerConfig configures how the Initializer will deploy Agents on
@@ -126,13 +128,13 @@ func (ic *InitializerConfig) Check() error {
 type Initializer struct {
 	InitializerConfig
 
-	sshClient SSHClient
+	sshClient ssh.Client
 	p         shepherd.Provider
 }
 
 // NewInitializer creates an Initializer instance, checking the
 // InitializerConfig, SharedConfig and AgentConfig for errors.
-func NewInitializer(p shepherd.Provider, sshClient SSHClient, ic InitializerConfig) (*Initializer, error) {
+func NewInitializer(p shepherd.Provider, sshClient ssh.Client, ic InitializerConfig) (*Initializer, error) {
 	if err := ic.Check(); err != nil {
 		return nil, err
 	}
@@ -219,7 +221,7 @@ func (i *Initializer) startAgent(ctx context.Context, m shepherd.Machine, mid uu
 	// Upload the agent executable.
 
 	klog.Infof("Uploading the agent executable (machine ID: %s, addr: %s).", mid, addr)
-	if err := conn.Upload(sctx, i.TargetPath, i.Executable); err != nil {
+	if err := conn.Upload(sctx, i.TargetPath, bytes.NewReader(i.Executable)); err != nil {
 		return nil, fmt.Errorf("while uploading agent executable: %w", err)
 	}
 	klog.V(1).Infof("Upload successful (machine ID: %s, addr: %s).", mid, addr)

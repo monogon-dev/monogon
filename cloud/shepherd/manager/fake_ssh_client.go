@@ -5,20 +5,23 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"fmt"
+	"io"
 	"time"
 
 	"google.golang.org/protobuf/proto"
 
 	apb "source.monogon.dev/cloud/agent/api"
+
+	"source.monogon.dev/go/net/ssh"
 )
 
-// FakeSSHClient is an SSHClient that pretends to start an agent, but in reality
+// FakeSSHClient is an Client that pretends to start an agent, but in reality
 // just responds with what an agent would respond on every execution attempt.
 type FakeSSHClient struct{}
 
 type fakeSSHConnection struct{}
 
-func (f *FakeSSHClient) Dial(ctx context.Context, address string, timeout time.Duration) (SSHConnection, error) {
+func (f *FakeSSHClient) Dial(ctx context.Context, address string, timeout time.Duration) (ssh.Connection, error) {
 	return &fakeSSHConnection{}, nil
 }
 
@@ -46,7 +49,7 @@ func (f *fakeSSHConnection) Execute(ctx context.Context, command string, stdin [
 	return arspb, nil, nil
 }
 
-func (f *fakeSSHConnection) Upload(ctx context.Context, targetPath string, data []byte) error {
+func (f *fakeSSHConnection) Upload(ctx context.Context, targetPath string, _ io.Reader) error {
 	if targetPath != "/fake/path" {
 		return fmt.Errorf("unexpected target path in test")
 	}

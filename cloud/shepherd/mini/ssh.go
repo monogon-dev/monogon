@@ -4,10 +4,11 @@ import (
 	"flag"
 	"fmt"
 
-	"golang.org/x/crypto/ssh"
+	xssh "golang.org/x/crypto/ssh"
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/shepherd/manager"
+	"source.monogon.dev/go/net/ssh"
 )
 
 type sshConfig struct {
@@ -36,18 +37,18 @@ func (sc *sshConfig) RegisterFlags() {
 	sc.SSHKey.RegisterFlags()
 }
 
-func (sc *sshConfig) NewClient() (*manager.PlainSSHClient, error) {
+func (sc *sshConfig) NewClient() (*ssh.DirectClient, error) {
 	if err := sc.check(); err != nil {
 		return nil, err
 	}
 
-	c := manager.PlainSSHClient{
+	c := ssh.DirectClient{
 		Username: sc.User,
 	}
 
 	switch {
 	case sc.Pass != "":
-		c.AuthMethod = ssh.Password(sc.Pass)
+		c.AuthMethod = xssh.Password(sc.Pass)
 	case sc.SSHKey.KeyPersistPath != "":
 		signer, err := sc.SSHKey.Signer()
 		if err != nil {
@@ -61,7 +62,7 @@ func (sc *sshConfig) NewClient() (*manager.PlainSSHClient, error) {
 
 		klog.Infof("Using ssh key auth with public key: %s", pubKey)
 
-		c.AuthMethod = ssh.PublicKeys(signer)
+		c.AuthMethod = xssh.PublicKeys(signer)
 	}
 	return &c, nil
 }

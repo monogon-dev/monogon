@@ -14,6 +14,7 @@ import (
 	"source.monogon.dev/cloud/equinix/wrapngo"
 	"source.monogon.dev/cloud/lib/component"
 	"source.monogon.dev/cloud/shepherd/manager"
+	ssh2 "source.monogon.dev/go/net/ssh"
 	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 )
 
@@ -89,7 +90,7 @@ func main() {
 		klog.Exitf("%v", err)
 	}
 
-	sshClient := &manager.PlainSSHClient{
+	sshClient := &ssh2.DirectClient{
 		AuthMethod: ssh.PublicKeys(sshSigner),
 		// Equinix OS installations always use root.
 		Username: "root",
