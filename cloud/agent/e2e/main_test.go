@@ -184,7 +184,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	initramfsOrigPath, err := runfiles.Rlocation("_main/cloud/agent/initramfs.cpio.zst")
+	initramfsOrigPath, err := runfiles.Rlocation("_main/cloud/agent/takeover/initramfs.cpio.zst")
 	if err != nil {
 		t.Fatal(err)
 	}

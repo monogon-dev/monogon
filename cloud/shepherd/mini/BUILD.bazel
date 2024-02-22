@@ -43,7 +43,7 @@ oci_image(
     entrypoint = ["/mini"],
     tars = [
         ":mini_layer",
-        "//cloud/takeover:takeover_layer",
+        "//cloud/agent/takeover:takeover_layer",
     ],
     visibility = ["//visibility:public"],
     workdir = "/app",

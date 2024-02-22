@@ -4,7 +4,7 @@ go_test(
     name = "e2e_test",
     srcs = ["main_test.go"],
     data = [
-        "//cloud/takeover",
+        "//cloud/agent/takeover",
         "//third_party/edk2:firmware",
         "@debian_11_cloudimage//file",
     ],

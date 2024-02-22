@@ -4,7 +4,7 @@ go_test(
     name = "e2e_test",
     srcs = ["main_test.go"],
     data = [
-        "//cloud/agent:initramfs",
+        "//cloud/agent/takeover:initramfs",
         "//metropolis/installer/test/testos:testos_bundle",
         "//third_party/edk2:firmware",
         "//third_party/linux",

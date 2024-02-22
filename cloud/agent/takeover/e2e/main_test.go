@@ -158,7 +158,7 @@ func TestE2E(t *testing.T) {
 	if err := takeoverFile.Chmod(0o755); err != nil {
 		t.Fatal(err)
 	}
-	takeoverPath, err := runfiles.Rlocation("_main/cloud/takeover/takeover_/takeover")
+	takeoverPath, err := runfiles.Rlocation("_main/cloud/agent/takeover/takeover_/takeover")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -44,7 +44,7 @@ var kernel []byte
 //go:embed ucode.cpio
 var ucode []byte
 
-//go:embed cloud/agent/initramfs.cpio.zst
+//go:embed initramfs.cpio.zst
 var initramfs []byte
 
 // newMemfile creates a new file which is not located on a specific filesystem,

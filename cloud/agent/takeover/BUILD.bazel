@@ -1,6 +1,8 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("//metropolis/node/build/mkucode:def.bzl", "cpio_ucode")
 load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
+load("//metropolis/node/build:def.bzl", "node_initramfs")
+load("//metropolis/node/build/fwprune:def.bzl", "fsspec_linux_firmware")
 
 go_library(
     name = "takeover_lib",
@@ -8,9 +10,9 @@ go_library(
     embedsrcs = [
         "//third_party/linux",  #keep
         ":ucode",  #keep
-        "//cloud/agent:initramfs",  #keep
+        ":initramfs",  #keep
     ],
-    importpath = "source.monogon.dev/cloud/takeover",
+    importpath = "source.monogon.dev/cloud/agent/takeover",
     visibility = ["//visibility:private"],
     deps = [
         "//cloud/agent/api",
@@ -25,6 +27,21 @@ go_library(
     ],
 )
 
+node_initramfs(
+    name = "initramfs",
+    files = {
+        "//cloud/agent:agent": "/init",
+        "@com_github_coredns_coredns//:coredns": "/kubernetes/bin/coredns",
+        "//metropolis/node/core/network/dns:resolv.conf": "/etc/resolv.conf",
+        "@cacerts//file": "/etc/ssl/cert.pem",
+    },
+    fsspecs = [
+        "//metropolis/node/build:earlydev.fsspec",
+        ":firmware",
+    ],
+    visibility = ["//cloud/agent:__subpackages__"],
+)
+
 go_binary(
     name = "takeover",
     embed = [":takeover_lib"],
@@ -37,6 +54,13 @@ cpio_ucode(
         "@linux-firmware//:amd_ucode": "AuthenticAMD",
         "@intel_ucode//:fam6h": "GenuineIntel",
     },
+)
+
+fsspec_linux_firmware(
+    name = "firmware",
+    firmware_files = ["@linux-firmware//:all_files"],
+    kernel = "//third_party/linux",
+    metadata = "@linux-firmware//:metadata",
 )
 
 # Used by container_images, forces a static build of the test_agent.
