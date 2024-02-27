@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/ed25519"
 	_ "embed"
-	"io"
 	"log"
 	"os"
 	"strings"
@@ -27,55 +26,18 @@ var installCmd = &cobra.Command{
 	Use:   "install",
 }
 
-var bundlePath = installCmd.PersistentFlags().StringP("bundle", "b", "", "Path to the Metropolis bundle to be installed")
-var installerPath = installCmd.PersistentFlags().StringP("installer", "i", "", "Path to the Metropolis installer to use when installing")
-
-var genusbCmd = &cobra.Command{
-	Use:     "genusb target",
-	Short:   "Generates a Metropolis installer disk or image.",
-	Example: "metroctl install --bundle=metropolis-v0.1.zip genusb /dev/sdx",
-	Args:    cobra.ExactArgs(1), // One positional argument: the target
-	Run:     doGenUSB,
-}
-
 // bootstrap is a flag controlling node parameters included in the installer
 // image. If set, the installed node will bootstrap a new cluster. Otherwise,
 // it will try to connect to the cluster which endpoints were provided with
 // the --endpoints flag.
-var bootstrap bool
+var bootstrap = installCmd.PersistentFlags().Bool("bootstrap", false, "Create a bootstrap installer image.")
+var bootstrapTPMMode = installCmd.PersistentFlags().String("bootstrap-tpm-mode", "required", "TPM mode to set on cluster (required, best-effort, disabled)")
+var bootstrapStorageSecurityPolicy = installCmd.PersistentFlags().String("bootstrap-storage-security", "needs-encryption-and-authentication", "Storage security policy to set on cluster (permissive, needs-encryption, needs-encryption-and-authentication, needs-insecure)")
+var bundlePath = installCmd.PersistentFlags().StringP("bundle", "b", "", "Path to the Metropolis bundle to be installed")
 
-var bootstrapTPMMode string
-var bootstrapStorageSecurityPolicy string
-
-type externalFile struct {
-	reader io.Reader
-	size   uint64
-}
-
-func external(name, datafilePath string, flag *string) fat32.SizedReader {
-	if flag == nil || *flag == "" {
-		rPath, err := runfiles.Rlocation(datafilePath)
-		if err != nil {
-			log.Fatalf("No %s specified", name)
-		}
-		df, err := os.ReadFile(rPath)
-		if err != nil {
-			log.Fatalf("Cant read file: %v", err)
-		}
-		return bytes.NewReader(df)
-	}
-
-	f, err := blkio.NewFileReader(*bundlePath)
-	if err != nil {
-		log.Fatalf("Failed to open specified %s: %v", name, err)
-	}
-
-	return f
-}
-
-func doGenUSB(cmd *cobra.Command, args []string) {
+func makeNodeParams() *api.NodeParameters {
 	var tpmMode cpb.ClusterConfiguration_TPMMode
-	switch strings.ToLower(bootstrapTPMMode) {
+	switch strings.ToLower(*bootstrapTPMMode) {
 	case "required", "require":
 		tpmMode = cpb.ClusterConfiguration_TPM_MODE_REQUIRED
 	case "best-effort", "besteffort":
@@ -87,7 +49,7 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 	}
 
 	var bootstrapStorageSecurity cpb.ClusterConfiguration_StorageSecurityPolicy
-	switch strings.ToLower(bootstrapStorageSecurityPolicy) {
+	switch strings.ToLower(*bootstrapStorageSecurityPolicy) {
 	case "permissive":
 		bootstrapStorageSecurity = cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_PERMISSIVE
 	case "needs-encryption":
@@ -101,17 +63,15 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 		log.Fatalf("Invalid --bootstrap-storage-security (must be one of: permissive, needs-encryption, needs-encryption-and-authentication, needs-insecure)")
 	}
 
-	bundle := external("bundle", "metropolis/node/bundle.zip", bundlePath)
-	installer := external("installer", "metropolis/installer/kernel.efi", installerPath)
 	ctx := clicontext.WithInterrupt(context.Background())
 
-	// TODO(lorenz): Have a key management story for this
 	if err := os.MkdirAll(flags.configPath, 0700); err != nil && !os.IsExist(err) {
 		log.Fatalf("Failed to create config directory: %v", err)
 	}
 
 	var params *api.NodeParameters
-	if bootstrap {
+	if *bootstrap {
+		// TODO(lorenz): Have a key management story for this
 		priv, err := core.GetOrMakeOwnerKey(flags.configPath)
 		if err != nil {
 			log.Fatalf("Failed to generate or get owner key: %v", err)
@@ -150,25 +110,30 @@ func doGenUSB(cmd *cobra.Command, args []string) {
 			},
 		}
 	}
+	return params
+}
 
-	installerImageArgs := core.MakeInstallerImageArgs{
-		TargetPath: args[0],
-		Installer:  installer,
-		NodeParams: params,
-		Bundle:     bundle,
+func external(name, datafilePath string, flag *string) fat32.SizedReader {
+	if flag == nil || *flag == "" {
+		rPath, err := runfiles.Rlocation(datafilePath)
+		if err != nil {
+			log.Fatalf("No %s specified", name)
+		}
+		df, err := os.ReadFile(rPath)
+		if err != nil {
+			log.Fatalf("Cant read file: %v", err)
+		}
+		return bytes.NewReader(df)
 	}
 
-	log.Printf("Generating installer image (this can take a while, see issues/92).")
-	if err := core.MakeInstallerImage(installerImageArgs); err != nil {
-		log.Fatalf("Failed to create installer: %v", err)
+	f, err := blkio.NewFileReader(*bundlePath)
+	if err != nil {
+		log.Fatalf("Failed to open specified %s: %v", name, err)
 	}
+
+	return f
 }
 
 func init() {
 	rootCmd.AddCommand(installCmd)
-
-	genusbCmd.Flags().BoolVar(&bootstrap, "bootstrap", false, "Create a bootstrap installer image.")
-	genusbCmd.Flags().StringVar(&bootstrapTPMMode, "bootstrap-tpm-mode", "required", "TPM mode to set on cluster (required, best-effort, disabled)")
-	genusbCmd.Flags().StringVar(&bootstrapStorageSecurityPolicy, "bootstrap-storage-security", "needs-encryption-and-authentication", "Storage security policy to set on cluster (permissive, needs-encryption, needs-encryption-and-authentication, needs-insecure)")
-	installCmd.AddCommand(genusbCmd)
 }

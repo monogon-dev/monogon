@@ -19,6 +19,7 @@ go_library(
     srcs = [
         "cmd_certs.go",
         "cmd_install.go",
+        "cmd_install_usb.go",
         "cmd_k8s_configure.go",
         "cmd_k8scredplugin.go",
         "cmd_node.go",
