@@ -29,6 +29,7 @@ import (
 	"slices"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/vishvananda/netlink"
 
 	"source.monogon.dev/metropolis/node/core/curator/watcher"
 	"source.monogon.dev/metropolis/node/core/localstorage"
@@ -128,6 +129,12 @@ func (s *Service) push(ctx context.Context, kubeC chan *Prefixes, netC chan *net
 			}
 		}
 
+		if kubeChanged {
+			if err := configureKubeNetwork(prevKubePrefixes, kubePrefixes); err != nil {
+				supervisor.Logger(ctx).Warningf("Could not configure cluster networking update: %v", err)
+			}
+		}
+
 		// Ignore spurious updates.
 		if !localChanged && !kubeChanged {
 			continue
@@ -170,6 +177,69 @@ func (s *Service) push(ctx context.Context, kubeC chan *Prefixes, netC chan *net
 		prevLocalAddr = localAddr
 
 	}
+}
+
+// configureKubeNetwork configures the point-to-point peer IP address of the
+// node host network namespace (i.e. the one container P2P interfaces point to)
+// on its loopback interface to make it eligible to be used as a source IP
+// address for communication into the clusternet overlay.
+func configureKubeNetwork(oldPrefixes *Prefixes, newPrefixes *Prefixes) error {
+	// diff maps prefixes to be removed to false
+	// and prefixes to be added to true.
+	diff := make(map[netip.Prefix]bool)
+
+	if newPrefixes != nil {
+		for _, newAddr := range *newPrefixes {
+			diff[newAddr] = true
+		}
+	}
+
+	if oldPrefixes != nil {
+		for _, oldAddr := range *oldPrefixes {
+			// Remove all prefixes in both the old
+			// and new prefix sets from `diff`.
+			if diff[oldAddr] {
+				delete(diff, oldAddr)
+				continue
+			}
+
+			// Mark all remaining (i.e. ones not in the new prefix set)
+			// prefixes for removal.
+			diff[oldAddr] = false
+		}
+	}
+
+	loInterface, err := netlink.LinkByName("lo")
+	if err != nil {
+		return fmt.Errorf("while getting lo interface: %w", err)
+	}
+
+	for prefix, shouldAdd := range diff {
+		// By CNI convention the first IP after the subnet base address is the
+		// point-to-point partner for all pod veths. To make this IP eligible
+		// to be used as a general host network namespace source IP we also add
+		// it to the loopback interface. This ensures that the kernel picks it
+		// as the source IP for traffic flowing into clusternet
+		// (due to its preference for source IPs in the same subnet).
+		addr := &netlink.Addr{
+			IPNet: &net.IPNet{
+				IP:   prefix.Addr().Next().AsSlice(),
+				Mask: net.CIDRMask(prefix.Addr().BitLen(), prefix.Addr().BitLen()),
+			},
+		}
+
+		if shouldAdd {
+			if err := netlink.AddrAdd(loInterface, addr); err != nil {
+				return fmt.Errorf("assigning extra loopback IP: %v", err)
+			}
+		} else {
+			if err := netlink.AddrDel(loInterface, addr); err != nil {
+				return fmt.Errorf("removing extra loopback IP: %v", err)
+			}
+		}
+	}
+
+	return nil
 }
 
 // pull is the sub-runnable responsible for fetching information about the
