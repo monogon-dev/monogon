@@ -125,23 +125,21 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 			hasIPv4Autoconfig = true
 		}
 		if i.Ipv6Autoconfig != nil {
-			err := sysctl.Options{
+			opts := sysctl.Options{
 				"net.ipv6.conf." + newLink.Attrs().Name + ".accept_ra": "1",
-			}.Apply()
-			if err != nil {
+			}
+			if err := opts.Apply(); err != nil {
 				return fmt.Errorf("failed enabling accept_ra for interface %q: %w", newLink.Attrs().Name, err)
 			}
 			// TODO(lorenz): Actually implement DHCPv6/Managed flag
 		}
 		for _, a := range i.Address {
-			err := addAddrFromSpec(a, newLink)
-			if err != nil {
+			if err := addAddrFromSpec(a, newLink); err != nil {
 				return fmt.Errorf("failed adding address %q to link: %w", a, err)
 			}
 		}
 		for _, r := range i.Route {
-			err := routeFromSpec(r, newLink)
-			if err != nil {
+			if err := routeFromSpec(r, newLink); err != nil {
 				return fmt.Errorf("failed creating route on interface %q: %w", i.Name, err)
 			}
 		}
