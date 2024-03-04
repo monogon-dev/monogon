@@ -28,10 +28,15 @@ endpoint must be provided with the --endpoints parameter.`,
 }
 
 func doTakeOwnership(cmd *cobra.Command, _ []string) {
+	ctx := clicontext.WithInterrupt(context.Background())
 	if len(flags.clusterEndpoints) != 1 {
 		log.Fatalf("takeownership requires a single cluster endpoint to be provided with the --endpoints parameter.")
 	}
-	ctx := clicontext.WithInterrupt(context.Background())
+
+	contextName, err := cmd.Flags().GetString("context")
+	if err != nil || contextName == "" {
+		log.Fatalf("takeownership requires a valid context name to be provided with the --context parameter.")
+	}
 
 	ca, err := core.GetClusterCAWithTOFU(ctx, connectOptions())
 	if err != nil {
@@ -94,5 +99,6 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 }
 
 func init() {
+	takeownershipCommand.Flags().String("context", "metroctl", "The name for the kubernetes context to configure")
 	rootCmd.AddCommand(takeownershipCommand)
 }

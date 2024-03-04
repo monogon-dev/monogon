@@ -33,6 +33,11 @@ func doK8sConfigure(cmd *cobra.Command, _ []string) {
 		log.Fatalf("k8s configure requires at least one cluster endpoint to be provided with the --endpoints parameter.")
 	}
 
+	contextName, err := cmd.Flags().GetString("context")
+	if err != nil || contextName == "" {
+		log.Fatalf("k8s configure requires a valid context name to be provided with the --context parameter.")
+	}
+
 	// If the user has metroctl in their path, use the metroctl from path as
 	// a credential plugin. Otherwise use the path to the currently-running
 	// metroctl.
@@ -45,14 +50,14 @@ func doK8sConfigure(cmd *cobra.Command, _ []string) {
 	}
 	// TODO(q3k, issues/144): this only works as long as all nodes are kubernetes controller
 	// nodes. This won't be the case for too long. Figure this out.
-	configName := "metroctl"
-	if err := core.InstallKubeletConfig(ctx, metroctlPath, connectOptions(), configName, flags.clusterEndpoints[0]); err != nil {
+	if err := core.InstallKubeletConfig(ctx, metroctlPath, connectOptions(), contextName, flags.clusterEndpoints[0]); err != nil {
 		log.Fatalf("Failed to install metroctl/k8s integration: %v", err)
 	}
-	log.Printf("Success! kubeconfig is set up. You can now run kubectl --context=%s ... to access the Kubernetes cluster.", configName)
+	log.Printf("Success! kubeconfig is set up. You can now run kubectl --context=%s ... to access the Kubernetes cluster.", contextName)
 }
 
 func init() {
 	k8sCommand.AddCommand(k8sConfigureCommand)
+	k8sCommand.Flags().String("context", "metroctl", "The name for the kubernetes context to configure")
 	rootCmd.AddCommand(k8sCommand)
 }
