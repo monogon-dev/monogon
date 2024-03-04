@@ -19,27 +19,7 @@ Refer to [SETUP.md](./SETUP.md) for detailed instructions.
 
 ## Monogon OS
 
-The source code lives in `//metropolis` (Metropolis is the codename of Monogon OS).
+The source code lives in [`//metropolis`](./metropolis) (Metropolis is the codename of Monogon OS).
 
-See the `//metropolis/README.md` for a developer quick start guide, or see
+See the [`//metropolis/README.md`](./metropolis/README.md) for a developer quick start guide, or see
 the [Monogon OS Handbook](https://docs.monogon.dev/metropolis-v0.1/handbook/index.html) for user documentation.
-
-### Run a single node demo cluster
-
-Build CLI and node image:
-
-    bazel build //metropolis/cli/dbg //:launch --config dbg
-
-Launch an ephemeral test node:
-
-    bazel test //:launch --config dbg --test_output=streamed
-    
-Run a kubectl command while the test is running:
-
-    bazel-bin/metropolis/cli/dbg/dbg_/dbg kubectl describe node
- 
-### Test suite
-
-Run full test suite:
-
-    bazel test --config dbg //...
