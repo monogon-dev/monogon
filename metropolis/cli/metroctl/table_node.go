@@ -50,7 +50,7 @@ func nodeEntry(n *apb.Node) clitable.Entry {
 	}
 	res.Add("tpm", tpm)
 
-	if n.Status.Version != nil {
+	if n.Status != nil && n.Status.Version != nil {
 		res.Add("version", version.Semver(n.Status.Version))
 	}
 
