@@ -35,7 +35,7 @@ func initializeDebugger(networkSvc *network.Service) {
 		// Delve for some reason connects to itself and in early-boot no
 		// network interface is available to do that through. Also external
 		// access isn't possible early on anyways.
-		watcher := networkSvc.Watch()
+		watcher := networkSvc.Status.Watch()
 		_, err := watcher.Get(context.Background())
 		if err != nil {
 			panic(err)

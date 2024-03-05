@@ -93,7 +93,7 @@ func (s *Controller) Run(ctx context.Context) error {
 	// machine's external IP address. If it changes, the runnable will exit.
 	// TODO(q3k): test this
 	supervisor.Run(ctx, "networked", func(ctx context.Context) error {
-		networkWatch := s.c.Network.Watch()
+		networkWatch := s.c.Network.Status.Watch()
 		defer networkWatch.Close()
 
 		var status *network.Status

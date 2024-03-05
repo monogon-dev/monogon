@@ -149,7 +149,8 @@ func (s *Service) Run(ctx context.Context) error {
 	localC := make(chan *network.Status)
 	s.clusterC = make(chan nodeMap)
 
-	if err := supervisor.Run(ctx, "local", event.Pipe(s.Network.Value(), localC)); err != nil {
+	st := &s.Network.Status
+	if err := supervisor.Run(ctx, "local", event.Pipe(st, localC)); err != nil {
 		return err
 	}
 	if err := supervisor.Run(ctx, "cluster", s.runCluster); err != nil {

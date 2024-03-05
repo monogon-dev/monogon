@@ -42,7 +42,7 @@ func (s *workerClusternet) run(ctx context.Context) error {
 		},
 		DataDirectory:             &s.storageRoot.Data.Kubernetes.ClusterNetworking,
 		LocalKubernetesPodNetwork: s.podNetwork,
-		Network:                   s.network.Value(),
+		Network:                   &s.network.Status,
 	}
 	return svc.Run(ctx)
 }

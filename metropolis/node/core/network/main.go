@@ -30,7 +30,6 @@ import (
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
 	"source.monogon.dev/metropolis/node/core/network/dns"
-	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/pkg/sysctl"
@@ -70,7 +69,8 @@ type Service struct {
 	natTable            *nftables.Table
 	natPostroutingChain *nftables.Chain
 
-	status memory.Value[*Status]
+	// Status is the current status of the network as seen by the service.
+	Status memory.Value[*Status]
 }
 
 // New instantiates a new network service. If autoconfiguration is desired,
@@ -93,21 +93,6 @@ func New(staticConfig *netpb.Net) *Service {
 type Status struct {
 	ExternalAddress net.IP
 	DNSServers      dhcp4c.DNSServers
-}
-
-// Watch returns a Watcher, which can be used by consumers of the network
-// Service to retrieve the current network status.
-// Close must be called on the Watcher when it is not used anymore in order to
-// prevent goroutine leaks.
-func (s *Service) Watch() event.Watcher[*Status] {
-	return s.status.Watch()
-}
-
-// Value returns the underlying event.Value for the network service status.
-//
-// TODO(q3k): just expose s.status directly and remove the Watch and Event methods.
-func (s *Service) Value() event.Value[*Status] {
-	return &s.status
 }
 
 // ConfigureDNS sets a DNS ExtraDirective on the built-in DNS server of the
@@ -161,7 +146,7 @@ func (s *Service) statusCallback(old, new *dhcp4c.Lease) error {
 		s.ConfigureDNS(dns.NewUpstreamDirective(newServers))
 	}
 	// Notify status waiters.
-	s.status.Set(&Status{
+	s.Status.Set(&Status{
 		ExternalAddress: new.AssignedIP,
 		DNSServers:      new.DNSServers(),
 	})

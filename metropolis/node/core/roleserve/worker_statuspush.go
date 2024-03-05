@@ -117,7 +117,7 @@ func (s *workerStatusPush) run(ctx context.Context) error {
 	// runnable could get stuck.
 
 	supervisor.Run(ctx, "map-network", func(ctx context.Context) error {
-		nw := s.network.Watch()
+		nw := s.network.Status.Watch()
 		defer nw.Close()
 
 		supervisor.Signal(ctx, supervisor.SignalHealthy)

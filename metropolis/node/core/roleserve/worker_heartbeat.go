@@ -23,7 +23,7 @@ type workerHeartbeat struct {
 }
 
 func (s *workerHeartbeat) run(ctx context.Context) error {
-	nw := s.network.Watch()
+	nw := s.network.Status.Watch()
 	defer nw.Close()
 
 	w := s.curatorConnection.Watch()

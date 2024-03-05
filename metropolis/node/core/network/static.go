@@ -174,7 +174,7 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 				}
 			}
 		}
-		s.status.Set(&Status{
+		s.Status.Set(&Status{
 			ExternalAddress: selectedAddr,
 			DNSServers:      nsIPList,
 		})
