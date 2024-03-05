@@ -172,12 +172,15 @@ var nodeUpdateCmd = &cobra.Command{
 						nodes, err := core.GetNodes(ctx, mgmt, fmt.Sprintf("node.id == %q", n.Id))
 						if err != nil {
 							log.Printf("while getting node status for %s: %v", n.Id, err)
+							continue
 						}
 						if len(nodes) == 0 {
 							log.Printf("node status for %s returned no node", n.Id)
+							continue
 						}
 						if len(nodes) > 1 {
 							log.Printf("node status for %s returned too many nodes (%d)", n.Id, len(nodes))
+							continue
 						}
 						s := nodes[0]
 						if s.Health == api.Node_HEALTHY {
