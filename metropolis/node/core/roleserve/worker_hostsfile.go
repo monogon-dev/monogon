@@ -41,7 +41,7 @@ func (s *workerHostsfile) run(ctx context.Context) error {
 
 	svc := hostsfile.Service{
 		Config: hostsfile.Config{
-			Network:               s.network,
+			Network:               &s.network.Status,
 			Ephemeral:             &s.storageRoot.Ephemeral,
 			ESP:                   &s.storageRoot.ESP,
 			NodeID:                cc.nodeID(),

@@ -38,9 +38,8 @@ import (
 )
 
 type Config struct {
-	// Network is a handle to the Network service, used to update the hostsfile
-	// service with information about the local node's external IP address.
-	Network *network.Service
+	// Network will be read to retrieve the current status of the Network service.
+	Network event.Value[*network.Status]
 	// Ephemeral is the root of the ephemeral storage of the node, into which the
 	// service will write its managed files.
 	Ephemeral *localstorage.EphemeralDirectory
@@ -149,8 +148,7 @@ func (s *Service) Run(ctx context.Context) error {
 	localC := make(chan *network.Status)
 	s.clusterC = make(chan nodeMap)
 
-	st := &s.Network.Status
-	if err := supervisor.Run(ctx, "local", event.Pipe(st, localC)); err != nil {
+	if err := supervisor.Run(ctx, "local", event.Pipe(s.Network, localC)); err != nil {
 		return err
 	}
 	if err := supervisor.Run(ctx, "cluster", s.runCluster); err != nil {
