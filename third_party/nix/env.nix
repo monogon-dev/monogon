@@ -61,7 +61,7 @@ in
               readonly workspace_dir
               return
             fi
-            workspace_dir="$(dirname "\''${workspace_dir}")"
+            workspace_dir="\''$(dirname "\''${workspace_dir}")"
           done
           readonly workspace_dir=""
         }
