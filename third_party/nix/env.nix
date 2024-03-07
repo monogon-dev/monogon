@@ -46,34 +46,17 @@ in
       unpackPhase = ''
         true
       '';
+      nativeBuildInputs = [ makeWrapper ];
       buildPhase = ''
         mkdir -p $out/bin
         cp $src $out/bin/.bazel-inner
         chmod +x $out/bin/.bazel-inner
 
-        cat > $out/bin/bazel <<EOF
-        #!/usr/bin/bash
-        export BAZEL_REAL=$out/bin/.bazel-inner
-        function get_workspace_root() {
-          workspace_dir="\''${PWD}"
-          while [[ "\''${workspace_dir}" != / ]]; do
-            if [[ -e "\''${workspace_dir}/WORKSPACE" || -e "\''${workspace_dir}/WORKSPACE.bazel" ]]; then
-              readonly workspace_dir
-              return
-            fi
-            workspace_dir="\''$(dirname "\''${workspace_dir}")"
-          done
-          readonly workspace_dir=""
-        }
-
-        get_workspace_root
-        readonly wrapper="\''${workspace_dir}/tools/bazel"
-        if [ -f "\''${wrapper}" ]; then
-          exec -a "\$0" "\''${wrapper}" "\$@"
-        fi
-        exec -a "\$0" "\''${BAZEL_REAL}" "\$@"
-        EOF
+        cp ${./bazel-inner.sh} $out/bin/bazel
         chmod +x $out/bin/bazel
+
+        # Use wrapProgram to set the actual bazel path
+        wrapProgram $out/bin/bazel --set BAZEL_REAL $out/bin/.bazel-inner
       '';
       dontStrip = true;
     })
