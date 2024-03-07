@@ -15,7 +15,7 @@ import (
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
 )
 
-const metroctlRunfile = "metropolis/cli/metroctl/metroctl_/metroctl"
+const metroctlRunfile = "_main/metropolis/cli/metroctl/metroctl_/metroctl"
 
 // MetroctlRunfilePath returns the absolute path to the metroctl binary available
 // if the built target depends on //metropolis/cli/metroctl. Otherwise, an error
