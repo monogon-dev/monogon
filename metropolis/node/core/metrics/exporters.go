@@ -24,6 +24,8 @@ type Exporter struct {
 	// Arguments to start the exporter. The exporter should listen at 127.0.0.1 and
 	// the port specified by Port, and serve its metrics on /metrics.
 	Arguments []string
+	// Path to scrape metrics at. Defaults to /metrics.
+	Path string
 }
 
 // DefaultExporters are the exporters which we run by default in Metropolis.
@@ -62,6 +64,11 @@ var DefaultExporters = []*Exporter{
 		Name: "kubernetes-apiserver",
 		Port: node.MetricsKubeAPIServerListenerPort,
 	},
+	{
+		Name: "containerd",
+		Port: node.MetricsContainerdListenerPort,
+		Path: "/v1/metrics",
+	},
 }
 
 func (e *Exporter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +83,12 @@ func (e *Exporter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// context from our runnable which contains the logger.
 	logger := supervisor.Logger(ctx)
 
-	url := "http://127.0.0.1:" + e.Port.PortString() + "/metrics"
+	path := e.Path
+	if e.Path == "" {
+		path = "/metrics"
+	}
+
+	url := "http://127.0.0.1:" + e.Port.PortString() + path
 	outReq, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		logger.Errorf("%s: forwarding to %q failed: %v", r.RemoteAddr, e.Name, err)

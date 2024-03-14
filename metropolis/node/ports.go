@@ -63,6 +63,9 @@ const (
 	// proxy for the api-server runs, bound to 127.0.0.1. The metrics
 	// service proxies traffic to it from the public MetricsPort.
 	MetricsKubeAPIServerListenerPort Port = 7845
+	// MetricsContainerdListenerPort is the TCP port on which the
+	// containerd metrics endpoint, bound to 127.0.0.1, is exposed.
+	MetricsContainerdListenerPort Port = 7846
 	// KubernetesAPIPort is the TCP port on which the Kubernetes API is
 	// exposed.
 	KubernetesAPIPort Port = 6443

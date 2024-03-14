@@ -436,6 +436,44 @@ func TestE2EKubernetes(t *testing.T) {
 		}
 		return nil
 	})
+	util.TestEventual(t, "containerd metrics retrieved", ctx, smallTestTimeout, func(ctx context.Context) error {
+		pool := x509.NewCertPool()
+		pool.AddCert(cluster.CACertificate)
+		cl := http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					Certificates: []tls.Certificate{cluster.Owner},
+					RootCAs:      pool,
+				},
+				DialContext: func(ctx context.Context, _, addr string) (net.Conn, error) {
+					return cluster.DialNode(ctx, addr)
+				},
+			},
+		}
+		u := url.URL{
+			Scheme: "https",
+			Host:   net.JoinHostPort(cluster.NodeIDs[1], common.MetricsPort.PortString()),
+			Path:   "/metrics/containerd",
+		}
+		res, err := cl.Get(u.String())
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+		if res.StatusCode != 200 {
+			return fmt.Errorf("status code %d", res.StatusCode)
+		}
+
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		needle := "containerd_build_info_total"
+		if !strings.Contains(string(body), needle) {
+			return util.Permanent(fmt.Errorf("could not find %q in returned response", needle))
+		}
+		return nil
+	})
 	if os.Getenv("HAVE_NESTED_KVM") != "" {
 		util.TestEventual(t, "Pod for KVM/QEMU smoke test", ctx, smallTestTimeout, func(ctx context.Context) error {
 			runcRuntimeClass := "runc"
