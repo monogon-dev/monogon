@@ -29,6 +29,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/multierr"
 	"golang.org/x/net/proxy"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -408,10 +409,39 @@ func copyFile(src, dst string) error {
 	}
 	defer out.Close()
 
-	_, err = io.Copy(out, in)
+	endPos, err := in.Seek(0, io.SeekEnd)
 	if err != nil {
-		return fmt.Errorf("when copying file: %w", err)
+		return fmt.Errorf("when getting source end: %w", err)
 	}
+
+	// Copy the file while preserving its sparseness. The image files are very
+	// sparse (less than 10% allocated), so this is a lot faster.
+	var lastHoleStart int64
+	for {
+		dataStart, err := in.Seek(lastHoleStart, unix.SEEK_DATA)
+		if err != nil {
+			return fmt.Errorf("when seeking to next data block: %w", err)
+		}
+		holeStart, err := in.Seek(dataStart, unix.SEEK_HOLE)
+		if err != nil {
+			return fmt.Errorf("when seeking to next hole: %w", err)
+		}
+		lastHoleStart = holeStart
+		if _, err := in.Seek(dataStart, io.SeekStart); err != nil {
+			return fmt.Errorf("when seeking to current data block: %w", err)
+		}
+		if _, err := out.Seek(dataStart, io.SeekStart); err != nil {
+			return fmt.Errorf("when seeking output to next data block: %w", err)
+		}
+		if _, err := io.CopyN(out, in, holeStart-dataStart); err != nil {
+			return fmt.Errorf("when copying file: %w", err)
+		}
+		if endPos == holeStart {
+			// The next hole is at the end of the file, we're done here.
+			break
+		}
+	}
+
 	return out.Close()
 }
 
