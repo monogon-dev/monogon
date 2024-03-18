@@ -238,7 +238,7 @@ func main() {
 	}
 	// Calculate the minimum target size based on the installation parameters.
 	minSize := uint64((installParams.PartitionSize.ESP +
-		installParams.PartitionSize.System +
+		installParams.PartitionSize.System*2 +
 		installParams.PartitionSize.Data + 1) * mib)
 
 	// Look for suitable block devices, given the minimum size.
