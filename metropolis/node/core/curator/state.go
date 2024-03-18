@@ -73,7 +73,7 @@ func (p etcdPrefix) Key(id string) (string, error) {
 	if strings.Contains(id, "/") {
 		return "", fmt.Errorf("invalid id: cannot contain / character")
 	}
-	path := append(p.parts, id)
+	path := append(append([]string(nil), p.parts...), id)
 	return "/" + strings.Join(path, "/"), nil
 }
 

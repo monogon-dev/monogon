@@ -13,10 +13,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
-	"source.monogon.dev/metropolis/node/core/curator/watcher"
-
 	common "source.monogon.dev/metropolis/node"
 	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	"source.monogon.dev/metropolis/node/core/curator/watcher"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -213,6 +212,7 @@ func (r *Resolver) runCuratorUpdater(ctx context.Context, opts []grpc.DialOption
 
 	// Use a keepalive to make sure we time out fast if the node we're connecting to
 	// partitions.
+	opts = append([]grpc.DialOption(nil), opts...)
 	opts = append(opts, grpc.WithResolvers(r), grpc.WithKeepaliveParams(keepalive.ClientParameters{
 		Time:    10 * time.Second,
 		Timeout: 5 * time.Second,
@@ -331,6 +331,7 @@ func (r *Resolver) watchLeaderVia(ctx context.Context, via string, opts []grpc.D
 	// partitions. This is particularly critical for the leader updater, as we want
 	// to know as early as possible that this happened, so that we can move over to
 	// another node.
+	opts = append([]grpc.DialOption(nil), opts...)
 	opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
 		Time:                10 * time.Second,
 		Timeout:             5 * time.Second,

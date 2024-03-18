@@ -111,7 +111,7 @@ func (l *local) Sub(space string) (Namespaced, error) {
 	}
 	sub := &local{
 		root: l.root,
-		path: append(l.path, space),
+		path: append(append([]string(nil), l.path...), space),
 	}
 	sub.populate()
 	return sub, nil

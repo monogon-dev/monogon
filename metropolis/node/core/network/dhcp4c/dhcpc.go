@@ -209,9 +209,10 @@ func newDefaultBackoff() *backoff.ExponentialBackOff {
 // managed through external means like a routing protocol, setting the default
 // route is also required. A simple example with the callback package thus
 // looks like this:
-//   c := dhcp4c.NewClient(yourInterface)
-//   c.LeaseCallback = callback.Compose(callback.ManageIP(yourInterface), callback.ManageDefaultRoute(yourInterface))
-//   c.Run(ctx)
+//
+//	c := dhcp4c.NewClient(yourInterface)
+//	c.LeaseCallback = callback.Compose(callback.ManageIP(yourInterface), callback.ManageDefaultRoute(yourInterface))
+//	c.Run(ctx)
 func NewClient(iface *net.Interface) (*Client, error) {
 	broadcastConn := transport.NewBroadcastTransport(iface)
 
@@ -350,7 +351,7 @@ func (c *Client) newMsg(t dhcpv4.MessageType) (*dhcpv4.DHCPv4, error) {
 		opts.Update(dhcpv4.OptClientIdentifier(c.ClientIdentifier))
 	}
 	if t == dhcpv4.MessageTypeDiscover || t == dhcpv4.MessageTypeRequest || t == dhcpv4.MessageTypeInform {
-		opts.Update(dhcpv4.OptParameterRequestList(append(c.RequestedOptions, internalOptions...)...))
+		opts.Update(dhcpv4.OptParameterRequestList(append(append(dhcpv4.OptionCodeList(nil), c.RequestedOptions...), internalOptions...)...))
 		opts.Update(dhcpv4.OptMaxMessageSize(c.maxMsgSize()))
 		if c.VendorClassIdentifier != "" {
 			opts.Update(dhcpv4.OptClassIdentifier(c.VendorClassIdentifier))
