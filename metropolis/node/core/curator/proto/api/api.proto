@@ -153,6 +153,15 @@ service Curator {
             need: PERMISSION_UPDATE_NODE_SELF
         };
     }
+
+    // GetConsensusStatus returns the status of the consensus service (etcd)
+    // running on curators. This can be used to detect the health of the cluster
+    // before operational changes.
+    rpc GetConsensusStatus(GetConsensusStatusRequest) returns (GetConsensusStatusResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_READ_CLUSTER_STATUS
+        };
+    }
 }
 
 // Node is the state and configuration of a node in the cluster.
@@ -437,4 +446,29 @@ message UpdateNodeClusterNetworkingRequest {
 }
 
 message UpdateNodeClusterNetworkingResponse {
+}
+
+message GetConsensusStatusRequest {
+}
+
+message GetConsensusStatusResponse {
+  // A control plane member as seen by the etcd cluster.
+  message EtcdMember {
+    // The ID of the etcd member node. This should be the same as the ID of the
+    // Metropolis node running this etcd member.
+    string id = 1;
+    // Status of this node from the point of view of etcd.
+    enum Status {
+      STATUS_UNKNOWN = 0;
+      // The node is an etcd learner - it cannot run the Curator control plane
+      // services yet because it's still catching up to the etcd cluster state.
+      STATUS_LEARNER = 1;
+      // This node is a full etcd member, and can become a Curator control plane
+      // leader.
+      STATUS_FULL = 2;
+    };
+    Status status = 2;
+  }
+  // All members of the etcd cluster.
+  repeated EtcdMember etcd_member = 1;
 }

@@ -576,3 +576,24 @@ func (l *leaderCurator) GetCurrentLeader(_ *ipb.GetCurrentLeaderRequest, srv ipb
 	rpc.Trace(ctx).Printf("Interrupting due to context cancellation")
 	return nil
 }
+
+func (l *leaderCurator) GetConsensusStatus(ctx context.Context, _ *ipb.GetConsensusStatusRequest) (*ipb.GetConsensusStatusResponse, error) {
+	var res ipb.GetConsensusStatusResponse
+	members, err := l.etcdCluster.MemberList(ctx)
+	if err != nil {
+		rpc.Trace(ctx).Printf("Could not get etcd members: %v", err)
+		return nil, status.Errorf(codes.Internal, "could not get etcd members")
+	}
+	for _, member := range members.Members {
+		st := ipb.GetConsensusStatusResponse_EtcdMember{
+			Id:     member.Name,
+			Status: ipb.GetConsensusStatusResponse_EtcdMember_STATUS_FULL,
+		}
+		if member.IsLearner {
+			st.Status = ipb.GetConsensusStatusResponse_EtcdMember_STATUS_LEARNER
+		}
+		res.EtcdMember = append(res.EtcdMember, &st)
+	}
+
+	return &res, nil
+}

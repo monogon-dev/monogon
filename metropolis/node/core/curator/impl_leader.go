@@ -50,7 +50,8 @@ type leadership struct {
 	leaderID string
 	// etcd is the etcd client in which curator data and leader election state is
 	// stored.
-	etcd client.Namespaced
+	etcd        client.Namespaced
+	etcdCluster clientv3.Cluster
 
 	// muNodes guards any changes to nodes, and prevents race conditions where the
 	// curator performs a read-modify-write operation to node data. The curator's

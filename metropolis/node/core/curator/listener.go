@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
@@ -41,7 +42,8 @@ type listener struct {
 	node *identity.NodeCredentials
 	// etcd is a client to the locally running consensus (etcd) server which is used
 	// both for storing lock/leader election status and actual Curator data.
-	etcd client.Namespaced
+	etcd        client.Namespaced
+	etcdCluster clientv3.Cluster
 
 	consensus consensus.ServiceHandle
 	status    *memory.Value[*electionStatus]
@@ -99,11 +101,12 @@ func (l *listener) run(ctx context.Context) error {
 
 		// Create a leader instance and serve it over gRPC.
 		leader := newCuratorLeader(&leadership{
-			lockKey:   st.leader.lockKey,
-			lockRev:   st.leader.lockRev,
-			leaderID:  l.node.ID(),
-			etcd:      l.etcd,
-			consensus: l.consensus,
+			lockKey:     st.leader.lockKey,
+			lockRev:     st.leader.lockRev,
+			leaderID:    l.node.ID(),
+			etcd:        l.etcd,
+			etcdCluster: l.etcdCluster,
+			consensus:   l.consensus,
 		}, &l.node.Node)
 
 		cpb.RegisterCuratorServer(srv, leader)
