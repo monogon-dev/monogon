@@ -163,7 +163,7 @@ type Watcher[T any] interface {
 	Get(context.Context, ...GetOption[T]) (T, error)
 
 	// Close must be called if the Watcher is not going to be used anymore -
-	// otherwise, a goroutine will leak.
+	// otherwise, it will not be garbage collected.
 	Close() error
 }
 

@@ -76,14 +76,17 @@ func (m *Value[T]) Set(val T) {
 
 	// Go through all watchers, updating them on the new value and filtering out
 	// all closed watchers.
-	newWatchers := make([]*watcher[T], 0, len(m.watchers))
+	newWatchers := m.watchers[:0]
 	for _, w := range m.watchers {
-		w := w
 		if w.closed() {
 			continue
 		}
 		w.update(m.Sync, val)
 		newWatchers = append(newWatchers, w)
+	}
+	if cap(newWatchers) > len(newWatchers)*3 {
+		reallocated := make([]*watcher[T], 0, len(newWatchers)*2)
+		newWatchers = append(reallocated, newWatchers...)
 	}
 	m.watchers = newWatchers
 }
@@ -91,14 +94,11 @@ func (m *Value[T]) Set(val T) {
 // watcher implements the event.Watcher interface for watchers returned by
 // Value.
 type watcher[T any] struct {
-	// activeReqC is a channel used to request an active submission channel
-	// from a pending Get function, if any.
-	activeReqC chan chan T
-	// deadletterSubmitC is a channel used to communicate a value that
-	// attempted to be submitted via activeReqC. This will be received by the
-	// deadletter worker of this watcher and passed on to the next .Get call
-	// that occurs.
-	deadletterSubmitC chan T
+	// bufferedC is a buffered channel of size 1 for submitting values to the
+	// watcher.
+	bufferedC chan T
+	// unbufferedC is an unbuffered channel, which is used when Sync is enabled.
+	unbufferedC chan T
 
 	// getSem is a channel-based semaphore (which is of size 1, and thus in
 	// fact a mutex) that is used to ensure that only a single .Get() call is
@@ -115,75 +115,37 @@ type watcher[T any] struct {
 // For more information about guarantees, see event.Value.Watch.
 func (m *Value[T]) Watch() event.Watcher[T] {
 	waiter := &watcher[T]{
-		activeReqC:        make(chan chan T),
-		deadletterSubmitC: make(chan T),
-		close:             make(chan struct{}),
-		getSem:            make(chan struct{}, 1),
+		bufferedC:   make(chan T, 1),
+		unbufferedC: make(chan T),
+		close:       make(chan struct{}),
+		getSem:      make(chan struct{}, 1),
 	}
-	// Start the deadletter worker as a goroutine. It will be stopped when the
-	// watcher is Closed() (as signaled by the close channel).
-	go waiter.deadletterWorker()
 
-	// Append this watcher to the Value.
 	m.mu.Lock()
+	// If the watchers slice is at capacity, drop closed watchers, and
+	// reallocate the slice at 2x length if it is not between 1.5x and 3x.
+	if len(m.watchers) == cap(m.watchers) {
+		newWatchers := m.watchers[:0]
+		for _, w := range m.watchers {
+			if !w.closed() {
+				newWatchers = append(newWatchers, w)
+			}
+		}
+		if cap(newWatchers)*2 < len(newWatchers)*3 || cap(newWatchers) > len(newWatchers)*3 {
+			reallocated := make([]*watcher[T], 0, len(newWatchers)*2)
+			newWatchers = append(reallocated, newWatchers...)
+		}
+		m.watchers = newWatchers
+	}
+	// Append this watcher to the Value.
 	m.watchers = append(m.watchers, waiter)
-	// If the Value already has some value set, communicate that to the
-	// first Get call by going through the deadletter worker.
+	// If the Value already has some value set, put it in the buffered channel.
 	if m.innerSet {
-		waiter.deadletterSubmitC <- m.inner
+		waiter.bufferedC <- m.inner
 	}
 	m.mu.Unlock()
 
 	return waiter
-}
-
-// deadletterWorker runs the 'deadletter worker', as goroutine that contains
-// any data that has been Set on the Value that is being watched that was
-// unable to be delivered directly to a pending .Get call.
-//
-// It watches the deadletterSubmitC channel for updated data, and overrides
-// previously received data. Then, when a .Get() begins to pend (and respond to
-// activeReqC receives), the deadletter worker will deliver that value.
-func (m *watcher[T]) deadletterWorker() {
-	// Current value, and flag to mark it as set (vs. nil).
-	var cur T
-	var set bool
-
-	for {
-		if !set {
-			// If no value is yet available, only attempt to receive one from the
-			// submit channel, as there's nothing to submit to pending .Get() calls
-			// yet.
-			val, ok := <-m.deadletterSubmitC
-			if !ok {
-				// If the channel has been closed (by Close()), exit.
-				return
-			}
-			cur = val
-			set = true
-		} else {
-			// If a value is available, update the inner state. Otherwise, if a
-			// .Get() is pending, submit our current state and unset it.
-			select {
-			case val, ok := <-m.deadletterSubmitC:
-				if !ok {
-					// If the channel has been closed (by Close()), exit.
-					return
-				}
-				cur = val
-			case c := <-m.activeReqC:
-				// Potential race: a .Get() might've been active, but might've
-				// quit by the time we're here (and will not receive on the
-				// responded channel). Handle this gracefully by just returning
-				// to the main loop if that's the case.
-				select {
-				case c <- cur:
-					set = false
-				default:
-				}
-			}
-		}
-	}
 }
 
 // closed returns whether this watcher has been closed.
@@ -200,33 +162,27 @@ func (m *watcher[T]) closed() bool {
 
 // update is the high level update-this-watcher function called by Value.
 func (m *watcher[T]) update(sync bool, val T) {
-	// If synchronous delivery was requested, block until a watcher .Gets it.
+	// If synchronous delivery was requested, block until a watcher .Gets it,
+	// or is closed.
 	if sync {
-		c := <-m.activeReqC
-		c <- val
+		select {
+		case m.unbufferedC <- val:
+		case <-m.close:
+		}
 		return
 	}
 
-	// Otherwise, deliver asynchronously. This means either delivering directly
-	// to a pending .Get if one exists, or submitting to the deadletter worker
-	// otherwise.
+	// Otherwise, deliver asynchronously. If there is already a value in the
+	// buffered channel that was not retrieved, drop it.
 	select {
-	case c := <-m.activeReqC:
-		// Potential race: a .Get() might've been active, but might've  quit by
-		// the time we're here (and will not receive on the responded channel).
-		// Handle this gracefully by falling back to the deadletter worker.
-		select {
-		case c <- val:
-		default:
-			m.deadletterSubmitC <- val
-		}
+	case <-m.bufferedC:
 	default:
-		m.deadletterSubmitC <- val
 	}
+	// The channel is now empty, so sending to it cannot block.
+	m.bufferedC <- val
 }
 
 func (m *watcher[T]) Close() error {
-	close(m.deadletterSubmitC)
 	close(m.close)
 	return nil
 }
@@ -255,43 +211,23 @@ func (m *watcher[T]) Get(ctx context.Context, opts ...event.GetOption[T]) (T, er
 		}
 	}
 
-	c := make(chan T)
-
-	// Start responding on activeReqC. This signals to .update and to the
-	// deadletter worker that we're ready to accept data updates.
-
-	// There is a potential for a race condition here that hasn't been observed
-	// in tests but might happen:
-	//   1) Value.Watch returns a Watcher 'w'.
-	//   2) w.Set(0) is called, no .Get() is pending, so 0 is submitted to the
-	//      deadletter worker.
-	//   3) w.Get() is called, and activeReqC begins to be served.
-	//   4) Simultaneously:
-	//     a) w.Set(1) is called, attempting to submit via activeReqC
-	//     b) the deadletter worker attempts to submit via activeReqC
-	//
-	// This could theoretically cause .Get() to first return 1, and then 0, if
-	// the Set activeReqC read and subsequent channel write is served before
-	// the deadletter workers' read/write is.
-	// As noted, however, this has not been observed in practice, even though
-	// TestConcurrency explicitly attempts to trigger this condition. More
-	// research needs to be done to attempt to trigger this (or to lawyer the
-	// Go channel spec to see if this has some guarantees that resolve this
-	// either way), or a preemptive fix can be attempted by adding monotonic
-	// counters associated with each .Set() value, ensuring an older value does
-	// not replace a newer value.
-	//
-	// TODO(q3k): investigate this.
 	for {
+		var val T
+		// For Sync values, ensure the initial value in the buffered
+		// channel is delivered first.
 		select {
-		case <-ctx.Done():
-			return empty, ctx.Err()
-		case m.activeReqC <- c:
-		case val := <-c:
-			if predicate != nil && !predicate(val) {
-				continue
+		case val = <-m.bufferedC:
+		default:
+			select {
+			case <-ctx.Done():
+				return empty, ctx.Err()
+			case val = <-m.bufferedC:
+			case val = <-m.unbufferedC:
 			}
-			return val, nil
 		}
+		if predicate != nil && !predicate(val) {
+			continue
+		}
+		return val, nil
 	}
 }

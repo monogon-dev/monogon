@@ -23,6 +23,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"source.monogon.dev/metropolis/pkg/event"
 )
 
 // TestAsync exercises the high-level behaviour of a Value, in which a
@@ -328,5 +330,41 @@ func TestSetAfterWatch(t *testing.T) {
 	}
 	if want, got := 1, data; want != got {
 		t.Errorf("Get should've returned %v, got %v", want, got)
+	}
+}
+
+// TestWatchersList ensures that the list of watchers is managed correctly,
+// i.e. there is no memory leak and closed watchers are removed while
+// keeping all non-closed watchers.
+func TestWatchersList(t *testing.T) {
+	ctx := context.Background()
+	p := Value[int]{}
+
+	var watchers []event.Watcher[int]
+	for i := 0; i < 100; i++ {
+		watchers = append(watchers, p.Watch())
+	}
+	for i := 0; i < 10000; i++ {
+		watchers[10].Close()
+		watchers[10] = p.Watch()
+	}
+
+	if want, got := 1000, cap(p.watchers); want <= got {
+		t.Fatalf("Got capacity %d, wanted less than %d", got, want)
+	}
+
+	p.Set(1)
+	if want, got := 100, len(p.watchers); want != got {
+		t.Fatalf("Got %d watchers, wanted %d", got, want)
+	}
+
+	for _, watcher := range watchers {
+		data, err := watcher.Get(ctx)
+		if err != nil {
+			t.Fatalf("Get: %v", err)
+		}
+		if want, got := 1, data; want != got {
+			t.Errorf("Get should've returned %v, got %v", want, got)
+		}
 	}
 }
