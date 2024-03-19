@@ -27,13 +27,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/curator/watcher"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/supervisor"
-
-	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -279,7 +278,13 @@ func (s *Service) runCluster(ctx context.Context) error {
 			return true
 		},
 		EqualsFn: func(a *ipb.Node, b *ipb.Node) bool {
-			return a.Status.ExternalAddress == b.Status.ExternalAddress
+			if a.Status.ExternalAddress != b.Status.ExternalAddress {
+				return false
+			}
+			if (a.Roles.ConsensusMember != nil) != (b.Roles.ConsensusMember != nil) {
+				return false
+			}
+			return true
 		},
 		OnNewUpdated: func(new *ipb.Node) error {
 			nodes[new.Id] = nodeInfo{
