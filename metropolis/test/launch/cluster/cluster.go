@@ -973,6 +973,9 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 				if n.State != cpb.NodeState_NODE_STATE_NEW {
 					continue
 				}
+				if seenNodes[n.Id] {
+					continue
+				}
 				seenNodes[n.Id] = true
 				cluster.Nodes[n.Id] = &NodeInCluster{
 					ID:     n.Id,
