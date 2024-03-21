@@ -37,6 +37,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 
@@ -1309,4 +1310,61 @@ func (c *Cluster) MakeKubernetesWorker(ctx context.Context, id string) error {
 		KubernetesWorker: &tr,
 	})
 	return err
+}
+
+// MakeConsensusMember adds the ConsensusMember role to a node by ID.
+func (c *Cluster) MakeConsensusMember(ctx context.Context, id string) error {
+	curC, err := c.CuratorClient()
+	if err != nil {
+		return err
+	}
+	mgmt := apb.NewManagementClient(curC)
+	cur := ipb.NewCuratorClient(curC)
+
+	tr := true
+	launch.Log("Cluster: %s: adding ConsensusMember", id)
+	bo := backoff.NewExponentialBackOff()
+	bo.MaxElapsedTime = 10 * time.Second
+
+	backoff.Retry(func() error {
+		_, err = mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
+			Node: &apb.UpdateNodeRolesRequest_Id{
+				Id: id,
+			},
+			ConsensusMember: &tr,
+		})
+		if err != nil {
+			launch.Log("Cluster: %s: UpdateNodeRoles failed: %v", id, err)
+		}
+		return err
+	}, backoff.WithContext(bo, ctx))
+	if err != nil {
+		return err
+	}
+
+	launch.Log("Cluster: %s: waiting for learner/full members...", id)
+
+	learner := false
+	for {
+		res, err := cur.GetConsensusStatus(ctx, &ipb.GetConsensusStatusRequest{})
+		if err != nil {
+			return fmt.Errorf("GetConsensusStatus: %w", err)
+		}
+		for _, member := range res.EtcdMember {
+			if member.Id != id {
+				continue
+			}
+			switch member.Status {
+			case ipb.GetConsensusStatusResponse_EtcdMember_STATUS_LEARNER:
+				if !learner {
+					learner = true
+					launch.Log("Cluster: %s: became a learner, waiting for full member...", id)
+				}
+			case ipb.GetConsensusStatusResponse_EtcdMember_STATUS_FULL:
+				launch.Log("Cluster: %s: became a full member", id)
+				return nil
+			}
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 }

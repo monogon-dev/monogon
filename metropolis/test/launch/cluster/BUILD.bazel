@@ -21,6 +21,7 @@ go_library(
     deps = [
         "//metropolis/cli/metroctl/core",
         "//metropolis/node",
+        "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
         "//metropolis/node/core/rpc/resolver",
