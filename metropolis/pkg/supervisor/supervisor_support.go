@@ -41,17 +41,19 @@ import (
 func GRPCServer(srv *grpc.Server, lis net.Listener, graceful bool) Runnable {
 	return func(ctx context.Context) error {
 		Signal(ctx, SignalHealthy)
+		defer func() {
+			if graceful {
+				srv.GracefulStop()
+			} else {
+				srv.Stop()
+			}
+		}()
 		errC := make(chan error)
 		go func() {
 			errC <- srv.Serve(lis)
 		}()
 		select {
 		case <-ctx.Done():
-			if graceful {
-				srv.GracefulStop()
-			} else {
-				srv.Stop()
-			}
 			return ctx.Err()
 		case err := <-errC:
 			return err
