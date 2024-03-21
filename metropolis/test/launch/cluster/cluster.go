@@ -1063,24 +1063,6 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 	}
 	mgmt := apb.NewManagementClient(curC)
 
-	// Get the timestamp of the node's last update, as observed by Curator.
-	// It'll be needed to make sure it had rejoined the cluster after the reboot.
-	var is *apb.Node
-	for {
-		r, err := getNode(ctx, mgmt, id)
-		if err != nil {
-			return err
-		}
-
-		// Node status may be absent if it hasn't reported to the cluster yet. Wait
-		// for it to appear before progressing further.
-		if r.Status != nil {
-			is = r
-			break
-		}
-		time.Sleep(time.Second)
-	}
-
 	// Cancel the node's context. This will shut down QEMU.
 	c.nodeOpts[idx].Runtime.CtxC()
 	launch.Log("Cluster: waiting for node %d (%s) to stop.", idx, id)
@@ -1099,18 +1081,19 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 		c.nodesDone[n] <- err
 	}(idx)
 
-	// Poll Management.GetNodes until the node's timestamp is updated.
+	start := time.Now()
+
+	// Poll Management.GetNodes until the node is healthy.
 	for {
 		cs, err := getNode(ctx, mgmt, id)
 		if err != nil {
 			launch.Log("Cluster: node get error: %v", err)
 			return err
 		}
-		launch.Log("Cluster: node status: %+v", cs)
-		if cs.Status == nil {
-			continue
-		}
-		if cs.Status.Timestamp.AsTime().Sub(is.Status.Timestamp.AsTime()) > 0 {
+		launch.Log("Cluster: node health: %+v", cs.Health)
+
+		lhb := time.Now().Add(-cs.TimeSinceHeartbeat.AsDuration())
+		if lhb.After(start) && cs.Health == apb.Node_HEALTHY {
 			break
 		}
 		time.Sleep(time.Second)
