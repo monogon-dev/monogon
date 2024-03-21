@@ -12,15 +12,16 @@ import (
 	"source.monogon.dev/metropolis/test/launch"
 )
 
-// TestEventual creates a new subtest looping the given function until it
-// either doesn't return an error anymore or the timeout is exceeded. The last
-// returned non-context-related error is being used as the test error.
-func TestEventual(t *testing.T, name string, ctx context.Context, timeout time.Duration, f func(context.Context) error) {
+// TestEventual creates a new subtest looping the given function until it either
+// doesn't return an error anymore, the timeout is exceeded or PermanentError is
+// returned. The last returned non-context-related error is being used as the
+// test error.
+func TestEventual(t *testing.T, name string, ctx context.Context, timeout time.Duration, f func(context.Context) error) bool {
 	start := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	t.Helper()
 	launch.Log("Test: %s: starting...", name)
-	t.Run(name, func(t *testing.T) {
+	return t.Run(name, func(t *testing.T) {
 		defer cancel()
 		var lastErr = errors.New("test didn't run to completion at least once")
 		for {
@@ -43,6 +44,14 @@ func TestEventual(t *testing.T, name string, ctx context.Context, timeout time.D
 			}
 		}
 	})
+}
+
+// MustTestEventual is like TestEventual, but aborts the `t` test with Fatal if a
+// timeout occurred or PermanentError was returned.
+func MustTestEventual(t *testing.T, name string, ctx context.Context, timeout time.Duration, f func(context.Context) error) {
+	if !TestEventual(t, name, ctx, timeout, f) {
+		t.Fatalf("Test: %s: fatal failure", name)
+	}
 }
 
 // PermanentError can be returned inside TestEventual to indicate that the test
