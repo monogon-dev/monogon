@@ -39,19 +39,19 @@ type resourceClusterRoles struct {
 	kubernetes.Interface
 }
 
-func (r resourceClusterRoles) List(ctx context.Context) ([]string, error) {
+func (r resourceClusterRoles) List(ctx context.Context) ([]meta.Object, error) {
 	res, err := r.RbacV1().ClusterRoles().List(ctx, listBuiltins)
 	if err != nil {
 		return nil, err
 	}
-	objs := make([]string, len(res.Items))
-	for i, el := range res.Items {
-		objs[i] = el.ObjectMeta.Name
+	objs := make([]meta.Object, len(res.Items))
+	for i := range res.Items {
+		objs[i] = &res.Items[i]
 	}
 	return objs, nil
 }
 
-func (r resourceClusterRoles) Create(ctx context.Context, el interface{}) error {
+func (r resourceClusterRoles) Create(ctx context.Context, el meta.Object) error {
 	_, err := r.RbacV1().ClusterRoles().Create(ctx, el.(*rbac.ClusterRole), meta.CreateOptions{})
 	return err
 }
@@ -60,9 +60,9 @@ func (r resourceClusterRoles) Delete(ctx context.Context, name string) error {
 	return r.RbacV1().ClusterRoles().Delete(ctx, name, meta.DeleteOptions{})
 }
 
-func (r resourceClusterRoles) Expected() map[string]interface{} {
-	return map[string]interface{}{
-		clusterRolePSPDefault: &rbac.ClusterRole{
+func (r resourceClusterRoles) Expected() []meta.Object {
+	return []meta.Object{
+		&rbac.ClusterRole{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   clusterRolePSPDefault,
 				Labels: builtinLabels(nil),
@@ -79,7 +79,7 @@ func (r resourceClusterRoles) Expected() map[string]interface{} {
 				},
 			},
 		},
-		clusterRoleCSIProvisioner: &rbac.ClusterRole{
+		&rbac.ClusterRole{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   clusterRoleCSIProvisioner,
 				Labels: builtinLabels(nil),
@@ -105,7 +105,7 @@ func (r resourceClusterRoles) Expected() map[string]interface{} {
 				},
 			},
 		},
-		clusterRoleNetServices: &rbac.ClusterRole{
+		&rbac.ClusterRole{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   clusterRoleNetServices,
 				Labels: builtinLabels(nil),
@@ -133,19 +133,19 @@ type resourceClusterRoleBindings struct {
 	kubernetes.Interface
 }
 
-func (r resourceClusterRoleBindings) List(ctx context.Context) ([]string, error) {
+func (r resourceClusterRoleBindings) List(ctx context.Context) ([]meta.Object, error) {
 	res, err := r.RbacV1().ClusterRoleBindings().List(ctx, listBuiltins)
 	if err != nil {
 		return nil, err
 	}
-	objs := make([]string, len(res.Items))
-	for i, el := range res.Items {
-		objs[i] = el.ObjectMeta.Name
+	objs := make([]meta.Object, len(res.Items))
+	for i := range res.Items {
+		objs[i] = &res.Items[i]
 	}
 	return objs, nil
 }
 
-func (r resourceClusterRoleBindings) Create(ctx context.Context, el interface{}) error {
+func (r resourceClusterRoleBindings) Create(ctx context.Context, el meta.Object) error {
 	_, err := r.RbacV1().ClusterRoleBindings().Create(ctx, el.(*rbac.ClusterRoleBinding), meta.CreateOptions{})
 	return err
 }
@@ -154,9 +154,9 @@ func (r resourceClusterRoleBindings) Delete(ctx context.Context, name string) er
 	return r.RbacV1().ClusterRoleBindings().Delete(ctx, name, meta.DeleteOptions{})
 }
 
-func (r resourceClusterRoleBindings) Expected() map[string]interface{} {
-	return map[string]interface{}{
-		clusterRoleBindingDefaultPSP: &rbac.ClusterRoleBinding{
+func (r resourceClusterRoleBindings) Expected() []meta.Object {
+	return []meta.Object{
+		&rbac.ClusterRoleBinding{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   clusterRoleBindingDefaultPSP,
 				Labels: builtinLabels(nil),
@@ -179,7 +179,7 @@ func (r resourceClusterRoleBindings) Expected() map[string]interface{} {
 				},
 			},
 		},
-		clusterRoleBindingAPIServerKubeletClient: &rbac.ClusterRoleBinding{
+		&rbac.ClusterRoleBinding{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   clusterRoleBindingAPIServerKubeletClient,
 				Labels: builtinLabels(nil),
@@ -202,7 +202,7 @@ func (r resourceClusterRoleBindings) Expected() map[string]interface{} {
 				},
 			},
 		},
-		clusterRoleBindingOwnerAdmin: &rbac.ClusterRoleBinding{
+		&rbac.ClusterRoleBinding{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   clusterRoleBindingOwnerAdmin,
 				Labels: builtinLabels(nil),
@@ -224,7 +224,7 @@ func (r resourceClusterRoleBindings) Expected() map[string]interface{} {
 				},
 			},
 		},
-		clusterRoleBindingCSIProvisioners: &rbac.ClusterRoleBinding{
+		&rbac.ClusterRoleBinding{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   clusterRoleBindingCSIProvisioners,
 				Labels: builtinLabels(nil),
@@ -245,7 +245,7 @@ func (r resourceClusterRoleBindings) Expected() map[string]interface{} {
 				},
 			},
 		},
-		clusterRoleBindingNetServices: &rbac.ClusterRoleBinding{
+		&rbac.ClusterRoleBinding{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   clusterRoleBindingNetServices,
 				Labels: builtinLabels(nil),

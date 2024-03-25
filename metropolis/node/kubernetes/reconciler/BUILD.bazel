@@ -28,11 +28,5 @@ go_test(
     name = "reconciler_test",
     srcs = ["reconciler_test.go"],
     embed = [":reconciler"],
-    deps = [
-        "@io_k8s_api//node/v1beta1",
-        "@io_k8s_api//policy/v1beta1",
-        "@io_k8s_api//rbac/v1:rbac",
-        "@io_k8s_api//storage/v1:storage",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
-    ],
+    deps = ["@io_k8s_apimachinery//pkg/apis/meta/v1:meta"],
 )

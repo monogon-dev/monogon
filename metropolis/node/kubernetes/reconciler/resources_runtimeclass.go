@@ -28,19 +28,19 @@ type resourceRuntimeClasses struct {
 	kubernetes.Interface
 }
 
-func (r resourceRuntimeClasses) List(ctx context.Context) ([]string, error) {
+func (r resourceRuntimeClasses) List(ctx context.Context) ([]meta.Object, error) {
 	res, err := r.NodeV1beta1().RuntimeClasses().List(ctx, listBuiltins)
 	if err != nil {
 		return nil, err
 	}
-	objs := make([]string, len(res.Items))
-	for i, el := range res.Items {
-		objs[i] = el.ObjectMeta.Name
+	objs := make([]meta.Object, len(res.Items))
+	for i := range res.Items {
+		objs[i] = &res.Items[i]
 	}
 	return objs, nil
 }
 
-func (r resourceRuntimeClasses) Create(ctx context.Context, el interface{}) error {
+func (r resourceRuntimeClasses) Create(ctx context.Context, el meta.Object) error {
 	_, err := r.NodeV1beta1().RuntimeClasses().Create(ctx, el.(*node.RuntimeClass), meta.CreateOptions{})
 	return err
 }
@@ -49,16 +49,16 @@ func (r resourceRuntimeClasses) Delete(ctx context.Context, name string) error {
 	return r.NodeV1beta1().RuntimeClasses().Delete(ctx, name, meta.DeleteOptions{})
 }
 
-func (r resourceRuntimeClasses) Expected() map[string]interface{} {
-	return map[string]interface{}{
-		"gvisor": &node.RuntimeClass{
+func (r resourceRuntimeClasses) Expected() []meta.Object {
+	return []meta.Object{
+		&node.RuntimeClass{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   "gvisor",
 				Labels: builtinLabels(nil),
 			},
 			Handler: "runsc",
 		},
-		"runc": &node.RuntimeClass{
+		&node.RuntimeClass{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   "runc",
 				Labels: builtinLabels(nil),

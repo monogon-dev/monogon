@@ -29,19 +29,19 @@ type resourcePodSecurityPolicies struct {
 	kubernetes.Interface
 }
 
-func (r resourcePodSecurityPolicies) List(ctx context.Context) ([]string, error) {
+func (r resourcePodSecurityPolicies) List(ctx context.Context) ([]meta.Object, error) {
 	res, err := r.PolicyV1beta1().PodSecurityPolicies().List(ctx, listBuiltins)
 	if err != nil {
 		return nil, err
 	}
-	objs := make([]string, len(res.Items))
-	for i, el := range res.Items {
-		objs[i] = el.ObjectMeta.Name
+	objs := make([]meta.Object, len(res.Items))
+	for i := range res.Items {
+		objs[i] = &res.Items[i]
 	}
 	return objs, nil
 }
 
-func (r resourcePodSecurityPolicies) Create(ctx context.Context, el interface{}) error {
+func (r resourcePodSecurityPolicies) Create(ctx context.Context, el meta.Object) error {
 	_, err := r.PolicyV1beta1().PodSecurityPolicies().Create(ctx, el.(*policy.PodSecurityPolicy), meta.CreateOptions{})
 	return err
 }
@@ -50,9 +50,9 @@ func (r resourcePodSecurityPolicies) Delete(ctx context.Context, name string) er
 	return r.PolicyV1beta1().PodSecurityPolicies().Delete(ctx, name, meta.DeleteOptions{})
 }
 
-func (r resourcePodSecurityPolicies) Expected() map[string]interface{} {
-	return map[string]interface{}{
-		"default": &policy.PodSecurityPolicy{
+func (r resourcePodSecurityPolicies) Expected() []meta.Object {
+	return []meta.Object{
+		&policy.PodSecurityPolicy{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   "default",
 				Labels: builtinLabels(nil),

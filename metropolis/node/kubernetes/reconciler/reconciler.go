@@ -96,23 +96,20 @@ func builtinRBACName(name string) string {
 }
 
 // resource is a type of resource to be managed by the reconciler. All
-// builti-ins/reconciled objects must implement this interface to be managed
+// built-ins/reconciled objects must implement this interface to be managed
 // correctly by the reconciler.
 type resource interface {
-	// List returns a list of names of objects current present on the target
+	// List returns a list of objects currently present on the target
 	// (ie. k8s API server).
-	List(ctx context.Context) ([]string, error)
-	// Create creates an object on the target. The el interface{} argument is
-	// the black box object returned by the Expected() call.
-	Create(ctx context.Context, el interface{}) error
-	// Delete delete an object, by name, from the target.
+	List(ctx context.Context) ([]meta.Object, error)
+	// Create creates an object on the target. The el argument is
+	// an object returned by the Expected() call.
+	Create(ctx context.Context, el meta.Object) error
+	// Delete deletes an object, by name, from the target.
 	Delete(ctx context.Context, name string) error
-	// Expected returns a map of all objects expected to be present on the
-	// target. The keys are names (which must correspond to the names returned
-	// by List() and used by Delete(), and the values are blackboxes that will
-	// then be passed to the Create() call if their corresponding key (name)
-	// does not exist on the target.
-	Expected() map[string]interface{}
+	// Expected returns a list of all objects expected to be present on the
+	// target. Objects are identified by their name, as returned by GetName.
+	Expected() []meta.Object
 }
 
 func allResources(clientSet kubernetes.Interface) map[string]resource {
@@ -162,19 +159,25 @@ func reconcile(ctx context.Context, r resource) error {
 	if err != nil {
 		return err
 	}
-	presentSet := make(map[string]bool)
+	presentMap := make(map[string]meta.Object)
 	for _, el := range present {
-		presentSet[el] = true
+		presentMap[el.GetName()] = el
 	}
-	expectedMap := r.Expected()
-	for name, el := range expectedMap {
-		if !presentSet[name] {
-			if err := r.Create(ctx, el); err != nil {
+	expected := r.Expected()
+	expectedMap := make(map[string]meta.Object)
+	for _, el := range expected {
+		expectedMap[el.GetName()] = el
+	}
+	for name, expectedEl := range expectedMap {
+		if _, ok := presentMap[name]; ok {
+			// TODO(#288): update the object if it is different than expected.
+		} else {
+			if err := r.Create(ctx, expectedEl); err != nil {
 				return err
 			}
 		}
 	}
-	for name, _ := range presentSet {
+	for name, _ := range presentMap {
 		if _, ok := expectedMap[name]; !ok {
 			if err := r.Delete(ctx, name); err != nil {
 				return err
