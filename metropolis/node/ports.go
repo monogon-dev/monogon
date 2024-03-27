@@ -36,9 +36,9 @@ const (
 	// WireGuardPort is the UDP port on which the Wireguard Kubernetes network
 	// overlay listens for incoming peer traffic.
 	WireGuardPort Port = 7838
-	// NodeManagement is the TCP port on which the node-local management service
+	// NodeManagementPort is the TCP port on which the node-local management service
 	// serves gRPC traffic for NodeManagement.
-	NodeManagement Port = 7839
+	NodeManagementPort Port = 7839
 	// MetricsPort is the TCP port on which the Metrics Service exports
 	// Prometheus-compatible metrics for this node, secured using TLS and the
 	// Cluster/Node certificates.
@@ -83,7 +83,7 @@ var SystemPorts = []Port{
 	ConsensusPort,
 	DebugServicePort,
 	WireGuardPort,
-	NodeManagement,
+	NodeManagementPort,
 	MetricsPort,
 	MetricsNodeListenerPort,
 	MetricsEtcdListenerPort,
@@ -103,7 +103,7 @@ func (p Port) String() string {
 		return "debug"
 	case WireGuardPort:
 		return "wireguard"
-	case NodeManagement:
+	case NodeManagementPort:
 		return "node-mgmt"
 	case KubernetesAPIPort:
 		return "kubernetes-api"

@@ -51,7 +51,7 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 	logger := supervisor.MustSubLogger(ctx, "rpc")
 	opts := sec.GRPCOptions(logger)
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", node.NodeManagement))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", node.NodeManagementPort))
 	if err != nil {
 		return fmt.Errorf("failed to listen on node management socket socket: %w", err)
 	}

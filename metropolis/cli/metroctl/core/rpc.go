@@ -75,7 +75,7 @@ func DialNode(ctx context.Context, opkey ed25519.PrivateKey, ocert, ca *x509.Cer
 	creds := rpc.NewAuthenticatedCredentials(tlsc, rpc.WantRemoteCluster(ca), rpc.WantRemoteNode(nodeId))
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
 
-	endpoint := net.JoinHostPort(nodeAddr, node.NodeManagement.PortString())
+	endpoint := net.JoinHostPort(nodeAddr, node.NodeManagementPort.PortString())
 	return grpc.Dial(endpoint, dialOpts...)
 }
 
