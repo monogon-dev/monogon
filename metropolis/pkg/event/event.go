@@ -227,7 +227,11 @@ func Pipe[T any](value Value[T], c chan<- T, opts ...GetOption[T]) supervisor.Ru
 			if err != nil {
 				return err
 			}
-			c <- v
+			select {
+			case c <- v:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 		}
 	}
 }
