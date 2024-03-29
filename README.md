@@ -2,7 +2,7 @@
 
 This is the main repository containing the source code for the [Monogon Platform](https://monogon.tech).
 
-*This is pre-release software - take a look, and check back later!*
+*This is pre-release software - take a look, and check back later! In the meantime, join us on Matrix: [`#monogon-os-community:matrix.org`](https://app.element.io/#/room/#monogon-os-community:matrix.org)*.
 
 ## Environment
 
