@@ -548,6 +548,12 @@ type ClusterOptions struct {
 	// pull images from. This is a more efficient alternative to preseeding all
 	// images used for testing.
 	LocalRegistry *localregistry.Server
+
+	// InitialClusterConfiguration will be passed to the first node when creating the
+	// cluster, and defines some basic properties of the cluster. If not specified,
+	// the cluster will default to defaults as defined in
+	// metropolis.proto.api.NodeParameters.
+	InitialClusterConfiguration *cpb.ClusterConfiguration
 }
 
 // Cluster is the running Metropolis cluster launched using the LaunchCluster
@@ -757,7 +763,8 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		NodeParameters: &apb.NodeParameters{
 			Cluster: &apb.NodeParameters_ClusterBootstrap_{
 				ClusterBootstrap: &apb.NodeParameters_ClusterBootstrap{
-					OwnerPublicKey: InsecurePublicKey,
+					OwnerPublicKey:              InsecurePublicKey,
+					InitialClusterConfiguration: opts.InitialClusterConfiguration,
 				},
 			},
 		},
