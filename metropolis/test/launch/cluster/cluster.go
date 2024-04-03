@@ -1117,6 +1117,52 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 	return nil
 }
 
+// ShutdownNode performs an ungraceful shutdown (i.e. power off) of the node
+// given by idx. If the node is already shut down, this is a no-op.
+func (c *Cluster) ShutdownNode(idx int) error {
+	if idx < 0 || idx >= len(c.NodeIDs) {
+		return fmt.Errorf("index out of bounds")
+	}
+	// Return if node is already stopped.
+	select {
+	case <-c.nodeOpts[idx].Runtime.ctxT.Done():
+		return nil
+	default:
+	}
+	id := c.NodeIDs[idx]
+
+	// Cancel the node's context. This will shut down QEMU.
+	c.nodeOpts[idx].Runtime.CtxC()
+	launch.Log("Cluster: waiting for node %d (%s) to stop.", idx, id)
+	err := <-c.nodesDone[idx]
+	if err != nil {
+		return fmt.Errorf("while shutting down node: %w", err)
+	}
+	return nil
+}
+
+// StartNode performs a power on of the node given by idx. If the node is already
+// running, this is a no-op.
+func (c *Cluster) StartNode(idx int) error {
+	if idx < 0 || idx >= len(c.NodeIDs) {
+		return fmt.Errorf("index out of bounds")
+	}
+	id := c.NodeIDs[idx]
+	// Return if node is already running.
+	select {
+	case <-c.nodeOpts[idx].Runtime.ctxT.Done():
+	default:
+		return nil
+	}
+
+	// Start QEMU again.
+	launch.Log("Cluster: starting node %d (%s).", idx, id)
+	if err := LaunchNode(c.ctxT, c.launchDir, c.socketDir, &c.nodeOpts[idx], c.nodesDone[idx]); err != nil {
+		return fmt.Errorf("failed to launch node %d: %w", idx, err)
+	}
+	return nil
+}
+
 // Close cancels the running clusters' context and waits for all virtualized
 // nodes to stop. It returns an error if stopping the nodes failed, or one of
 // the nodes failed to fully start in the first place.
