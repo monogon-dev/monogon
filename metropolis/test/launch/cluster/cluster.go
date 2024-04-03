@@ -226,7 +226,7 @@ func (c *Cluster) CuratorClient() (*grpc.ClientConn, error) {
 // (swtpm <-> QEMU interplay) respectively. The directories must exist before
 // LaunchNode is called. LaunchNode will update options.Runtime and options.Mac
 // if either are not initialized.
-func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error {
+func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions, doneC chan error) error {
 	// TODO(mateusz@monogon.tech) try using QEMU's abstract socket namespace instead
 	// of /tmp (requires QEMU version >5.0).
 	// https://github.com/qemu/qemu/commit/776b97d3605ed0fc94443048fdf988c7725e38a9).
@@ -328,7 +328,6 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 
 	// Start TPM emulator as a subprocess
 	tpmCtx, tpmCancel := context.WithCancel(options.Runtime.ctxT)
-	defer tpmCancel()
 
 	tpmd := filepath.Join(r.ld, "tpm")
 	tpmEmuCmd := exec.CommandContext(tpmCtx, "swtpm", "socket", "--tpm2", "--tpmstate", "dir="+tpmd, "--ctrl", "type=unixio,path="+tpmSocketPath)
@@ -337,6 +336,7 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 
 	err = tpmEmuCmd.Start()
 	if err != nil {
+		tpmCancel()
 		return fmt.Errorf("failed to start TPM emulator: %w", err)
 	}
 
@@ -348,9 +348,11 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 			break
 		}
 		if !os.IsNotExist(err) {
+			tpmCancel()
 			return fmt.Errorf("while stat-ing TPM socket path: %w", err)
 		}
 		if err := tpmCtx.Err(); err != nil {
+			tpmCancel()
 			return fmt.Errorf("while waiting for the TPM socket: %w", err)
 		}
 		time.Sleep(time.Millisecond * 100)
@@ -368,29 +370,37 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 
 	launch.PrettyPrintQemuArgs(options.Name, systemCmd.Args)
 
-	err = systemCmd.Run()
+	go func() {
+		launch.Log("Node: Starting...")
+		err = systemCmd.Run()
+		launch.Log("Node: Returned: %v", err)
 
-	// Stop TPM emulator and wait for it to exit to properly reap the child process
-	tpmCancel()
-	launch.Log("Node: Waiting for TPM emulator to exit")
-	// Wait returns a SIGKILL error because we just cancelled its context.
-	// We still need to call it to avoid creating zombies.
-	_ = tpmEmuCmd.Wait()
-	launch.Log("Node: TPM emulator done")
+		// Stop TPM emulator and wait for it to exit to properly reap the child process
+		tpmCancel()
+		launch.Log("Node: Waiting for TPM emulator to exit")
+		// Wait returns a SIGKILL error because we just cancelled its context.
+		// We still need to call it to avoid creating zombies.
+		errTpm := tpmEmuCmd.Wait()
+		launch.Log("Node: TPM emulator done: %v", errTpm)
 
-	var exerr *exec.ExitError
-	if err != nil && errors.As(err, &exerr) {
-		status := exerr.ProcessState.Sys().(syscall.WaitStatus)
-		if status.Signaled() && status.Signal() == syscall.SIGKILL {
-			// Process was killed externally (most likely by our context being canceled).
-			// This is a normal exit for us, so return nil
-			return nil
+		var exerr *exec.ExitError
+		if err != nil && errors.As(err, &exerr) {
+			status := exerr.ProcessState.Sys().(syscall.WaitStatus)
+			if status.Signaled() && status.Signal() == syscall.SIGKILL {
+				// Process was killed externally (most likely by our context being canceled).
+				// This is a normal exit for us, so return nil
+				doneC <- nil
+				return
+			}
+			exerr.Stderr = stdErrBuf.Bytes()
+			newErr := launch.QEMUError(*exerr)
+			launch.Log("Node: %q", stdErrBuf.String())
+			doneC <- &newErr
+			return
 		}
-		exerr.Stderr = stdErrBuf.Bytes()
-		newErr := launch.QEMUError(*exerr)
-		return &newErr
-	}
-	return err
+		doneC <- err
+	}()
+	return nil
 }
 
 func copyFile(src, dst string) error {
@@ -767,13 +777,10 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	// Start the first node.
 	ctxT, ctxC := context.WithCancel(ctx)
 	launch.Log("Cluster: Starting node %d...", 1)
-	go func() {
-		err := LaunchNode(ctxT, ld, sd, &nodeOpts[0])
-		if err != nil {
-			launch.Log("Node %d finished with an error: %v", 1, err)
-		}
-		done[0] <- err
-	}()
+	if err := LaunchNode(ctxT, ld, sd, &nodeOpts[0], done[0]); err != nil {
+		ctxC()
+		return nil, fmt.Errorf("failed to launch first node: %w", err)
+	}
 
 	localRegistryAddr := net.TCPAddr{
 		IP:   net.IPv4(10, 42, 0, 82),
@@ -956,13 +963,10 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	// Now run the rest of the nodes.
 	for i := 1; i < opts.NumNodes; i++ {
 		launch.Log("Cluster: Starting node %d...", i+1)
-		go func(i int) {
-			err := LaunchNode(ctxT, ld, sd, &nodeOpts[i])
-			if err != nil {
-				launch.Log("Node %d finished with an error: %v", i, err)
-			}
-			done[i] <- err
-		}(i)
+		err := LaunchNode(ctxT, ld, sd, &nodeOpts[i], done[i])
+		if err != nil {
+			return nil, fmt.Errorf("failed to launch node %d: %w", i+1, err)
+		}
 	}
 
 	seenNodes := make(map[string]bool)
@@ -1057,7 +1061,10 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 // using the cluster's context c.ctxT. The nodes are indexed starting at 0.
 func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 	if idx < 0 || idx >= len(c.NodeIDs) {
-		return fmt.Errorf("index out of bounds.")
+		return fmt.Errorf("index out of bounds")
+	}
+	if c.nodeOpts[idx].Runtime == nil {
+		return fmt.Errorf("node not running")
 	}
 	id := c.NodeIDs[idx]
 
@@ -1078,13 +1085,9 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 
 	// Start QEMU again.
 	launch.Log("Cluster: restarting node %d (%s).", idx, id)
-	go func(n int) {
-		err := LaunchNode(c.ctxT, c.launchDir, c.socketDir, &c.nodeOpts[n])
-		if err != nil {
-			launch.Log("Node %d finished with an error: %v", n, err)
-		}
-		c.nodesDone[n] <- err
-	}(idx)
+	if err := LaunchNode(c.ctxT, c.launchDir, c.socketDir, &c.nodeOpts[idx], c.nodesDone[idx]); err != nil {
+		return fmt.Errorf("failed to launch node %d: %w", idx, err)
+	}
 
 	start := time.Now()
 

@@ -48,6 +48,7 @@ func main() {
 		ports = append(ports, uint16(p))
 	}
 	ctx := clicontext.WithInterrupt(context.Background())
+	doneC := make(chan error)
 	err = cluster.LaunchNode(ctx, ld, sd, &cluster.NodeOptions{
 		Name:       "test-node",
 		Ports:      launch.IdentityPortMap(ports),
@@ -57,8 +58,12 @@ func main() {
 				ClusterBootstrap: cluster.InsecureClusterBootstrap,
 			},
 		},
-	})
+	}, doneC)
 	if err != nil {
 		log.Fatalf("LaunchNode: %v", err)
+	}
+	err = <-doneC
+	if err != nil {
+		log.Fatalf("Node returned: %v", err)
 	}
 }
