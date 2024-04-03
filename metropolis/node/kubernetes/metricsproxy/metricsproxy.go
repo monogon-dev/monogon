@@ -84,7 +84,7 @@ func (s *metricsService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res, err := s.transport.RoundTrip(outReq)
 	if err != nil {
 		logger.Errorf("%s: forwarding to %q failed: %v", r.RemoteAddr, s.Name, err)
-		http.Error(w, "could not reach exporter", http.StatusBadGateway)
+		http.Error(w, "could not reach endpoint", http.StatusBadGateway)
 		return
 	}
 	defer res.Body.Close()
