@@ -90,6 +90,10 @@ var SystemPorts = []Port{
 	MetricsPort,
 	MetricsNodeListenerPort,
 	MetricsEtcdListenerPort,
+	MetricsKubeSchedulerListenerPort,
+	MetricsKubeControllerManagerListenerPort,
+	MetricsKubeAPIServerListenerPort,
+	MetricsContainerdListenerPort,
 	KubernetesAPIPort,
 	KubernetesAPIWrappedPort,
 	KubernetesWorkerLocalAPIPort,
@@ -108,12 +112,26 @@ func (p Port) String() string {
 		return "wireguard"
 	case NodeManagementPort:
 		return "node-mgmt"
+	case MetricsPort:
+		return "metrics"
+	case MetricsNodeListenerPort:
+		return "metrics-node-exporter"
+	case MetricsEtcdListenerPort:
+		return "metrics-etcd"
+	case MetricsKubeSchedulerListenerPort:
+		return "metrics-kubernetes-scheduler"
+	case MetricsKubeControllerManagerListenerPort:
+		return "metrics-kubernetes-controller-manager"
+	case MetricsKubeAPIServerListenerPort:
+		return "metrics-kubernetes-api-server"
+	case MetricsContainerdListenerPort:
+		return "metrics-containerd"
 	case KubernetesAPIPort:
 		return "kubernetes-api"
-	case KubernetesWorkerLocalAPIPort:
-		return "kubernetes-worker-local-api"
 	case KubernetesAPIWrappedPort:
 		return "kubernetes-api-wrapped"
+	case KubernetesWorkerLocalAPIPort:
+		return "kubernetes-worker-local-api"
 	case DebuggerPort:
 		return "delve"
 	}
