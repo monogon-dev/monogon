@@ -47,7 +47,7 @@ git_commit: str = (
 
 # Git tags pointing at this commit.
 git_tags_b: [bytes] = subprocess.check_output(
-    ["git", "tag", "--points-at", "HEAD"]
+    ["git", "tag", "--sort=-version:refname", "--points-at", "HEAD"]
 ).split(b"\n")
 git_tags: [str] = [t.decode().strip() for t in git_tags_b if t.decode().strip() != ""]
 
@@ -95,19 +95,12 @@ def parse_tag(tag: str, product: str) -> Optional[Version]:
 
 
 for product in ["metropolis", "cloud"]:
-    versions = []
-    # Get exact versions from tags.
+    # Get exact version from tags.
+    version = None
     for tag in git_tags:
         version = parse_tag(tag, product)
-        if version is None:
-            continue
-        versions.append(version)
-    version = None
-    if len(versions) > 0:
-        # Find the highest version and use that. Lexicographic sort is good enough
-        # for the limited subset of semver we support.
-        versions.sort(reverse=True)
-        version = versions[0]
+        if version is not None:
+            break
 
     if version is None:
         # No exact version found. Use latest tag for the given product and
@@ -115,7 +108,7 @@ for product in ["metropolis", "cloud"]:
         # tag.
         for tag in (
             subprocess.check_output(
-                ["git", "tag", "--sort=-refname", "--merged", "HEAD"]
+                ["git", "tag", "--sort=-version:refname", "--merged", "HEAD"]
             )
             .decode()
             .strip()
