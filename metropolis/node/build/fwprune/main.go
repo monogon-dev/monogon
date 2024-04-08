@@ -26,7 +26,7 @@ import (
 // linkRegexp parses the Link: lines in the WHENCE file. This does not have
 // an official grammar, the regexp has been written in an approximation of
 // the original parsing algorithm at @linux-firmware//:copy_firmware.sh.
-var linkRegexp = regexp.MustCompile(`(?m:^Link:\s*([^\s]+)\s+->\s+([^\s+]+)\s*$)`)
+var linkRegexp = regexp.MustCompile(`(?m:^Link:\s*([^\s]+)\s+->\s+([^\s]+)\s*$)`)
 
 var (
 	modinfoPath      = flag.String("modinfo", "", "Path to the modules.builtin.modinfo file built with the kernel")
