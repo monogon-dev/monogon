@@ -1,0 +1,20 @@
+load("//metropolis/node/build/fwprune:def.bzl", "fsspec_linux_firmware")
+
+fsspec_linux_firmware(
+    name = "firmware",
+    firmware_files = ["@linux-firmware//:all_files"],
+    kernel = "//third_party/linux",
+    metadata = "@linux-firmware//:metadata",
+    visibility = ["//visibility:public"],
+)
+
+load("//metropolis/node/build/mkucode:def.bzl", "cpio_ucode")
+
+cpio_ucode(
+    name = "ucode",
+    ucode = {
+        "@linux-firmware//:amd_ucode": "AuthenticAMD",
+        "@intel_ucode//:fam6h": "GenuineIntel",
+    },
+    visibility = ["//visibility:public"],
+)

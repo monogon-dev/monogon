@@ -2,8 +2,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("//metropolis/node/build:def.bzl", "erofs_image", "verity_image")
 load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
 load("//metropolis/node/build/mkimage:def.bzl", "node_image")
-load("//metropolis/node/build/fwprune:def.bzl", "fsspec_linux_firmware")
-load("//metropolis/node/build/mkucode:def.bzl", "cpio_ucode")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
 go_library(
@@ -28,22 +26,6 @@ config_setting(
     values = {
         "compilation_mode": "dbg",
     },
-)
-
-fsspec_linux_firmware(
-    name = "firmware",
-    firmware_files = ["@linux-firmware//:all_files"],
-    kernel = "//third_party/linux",
-    metadata = "@linux-firmware//:metadata",
-)
-
-cpio_ucode(
-    name = "ucode",
-    ucode = {
-        "@linux-firmware//:amd_ucode": "AuthenticAMD",
-        "@intel_ucode//:fam6h": "GenuineIntel",
-    },
-    visibility = ["//metropolis:__subpackages__"],
 )
 
 erofs_image(
@@ -104,7 +86,7 @@ erofs_image(
     fsspecs = [
         ":erofs-layout.fsspec",
         "//metropolis/node/build:earlydev.fsspec",
-        ":firmware",
+        "//third_party:firmware",
     ],
     symlinks = {
         "/ephemeral/machine-id": "/etc/machine-id",
@@ -120,7 +102,7 @@ verity_image(
 efi_unified_kernel_image(
     name = "kernel_efi",
     cmdline = "console=ttyS0,115200 console=ttyS1,115200 console=tty0 quiet rootfstype=erofs init=/init loadpin.exclude=kexec-image,kexec-initramfs kernel.unknown_nmi_panic=1",
-    initrd = [":ucode"],
+    initrd = ["//third_party:ucode"],
     kernel = "//third_party/linux",
     os_release = ":os-release-info",
     verity = ":verity_rootfs",

@@ -51,7 +51,7 @@ efi_unified_kernel_image(
     name = "kernel",
     cmdline = "console=ttyS0,115200 console=tty0 quiet",
     initrd = [
-        "//metropolis/node:ucode",
+        "//third_party:ucode",
         ":initramfs",
     ],
     kernel = "//third_party/linux",

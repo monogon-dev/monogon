@@ -41,7 +41,7 @@ import (
 //go:embed third_party/linux/bzImage
 var kernel []byte
 
-//go:embed ucode.cpio
+//go:embed third_party/ucode.cpio
 var ucode []byte
 
 //go:embed initramfs.cpio.zst

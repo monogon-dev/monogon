@@ -9,7 +9,7 @@ go_library(
     srcs = ["takeover.go"],
     embedsrcs = [
         "//third_party/linux",  #keep
-        ":ucode",  #keep
+        "//third_party:ucode",  #keep
         ":initramfs",  #keep
     ],
     importpath = "source.monogon.dev/cloud/agent/takeover",
@@ -37,7 +37,7 @@ node_initramfs(
     },
     fsspecs = [
         "//metropolis/node/build:earlydev.fsspec",
-        ":firmware",
+        "//third_party:firmware",
     ],
     visibility = ["//cloud/agent:__subpackages__"],
 )
@@ -46,21 +46,6 @@ go_binary(
     name = "takeover",
     embed = [":takeover_lib"],
     visibility = ["//visibility:public"],
-)
-
-cpio_ucode(
-    name = "ucode",
-    ucode = {
-        "@linux-firmware//:amd_ucode": "AuthenticAMD",
-        "@intel_ucode//:fam6h": "GenuineIntel",
-    },
-)
-
-fsspec_linux_firmware(
-    name = "firmware",
-    firmware_files = ["@linux-firmware//:all_files"],
-    kernel = "//third_party/linux",
-    metadata = "@linux-firmware//:metadata",
 )
 
 # Used by container_images, forces a static build of the test_agent.
