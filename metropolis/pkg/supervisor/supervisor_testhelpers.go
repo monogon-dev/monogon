@@ -67,7 +67,7 @@ func TestHarness(t testing.TB, r func(ctx context.Context) error) (context.Cance
 			return err
 		}
 		return nil
-	}, WithExistingLogtree(lt))
+	}, WithExistingLogtree(lt), WithPropagatePanic)
 
 	t.Cleanup(func() {
 		ctxC()
