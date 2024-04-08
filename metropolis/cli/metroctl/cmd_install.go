@@ -126,7 +126,7 @@ func external(name, datafilePath string, flag *string) fat32.SizedReader {
 		return bytes.NewReader(df)
 	}
 
-	f, err := blkio.NewFileReader(*bundlePath)
+	f, err := blkio.NewFileReader(*flag)
 	if err != nil {
 		log.Fatalf("Failed to open specified %s: %v", name, err)
 	}
