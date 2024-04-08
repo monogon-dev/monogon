@@ -150,6 +150,7 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 		nsIP := net.ParseIP(ns.Ip)
 		if nsIP == nil {
 			l.Warningf("failed to parse %q as nameserver IP", ns.Ip)
+			continue
 		}
 		nsIPList = append(nsIPList, nsIP)
 	}
