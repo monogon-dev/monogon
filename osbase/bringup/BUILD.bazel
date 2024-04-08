@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//osbase/build:def.bzl", "node_initramfs")
+
+go_library(
+    name = "bringup",
+    srcs = ["bringup.go"],
+    importpath = "source.monogon.dev/osbase/bringup",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//osbase/bootparam",
+        "//osbase/efivarfs",
+        "//osbase/logtree",
+        "//osbase/supervisor",
+        "@org_golang_x_sys//unix",
+        "@org_uber_go_multierr//:multierr",
+    ],
+)
