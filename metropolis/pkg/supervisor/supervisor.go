@@ -107,14 +107,12 @@ type supervisor struct {
 // SupervisorOpt are runtime configurable options for the supervisor.
 type SupervisorOpt func(s *supervisor)
 
-var (
-	// WithPropagatePanic prevents the Supervisor from catching panics in
-	// runnables and treating them as failures. This is useful to enable for
-	// testing and local debugging.
-	WithPropagatePanic = func(s *supervisor) {
-		s.propagatePanic = true
-	}
-)
+// WithPropagatePanic prevents the Supervisor from catching panics in
+// runnables and treating them as failures. This is useful to enable for
+// testing and local debugging.
+func WithPropagatePanic(s *supervisor) {
+	s.propagatePanic = true
+}
 
 func WithExistingLogtree(lt *logtree.LogTree) SupervisorOpt {
 	return func(s *supervisor) {
