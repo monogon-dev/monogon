@@ -20,44 +20,6 @@ package metropolis.proto.private;
 
 import "metropolis/proto/common/common.proto";
 
-// Node describes a single node's state in etcd
-// DEPRECATED: this will be moved to //metropolis/node/curator.
-message Node {
-    // Node's public key..
-    bytes public_key = 1;
-    // Node's individual cluster part of the data partition encryption key. It
-    // is combined with the Node Unlock Key (NUK) kept within
-    // SealedConfiguration.
-    bytes cluster_unlock_key = 2;
-
-    // TODO(q3k): document this based on cluster lifecycle design doc once this
-    // fully stabilizes.
-    enum FSMState {
-        FSM_STATE_INVALID = 0;
-        FSM_STATE_NEW = 1;
-        FSM_STATE_STANDBY = 2;
-        FSM_STATE_UP = 3;
-        FSM_STATE_DISOWNED = 4;
-    };
-    FSMState fsm_state = 3;
-
-    message Roles {
-        message ConsensusMember {
-            // Used to be: consensus member name, can be deduced from
-            // Certificate/Pubkey/ID.
-            reserved 1;
-        }
-        ConsensusMember consensus_member = 1;
-        message KubernetesWorker {
-            // Used to be: node name, can be deduced from
-            // Certificate/Pubkey/ID.
-            reserved 1;
-        }
-        KubernetesWorker kubernetes_worker = 2;
-    }
-    Roles roles = 4;
-}
-
 // SealedConfiguration is all configuration kept in a TPM-sealed (ie.
 // confidential and tamper-resistant) blob within the node's ESP (EFI)
 // partition. It contains everything that the node needs to join an existing
