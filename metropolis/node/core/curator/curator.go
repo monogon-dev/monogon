@@ -204,7 +204,10 @@ func (s *Service) elect(ctx context.Context) error {
 	// current leader.
 	for {
 		select {
-		case o := <-observerC:
+		case o, ok := <-observerC:
+			if !ok {
+				return errors.New("election observation failed")
+			}
 			var lock ppb.LeaderElectionValue
 			if err := proto.Unmarshal(o.Kvs[0].Value, &lock); err != nil {
 				return fmt.Errorf("parsing existing lock value failed: %w", err)
