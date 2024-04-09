@@ -43,6 +43,7 @@ go_test(
         "//metropolis/node/core/rpc",
         "//metropolis/pkg/localregistry",
         "//metropolis/proto/api",
+        "//metropolis/proto/common",
         "//metropolis/test/launch",
         "//metropolis/test/launch/cluster",
         "//metropolis/test/util",
