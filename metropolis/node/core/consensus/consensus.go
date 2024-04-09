@@ -487,6 +487,7 @@ func (s *Service) autopromoter(ctx context.Context) error {
 		status, err := cl.Status(ctx, cl.Endpoints()[0])
 		if err != nil {
 			supervisor.Logger(ctx).Warningf("Failed to get endpoint status: %v", err)
+			return
 		}
 		if status.Leader != status.Header.MemberId {
 			return
