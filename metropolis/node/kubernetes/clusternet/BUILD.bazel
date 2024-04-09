@@ -2,10 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "clusternet",
-    srcs = [
-        "clusternet.go",
-        "netlink_compat.go",
-    ],
+    srcs = ["clusternet.go"],
     importpath = "source.monogon.dev/metropolis/node/kubernetes/clusternet",
     visibility = ["//metropolis/node/kubernetes:__subpackages__"],
     deps = [
@@ -13,7 +10,6 @@ go_library(
         "//metropolis/pkg/event",
         "//metropolis/pkg/logtree",
         "//metropolis/pkg/supervisor",
-        "@com_github_vishvananda_netlink//:netlink",
         "@io_k8s_api//core/v1:core",
         "@io_k8s_apimachinery//pkg/fields",
         "@io_k8s_client_go//kubernetes",
