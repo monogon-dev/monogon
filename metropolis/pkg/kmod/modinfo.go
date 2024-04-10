@@ -69,7 +69,7 @@ func (i ModuleInfo) GetOptionalDependencies() OptionalDependencies {
 			MODE_PRE  = 1
 			MODE_POST = 2
 		)
-		var state int = MODE_IDLE
+		var state = MODE_IDLE
 		for _, token := range tokens {
 			switch token {
 			case "pre:":

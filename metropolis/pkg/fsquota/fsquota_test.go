@@ -90,7 +90,7 @@ func TestBasic(t *testing.T) {
 		testdata := make([]byte, 1024)
 		var bytesWritten int
 		for {
-			n, err := testfile.Write([]byte(testdata))
+			n, err := testfile.Write(testdata)
 			if err != nil {
 				if pathErr, ok := err.(*os.PathError); ok {
 					if pathErr.Err == syscall.ENOSPC {

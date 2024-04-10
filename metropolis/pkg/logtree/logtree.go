@@ -108,10 +108,10 @@ type nodeTraversal struct {
 //
 // For example, a traversal of foo.bar.baz will cause .next() to return the
 // following on each invocation:
-//  - part: foo, full: foo
-//  - part: bar, full: foo.bar
-//  - part: baz, full: foo.bar.baz
-//  - part: "",  full: foo.bar.baz
+//   - part: foo, full: foo
+//   - part: bar, full: foo.bar
+//   - part: baz, full: foo.bar.baz
+//   - part: "",  full: foo.bar.baz
 func (t *nodeTraversal) next() (part string, full DN) {
 	if len(t.left) == 0 {
 		return "", t.want
@@ -150,7 +150,7 @@ func (t *nodeTraversal) execute(n *node) *node {
 		mu := &cur.mu
 		mu.Lock()
 		if _, ok := cur.children[part]; !ok {
-			cur.children[part] = newNode(n.tree, DN(full))
+			cur.children[part] = newNode(n.tree, full)
 		}
 		cur = cur.children[part]
 		mu.Unlock()

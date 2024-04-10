@@ -90,13 +90,13 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	if err != nil {
 		return fmt.Errorf("could not generate node keypair: %w", err)
 	}
-	supervisor.Logger(ctx).Infof("Bootstrapping: node public key: %s", hex.EncodeToString([]byte(pub)))
+	supervisor.Logger(ctx).Infof("Bootstrapping: node public key: %s", hex.EncodeToString(pub))
 
 	jpub, jpriv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return fmt.Errorf("could not generate join keypair: %w", err)
 	}
-	supervisor.Logger(ctx).Infof("Bootstrapping: node public join key: %s", hex.EncodeToString([]byte(jpub)))
+	supervisor.Logger(ctx).Infof("Bootstrapping: node public join key: %s", hex.EncodeToString(jpub))
 
 	directory := &cpb.ClusterDirectory{
 		Nodes: []*cpb.ClusterDirectory_Node{

@@ -79,5 +79,5 @@ func getPermanentHWAddrLegacy(ifName string) (net.HardwareAddr, error) {
 	if data.Size == 0 || isAllZeroes(data.Data[:data.Size]) {
 		return nil, errNoPermenentHWAddr
 	}
-	return net.HardwareAddr(data.Data[:data.Size]), nil
+	return data.Data[:data.Size], nil
 }

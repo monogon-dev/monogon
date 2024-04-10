@@ -130,7 +130,7 @@ func singleIPtoNetlinkAddr(ip net.IP, label string) *netlink.Addr {
 // nftables)
 func nfifname(n string) []byte {
 	b := make([]byte, 16)
-	copy(b, []byte(n+"\x00"))
+	copy(b, n+"\x00")
 	return b
 }
 

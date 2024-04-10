@@ -191,7 +191,7 @@ func main() {
 		time.Sleep(5 * time.Second)
 		// Perform kexec, this will not return unless it fails
 		err := unix.Reboot(unix.LINUX_REBOOT_CMD_KEXEC)
-		var msg string = "takeover: reboot succeeded, but we're still runing??"
+		var msg = "takeover: reboot succeeded, but we're still runing??"
 		if err != nil {
 			msg = err.Error()
 		}

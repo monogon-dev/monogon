@@ -196,7 +196,7 @@ func addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP) error {
 // nftables)
 func nfifname(n string) []byte {
 	b := make([]byte, 16)
-	copy(b, []byte(n+"\x00"))
+	copy(b, n+"\x00")
 	return b
 }
 

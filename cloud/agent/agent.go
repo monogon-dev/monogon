@@ -78,7 +78,7 @@ func agentRunnable(ctx context.Context) error {
 	supervisor.Run(ctx, "networking", networkSvc.Run)
 	l.Info("Started networking")
 
-	ephemeralCert, err := newEphemeralCert(ed25519.PrivateKey(agentInit.PrivateKey))
+	ephemeralCert, err := newEphemeralCert(agentInit.PrivateKey)
 	if err != nil {
 		return fmt.Errorf("could not generate ephemeral credentials: %w", err)
 	}

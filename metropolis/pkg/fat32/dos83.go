@@ -38,10 +38,10 @@ func makeUniqueDOSNames(inodes []*Inode) error {
 		dosParts := validDOSName.FindStringSubmatch(nameUpper)
 		if dosParts != nil {
 			// Name is pass-through
-			copy(i.dosName[:8], []byte(dosParts[1]))
+			copy(i.dosName[:8], dosParts[1])
 			if len(dosParts[2]) > 0 {
 				// Skip the dot, it is implicit
-				copy(i.dosName[8:], []byte(dosParts[2][1:]))
+				copy(i.dosName[8:], dosParts[2][1:])
 			}
 			if taken[i.dosName] {
 				// Mapping is unique, complain about the actual file name, not

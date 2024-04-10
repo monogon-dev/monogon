@@ -212,8 +212,8 @@ func (sb *superblock) WriteTo(w io.Writer) (int64, error) {
 
 	// Get the padding size by substracting current offset from a hash block
 	// size.
-	co := int(binary.Size(sb))
-	pbc := int(sb.hashBlockSize) - int(co)
+	co := binary.Size(sb)
+	pbc := int(sb.hashBlockSize) - co
 	if pbc <= 0 {
 		return int64(co), fmt.Errorf("hash device block size smaller than dm-verity superblock")
 	}
@@ -326,8 +326,8 @@ func (t *MappingTable) VerityParameterList() []string {
 		t.HashDevicePath,
 		strconv.FormatUint(uint64(t.superblock.dataBlockSize), 10),
 		strconv.FormatUint(uint64(t.superblock.hashBlockSize), 10),
-		strconv.FormatUint(uint64(t.superblock.dataBlocks), 10),
-		strconv.FormatInt(int64(t.HashStart), 10),
+		strconv.FormatUint(t.superblock.dataBlocks, 10),
+		strconv.FormatInt(t.HashStart, 10),
 		t.superblock.algorithmName(),
 		hex.EncodeToString(t.rootHash),
 		hex.EncodeToString(t.superblock.salt()),

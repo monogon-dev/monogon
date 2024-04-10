@@ -120,7 +120,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	if err != nil {
 		return fmt.Errorf("could not generate join keypair: %w", err)
 	}
-	supervisor.Logger(ctx).Infof("Registering: join public key: %s", hex.EncodeToString([]byte(jpub)))
+	supervisor.Logger(ctx).Infof("Registering: join public key: %s", hex.EncodeToString(jpub))
 
 	// Register this node.
 	//

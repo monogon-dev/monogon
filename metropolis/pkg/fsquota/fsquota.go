@@ -56,7 +56,7 @@ func SetQuota(path string, maxBytes uint64, maxInodes uint64) error {
 		return err
 	}
 
-	var lastID uint32 = attrs.ProjectID
+	var lastID = attrs.ProjectID
 	if lastID == 0 {
 		// No project/quota exists for this directory, assign a new project
 		// quota.

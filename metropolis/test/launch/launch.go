@@ -90,7 +90,7 @@ func (p PortMap) ToQemuForwards() []string {
 func IdentityPortMap(ports []uint16) PortMap {
 	portMap := make(PortMap)
 	for _, port := range ports {
-		portMap[port] = uint16(port)
+		portMap[port] = port
 	}
 	return portMap
 }

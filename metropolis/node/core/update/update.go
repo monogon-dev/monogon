@@ -409,7 +409,7 @@ func (s *Service) fixupEFI() error {
 	if err != nil {
 		return fmt.Errorf("failed to list EFI variables: %w", err)
 	}
-	var validBootEntryIdx int = -1
+	var validBootEntryIdx = -1
 	for _, varName := range varNames {
 		m := bootVarRegexp.FindStringSubmatch(varName)
 		if m == nil {
