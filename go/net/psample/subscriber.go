@@ -99,6 +99,7 @@ func decode(b []byte) (*Packet, error) {
 			p.Latency = ad.Uint64()
 		case aTimestamp:
 			p.Timestamp = ad.Uint64()
+		default:
 		}
 	}
 	return &p, nil

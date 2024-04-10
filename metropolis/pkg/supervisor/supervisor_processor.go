@@ -431,6 +431,7 @@ func (s *supervisor) processGC() {
 			curReady = true
 		case nodeStateDead:
 			curReady = true
+		default:
 		}
 
 		if cur.state == nodeStateDead && !childrenReady {
