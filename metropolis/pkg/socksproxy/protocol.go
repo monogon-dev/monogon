@@ -116,7 +116,7 @@ func readRequest(r io.Reader) (*connectRequest, error) {
 	case 1:
 		addrBytes = make([]byte, 4)
 	case 4:
-		addrBytes = make([]byte, 4)
+		addrBytes = make([]byte, 16)
 	default:
 		return nil, errUnsupportedAddressType
 	}
