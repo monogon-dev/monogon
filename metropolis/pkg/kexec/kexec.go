@@ -36,8 +36,8 @@ func FileLoad(kernel, initramfs *os.File, cmdline string) error {
 				// We have no RSDP, no need to pass it
 				break
 			}
-			if err != nil {
-				return fmt.Errorf("failed to read EFI systab: %w", err)
+			if s.Err() != nil {
+				return fmt.Errorf("failed to read EFI systab: %w", s.Err())
 			}
 			parts := strings.SplitN(s.Text(), "=", 2)
 			// There are two ACPI RDSP revisions, 1.0 and 2.0.
