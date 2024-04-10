@@ -36,7 +36,7 @@ func TestReflection(t *testing.T) {
 
 	// Create 10 test machines.
 	var mids []uuid.UUID
-	sess.Transact(ctx, func(q *model.Queries) error {
+	err = sess.Transact(ctx, func(q *model.Queries) error {
 		for i := 0; i < 10; i += 1 {
 			mach, err := q.NewMachine(ctx)
 			if err != nil {
