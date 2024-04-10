@@ -318,14 +318,10 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 	}
 
 	if options.PcapDump {
-		var qemuNetDump launch.QemuValue
-		pcapPath := filepath.Join(r.ld, "net0.pcap")
-		if options.PcapDump {
-			qemuNetDump = launch.QemuValue{
-				"id":     {"net0"},
-				"netdev": {"net0"},
-				"file":   {pcapPath},
-			}
+		qemuNetDump := launch.QemuValue{
+			"id":     {"net0"},
+			"netdev": {"net0"},
+			"file":   {filepath.Join(r.ld, "net0.pcap")},
 		}
 		qemuArgs = append(qemuArgs, "-object", qemuNetDump.ToOption("filter-dump"))
 	}
@@ -351,7 +347,7 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions) error 
 		if err == nil {
 			break
 		}
-		if err != nil && !os.IsNotExist(err) {
+		if !os.IsNotExist(err) {
 			return fmt.Errorf("while stat-ing TPM socket path: %w", err)
 		}
 		if err := tpmCtx.Err(); err != nil {
