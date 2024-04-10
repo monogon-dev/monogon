@@ -94,7 +94,7 @@ func main() {
 		msg := "no files"
 		if len(binFiles) > 0 {
 			var names []string
-			for name, _ := range binFiles {
+			for name := range binFiles {
 				names = append(names, fmt.Sprintf("%q", name))
 			}
 			msg = fmt.Sprintf(": %s", strings.Join(names, ", "))

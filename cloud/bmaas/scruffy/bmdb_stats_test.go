@@ -68,7 +68,7 @@ func TestBMDBStats(t *testing.T) {
 				}
 			}
 		}
-		for mf, _ := range wantValues {
+		for mf := range wantValues {
 			if !gotValues[mf] {
 				t.Errorf("MetricFamily %s: missing", mf)
 			}

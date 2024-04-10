@@ -91,7 +91,7 @@ func parseEtcdLogEntry(l *logbuffer.Line, write unraw.LeveledWriter) {
 
 	// Sort extra keys alphabetically.
 	extraKeys := make([]string, 0, len(e.Extras))
-	for k, _ := range e.Extras {
+	for k := range e.Extras {
 		extraKeys = append(extraKeys, k)
 	}
 	sort.Strings(extraKeys)

@@ -242,7 +242,7 @@ func (n *node) runGroup(runnables map[string]Runnable) error {
 	}
 
 	// Check the requested runnable names.
-	for name, _ := range runnables {
+	for name := range runnables {
 		if !reNodeName.MatchString(name) {
 			return fmt.Errorf("runnable name %q is invalid", name)
 		}
@@ -272,7 +272,7 @@ func (n *node) runGroup(runnables map[string]Runnable) error {
 
 	// Schedule execution of group members.
 	go func() {
-		for name, _ := range runnables {
+		for name := range runnables {
 			n.sup.pReq <- &processorRequest{
 				schedule: &processorRequestSchedule{
 					dn: dns[name],

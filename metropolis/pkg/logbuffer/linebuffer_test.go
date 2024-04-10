@@ -32,7 +32,7 @@ func TestLineBuffer(t *testing.T) {
 		if len(a) != len(b) {
 			return msg
 		}
-		for i, _ := range a {
+		for i := range a {
 			if a[i].String() != b[i] {
 				return msg
 			}

@@ -65,7 +65,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	// been included, as it can't be relied on beyond providing cluster endpoint
 	// addresses, considering its untrusted origin (ESP). This explicitly enforces
 	// suggested usage described in ClusterDirectory's protofile.
-	for i, _ := range register.ClusterDirectory.Nodes {
+	for i := range register.ClusterDirectory.Nodes {
 		register.ClusterDirectory.Nodes[i].PublicKey = nil
 	}
 

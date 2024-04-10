@@ -176,7 +176,7 @@ func reconcile(ctx context.Context, r resource) error {
 			}
 		}
 	}
-	for name, _ := range presentMap {
+	for name := range presentMap {
 		if _, ok := expectedMap[name]; !ok {
 			if err := r.Delete(ctx, name); err != nil {
 				return err

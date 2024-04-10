@@ -113,7 +113,7 @@ func (c *connectionPool) Targets() []string {
 	defer c.mu.Unlock()
 
 	res := make([]string, 0, len(c.idsByTarget))
-	for target, _ := range c.idsByTarget {
+	for target := range c.idsByTarget {
 		res = append(res, target)
 	}
 	sort.Strings(res)

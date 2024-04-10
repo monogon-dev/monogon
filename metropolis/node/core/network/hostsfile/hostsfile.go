@@ -97,7 +97,7 @@ type nodeMap map[string]nodeInfo
 // pointing to 127.0.0.1 and ::1 will also be generated.
 func (m nodeMap) hosts(ctx context.Context) []byte {
 	var nodeIdsSorted []string
-	for k, _ := range m {
+	for k := range m {
 		nodeIdsSorted = append(nodeIdsSorted, k)
 	}
 	sort.Slice(nodeIdsSorted, func(i, j int) bool {

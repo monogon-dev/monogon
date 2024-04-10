@@ -20,7 +20,7 @@ type Permissions map[epb.Permission]bool
 func (p Permissions) String() string {
 	var res []string
 
-	for k, _ := range p {
+	for k := range p {
 		res = append(res, k.String())
 	}
 

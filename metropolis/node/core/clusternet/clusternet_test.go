@@ -137,7 +137,7 @@ func TestClusternetBasic(t *testing.T) {
 				return fmt.Errorf("node %q prefixes mismatch: %v in programmed peers, %v wanted", nid, p2, p)
 			}
 		}
-		for nid, _ := range wg.nodes {
+		for nid := range wg.nodes {
 			if _, ok := nodes[nid]; !ok {
 				return fmt.Errorf("node %q present in programmed peers", nid)
 			}

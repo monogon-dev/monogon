@@ -281,7 +281,7 @@ func (r *Resolver) runCuratorUpdater(ctx context.Context, opts []grpc.DialOption
 		for k, v := range dbg.curmap.curators {
 			msg = append(msg, fmt.Sprintf("curator: %s/%s", k, v.endpoint))
 		}
-		for k, _ := range dbg.curmap.seeds {
+		for k := range dbg.curmap.seeds {
 			msg = append(msg, fmt.Sprintf("seed: %s", k))
 		}
 		if dbg.leader != nil {

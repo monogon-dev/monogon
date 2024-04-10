@@ -166,12 +166,12 @@ func (r *Resolver) run(ctx context.Context) error {
 				}
 			}
 			toDelete := make(map[string]bool)
-			for nid, _ := range curMap.curators {
+			for nid := range curMap.curators {
 				if req.nu.nodes[nid] == nil {
 					toDelete[nid] = true
 				}
 			}
-			for nid, _ := range toDelete {
+			for nid := range toDelete {
 				delete(curMap.curators, nid)
 			}
 		case req.sa != nil:
@@ -284,7 +284,7 @@ func (m *curatorMap) copy() *curatorMap {
 // received by the curator updater, and the seeds provided by the user.
 func (m *curatorMap) candidates() []string {
 	resMap := make(map[string]bool)
-	for ep, _ := range m.seeds {
+	for ep := range m.seeds {
 		resMap[ep] = true
 	}
 	for nid, v := range m.curators {
@@ -295,7 +295,7 @@ func (m *curatorMap) candidates() []string {
 		}
 	}
 	var res []string
-	for ep, _ := range resMap {
+	for ep := range resMap {
 		res = append(res, ep)
 	}
 	sort.Strings(res)
