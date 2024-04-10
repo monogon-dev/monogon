@@ -45,6 +45,9 @@ func (d *Device) ReadDefectDataLBA(plist, glist bool) ([]uint64, error) {
 	if defectListLength%8 != 0 {
 		return nil, errors.New("returned defect list not divisible by array item size")
 	}
+	if len(data) < int(defectListLength)+4 {
+		return nil, errors.New("returned defect list longer than buffer")
+	}
 	res := make([]uint64, defectListLength/8)
 	if err := binary.Read(bytes.NewReader(data[4:]), binary.BigEndian, &res); err != nil {
 		panic(err)
