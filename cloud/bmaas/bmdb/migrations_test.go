@@ -65,8 +65,8 @@ func TestMigration1681826233(t *testing.T) {
 	// This migration adds a new nullable field to backoffs.
 
 	// This guarantees that versions [prev, ver] can run concurrently in a cluster.
-	min := uint(1672749980)
-	max := uint(1681826233)
+	minVer := uint(1672749980)
+	maxVer := uint(1681826233)
 
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer t.Cleanup(ctxC)
@@ -79,7 +79,7 @@ func TestMigration1681826233(t *testing.T) {
 
 	// First, make sure the change can actually progress if we have some backoffs
 	// already.
-	if err := b.Database.MigrateUpToIncluding(min); err != nil {
+	if err := b.Database.MigrateUpToIncluding(minVer); err != nil {
 		t.Fatalf("Migration to minimum version failed: %v", err)
 	}
 
@@ -100,7 +100,7 @@ func TestMigration1681826233(t *testing.T) {
 	}
 
 	// Migrate to newer version.
-	if err := b.Database.MigrateUpToIncluding(max); err != nil {
+	if err := b.Database.MigrateUpToIncluding(maxVer); err != nil {
 		t.Fatalf("Migration to maximum version failed: %v", err)
 	}
 

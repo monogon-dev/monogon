@@ -194,9 +194,9 @@ func UnmarshalStructureRaw(rawStruct Structure, target any) error {
 	hasAborted := false
 	for i := 2; i < numFields; i++ {
 		fieldType := v.Type().Field(i)
-		if min := fieldType.Tag.Get("smbios_min_ver"); min != "" {
+		if minVer := fieldType.Tag.Get("smbios_min_ver"); minVer != "" {
 			var ver Version
-			if _, err := fmt.Sscanf(min, "%d.%d", &ver.Major, &ver.Minor); err != nil {
+			if _, err := fmt.Sscanf(minVer, "%d.%d", &ver.Major, &ver.Minor); err != nil {
 				panic(fmt.Sprintf("invalid smbios_min_ver tag in %v: %v", fieldType.Name, err))
 			}
 			completedVersion = parsingVersion

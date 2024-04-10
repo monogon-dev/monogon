@@ -36,9 +36,9 @@ type server struct {
 	schema *reflection.Schema
 	// muSchema locks schema for updates.
 	muSchema sync.RWMutex
-	// strictConsistency, when enabled, makes webug render its views with the 
-	// freshest available data, potentially conflicting with online 
-	// transactions. This should only be enabled during testing, as it tends to 
+	// strictConsistency, when enabled, makes webug render its views with the
+	// freshest available data, potentially conflicting with online
+	// transactions. This should only be enabled during testing, as it tends to
 	// clog up the database query planner and make everything slow.
 	strictConsistency bool
 }
@@ -87,9 +87,9 @@ func (s *server) schemaWorker(ctx context.Context) {
 
 		// Swap the current schema if necessary.
 		cur := s.curSchema().Version
-		new := schema.Version
-		if cur != new {
-			klog.Infof("Got new schema: %s -> %s", cur, new)
+		newVer := schema.Version
+		if cur != newVer {
+			klog.Infof("Got new schema: %s -> %s", cur, newVer)
 			s.muSchema.Lock()
 			s.schema = schema
 			s.muSchema.Unlock()

@@ -109,7 +109,7 @@ func New(kv clientv3.KV, clusterDomain string) *PKI {
 		Certificates: make(map[KubeCertificateName]*opki.Certificate),
 	}
 
-	make := func(i, name KubeCertificateName, template x509.Certificate) {
+	makeCert := func(i, name KubeCertificateName, template x509.Certificate) {
 		pki.Certificates[name] = &opki.Certificate{
 			Namespace: &pki.namespace,
 			Issuer:    pki.Certificates[i],
@@ -126,7 +126,7 @@ func New(kv clientv3.KV, clusterDomain string) *PKI {
 		Template:  opki.CA("Metropolis Kubernetes ID CA"),
 		Mode:      opki.CertificateManaged,
 	}
-	make(IdCA, APIServer, opki.Server(
+	makeCert(IdCA, APIServer, opki.Server(
 		[]string{
 			"kubernetes",
 			"kubernetes.default",
@@ -141,12 +141,12 @@ func New(kv clientv3.KV, clusterDomain string) *PKI {
 		// TODO(q3k): add service network internal apiserver address
 		[]net.IP{{10, 224, 0, 1}, {127, 0, 0, 1}},
 	))
-	make(IdCA, APIServerKubeletClient, opki.Client("metropolis:apiserver-kubelet-client", nil))
-	make(IdCA, ControllerManagerClient, opki.Client("system:kube-controller-manager", nil))
-	make(IdCA, ControllerManager, opki.Server([]string{"kube-controller-manager.local"}, nil))
-	make(IdCA, SchedulerClient, opki.Client("system:kube-scheduler", nil))
-	make(IdCA, Scheduler, opki.Server([]string{"kube-scheduler.local"}, nil))
-	make(IdCA, Master, opki.Client("metropolis:master", []string{"system:masters"}))
+	makeCert(IdCA, APIServerKubeletClient, opki.Client("metropolis:apiserver-kubelet-client", nil))
+	makeCert(IdCA, ControllerManagerClient, opki.Client("system:kube-controller-manager", nil))
+	makeCert(IdCA, ControllerManager, opki.Server([]string{"kube-controller-manager.local"}, nil))
+	makeCert(IdCA, SchedulerClient, opki.Client("system:kube-scheduler", nil))
+	makeCert(IdCA, Scheduler, opki.Server([]string{"kube-scheduler.local"}, nil))
+	makeCert(IdCA, Master, opki.Client("metropolis:master", []string{"system:masters"}))
 
 	pki.Certificates[AggregationCA] = &opki.Certificate{
 		Namespace: &pki.namespace,
@@ -155,8 +155,8 @@ func New(kv clientv3.KV, clusterDomain string) *PKI {
 		Template:  opki.CA("Metropolis OpenAPI Aggregation CA"),
 		Mode:      opki.CertificateManaged,
 	}
-	make(AggregationCA, FrontProxyClient, opki.Client("front-proxy-client", nil))
-	make(AggregationCA, MetropolisAuthProxyClient, opki.Client("metropolis-auth-proxy-client", nil))
+	makeCert(AggregationCA, FrontProxyClient, opki.Client("front-proxy-client", nil))
+	makeCert(AggregationCA, MetropolisAuthProxyClient, opki.Client("metropolis-auth-proxy-client", nil))
 
 	return &pki
 }

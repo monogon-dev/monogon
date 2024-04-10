@@ -49,7 +49,7 @@ func newLiveTestClient(t *testing.T) *liveTestClient {
 	ctx, ctxC := context.WithCancel(context.Background())
 	t.Cleanup(ctxC)
 	return &liveTestClient{
-		cl: new(&Opts{
+		cl: newClient(&Opts{
 			User:   apiuser,
 			APIKey: apikey,
 		}),

@@ -184,10 +184,10 @@ func (s *serializer) stats() (usage, waiting int64) {
 // variable can be set prior to the below call to enable verbose packngo
 // debug logs.
 func New(opts *Opts) Client {
-	return new(opts)
+	return newClient(opts)
 }
 
-func new(opts *Opts) *client {
+func newClient(opts *Opts) *client {
 	// Apply the defaults.
 	if opts.APIRate == 0 {
 		opts.APIRate = 2 * time.Second
