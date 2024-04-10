@@ -36,7 +36,7 @@ const (
 )
 
 const (
-	Q_SYNC uint = ((0x800001 + iota) << 8)
+	Q_SYNC uint = (0x800001 + iota) << 8
 	Q_QUOTAON
 	Q_QUOTAOFF
 	Q_GETFMT
