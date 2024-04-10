@@ -277,8 +277,8 @@ func parseEfiSignatureList(b []byte) ([]x509.Certificate, [][]byte, error) {
 	}
 	signatures := efiSignatureList{}
 	buf := bytes.NewReader(b)
-	certificates := []x509.Certificate{}
-	hashes := [][]byte{}
+	var certificates []x509.Certificate
+	var hashes [][]byte
 
 	for buf.Len() > 0 {
 		err := binary.Read(buf, binary.LittleEndian, &signatures.Header)
@@ -368,7 +368,7 @@ type EFISignatureData struct {
 }
 
 func parseEfiSignature(b []byte) ([]x509.Certificate, error) {
-	certificates := []x509.Certificate{}
+	var certificates []x509.Certificate
 
 	if len(b) < 16 {
 		return nil, fmt.Errorf("invalid signature: buffer smaller than header (%d < %d)", len(b), 16)

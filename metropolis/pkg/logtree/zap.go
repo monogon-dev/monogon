@@ -126,7 +126,7 @@ func parseZapJSON(s string) (*zapEntry, error) {
 	delete(entry, "level")
 	delete(entry, "time")
 	delete(entry, "caller")
-	extra := []byte{}
+	var extra []byte
 	if len(entry) > 0 {
 		extra, _ = json.Marshal(entry)
 	}

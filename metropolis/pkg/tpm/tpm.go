@@ -285,7 +285,7 @@ func Unseal(data []byte) ([]byte, error) {
 		return []byte{}, fmt.Errorf("sealed data structure is invalid: no sealed key")
 	}
 	// Logging this for auditing purposes
-	pcrList := []string{}
+	var pcrList []string
 	for _, pcr := range sealedBytes.SealedKey.Pcrs {
 		pcrList = append(pcrList, strconv.FormatUint(uint64(pcr), 10))
 	}
