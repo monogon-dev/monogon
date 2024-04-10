@@ -33,10 +33,8 @@ package main
 
 import (
 	goflag "flag"
-	"math/rand"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -51,8 +49,6 @@ import (
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
-
 	hyperkubeCommand, allCommandFns := NewHyperKubeCommand()
 
 	// TODO: once we switch everything over to Cobra commands, we can go back

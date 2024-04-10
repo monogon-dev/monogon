@@ -21,10 +21,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"math/rand"
 	"os"
 	"strings"
-	"time"
 
 	"google.golang.org/grpc"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -180,7 +178,6 @@ func main() {
 		// The base code is straight from:
 		//   https://github.com/kubernetes/kubernetes/blob/master/cmd/kubectl/kubectl.go
 		os.Setenv("KUBECONFIG", kubeconfigFile.Name())
-		rand.Seed(time.Now().UnixNano())
 		command := cmd.NewDefaultKubectlCommandWithArgs(cmd.KubectlOptions{
 			PluginHandler: cmd.NewDefaultPluginHandler(plugin.ValidPluginFilenamePrefixes),
 			Arguments:     os.Args[2:],
