@@ -258,7 +258,7 @@ campaigned:
 // odd 'Unimplemented' errors.
 func (s *Service) cleanupPreviousLifetime(ctx context.Context, cl client.Namespaced) error {
 	// Get the active leader key and value.
-	resp, err := cl.Get(ctx, electionPrefix, clientv3.WithFirstCreate()...)
+	resp, err := cl.Get(ctx, electionPrefix+"/", clientv3.WithFirstCreate()...)
 	if err != nil {
 		return err
 	}
