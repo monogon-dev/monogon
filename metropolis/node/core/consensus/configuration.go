@@ -91,10 +91,8 @@ func (c *Config) build(enablePeers bool) *embed.Config {
 		port = p
 	}
 	host := nodeID
-	var extraNames []string
 	if c.testOverrides.externalAddress != "" {
 		host = c.testOverrides.externalAddress
-		extraNames = append(extraNames, host)
 	}
 	etcdPort := int(node.MetricsEtcdListenerPort)
 	if p := c.testOverrides.etcdMetricsPort; p != 0 {
