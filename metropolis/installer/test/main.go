@@ -179,6 +179,9 @@ func TestInstallerImage(t *testing.T) {
 	}
 	// Verify that GPT exists.
 	ti, err := image.GetPartitionTable()
+	if err != nil {
+		t.Fatalf("Couldn't read the installer image partition table: %s", err)
+	}
 	if ti.Type() != "gpt" {
 		t.Error("Couldn't verify that the installer image contains a GPT.")
 	}
