@@ -126,18 +126,18 @@ func (c *CockroachConfig) buildDSN(scheme string) string {
 
 // Connect returns a working *sql.DB handle to the database described by this
 // CockroachConfig.
-func (d *CockroachConfig) Connect() (*sql.DB, error) {
-	dsn := d.buildDSN("postgres")
+func (c *CockroachConfig) Connect() (*sql.DB, error) {
+	dsn := c.buildDSN("postgres")
 	klog.Infof("Connecting to %s...", dsn)
-	return sql.Open("postgres", d.buildDSN("postgres"))
+	return sql.Open("postgres", c.buildDSN("postgres"))
 }
 
 // MigrateUp performs all possible migrations upwards for the database described
 // by this CockroachConfig.
-func (d *CockroachConfig) MigrateUp() error {
-	dsn := d.buildDSN("cockroachdb")
+func (c *CockroachConfig) MigrateUp() error {
+	dsn := c.buildDSN("cockroachdb")
 	klog.Infof("Running migrations up...")
-	m, err := migrate.NewWithSourceInstance("iofs", d.Migrations, dsn)
+	m, err := migrate.NewWithSourceInstance("iofs", c.Migrations, dsn)
 	if err != nil {
 		return err
 	}
@@ -152,10 +152,10 @@ func (d *CockroachConfig) MigrateUp() error {
 	}
 }
 
-func (d *CockroachConfig) MigrateUpToIncluding(ver uint) error {
-	dsn := d.buildDSN("cockroachdb")
+func (c *CockroachConfig) MigrateUpToIncluding(ver uint) error {
+	dsn := c.buildDSN("cockroachdb")
 	klog.Infof("Running migrations up to %d...", ver)
-	m, err := migrate.NewWithSourceInstance("iofs", d.Migrations, dsn)
+	m, err := migrate.NewWithSourceInstance("iofs", c.Migrations, dsn)
 	if err != nil {
 		return err
 	}
@@ -171,18 +171,18 @@ func (d *CockroachConfig) MigrateUpToIncluding(ver uint) error {
 // Obviously, this is a dangerous method. Thus, to prevent accidental nuking of
 // production data, we currently only allow this to be performed on InMemory
 // databases.
-func (d *CockroachConfig) MigrateDownDangerDanger() error {
-	if !d.InMemory {
+func (c *CockroachConfig) MigrateDownDangerDanger() error {
+	if !c.InMemory {
 		return fmt.Errorf("refusing to migrate down a non-in-memory database")
 	}
 	// Sneaky extra check to make sure the caller didn't just set InMemory after
 	// connecting to an external database. We really need to be safe here.
-	if d.inMemoryInstance == nil {
+	if c.inMemoryInstance == nil {
 		return fmt.Errorf("no really, this cannot be run on non-in-memory databases")
 	}
-	dsn := d.buildDSN("cockroachdb")
+	dsn := c.buildDSN("cockroachdb")
 	klog.Infof("Running migrations down...")
-	m, err := migrate.NewWithSourceInstance("iofs", d.Migrations, dsn)
+	m, err := migrate.NewWithSourceInstance("iofs", c.Migrations, dsn)
 	if err != nil {
 		return err
 	}
@@ -192,7 +192,7 @@ func (d *CockroachConfig) MigrateDownDangerDanger() error {
 	if err != nil {
 		return fmt.Errorf("could not retrieve remote version: %w", err)
 	}
-	if v2, err := d.Migrations.Next(v); !os.IsNotExist(err) {
+	if v2, err := c.Migrations.Next(v); !os.IsNotExist(err) {
 		return fmt.Errorf("remote running version %d, but we know %d which is newer", v, v2)
 	}
 	return m.Down()

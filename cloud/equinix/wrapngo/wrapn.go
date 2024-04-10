@@ -228,8 +228,8 @@ var (
 	ErrNoReservationProvided = errors.New("hardware reservation must be set")
 )
 
-func (e *client) PowerOffDevice(ctx context.Context, pid string) error {
-	_, err := wrap(ctx, e, func(p *packngo.Client) (*packngo.Response, error) {
+func (c *client) PowerOffDevice(ctx context.Context, pid string) error {
+	_, err := wrap(ctx, c, func(p *packngo.Client) (*packngo.Response, error) {
 		r, err := p.Devices.PowerOff(pid)
 		if err != nil {
 			return nil, fmt.Errorf("Devices.PowerOff: %w", err)
@@ -239,8 +239,8 @@ func (e *client) PowerOffDevice(ctx context.Context, pid string) error {
 	return err
 }
 
-func (e *client) PowerOnDevice(ctx context.Context, pid string) error {
-	_, err := wrap(ctx, e, func(p *packngo.Client) (*packngo.Response, error) {
+func (c *client) PowerOnDevice(ctx context.Context, pid string) error {
+	_, err := wrap(ctx, c, func(p *packngo.Client) (*packngo.Response, error) {
 		r, err := p.Devices.PowerOn(pid)
 		if err != nil {
 			return nil, fmt.Errorf("Devices.PowerOn: %w", err)
@@ -250,8 +250,8 @@ func (e *client) PowerOnDevice(ctx context.Context, pid string) error {
 	return err
 }
 
-func (e *client) DeleteDevice(ctx context.Context, id string) error {
-	_, err := wrap(ctx, e, func(p *packngo.Client) (*packngo.Response, error) {
+func (c *client) DeleteDevice(ctx context.Context, id string) error {
+	_, err := wrap(ctx, c, func(p *packngo.Client) (*packngo.Response, error) {
 		r, err := p.Devices.Delete(id, false)
 		if err != nil {
 			return nil, fmt.Errorf("Devices.Delete: %w", err)
@@ -261,7 +261,7 @@ func (e *client) DeleteDevice(ctx context.Context, id string) error {
 	return err
 }
 
-func (e *client) CreateDevice(ctx context.Context, r *packngo.DeviceCreateRequest) (*packngo.Device, error) {
+func (c *client) CreateDevice(ctx context.Context, r *packngo.DeviceCreateRequest) (*packngo.Device, error) {
 	if r.HardwareReservationID == "" {
 		return nil, ErrNoReservationProvided
 	}
@@ -270,7 +270,7 @@ func (e *client) CreateDevice(ctx context.Context, r *packngo.DeviceCreateReques
 	witnessTag := fmt.Sprintf("wrapngo-idempotency-%s", uuid.New().String())
 	r.Tags = append(r.Tags, witnessTag)
 
-	return wrap(ctx, e, func(cl *packngo.Client) (*packngo.Device, error) {
+	return wrap(ctx, c, func(cl *packngo.Client) (*packngo.Device, error) {
 		//Does the device already exist?
 		res, _, err := cl.HardwareReservations.Get(r.HardwareReservationID, nil)
 		if err != nil {
@@ -303,31 +303,31 @@ func (e *client) CreateDevice(ctx context.Context, r *packngo.DeviceCreateReques
 	})
 }
 
-func (e *client) UpdateDevice(ctx context.Context, id string, r *packngo.DeviceUpdateRequest) (*packngo.Device, error) {
-	return wrap(ctx, e, func(cl *packngo.Client) (*packngo.Device, error) {
+func (c *client) UpdateDevice(ctx context.Context, id string, r *packngo.DeviceUpdateRequest) (*packngo.Device, error) {
+	return wrap(ctx, c, func(cl *packngo.Client) (*packngo.Device, error) {
 		dev, _, err := cl.Devices.Update(id, r)
 		return dev, err
 	})
 }
 
-func (e *client) ListDevices(ctx context.Context, pid string) ([]packngo.Device, error) {
-	return wrap(ctx, e, func(cl *packngo.Client) ([]packngo.Device, error) {
+func (c *client) ListDevices(ctx context.Context, pid string) ([]packngo.Device, error) {
+	return wrap(ctx, c, func(cl *packngo.Client) ([]packngo.Device, error) {
 		// to increase the chances of a stable pagination, we sort the devices by hostname
 		res, _, err := cl.Devices.List(pid, &packngo.GetOptions{SortBy: "hostname"})
 		return res, err
 	})
 }
 
-func (e *client) GetDevice(ctx context.Context, pid, did string, opts *packngo.ListOptions) (*packngo.Device, error) {
-	return wrap(ctx, e, func(cl *packngo.Client) (*packngo.Device, error) {
+func (c *client) GetDevice(ctx context.Context, pid, did string, opts *packngo.ListOptions) (*packngo.Device, error) {
+	return wrap(ctx, c, func(cl *packngo.Client) (*packngo.Device, error) {
 		d, _, err := cl.Devices.Get(did, opts)
 		return d, err
 	})
 }
 
 // Currently unexported, only used in tests.
-func (e *client) deleteDevice(ctx context.Context, did string) error {
-	_, err := wrap(ctx, e, func(cl *packngo.Client) (*struct{}, error) {
+func (c *client) deleteDevice(ctx context.Context, did string) error {
+	_, err := wrap(ctx, c, func(cl *packngo.Client) (*struct{}, error) {
 		_, err := cl.Devices.Delete(did, false)
 		if httpStatusCode(err) == http.StatusNotFound {
 			// 404s may pop up as an after effect of running the back-off
@@ -339,15 +339,15 @@ func (e *client) deleteDevice(ctx context.Context, did string) error {
 	return err
 }
 
-func (e *client) ListReservations(ctx context.Context, pid string) ([]packngo.HardwareReservation, error) {
-	return wrap(ctx, e, func(cl *packngo.Client) ([]packngo.HardwareReservation, error) {
+func (c *client) ListReservations(ctx context.Context, pid string) ([]packngo.HardwareReservation, error) {
+	return wrap(ctx, c, func(cl *packngo.Client) ([]packngo.HardwareReservation, error) {
 		res, _, err := cl.HardwareReservations.List(pid, &packngo.ListOptions{Includes: []string{"facility", "device"}})
 		return res, err
 	})
 }
 
-func (e *client) MoveReservation(ctx context.Context, hardwareReservationDID, projectID string) (*packngo.HardwareReservation, error) {
-	return wrap(ctx, e, func(cl *packngo.Client) (*packngo.HardwareReservation, error) {
+func (c *client) MoveReservation(ctx context.Context, hardwareReservationDID, projectID string) (*packngo.HardwareReservation, error) {
+	return wrap(ctx, c, func(cl *packngo.Client) (*packngo.HardwareReservation, error) {
 		hr, _, err := cl.HardwareReservations.Move(hardwareReservationDID, projectID)
 		if err != nil {
 			return nil, fmt.Errorf("HardwareReservations.Move: %w", err)
@@ -356,8 +356,8 @@ func (e *client) MoveReservation(ctx context.Context, hardwareReservationDID, pr
 	})
 }
 
-func (e *client) CreateSSHKey(ctx context.Context, r *packngo.SSHKeyCreateRequest) (*packngo.SSHKey, error) {
-	return wrap(ctx, e, func(cl *packngo.Client) (*packngo.SSHKey, error) {
+func (c *client) CreateSSHKey(ctx context.Context, r *packngo.SSHKeyCreateRequest) (*packngo.SSHKey, error) {
+	return wrap(ctx, c, func(cl *packngo.Client) (*packngo.SSHKey, error) {
 		// Does the key already exist?
 		ks, _, err := cl.SSHKeys.List()
 		if err != nil {
@@ -381,8 +381,8 @@ func (e *client) CreateSSHKey(ctx context.Context, r *packngo.SSHKeyCreateReques
 	})
 }
 
-func (e *client) UpdateSSHKey(ctx context.Context, id string, r *packngo.SSHKeyUpdateRequest) (*packngo.SSHKey, error) {
-	return wrap(ctx, e, func(cl *packngo.Client) (*packngo.SSHKey, error) {
+func (c *client) UpdateSSHKey(ctx context.Context, id string, r *packngo.SSHKeyUpdateRequest) (*packngo.SSHKey, error) {
+	return wrap(ctx, c, func(cl *packngo.Client) (*packngo.SSHKey, error) {
 		k, _, err := cl.SSHKeys.Update(id, r)
 		if err != nil {
 			return nil, fmt.Errorf("SSHKeys.Update: %w", err)
@@ -392,8 +392,8 @@ func (e *client) UpdateSSHKey(ctx context.Context, id string, r *packngo.SSHKeyU
 }
 
 // Currently unexported, only used in tests.
-func (e *client) deleteSSHKey(ctx context.Context, id string) error {
-	_, err := wrap(ctx, e, func(cl *packngo.Client) (struct{}, error) {
+func (c *client) deleteSSHKey(ctx context.Context, id string) error {
+	_, err := wrap(ctx, c, func(cl *packngo.Client) (struct{}, error) {
 		_, err := cl.SSHKeys.Delete(id)
 		if err != nil {
 			return struct{}{}, fmt.Errorf("SSHKeys.Delete: %w", err)
@@ -403,8 +403,8 @@ func (e *client) deleteSSHKey(ctx context.Context, id string) error {
 	return err
 }
 
-func (e *client) ListSSHKeys(ctx context.Context) ([]packngo.SSHKey, error) {
-	return wrap(ctx, e, func(cl *packngo.Client) ([]packngo.SSHKey, error) {
+func (c *client) ListSSHKeys(ctx context.Context) ([]packngo.SSHKey, error) {
+	return wrap(ctx, c, func(cl *packngo.Client) ([]packngo.SSHKey, error) {
 		ks, _, err := cl.SSHKeys.List()
 		if err != nil {
 			return nil, fmt.Errorf("SSHKeys.List: %w", err)
@@ -414,8 +414,8 @@ func (e *client) ListSSHKeys(ctx context.Context) ([]packngo.SSHKey, error) {
 }
 
 // Currently unexported, only used in tests.
-func (e *client) getSSHKey(ctx context.Context, id string) (*packngo.SSHKey, error) {
-	return wrap(ctx, e, func(cl *packngo.Client) (*packngo.SSHKey, error) {
+func (c *client) getSSHKey(ctx context.Context, id string) (*packngo.SSHKey, error) {
+	return wrap(ctx, c, func(cl *packngo.Client) (*packngo.SSHKey, error) {
 		k, _, err := cl.SSHKeys.Get(id, nil)
 		if err != nil {
 			return nil, fmt.Errorf("SSHKeys.Get: %w", err)
@@ -424,8 +424,8 @@ func (e *client) getSSHKey(ctx context.Context, id string) (*packngo.SSHKey, err
 	})
 }
 
-func (e *client) RebootDevice(ctx context.Context, did string) error {
-	_, err := wrap(ctx, e, func(cl *packngo.Client) (struct{}, error) {
+func (c *client) RebootDevice(ctx context.Context, did string) error {
+	_, err := wrap(ctx, c, func(cl *packngo.Client) (struct{}, error) {
 		_, err := cl.Devices.Reboot(did)
 		return struct{}{}, err
 	})

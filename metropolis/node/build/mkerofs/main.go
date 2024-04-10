@@ -128,7 +128,7 @@ type entrySpec struct {
 
 // pathRef gets the entrySpec at the leaf of the given path, inferring
 // directories if necessary
-func (s *entrySpec) pathRef(p string) *entrySpec {
+func (spec *entrySpec) pathRef(p string) *entrySpec {
 	// This block gets a path array starting at the root of the filesystem. The
 	// root folder is the zero-length array.
 	pathParts := strings.Split(path.Clean("./"+p), "/")
@@ -136,7 +136,7 @@ func (s *entrySpec) pathRef(p string) *entrySpec {
 		pathParts = pathParts[1:]
 	}
 
-	entryRef := s
+	entryRef := spec
 	for _, part := range pathParts {
 		childRef, ok := entryRef.children[part]
 		if !ok {

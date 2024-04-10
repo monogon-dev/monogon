@@ -201,8 +201,8 @@ func WithAlignment(alignmenet int64) AddOption {
 // It writes the placement information (FirstBlock, LastBlock) back to p.
 // By default, AddPartition aligns FirstBlock to 1MiB boundaries, but this can
 // be overridden using WithAlignment.
-func (g *Table) AddPartition(p *Partition, size int64, options ...AddOption) error {
-	blockSize := g.b.BlockSize()
+func (gpt *Table) AddPartition(p *Partition, size int64, options ...AddOption) error {
+	blockSize := gpt.b.BlockSize()
 	var opts addOptions
 	// Align to 1MiB or the block size, whichever is bigger
 	opts.alignment = 1 * 1024 * 1024
@@ -219,7 +219,7 @@ func (g *Table) AddPartition(p *Partition, size int64, options ...AddOption) err
 		p.ID = uuid.New()
 	}
 
-	fs, _, err := g.GetFreeSpaces()
+	fs, _, err := gpt.GetFreeSpaces()
 	if err != nil {
 		return fmt.Errorf("unable to determine free space: %v", err)
 	}
@@ -247,7 +247,7 @@ func (g *Table) AddPartition(p *Partition, size int64, options ...AddOption) err
 		end := freeInt[1]
 		freeBlocks := end - start
 		// Align start properly
-		alignTo := (opts.alignment / blockSize)
+		alignTo := opts.alignment / blockSize
 		// Go doesn't implement the euclidean modulus, thus this construction
 		// is necessary.
 		paddingBlocks := ((alignTo - start) % alignTo) % alignTo
@@ -269,7 +269,7 @@ func (g *Table) AddPartition(p *Partition, size int64, options ...AddOption) err
 			}
 			newPartPos := -1
 			if !opts.keepEmptyEntries {
-				for i, part := range g.Partitions {
+				for i, part := range gpt.Partitions {
 					if part.IsUnused() {
 						newPartPos = i
 						break
@@ -277,11 +277,11 @@ func (g *Table) AddPartition(p *Partition, size int64, options ...AddOption) err
 				}
 			}
 			if newPartPos == -1 {
-				g.Partitions = append(g.Partitions, p)
+				gpt.Partitions = append(gpt.Partitions, p)
 			} else {
-				g.Partitions[newPartPos] = p
+				gpt.Partitions[newPartPos] = p
 			}
-			p.Section = blockdev.NewSection(g.b, int64(p.FirstBlock), int64(p.LastBlock)+1)
+			p.Section = blockdev.NewSection(gpt.b, int64(p.FirstBlock), int64(p.LastBlock)+1)
 			return nil
 		}
 	}
@@ -291,18 +291,18 @@ func (g *Table) AddPartition(p *Partition, size int64, options ...AddOption) err
 
 // FirstUsableBlock returns the first usable (i.e. a partition can start there)
 // block.
-func (g *Table) FirstUsableBlock() int64 {
-	blockSize := g.b.BlockSize()
+func (gpt *Table) FirstUsableBlock() int64 {
+	blockSize := gpt.b.BlockSize()
 	partitionEntryBlocks := (16384 + blockSize - 1) / blockSize
 	return 2 + partitionEntryBlocks
 }
 
 // LastUsableBlock returns the last usable (i.e. a partition can end there)
 // block. This block is inclusive.
-func (g *Table) LastUsableBlock() int64 {
-	blockSize := g.b.BlockSize()
+func (gpt *Table) LastUsableBlock() int64 {
+	blockSize := gpt.b.BlockSize()
 	partitionEntryBlocks := (16384 + blockSize - 1) / blockSize
-	return g.b.BlockCount() - (2 + partitionEntryBlocks)
+	return gpt.b.BlockCount() - (2 + partitionEntryBlocks)
 }
 
 // GetFreeSpaces returns a slice of tuples, each containing a half-closed
@@ -315,7 +315,7 @@ func (g *Table) LastUsableBlock() int64 {
 //
 // Note that the most common use cases for this function are covered by
 // AddPartition, you're encouraged to use it instead.
-func (g *Table) GetFreeSpaces() ([][2]int64, bool, error) {
+func (gpt *Table) GetFreeSpaces() ([][2]int64, bool, error) {
 	// This implements an efficient algorithm for finding free intervals given
 	// a set of potentially overlapping occupying intervals. It uses O(n*log n)
 	// time for n being the amount of intervals, i.e. partitions. It uses O(n)
@@ -324,7 +324,7 @@ func (g *Table) GetFreeSpaces() ([][2]int64, bool, error) {
 	// of its cyclomatic complexity and O(n*log n) is tiny for even very big
 	// partition tables.
 
-	blockCount := g.b.BlockCount()
+	blockCount := gpt.b.BlockCount()
 
 	// startBlocks contains the start blocks (inclusive) of all occupied
 	// intervals.
@@ -335,13 +335,13 @@ func (g *Table) GetFreeSpaces() ([][2]int64, bool, error) {
 
 	// Reserve the primary GPT interval including the protective MBR.
 	startBlocks = append(startBlocks, 0)
-	endBlocks = append(endBlocks, g.FirstUsableBlock())
+	endBlocks = append(endBlocks, gpt.FirstUsableBlock())
 
 	// Reserve the alternate GPT interval (needs +1 for exclusive interval)
-	startBlocks = append(startBlocks, g.LastUsableBlock()+1)
+	startBlocks = append(startBlocks, gpt.LastUsableBlock()+1)
 	endBlocks = append(endBlocks, blockCount)
 
-	for i, part := range g.Partitions {
+	for i, part := range gpt.Partitions {
 		if part.IsUnused() {
 			continue
 		}

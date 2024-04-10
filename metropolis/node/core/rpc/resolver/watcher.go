@@ -109,16 +109,16 @@ func (w *clientWatcher) watch() {
 	}
 }
 
-func (r *clientWatcher) ResolveNow(_ resolver.ResolveNowOptions) {
+func (w *clientWatcher) ResolveNow(_ resolver.ResolveNowOptions) {
 	// No-op. The clientWatcher's watcher runs as fast as possible.
 }
 
-func (r *clientWatcher) Close() {
+func (w *clientWatcher) Close() {
 	select {
-	case <-r.resolver.ctx.Done():
-	case r.resolver.reqC <- &request{
+	case <-w.resolver.ctx.Done():
+	case w.resolver.reqC <- &request{
 		unsub: &requestUnsubscribe{
-			id: r.subscription.id,
+			id: w.subscription.id,
 		},
 	}:
 	}

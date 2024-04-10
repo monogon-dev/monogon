@@ -220,11 +220,11 @@ func (a AdditionalSenseCode) IsKey(b AdditionalSenseCode) bool {
 }
 
 // String returns the textual representation of this ASK
-func (s AdditionalSenseCode) String() string {
-	if str, ok := additionalSenseCodeDesc[s]; ok {
+func (a AdditionalSenseCode) String() string {
+	if str, ok := additionalSenseCodeDesc[a]; ok {
 		return str
 	}
-	return fmt.Sprintf("unknown additional sense code %xh %xh", s.ASK(), s.ASKQ())
+	return fmt.Sprintf("unknown additional sense code %xh %xh", a.ASK(), a.ASKQ())
 }
 
 // FixedError is one type of error returned by a SCSI CHECK_CONDITION.

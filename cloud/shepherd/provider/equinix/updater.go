@@ -41,9 +41,9 @@ type Updater struct {
 	cl ecl.Client
 }
 
-func (c *UpdaterConfig) New(cl ecl.Client) (*Updater, error) {
+func (u *UpdaterConfig) New(cl ecl.Client) (*Updater, error) {
 	return &Updater{
-		config: c,
+		config: u,
 		cl:     cl,
 	}, nil
 }
