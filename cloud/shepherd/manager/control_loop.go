@@ -156,7 +156,7 @@ func (r *controlLoopRunner) runOne(ctx context.Context, conn *bmdb.Connection, p
 			klog.Errorf("Session expired, restarting...")
 			sess = nil
 			time.Sleep(time.Second)
-		case err != nil:
+		default:
 			klog.Errorf("Processing failed: %v", err)
 			// TODO(q3k): close session
 			time.Sleep(time.Second)
