@@ -97,6 +97,7 @@ func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string)
 			t.Fatal("Timed out waiting for VM to exit")
 			cancel()
 			<-procExit
+			t.FailNow()
 			return
 		}
 	case err := <-procExit:
