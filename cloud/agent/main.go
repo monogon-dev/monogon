@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"regexp"
 
@@ -33,8 +32,8 @@ func main() {
 	consoles["ttyS0"] = true
 
 	lt := logtree.New()
-	for p := range consoles {
-		f, err := os.OpenFile("/dev/"+p, os.O_WRONLY, 0)
+	for path := range consoles {
+		f, err := os.OpenFile("/dev/"+path, os.O_WRONLY, 0)
 		if err != nil {
 			continue
 		}
@@ -42,12 +41,12 @@ func main() {
 		if err != nil {
 			panic(fmt.Errorf("could not set up root log reader: %v", err))
 		}
-		go func(path string, f io.Writer) {
+		go func() {
 			for {
 				p := <-reader.Stream
 				fmt.Fprintf(f, "%s\n", p.String())
 			}
-		}(p, f)
+		}()
 	}
 
 	sCtx := context.Background()

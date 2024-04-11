@@ -19,7 +19,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"strings"
@@ -55,7 +54,7 @@ func main() {
 
 	// Set up logger for Metropolis. Currently logs everything to /dev/tty0 and
 	// /dev/ttyS{0,1}.
-	consoles := []console{
+	consoles := []*console{
 		{
 			path:     "/dev/tty0",
 			maxWidth: 80,
@@ -74,8 +73,8 @@ func main() {
 	crash := make(chan string)
 
 	// Open up consoles and set up logging from logtree and crash channel.
-	for _, console := range consoles {
-		f, err := os.OpenFile(console.path, os.O_WRONLY, 0)
+	for _, c := range consoles {
+		f, err := os.OpenFile(c.path, os.O_WRONLY, 0)
 		if err != nil {
 			continue
 		}
@@ -83,20 +82,20 @@ func main() {
 		if err != nil {
 			panic(fmt.Errorf("could not set up root log reader: %v", err))
 		}
-		console.reader = reader
-		go func(path string, maxWidth int, f io.Writer) {
-			fmt.Fprintf(f, "\nMetropolis: this is %s. Verbose node logs follow.\n\n", path)
+		c.reader = reader
+		go func() {
+			fmt.Fprintf(f, "\nMetropolis: this is %s. Verbose node logs follow.\n\n", c.path)
 			for {
 				select {
 				case p := <-reader.Stream:
 					if consoleFilter(p) {
-						fmt.Fprintf(f, "%s\n", p.ConciseString(logtree.MetropolisShortenDict, maxWidth))
+						fmt.Fprintf(f, "%s\n", p.ConciseString(logtree.MetropolisShortenDict, c.maxWidth))
 					}
 				case s := <-crash:
 					fmt.Fprintf(f, "%s\n", s)
 				}
 			}
-		}(console.path, console.maxWidth, f)
+		}()
 	}
 
 	// Initialize persistent panic handler early
@@ -244,12 +243,12 @@ func main() {
 	ctxC()
 	time.Sleep(time.Second)
 	// After a bit, kill all console log readers.
-	for _, console := range consoles {
-		if console.reader == nil {
+	for _, c := range consoles {
+		if c.reader == nil {
 			continue
 		}
-		console.reader.Close()
-		console.reader.Stream = nil
+		c.reader.Close()
+		c.reader.Stream = nil
 	}
 	// Wait for final logs to flush to console...
 	time.Sleep(time.Second)

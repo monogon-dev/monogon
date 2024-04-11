@@ -54,7 +54,7 @@ func runtimeWrite(fd uintptr, p unsafe.Pointer, n int32) int32 {
 	return int32(err)
 }
 
-func initPanicHandler(lt *logtree.LogTree, consoles []console) {
+func initPanicHandler(lt *logtree.LogTree, consoles []*console) {
 	l := lt.MustLeveledFor("panichandler")
 
 	// Setup pstore userspace message buffer
@@ -66,11 +66,11 @@ func initPanicHandler(lt *logtree.LogTree, consoles []console) {
 		runtimeFds = append(runtimeFds, fd)
 	}
 
-	for _, console := range consoles {
-		fd, err := unix.Open(console.path, os.O_WRONLY, 0)
+	for _, c := range consoles {
+		fd, err := unix.Open(c.path, os.O_WRONLY, 0)
 		if err == nil {
 			runtimeFds = append(runtimeFds, fd)
-			l.Infof("Panic console: %s", console.path)
+			l.Infof("Panic console: %s", c.path)
 		}
 	}
 
