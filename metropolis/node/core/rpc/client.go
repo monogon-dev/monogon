@@ -94,7 +94,6 @@ func NewEphemeralCredentials(private ed25519.PrivateKey, opts ...CredentialsOpt)
 		Certificate: [][]byte{certificateBytes},
 		PrivateKey:  private,
 	}
-	opts = append(opts)
 	return NewAuthenticatedCredentials(certificate, opts...), nil
 }
 
