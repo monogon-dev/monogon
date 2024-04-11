@@ -182,7 +182,8 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 	externalLis := bufconn.Listen(1024 * 1024)
 	go func() {
 		if err := srv.Serve(externalLis); err != nil {
-			t.Fatalf("GRPC serve failed: %v", err)
+			t.Errorf("GRPC serve failed: %v", err)
+			return
 		}
 	}()
 

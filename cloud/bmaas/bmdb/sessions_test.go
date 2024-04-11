@@ -582,11 +582,13 @@ func TestAgentStartWorkflowParallel(t *testing.T) {
 	}
 
 	worker := func(workerID int) {
-		ctxS, ctxC := context.WithCancel(ctx)
-		defer ctxC()
+		ctxS, ctxSC := context.WithCancel(ctx)
+		defer ctxSC()
 		session, err := conn.StartSession(ctxS)
 		if err != nil {
-			t.Fatalf("Starting session failed: %v", err)
+			t.Errorf("Starting session failed: %v", err)
+			ctxC()
+			return
 		}
 		for {
 			err := workOnce(ctxS, workerID, session)
@@ -597,7 +599,9 @@ func TestAgentStartWorkflowParallel(t *testing.T) {
 				if errors.Is(err, ctxS.Err()) {
 					return
 				}
-				t.Fatalf("worker failed: %v", err)
+				t.Errorf("worker failed: %v", err)
+				ctxC()
+				return
 			}
 		}
 	}
@@ -608,7 +612,11 @@ func TestAgentStartWorkflowParallel(t *testing.T) {
 
 	// Wait for at least three workers to be alive.
 	for i := 0; i < 3; i++ {
-		workStarted <- struct{}{}
+		select {
+			case workStarted <- struct{}{}:
+			case <-ctx.Done():
+				t.FailNow()
+		}
 	}
 
 	// Allow all workers to continue running from now on.

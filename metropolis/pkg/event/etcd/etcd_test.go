@@ -210,7 +210,9 @@ func wait(t *testing.T, w event.Watcher[StringAt]) (chan string, func()) {
 				return
 			}
 			if err != nil {
-				t.Fatalf("Get: %v", err)
+				t.Errorf("Get: %v", err)
+				close(c)
+				return
 			}
 			c <- got.Value
 		}

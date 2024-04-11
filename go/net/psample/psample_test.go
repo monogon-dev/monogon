@@ -179,7 +179,8 @@ func TestSampling(t *testing.T) {
 	}
 
 	// Look for packets matching attributes defined in 'sa'. Signal on 'dC'
-	// immediately after the expected packet has been received, then return.
+	// immediately after the expected packet has been received or an error
+	// occurred, then return.
 	dC := make(chan struct{})
 	go func() {
 		for {
@@ -188,7 +189,9 @@ func TestSampling(t *testing.T) {
 			// the sampled traffic could not have been captured, and had been
 			// dropped instead.
 			if err != nil && !errors.Is(err, syscall.ENOBUFS) {
-				t.Fatalf("while receiving psamples: %v", err)
+				t.Errorf("while receiving psamples: %v", err)
+				dC <- struct{}{}
+				return
 			}
 			for _, raw := range pkts {
 				if sa.match(t, raw) {

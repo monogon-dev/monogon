@@ -153,7 +153,8 @@ func TestResolverSimple(t *testing.T) {
 		ipb.RegisterCuratorLocalServer(servers[i], impls[i])
 		go func() {
 			if err := servers[i].Serve(listeners[i]); err != nil {
-				t.Fatalf("GRPC serve failed: %v", err)
+				t.Errorf("GRPC serve failed: %v", err)
+				return
 			}
 		}()
 

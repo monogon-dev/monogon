@@ -51,7 +51,8 @@ func TestExternalServerSecurity(t *testing.T) {
 	lis := bufconn.Listen(1024 * 1024)
 	go func() {
 		if err := srv.Serve(lis); err != nil {
-			t.Fatalf("GRPC serve failed: %v", err)
+			t.Errorf("GRPC serve failed: %v", err)
+			return
 		}
 	}()
 	defer lis.Close()

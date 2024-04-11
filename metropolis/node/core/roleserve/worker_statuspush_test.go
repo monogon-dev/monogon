@@ -87,7 +87,8 @@ func TestWorkerStatusPush(t *testing.T) {
 	defer lis.Close()
 	go func() {
 		if err := srv.Serve(lis); err != nil {
-			t.Fatalf("GRPC serve failed: %v", err)
+			t.Errorf("GRPC serve failed: %v", err)
+			return
 		}
 	}()
 	withLocalDialer := grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {

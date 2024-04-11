@@ -35,7 +35,8 @@ func TestE2E(t *testing.T) {
 	go func() {
 		err := http.Serve(lisSrv, mux)
 		if err != nil {
-			t.Fatalf("http.Serve: %v", err)
+			t.Errorf("http.Serve: %v", err)
+			return
 		}
 	}()
 
@@ -47,7 +48,8 @@ func TestE2E(t *testing.T) {
 	go func() {
 		err := Serve(ctx, HostHandler, lisPrx)
 		if err != nil && !errors.Is(err, ctx.Err()) {
-			t.Fatalf("proxy.Serve: %v", err)
+			t.Errorf("proxy.Serve: %v", err)
+			return
 		}
 	}()
 
@@ -122,7 +124,8 @@ func TestCancellation(t *testing.T) {
 	go func() {
 		err := Serve(ctx, handler, lisPrx)
 		if err != nil && !errors.Is(err, ctx.Err()) {
-			t.Fatalf("proxy.Serve: %v", err)
+			t.Errorf("proxy.Serve: %v", err)
+			return
 		}
 	}()
 
