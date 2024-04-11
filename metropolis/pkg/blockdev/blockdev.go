@@ -154,7 +154,8 @@ func (s *Section) Discard(startByte, endByte int64) error {
 	if err := s.inRange(startByte, endByte); err != nil {
 		return err
 	}
-	return s.b.Discard(s.startBlock+startByte, s.startBlock+endByte)
+	offset := s.startBlock * s.b.BlockSize()
+	return s.b.Discard(offset+startByte, offset+endByte)
 }
 
 func (s *Section) OptimalBlockSize() int64 {
@@ -165,7 +166,8 @@ func (s *Section) Zero(startByte, endByte int64) error {
 	if err := s.inRange(startByte, endByte); err != nil {
 		return err
 	}
-	return s.b.Zero(s.startBlock+startByte, s.startBlock+endByte)
+	offset := s.startBlock * s.b.BlockSize()
+	return s.b.Zero(offset+startByte, offset+endByte)
 }
 
 // GenericZero implements software-based zeroing. This can be used to implement

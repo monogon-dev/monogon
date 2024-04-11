@@ -100,7 +100,7 @@ const Mi = 1024 * 1024
 func Create(params *Params) (*efivarfs.LoadOption, error) {
 	// Discard the entire device, we're going to write new data over it.
 	// Ignore errors, this is only advisory.
-	params.Output.Discard(0, params.Output.BlockCount())
+	params.Output.Discard(0, params.Output.BlockCount()*params.Output.BlockSize())
 
 	tbl, err := gpt.New(params.Output)
 	if err != nil {

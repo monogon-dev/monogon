@@ -44,7 +44,7 @@ func (d *Device) Discard(startByte int64, endByte int64) error {
 	var args [2]uint64
 	var err unix.Errno
 	args[0] = uint64(startByte)
-	args[1] = uint64(endByte)
+	args[1] = uint64(endByte - startByte)
 	if ctrlErr := d.rawConn.Control(func(fd uintptr) {
 		_, _, err = unix.Syscall(unix.SYS_IOCTL, fd, unix.BLKDISCARD, uintptr(unsafe.Pointer(&args[0])))
 	}); ctrlErr != nil {
@@ -67,7 +67,7 @@ func (d *Device) Zero(startByte int64, endByte int64) error {
 	var args [2]uint64
 	var err error
 	args[0] = uint64(startByte)
-	args[1] = uint64(endByte)
+	args[1] = uint64(endByte - startByte)
 	if ctrlErr := d.rawConn.Control(func(fd uintptr) {
 		// Attempts to leverage discard guarantees to provide extremely quick
 		// metadata-only zeroing.
@@ -215,7 +215,7 @@ func (d *File) Discard(startByte int64, endByte int64) error {
 	if errors.Is(err, unix.EOPNOTSUPP) {
 		return errors.ErrUnsupported
 	}
-	if err != unix.Errno(0) {
+	if err != nil {
 		return fmt.Errorf("failed to discard: %w", err)
 	}
 	return nil
