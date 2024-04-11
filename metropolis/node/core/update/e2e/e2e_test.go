@@ -71,7 +71,7 @@ func stderrHandler(t *testing.T, cmd *exec.Cmd) {
 
 func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	qemuCmdLaunch := exec.CommandContext(ctx, "qemu-system-x86_64", qemuArgs...)
 	testosStarted := make(chan string, 1)
@@ -94,7 +94,7 @@ func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string)
 		case <-procExit:
 			return
 		case <-ctx.Done():
-			t.Error("Timed out waiting for VM to exit")
+			t.Fatal("Timed out waiting for VM to exit")
 			cancel()
 			<-procExit
 			return

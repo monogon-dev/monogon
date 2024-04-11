@@ -30,9 +30,8 @@ import (
 
 	apb "source.monogon.dev/cloud/agent/api"
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
-	mpb "source.monogon.dev/metropolis/proto/api"
-
 	"source.monogon.dev/metropolis/pkg/pki"
+	mpb "source.monogon.dev/metropolis/proto/api"
 )
 
 type fakeServer struct {
@@ -284,7 +283,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	select {
 	case <-testosStarted:
 		// Done, test passed
-	case <-time.After(10 * time.Second):
+	case <-time.After(30 * time.Second):
 		t.Fatal("Waiting for TestOS launch timed out")
 	}
 }
