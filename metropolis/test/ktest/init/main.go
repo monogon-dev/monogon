@@ -73,9 +73,8 @@ func main() {
 			if _, err := ioConn.Write([]byte{uint8(exerr.ExitCode())}); err != nil {
 				panic(err)
 			}
-		} else if err != nil {
-			fmt.Printf("Failed to execute tests (tests didn't run): %v", err)
 		}
+		fmt.Printf("Failed to execute tests (tests didn't run): %v", err)
 	} else {
 		ioConn.Write([]byte{0})
 	}
