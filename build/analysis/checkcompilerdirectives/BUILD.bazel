@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "checkcompilerdirectives",
+    srcs = ["checkcompilerdirectives.go"],
+    importpath = "source.monogon.dev/build/analysis/checkcompilerdirectives",
+    visibility = ["//visibility:public"],
+    deps = ["@com_4d63_gocheckcompilerdirectives//checkcompilerdirectives"],
+)

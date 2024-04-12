@@ -365,6 +365,16 @@ exports_files([
     ],
 )
 
+# CockroachDB repository used for linter passes.
+http_archive(
+    name = "com_github_cockroachdb_cockroach",
+    integrity = "sha256-3xYgvXmuPvrGgtSzfoK/K9p/FCH0eMZywAAL10A41k0=",
+    strip_prefix = "cockroach-23.2.4",
+    urls = [
+        "https://github.com/cockroachdb/cockroach/archive/v23.2.4.tar.gz",
+    ],
+)
+
 # bazeldnf is used to generate our sandbox root.
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -390,5 +400,15 @@ http_file(
     sha256 = "14caeec68ba3129a115a9b57396d08dc0973cc9f569ce049232d7d15d768ad41",
     urls = [
         "https://cloud.debian.org/images/cloud/bullseye/20230124-1270/debian-11-genericcloud-amd64-20230124-1270.qcow2",
+    ],
+)
+
+# Used to include staticcheck as nogo analyzer
+http_archive(
+    name = "com_github_sluongng_nogo_analyzer",
+    integrity = "sha256-p0peRHUdKS0XvYeeWqi0C6qUtdwvBD3x46y7PiPq0HM=",
+    strip_prefix = "nogo-analyzer-0.0.2",
+    urls = [
+        "https://github.com/sluongng/nogo-analyzer/archive/refs/tags/v0.0.2.tar.gz",
     ],
 )

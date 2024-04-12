@@ -1,46 +1,250 @@
+load("@com_github_sluongng_nogo_analyzer//staticcheck:def.bzl", ALL_STATICCHECK_ANALYZERS = "ANALYZERS", format_staticcheck_analyzers = "staticcheck_analyzers")
+load("@com_github_sluongng_nogo_analyzer//:def.bzl", gen_nogo_config = "nogo_config")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@io_bazel_rules_go//go:def.bzl", "nogo")
+
+# NOGO_PASSES contains all enabled analyzers that nogo should execute.
+NOGO_PASSES = []
 
 # These deps enable the analyses equivalent to running `go vet`.
 # Passing vet = True enables only a tiny subset of these (the ones
 # that are always correct).
 # You can see the what `go vet` does by running `go doc cmd/vet`.
-govet = [
-    "@org_golang_x_tools//go/analysis/passes/asmdecl:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/assign:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/atomic:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/bools:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/buildtag:go_default_library",
+NOGO_PASSES += [
+    "@org_golang_x_tools//go/analysis/passes/appends",
+    "@org_golang_x_tools//go/analysis/passes/asmdecl",
+    "@org_golang_x_tools//go/analysis/passes/assign",
+    "@org_golang_x_tools//go/analysis/passes/atomic",
+    "@org_golang_x_tools//go/analysis/passes/atomicalign",
+    "@org_golang_x_tools//go/analysis/passes/bools",
+    "@org_golang_x_tools//go/analysis/passes/buildssa",
+    "@org_golang_x_tools//go/analysis/passes/buildtag",
     # Disable cgocall because it fails processing com_github_mattn_go_sqlite3 before exclusions are applied
-    #"@org_golang_x_tools//go/analysis/passes/cgocall:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/composite:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/copylock:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/httpresponse:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/lostcancel:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/nilfunc:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/printf:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/shift:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/stdmethods:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/structtag:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/tests:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/unmarshal:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/unreachable:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/unsafeptr:go_default_library",
-    "@org_golang_x_tools//go/analysis/passes/unusedresult:go_default_library",
+    #"@org_golang_x_tools//go/analysis/passes/cgocall",
+    "@org_golang_x_tools//go/analysis/passes/composite",
+    "@org_golang_x_tools//go/analysis/passes/copylock",
+    "@org_golang_x_tools//go/analysis/passes/deepequalerrors",
+    "@org_golang_x_tools//go/analysis/passes/defers",
+    "@org_golang_x_tools//go/analysis/passes/directive",
+    "@org_golang_x_tools//go/analysis/passes/errorsas",
+    # Disabled as there is no real benefit from it.
+    #"@org_golang_x_tools//go/analysis/passes/fieldalignment",
+    "@org_golang_x_tools//go/analysis/passes/framepointer",
+    "@org_golang_x_tools//go/analysis/passes/httpmux",
+    "@org_golang_x_tools//go/analysis/passes/httpresponse",
+    "@org_golang_x_tools//go/analysis/passes/ifaceassert",
+    # Disabled because we are using Go 1.22
+    # https://go.dev/blog/loopvar-preview
+    #"@org_golang_x_tools//go/analysis/passes/loopclosure",
+    "@org_golang_x_tools//go/analysis/passes/lostcancel",
+    "@org_golang_x_tools//go/analysis/passes/nilfunc",
+    "@org_golang_x_tools//go/analysis/passes/nilness",
+    "@org_golang_x_tools//go/analysis/passes/printf",
+    "@org_golang_x_tools//go/analysis/passes/reflectvaluecompare",
+    # Disabled because of too many false positives
+    # "@org_golang_x_tools//go/analysis/passes/shadow",
+    "@org_golang_x_tools//go/analysis/passes/shift",
+    "@org_golang_x_tools//go/analysis/passes/sigchanyzer",
+    "@org_golang_x_tools//go/analysis/passes/slog",
+    "@org_golang_x_tools//go/analysis/passes/sortslice",
+    "@org_golang_x_tools//go/analysis/passes/stdmethods",
+    "@org_golang_x_tools//go/analysis/passes/stringintconv",
+    "@org_golang_x_tools//go/analysis/passes/structtag",
+    "@org_golang_x_tools//go/analysis/passes/testinggoroutine",
+    "@org_golang_x_tools//go/analysis/passes/tests",
+    "@org_golang_x_tools//go/analysis/passes/timeformat",
+    "@org_golang_x_tools//go/analysis/passes/unmarshal",
+    "@org_golang_x_tools//go/analysis/passes/unreachable",
+    "@org_golang_x_tools//go/analysis/passes/unsafeptr",
+    "@org_golang_x_tools//go/analysis/passes/unusedresult",
+    "@org_golang_x_tools//go/analysis/passes/unusedwrite",
 ]
+
+# Append some passes provided by CockroachDB.
+NOGO_PASSES += [
+    "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/errcmp",
+    # TODO(tim): Enable when fixed
+    # "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/errwrap",
+    "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/hash",
+    "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/nilness",
+    "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/nocopy",
+    "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/returnerrcheck",
+    "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/timer",
+    "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/unconvert",
+]
+
+# Combine all staticcheck analyzers with a list
+# of all globally disabled staticcheck analyzers
+# and append them to the nogo passes.
+NOGO_PASSES += format_staticcheck_analyzers(ALL_STATICCHECK_ANALYZERS + [
+    "-ST1000",  # at least one file in a package should have a package comment
+    "-ST1003",  # should not use ALL_CAPS in Go names; use CamelCase instead
+    "-QF1006",  # could lift into loop condition
+    "-QF1003",  # could use tagged switch
+    "-QF1008",  # Omit embedded fields from selector expression
+
+    # TODO: Enable when fixed
+    "-SA4003",  # no value of type uint32 is less than 0
+])
+
+NOGO_PASSES += [
+    # This analyzer ensures that all comment lines are <= 80 characters long
+    # in Go source. This is in line with general practices around the Go
+    # community, where code lines can be as long as needed (and is expected
+    # to be soft-reflowable by text editors), but comments are kept at a
+    # 'standard' 80 characters long, as prose within comment blocks does not
+    # soft-reflow well.
+    "@com_github_corverroos_commentwrap//:go_default_library",
+    "//build/analysis/checkcompilerdirectives",
+    "//build/analysis/noioutil",
+    "//build/analysis/importsort",
+]
+
+# NOGO_CONFIG contains the overrides for nogo to exempt specific files
+# from being analyzed.
+NOGO_CONFIG = {
+    "shift": {
+        "exclude_files": {
+            "external/dev_gvisor_gvisor": "third_party",
+        },
+    },
+    "stringintconv": {
+        "exclude_files": {
+            "external/com_github_masterminds_goutils": "third_party",
+        },
+    },
+    "noioutil": {
+        "exclude_files": {
+            "external/": "TODO(tim): break me up and filter out unmaintained dependencies",
+        },
+    },
+    "nilness": {
+        "exclude_files": {
+            "external/org_golang_x_tools": "third_party",
+            "external/in_gopkg_yaml_v2": "third_party",
+            "external/com_github_google_cadvisor": "third_party",
+            "external/com_github_pkg_sftp": "third_party",
+            "external/com_github_vishvananda_netlink": "third_party",
+            "external/com_github_go_sql_driver_mysql": "third_party",
+            "external/com_github_google_go_tpm": "third_party",
+            "external/com_github_json_iterator_go": "third_party",
+            "external/com_github_gregjones_httpcache": "third_party",
+            "external/com_github_cilium_ebpf": "third_party",
+            "external/com_github_urfave_cli": "third_party",
+            "external/in_gopkg_square_go_jose_v2": "third_party",
+            "external/com_github_alecthomas_kingpin_v2": "third_party",
+            "external/io_k8s_mount_utils": "third_party",
+            "external/com_github_stefanberger_go_pkcs11uri": "third_party",
+            "external/com_github_go_delve_delve": "third_party",
+            "external/io_opencensus_go": "third_party",
+            "external/io_k8s_apimachinery": "third_party",
+            "external/io_k8s_kubernetes": "third_party",
+            "external/io_k8s_kube_openapi": "third_party",
+            "external/io_k8s_apiextensions_apiserver": "third_party",
+            "external/io_etcd_go_etcd_client_v3": "third_party",
+            "external/com_github_coredns_coredns": "third_party",
+            "external/io_etcd_go_etcd_server_v3": "third_party",
+            "external/com_github_containerd_containerd": "third_party",
+            "external/io_k8s_client_go": "third_party",
+            "external/io_k8s_apiserver": "third_party",
+            "external/io_k8s_kubectl": "third_party",
+            "external/com_github_spf13_pflag": "third_party",
+            "external/com_github_burntsushi_toml": "third_party",
+        },
+    },
+    "unsafeptr": {
+        "exclude_files": {
+            "external/com_github_modern_go_reflect2/": "third_party",
+            "sqlite3.*go": "third_party",
+            "external/dev_gvisor_gvisor/": "third_party",
+            "external/io_k8s_sigs_structured_merge_diff/": "third_party",
+            "external/com_github_go_delve_delve/": "third_party",
+            "external/com_github_mailru_easyjson/jlexer/": "third_party",
+            "external/com_github_cilium_ebpf/": "third_party",
+            "external/org_golang_x_sys": "third_party",
+            "external/net_starlark_go": "third_party",
+            "external/com_github_pingcap_tidb_parser": "third_party",
+            "external/com_github_dennwc_btrfs": "third_party",
+        },
+    },
+    "lostcancel": {
+        "exclude_files": {
+            "external/org_golang_x_tools": "third_party",
+            "external/com_github_grpc_ecosystem_grpc_gateway": "third_party",
+        },
+    },
+    "deepequalerrors": {
+        "exclude_files": {
+            "external/com_github_u_root_uio": "third_party",
+        },
+    },
+    "copylocks": {
+        "exclude_files": {
+            "external/org_golang_google_protobuf": "third_party",
+            "external/com_github_derekparker_trie": "third_party",
+            "external/com_github_hodgesds_perf_utils": "third_party",
+            "external/com_github_google_gnostic": "third_party",
+            "external/com_github_coredns_coredns": "third_party",
+            "external/com_github_pseudomuto_protoc_gen_doc": "third_party",
+            "external/io_k8s_apiserver": "third_party",
+        },
+    },
+    "defers": {
+        "exclude_files": {
+            "external/com_github_sbezverk_nfproxy": "third_party",
+        },
+    },
+    "unparam": {
+        "exclude_files": {
+            "external/": "third_party",
+            "bazel-out/": "generated_output",
+            "cgo/": "cgo",
+        },
+    },
+}
+
+# All analyzers that should be disabled for external, generated or cgo code.
+DISABLED_FOR_EXTERNAL_CODE = [
+    "exclude_files",
+    "commentwrap",
+    "importsort",
+    "unreachable",
+    "unusedwrite",
+    "composites",
+    "stdmethods",
+    "reflectvaluecompare",
+    "unconvert",
+    "errwrap",
+    "ruleguard",
+    "returnerrcheck",
+    "hash",
+    "errcmp",
+] + ALL_STATICCHECK_ANALYZERS
+
+# We override the variable with itself unioned with the other
+# config part, as the Intellij integration doesn't understand
+# the |= expression which makes editing this file kinda annoying.
+NOGO_CONFIG = NOGO_CONFIG | {
+    analyzer: {
+        "exclude_files": {
+            # Don't run linters on external dependencies
+            "external/": "third_party",
+            "bazel-out/": "generated_output",
+            "cgo/": "cgo",
+        },
+    }
+    for analyzer in DISABLED_FOR_EXTERNAL_CODE
+}
+
+write_file(
+    name = "nogo_config",
+    out = "nogo_config.json",
+    content = [json.encode_indent(NOGO_CONFIG)],
+)
 
 nogo(
     name = "nogo",
-    config = "nogo_config.json",
+    config = ":nogo_config",
     visibility = ["//visibility:public"],
-    deps = govet + [
-        # This analyzer ensures that all comment lines are <= 80 characters long
-        # in Go source. This is in line with general practices around the Go
-        # community, where code lines can be as long as needed (and is expected
-        # to be soft-reflowable by text editors), but comments are kept at a
-        # 'standard' 80 characters long, as prose within comment blocks does not
-        # soft-reflow well.
-        "@com_github_corverroos_commentwrap//:go_default_library",
-        "//build/analysis/noioutil",
-        "//build/analysis/importsort",
-    ],
+    deps = NOGO_PASSES,
 )
