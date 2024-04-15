@@ -92,17 +92,11 @@ func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string)
 		}
 		select {
 		case <-procExit:
-			return
 		case <-ctx.Done():
 			t.Fatal("Timed out waiting for VM to exit")
-			cancel()
-			<-procExit
-			t.FailNow()
-			return
 		}
 	case err := <-procExit:
 		t.Fatalf("QEMU exited unexpectedly: %v", err)
-		return
 	case <-ctx.Done():
 		t.Fatalf("Waiting for TestOS variant %s launch timed out", expectedVariant)
 	}
@@ -122,7 +116,6 @@ func (b *bundleServing) setNextBundle(variant string) {
 	p, ok := b.bundlePaths[variant]
 	if !ok {
 		b.t.Fatalf("no bundle for variant %s available", variant)
-		return
 	}
 	b.bundleFilePath = p
 }
@@ -325,7 +318,6 @@ func TestABUpdateSequenceKexec(t *testing.T) {
 			t.Logf("Got %s, installing %s", variant, expectedVariant)
 		case err := <-procExit:
 			t.Fatalf("QEMU exited unexpectedly: %v", err)
-			return
 		case <-ctx.Done():
 			t.Fatalf("Waiting for TestOS variant %s launch timed out", expectedVariant)
 		}
