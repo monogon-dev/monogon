@@ -302,8 +302,8 @@ register_toolchains("//:host_python")
 # Derived from Mozilla NSS, currently needed for containerd to be able to pull images
 http_file(
     name = "cacerts",
-    sha256 = "fb1ecd641d0a02c01bc9036d513cb658bbda62a75e246bedbc01764560a639f0",
-    urls = ["https://curl.se/ca/cacert-2023-01-10.pem"],
+    sha256 = "1794c1d4f7055b7d02c2170337b61b48a2ef6c90d77e95444fd2596f4cac609f",
+    urls = ["https://curl.se/ca/cacert-2024-03-11.pem"],
 )
 
 # lz4, the library and the tool.
