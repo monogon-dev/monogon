@@ -127,6 +127,15 @@ var nodeUpdateCmd = &cobra.Command{
 			}
 		}
 
+		excludedNodesSlice, err := cmd.Flags().GetStringArray("exclude")
+		if err != nil {
+			return err
+		}
+		excludedNodes := make(map[string]bool)
+		for _, n := range excludedNodesSlice {
+			excludedNodes[n] = true
+		}
+
 		updateReq := &apb.UpdateNodeRequest{
 			BundleUrl:      bundleUrl,
 			ActivationMode: am,
@@ -136,11 +145,14 @@ var nodeUpdateCmd = &cobra.Command{
 
 		for _, n := range nodes {
 			// Filter the information we want client-side.
+			nid := identity.NodeID(n.Pubkey)
 			if len(qids) != 0 {
-				nid := identity.NodeID(n.Pubkey)
 				if _, e := qids[nid]; !e {
 					continue
 				}
+			}
+			if excludedNodes[nid] {
+				continue
 			}
 
 			if err := unavailableSemaphore.Acquire(ctx, 1); err != nil {
@@ -265,6 +277,7 @@ func init() {
 	nodeUpdateCmd.Flags().String("bundle-url", "", "The URL to the new version")
 	nodeUpdateCmd.Flags().String("activation-mode", "reboot", "How the update should be activated (kexec, reboot, none)")
 	nodeUpdateCmd.Flags().Uint64("max-unavailable", 1, "Maximum nodes which can be unavailable during the update process")
+	nodeUpdateCmd.Flags().StringArray("exclude", nil, "List of nodes to exclude (useful with the \"all\" argument)")
 
 	nodeDeleteCmd.Flags().Bool("bypass-has-roles", false, "Allows to bypass the HasRoles check")
 	nodeDeleteCmd.Flags().Bool("bypass-not-decommissioned", false, "Allows to bypass the NotDecommissioned check")
