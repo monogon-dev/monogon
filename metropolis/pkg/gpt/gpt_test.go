@@ -130,7 +130,7 @@ func TestRoundTrip(t *testing.T) {
 	if _, err := io.CopyBuffer(rewrittenHash, sr2, make([]byte, d.OptimalBlockSize())); err != nil {
 		panic(err)
 	}
-	if !bytes.Equal(originalHash.Sum([]byte{}), rewrittenHash.Sum([]byte{})) {
-		t.Errorf("Write/Read/Write test was not reproducible: %x != %x", originalHash.Sum([]byte{}), rewrittenHash.Sum([]byte{}))
+	if !bytes.Equal(originalHash.Sum(nil), rewrittenHash.Sum(nil)) {
+		t.Errorf("Write/Read/Write test was not reproducible: %x != %x", originalHash.Sum(nil), rewrittenHash.Sum(nil))
 	}
 }
