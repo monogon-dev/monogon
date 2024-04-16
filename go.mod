@@ -1,6 +1,6 @@
 module source.monogon.dev
 
-go 1.21
+go 1.22
 
 // Kubernetes is not fully consumable as a module, fix that
 replace (
