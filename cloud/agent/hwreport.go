@@ -376,7 +376,7 @@ func (c *hwReportContext) gatherNICs() {
 						c.errors = append(c.errors, fmt.Errorf("nic %v: failed to parse %q as integer: %w", l.Attrs().Name, modeParts[1], err))
 						continue
 					}
-					speeds[int64(speedMegabits)*mbps] = true
+					speeds[speedMegabits*mbps] = true
 				}
 			}
 			for s := range speeds {
