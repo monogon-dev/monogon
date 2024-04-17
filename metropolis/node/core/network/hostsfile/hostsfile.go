@@ -27,12 +27,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
-	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/curator/watcher"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/supervisor"
+
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -122,7 +123,7 @@ func (m nodeMap) hosts(ctx context.Context) []byte {
 // is empty, an empty ClusterDirectory is returned.
 func (m nodeMap) clusterDirectory(ctx context.Context) *cpb.ClusterDirectory {
 	var directory cpb.ClusterDirectory
-	for _, ni := range m {
+	for nid, ni := range m {
 		if !ni.controlPlane {
 			continue
 		}
@@ -131,6 +132,7 @@ func (m nodeMap) clusterDirectory(ctx context.Context) *cpb.ClusterDirectory {
 			{Host: ni.address},
 		}
 		node := &cpb.ClusterDirectory_Node{
+			Id:        nid,
 			Addresses: addresses,
 		}
 		directory.Nodes = append(directory.Nodes, node)
@@ -143,6 +145,33 @@ func (s *Service) Run(ctx context.Context) error {
 	// persisted.
 	exists, _ := s.ESP.Metropolis.ClusterDirectory.Exists()
 	s.ClusterDirectorySaved.Set(exists)
+
+	nodes := make(nodeMap)
+	if exists {
+		supervisor.Logger(ctx).Infof("Saved cluster directory present, restoring host data...")
+		cd, err := s.ESP.Metropolis.ClusterDirectory.Unmarshal()
+		if err != nil {
+			supervisor.Logger(ctx).Errorf("Could not unmarshal saved cluster directory: %v", err)
+		} else {
+			for i, node := range cd.Nodes {
+				if len(node.Id) == 0 {
+					supervisor.Logger(ctx).Warningf("Node %d in cluster directory has no ID, skipping...", i)
+					continue
+				}
+				if len(node.Addresses) == 0 {
+					supervisor.Logger(ctx).Warningf("Node %d (%s) in cluster directory has no addresses, skipping...", i, node.Id)
+					continue
+				}
+				nodes[node.Id] = nodeInfo{
+					address:      node.Addresses[0].Host,
+					local:        false,
+					controlPlane: true,
+				}
+			}
+		}
+	} else {
+		supervisor.Logger(ctx).Infof("Saved cluster directory absent, not restoring any host data.")
+	}
 
 	localC := make(chan *network.Status)
 	s.clusterC = make(chan nodeMap)
@@ -162,9 +191,9 @@ func (s *Service) Run(ctx context.Context) error {
 	if err := unix.Sethostname([]byte(s.NodeID)); err != nil {
 		return fmt.Errorf("failed to set runtime hostname: %w", err)
 	}
-	// Immediately write an /etc/hosts just containing localhost, even if we don't
-	// yet have a network address.
-	nodes := make(nodeMap)
+
+	// Immediately write an /etc/hosts just containing localhost and persisted
+	// cluster directory nodes, even if we don't yet have a network address.
 	if err := s.Ephemeral.Hosts.Write(nodes.hosts(ctx), 0644); err != nil {
 		return fmt.Errorf("failed to write %s: %w", s.Ephemeral.Hosts.FullPath(), err)
 	}
