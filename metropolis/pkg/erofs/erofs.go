@@ -78,7 +78,7 @@ func (w *Writer) allocateMetadata(size int, alignment uint16) (int64, error) {
 		panic("cannot allocate a metadata object bigger than BlockSize bytes")
 	}
 	sizeU16 := uint16(size)
-	pos, ok := w.metadataBlocksFree.findBlock(sizeU16, 32)
+	pos, ok := w.metadataBlocksFree.findBlock(sizeU16, alignment)
 	if !ok {
 		blockNumber, err := w.allocateBlocks(1)
 		if err != nil {
@@ -250,7 +250,10 @@ type metadataBlocksMeta []metadataBlockMeta
 // metadata block it returns false as the second return value.
 func (m metadataBlocksMeta) findBlock(size uint16, alignment uint16) (int64, bool) {
 	for i, blockMeta := range m {
-		freeBytesAligned := blockMeta.freeBytes - (blockMeta.freeBytes % alignment)
+		freeBytesAligned := blockMeta.freeBytes
+		if alignment > 0 {
+			freeBytesAligned = blockMeta.freeBytes - (blockMeta.freeBytes % alignment)
+		}
 		if freeBytesAligned > size {
 			m[i] = metadataBlockMeta{
 				blockNumber: blockMeta.blockNumber,
