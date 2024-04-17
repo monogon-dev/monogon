@@ -30,7 +30,7 @@ func WorkspaceDirectory() (string, error) {
 		return p, nil
 	}
 
-	if p, err := os.Getwd(); err != nil && isWorkspace(p) {
+	if p, err := os.Getwd(); err == nil && isWorkspace(p) {
 		return p, nil
 	}
 
