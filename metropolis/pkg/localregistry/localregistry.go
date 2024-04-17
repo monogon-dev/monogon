@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/manifestlist"
 	"github.com/docker/distribution/manifest/ocischema"
@@ -37,7 +38,10 @@ type blobMeta struct {
 }
 
 func manifestDescriptorFromBazel(image *spec.Image) (manifestlist.ManifestDescriptor, error) {
-	indexPath := filepath.Join(image.Path, "index.json")
+	indexPath, err := runfiles.Rlocation(filepath.Join("_main", image.Path, "index.json"))
+	if err != nil {
+		return manifestlist.ManifestDescriptor{}, fmt.Errorf("while locating manifest list file: %w", err)
+	}
 
 	manifestListRaw, err := os.ReadFile(indexPath)
 	if err != nil {
@@ -57,7 +61,10 @@ func manifestDescriptorFromBazel(image *spec.Image) (manifestlist.ManifestDescri
 }
 
 func manifestFromBazel(s *Server, image *spec.Image, md manifestlist.ManifestDescriptor) (ocischema.Manifest, error) {
-	manifestPath := filepath.Join(image.Path, "blobs", md.Digest.Algorithm().String(), md.Digest.Hex())
+	manifestPath, err := runfiles.Rlocation(filepath.Join("_main", image.Path, "blobs", md.Digest.Algorithm().String(), md.Digest.Hex()))
+	if err != nil {
+		return ocischema.Manifest{}, fmt.Errorf("while locating manifest file: %w", err)
+	}
 	manifestRaw, err := os.ReadFile(manifestPath)
 	if err != nil {
 		return ocischema.Manifest{}, fmt.Errorf("while opening manifest file: %w", err)

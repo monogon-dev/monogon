@@ -13,6 +13,7 @@ go_library(
         "@com_github_docker_distribution//manifest/schema2",
         "@com_github_docker_distribution//reference",
         "@com_github_opencontainers_go_digest//:go-digest",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@org_golang_google_protobuf//encoding/prototext",
     ],
 )
