@@ -64,6 +64,9 @@ func main() {
 func patchKconfig(inFile io.Reader, outFile io.Writer, overrides map[string]string) error {
 	scanner := bufio.NewScanner(inFile)
 	for scanner.Scan() {
+		if scanner.Err() != nil {
+			return scanner.Err()
+		}
 		line := scanner.Text()
 		cleanLine := strings.TrimSpace(line)
 		if strings.HasPrefix(cleanLine, "#") || cleanLine == "" {
