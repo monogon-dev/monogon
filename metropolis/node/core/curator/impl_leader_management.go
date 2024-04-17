@@ -111,7 +111,7 @@ func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClust
 			})
 		}
 		directory.Nodes[i] = &cpb.ClusterDirectory_Node{
-			PublicKey: node.pubkey,
+			Id:        node.ID(),
 			Addresses: addresses,
 		}
 	}

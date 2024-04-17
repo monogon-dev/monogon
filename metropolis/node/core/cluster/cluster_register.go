@@ -56,17 +56,6 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 				return fmt.Errorf("NodeParameters.ClusterDirectory.Nodes[%d].Addresses[%d] (%q) invalid: not a parseable address", i, j, add.Host)
 			}
 		}
-		if len(node.PublicKey) != ed25519.PublicKeySize {
-			return fmt.Errorf("NodeParameters.ClusterDirectory.Nodes[%d] invalid: PublicKey invalid length or not set", i)
-		}
-	}
-
-	// Strip the initial ClusterDirectory of any node public keys that might have
-	// been included, as it can't be relied on beyond providing cluster endpoint
-	// addresses, considering its untrusted origin (ESP). This explicitly enforces
-	// suggested usage described in ClusterDirectory's protofile.
-	for i := range register.ClusterDirectory.Nodes {
-		register.ClusterDirectory.Nodes[i].PublicKey = nil
 	}
 
 	// Validation passed, let's start working on registering us into the cluster.

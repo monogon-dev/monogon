@@ -44,7 +44,6 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 
 	common "source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/localregistry"
 	"source.monogon.dev/metropolis/test/launch"
@@ -129,7 +128,7 @@ func TestE2ECore(t *testing.T) {
 		addresses := make(map[string]bool)
 		for _, n := range nodes {
 			if len(n.Addresses) != 1 {
-				return fmt.Errorf("node %s has no addresss", identity.NodeID(n.PublicKey))
+				return fmt.Errorf("node %s has no addresss", n.Id)
 			}
 			address := n.Addresses[0].Host
 			addresses[address] = true

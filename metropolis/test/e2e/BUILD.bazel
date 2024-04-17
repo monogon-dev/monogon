@@ -40,7 +40,6 @@ go_test(
     rundir = ".",
     deps = [
         "//metropolis/node",
-        "//metropolis/node/core/identity",
         "//metropolis/node/core/rpc",
         "//metropolis/pkg/localregistry",
         "//metropolis/proto/api",

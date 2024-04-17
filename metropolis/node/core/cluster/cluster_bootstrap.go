@@ -27,6 +27,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/curator"
+	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -101,7 +102,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	directory := &cpb.ClusterDirectory{
 		Nodes: []*cpb.ClusterDirectory_Node{
 			{
-				PublicKey: pub,
+				Id: identity.NodeID(pub),
 				Addresses: []*cpb.ClusterDirectory_Node_Address{
 					{
 						Host: "127.0.0.1",

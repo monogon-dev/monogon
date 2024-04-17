@@ -172,7 +172,8 @@ message NodeStatus {
 // directory.
 message ClusterDirectory {
     message Node {
-        bytes public_key = 1;
+        string id = 3;
+        reserved 1;
         message Address {
             string host = 1;
         };
