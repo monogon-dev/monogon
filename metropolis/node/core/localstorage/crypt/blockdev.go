@@ -111,6 +111,7 @@ func handleBlockDevice(diskBlockDev string, blockDevs []os.DirEntry, espUUID uui
 
 	table, err := gpt.Read(blkdev)
 	if err != nil {
+		//nolint:returnerrcheck
 		return nil // Probably just not a GPT-partitioned disk
 	}
 

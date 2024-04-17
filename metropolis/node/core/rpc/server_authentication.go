@@ -206,6 +206,7 @@ func (s *ServerSecurity) getPeerInfoUnauthenticated(ctx context.Context) (*PeerI
 		if err := cert.CheckSignature(cert.SignatureAlgorithm, cert.RawTBSCertificate, cert.Signature); err != nil {
 			// Peer presented a certificate that is not self-signed - for example a user or
 			// node certificate. Ignore it.
+			//nolint:returnerrcheck
 			return &res, nil
 		}
 		res.Unauthenticated.SelfSignedPublicKey = cert.PublicKey.(ed25519.PublicKey)

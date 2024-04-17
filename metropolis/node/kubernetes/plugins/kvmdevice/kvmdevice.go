@@ -153,6 +153,7 @@ func (k *Plugin) Run(ctx context.Context) error {
 		k.logger.Warning("KVM is not available. Check firmware settings and CPU.")
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
 		supervisor.Signal(ctx, supervisor.SignalDone)
+		//nolint:returnerrcheck
 		return nil
 	}
 

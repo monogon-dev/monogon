@@ -114,6 +114,7 @@ func (t *UnicastTransport) Close() error {
 	err := t.udpConn.Close()
 	t.udpConn = nil
 	if err != nil && errors.Is(err, net.ErrClosed) {
+		//nolint:returnerrcheck
 		return nil
 	}
 	return err
