@@ -168,11 +168,6 @@ func (s *Service) Run(ctx context.Context) error {
 
 	// Create log converter. This will ingest etcd logs and pipe them out to this
 	// runnable's leveled logging facilities.
-	//
-	// TODO(q3k): add support for streaming to a sub-logger in the tree to get
-	// cleaner logs.
-
-	fifoPath := s.config.Ephemeral.ServerLogsFIFO.FullPath()
 
 	// This is not where etcd will run, but where its log ingestion machinery lives.
 	// This ensures that the (annoying verbose) etcd logs are contained into just
@@ -183,7 +178,7 @@ func (s *Service) Run(ctx context.Context) error {
 			MaximumLineLength: 8192,
 			LeveledLogger:     supervisor.Logger(ctx),
 		}
-		pipe, err := converter.NamedPipeReader(fifoPath)
+		pipe, err := converter.NamedPipeReader(s.config.Ephemeral.ServerLogsFIFO.FullPath())
 		if err != nil {
 			return fmt.Errorf("when creating pipe reader: %w", err)
 		}
@@ -236,7 +231,7 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 		if absent {
 			supervisor.Logger(ctx).Info("PKI data absent, bootstrapping.")
-			if err := s.bootstrap(ctx, fifoPath); err != nil {
+			if err := s.bootstrap(ctx); err != nil {
 				return fmt.Errorf("bootstrap failed: %w", err)
 			}
 		} else {
@@ -386,7 +381,7 @@ func clientFor(kv *clientv3.Client, parts ...string) (client.Namespaced, error) 
 // data directly in the running etcd instance. It then writes all required
 // startup data (node private key, member certificate, CA certificate) to disk,
 // so that a 'full' etcd instance can be started.
-func (s *Service) bootstrap(ctx context.Context, fifoPath string) error {
+func (s *Service) bootstrap(ctx context.Context) error {
 	supervisor.Logger(ctx).Infof("Bootstrapping PKI: starting etcd...")
 
 	cfg := s.config.build(false)
