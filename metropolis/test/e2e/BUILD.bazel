@@ -1,21 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 load("//metropolis/pkg/localregistry:def.bzl", "localregistry_manifest")
-
-go_library(
-    name = "e2e",
-    srcs = ["kubernetes_helpers.go"],
-    importpath = "source.monogon.dev/metropolis/test/e2e",
-    visibility = ["//metropolis/test:__subpackages__"],
-    deps = [
-        "@io_k8s_api//apps/v1:apps",
-        "@io_k8s_api//batch/v1:batch",
-        "@io_k8s_api//core/v1:core",
-        "@io_k8s_apimachinery//pkg/api/resource",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
-        "@io_k8s_apimachinery//pkg/util/intstr",
-        "@io_k8s_client_go//kubernetes",
-    ],
-)
 
 localregistry_manifest(
     name = "testimages_manifest",
@@ -24,35 +7,7 @@ localregistry_manifest(
         "//metropolis/test/e2e/httpserver:httpserver_image",
         "//metropolis/vm/smoketest:smoketest_image",
     ],
-)
-
-go_test(
-    name = "e2e_test",
-    size = "large",
-    srcs = ["main_test.go"],
-    data = [
-        ":testimages_manifest",
-        "//metropolis/node:image",
-        "//metropolis/node:swtpm_data",
-        "//third_party/edk2:firmware",
-    ],
-    embed = [":e2e"],
-    rundir = ".",
-    deps = [
-        "//metropolis/node",
-        "//metropolis/node/core/rpc",
-        "//metropolis/pkg/localregistry",
-        "//metropolis/proto/api",
-        "//metropolis/proto/common",
-        "//metropolis/test/launch",
-        "//metropolis/test/launch/cluster",
-        "//metropolis/test/util",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
-        "@io_k8s_api//core/v1:core",
-        "@io_k8s_apimachinery//pkg/api/errors",
-        "@io_k8s_apimachinery//pkg/api/resource",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
-        "@io_k8s_kubernetes//pkg/api/v1/pod",
-        "@org_golang_google_grpc//:go_default_library",
+    visibility = [
+        "//metropolis/test/e2e/suites:__subpackages__",
     ],
 )

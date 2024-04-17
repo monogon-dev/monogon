@@ -287,7 +287,7 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions, doneC 
 	fwVarPath := filepath.Join(r.ld, "OVMF_VARS.fd")
 	storagePath := filepath.Join(r.ld, "image.img")
 	qemuArgs := []string{
-		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "4096",
+		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "2048",
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
 		"-drive", "if=pflash,format=raw,readonly=on,file=" + ovmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + fwVarPath,
