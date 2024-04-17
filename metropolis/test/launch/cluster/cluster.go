@@ -819,10 +819,18 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		} else {
 			serialPort = newPrefixedStdio(99)
 		}
+		kernelPath, err := runfiles.Rlocation("_main/metropolis/test/ktest/vmlinux")
+		if err != nil {
+			launch.Fatal("Failed to resolved nanoswitch kernel: %v", err)
+		}
+		initramfsPath, err := runfiles.Rlocation("_main/metropolis/test/nanoswitch/initramfs.cpio.zst")
+		if err != nil {
+			launch.Fatal("Failed to resolved nanoswitch initramfs: %v", err)
+		}
 		if err := launch.RunMicroVM(ctxT, &launch.MicroVMOptions{
 			Name:                   "nanoswitch",
-			KernelPath:             "metropolis/test/ktest/vmlinux",
-			InitramfsPath:          "metropolis/test/nanoswitch/initramfs.cpio.zst",
+			KernelPath:             kernelPath,
+			InitramfsPath:          initramfsPath,
 			ExtraNetworkInterfaces: switchPorts,
 			PortMap:                portMap,
 			GuestServiceMap:        guestSvcMap,
