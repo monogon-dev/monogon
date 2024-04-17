@@ -82,9 +82,13 @@ func manifestFromBazel(s *Server, image *spec.Image, md manifestlist.ManifestDes
 	return imageManifest, nil
 }
 
-func addBazelBlobFromDescriptor(s *Server, image *spec.Image, dd distribution.Descriptor) {
-	path := filepath.Join(image.Path, "blobs", dd.Digest.Algorithm().String(), dd.Digest.Hex())
+func addBazelBlobFromDescriptor(s *Server, image *spec.Image, dd distribution.Descriptor) error {
+	path, err := runfiles.Rlocation(filepath.Join("_main", image.Path, "blobs", dd.Digest.Algorithm().String(), dd.Digest.Hex()))
+	if err != nil {
+		return fmt.Errorf("while locating blob: %w", err)
+	}
 	s.blobs[dd.Digest] = blobMeta{filePath: path, mediaType: dd.MediaType, contentLength: dd.Size}
+	return nil
 }
 
 func FromBazelManifest(mb []byte) (*Server, error) {
@@ -102,16 +106,22 @@ func FromBazelManifest(mb []byte) (*Server, error) {
 			return nil, err
 		}
 
-		addBazelBlobFromDescriptor(&s, i, md.Descriptor)
+		if err := addBazelBlobFromDescriptor(&s, i, md.Descriptor); err != nil {
+			return nil, err
+		}
 
 		m, err := manifestFromBazel(&s, i, md)
 		if err != nil {
 			return nil, err
 		}
 
-		addBazelBlobFromDescriptor(&s, i, m.Config)
+		if err := addBazelBlobFromDescriptor(&s, i, m.Config); err != nil {
+			return nil, err
+		}
 		for _, l := range m.Layers {
-			addBazelBlobFromDescriptor(&s, i, l)
+			if err := addBazelBlobFromDescriptor(&s, i, l); err != nil {
+				return nil, err
+			}
 		}
 	}
 	return &s, nil
