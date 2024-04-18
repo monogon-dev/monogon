@@ -175,7 +175,7 @@ func testRead(t *testing.T, devPath string, expectedData []byte) bool {
 	}
 
 	// Return true, if read data matches expectedData.
-	if bytes.Compare(expectedData, readData) == 0 {
+	if bytes.Equal(expectedData, readData) {
 		return true
 	}
 	return false

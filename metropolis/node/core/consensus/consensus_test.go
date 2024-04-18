@@ -249,7 +249,7 @@ func TestRestartFromDisk(t *testing.T) {
 	}
 	ctxC()
 
-	if bytes.Compare(firstCA, secondCA) != 0 {
+	if !bytes.Equal(firstCA, secondCA) {
 		t.Fatalf("wanted same, got different CAs accross runs")
 	}
 }

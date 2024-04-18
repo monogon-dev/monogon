@@ -807,7 +807,7 @@ func TestJoin(t *testing.T) {
 	}
 
 	// Compare the received CUK with the one we started out with.
-	if bytes.Compare(cuk, jr.ClusterUnlockKey) != 0 {
+	if !bytes.Equal(cuk, jr.ClusterUnlockKey) {
 		t.Fatal("JoinNode returned an invalid CUK.")
 	}
 }
