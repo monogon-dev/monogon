@@ -135,6 +135,9 @@ func TestMigration1681826233(t *testing.T) {
 	rows, err := conn.db.Query(`
 		SELECT machine_id, process, until, cause FROM work_backoff
 	`)
+	if err != nil {
+		t.Fatalf("Could not fetch old-style backoff data: %v", err)
+	}
 	for rows.Next() {
 		var mid, process, until, cause string
 		if err := rows.Scan(&mid, &process, &until, &cause); err != nil {

@@ -85,6 +85,9 @@ func (s *Controller) Run(ctx context.Context) error {
 	}
 
 	clientConfig, err := rawClientConfig.ClientConfig()
+	if err != nil {
+		return fmt.Errorf("could not fetch generate client config: %w", err)
+	}
 	clientSet, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
 		return fmt.Errorf("could not generate kubernetes client: %w", err)

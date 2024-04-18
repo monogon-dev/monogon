@@ -102,6 +102,9 @@ func TestUpdater(t *testing.T) {
 			AgentPublicKey: []byte("fakefakefakefake"),
 		})
 	})
+	if err != nil {
+		t.Fatalf("failed to execute bmdb transaction: %v", err)
+	}
 
 	deadline := time.Now().Add(time.Second * 10)
 	for {

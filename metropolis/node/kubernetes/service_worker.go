@@ -238,6 +238,9 @@ func connectByKubeconfig(kubeconfig []byte) (*kubernetes.Clientset, informers.Sh
 		return nil, nil, fmt.Errorf("could not generate kubernetes client config: %w", err)
 	}
 	clientConfig, err := rawClientConfig.ClientConfig()
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not fetch generate client config: %w", err)
+	}
 	clientSet, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not generate kubernetes client: %w", err)

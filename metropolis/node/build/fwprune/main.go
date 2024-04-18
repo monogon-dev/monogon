@@ -209,6 +209,9 @@ func main() {
 	// Format output in a both human- and machine-readable form
 	marshalOpts := prototext.MarshalOptions{Multiline: true, Indent: "  "}
 	fsspecRaw, err := marshalOpts.Marshal(&fsspec.FSSpec{File: files, SymbolicLink: symlinks})
+	if err != nil {
+		log.Fatalf("failed to marshal fsspec: %v", err)
+	}
 	if err := os.WriteFile(*outFSSpecPath, fsspecRaw, 0644); err != nil {
 		log.Fatalf("failed writing output: %v", err)
 	}

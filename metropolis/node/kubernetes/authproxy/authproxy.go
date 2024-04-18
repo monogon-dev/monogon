@@ -56,6 +56,9 @@ func (s *Service) Run(ctx context.Context) error {
 
 	k8sCAs := x509.NewCertPool()
 	cert, _, err := s.KPKI.Certificate(ctx, pki.IdCA)
+	if err != nil {
+		return fmt.Errorf("could not load certificate %q from PKI: %w", pki.IdCA, err)
+	}
 	parsedCert, err := x509.ParseCertificate(cert)
 	if err != nil {
 		return fmt.Errorf("failed to parse K8s CA certificate: %w", err)

@@ -328,6 +328,9 @@ func main() {
 		log.Fatalf("failed to read compilation db: %v", err)
 	}
 	specRaw, err := os.ReadFile(*specPath)
+	if err != nil {
+		log.Fatalf("failed to read spec file: %v", err)
+	}
 	var spec ccfixspec.CCFixSpec
 	if err := prototext.Unmarshal(specRaw, &spec); err != nil {
 		log.Fatalf("failed to load spec: %v", err)

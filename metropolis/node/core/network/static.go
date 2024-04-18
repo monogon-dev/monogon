@@ -168,6 +168,8 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 			for _, a := range i.Address {
 				ipNet, err := addressOrPrefix(a)
 				if err != nil {
+					l.Warningf("failed to parse %q as IPNet", a)
+					continue
 				}
 				if ipNet.IP.To4() != nil {
 					selectedAddr = ipNet.IP.To4()

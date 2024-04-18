@@ -112,6 +112,7 @@ func TestNamedPipeReader(t *testing.T) {
 		close(started)
 		return r(ctx)
 	})
+	defer stop()
 
 	<-started
 

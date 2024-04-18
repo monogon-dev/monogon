@@ -122,6 +122,9 @@ func TestMetropolisInstallE2E(t *testing.T) {
 		BasicConstraintsValid: true,
 	}
 	serverCert, err := x509.CreateCertificate(rand.Reader, &serverCertTmpl, caCert, serverPubKey, caPrivKey)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	s := grpc.NewServer(grpc.Creds(credentials.NewServerTLSFromCert(&tls.Certificate{
 		Certificate: [][]byte{serverCert},
@@ -147,10 +150,14 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	blobListenAddr := blobLis.Addr().(*net.TCPAddr)
 	go http.Serve(blobLis, m)
 
 	_, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	init := apb.AgentInit{
 		TakeoverInit: &apb.TakeoverInit{

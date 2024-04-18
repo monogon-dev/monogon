@@ -165,6 +165,9 @@ func setupTakeover() (*api.TakeoverSuccess, error) {
 		agentParams = append(agentParams, bootparam.Param{Param: "console", Value: "ttyS0,115200"})
 	}
 	agentCmdline, err := bootparam.Marshal(agentParams, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal agent params: %w", err)
+	}
 	// Stage agent payload into kernel memory
 	if err := kexec.FileLoad(kernelFile, initramfsFile, agentCmdline); err != nil {
 		return nil, fmt.Errorf("failed to load kexec payload: %w", err)

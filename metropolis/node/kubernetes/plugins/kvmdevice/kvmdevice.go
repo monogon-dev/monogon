@@ -158,6 +158,9 @@ func (k *Plugin) Run(ctx context.Context) error {
 	}
 
 	kvmDevNode, err := deviceNumberFromString(string(kvmDevRaw))
+	if err != nil {
+		return fmt.Errorf("failed to parse KVM device node: %w", err)
+	}
 
 	err = unix.Mknod("/dev/kvm", 0660, int(kvmDevNode))
 	if err != nil && errors.Is(err, unix.EEXIST) {

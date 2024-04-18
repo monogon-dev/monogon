@@ -89,6 +89,9 @@ func findInstallableBlockDevices(espDev string, minSize uint64) ([]string, error
 	// Use the partition's name to find and return the name of its parent
 	// device. It will be excluded from the list of suitable target devices.
 	srcDev, err := sysfs.ParentBlockDevice(espDev)
+	if err != nil{
+		return nil, fmt.Errorf("failed to fetch parent device: %w", err)
+	}
 	// Build the exclusion list containing forbidden handle prefixes.
 	exclude := []string{"dm-", "zram", "ram", "loop", srcDev}
 

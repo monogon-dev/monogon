@@ -275,6 +275,9 @@ func (s *Service) InstallBundle(ctx context.Context, bundleURL string, withKexec
 
 func (*Service) tryDownloadBundle(ctx context.Context, bundleURL string, bundleRaw *bytes.Buffer) error {
 	bundleReq, err := http.NewRequestWithContext(ctx, "GET", bundleURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
 	bundleRes, err := http.DefaultClient.Do(bundleReq)
 	if err != nil {
 		return fmt.Errorf("HTTP request failed: %w", err)

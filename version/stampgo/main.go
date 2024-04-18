@@ -147,6 +147,9 @@ func main() {
 	}
 
 	versionBytes, err := proto.Marshal(version)
+	if err != nil {
+		log.Fatalf("failed to marshal version: %v", err)
+	}
 	literalBytes := make([]string, len(versionBytes))
 	for i, by := range versionBytes {
 		literalBytes[i] = fmt.Sprintf("0x%02x", by)

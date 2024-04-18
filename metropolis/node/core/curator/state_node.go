@@ -446,7 +446,11 @@ func nodeDestroy(ctx context.Context, l *leadership, n *Node) error {
 		return status.Errorf(codes.InvalidArgument, "invalid node id")
 	}
 	jkey, err := n.etcdJoinKeyPath()
-
+	if err != nil {
+		// This should never happen.
+		rpc.Trace(ctx).Printf("invalid join key representation: %v", err)
+		return status.Errorf(codes.InvalidArgument, "invalid join key representation")
+	}
 	// Delete both.
 	_, err = l.txnAsLeader(ctx,
 		clientv3.OpDelete(nkey),

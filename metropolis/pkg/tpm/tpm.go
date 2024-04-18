@@ -160,6 +160,9 @@ func Initialize(logger logtree.LeveledLogger) error {
 	}
 	tpmName := tpms[0]
 	ueventData, err := sysfs.ReadUevents(filepath.Join("/sys/class/tpm", tpmName, "uevent"))
+	if err != nil {
+		return fmt.Errorf("failed to read uevents: %w", err)
+	}
 	majorDev, err := strconv.Atoi(ueventData["MAJOR"])
 	if err != nil {
 		return fmt.Errorf("failed to convert uevent: %w", err)

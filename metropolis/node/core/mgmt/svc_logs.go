@@ -169,7 +169,6 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 		if err != nil {
 			return err
 		}
-		chunk = make([]*cpb.LogEntry, 0, maxChunkSize)
 	}
 
 	// Start serving streaming data, if streaming has been requested.

@@ -337,7 +337,7 @@ func (k *PKI) ServiceAccountKey(ctx context.Context) ([]byte, error) {
 	// Save to etcd.
 	_, err = k.KV.Put(ctx, path, string(key))
 	if err != nil {
-		err = fmt.Errorf("failed to write newly generated key: %w", err)
+		return nil, fmt.Errorf("failed to write newly generated key: %w", err)
 	}
 	return key, nil
 }
