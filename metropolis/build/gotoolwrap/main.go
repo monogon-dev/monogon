@@ -136,11 +136,11 @@ func main() {
 	defer os.RemoveAll(tempDir)
 
 	cmd.Env = append(cmd.Env,
-		fmt.Sprintf("GOROOT=%s", gorootAbs),
-		fmt.Sprintf("GOPATH=%s", gopathAbs),
-		fmt.Sprintf("PATH=%s", path),
-		fmt.Sprintf("GO111MODULE=off"),
-		fmt.Sprintf("GOCACHE=%s", tempDir),
+		"GOROOT=" + gorootAbs,
+		"GOPATH=" + gopathAbs,
+		"PATH=" + path,
+		"GO111MODULE=off",
+		"GOCACHE=" + tempDir,
 	)
 
 	// Run the command interactively.

@@ -833,8 +833,8 @@ func TestBacklogOnlyRange(t *testing.T) {
 	res[g.Key] = g.Value
 
 	// These won't be part of the backlog.
-	tc.put(t, ks+"a", fmt.Sprintf("val-100"))
-	tc.put(t, ks+"b", fmt.Sprintf("val-101"))
+	tc.put(t, ks+"a", "val-100")
+	tc.put(t, ks+"b", "val-101")
 
 	// Retrieve the rest of the backlog until BacklogDone is returned.
 	nUpdates := 1

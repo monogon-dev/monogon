@@ -179,7 +179,7 @@ func (s *apiserverService) Run(ctx context.Context) error {
 		"--service-account-issuer", "https://metropolis.internal", // TODO: Figure out federation
 		fmt.Sprintf("--service-cluster-ip-range=%v", s.ServiceIPRange.String()),
 		// We use a patch for the allocator that prevents usage of system ports.
-		fmt.Sprintf("--service-node-port-range=1-65535"),
+		"--service-node-port-range=1-65535",
 		args.FileOpt("--tls-cert-file", "server-cert.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: s.serverCert})),
 		args.FileOpt("--tls-private-key-file", "server-key.pem",

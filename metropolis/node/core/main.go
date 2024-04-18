@@ -256,7 +256,7 @@ func main() {
 	crash <- ""
 	crash <- ""
 	crash <- fmt.Sprintf(" Fatal error: %v", err)
-	crash <- fmt.Sprintf(" This node could not be started. Rebooting...")
+	crash <- " This node could not be started. Rebooting..."
 	time.Sleep(time.Second)
 	// Return to minit, which will reboot this node.
 	os.Exit(0)
