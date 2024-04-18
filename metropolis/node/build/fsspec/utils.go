@@ -21,18 +21,10 @@ func ReadMergeSpecs(paths []string) (*FSSpec, error) {
 		if err := prototext.Unmarshal(specRaw, &spec); err != nil {
 			return nil, fmt.Errorf("failed to parse spec %q: %w", p, err)
 		}
-		for _, f := range spec.File {
-			mergedSpec.File = append(mergedSpec.File, f)
-		}
-		for _, d := range spec.Directory {
-			mergedSpec.Directory = append(mergedSpec.Directory, d)
-		}
-		for _, s := range spec.SymbolicLink {
-			mergedSpec.SymbolicLink = append(mergedSpec.SymbolicLink, s)
-		}
-		for _, s := range spec.SpecialFile {
-			mergedSpec.SpecialFile = append(mergedSpec.SpecialFile, s)
-		}
+		mergedSpec.File = append(mergedSpec.File, spec.File...)
+		mergedSpec.Directory = append(mergedSpec.Directory, spec.Directory...)
+		mergedSpec.SymbolicLink = append(mergedSpec.SymbolicLink, spec.SymbolicLink...)
+		mergedSpec.SpecialFile = append(mergedSpec.SpecialFile, spec.SpecialFile...)
 	}
 	return &mergedSpec, nil
 }

@@ -66,9 +66,7 @@ func readBacklog(tree *LogTree, t *testing.T, dn DN, backlog int, recursive bool
 
 	var lines []string
 	for _, e := range res.Backlog {
-		for _, msg := range e.Leveled.Messages() {
-			lines = append(lines, msg)
-		}
+		lines = append(lines, e.Leveled.Messages()...)
 	}
 	return lines
 }

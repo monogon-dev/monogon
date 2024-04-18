@@ -101,9 +101,7 @@ func drainLogs(t *testing.T, srv api.NodeManagement_LogsClient) (res []*cpb.LogE
 			t.Errorf("Recv: %v", err)
 			return
 		}
-		for _, e := range ev.BacklogEntries {
-			res = append(res, e)
-		}
+		res = append(res, ev.BacklogEntries...)
 	}
 }
 
