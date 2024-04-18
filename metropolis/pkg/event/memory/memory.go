@@ -206,7 +206,7 @@ func (m *watcher[T]) Get(ctx context.Context, opts ...event.GetOption[T]) (T, er
 		if opt.Predicate != nil {
 			predicate = opt.Predicate
 		}
-		if opt.BacklogOnly != false {
+		if opt.BacklogOnly {
 			return empty, errors.New("BacklogOnly is not implemented for memory watchers")
 		}
 	}

@@ -214,7 +214,7 @@ func TestNoBlockDevices(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
-	if result != true {
+	if !result {
 		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
 	}
 }
@@ -237,7 +237,7 @@ func TestBlockDeviceTooSmall(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
-	if result != true {
+	if !result {
 		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
 	}
 }
@@ -262,7 +262,7 @@ func TestInstall(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
-	if result != true {
+	if !result {
 		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
 	}
 
@@ -314,7 +314,7 @@ func TestInstall(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
-	if result != true {
+	if !result {
 		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
 	}
 }
