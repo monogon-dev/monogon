@@ -128,22 +128,20 @@ func (s *supervisor) processor(ctx context.Context) {
 // liveRunnables returning an empty list.
 func (s *supervisor) liquidator() {
 	for {
-		select {
-		case r := <-s.pReq:
-			switch {
-			case r.schedule != nil:
-				s.ilogger.Infof("liquidator: refusing to schedule %s", r.schedule.dn)
-				s.mu.Lock()
-				n := s.nodeByDN(r.schedule.dn)
-				n.state = nodeStateDead
-				s.mu.Unlock()
-			case r.died != nil:
-				s.ilogger.Infof("liquidator: %s exited", r.died.dn)
-				s.mu.Lock()
-				n := s.nodeByDN(r.died.dn)
-				n.state = nodeStateDead
-				s.mu.Unlock()
-			}
+		r := <-s.pReq
+		switch {
+		case r.schedule != nil:
+			s.ilogger.Infof("liquidator: refusing to schedule %s", r.schedule.dn)
+			s.mu.Lock()
+			n := s.nodeByDN(r.schedule.dn)
+			n.state = nodeStateDead
+			s.mu.Unlock()
+		case r.died != nil:
+			s.ilogger.Infof("liquidator: %s exited", r.died.dn)
+			s.mu.Lock()
+			n := s.nodeByDN(r.died.dn)
+			n.state = nodeStateDead
+			s.mu.Unlock()
 		}
 		live := s.liveRunnables()
 		if len(live) == 0 {
