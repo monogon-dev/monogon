@@ -71,10 +71,8 @@ func builtinLabels(extra map[string]string) map[string]string {
 	l := map[string]string{
 		BuiltinLabelKey: BuiltinLabelValue,
 	}
-	if extra != nil {
-		for k, v := range extra {
-			l[k] = v
-		}
+	for k, v := range extra {
+		l[k] = v
 	}
 	return l
 }
