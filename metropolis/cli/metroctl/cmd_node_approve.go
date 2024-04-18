@@ -63,6 +63,7 @@ func doApprove(cmd *cobra.Command, args []string) {
 			if n == nil {
 				log.Fatalf("Couldn't find a new node matching id %s", tgtNodeId)
 			}
+			// nolint:SA5011
 			_, err := mgmt.ApproveNode(ctx, &api.ApproveNodeRequest{
 				Pubkey: n.Pubkey,
 			})

@@ -259,6 +259,7 @@ func TestLiveAPI(t *testing.T) {
 			t.Skip("could not find a provisionable hardware reservation - skipping...")
 		}
 
+		// nolint:SA5011
 		d, err := cl.CreateDevice(ctx, &packngo.DeviceCreateRequest{
 			Hostname:              ltc.testDeviceHostname,
 			OS:                    ltc.apios,
@@ -283,9 +284,11 @@ func TestLiveAPI(t *testing.T) {
 		}
 		if d == nil {
 			t.Fatalf("expected the test device (ID: %s) to exist.", testDevice.ID)
+			return
 		}
 		if d.ID != testDevice.ID {
 			t.Errorf("got device ID that doesn't match the original.")
+			return
 		}
 	})
 	t.Run("ListDevices", func(t *testing.T) {
