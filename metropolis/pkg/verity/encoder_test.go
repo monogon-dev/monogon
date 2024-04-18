@@ -70,7 +70,7 @@ type devZeroReader struct{}
 
 // Read implements io.Reader on devZeroReader, making it a source of zero
 // bytes.
-func (_ devZeroReader) Read(b []byte) (int, error) {
+func (devZeroReader) Read(b []byte) (int, error) {
 	for i := range b {
 		b[i] = 0
 	}
