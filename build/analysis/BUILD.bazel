@@ -82,9 +82,6 @@ NOGO_PASSES += format_staticcheck_analyzers(ALL_STATICCHECK_ANALYZERS + [
     "-QF1006",  # could lift into loop condition
     "-QF1003",  # could use tagged switch
     "-QF1008",  # Omit embedded fields from selector expression
-
-    # TODO: Enable when fixed
-    "-SA4003",  # no value of type uint32 is less than 0
 ])
 
 NOGO_PASSES += [
