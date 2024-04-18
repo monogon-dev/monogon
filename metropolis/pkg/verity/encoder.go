@@ -532,9 +532,9 @@ func (e *encoder) Close() error {
 func (e *encoder) MappingTable(dataDevicePath, hashDevicePath string, hashStart int64) (*MappingTable, error) {
 	if e.rootHash == nil {
 		if e.bottom.Len() != 0 {
-			return nil, fmt.Errorf("encoder wasn't closed.")
+			return nil, fmt.Errorf("encoder wasn't closed")
 		}
-		return nil, fmt.Errorf("encoder is empty.")
+		return nil, fmt.Errorf("encoder is empty")
 	}
 
 	if e.writeSb {

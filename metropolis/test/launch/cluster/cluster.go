@@ -495,7 +495,7 @@ func getNode(ctx context.Context, mgmt apb.ManagementClient, id string) (*apb.No
 		}
 		return n, nil
 	}
-	return nil, fmt.Errorf("no such node.")
+	return nil, fmt.Errorf("no such node")
 }
 
 // Gets a random EUI-48 Ethernet MAC address

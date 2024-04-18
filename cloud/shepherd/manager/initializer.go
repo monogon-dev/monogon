@@ -263,10 +263,10 @@ func (i *Initializer) startAgent(ctx context.Context, m shepherd.Machine, mid uu
 		return nil, fmt.Errorf("agent returned unknown result of type %T", arsp.Result)
 	}
 	if !proto.Equal(&imsg, successResp.InitMessage) {
-		return nil, fmt.Errorf("agent did not send back the init message.")
+		return nil, fmt.Errorf("agent did not send back the init message")
 	}
 	if len(successResp.Key) != ed25519.PublicKeySize {
-		return nil, fmt.Errorf("agent key length mismatch.")
+		return nil, fmt.Errorf("agent key length mismatch")
 	}
 	klog.Infof("Started the agent (machine ID: %s, key: %s).", mid, hex.EncodeToString(successResp.Key))
 	return successResp.Key, nil

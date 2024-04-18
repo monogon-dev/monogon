@@ -28,7 +28,7 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 	// Get Cluster CA from Sealed Configuration.
 	ca, err := x509.ParseCertificate(sc.ClusterCa)
 	if err != nil {
-		return fmt.Errorf("Cluster CA certificate present in Sealed Configuration could not be parsed: %w", err)
+		return fmt.Errorf("cluster CA certificate present in Sealed Configuration could not be parsed: %w", err)
 	}
 
 	// Tell the user what we're doing.

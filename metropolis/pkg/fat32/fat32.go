@@ -431,7 +431,7 @@ func WriteFS(w io.Writer, rootInode Inode, opts Options) error {
 
 	allocClusters := len(p.fat)
 	if allocClusters >= fatMask&math.MaxUint32 {
-		return fmt.Errorf("filesystem contains more than 2^28 FAT entries, this is unsupported. Note that this package currently always creates minimal clusters.")
+		return fmt.Errorf("filesystem contains more than 2^28 FAT entries, this is unsupported. Note that this package currently always creates minimal clusters")
 	}
 
 	// Fill out FAT to minimum size for FAT32

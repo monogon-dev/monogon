@@ -49,7 +49,7 @@ func (s *workerHeartbeat) run(ctx context.Context) error {
 
 		_, err := stream.Recv()
 		if err == io.EOF {
-			return fmt.Errorf("stream closed by the server. Restarting worker...")
+			return fmt.Errorf("stream closed by the server, restarting worker... ")
 		}
 		if err != nil {
 			return fmt.Errorf("while receiving a heartbeat reply: %v", err)

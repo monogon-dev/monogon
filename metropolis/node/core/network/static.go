@@ -44,7 +44,7 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 		return err
 	}
 	if loopbackLink == nil {
-		return errors.New("No loopback interface present, weird/broken kernel?")
+		return errors.New("no loopback interface present, weird/broken kernel?")
 	}
 	if err := netlink.LinkSetUp(loopbackLink); err != nil {
 		l.Error("Failed to enable loopback interface: %w", err)

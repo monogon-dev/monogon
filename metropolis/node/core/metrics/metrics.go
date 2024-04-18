@@ -140,5 +140,5 @@ func (s *Service) Run(ctx context.Context) error {
 	if err != nil && ctx.Err() != nil {
 		return ctx.Err()
 	}
-	return fmt.Errorf("Serve: %w", err)
+	return fmt.Errorf("Serve(): %w", err)
 }

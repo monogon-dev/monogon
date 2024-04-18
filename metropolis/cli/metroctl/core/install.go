@@ -34,7 +34,7 @@ type MakeInstallerImageArgs struct {
 // with a bundle and/or Node Parameters.
 func MakeInstallerImage(args MakeInstallerImageArgs) error {
 	if args.Installer == nil {
-		return errors.New("Installer is mandatory")
+		return errors.New("installer is mandatory")
 	}
 
 	espRoot := fat32.Inode{Attrs: fat32.AttrDirectory}

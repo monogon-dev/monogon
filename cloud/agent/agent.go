@@ -58,7 +58,7 @@ func agentRunnable(ctx context.Context) error {
 	}
 	agentInitRaw, err := os.ReadFile("/init.pb")
 	if err != nil {
-		return fmt.Errorf("Unable to read spec file from takeover: %w", err)
+		return fmt.Errorf("unable to read spec file from takeover: %w", err)
 	}
 
 	var agentInit apb.AgentInit

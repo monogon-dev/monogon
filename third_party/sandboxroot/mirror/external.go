@@ -186,10 +186,10 @@ func (e *rpmDef) mirrorToOurs(ctx context.Context, bucket *storage.BucketHandle)
 		log.Printf("  Uploading to %s...", objName)
 		wr := obj.NewWriter(ctx)
 		if _, err := wr.Write(data); err != nil {
-			return fmt.Errorf("Write failed: %w", err)
+			return fmt.Errorf("Write() failed: %w", err)
 		}
 		if err := wr.Close(); err != nil {
-			return fmt.Errorf("Close failed: %w", err)
+			return fmt.Errorf("Close() failed: %w", err)
 		}
 		return nil
 	}

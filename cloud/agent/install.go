@@ -52,6 +52,7 @@ func install(req *bpb.OSInstallationRequest, netConfig *npb.Net, l logtree.Level
 
 func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Net, l logtree.LeveledLogger, isEFIBoot bool) error {
 	if !isEFIBoot {
+		//nolint:ST1005
 		return errors.New("Monogon OS can only be installed on EFI-booted machines, this one is not")
 	}
 

@@ -58,7 +58,7 @@ func createImage(dataImagePath, outputImagePath string, wsb bool) (*verity.Mappi
 		return nil, fmt.Errorf("the data image must be a regular file")
 	}
 	if ds.Size()%int64(bs) != 0 {
-		return nil, fmt.Errorf("the data image must end on a %d-byte block boundary.", bs)
+		return nil, fmt.Errorf("the data image must end on a %d-byte block boundary", bs)
 	}
 
 	// Create an empty hash image file.
