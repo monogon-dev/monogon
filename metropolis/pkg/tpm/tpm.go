@@ -187,7 +187,7 @@ func Initialize(logger logtree.LeveledLogger) error {
 func IsInitialized() bool {
 	lock.Lock()
 	defer lock.Unlock()
-	return !(tpm == nil)
+	return tpm != nil
 }
 
 // GenerateSafeKey uses two sources of randomness (Kernel & TPM) to generate

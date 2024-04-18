@@ -143,7 +143,7 @@ func sanitizeRoutes(routes []*dhcpv4.Route, assignedNet *net.IPNet) []*dhcpv4.Ro
 	var saneRoutes []*dhcpv4.Route
 	for _, route := range routes {
 		if route.Router != nil && !route.Router.IsUnspecified() {
-			if !(route.Router.IsGlobalUnicast() || route.Router.IsLinkLocalUnicast()) {
+			if !route.Router.IsGlobalUnicast() && !route.Router.IsLinkLocalUnicast() {
 				// Ignore non-unicast routers
 				continue
 			}
