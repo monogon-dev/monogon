@@ -64,7 +64,6 @@ func (c *hwReportContext) gatherSMBIOS() {
 		}
 		c.node.MemoryInstalledBytes += int64(size)
 	}
-	return
 }
 
 var memoryBlockRegexp = regexp.MustCompile("^memory[0-9]+$")
@@ -105,7 +104,6 @@ func (c *hwReportContext) gatherMemorySysfs() {
 			c.node.MemoryInstalledBytes += blockSize
 		}
 	}
-	return
 }
 
 func parseCpuinfoAMD64(cpuinfoRaw []byte) (*api.CPU, []error) {
@@ -189,7 +187,6 @@ func (c *hwReportContext) gatherCPU() {
 		// Currently unimplemented, do nothing
 		c.errors = append(c.errors, fmt.Errorf("architecture %v unsupported by CPU gatherer", runtime.GOARCH))
 	}
-	return
 }
 
 var FRUUnavailable = [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -333,7 +330,6 @@ func (c *hwReportContext) gatherBlockDevices() {
 			c.node.BlockDevice = append(c.node.BlockDevice, &bd)
 		}
 	}
-	return
 }
 
 var speedModeRegexp = regexp.MustCompile("^([0-9]+)base")
@@ -401,7 +397,6 @@ func (c *hwReportContext) gatherNICs() {
 		}
 		c.node.NetworkInterface = append(c.node.NetworkInterface, &nif)
 	}
-	return
 }
 
 func gatherHWReport() (*api.Node, []error) {

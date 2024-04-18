@@ -55,7 +55,6 @@ func lookupModulesRec(n *kmodpb.RadixNode, needle string, matches map[uint32]boo
 			matches[mi] = true
 		}
 	}
-	return
 }
 
 // AddPattern adds a new pattern associated with a moduleIndex to the radix tree

@@ -78,5 +78,4 @@ func initPanicHandler(lt *logtree.LogTree, consoles []*console) {
 	// initializing the crash handler, but there is no locking infrastructure
 	// for this so we have to take that risk.
 	overrideWrite = runtimeWrite
-	return
 }
