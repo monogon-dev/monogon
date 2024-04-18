@@ -211,7 +211,7 @@ func unmarshalFilePath(data []byte) (DevicePathElem, error) {
 	if nullIdx != len(out)-1 {
 		return nil, fmt.Errorf("FilePath not properly null-terminated")
 	}
-	withoutBackslashes := strings.Replace(string(out[:len(out)-1]), `\`, `/`, -1)
+	withoutBackslashes := strings.ReplaceAll(string(out[:len(out)-1]), `\`, `/`)
 	return FilePath(withoutBackslashes), nil
 }
 
