@@ -85,7 +85,7 @@ var knownProtoFields = map[string]proto.Message{
 // not well-defined, and should be used only informatively.
 func (r *TagFieldType) HumanType() string {
 	if r.ProtoType != nil {
-		return fmt.Sprintf("%s", r.ProtoType.Descriptor().FullName())
+		return string(r.ProtoType.Descriptor().FullName())
 	}
 	switch r.NativeType {
 	case "USER-DEFINED":
