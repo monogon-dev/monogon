@@ -80,9 +80,7 @@ func (s *OrderedMap[K, V]) Keys() []K {
 	}
 
 	keys := make([]K, len(s.keys))
-	for i, k := range s.keys {
-		keys[i] = k
-	}
+	copy(keys, s.keys)
 	return keys
 }
 
