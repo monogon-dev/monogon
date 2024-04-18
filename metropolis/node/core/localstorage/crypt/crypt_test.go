@@ -62,7 +62,7 @@ func TestMapUnmap(t *testing.T) {
 	checkWitness := func(target, witness string) {
 		t.Helper()
 
-		file, err := os.OpenFile(target, 0, 644)
+		file, err := os.OpenFile(target, 0, 0644)
 		if err != nil {
 			t.Fatalf("opening mapped crypt failed: %v", err)
 		}
