@@ -516,11 +516,6 @@ func (e *encoder) Close() error {
 		return fmt.Errorf("while writing a hash tree: %w", err)
 	}
 
-	// Reset the encoder.
-	e, err = NewEncoder(e.out, e.sb.dataBlockSize, e.sb.hashBlockSize, e.writeSb)
-	if err != nil {
-		return fmt.Errorf("while resetting an encoder: %w", err)
-	}
 	return nil
 }
 
