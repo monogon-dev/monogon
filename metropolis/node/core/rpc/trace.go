@@ -16,7 +16,7 @@ import (
 // Span implements a compatible subset of
 // go.opentelemetry.io/otel/trace.Span.
 
-// It is used in place of trace.Span until opentelemetry support
+// Span is used in place of trace.Span until opentelemetry support
 // is fully implemented and thus the library is pulled in. Once
 // that happens, all relevant methods will be replace with an
 // embedding of the trace.Span interface.

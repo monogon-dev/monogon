@@ -106,7 +106,7 @@ func New(ctx context.Context, opts ...ResolverOption) *Resolver {
 	return r
 }
 
-// ResolverOptions are passed to a Resolver being created.
+// ResolverOption are passed to a Resolver being created.
 type ResolverOption func(r *Resolver)
 
 // WithLogger configures a given function as the logger of the resolver. The

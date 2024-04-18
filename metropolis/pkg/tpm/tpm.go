@@ -623,7 +623,7 @@ readLoop:
 	return pcrs, nil
 }
 
-// GetMeasurmentLog returns the binary log of all data hashed into PCRs. The
+// GetMeasurementLog returns the binary log of all data hashed into PCRs. The
 // result can be parsed by eventlog.  As this library currently doesn't support
 // extending PCRs it just returns the log as supplied by the EFI interface.
 func GetMeasurementLog() ([]byte, error) {

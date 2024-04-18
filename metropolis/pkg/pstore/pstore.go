@@ -52,7 +52,7 @@ func parseDmesgHeader(hdr string) (*pstoreDmesgHeader, error) {
 	}, nil
 }
 
-// A reassembled kernel message buffer dump from pstore.
+// KmsgDump reassembled a kernel message buffer dump from pstore.
 type KmsgDump struct {
 	// The reason why the dump was created. Common values include "Panic" and
 	// "Oops", but depending on the setting `printk.always_kmsg_dump` and

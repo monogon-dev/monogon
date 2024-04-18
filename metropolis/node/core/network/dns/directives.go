@@ -22,7 +22,7 @@ import (
 	"strings"
 )
 
-// Type ExtraDirective contains additional config directives for CoreDNS.
+// ExtraDirective contains additional config directives for CoreDNS.
 type ExtraDirective struct {
 	// ID is the identifier of this directive. There can only be one directive
 	// with a given ID active at once. The ID is also used to identify which

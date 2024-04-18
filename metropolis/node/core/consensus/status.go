@@ -183,7 +183,7 @@ func (s *Status) AddNode(ctx context.Context, pk ed25519.PublicKey, opts ...*Add
 	}, nil
 }
 
-// AddNodeOptions can be passed to AddNode to influence the behaviour of the
+// AddNodeOption can be passed to AddNode to influence the behaviour of the
 // function. Currently this is only used internally by tests.
 type AddNodeOption struct {
 	externalAddress string

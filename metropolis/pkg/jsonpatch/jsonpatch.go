@@ -20,7 +20,7 @@ package jsonpatch
 
 import "strings"
 
-// JSON Patch operation (RFC 6902 Section 4)
+// JsonPatchOp describes a JSON Patch operation (RFC 6902 Section 4)
 type JsonPatchOp struct {
 	Operation string      `json:"op"`
 	Path      string      `json:"path"` // Technically a JSON Pointer, but called Path in the RFC

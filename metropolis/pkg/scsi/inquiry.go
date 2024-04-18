@@ -199,7 +199,7 @@ type InquiryData struct {
 	VersionDescriptors      []uint16
 }
 
-// Table 498
+// VPDPageCode see Table 498
 type VPDPageCode uint8
 
 const (
