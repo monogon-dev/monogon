@@ -270,7 +270,7 @@ func (i *Inode) PlaceFile(path string, reader SizedReader) error {
 	for j, part := range pathParts {
 		var childExists bool
 		for _, child := range inodeRef.Children {
-			if strings.ToLower(child.Name) == strings.ToLower(part) {
+			if strings.EqualFold(child.Name, part) {
 				inodeRef = child
 				childExists = true
 				break
