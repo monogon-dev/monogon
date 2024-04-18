@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/component-base/cli"
 	"k8s.io/kubectl/pkg/cmd"
@@ -41,7 +42,7 @@ func main() {
 	ctx := context.Background()
 	// Hardcode localhost since this should never be used to interface with a
 	// production node because of missing encryption & authentication
-	grpcClient, err := grpc.Dial("localhost:7837", grpc.WithInsecure())
+	grpcClient, err := grpc.Dial("localhost:7837", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		fmt.Printf("Failed to dial debug service (is it running): %v\n", err)
 	}
