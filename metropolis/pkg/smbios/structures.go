@@ -12,7 +12,9 @@ const (
 	structTypeMemoryDevice         = 17
 )
 
-// Table 7.1.2.2 Bit 3
+// UEFISpecificationSupported is a bitmask for accessing the third bit,
+// which displays the support of UEFI in the smbios structure. For more
+// information check the SMBIOS documentation at Table 7.1.2.2 Bit 3.
 const UEFISpecificationSupported = 1 << 3
 
 // BIOSInformationRaw contains decoded data from the BIOS Information structure

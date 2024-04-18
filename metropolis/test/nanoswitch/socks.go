@@ -9,6 +9,8 @@ import (
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
+// SOCKSPort is the port at which nanoswitch listens for SOCKS conenctions.
+//
 // ONCHANGE(//metropolis/test/launch/cluster:cluster.go): port must be kept in sync
 const SOCKSPort uint16 = 1080
 

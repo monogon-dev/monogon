@@ -46,9 +46,13 @@ const (
 	FlagHasAttribute    FSXAttrFlag = 0x80000000
 )
 
-// FS_IOC_FSGETXATTR/FS_IOC_FSSETXATTR are defined in uapi/linux/fs.h
-const FS_IOC_FSGETXATTR = 0x801c581f
-const FS_IOC_FSSETXATTR = 0x401c5820
+// FS_IOC_FSGETXATTR and FS_IOC_FSSETXATTR are defined in uapi/linux/fs.h
+// and normally would be imported from x/sys/unix. Since they don't exist
+// there define them here for now.
+const (
+	FS_IOC_FSGETXATTR = 0x801c581f
+	FS_IOC_FSSETXATTR = 0x401c5820
+)
 
 type FSXAttrs struct {
 	Flags         FSXAttrFlag
