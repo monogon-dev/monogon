@@ -74,11 +74,8 @@ type controlPlaneStartup struct {
 func (c *controlPlaneStartup) changed(o *controlPlaneStartup) bool {
 	hasConsensusA := c.consensusConfig != nil
 	hasConsensusB := o.consensusConfig != nil
-	if hasConsensusA != hasConsensusB {
-		return true
-	}
 
-	return false
+	return hasConsensusA != hasConsensusB
 }
 
 func (s *workerControlPlane) run(ctx context.Context) error {

@@ -54,21 +54,15 @@ type kubernetesStartup struct {
 func (k *kubernetesStartup) workerChanged(o *kubernetesStartup) bool {
 	hasKubernetesA := k.roles.KubernetesWorker != nil
 	hasKubernetesB := o.roles.KubernetesWorker != nil
-	if hasKubernetesA != hasKubernetesB {
-		return true
-	}
 
-	return false
+	return hasKubernetesA != hasKubernetesB
 }
 
 func (k *kubernetesStartup) controllerChanged(o *kubernetesStartup) bool {
 	hasKubernetesA := k.roles.KubernetesController != nil
 	hasKubernetesB := o.roles.KubernetesController != nil
-	if hasKubernetesA != hasKubernetesB {
-		return true
-	}
 
-	return false
+	return hasKubernetesA != hasKubernetesB
 }
 
 func (s *workerKubernetes) run(ctx context.Context) error {
