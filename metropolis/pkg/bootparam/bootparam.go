@@ -33,7 +33,7 @@ func isSpace(r byte) bool {
 	}
 }
 
-// Trim spaces as defined by Linux from the left of the string.
+// TrimLeftSpace spaces as defined by Linux from the left of the string.
 // This is only exported for tests, do not use this. Because of import loops
 // as well as cgo restrictions this cannot be an internal function used by
 // tests.

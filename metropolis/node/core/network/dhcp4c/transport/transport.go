@@ -24,7 +24,7 @@ import (
 	"net"
 )
 
-var DeadlineExceededErr = errors.New("deadline exceeded")
+var ErrDeadlineExceeded = errors.New("deadline exceeded")
 
 func NewInvalidMessageError(internalErr error) error {
 	return &InvalidMessageError{internalErr: internalErr}
@@ -45,7 +45,7 @@ func (i InvalidMessageError) Unwrap() error {
 func deadlineFromTimeout(err error) error {
 	var timeoutErr net.Error
 	if errors.As(err, &timeoutErr) && timeoutErr.Timeout() {
-		return DeadlineExceededErr
+		return ErrDeadlineExceeded
 	}
 	return err
 }

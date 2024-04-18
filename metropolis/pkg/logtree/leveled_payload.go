@@ -97,8 +97,8 @@ func (p *LeveledPayload) Strings() (prefix string, lines []string) {
 	return
 }
 
-// Message returns the inner message lines of this entry, ie. what was passed to
-// the actual logging method, but split by newlines.
+// Messages returns the inner message lines of this entry, ie. what was passed
+// to the actual logging method, but split by newlines.
 func (p *LeveledPayload) Messages() []string { return p.messages }
 
 func (p *LeveledPayload) MessagesJoined() string { return strings.Join(p.messages, "\n") }

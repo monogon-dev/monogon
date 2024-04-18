@@ -205,8 +205,8 @@ func (l *LogEntry) Strings() (prefix string, lines []string) {
 	return "INVALID ", []string{"INVALID"}
 }
 
-// Convert this LogEntry to proto. Returned value may be nil if given LogEntry is
-// invalid, eg. contains neither a Raw nor Leveled entry.
+// Proto converts this LogEntry to proto. Returned value may be nil if given
+// LogEntry is invalid, eg. contains neither a Raw nor Leveled entry.
 func (l *LogEntry) Proto() *cpb.LogEntry {
 	p := &cpb.LogEntry{
 		Dn: string(l.DN),
@@ -228,8 +228,9 @@ func (l *LogEntry) Proto() *cpb.LogEntry {
 	return p
 }
 
-// Parse a proto LogEntry back into internal structure. This can be used in log
-// proto API consumers to easily print received log entries.
+// LogEntryFromProto parses a proto LogEntry back into internal structure.
+// This can be used in log proto API consumers to easily print received log
+// entries.
 func LogEntryFromProto(l *cpb.LogEntry) (*LogEntry, error) {
 	dn := DN(l.Dn)
 	if _, err := dn.Path(); err != nil {

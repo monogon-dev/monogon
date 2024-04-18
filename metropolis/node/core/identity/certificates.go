@@ -44,7 +44,7 @@ func NodeCertificate(pubkey ed25519.PublicKey) x509.Certificate {
 	}
 }
 
-// CA makes a Metropolis-compatible CA certificate template.
+// CACertificate makes a Metropolis-compatible CA certificate template.
 //
 // cn is a human-readable string that can be used to distinguish Metropolis
 // clusters, if needed. It is not machine-parsed, instead only signature

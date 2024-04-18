@@ -24,9 +24,9 @@ import (
 // However, that seems to not be worth the effort for a tightly coupled single
 // consumer like the bootstrap code.
 
-// BootstrapFinish saves the given Node and initial cluster owner pubkey into
-// etcd, without regard for any other cluster state and directly using a given
-// etcd client.
+// BootstrapNodeFinish saves the given Node and initial cluster owner pubkey
+// into etcd, without regard for any other cluster state and directly using
+// a given etcd client.
 //
 // This is ran by the cluster bootstrap workflow to finish bootstrapping a
 // cluster - afterwards, this cluster will be ready to serve.

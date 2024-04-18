@@ -46,7 +46,7 @@ func New() (*FileArgs, error) {
 	return NewWithSize(DefaultSize)
 }
 
-// NewWthSize is the same as new, but with a custom size limit. Please be aware
+// NewWithSize is the same as new, but with a custom size limit. Please be aware
 // that this data cannot be swapped out and using a size limit that's too high
 // can deadlock your kernel.
 func NewWithSize(size uint64) (*FileArgs, error) {

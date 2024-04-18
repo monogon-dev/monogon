@@ -105,10 +105,10 @@ func (i ModuleInfo) Firmware() []string {
 	return i["firmware"]
 }
 
-// License returns the licenses use of this module is governed by. For mainline
-// modules, the list of valid license strings is documented in the kernel's
-// Documentation/process/license-rules.rst file under the `MODULE_LICENSE`
-// section.
+// Licenses returns the licenses use of this module is governed by.
+// For mainline modules, the list of valid license strings is
+// documented in the kernel's Documentation/process/license-rules.rst file
+// under the `MODULE_LICENSE` section.
 func (i ModuleInfo) Licenses() []string {
 	return i["license"]
 }

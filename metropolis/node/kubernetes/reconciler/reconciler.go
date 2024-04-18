@@ -37,7 +37,7 @@ import (
 	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
-// Sad workaround for all the pointer booleans in K8s specs
+// True is a sad workaround for all the pointer booleans in K8s specs
 func True() *bool {
 	val := true
 	return &val

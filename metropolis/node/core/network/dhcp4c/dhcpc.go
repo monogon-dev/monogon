@@ -94,11 +94,11 @@ type Transport interface {
 	// was successfully received.
 	Send(payload *dhcpv4.DHCPv4) error
 	// SetReceiveDeadline sets a deadline for Receive() calls after which they
-	// return with DeadlineExceededErr
+	// return with ErrDeadlineExceeded
 	SetReceiveDeadline(time.Time) error
 	// Receive waits for a DHCP message to arrive and returns it. If the
 	// deadline expires without a message arriving it will return
-	// DeadlineExceededErr. If the message is completely malformed it will an
+	// ErrDeadlineExceeded. If the message is completely malformed it will an
 	// instance of InvalidMessageError.
 	Receive() (*dhcpv4.DHCPv4, error)
 	// Close closes the given transport. Calls to any of the above methods will
@@ -465,7 +465,7 @@ func (c *Client) runTransactionState(s transactionStateSpec) error {
 			return s.ctx.Err()
 		default:
 		}
-		if errors.Is(err, transport.DeadlineExceededErr) {
+		if errors.Is(err, transport.ErrDeadlineExceeded) {
 			return nil
 		}
 		var e transport.InvalidMessageError

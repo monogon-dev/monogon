@@ -87,7 +87,7 @@ func (mt *mockTransport) Receive() (*dhcpv4.DHCPv4, error) {
 		mt.receiveIdx++
 		return packet, nil
 	}
-	return nil, transport.DeadlineExceededErr
+	return nil, transport.ErrDeadlineExceeded
 }
 
 func (mt *mockTransport) SetReceiveDeadline(t time.Time) error {

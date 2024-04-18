@@ -74,8 +74,8 @@ func (w *Watcher) Next() bool {
 	return true
 }
 
-// Returns underlying error for this Watcher, nil if no error is present. After
-// an error is returned, the Watcher cannot be used anymore.
+// Error returns underlying error for this Watcher, nil if no error is present.
+// After an error is returned, the Watcher cannot be used anymore.
 func (w *Watcher) Error() error {
 	return w.err
 }
