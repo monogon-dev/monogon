@@ -96,7 +96,8 @@ func ManageIP(iface netlink.Link) dhcp4c.LeaseCallback {
 		}
 
 		if new != nil {
-			remainingLifetimeSecs := int(math.Ceil(new.ExpiresAt.Sub(time.Now()).Seconds()))
+
+			remainingLifetimeSecs := int(math.Ceil(time.Until(new.ExpiresAt).Seconds()))
 			newBroadcastIP := dhcpv4.GetIP(dhcpv4.OptionBroadcastAddress, new.Options)
 			if err := netlink.AddrReplace(iface, &netlink.Addr{
 				IPNet:       newNet,
