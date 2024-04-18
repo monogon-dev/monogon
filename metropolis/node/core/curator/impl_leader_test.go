@@ -1739,7 +1739,7 @@ func TestClusterTPMModeSetting(t *testing.T) {
 				eph.Close()
 			})
 
-			useTPM := false
+			var useTPM bool
 			if resR.TpmUsage == cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED {
 				useTPM = true
 			}
