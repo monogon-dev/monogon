@@ -30,9 +30,6 @@ import (
 	"io"
 	"sort"
 
-	// Ensure hashes are available.
-	_ "crypto/sha256"
-
 	"github.com/google/go-tpm/tpm2"
 )
 

@@ -25,7 +25,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	_ "net/http"
 	_ "net/http/pprof"
 	"net/url"
 	"os"

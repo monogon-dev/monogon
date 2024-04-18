@@ -20,7 +20,6 @@ import (
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/version"
 
-	"source.monogon.dev/metropolis/proto/api"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
@@ -149,7 +148,7 @@ var nodeUpdateCmd = &cobra.Command{
 			}
 			wg.Add(1)
 
-			go func(n *api.Node) {
+			go func(n *apb.Node) {
 				defer wg.Done()
 				cc := dialAuthenticatedNode(ctx, n.Id, n.Status.ExternalAddress, cacert)
 				nodeMgmt := apb.NewNodeManagementClient(cc)
@@ -183,7 +182,7 @@ var nodeUpdateCmd = &cobra.Command{
 							continue
 						}
 						s := nodes[0]
-						if s.Health == api.Node_HEALTHY {
+						if s.Health == apb.Node_HEALTHY {
 							if s.Status != nil && s.Status.Version != nil {
 								log.Printf("node %s updated in %v to version %s", s.Id, time.Since(start), version.Semver(s.Status.Version))
 							} else {
