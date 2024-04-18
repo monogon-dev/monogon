@@ -114,7 +114,7 @@ func GetClusterCAWithTOFU(ctx context.Context, c *ConnectOptions) (*x509.Certifi
 	if err == nil {
 		return ca, nil
 	}
-	if !errors.Is(err, NoCACertificateError) {
+	if !errors.Is(err, ErrNoCACertificate) {
 		return nil, err
 	}
 
@@ -128,7 +128,7 @@ func GetClusterCAWithTOFU(ctx context.Context, c *ConnectOptions) (*x509.Certifi
 	// against it, and don't ask the user.
 	var ocert *x509.Certificate
 	if err != nil {
-		if errors.Is(err, NoCredentialsError) {
+		if errors.Is(err, ErrNoCredentials) {
 			okey, err := GetOwnerKey(c.ConfigPath)
 			if err != nil {
 				return nil, err

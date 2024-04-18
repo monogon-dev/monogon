@@ -73,13 +73,13 @@ type leadership struct {
 }
 
 var (
-	// lostLeadership is returned by txnAsLeader if the transaction got canceled
+	// errLostLeadership is returned by txnAsLeader if the transaction got canceled
 	// because leadership was lost.
-	lostLeadership = errors.New("lost leadership")
+	errLostLeadership = errors.New("lost leadership")
 )
 
 // txnAsLeader performs an etcd transaction guarded by continued leadership.
-// lostLeadership will be returned as an error in case the leadership is lost.
+// errLostLeadership will be returned as an error in case the leadership is lost.
 func (l *leadership) txnAsLeader(ctx context.Context, ops ...clientv3.Op) (*clientv3.TxnResponse, error) {
 	var opsStr []string
 	for _, op := range ops {
@@ -118,7 +118,7 @@ func (l *leadership) txnAsLeader(ctx context.Context, ops ...clientv3.Op) (*clie
 			}
 		}
 		rpc.Trace(ctx).Printf("txnAsLeader(...): rejected (lost leadership (key %s should've been at rev %d, is at rev %s)", l.lockKey, l.lockRev, lockRev)
-		return nil, lostLeadership
+		return nil, errLostLeadership
 	}
 	rpc.Trace(ctx).Printf("txnAsLeader(...): ok")
 	return resp, nil
@@ -128,7 +128,7 @@ func (l *leadership) txnAsLeader(ctx context.Context, ops ...clientv3.Op) (*clie
 // directly exposed to RPC clients. If false is returned, the error was not
 // converted and is returned verbatim.
 func rpcError(err error) (error, bool) {
-	if errors.Is(err, lostLeadership) {
+	if errors.Is(err, errLostLeadership) {
 		return status.Error(codes.Unavailable, "lost leadership"), true
 	}
 	if errors.Is(err, context.DeadlineExceeded) {

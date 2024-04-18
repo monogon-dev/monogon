@@ -179,7 +179,7 @@ func Filter[T any](pred func(T) bool) GetOption[T] {
 }
 
 // BacklogOnly will prevent Get from blocking on waiting for more updates from
-// etcd, by instead returning BacklogDone whenever no more data is currently
+// etcd, by instead returning ErrBacklogDone whenever no more data is currently
 // locally available. This is different however, from establishing that there
 // are no more pending updates from the etcd cluster - the only way to ensure
 // the local client is up to date is by performing Get calls without this option
@@ -187,7 +187,7 @@ func Filter[T any](pred func(T) bool) GetOption[T] {
 //
 // This mode of retrieval should only be used for the retrieval of the existing
 // data in the etcd cluster on the initial creation of the Watcher (by
-// repeatedly calling Get until BacklogDone is returned), and shouldn't be set
+// repeatedly calling Get until ErrBacklogDone is returned), and shouldn't be set
 // for any subsequent call. Any use of this option after that initial fetch is
 // undefined behaviour that exposes the internals of the Get implementation, and
 // must not be relied on. However, in the future, this behaviour might be
@@ -203,10 +203,10 @@ func BacklogOnly[T any]() GetOption[T] {
 }
 
 var (
-	// BacklogDone is returned by Get when BacklogOnly is set and there is no more
+	// ErrBacklogDone is returned by Get when BacklogOnly is set and there is no more
 	// event data stored in the Watcher client, ie. when the initial cluster state
 	// of the requested key has been retrieved.
-	BacklogDone = errors.New("no more backlogged data")
+	ErrBacklogDone = errors.New("no more backlogged data")
 )
 
 // Pipe a Value's initial state and subsequent updates to an already existing

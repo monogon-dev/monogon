@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	NoSuchKey = errors.New("no such key")
+	ErrNoSuchKey = errors.New("no such key")
 )
 
 // providerConfig contains configuration options used by both the Initializer and

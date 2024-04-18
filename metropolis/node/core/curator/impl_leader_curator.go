@@ -109,7 +109,7 @@ func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, 
 	nodes := make(map[string]*Node)
 	for {
 		nodeKV, err := w.Get(ctx, event.BacklogOnly[*nodeAtID]())
-		if errors.Is(err, event.BacklogDone) {
+		if errors.Is(err, event.ErrBacklogDone) {
 			break
 		}
 		if err != nil {

@@ -33,7 +33,7 @@ func (l *leaderCurator) prepareClusternetCacheUnlocked(ctx context.Context) erro
 	defer w.Close()
 	for {
 		nodeKV, err := w.Get(ctx, event.BacklogOnly[*nodeAtID]())
-		if errors.Is(err, event.BacklogDone) {
+		if errors.Is(err, event.ErrBacklogDone) {
 			break
 		}
 		if err != nil {

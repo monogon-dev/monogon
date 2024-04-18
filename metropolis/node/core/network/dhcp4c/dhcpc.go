@@ -482,13 +482,13 @@ func (c *Client) runTransactionState(s transactionStateSpec) error {
 		err = s.handleMessage(offer, sentTime)
 		if err == nil {
 			return nil
-		} else if !errors.Is(err, InvalidMsgErr) {
+		} else if !errors.Is(err, ErrInvalidMsg) {
 			return err
 		}
 	}
 }
 
-var InvalidMsgErr = errors.New("invalid message")
+var ErrInvalidMsg = errors.New("invalid message")
 
 func (c *Client) runState(ctx context.Context) error {
 	switch c.state {
@@ -516,7 +516,7 @@ func (c *Client) runState(ctx context.Context) error {
 						return c.transitionToBound(offer, sentTime)
 					}
 				}
-				return InvalidMsgErr
+				return ErrInvalidMsg
 			},
 		})
 	case stateRequesting:
@@ -541,7 +541,7 @@ func (c *Client) runState(ctx context.Context) error {
 					c.requestingToDiscovering()
 					return nil
 				}
-				return InvalidMsgErr
+				return ErrInvalidMsg
 			},
 			stateDeadlineExceeded: func() error {
 				c.requestingToDiscovering()
@@ -578,7 +578,7 @@ func (c *Client) runState(ctx context.Context) error {
 				case dhcpv4.MessageTypeNak:
 					return c.leaseToDiscovering()
 				}
-				return InvalidMsgErr
+				return ErrInvalidMsg
 			},
 			stateDeadlineExceeded: func() error {
 				c.state = stateRebinding
@@ -609,7 +609,7 @@ func (c *Client) runState(ctx context.Context) error {
 				case dhcpv4.MessageTypeNak:
 					return c.leaseToDiscovering()
 				}
-				return InvalidMsgErr
+				return ErrInvalidMsg
 			},
 			stateDeadlineExceeded: func() error {
 				return c.leaseToDiscovering()

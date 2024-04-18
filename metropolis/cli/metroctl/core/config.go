@@ -35,11 +35,13 @@ const (
 	CACertificateFileName = "ca.pem"
 )
 
-// NoCredentialsError indicates that the requested datum (eg. owner key or owner
-// certificate) is not present in the requested directory.
-var NoCredentialsError = errors.New("owner certificate or key does not exist")
+var (
+	// ErrNoCredentials indicates that the requested datum (eg. owner key or owner
+	// certificate) is not present in the requested directory.
+	ErrNoCredentials = errors.New("owner certificate or key does not exist")
 
-var NoCACertificateError = errors.New("no cluster CA certificate while secure connection was requested")
+	ErrNoCACertificate = errors.New("no cluster CA certificate while secure connection was requested")
+)
 
 // A PEM block type for a Metropolis initial owner private key
 const ownerKeyType = "METROPOLIS INITIAL OWNER PRIVATE KEY"
@@ -51,7 +53,7 @@ func GetOrMakeOwnerKey(path string) (ed25519.PrivateKey, error) {
 	switch {
 	case err == nil:
 		return existing, nil
-	case errors.Is(err, NoCredentialsError):
+	case errors.Is(err, ErrNoCredentials):
 	default:
 		return nil, err
 	}
@@ -88,11 +90,11 @@ func WriteCACertificate(path string, der []byte) error {
 
 // GetOwnerKey loads and returns a raw ED25519 private key from the saved owner
 // key in a given metroctl configuration directory path. If the owner key doesn't
-// exist, NoCredentialsError will be returned.
+// exist, ErrNoCredentials will be returned.
 func GetOwnerKey(path string) (ed25519.PrivateKey, error) {
 	ownerPrivateKeyPEM, err := os.ReadFile(filepath.Join(path, OwnerKeyFileName))
 	if os.IsNotExist(err) {
-		return nil, NoCredentialsError
+		return nil, ErrNoCredentials
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to load owner private key: %w", err)
 	}
@@ -125,7 +127,7 @@ func WriteOwnerCertificate(path string, cert []byte) error {
 // GetOwnerCredentials loads and returns a raw ED25519 private key alongside a
 // DER-encoded X509 certificate from the saved owner key and certificate in a
 // given metroctl configuration directory path. If either the key or certificate
-// doesn't exist, NoCredentialsError will be returned.
+// doesn't exist, ErrNoCredentials will be returned.
 func GetOwnerCredentials(path string) (cert *x509.Certificate, key ed25519.PrivateKey, err error) {
 	key, err = GetOwnerKey(path)
 	if err != nil {
@@ -134,7 +136,7 @@ func GetOwnerCredentials(path string) (cert *x509.Certificate, key ed25519.Priva
 
 	ownerCertPEM, err := os.ReadFile(filepath.Join(path, OwnerCertificateFileName))
 	if os.IsNotExist(err) {
-		return nil, nil, NoCredentialsError
+		return nil, nil, ErrNoCredentials
 	} else if err != nil {
 		return nil, nil, fmt.Errorf("failed to load owner certificate: %w", err)
 	}
@@ -171,7 +173,7 @@ func GetOwnerTLSCredentials(path string) (*tls.Certificate, error) {
 func GetClusterCA(path string) (cert *x509.Certificate, err error) {
 	caCertPEM, err := os.ReadFile(filepath.Join(path, CACertificateFileName))
 	if os.IsNotExist(err) {
-		return nil, NoCACertificateError
+		return nil, ErrNoCACertificate
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to load CA certificate: %w", err)
 	}

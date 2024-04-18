@@ -292,7 +292,7 @@ func (ep *equinixProvider) sshEquinix(ctx context.Context) (*packngo.SSHKey, err
 			return &k, nil
 		}
 	}
-	return nil, NoSuchKey
+	return nil, ErrNoSuchKey
 }
 
 // sshEquinixId looks up the Equinix key identified by providerConfig.KeyLabel,
@@ -344,7 +344,7 @@ func (ep *equinixProvider) sshEquinixUpload(ctx context.Context) error {
 func (ep *equinixProvider) SSHEquinixEnsure(ctx context.Context) error {
 	k, err := ep.sshEquinix(ctx)
 	switch {
-	case errors.Is(err, NoSuchKey):
+	case errors.Is(err, ErrNoSuchKey):
 		if err := ep.sshEquinixUpload(ctx); err != nil {
 			return fmt.Errorf("while uploading key: %w", err)
 		}

@@ -402,7 +402,7 @@ func (w *watcher[T]) getUnlocked(ctx context.Context, ranged, backlogOnly bool) 
 	}
 
 	if backlogOnly && len(w.backlogged) == 0 {
-		return empty, event.BacklogDone
+		return empty, event.ErrBacklogDone
 	}
 
 	// Update backlog from etcd if needed.

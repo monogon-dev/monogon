@@ -776,15 +776,15 @@ func TestBacklogOnly(t *testing.T) {
 	// As expected, next call to Get with BacklogOnly fails - there truly is no new
 	// updates to emit.
 	_, err = watcher.Get(ctx, event.BacklogOnly[StringAt]())
-	if want, got := event.BacklogDone, err; !errors.Is(got, want) {
+	if want, got := event.ErrBacklogDone, err; !errors.Is(got, want) {
 		t.Fatalf("Second Get: wanted %v, got %v", want, got)
 	}
 
 	// Implementation detail: even though there is a new value ('second'),
-	// BacklogOnly will still return BacklogDone.
+	// BacklogOnly will still return ErrBacklogDone.
 	tc.put(t, k, "second")
 	_, err = watcher.Get(ctx, event.BacklogOnly[StringAt]())
-	if want, got := event.BacklogDone, err; !errors.Is(got, want) {
+	if want, got := event.ErrBacklogDone, err; !errors.Is(got, want) {
 		t.Fatalf("Third Get: wanted %v, got %v", want, got)
 	}
 
@@ -836,11 +836,11 @@ func TestBacklogOnlyRange(t *testing.T) {
 	tc.put(t, ks+"a", "val-100")
 	tc.put(t, ks+"b", "val-101")
 
-	// Retrieve the rest of the backlog until BacklogDone is returned.
+	// Retrieve the rest of the backlog until ErrBacklogDone is returned.
 	nUpdates := 1
 	for {
 		g, err := w.Get(ctx, event.BacklogOnly[StringAt]())
-		if errors.Is(err, event.BacklogDone) {
+		if errors.Is(err, event.ErrBacklogDone) {
 			break
 		}
 		if err != nil {

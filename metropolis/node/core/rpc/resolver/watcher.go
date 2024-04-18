@@ -17,9 +17,9 @@ type clientWatcher struct {
 }
 
 var (
-	// ResolverClosed will be returned by the resolver to gRPC machinery whenever a
+	// ErrResolverClosed will be returned by the resolver to gRPC machinery whenever a
 	// resolver cannot be used anymore because it was Closed.
-	ResolverClosed = errors.New("cluster resolver closed")
+	ErrResolverClosed = errors.New("cluster resolver closed")
 )
 
 // Build is called by gRPC on each Dial call. It spawns a new clientWatcher,
@@ -45,7 +45,7 @@ func (r *Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts re
 
 	select {
 	case <-r.ctx.Done():
-		return nil, ResolverClosed
+		return nil, ErrResolverClosed
 	case r.reqC <- &request{
 		ds: &requestDialOptionsSet{
 			options: options,
@@ -61,7 +61,7 @@ func (r *Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts re
 	}
 	select {
 	case <-r.ctx.Done():
-		return nil, ResolverClosed
+		return nil, ErrResolverClosed
 	case r.reqC <- req:
 	}
 	// This receive is uninterruptible by contract - as it's also uninterruptible on
@@ -94,7 +94,7 @@ func (w *clientWatcher) watch() {
 		if update == nil {
 			// A nil result means the channel is closed, which means this watcher has either
 			// closed or the resolver has been canceled. Abort loop.
-			w.clientConn.ReportError(ResolverClosed)
+			w.clientConn.ReportError(ErrResolverClosed)
 			break
 		}
 		w.clientConn.UpdateState(resolver.State{

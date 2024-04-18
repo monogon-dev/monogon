@@ -29,7 +29,7 @@ var certExportCmd = &cobra.Command{
 	Example: "metroctl cert export",
 	Run: func(cmd *cobra.Command, args []string) {
 		ocert, opkey, err := core.GetOwnerCredentials(flags.configPath)
-		if errors.Is(err, core.NoCredentialsError) {
+		if errors.Is(err, core.ErrNoCredentials) {
 			log.Fatalf("You have to take ownership of the cluster first: %v", err)
 		}
 
