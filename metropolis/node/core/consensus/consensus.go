@@ -249,14 +249,14 @@ func (s *Service) Run(ctx context.Context) error {
 			allOkay := true
 			shouldLog := time.Now().After(startLogging)
 			for _, node := range jc.ExistingNodes {
-				u, _ := url.Parse(node.URL)
+				u, err := url.Parse(node.URL)
 				if err != nil {
 					// Just pretend this node is up. If the URL is really bad, etcd will complain
 					// more clearly than us. This shouldn't happen, anyway.
+					continue
 				}
 				host := u.Hostname()
-				_, err := net.LookupIP(host)
-				if err == nil {
+				if _, err := net.LookupIP(host); err == nil {
 					continue
 				}
 				if shouldLog {
