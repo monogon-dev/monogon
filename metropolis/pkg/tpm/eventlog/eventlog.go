@@ -246,26 +246,27 @@ var eventlogWorkarounds = []elWorkaround{
 // An error is returned if the replayed digest for events with a given PCR
 // index do not match any provided value for that PCR index.
 func (e *EventLog) Verify(pcrs []PCR) ([]Event, error) {
-	events, err := e.verify(pcrs)
+	events, rErr := replayEvents(e.rawEvents, pcrs)
+	if rErr == nil {
+		return events, nil
+	}
 	// If there were any issues replaying the PCRs, try each of the workarounds
 	// in turn.
 	// TODO(jsonp): Allow workarounds to be combined.
-	if rErr, isReplayErr := err.(ReplayError); isReplayErr {
-		for _, wkrd := range eventlogWorkarounds {
-			if !rErr.affected(wkrd.affectedPCR) {
-				continue
-			}
-			el := e.clone()
-			if err := wkrd.apply(el); err != nil {
-				return nil, fmt.Errorf("failed applying workaround %q: %v", wkrd.id, err)
-			}
-			if events, err := el.verify(pcrs); err == nil {
-				return events, nil
-			}
+	for _, wkrd := range eventlogWorkarounds {
+		if !rErr.affected(wkrd.affectedPCR) {
+			continue
+		}
+		el := e.clone()
+		if err := wkrd.apply(el); err != nil {
+			return nil, fmt.Errorf("failed applying workaround %q: %v", wkrd.id, err)
+		}
+		if events, err := replayEvents(el.rawEvents, pcrs); err == nil {
+			return events, nil
 		}
 	}
 
-	return events, err
+	return events, rErr
 }
 
 // PCR encapsulates the value of a PCR at a point in time.
@@ -273,17 +274,6 @@ type PCR struct {
 	Index     int
 	Digest    []byte
 	DigestAlg crypto.Hash
-}
-
-func (e *EventLog) verify(pcrs []PCR) ([]Event, error) {
-	events, err := replayEvents(e.rawEvents, pcrs)
-	if err != nil {
-		if _, isReplayErr := err.(ReplayError); isReplayErr {
-			return nil, err
-		}
-		return nil, fmt.Errorf("pcrs failed to replay: %v", err)
-	}
-	return events, nil
 }
 
 func extend(pcr PCR, replay []byte, e rawEvent) (pcrDigest []byte, eventDigest []byte, err error) {
@@ -343,7 +333,7 @@ type pcrReplayResult struct {
 	successful bool
 }
 
-func replayEvents(rawEvents []rawEvent, pcrs []PCR) ([]Event, error) {
+func replayEvents(rawEvents []rawEvent, pcrs []PCR) ([]Event, *ReplayError) {
 	var (
 		invalidReplays []int
 		verifiedEvents []Event
@@ -377,7 +367,7 @@ pcrLoop:
 		for _, e := range rawEvents {
 			events = append(events, Event{e.sequence, e.index, e.typ, e.data, nil})
 		}
-		return nil, ReplayError{
+		return nil, &ReplayError{
 			Events:      events,
 			invalidPCRs: invalidReplays,
 		}
