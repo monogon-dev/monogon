@@ -22,7 +22,6 @@ import (
 	"math"
 	"net"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -114,8 +113,7 @@ func (t *UnicastTransport) Close() error {
 	}
 	err := t.udpConn.Close()
 	t.udpConn = nil
-	// TODO(lorenz): Move to net.ErrClosed once Go 1.16 lands
-	if err != nil && strings.Contains(err.Error(), "use of closed network connection") {
+	if err != nil && errors.Is(err, net.ErrClosed) {
 		return nil
 	}
 	return err
