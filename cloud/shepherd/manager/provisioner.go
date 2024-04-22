@@ -411,7 +411,7 @@ func (p *Provisioner) reconcile(ctx context.Context, sess *bmdb.Session, inProvi
 			UnusedMachine: machine,
 		})
 		if err != nil {
-			klog.Errorf("while creating new device (ID: %s, Addr: %s, Availability: %s): %w", machine.ID(), machine.Addr(), machine.Availability(), err)
+			klog.Errorf("while creating new device (ID: %s, Addr: %s, Availability: %s): %v", machine.ID(), machine.Addr(), machine.Availability(), err)
 			continue
 		}
 		klog.Infof("Created new machine with ID: %s", nd.ID())

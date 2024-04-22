@@ -21,7 +21,7 @@ func (b *BMDB) Open(migrate bool) (*Connection, error) {
 		klog.Infof("Using default migrations source.")
 		m, err := model.MigrationsSource()
 		if err != nil {
-			klog.Exitf("failed to prepare migrations source: %w", err)
+			klog.Exitf("failed to prepare migrations source: %v", err)
 		}
 		b.Config.Database.Migrations = m
 	}

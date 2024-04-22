@@ -104,7 +104,7 @@ func (s *Server) Start(ctx context.Context) {
 		klog.Infof("Using default migrations source.")
 		m, err := model.MigrationsSource()
 		if err != nil {
-			klog.Exitf("failed to prepare migrations source: %w", err)
+			klog.Exitf("failed to prepare migrations source: %v", err)
 		}
 		s.Config.Database.Migrations = m
 	}
