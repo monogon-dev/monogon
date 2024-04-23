@@ -274,19 +274,9 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 		return
 	}
 
-	// Find innermost error to check if it's a context canceled error.
-	perr := r.err
-	for {
-		if inner := errors.Unwrap(perr); inner != nil {
-			perr = inner
-			continue
-		}
-		break
-	}
-
 	// Simple case: the context was canceled and the returned error is the
 	// context error.
-	if err := ctx.Err(); err != nil && perr == err {
+	if r.err != nil && ctx.Err() != nil && errors.Is(r.err, ctx.Err()) {
 		// Mark the node as canceled successfully.
 		n.state = nodeStateCanceled
 		return
