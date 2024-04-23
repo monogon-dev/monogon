@@ -135,7 +135,7 @@ type DataKubernetesKubeletDirectory struct {
 	} `dir:"device-plugins"`
 
 	// Pod logs, hardcoded to /data/kubelet/logs in
-	// @com_github_kubernetes//pkg/kubelet/kuberuntime:kuberuntime_manager.go
+	// //metropolis/node/kubernetes:kubelet.go
 	Logs declarative.Directory `dir:"logs"`
 
 	Plugins struct {

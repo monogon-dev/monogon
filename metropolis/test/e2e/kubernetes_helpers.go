@@ -167,7 +167,7 @@ func makeTestStatefulSet(name string, volumeMode corev1.PersistentVolumeMode) *a
 					ObjectMeta: metav1.ObjectMeta{Name: "www"},
 					Spec: corev1.PersistentVolumeClaimSpec{
 						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-						Resources: corev1.ResourceRequirements{
+						Resources: corev1.VolumeResourceRequirements{
 							Requests: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: resource.MustParse("50Mi")},
 						},
 						VolumeMode: &volumeMode,

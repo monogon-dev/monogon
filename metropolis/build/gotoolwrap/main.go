@@ -27,6 +27,13 @@
 //  				     go_path target.
 //  - GOTOOLWRAP_GOROOT: A Go SDK's GOROOT, eg. one from rules_go's GoSDK
 //                       provider.
+//  - GOTOOLWRAP_COPYOUT: Pairs of source:destination elements separated by ;.
+//                        Files given in this list will be copied from source
+//                        (relative to the GOPATH sources) to the destination
+//                        (absolute path). This is primarily useful when dealing
+//                        with code generators which insist on putting their
+//                        generated files within the GOPATH, and allows copying
+//                        of said files to a declared output file.
 //
 // gotoolwrap will set PATH to contain GOROOT/bin, and set GOPATH and GOROOT as
 // resolved, absolute paths. Absolute paths are expected by tools like 'gofmt'.
@@ -121,6 +128,9 @@ func main() {
 		if strings.HasPrefix(v, "GOTOOLWRAP_GOPATH=") {
 			continue
 		}
+		if strings.HasPrefix(v, "GOTOOLWRAP_COPYOUT=") {
+			continue
+		}
 		if strings.HasPrefix(v, "PATH=") {
 			continue
 		}
@@ -136,11 +146,11 @@ func main() {
 	defer os.RemoveAll(tempDir)
 
 	cmd.Env = append(cmd.Env,
-		"GOROOT=" + gorootAbs,
-		"GOPATH=" + gopathAbs,
-		"PATH=" + path,
+		"GOROOT="+gorootAbs,
+		"GOPATH="+gopathAbs,
+		"PATH="+path,
 		"GO111MODULE=off",
-		"GOCACHE=" + tempDir,
+		"GOCACHE="+tempDir,
 	)
 
 	// Run the command interactively.
@@ -153,6 +163,31 @@ func main() {
 			os.Exit(exitErr.ExitCode())
 		} else {
 			log.Fatalf("Could not run %q: %v", os.Args[1], err)
+		}
+	}
+
+	copyout := os.Getenv("GOTOOLWRAP_COPYOUT")
+	if len(copyout) != 0 {
+		for _, pair := range strings.Split(copyout, ";") {
+			parts := strings.Split(pair, ":")
+			if len(parts) != 2 {
+				log.Fatalf("GOTOOL_COPYOUT invalid pair: %q", pair)
+			}
+			from := filepath.Join(gopathAbs, "src", parts[0])
+			to := parts[1]
+			log.Printf("gotoolwrap: Copying %s to %s...", from, to)
+			data, err := os.ReadFile(from)
+			if err != nil {
+				log.Fatalf("gotoolwrap: read failed: %v", err)
+			}
+			err = os.MkdirAll(filepath.Dir(to), 0755)
+			if err != nil {
+				log.Fatalf("gotoolwrap: mkdir failed: %v", err)
+			}
+			err = os.WriteFile(to, data, 0644)
+			if err != nil {
+				log.Fatalf("gotoolwrap: write failed: %v", err)
+			}
 		}
 	}
 }

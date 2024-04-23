@@ -115,6 +115,7 @@ func (s *kubeletService) configure(fargs *fileargs.FileArgs) *kubeletconfig.Kube
 		// Currently we allocate a /24 per node, so we can have a maximum of
 		// 253 pods per node.
 		MaxPods: 253,
+		PodLogsDir: "/data/kubelet/logs",
 	}
 }
 

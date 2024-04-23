@@ -8,18 +8,10 @@ Subject: [PATCH] Provide native mounter implementation for Linux
  1 file changed, 141 insertions(+)
 
 diff --git a/mount_linux.go b/mount_linux.go
-index 7d18072..5e4a79e 100644
+index 07ce76d..e925185 100644
 --- a/mount_linux.go
 +++ b/mount_linux.go
-@@ -34,6 +34,7 @@ import (
-
- 	"github.com/moby/sys/mountinfo"
-
-+	"golang.org/x/sys/unix"
- 	"k8s.io/klog/v2"
- 	utilexec "k8s.io/utils/exec"
- )
-@@ -63,6 +64,8 @@ type Mounter struct {
+@@ -69,6 +70,8 @@ type Mounter struct {
  	withSystemd                *bool
  	trySystemd                 bool
  	withSafeNotMountedBehavior bool
@@ -28,7 +20,7 @@ index 7d18072..5e4a79e 100644
  }
 
  var _ MounterForceUnmounter = &Mounter{}
-@@ -75,6 +78,8 @@ func New(mounterPath string) Interface {
+@@ -81,6 +84,8 @@ func New(mounterPath string) Interface {
  		mounterPath:                mounterPath,
  		trySystemd:                 true,
  		withSafeNotMountedBehavior: detectSafeNotMountedBehavior(),
@@ -37,7 +29,7 @@ index 7d18072..5e4a79e 100644
  	}
  }
 
-@@ -87,6 +92,8 @@ func NewWithoutSystemd(mounterPath string) Interface {
+@@ -93,6 +98,8 @@ func NewWithoutSystemd(mounterPath string) Interface {
  		mounterPath:                mounterPath,
  		trySystemd:                 false,
  		withSafeNotMountedBehavior: detectSafeNotMountedBehavior(),
@@ -46,7 +38,7 @@ index 7d18072..5e4a79e 100644
  	}
  }
 
-@@ -105,6 +112,29 @@ func (mounter *Mounter) hasSystemd() bool {
+@@ -111,6 +118,29 @@ func (mounter *Mounter) hasSystemd() bool {
  	return *mounter.withSystemd
  }
 
@@ -76,7 +68,7 @@ index 7d18072..5e4a79e 100644
  // Mount mounts source to target as fstype with given options. 'source' and 'fstype' must
  // be an empty string in case it's not required, e.g. for remount, or for auto filesystem
  // type, where kernel handles fstype for you. The mount 'options' is a list of options,
-@@ -120,6 +150,10 @@ func (mounter *Mounter) Mount(source string, target string, fstype string, optio
+@@ -126,6 +156,10 @@ func (mounter *Mounter) Mount(source string, target string, fstype string, optio
  // method should be used by callers that pass sensitive material (like
  // passwords) as mount options.
  func (mounter *Mounter) MountSensitive(source string, target string, fstype string, options []string, sensitiveOptions []string) error {
@@ -87,7 +79,7 @@ index 7d18072..5e4a79e 100644
  	// Path to mounter binary if containerized mounter is needed. Otherwise, it is set to empty.
  	// All Linux distros are expected to be shipped with a mount utility that a support bind mounts.
  	mounterPath := ""
-@@ -151,6 +185,9 @@ func (mounter *Mounter) MountSensitiveWithoutSystemd(source string, target strin
+@@ -157,6 +191,9 @@ func (mounter *Mounter) MountSensitiveWithoutSystemd(source string, target strin
 
  // MountSensitiveWithoutSystemdWithMountFlags is the same as MountSensitiveWithoutSystemd with additional mount flags.
  func (mounter *Mounter) MountSensitiveWithoutSystemdWithMountFlags(source string, target string, fstype string, options []string, sensitiveOptions []string, mountFlags []string) error {
@@ -97,7 +89,7 @@ index 7d18072..5e4a79e 100644
  	mounterPath := ""
  	bind, bindOpts, bindRemountOpts, bindRemountOptsSensitive := MakeBindOptsSensitive(options, sensitiveOptions)
  	if bind {
-@@ -173,6 +210,80 @@ func (mounter *Mounter) MountSensitiveWithoutSystemdWithMountFlags(source string
+@@ -179,6 +216,80 @@ func (mounter *Mounter) MountSensitiveWithoutSystemdWithMountFlags(source string
  	return mounter.doMount(mounterPath, defaultMountCommand, source, target, fstype, options, sensitiveOptions, mountFlags, false)
  }
 
@@ -178,7 +170,7 @@ index 7d18072..5e4a79e 100644
  // doMount runs the mount command. mounterPath is the path to mounter binary if containerized mounter is used.
  // sensitiveOptions is an extension of options except they will not be logged (because they may contain sensitive material)
  // systemdMountRequired is an extension of option to decide whether uses systemd mount.
-@@ -288,6 +399,30 @@ func detectSafeNotMountedBehaviorWithExec(exec utilexec.Interface) bool {
+@@ -294,6 +405,30 @@ func detectSafeNotMountedBehaviorWithExec(exec utilexec.Interface) bool {
  	return false
  }
 
@@ -209,7 +201,7 @@ index 7d18072..5e4a79e 100644
  // MakeMountArgs makes the arguments to the mount(8) command.
  // options MUST not contain sensitive material (like passwords).
  func MakeMountArgs(source, target, fstype string, options []string) (mountArgs []string) {
-@@ -358,6 +493,12 @@ func AddSystemdScopeSensitive(systemdRunPath, mountName, command string, args []
+@@ -364,6 +499,12 @@ func AddSystemdScopeSensitive(systemdRunPath, mountName, command string, args []
  // If the mounter has safe "not mounted" behavior, no error will be returned when the target is not a mount point.
  func (mounter *Mounter) Unmount(target string) error {
  	klog.V(4).Infof("Unmounting %s", target)
