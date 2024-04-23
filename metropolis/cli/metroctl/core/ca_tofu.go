@@ -114,7 +114,7 @@ func GetClusterCAWithTOFU(ctx context.Context, c *ConnectOptions) (*x509.Certifi
 	if err == nil {
 		return ca, nil
 	}
-	if err != NoCACertificateError {
+	if !errors.Is(err, NoCACertificateError) {
 		return nil, err
 	}
 

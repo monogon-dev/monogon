@@ -48,10 +48,10 @@ const ownerKeyType = "METROPOLIS INITIAL OWNER PRIVATE KEY"
 // directory path, generating and saving it first if it doesn't exist.
 func GetOrMakeOwnerKey(path string) (ed25519.PrivateKey, error) {
 	existing, err := GetOwnerKey(path)
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		return existing, nil
-	case NoCredentialsError:
+	case errors.Is(err, NoCredentialsError):
 	default:
 		return nil, err
 	}

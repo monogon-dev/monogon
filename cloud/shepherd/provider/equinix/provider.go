@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/netip"
 	"slices"
@@ -342,13 +343,13 @@ func (ep *equinixProvider) sshEquinixUpload(ctx context.Context) error {
 // generated as needed The key is generated as needed
 func (ep *equinixProvider) SSHEquinixEnsure(ctx context.Context) error {
 	k, err := ep.sshEquinix(ctx)
-	switch err {
-	case NoSuchKey:
+	switch {
+	case errors.Is(err, NoSuchKey):
 		if err := ep.sshEquinixUpload(ctx); err != nil {
 			return fmt.Errorf("while uploading key: %w", err)
 		}
 		return nil
-	case nil:
+	case err == nil:
 		if err := ep.sshEquinixUpdate(ctx, k.ID); err != nil {
 			return fmt.Errorf("while updating key: %w", err)
 		}

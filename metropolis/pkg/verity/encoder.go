@@ -45,6 +45,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -177,9 +178,9 @@ func (sb *superblock) computeHashBlock(r io.Reader) ([]byte, uint64, error) {
 			dcnt++
 		}
 		// Handle the read errors.
-		switch err {
-		case nil:
-		case io.ErrUnexpectedEOF, io.EOF:
+		switch {
+		case err == nil:
+		case errors.Is(err, io.ErrUnexpectedEOF), errors.Is(err, io.EOF):
 			// io.ReadFull returns io.ErrUnexpectedEOF after a partial read,
 			// and io.EOF if no bytes were read. In both cases it's possible
 			// to end up with a partially filled hash block.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"log"
 
 	"google.golang.org/grpc"
@@ -17,7 +18,7 @@ func dialAuthenticated(ctx context.Context) *grpc.ClientConn {
 	// Collect credentials, validate command parameters, and try dialing the
 	// cluster.
 	ocert, opkey, err := core.GetOwnerCredentials(flags.configPath)
-	if err == core.NoCredentialsError {
+	if errors.Is(err, core.NoCredentialsError) {
 		log.Fatalf("You have to take ownership of the cluster first: %v", err)
 	}
 	if len(flags.clusterEndpoints) == 0 {
@@ -51,7 +52,7 @@ func dialAuthenticatedNode(ctx context.Context, id, address string, cacert *x509
 	// Collect credentials, validate command parameters, and try dialing the
 	// cluster.
 	ocert, opkey, err := core.GetOwnerCredentials(flags.configPath)
-	if err == core.NoCredentialsError {
+	if errors.Is(err, core.NoCredentialsError) {
 		log.Fatalf("You have to take ownership of the cluster first: %v", err)
 	}
 	cc, err := core.DialNode(ctx, opkey, ocert, cacert, flags.proxyAddr, id, address)

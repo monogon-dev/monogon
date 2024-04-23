@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"log"
 	"os"
 
@@ -27,7 +28,7 @@ cluster. This should never be directly called by end users.`,
 
 func doK8sCredPlugin(cmd *cobra.Command, args []string) {
 	cert, key, err := core.GetOwnerCredentials(flags.configPath)
-	if err == core.NoCredentialsError {
+	if errors.Is(err, core.NoCredentialsError) {
 		log.Fatal("No credentials found on your machine")
 	}
 	if err != nil {

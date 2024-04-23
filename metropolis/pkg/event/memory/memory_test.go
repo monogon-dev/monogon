@@ -18,6 +18,7 @@ package memory
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -294,7 +295,7 @@ func TestCanceling(t *testing.T) {
 
 	// Cancel the context, and expect that context error to propagate to the .Get().
 	ctxC()
-	if want, got := ctx.Err(), <-errs; want != got {
+	if want, got := ctx.Err(), <-errs; !errors.Is(got, want) {
 		t.Fatalf("Get should've returned %v, got %v", want, got)
 	}
 
@@ -308,7 +309,7 @@ func TestCanceling(t *testing.T) {
 
 	// Unblock the .Get now.
 	p.Set(1)
-	if want, got := error(nil), <-errs; want != got {
+	if want, got := error(nil), <-errs; !errors.Is(got, want) {
 		t.Fatalf("Get should've returned %v, got %v", want, got)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"errors"
 	"sort"
 	"time"
 
@@ -319,7 +320,7 @@ func (l *leaderManagement) UpdateNodeRoles(ctx context.Context, req *apb.UpdateN
 
 	// Find the node matching the requested public key.
 	node, err := nodeLoad(ctx, l.leadership, id)
-	if err == errNodeNotFound {
+	if errors.Is(err, errNodeNotFound) {
 		return nil, status.Errorf(codes.NotFound, "node %s not found", id)
 	}
 	if err != nil {
@@ -413,7 +414,7 @@ func (l *leaderManagement) DeleteNode(ctx context.Context, req *apb.DeleteNodeRe
 
 	// Find the node matching the requested public key.
 	node, err := nodeLoad(ctx, l.leadership, id)
-	if err == errNodeNotFound {
+	if errors.Is(err, errNodeNotFound) {
 		return nil, status.Errorf(codes.NotFound, "node %s not found", id)
 	}
 	if err != nil {

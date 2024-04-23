@@ -2,6 +2,7 @@ package kmod
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -150,7 +151,7 @@ func (s *Manager) loadModuleRecursive(modIdx uint32) error {
 	}
 	defer module.Close()
 	err = LoadModule(module, "", 0)
-	if err != nil && err != unix.EEXIST {
+	if err != nil && errors.Is(err, unix.EEXIST) {
 		return fmt.Errorf("error loading kernel module %v: %w", modMeta.Name, err)
 	}
 	s.loadedModules[modIdx] = true

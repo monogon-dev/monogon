@@ -21,6 +21,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -159,7 +160,7 @@ func main() {
 					log.Printf("Log pump error: %v", err)
 				}
 				logs.Close()
-			} else if err == ctx.Err() {
+			} else if errors.Is(err, ctx.Err()) {
 				return // Exit if the context has been cancelled
 			} else {
 				log.Printf("Pod logs not ready yet: %v", err)
@@ -170,7 +171,7 @@ func main() {
 	for {
 		time.Sleep(1 * time.Second)
 		pod, err := clientSet.CoreV1().Pods("default").Get(ctx, podName, metav1.GetOptions{})
-		if err != nil && err == ctx.Err() {
+		if err != nil && errors.Is(err, ctx.Err()) {
 			return // Exit if the context has been cancelled
 		} else if err != nil {
 			log.Printf("Failed to get CTS pod: %v", err)

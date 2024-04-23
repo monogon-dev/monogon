@@ -26,6 +26,7 @@ package kvmdevice
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -158,7 +159,7 @@ func (k *Plugin) Run(ctx context.Context) error {
 	kvmDevNode, err := deviceNumberFromString(string(kvmDevRaw))
 
 	err = unix.Mknod("/dev/kvm", 0660, int(kvmDevNode))
-	if err != nil && err != unix.EEXIST {
+	if err != nil && errors.Is(err, unix.EEXIST) {
 		return fmt.Errorf("failed to create KVM device node: %v", err)
 	}
 

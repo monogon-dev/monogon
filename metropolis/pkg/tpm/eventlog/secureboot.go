@@ -163,7 +163,7 @@ func ParseSecurebootState(events []Event) (*SecurebootState, error) {
 			a, err := internal.ParseUEFIVariableAuthority(bytes.NewReader(e.Data))
 			if err != nil {
 				// Workaround for: https://github.com/google/go-attestation/issues/157
-				if err == internal.ErrSigMissingGUID {
+				if errors.Is(err, internal.ErrSigMissingGUID) {
 					// Versions of shim which do not carry
 					// https://github.com/rhboot/shim/commit/8a27a4809a6a2b40fb6a4049071bf96d6ad71b50
 					// have an erroneous additional byte in the event, which breaks digest

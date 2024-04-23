@@ -9,6 +9,7 @@ package scruffy
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -77,7 +78,7 @@ func (s *Server) Start(ctx context.Context) {
 	go hwr.run(ctx)
 
 	go func() {
-		if err := s.Config.Webug.Start(ctx, conn); err != nil && err != ctx.Err() {
+		if err := s.Config.Webug.Start(ctx, conn); err != nil && !errors.Is(err, ctx.Err()) {
 			klog.Exitf("Failed to start webug: %v", err)
 		}
 	}()

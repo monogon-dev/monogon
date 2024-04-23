@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"net"
@@ -119,7 +120,7 @@ func (s *Server) startPublic(ctx context.Context) {
 	klog.Infof("Public API listening on %s", s.ListenPublic)
 	go func() {
 		err := g.Serve(lis)
-		if err != ctx.Err() {
+		if !errors.Is(err, ctx.Err()) {
 			klog.Exitf("Public gRPC serve failed: %v", err)
 		}
 	}()
@@ -137,7 +138,7 @@ func (s *Server) startInternalGRPC(ctx context.Context) {
 	klog.Infof("Internal gRPC listening on %s", s.ListenGRPC)
 	go func() {
 		err := g.Serve(lis)
-		if err != ctx.Err() {
+		if !errors.Is(err, ctx.Err()) {
 			klog.Exitf("Internal gRPC serve failed: %v", err)
 		}
 	}()
@@ -163,7 +164,7 @@ func (s *Server) Start(ctx context.Context) {
 	s.startInternalGRPC(ctx)
 	s.startPublic(ctx)
 	go func() {
-		if err := s.Config.Webug.Start(ctx, conn); err != nil && err != ctx.Err() {
+		if err := s.Config.Webug.Start(ctx, conn); err != nil && !errors.Is(err, ctx.Err()) {
 			klog.Exitf("Failed to start webug: %v", err)
 		}
 	}()

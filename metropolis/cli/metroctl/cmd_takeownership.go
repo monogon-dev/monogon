@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"os/exec"
@@ -46,7 +47,7 @@ func doTakeOwnership(cmd *cobra.Command, _ []string) {
 	// Retrieve the cluster owner's private key, and use it to construct
 	// ephemeral credentials. Then, dial the cluster.
 	opk, err := core.GetOwnerKey(flags.configPath)
-	if err == core.NoCredentialsError {
+	if errors.Is(err, core.NoCredentialsError) {
 		log.Fatalf("Owner key does not exist. takeownership needs to be executed on the same system that has previously installed the cluster using metroctl install.")
 	}
 	if err != nil {

@@ -17,6 +17,7 @@ package socksproxy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -173,14 +174,14 @@ func handle(ctx context.Context, handler Handler, con net.Conn) {
 
 	// Read request from the client and translate problems into early error replies.
 	req, err := readRequest(con)
-	switch err {
-	case errNotConnect:
+	switch {
+	case errors.Is(err, errNotConnect):
 		writeReply(con, ReplyCommandNotSupported, net.IPv4(0, 0, 0, 0), 0)
 		return
-	case errUnsupportedAddressType:
+	case errors.Is(err, errUnsupportedAddressType):
 		writeReply(con, ReplyAddressTypeNotSupported, net.IPv4(0, 0, 0, 0), 0)
 		return
-	case nil:
+	case err == nil:
 	default:
 		writeReply(con, ReplyGeneralFailure, net.IPv4(0, 0, 0, 0), 0)
 		return

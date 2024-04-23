@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -146,7 +147,7 @@ func main() {
 		}
 	}()
 	go func() {
-		if err := c.WebugConfig.Start(ctx, conn); err != nil && err != ctx.Err() {
+		if err := c.WebugConfig.Start(ctx, conn); err != nil && !errors.Is(err, ctx.Err()) {
 			klog.Exitf("Failed to start webug: %v", err)
 		}
 	}()

@@ -22,6 +22,7 @@
 package fsquota
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -66,7 +67,7 @@ func SetQuota(path string, maxBytes uint64, maxInodes uint64) error {
 		// infrequent calls this should not be an immediate issue.
 		for {
 			quota, err := quotactl.GetNextQuota(dir, quotactl.QuotaTypeProject, lastID)
-			if err == unix.ENOENT || err == unix.ESRCH {
+			if errors.Is(err, unix.ENOENT) || errors.Is(err, unix.ESRCH) {
 				// We have enumerated all quotas, nothing exists here
 				break
 			} else if err != nil {

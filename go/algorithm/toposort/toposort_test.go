@@ -1,6 +1,9 @@
 package toposort
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestBasic(t *testing.T) {
 	// Test the example from Wikipedia's Topological sorting page
@@ -83,7 +86,7 @@ func FuzzTopoSort(f *testing.F) {
 			g.AddEdge(int(a[i]), int(a[i+1]))
 		}
 		solution, err := g.TopologicalOrder()
-		if err == ErrCycle {
+		if errors.Is(err, ErrCycle) {
 			// Cycle found
 			return
 		}

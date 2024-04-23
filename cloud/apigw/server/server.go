@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"net"
 	"net/http"
@@ -37,9 +38,9 @@ func (c *Config) RegisterFlags() {
 }
 
 // Server runs the apigw server. It listens on two interfaces:
-//  - Internal gRPC, which is authenticated using TLS and authorized by CA. This
-//    is to be used for internal RPCs, eg. management/debug.
-//  - Public gRPC-Web, which is currently unauthenticated.
+//   - Internal gRPC, which is authenticated using TLS and authorized by CA. This
+//     is to be used for internal RPCs, eg. management/debug.
+//   - Public gRPC-Web, which is currently unauthenticated.
 type Server struct {
 	Config Config
 
@@ -66,7 +67,7 @@ func (s *Server) startInternalGRPC(ctx context.Context) {
 	klog.Infof("Internal gRPC listening on %s", s.ListenGRPC)
 	go func() {
 		err := g.Serve(lis)
-		if err != ctx.Err() {
+		if !errors.Is(err, ctx.Err()) {
 			klog.Exitf("Internal gRPC serve failed: %v", err)
 		}
 	}()
@@ -91,7 +92,7 @@ func (s *Server) startPublic(ctx context.Context) {
 	klog.Infof("Public API listening on %s", s.ListenPublic)
 	go func() {
 		err := server.Serve(lis)
-		if err != ctx.Err() {
+		if !errors.Is(err, ctx.Err()) {
 			klog.Exitf("Public API serve failed: %v", err)
 		}
 	}()

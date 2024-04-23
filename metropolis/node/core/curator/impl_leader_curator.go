@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/subtle"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -108,7 +109,7 @@ func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, 
 	nodes := make(map[string]*Node)
 	for {
 		nodeKV, err := w.Get(ctx, event.BacklogOnly[*nodeAtID]())
-		if err == event.BacklogDone {
+		if errors.Is(err, event.BacklogDone) {
 			break
 		}
 		if err != nil {
@@ -359,7 +360,7 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 		rpc.Trace(ctx).Printf("node %s already exists in cluster, failing", id)
 		return nil, status.Errorf(codes.FailedPrecondition, "node already exists in cluster, state %s", node.state.String())
 	}
-	if err != errNodeNotFound {
+	if !errors.Is(err, errNodeNotFound) {
 		return nil, err
 	}
 

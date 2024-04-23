@@ -18,6 +18,7 @@ package kubernetes
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -107,7 +108,7 @@ func (s *csiPluginServer) NodePublishVolume(ctx context.Context, req *csi.NodePu
 	case *csi.VolumeCapability_Mount:
 		err := unix.Mount(volumePath, req.TargetPath, "", unix.MS_BIND, "")
 		switch {
-		case err == unix.ENOENT:
+		case errors.Is(err, unix.ENOENT):
 			return nil, status.Error(codes.NotFound, "volume not found")
 		case err != nil:
 			return nil, status.Errorf(codes.Unavailable, "failed to bind-mount volume: %v", err)

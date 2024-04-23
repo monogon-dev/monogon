@@ -72,7 +72,7 @@ func (d *Device) Zero(startByte int64, endByte int64) error {
 		// Attempts to leverage discard guarantees to provide extremely quick
 		// metadata-only zeroing.
 		err = unix.Fallocate(int(fd), unix.FALLOC_FL_PUNCH_HOLE|unix.FALLOC_FL_KEEP_SIZE, startByte, endByte-startByte)
-		if err == unix.EOPNOTSUPP {
+		if errors.Is(err, unix.EOPNOTSUPP) {
 			// Tries Write Same and friends and then just falls back to writing
 			// zeroes.
 			_, _, err = unix.Syscall(unix.SYS_IOCTL, fd, unix.BLKZEROOUT, uintptr(unsafe.Pointer(&args[0])))

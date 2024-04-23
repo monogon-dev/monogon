@@ -1,6 +1,7 @@
 package mgmt
 
 import (
+	"errors"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -63,9 +64,9 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 	}
 	dn := logtree.DN(req.Dn)
 	_, err := dn.Path()
-	switch err {
-	case nil:
-	case logtree.ErrInvalidDN:
+	switch {
+	case err == nil:
+	case errors.Is(err, logtree.ErrInvalidDN):
 		return status.Errorf(codes.InvalidArgument, "invalid DN")
 	default:
 		return status.Errorf(codes.Unavailable, "could not parse DN: %v", err)
@@ -116,9 +117,9 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 	}
 
 	reader, err := s.LogTree.Read(logtree.DN(req.Dn), options...)
-	switch err {
-	case nil:
-	case logtree.ErrRawAndLeveled:
+	switch {
+	case err == nil:
+	case errors.Is(err, logtree.ErrRawAndLeveled):
 		return status.Errorf(codes.InvalidArgument, "requested only raw and only leveled logs simultaneously")
 	default:
 		return status.Errorf(codes.Unavailable, "could not retrieve logs: %v", err)

@@ -30,7 +30,7 @@ func TestEventual(t *testing.T, name string, ctx context.Context, timeout time.D
 				launch.Log("Test: %s: okay after %.1f seconds", name, time.Since(start).Seconds())
 				return
 			}
-			if err == ctx.Err() {
+			if errors.Is(err, ctx.Err()) {
 				t.Fatal(lastErr)
 			}
 			if errors.Is(err, &PermanentError{}) {

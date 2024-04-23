@@ -3,6 +3,7 @@ package scsi
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -27,7 +28,7 @@ func (d Device) Inquiry() (*InquiryData, error) {
 	rawReader := io.LimitReader(bytes.NewReader(data), resLen)
 	var raw inquiryDataRaw
 	if err := binary.Read(rawReader, binary.BigEndian, &raw); err != nil {
-		if err == io.ErrUnexpectedEOF {
+		if errors.Is(err, io.ErrUnexpectedEOF) {
 			return nil, fmt.Errorf("response to INQUIRY is smaller than %d bytes, very old or broken device", binary.Size(raw))
 		}
 		panic(err) // Read from memory, shouldn't be possible to hit
@@ -67,14 +68,14 @@ func (d Device) Inquiry() (*InquiryData, error) {
 	}
 	var padding [2]byte
 	if _, err := io.ReadFull(rawReader, padding[:]); err != nil {
-		if err == io.ErrUnexpectedEOF {
+		if errors.Is(err, io.ErrUnexpectedEOF) {
 			return &res, nil
 		}
 	}
 	for i := 0; i < 8; i++ {
 		var versionDesc uint16
 		if err := binary.Read(rawReader, binary.BigEndian, &versionDesc); err != nil {
-			if err == io.EOF || err == io.ErrUnexpectedEOF {
+			if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
 				return &res, nil
 			}
 		}

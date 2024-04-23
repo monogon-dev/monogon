@@ -2,6 +2,7 @@ package curator
 
 import (
 	"context"
+	"errors"
 	"net/netip"
 
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -32,7 +33,7 @@ func (l *leaderCurator) prepareClusternetCacheUnlocked(ctx context.Context) erro
 	defer w.Close()
 	for {
 		nodeKV, err := w.Get(ctx, event.BacklogOnly[*nodeAtID]())
-		if err == event.BacklogDone {
+		if errors.Is(err, event.BacklogDone) {
 			break
 		}
 		if err != nil {
