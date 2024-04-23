@@ -241,7 +241,7 @@ func (ep *equinixProvider) provision(ctx context.Context, sess *bmdb.Session, rs
 	}
 	klog.Infof("Created a new device within Equinix (RID: %s, PID: %s, HOST: %s)", rsv.ID, nd.ID, hostname)
 
-	slices.DeleteFunc(ep.reservationCache, func(v packngo.HardwareReservation) bool {
+	ep.reservationCache = slices.DeleteFunc(ep.reservationCache, func(v packngo.HardwareReservation) bool {
 		return rsv.ID == v.ID
 	})
 
