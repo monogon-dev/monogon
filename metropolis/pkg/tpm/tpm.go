@@ -196,17 +196,17 @@ func GenerateSafeKey(size uint16) ([]byte, error) {
 	lock.Lock()
 	defer lock.Unlock()
 	if tpm == nil {
-		return []byte{}, ErrNotInitialized
+		return nil, ErrNotInitialized
 	}
 	encryptionKeyHost := make([]byte, size)
 	if _, err := io.ReadFull(rand.Reader, encryptionKeyHost); err != nil {
-		return []byte{}, fmt.Errorf("failed to generate host portion of new key: %w", err)
+		return nil, fmt.Errorf("failed to generate host portion of new key: %w", err)
 	}
 	var encryptionKeyTPM []byte
 	for i := 48; i > 0; i-- {
 		tpmKeyPart, err := tpm2.GetRandom(tpm.device, size-uint16(len(encryptionKeyTPM)))
 		if err != nil {
-			return []byte{}, fmt.Errorf("failed to generate TPM portion of new key: %w", err)
+			return nil, fmt.Errorf("failed to generate TPM portion of new key: %w", err)
 		}
 		encryptionKeyTPM = append(encryptionKeyTPM, tpmKeyPart...)
 		if len(encryptionKeyTPM) >= int(size) {
@@ -215,7 +215,7 @@ func GenerateSafeKey(size uint16) ([]byte, error) {
 	}
 
 	if len(encryptionKeyTPM) != int(size) {
-		return []byte{}, fmt.Errorf("got incorrect amount of TPM randomess: %v, requested %v", len(encryptionKeyTPM), size)
+		return nil, fmt.Errorf("got incorrect amount of TPM randomess: %v, requested %v", len(encryptionKeyTPM), size)
 	}
 
 	encryptionKey := make([]byte, size)
@@ -233,13 +233,13 @@ func Seal(data []byte, pcrs []int) ([]byte, error) {
 	// 128 bytes which is insufficient.
 	boxKey, err := GenerateSafeKey(32)
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to generate boxKey: %w", err)
+		return nil, fmt.Errorf("failed to generate boxKey: %w", err)
 	}
 	lock.Lock()
 	defer lock.Unlock()
 	srk, err := tpm2tools.StorageRootKeyRSA(tpm.device)
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to load TPM SRK: %w", err)
+		return nil, fmt.Errorf("failed to load TPM SRK: %w", err)
 	}
 	defer srk.Close()
 	var boxKeyArr [32]byte
@@ -250,7 +250,7 @@ func Seal(data []byte, pcrs []int) ([]byte, error) {
 	encryptedData := secretbox.Seal(nil, data, &unusedNonce, &boxKeyArr)
 	sealedKey, err := srk.Seal(boxKey, tpm2tools.SealOpts{Current: tpm2.PCRSelection{Hash: tpm2.AlgSHA256, PCRs: pcrs}})
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to seal boxKey: %w", err)
+		return nil, fmt.Errorf("failed to seal boxKey: %w", err)
 	}
 	sealedBytes := tpmpb.ExtendedSealedBytes{
 		SealedKey:        sealedKey,
@@ -258,7 +258,7 @@ func Seal(data []byte, pcrs []int) ([]byte, error) {
 	}
 	rawSealedBytes, err := proto.Marshal(&sealedBytes)
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to marshal sealed data: %w", err)
+		return nil, fmt.Errorf("failed to marshal sealed data: %w", err)
 	}
 	return rawSealedBytes, nil
 }
@@ -269,20 +269,20 @@ func Unseal(data []byte) ([]byte, error) {
 	lock.Lock()
 	defer lock.Unlock()
 	if tpm == nil {
-		return []byte{}, ErrNotInitialized
+		return nil, ErrNotInitialized
 	}
 	srk, err := tpm2tools.StorageRootKeyRSA(tpm.device)
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to load TPM SRK: %w", err)
+		return nil, fmt.Errorf("failed to load TPM SRK: %w", err)
 	}
 	defer srk.Close()
 
 	var sealedBytes tpmpb.ExtendedSealedBytes
 	if err := proto.Unmarshal(data, &sealedBytes); err != nil {
-		return []byte{}, fmt.Errorf("failed to unmarshal sealed data: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal sealed data: %w", err)
 	}
 	if sealedBytes.SealedKey == nil {
-		return []byte{}, fmt.Errorf("sealed data structure is invalid: no sealed key")
+		return nil, fmt.Errorf("sealed data structure is invalid: no sealed key")
 	}
 	// Logging this for auditing purposes
 	var pcrList []string
@@ -292,17 +292,17 @@ func Unseal(data []byte) ([]byte, error) {
 	tpm.logger.Infof("Attempting to unseal key protected with PCRs %s", strings.Join(pcrList, ","))
 	unsealedKey, err := srk.Unseal(sealedBytes.SealedKey, tpm2tools.UnsealOpts{})
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to unseal key: %w", err)
+		return nil, fmt.Errorf("failed to unseal key: %w", err)
 	}
 	var key [32]byte
 	if len(unsealedKey) != len(key) {
-		return []byte{}, fmt.Errorf("unsealed key has wrong length: expected %v bytes, got %v", len(key), len(unsealedKey))
+		return nil, fmt.Errorf("unsealed key has wrong length: expected %v bytes, got %v", len(key), len(unsealedKey))
 	}
 	copy(key[:], unsealedKey)
 	var unusedNonce [24]byte
 	payload, ok := secretbox.Open(nil, sealedBytes.EncryptedPayload, &unusedNonce, &key)
 	if !ok {
-		return []byte{}, errors.New("payload box cannot be opened")
+		return nil, errors.New("payload box cannot be opened")
 	}
 	return payload, nil
 }
@@ -354,16 +354,16 @@ func GetAKPublic() ([]byte, error) {
 	lock.Lock()
 	defer lock.Unlock()
 	if tpm == nil {
-		return []byte{}, ErrNotInitialized
+		return nil, ErrNotInitialized
 	}
 	if tpm.akHandleCache == tpmutil.Handle(0) {
 		if err := loadAK(); err != nil {
-			return []byte{}, fmt.Errorf("failed to load AK primary key: %w", err)
+			return nil, fmt.Errorf("failed to load AK primary key: %w", err)
 		}
 	}
 	public, _, _, err := tpm2.ReadPublic(tpm.device, tpm.akHandleCache)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 	return public.Encode()
 }
@@ -380,22 +380,22 @@ func GetEKPublic() ([]byte, []byte, error) {
 	lock.Lock()
 	defer lock.Unlock()
 	if tpm == nil {
-		return []byte{}, []byte{}, ErrNotInitialized
+		return nil, []byte{}, ErrNotInitialized
 	}
 	ekHandle, publicRaw, err := loadEK()
 	if err != nil {
-		return []byte{}, []byte{}, fmt.Errorf("failed to load EK primary key: %w", err)
+		return nil, []byte{}, fmt.Errorf("failed to load EK primary key: %w", err)
 	}
 	defer tpm2.FlushContext(tpm.device, ekHandle)
 	// Don't question the use of HandleOwner, that's the Standard™
 	ekCertRaw, err := tpm2.NVReadEx(tpm.device, ekCertHandle, tpm2.HandleOwner, "", 0)
 	if err != nil {
-		return []byte{}, []byte{}, err
+		return nil, []byte{}, err
 	}
 
 	publicKey, err := x509.MarshalPKIXPublicKey(publicRaw)
 	if err != nil {
-		return []byte{}, []byte{}, err
+		return nil, []byte{}, err
 	}
 
 	return publicKey, ekCertRaw, nil
@@ -406,19 +406,19 @@ func GetEKPublic() ([]byte, []byte, error) {
 func MakeAKChallenge(ekPubKey, akPub []byte, nonce []byte) ([]byte, []byte, error) {
 	ekPubKeyData, err := x509.ParsePKIXPublicKey(ekPubKey)
 	if err != nil {
-		return []byte{}, []byte{}, fmt.Errorf("failed to decode EK pubkey: %w", err)
+		return nil, []byte{}, fmt.Errorf("failed to decode EK pubkey: %w", err)
 	}
 	akPubData, err := tpm2.DecodePublic(akPub)
 	if err != nil {
-		return []byte{}, []byte{}, fmt.Errorf("failed to decode AK public part: %w", err)
+		return nil, []byte{}, fmt.Errorf("failed to decode AK public part: %w", err)
 	}
 	// Make sure we're attesting the right attributes (in particular Restricted)
 	if !akPubData.MatchesTemplate(akTemplate) {
-		return []byte{}, []byte{}, errors.New("the key being challenged is not a valid AK")
+		return nil, []byte{}, errors.New("the key being challenged is not a valid AK")
 	}
 	akName, err := akPubData.Name()
 	if err != nil {
-		return []byte{}, []byte{}, fmt.Errorf("failed to derive AK name: %w", err)
+		return nil, []byte{}, fmt.Errorf("failed to derive AK name: %w", err)
 	}
 	return generateRSA(akName.Digest, ekPubKeyData.(*rsa.PublicKey), 16, nonce, rand.Reader)
 }
@@ -428,17 +428,17 @@ func SolveAKChallenge(credBlob, secretChallenge []byte) ([]byte, error) {
 	lock.Lock()
 	defer lock.Unlock()
 	if tpm == nil {
-		return []byte{}, ErrNotInitialized
+		return nil, ErrNotInitialized
 	}
 	if tpm.akHandleCache == tpmutil.Handle(0) {
 		if err := loadAK(); err != nil {
-			return []byte{}, fmt.Errorf("failed to load AK primary key: %w", err)
+			return nil, fmt.Errorf("failed to load AK primary key: %w", err)
 		}
 	}
 
 	ekHandle, _, err := loadEK()
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to load EK: %w", err)
+		return nil, fmt.Errorf("failed to load EK: %w", err)
 	}
 	defer tpm2.FlushContext(tpm.device, ekHandle)
 
@@ -466,7 +466,7 @@ func SolveAKChallenge(credBlob, secretChallenge []byte) ([]byte, error) {
 
 	_, _, err = tpm2.PolicySecret(tpm.device, tpm2.HandleEndorsement, tpm2.AuthCommand{Session: tpm2.HandlePasswordSession, Attributes: tpm2.AttrContinueSession}, endorsementSession, nil, nil, nil, 0)
 	if err != nil {
-		return []byte{}, fmt.Errorf("failed to make a policy secret session: %w", err)
+		return nil, fmt.Errorf("failed to make a policy secret session: %w", err)
 	}
 
 	for {
@@ -513,11 +513,11 @@ func AttestPlatform(nonce []byte) ([]byte, []byte, error) {
 	lock.Lock()
 	defer lock.Unlock()
 	if tpm == nil {
-		return []byte{}, []byte{}, ErrNotInitialized
+		return nil, []byte{}, ErrNotInitialized
 	}
 	if tpm.akHandleCache == tpmutil.Handle(0) {
 		if err := loadAK(); err != nil {
-			return []byte{}, []byte{}, fmt.Errorf("failed to load AK primary key: %w", err)
+			return nil, []byte{}, fmt.Errorf("failed to load AK primary key: %w", err)
 		}
 	}
 	// We only care about SHA256 since SHA1 is weak. This is supported on at
@@ -526,7 +526,7 @@ func AttestPlatform(nonce []byte) ([]byte, []byte, error) {
 	quote, signature, err := tpm2.Quote(tpm.device, tpm.akHandleCache, "", "", nonce, srtmPCRs,
 		tpm2.AlgNull)
 	if err != nil {
-		return []byte{}, []byte{}, fmt.Errorf("failed to quote PCRs: %w", err)
+		return nil, []byte{}, fmt.Errorf("failed to quote PCRs: %w", err)
 	}
 	return quote, signature.RSA.Signature, err
 }
@@ -584,7 +584,7 @@ func GetPCRs() ([][]byte, error) {
 	lock.Lock()
 	defer lock.Unlock()
 	if tpm == nil {
-		return [][]byte{}, ErrNotInitialized
+		return nil, ErrNotInitialized
 	}
 	pcrs := make([][]byte, numSRTMPCRs)
 

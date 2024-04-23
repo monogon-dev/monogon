@@ -92,7 +92,7 @@ func GetPmsgDump() ([]string, error) {
 	var lines []string
 	pstoreEntries, err := os.ReadDir(CanonicalMountPath)
 	if err != nil {
-		return []string{}, fmt.Errorf("failed to list files in pstore: %w", err)
+		return nil, fmt.Errorf("failed to list files in pstore: %w", err)
 	}
 	for _, entry := range pstoreEntries {
 		if !pmsgFileRegexp.MatchString(entry.Name()) {

@@ -250,7 +250,7 @@ func getIncludeDirs(entry compilationDBEntry) (quoteIncludes []string, systemInc
 	if len(entry.Arguments) == 0 {
 		commandArgs, err := shellwords.Parse(entry.Command)
 		if err != nil {
-			return []string{}, []string{}, fmt.Errorf("failed to parse command: %w", err)
+			return nil, nil, fmt.Errorf("failed to parse command: %w", err)
 		}
 		entry.Arguments = commandArgs
 	}
