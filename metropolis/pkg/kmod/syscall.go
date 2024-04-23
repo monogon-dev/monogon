@@ -19,14 +19,15 @@ func LoadModule(file syscall.Conn, params string, flags uintptr) error {
 	if err != nil {
 		return errors.New("invalid null byte in params")
 	}
+	var errNo unix.Errno
 	ctrlErr := sc.Control(func(fd uintptr) {
-		_, _, err = unix.Syscall(unix.SYS_FINIT_MODULE, fd, uintptr(unsafe.Pointer(paramsRaw)), flags)
+		_, _, errNo = unix.Syscall(unix.SYS_FINIT_MODULE, fd, uintptr(unsafe.Pointer(paramsRaw)), flags)
 	})
 	if ctrlErr != nil {
 		return fmt.Errorf("unable to get control handle: %w", ctrlErr)
 	}
-	if err != unix.Errno(0) {
-		return err
+	if errNo != unix.Errno(0) {
+		return errNo
 	}
 	return nil
 }
@@ -37,9 +38,9 @@ func UnloadModule(name string, flags uintptr) error {
 	if err != nil {
 		return errors.New("invalid null byte in name")
 	}
-	_, _, err = unix.Syscall(unix.SYS_DELETE_MODULE, uintptr(unsafe.Pointer(nameRaw)), flags, 0)
-	if err != unix.Errno(0) {
-		return err
+	_, _, errNo := unix.Syscall(unix.SYS_DELETE_MODULE, uintptr(unsafe.Pointer(nameRaw)), flags, 0)
+	if errNo != unix.Errno(0) {
+		return errNo
 	}
-	return err
+	return nil
 }

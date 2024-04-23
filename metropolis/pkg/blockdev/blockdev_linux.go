@@ -68,19 +68,22 @@ func (d *Device) Zero(startByte int64, endByte int64) error {
 	var err error
 	args[0] = uint64(startByte)
 	args[1] = uint64(endByte - startByte)
-	if ctrlErr := d.rawConn.Control(func(fd uintptr) {
+	ctrlErr := d.rawConn.Control(func(fd uintptr) {
 		// Attempts to leverage discard guarantees to provide extremely quick
 		// metadata-only zeroing.
 		err = unix.Fallocate(int(fd), unix.FALLOC_FL_PUNCH_HOLE|unix.FALLOC_FL_KEEP_SIZE, startByte, endByte-startByte)
 		if errors.Is(err, unix.EOPNOTSUPP) {
 			// Tries Write Same and friends and then just falls back to writing
 			// zeroes.
-			_, _, err = unix.Syscall(unix.SYS_IOCTL, fd, unix.BLKZEROOUT, uintptr(unsafe.Pointer(&args[0])))
-			if err == unix.Errno(0) {
+			_, _, errNo := unix.Syscall(unix.SYS_IOCTL, fd, unix.BLKZEROOUT, uintptr(unsafe.Pointer(&args[0])))
+			if errNo == unix.Errno(0) {
 				err = nil
+			} else {
+				err = errNo
 			}
 		}
-	}); ctrlErr != nil {
+	})
+	if ctrlErr != nil {
 		return ctrlErr
 	}
 	if err != nil {
@@ -134,7 +137,7 @@ func FromFileHandle(handle *os.File) (*Device, error) {
 	}
 
 	var sizeBytes uint64
-	var getSizeErr error
+	var getSizeErr syscall.Errno
 	outFileC.Control(func(fd uintptr) {
 		_, _, getSizeErr = unix.Syscall(unix.SYS_IOCTL, fd, unix.BLKGETSIZE64, uintptr(unsafe.Pointer(&sizeBytes)))
 	})

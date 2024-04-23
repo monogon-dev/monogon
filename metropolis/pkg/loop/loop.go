@@ -185,15 +185,15 @@ func Open(path string) (*Device, error) {
 		return nil, fmt.Errorf("failed to open device: %w", err)
 	}
 	var loopInfo loopInfo64
-	_, _, err = syscall.Syscall(unix.SYS_IOCTL, potentialDevice.Fd(), unix.LOOP_GET_STATUS64, uintptr(unsafe.Pointer(&loopInfo)))
-	if err == syscall.Errno(0) {
+	_, _, errNo := syscall.Syscall(unix.SYS_IOCTL, potentialDevice.Fd(), unix.LOOP_GET_STATUS64, uintptr(unsafe.Pointer(&loopInfo)))
+	if errNo == syscall.Errno(0) {
 		return &Device{dev: potentialDevice, num: loopInfo.number}, nil
 	}
 	potentialDevice.Close()
-	if err == syscall.EINVAL {
+	if errNo == syscall.EINVAL {
 		return nil, errors.New("not a loop device")
 	}
-	return nil, fmt.Errorf("failed to determine state of potential loop device: %w", err)
+	return nil, fmt.Errorf("failed to determine state of potential loop device: %w", errNo)
 }
 
 func (d *Device) ensureOpen() error {

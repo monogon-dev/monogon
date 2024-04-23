@@ -107,9 +107,9 @@ func QuotaOn(fd *os.File, qtype QuotaType, quotaFormat QuotaFormat, quotaFilePat
 	if err != nil {
 		return err
 	}
-	_, _, err = unix.Syscall6(unix.SYS_QUOTACTL_FD, fd.Fd(), uintptr(Q_QUOTAON|uint(qtype)), uintptr(quotaFormat), uintptr(unsafe.Pointer(pathArg)), 0, 0)
-	if err != unix.Errno(0) {
-		return err
+	_, _, errNo := unix.Syscall6(unix.SYS_QUOTACTL_FD, fd.Fd(), uintptr(Q_QUOTAON|uint(qtype)), uintptr(quotaFormat), uintptr(unsafe.Pointer(pathArg)), 0, 0)
+	if errNo != unix.Errno(0) {
+		return errNo
 	}
 	return nil
 }
