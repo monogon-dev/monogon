@@ -17,6 +17,7 @@
 package fsquota
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -92,11 +93,10 @@ func TestBasic(t *testing.T) {
 		for {
 			n, err := testfile.Write(testdata)
 			if err != nil {
-				if pathErr, ok := err.(*os.PathError); ok {
-					if pathErr.Err == syscall.ENOSPC {
-						// Running out of space is the only acceptable error to continue execution
-						break
-					}
+				var pathErr *os.PathError
+				if errors.As(err, &pathErr) && errors.Is(pathErr.Err, syscall.ENOSPC) {
+					// Running out of space is the only acceptable error to continue execution
+					break
 				}
 				t.Fatal(err)
 			}

@@ -391,7 +391,8 @@ func parseEfiSignature(b []byte) ([]x509.Certificate, error) {
 	} else {
 		// A bug in shim may cause an event to be missing the SignatureOwner GUID.
 		// We handle this, but signal back to the caller using ErrSigMissingGUID.
-		if _, isStructuralErr := err.(asn1.StructuralError); isStructuralErr {
+		var structuralError asn1.StructuralError
+		if errors.As(err, &structuralError) {
 			var err2 error
 			cert, err2 = x509.ParseCertificate(b)
 			if err2 == nil {

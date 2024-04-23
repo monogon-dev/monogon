@@ -150,11 +150,10 @@ func Create(f *os.File, c Config) (*Device, error) {
 			return nil, fmt.Errorf("failed to allocate loop device: %w", os.NewSyscallError("ioctl(LOOP_CTL_GET_FREE)", errno))
 		}
 		dev, err := os.OpenFile(fmt.Sprintf("/dev/loop%v", devNum), os.O_RDWR|os.O_EXCL, 0)
-		if pe, ok := err.(*os.PathError); ok {
-			if pe.Err == unix.EBUSY {
-				// We have lost the race, get a new device
-				continue
-			}
+		var pe *os.PathError
+		if errors.As(err, &pe) && errors.Is(pe.Err, unix.EBUSY) {
+			// We have lost the race, get a new device
+			continue
 		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to open newly-allocated loop device: %w", err)

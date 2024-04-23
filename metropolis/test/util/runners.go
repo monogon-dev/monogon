@@ -70,8 +70,8 @@ func (p *PermanentError) Unwrap() error {
 }
 
 func (p *PermanentError) Is(o error) bool {
-	op, ok := o.(*PermanentError)
-	if !ok {
+	var op *PermanentError
+	if !errors.As(o, &op) {
 		return false
 	}
 	if p.Err == nil || op.Err == nil {

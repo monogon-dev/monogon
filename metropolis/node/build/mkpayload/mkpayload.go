@@ -20,6 +20,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -179,7 +180,8 @@ func main() {
 		return
 	}
 	// Exit with objcopy's return code.
-	if e, ok := err.(*exec.ExitError); ok {
+	var e *exec.ExitError
+	if errors.As(err, &e) {
 		os.Exit(e.ExitCode())
 	}
 	log.Fatalf("Could not start command: %v", err)

@@ -476,7 +476,8 @@ func SolveAKChallenge(credBlob, secretChallenge []byte) ([]byte, error) {
 			// Use a full policy session for the EK
 			{Session: endorsementSession, Attributes: tpm2.AttrContinueSession},
 		}, tpm.akHandleCache, ekHandle, credBlob, secretChallenge)
-		if warn, ok := err.(tpm2.Warning); ok && warn.Code == tpm2.RCRetry {
+		var warn tpm2.Warning
+		if errors.As(err, &warn) && warn.Code == tpm2.RCRetry {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}

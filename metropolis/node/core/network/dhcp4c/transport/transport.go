@@ -43,7 +43,8 @@ func (i InvalidMessageError) Unwrap() error {
 }
 
 func deadlineFromTimeout(err error) error {
-	if timeoutErr, ok := err.(net.Error); ok && timeoutErr.Timeout() {
+	var timeoutErr net.Error
+	if errors.As(err, &timeoutErr) && timeoutErr.Timeout() {
 		return DeadlineExceededErr
 	}
 	return err

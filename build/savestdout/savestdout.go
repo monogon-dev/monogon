@@ -17,6 +17,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 	"os/exec"
@@ -43,7 +44,8 @@ func main() {
 		return
 	}
 
-	if e, ok := err.(*exec.ExitError); ok {
+	var e *exec.ExitError
+	if errors.As(err, &e) {
 		os.Exit(e.ExitCode())
 	}
 
