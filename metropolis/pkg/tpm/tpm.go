@@ -142,13 +142,13 @@ func Initialize(logger logtree.LeveledLogger) error {
 	defer lock.Unlock()
 	tpmDir, err := os.Open("/sys/class/tpm")
 	if err != nil {
-		return errors.Wrap(err, "failed to open sysfs TPM class")
+		return fmt.Errorf("failed to open sysfs TPM class: %w", err)
 	}
 	defer tpmDir.Close()
 
 	tpms, err := tpmDir.Readdirnames(2)
 	if err != nil {
-		return errors.Wrap(err, "failed to read TPM device class")
+		return fmt.Errorf("failed to read TPM device class: %w", err)
 	}
 
 	if len(tpms) == 0 {
@@ -169,11 +169,11 @@ func Initialize(logger logtree.LeveledLogger) error {
 		return fmt.Errorf("failed to convert uevent: %w", err)
 	}
 	if err := unix.Mknod("/dev/tpm", 0600|unix.S_IFCHR, int(unix.Mkdev(uint32(majorDev), uint32(minorDev)))); err != nil {
-		return errors.Wrap(err, "failed to create TPM device node")
+		return fmt.Errorf("failed to create TPM device node: %w", err)
 	}
 	device, err := tpm2.OpenTPM("/dev/tpm")
 	if err != nil {
-		return errors.Wrap(err, "failed to open TPM")
+		return fmt.Errorf("failed to open TPM: %w", err)
 	}
 	tpm = &TPM{
 		device: device,
@@ -200,13 +200,13 @@ func GenerateSafeKey(size uint16) ([]byte, error) {
 	}
 	encryptionKeyHost := make([]byte, size)
 	if _, err := io.ReadFull(rand.Reader, encryptionKeyHost); err != nil {
-		return []byte{}, errors.Wrap(err, "failed to generate host portion of new key")
+		return []byte{}, fmt.Errorf("failed to generate host portion of new key: %w", err)
 	}
 	var encryptionKeyTPM []byte
 	for i := 48; i > 0; i-- {
 		tpmKeyPart, err := tpm2.GetRandom(tpm.device, size-uint16(len(encryptionKeyTPM)))
 		if err != nil {
-			return []byte{}, errors.Wrap(err, "failed to generate TPM portion of new key")
+			return []byte{}, fmt.Errorf("failed to generate TPM portion of new key: %w", err)
 		}
 		encryptionKeyTPM = append(encryptionKeyTPM, tpmKeyPart...)
 		if len(encryptionKeyTPM) >= int(size) {
@@ -239,7 +239,7 @@ func Seal(data []byte, pcrs []int) ([]byte, error) {
 	defer lock.Unlock()
 	srk, err := tpm2tools.StorageRootKeyRSA(tpm.device)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to load TPM SRK")
+		return []byte{}, fmt.Errorf("failed to load TPM SRK: %w", err)
 	}
 	defer srk.Close()
 	var boxKeyArr [32]byte
@@ -258,7 +258,7 @@ func Seal(data []byte, pcrs []int) ([]byte, error) {
 	}
 	rawSealedBytes, err := proto.Marshal(&sealedBytes)
 	if err != nil {
-		return []byte{}, errors.Wrapf(err, "failed to marshal sealed data")
+		return []byte{}, fmt.Errorf("failed to marshal sealed data: %w", err)
 	}
 	return rawSealedBytes, nil
 }
@@ -273,13 +273,13 @@ func Unseal(data []byte) ([]byte, error) {
 	}
 	srk, err := tpm2tools.StorageRootKeyRSA(tpm.device)
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to load TPM SRK")
+		return []byte{}, fmt.Errorf("failed to load TPM SRK: %w", err)
 	}
 	defer srk.Close()
 
 	var sealedBytes tpmpb.ExtendedSealedBytes
 	if err := proto.Unmarshal(data, &sealedBytes); err != nil {
-		return []byte{}, errors.Wrap(err, "failed to unmarshal sealed data")
+		return []byte{}, fmt.Errorf("failed to unmarshal sealed data: %w", err)
 	}
 	if sealedBytes.SealedKey == nil {
 		return []byte{}, fmt.Errorf("sealed data structure is invalid: no sealed key")
@@ -292,7 +292,7 @@ func Unseal(data []byte) ([]byte, error) {
 	tpm.logger.Infof("Attempting to unseal key protected with PCRs %s", strings.Join(pcrList, ","))
 	unsealedKey, err := srk.Unseal(sealedBytes.SealedKey, tpm2tools.UnsealOpts{})
 	if err != nil {
-		return []byte{}, errors.Wrap(err, "failed to unseal key")
+		return []byte{}, fmt.Errorf("failed to unseal key: %w", err)
 	}
 	var key [32]byte
 	if len(unsealedKey) != len(key) {
