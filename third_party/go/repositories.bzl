@@ -1421,8 +1421,8 @@ def go_repositories():
     go_repository(
         name = "com_github_dnaeon_go_vcr",
         importpath = "github.com/dnaeon/go-vcr",
-        sum = "h1:r8L/HqC0Hje5AXMu1ooW8oyQyOFv4GxqpL0nRP7SLLY=",
-        version = "v1.0.1",
+        sum = "h1:zHCHvJYTMh1N7xnV7zf1m1GPBF9Ad0Jk/whtQ1663qI=",
+        version = "v1.2.0",
     )
     go_repository(
         name = "com_github_dnstap_golang_dnstap",
@@ -3816,6 +3816,12 @@ def go_repositories():
         version = "v1.0.2",
     )
     go_repository(
+        name = "com_github_modocache_gover",
+        importpath = "github.com/modocache/gover",
+        sum = "h1:8Q0qkMVC/MmWkpIdlvZgcv2o2jrlF6zqVOh7W5YHdMA=",
+        version = "v0.0.0-20171022184752-b58185e213c5",
+    )
+    go_repository(
         name = "com_github_mohae_deepcopy",
         importpath = "github.com/mohae/deepcopy",
         sum = "h1:RWengNIwukTxcDr9M+97sNutRR1RKhG96O6jWumTTnw=",
@@ -4136,8 +4142,9 @@ def go_repositories():
     go_repository(
         name = "com_github_packethost_packngo",
         importpath = "github.com/packethost/packngo",
-        sum = "h1:gRIhciVZQ/zLNrIdIdbOUyB/Tw5IgoaXyhP4bvE+D2s=",
-        version = "v0.29.0",
+        replace = "github.com/monogon-dev/packngo",
+        sum = "h1:sxSnvzB4iDBNhUBqXME/ETqjF4vX0mURE85T/I/Mr0o=",
+        version = "v0.0.0-20240122175436-ecbd9eb00ddb",
     )
     go_repository(
         name = "com_github_pact_foundation_pact_go",

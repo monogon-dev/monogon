@@ -4,6 +4,7 @@ go_library(
     name = "cli_lib",
     srcs = [
         "cmd_delete.go",
+        "cmd_list.go",
         "cmd_move.go",
         "cmd_reboot.go",
         "cmd_yoink.go",

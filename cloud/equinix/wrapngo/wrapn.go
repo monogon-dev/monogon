@@ -110,6 +110,9 @@ type Client interface {
 	// with project pid. This is an expensive method that takes a while to execute,
 	// handle with care.
 	ListReservations(ctx context.Context, pid string) ([]packngo.HardwareReservation, error)
+
+	ListOrganizationReservations(ctx context.Context, oid string) ([]packngo.HardwareReservation, error)
+
 	// MoveReservation moves a reserved device to the given project.
 	MoveReservation(ctx context.Context, hardwareReservationDID, projectID string) (*packngo.HardwareReservation, error)
 
@@ -342,6 +345,13 @@ func (c *client) deleteDevice(ctx context.Context, did string) error {
 func (c *client) ListReservations(ctx context.Context, pid string) ([]packngo.HardwareReservation, error) {
 	return wrap(ctx, c, func(cl *packngo.Client) ([]packngo.HardwareReservation, error) {
 		res, _, err := cl.HardwareReservations.List(pid, &packngo.ListOptions{Includes: []string{"facility", "device"}})
+		return res, err
+	})
+}
+
+func (c *client) ListOrganizationReservations(ctx context.Context, pid string) ([]packngo.HardwareReservation, error) {
+	return wrap(ctx, c, func(cl *packngo.Client) ([]packngo.HardwareReservation, error) {
+		res, _, err := cl.Organizations.ListHardwareReservations(pid, &packngo.ListOptions{Includes: []string{"facility", "device", "project"}})
 		return res, err
 	})
 }

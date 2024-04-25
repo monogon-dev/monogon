@@ -66,6 +66,10 @@ replace github.com/google/cel-go => github.com/google/cel-go v0.17.8
 // to appear in our dependency graph: https://github.com/golang/go/issues/37175
 replace golang.org/x/exp => golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 
+// Replace with our patched library to support hardware listings for a whole
+// organization at once.
+replace github.com/packethost/packngo => github.com/monogon-dev/packngo v0.0.0-20240122175436-ecbd9eb00ddb
+
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1
 	cloud.google.com/go/storage v1.36.0

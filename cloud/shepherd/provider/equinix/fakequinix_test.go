@@ -23,6 +23,10 @@ type fakequinix struct {
 	reboots      map[string]int
 }
 
+func (f *fakequinix) ListOrganizationReservations(ctx context.Context, oid string) ([]packngo.HardwareReservation, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 // newFakequinix makes a fakequinix with a given fake project ID and number of
 // hardware reservations to create.
 func newFakequinix(pid string, numReservations int) *fakequinix {

@@ -1337,8 +1337,9 @@ github.com/diskfs/go-diskfs v1.2.0 h1:Ow4xorEDw1VNYKbC+SA/qQNwi5gWIwdKUxmUcLFST2
 github.com/diskfs/go-diskfs v1.2.0/go.mod h1:ZTeTbzixuyfnZW5y5qKMtjV2o+GLLHo1KfMhotJI4Rk=
 github.com/distribution/reference v0.5.0 h1:/FUIFXtfc/x2gpa5/VGfiGLuOIdYa1t65IKK2OFGvA0=
 github.com/distribution/reference v0.5.0/go.mod h1:BbU0aIcezP1/5jX/8MP0YiH4SdvB5Y4f/wlDRiLyi3E=
-github.com/dnaeon/go-vcr v1.0.1 h1:r8L/HqC0Hje5AXMu1ooW8oyQyOFv4GxqpL0nRP7SLLY=
 github.com/dnaeon/go-vcr v1.0.1/go.mod h1:aBB1+wY4s93YsC3HHjMBMrwTj2R9FHDzUr9KyGc8n1E=
+github.com/dnaeon/go-vcr v1.2.0 h1:zHCHvJYTMh1N7xnV7zf1m1GPBF9Ad0Jk/whtQ1663qI=
+github.com/dnaeon/go-vcr v1.2.0/go.mod h1:R4UdLID7HZT3taECzJs4YgbbH6PIGXB6W/sc5OLb6RQ=
 github.com/dnstap/golang-dnstap v0.4.0 h1:KRHBoURygdGtBjDI2w4HifJfMAhhOqDuktAokaSa234=
 github.com/dnstap/golang-dnstap v0.4.0/go.mod h1:FqsSdH58NAmkAvKcpyxht7i4FoBjKu8E4JUPt8ipSUs=
 github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
@@ -2283,6 +2284,7 @@ github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742/go.mod h1:bx2lN
 github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9Gz0M=
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
+github.com/modocache/gover v0.0.0-20171022184752-b58185e213c5/go.mod h1:caMODM3PzxT8aQXRPkAt8xlV/e7d7w8GM5g0fa5F0D8=
 github.com/mohae/deepcopy v0.0.0-20170603005431-491d3605edfb/go.mod h1:TaXosZuwdSHYgviHp1DAtfrULt5eUgsSMsZf+YrPgl8=
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 h1:RWengNIwukTxcDr9M+97sNutRR1RKhG96O6jWumTTnw=
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826/go.mod h1:TaXosZuwdSHYgviHp1DAtfrULt5eUgsSMsZf+YrPgl8=
@@ -2292,6 +2294,8 @@ github.com/monogon-dev/ethtool v0.0.0-20231122193313-e9c21a3a83cb h1:Y1CNfkifx2l
 github.com/monogon-dev/ethtool v0.0.0-20231122193313-e9c21a3a83cb/go.mod h1:MQ3uW0nQeqrFtI+NIBalCybBz4C0cNAJs94InnMJqyk=
 github.com/monogon-dev/netlink v0.0.0-20230125113930-88977c3ff4b3 h1:y05BDqZ6q3if6pYBHJcnQRUd92ihzBEJde/S4fpKEAM=
 github.com/monogon-dev/netlink v0.0.0-20230125113930-88977c3ff4b3/go.mod h1:cAAsePK2e15YDAMJNyOpGYEWNe4sIghTY7gpz4cX/Ik=
+github.com/monogon-dev/packngo v0.0.0-20240122175436-ecbd9eb00ddb h1:sxSnvzB4iDBNhUBqXME/ETqjF4vX0mURE85T/I/Mr0o=
+github.com/monogon-dev/packngo v0.0.0-20240122175436-ecbd9eb00ddb/go.mod h1:Io6VJqzkiqmIEQbpOjeIw9v8q9PfcTEq8TEY/tMQsfw=
 github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe/go.mod h1:wL8QJuTMNUDYhXwkmfOly8iTdp5TEcJFWZD2D7SIkUc=
 github.com/morikuni/aec v1.0.0 h1:nP9CBfwrvYnBRgY6qfDQkygYDmYwOilePFkwzv4dU8A=
 github.com/morikuni/aec v1.0.0/go.mod h1:BbKIizmSmc5MMPqRYbxO4ZU0S0+P200+tUnFx7PXmsc=
@@ -2457,8 +2461,6 @@ github.com/otiai10/mint v1.3.0/go.mod h1:F5AjcsTsWUqX+Na9fpHb52P8pcRX2CI6A3ctIT9
 github.com/otiai10/mint v1.3.1/go.mod h1:/yxELlJQ0ufhjUwhshSj+wFjZ78CnZ48/1wtmBH1OTc=
 github.com/outcaste-io/ristretto v0.2.1 h1:KCItuNIGJZcursqHr3ghO7fc5ddZLEHspL9UR0cQM64=
 github.com/outcaste-io/ristretto v0.2.1/go.mod h1:W8HywhmtlopSB1jeMg3JtdIhf+DYkLAr0VN/s4+MHac=
-github.com/packethost/packngo v0.29.0 h1:gRIhciVZQ/zLNrIdIdbOUyB/Tw5IgoaXyhP4bvE+D2s=
-github.com/packethost/packngo v0.29.0/go.mod h1:/UHguFdPs6Lf6FOkkSEPnRY5tgS0fsVM+Zv/bvBrmt0=
 github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIwwtUjcrb0b5/5kLM=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
