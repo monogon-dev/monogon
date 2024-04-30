@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+load("//metropolis/test/ktest:ktest.bzl", "ktest")
+
+go_test(
+    name = "lacptest_test",
+    srcs = ["lacp_test.go"],
+    deps = [
+        "@com_github_vishvananda_netlink//:netlink",
+        "@org_golang_x_sys//unix",
+    ],
+)
+
+ktest(
+    tester = ":lacptest_test",
+)
+
+go_test(
+    name = "lacp_test",
+    srcs = ["lacp_test.go"],
+    deps = [
+        "@com_github_vishvananda_netlink//:netlink",
+        "@org_golang_x_sys//unix",
+    ],
+)

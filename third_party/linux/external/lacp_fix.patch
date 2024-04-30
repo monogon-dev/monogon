@@ -1,0 +1,102 @@
+From dd369885e1c0e3a6eff97db6acc5c765ee5dd421 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Thu, 2 May 2024 10:17:14 +0200
+Subject: [PATCH] bonding: 3ad: fix carrier and tx with no active ports
+
+bond carrier state should not be be up when no ports are in
+aggregation. Ports should only be enabled when they are in aggregation.
+
+While in there, set the default template to fast mode to quickly recover
+links and shorten the non-standard aggregator selection timer.
+---
+ drivers/net/bonding/bond_3ad.c | 39 ++++++++++++++++++----------------
+ 1 file changed, 21 insertions(+), 18 deletions(-)
+
+diff --git a/drivers/net/bonding/bond_3ad.c b/drivers/net/bonding/bond_3ad.c
+index c99ffe6c683a..a310c27ea659 100644
+--- a/drivers/net/bonding/bond_3ad.c
++++ b/drivers/net/bonding/bond_3ad.c
+@@ -699,6 +699,22 @@ static int __agg_active_ports(struct aggregator *agg)
+ 	return active;
+ }
+ 
++// __agg_enabled_ports counts the number of ports which are currently in
++// aggregation, different from __agg_active_ports which counts ports which
++// are up (but not in aggregation because of LACP).
++static int __agg_enabled_ports(struct aggregator *agg) {
++	struct port *port;
++	int en_count = 0;
++
++	for (port = agg->lag_ports; port;
++	     port = port->next_port_in_aggregator) {
++		if (__port_is_enabled(port))
++			en_count++;
++	}
++
++	return en_count;
++}
++
+ /**
+  * __get_agg_bandwidth - get the total bandwidth of an aggregator
+  * @aggregator: the aggregator we're looking at
+@@ -1086,6 +1102,8 @@ static void ad_mux_machine(struct port *port, bool *update_slave_arr)
+ 			break;
+ 		}
+ 	}
++	// Update carrier state as we might have enabled/disabled ports
++	bond_3ad_set_carrier(__get_bond_by_port(port));
+ }
+ 
+ /**
+@@ -1780,21 +1798,6 @@ static void ad_agg_selection_logic(struct aggregator *agg,
+ 		*update_slave_arr = true;
+ 	}
+ 
+-	/* if the selected aggregator is of join individuals
+-	 * (partner_system is NULL), enable their ports
+-	 */
+-	active = __get_active_agg(origin);
+-
+-	if (active) {
+-		if (!__agg_has_partner(active)) {
+-			for (port = active->lag_ports; port;
+-			     port = port->next_port_in_aggregator) {
+-				__enable_port(port);
+-			}
+-			*update_slave_arr = true;
+-		}
+-	}
+-
+ 	rcu_read_unlock();
+ 
+ 	bond_3ad_set_carrier(bond);
+@@ -1852,7 +1855,7 @@ static void ad_initialize_port(struct port *port, int lacp_fast)
+ 		.key             = 1,
+ 		.port_number     = 1,
+ 		.port_priority   = 0xff,
+-		.port_state      = 1,
++		.port_state      = LACP_STATE_LACP_ACTIVITY | LACP_STATE_LACP_TIMEOUT,
+ 	};
+ 	static const struct lacpdu lacpdu = {
+ 		.subtype		= 0x01,
+@@ -1994,7 +1997,7 @@ static void ad_marker_response_received(struct bond_marker *marker,
+ /* ========= AD exported functions to the main bonding code ========= */
+ 
+ /* Check aggregators status in team every T seconds */
+-#define AD_AGGREGATOR_SELECTION_TIMER  8
++#define AD_AGGREGATOR_SELECTION_TIMER  3
+ 
+ /**
+  * bond_3ad_initiate_agg_selection - initate aggregator selection
+@@ -2619,7 +2622,7 @@ int bond_3ad_set_carrier(struct bonding *bond)
+ 	active = __get_active_agg(&(SLAVE_AD_INFO(first_slave)->aggregator));
+ 	if (active) {
+ 		/* are enough slaves available to consider link up? */
+-		if (__agg_active_ports(active) < bond->params.min_links) {
++		if (__agg_enabled_ports(active) < bond->params.min_links) {
+ 			if (netif_carrier_ok(bond->dev)) {
+ 				netif_carrier_off(bond->dev);
+ 				goto out;
+-- 
+2.42.0
+

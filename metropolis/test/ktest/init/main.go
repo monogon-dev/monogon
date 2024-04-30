@@ -37,6 +37,7 @@ func mountInit() error {
 		flags uintptr
 	}{
 		{"/sys", "sysfs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
+		{"/sys/kernel/debug", "debugfs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
 		{"/proc", "proc", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
 		{"/dev", "devtmpfs", unix.MS_NOEXEC | unix.MS_NOSUID},
 		{"/dev/pts", "devpts", unix.MS_NOEXEC | unix.MS_NOSUID},
