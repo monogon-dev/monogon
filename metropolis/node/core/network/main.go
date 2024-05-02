@@ -178,7 +178,7 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 	}
 	s.dhcp.VendorClassIdentifier = s.DHCPVendorClassID
 	s.dhcp.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter, dhcpv4.OptionDomainNameServer, dhcpv4.OptionClasslessStaticRoute}
-	s.dhcp.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(iface), dhcpcb.ManageRoutes(iface), s.statusCallback(ctx))
+	s.dhcp.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(iface), arpAnnounceCB(iface), dhcpcb.ManageRoutes(iface), s.statusCallback(ctx))
 	err = supervisor.Run(ctx, "dhcp", s.dhcp.Run)
 	if err != nil {
 		return err
@@ -218,6 +218,8 @@ func (s *Service) Run(ctx context.Context) error {
 	if err := applyQuirks(logger); err != nil {
 		logger.Errorf("Applying quirks failed, continuing without: %v", err)
 	}
+
+	supervisor.Run(ctx, "announce", s.runNeighborAnnounce)
 
 	// Choose between autoconfig and static config runnables
 	if s.StaticConfig == nil {

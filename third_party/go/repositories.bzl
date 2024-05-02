@@ -3562,6 +3562,18 @@ def go_repositories():
         version = "v6.2.2",
     )
     go_repository(
+        name = "com_github_mdlayher_arp",
+        importpath = "github.com/mdlayher/arp",
+        sum = "h1:ql8x//rJsHMjS+qqEag8n3i4azw1QneKh5PieH9UEbY=",
+        version = "v0.0.0-20220512170110-6706a2966875",
+    )
+    go_repository(
+        name = "com_github_mdlayher_ethernet",
+        importpath = "github.com/mdlayher/ethernet",
+        sum = "h1:2oDp6OOhLxQ9JBoUuysVz9UZ9uI6oLUbvAZu0x8o+vE=",
+        version = "v0.0.0-20220221185849-529eae5b6118",
+    )
+    go_repository(
         name = "com_github_mdlayher_ethtool",
         importpath = "github.com/mdlayher/ethtool",
         replace = "github.com/monogon-dev/ethtool",

@@ -200,7 +200,7 @@ func (s *Service) runDHCPv4(ctx context.Context, lnk netlink.Link) error {
 		return fmt.Errorf("failed creating DHCPv4 client: %w", err)
 	}
 	c.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter, dhcpv4.OptionDomainNameServer, dhcpv4.OptionClasslessStaticRoute}
-	c.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(lnk), dhcpcb.ManageRoutes(lnk), s.statusCallback(ctx))
+	c.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(lnk), arpAnnounceCB(lnk), dhcpcb.ManageRoutes(lnk), s.statusCallback(ctx))
 	return supervisor.Run(ctx, "dhcp-"+lnk.Attrs().Name, c.Run)
 }
 
