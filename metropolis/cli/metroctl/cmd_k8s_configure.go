@@ -57,7 +57,7 @@ func doK8sConfigure(cmd *cobra.Command, _ []string) {
 }
 
 func init() {
+	k8sConfigureCommand.Flags().String("context", "metroctl", "The name for the kubernetes context to configure")
 	k8sCommand.AddCommand(k8sConfigureCommand)
-	k8sCommand.Flags().String("context", "metroctl", "The name for the kubernetes context to configure")
 	rootCmd.AddCommand(k8sCommand)
 }
