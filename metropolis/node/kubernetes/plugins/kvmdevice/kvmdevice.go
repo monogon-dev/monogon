@@ -163,7 +163,7 @@ func (k *Plugin) Run(ctx context.Context) error {
 	}
 
 	err = unix.Mknod("/dev/kvm", 0660, int(kvmDevNode))
-	if err != nil && errors.Is(err, unix.EEXIST) {
+	if err != nil && !errors.Is(err, unix.EEXIST) {
 		return fmt.Errorf("failed to create KVM device node: %v", err)
 	}
 
