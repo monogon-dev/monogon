@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"source.monogon.dev/metropolis/pkg/logtree"
+	lpb "source.monogon.dev/metropolis/pkg/logtree/proto"
 	"source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
@@ -50,19 +51,19 @@ func dut(t *testing.T) (*Service, *grpc.ClientConn) {
 	return s, cl
 }
 
-func cleanLogEntry(e *cpb.LogEntry) {
+func cleanLogEntry(e *lpb.LogEntry) {
 	// Filter out bits that change too much to test them.
 	switch k := e.Kind.(type) {
-	case *cpb.LogEntry_Leveled_:
+	case *lpb.LogEntry_Leveled_:
 		k.Leveled.Location = ""
 		k.Leveled.Timestamp = nil
 	}
 }
 
-func mkRawEntry(dn string, line string) *cpb.LogEntry {
-	return &cpb.LogEntry{
-		Dn: dn, Kind: &cpb.LogEntry_Raw_{
-			Raw: &cpb.LogEntry_Raw{
+func mkRawEntry(dn string, line string) *lpb.LogEntry {
+	return &lpb.LogEntry{
+		Dn: dn, Kind: &lpb.LogEntry_Raw_{
+			Raw: &lpb.LogEntry_Raw{
 				Data:           line,
 				OriginalLength: int64(len(line)),
 			},
@@ -70,19 +71,19 @@ func mkRawEntry(dn string, line string) *cpb.LogEntry {
 	}
 }
 
-func mkLeveledEntry(dn string, severity string, lines string) *cpb.LogEntry {
-	var sev cpb.LeveledLogSeverity
+func mkLeveledEntry(dn string, severity string, lines string) *lpb.LogEntry {
+	var sev lpb.LeveledLogSeverity
 	switch severity {
 	case "i":
-		sev = cpb.LeveledLogSeverity_INFO
+		sev = lpb.LeveledLogSeverity_INFO
 	case "w":
-		sev = cpb.LeveledLogSeverity_WARNING
+		sev = lpb.LeveledLogSeverity_WARNING
 	case "e":
-		sev = cpb.LeveledLogSeverity_ERROR
+		sev = lpb.LeveledLogSeverity_ERROR
 	}
-	return &cpb.LogEntry{
-		Dn: dn, Kind: &cpb.LogEntry_Leveled_{
-			Leveled: &cpb.LogEntry_Leveled{
+	return &lpb.LogEntry{
+		Dn: dn, Kind: &lpb.LogEntry_Leveled_{
+			Leveled: &lpb.LogEntry_Leveled{
 				Lines:    strings.Split(lines, "\n"),
 				Severity: sev,
 			},
@@ -90,7 +91,7 @@ func mkLeveledEntry(dn string, severity string, lines string) *cpb.LogEntry {
 	}
 }
 
-func drainLogs(t *testing.T, srv api.NodeManagement_LogsClient) (res []*cpb.LogEntry) {
+func drainLogs(t *testing.T, srv api.NodeManagement_LogsClient) (res []*lpb.LogEntry) {
 	t.Helper()
 	for {
 		ev, err := srv.Recv()
@@ -153,12 +154,12 @@ func TestLogService_Logs_Backlog(t *testing.T) {
 	}
 	for i, te := range []struct {
 		req  *api.GetLogsRequest
-		want []*cpb.LogEntry
+		want []*lpb.LogEntry
 	}{
 		{
 			// Test all backlog.
 			req: mkReq("main.roleserver.kubernetes", -1),
-			want: []*cpb.LogEntry{
+			want: []*lpb.LogEntry{
 				mkLeveledEntry("main.roleserver.kubernetes", "i", "Starting kubernetes..."),
 				mkLeveledEntry("main.roleserver.kubernetes", "i", "Kubernetes version: 1.21.37"),
 			},
@@ -166,7 +167,7 @@ func TestLogService_Logs_Backlog(t *testing.T) {
 		{
 			// Test exact backlog.
 			req: mkReq("main.roleserver.kubernetes", 1),
-			want: []*cpb.LogEntry{
+			want: []*lpb.LogEntry{
 				mkLeveledEntry("main.roleserver.kubernetes", "i", "Kubernetes version: 1.21.37"),
 			},
 		},
@@ -178,7 +179,7 @@ func TestLogService_Logs_Backlog(t *testing.T) {
 		{
 			// Test recursion with backlog.
 			req: mkRecursive(mkReq("main.roleserver", 2)),
-			want: []*cpb.LogEntry{
+			want: []*lpb.LogEntry{
 				mkLeveledEntry("main.roleserver.kubernetes", "i", "Kubernetes version: 1.21.37"),
 				mkLeveledEntry("main.roleserver.controlplane", "i", "Starting etcd..."),
 			},
@@ -186,7 +187,7 @@ func TestLogService_Logs_Backlog(t *testing.T) {
 		{
 			// Test invalid utf-8 in log data
 			req: mkReq("main.weirdo", 1),
-			want: []*cpb.LogEntry{
+			want: []*lpb.LogEntry{
 				mkLeveledEntry("main.weirdo", "i", "Here comes some invalid utf-8: a<INVALID>z"),
 			},
 		},
@@ -234,7 +235,7 @@ func TestLogService_Logs_Stream(t *testing.T) {
 	}
 
 	// Pipe returned logs into a channel for analysis.
-	logC := make(chan *cpb.LogEntry)
+	logC := make(chan *lpb.LogEntry)
 	go func() {
 		for {
 			ev, err := srv.Recv()
@@ -292,7 +293,7 @@ func TestLogService_Logs_Filters(t *testing.T) {
 
 	for i, te := range []struct {
 		req  *api.GetLogsRequest
-		want []*cpb.LogEntry
+		want []*lpb.LogEntry
 	}{
 		// Case 0: request given level
 		{
@@ -304,13 +305,13 @@ func TestLogService_Logs_Filters(t *testing.T) {
 					{
 						Filter: &cpb.LogFilter_LeveledWithMinimumSeverity_{
 							LeveledWithMinimumSeverity: &cpb.LogFilter_LeveledWithMinimumSeverity{
-								Minimum: cpb.LeveledLogSeverity_WARNING,
+								Minimum: lpb.LeveledLogSeverity_WARNING,
 							},
 						},
 					},
 				},
 			},
-			want: []*cpb.LogEntry{
+			want: []*lpb.LogEntry{
 				mkLeveledEntry("main", "w", "Something failed!"),
 				mkLeveledEntry("main", "e", "Something failed very hard!"),
 			},
@@ -329,7 +330,7 @@ func TestLogService_Logs_Filters(t *testing.T) {
 					},
 				},
 			},
-			want: []*cpb.LogEntry{
+			want: []*lpb.LogEntry{
 				mkRawEntry("main", "medium rare"),
 			},
 		},
@@ -347,7 +348,7 @@ func TestLogService_Logs_Filters(t *testing.T) {
 					},
 				},
 			},
-			want: []*cpb.LogEntry{
+			want: []*lpb.LogEntry{
 				mkLeveledEntry("main", "i", "Hello"),
 				mkLeveledEntry("main", "i", "Starting..."),
 				mkLeveledEntry("main", "w", "Something failed!"),

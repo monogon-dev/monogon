@@ -49,6 +49,7 @@ go_library(
         "//metropolis/pkg/blkio",
         "//metropolis/pkg/fat32",
         "//metropolis/pkg/logtree",
+        "//metropolis/pkg/logtree/proto",
         "//metropolis/proto/api",
         "//metropolis/proto/common",
         "//version",

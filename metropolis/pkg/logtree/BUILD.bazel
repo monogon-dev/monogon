@@ -24,7 +24,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//metropolis/pkg/logbuffer",
-        "//metropolis/proto/common",
+        "//metropolis/pkg/logtree/proto",
         "@com_github_mitchellh_go_wordwrap//:go-wordwrap",
         "@org_golang_google_grpc//grpclog",
         "@org_golang_google_protobuf//types/known/timestamppb",

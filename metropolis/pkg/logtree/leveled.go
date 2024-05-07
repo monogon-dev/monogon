@@ -19,7 +19,7 @@ package logtree
 import (
 	"fmt"
 
-	cpb "source.monogon.dev/metropolis/proto/common"
+	lpb "source.monogon.dev/metropolis/pkg/logtree/proto"
 )
 
 // LeveledLogger is a generic interface for glog-style logging. There are four
@@ -144,32 +144,32 @@ func (s Severity) Valid() bool {
 	}
 }
 
-func SeverityFromProto(s cpb.LeveledLogSeverity) (Severity, error) {
+func SeverityFromProto(s lpb.LeveledLogSeverity) (Severity, error) {
 	switch s {
-	case cpb.LeveledLogSeverity_INFO:
+	case lpb.LeveledLogSeverity_INFO:
 		return INFO, nil
-	case cpb.LeveledLogSeverity_WARNING:
+	case lpb.LeveledLogSeverity_WARNING:
 		return WARNING, nil
-	case cpb.LeveledLogSeverity_ERROR:
+	case lpb.LeveledLogSeverity_ERROR:
 		return ERROR, nil
-	case cpb.LeveledLogSeverity_FATAL:
+	case lpb.LeveledLogSeverity_FATAL:
 		return FATAL, nil
 	default:
 		return "", fmt.Errorf("unknown severity value %d", s)
 	}
 }
 
-func (s Severity) ToProto() cpb.LeveledLogSeverity {
+func (s Severity) ToProto() lpb.LeveledLogSeverity {
 	switch s {
 	case INFO:
-		return cpb.LeveledLogSeverity_INFO
+		return lpb.LeveledLogSeverity_INFO
 	case WARNING:
-		return cpb.LeveledLogSeverity_WARNING
+		return lpb.LeveledLogSeverity_WARNING
 	case ERROR:
-		return cpb.LeveledLogSeverity_ERROR
+		return lpb.LeveledLogSeverity_ERROR
 	case FATAL:
-		return cpb.LeveledLogSeverity_FATAL
+		return lpb.LeveledLogSeverity_FATAL
 	default:
-		return cpb.LeveledLogSeverity_INVALID
+		return lpb.LeveledLogSeverity_INVALID
 	}
 }

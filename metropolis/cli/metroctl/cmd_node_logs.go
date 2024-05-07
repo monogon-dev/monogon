@@ -9,8 +9,8 @@ import (
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/metropolis/pkg/logtree"
+	lpb "source.monogon.dev/metropolis/pkg/logtree/proto"
 	"source.monogon.dev/metropolis/proto/api"
-
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -141,7 +141,7 @@ unnecessary lines are fetched.
 	},
 }
 
-func printEntry(e *cpb.LogEntry) {
+func printEntry(e *lpb.LogEntry) {
 	entry, err := logtree.LogEntryFromProto(e)
 	if err != nil {
 		fmt.Printf("invalid stream entry: %v\n", err)

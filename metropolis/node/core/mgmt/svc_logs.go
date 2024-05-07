@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"source.monogon.dev/metropolis/pkg/logtree"
+	lpb "source.monogon.dev/metropolis/pkg/logtree/proto"
 	"source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
@@ -24,17 +25,17 @@ type LogService struct {
 
 // sanitizedEntries returns a deep copy of the given log entries, but replaces
 // all invalid UTF-8 characters with "<INVALID>".
-func sanitizedEntries(entries []*cpb.LogEntry) []*cpb.LogEntry {
-	res := make([]*cpb.LogEntry, len(entries))
+func sanitizedEntries(entries []*lpb.LogEntry) []*lpb.LogEntry {
+	res := make([]*lpb.LogEntry, len(entries))
 	for i, entry := range entries {
-		res[i] = &cpb.LogEntry{
+		res[i] = &lpb.LogEntry{
 			Dn:   entry.Dn,
 			Kind: nil,
 		}
 		switch k := entry.Kind.(type) {
-		case *cpb.LogEntry_Leveled_:
-			leveled := &cpb.LogEntry_Leveled_{
-				Leveled: &cpb.LogEntry_Leveled{
+		case *lpb.LogEntry_Leveled_:
+			leveled := &lpb.LogEntry_Leveled_{
+				Leveled: &lpb.LogEntry_Leveled{
 					Lines:     make([]string, len(k.Leveled.Lines)),
 					Timestamp: k.Leveled.Timestamp,
 					Severity:  k.Leveled.Severity,
@@ -46,9 +47,9 @@ func sanitizedEntries(entries []*cpb.LogEntry) []*cpb.LogEntry {
 			}
 			res[i].Kind = leveled
 
-		case *cpb.LogEntry_Raw_:
-			res[i].Kind = &cpb.LogEntry_Raw_{
-				Raw: &cpb.LogEntry_Raw{
+		case *lpb.LogEntry_Raw_:
+			res[i].Kind = &lpb.LogEntry_Raw_{
+				Raw: &lpb.LogEntry_Raw{
 					Data:           strings.ToValidUTF8(k.Raw.Data, "<INVALID>"),
 					OriginalLength: k.Raw.OriginalLength,
 				},
@@ -141,7 +142,7 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 	maxChunkSize := 2000
 
 	// Serve all backlog entries in chunks.
-	chunk := make([]*cpb.LogEntry, 0, maxChunkSize)
+	chunk := make([]*lpb.LogEntry, 0, maxChunkSize)
 	for _, entry := range reader.Backlog {
 		p := entry.Proto()
 		if p == nil {
@@ -157,7 +158,7 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 			if err != nil {
 				return err
 			}
-			chunk = make([]*cpb.LogEntry, 0, maxChunkSize)
+			chunk = make([]*lpb.LogEntry, 0, maxChunkSize)
 		}
 	}
 
@@ -188,7 +189,7 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 			continue
 		}
 		err := srv.Send(&api.GetLogsResponse{
-			StreamEntries: []*cpb.LogEntry{p},
+			StreamEntries: []*lpb.LogEntry{p},
 		})
 		if err != nil {
 			return err

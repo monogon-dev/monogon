@@ -15,6 +15,7 @@ go_library(
         "//metropolis/node/core/rpc",
         "//metropolis/node/core/update",
         "//metropolis/pkg/logtree",
+        "//metropolis/pkg/logtree/proto",
         "//metropolis/pkg/supervisor",
         "//metropolis/proto/api",
         "//metropolis/proto/common",
@@ -32,6 +33,7 @@ go_test(
     embed = [":mgmt"],
     deps = [
         "//metropolis/pkg/logtree",
+        "//metropolis/pkg/logtree/proto",
         "//metropolis/proto/api",
         "//metropolis/proto/common",
         "@com_github_google_go_cmp//cmp",
