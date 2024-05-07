@@ -13,8 +13,8 @@ import (
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/pkg/event"
-	"source.monogon.dev/metropolis/pkg/pki"
+	"source.monogon.dev/osbase/event"
+	"source.monogon.dev/osbase/pki"
 )
 
 // ServiceHandle is implemented by Service and should be the type expected by

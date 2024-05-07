@@ -21,7 +21,7 @@ option go_package = "source.monogon.dev/metropolis/proto/common";
 import "google/protobuf/timestamp.proto";
 import "version/spec/spec.proto";
 
-import "metropolis/pkg/logtree/proto/logtree.proto";
+import "osbase/logtree/proto/logtree.proto";
 
 // NodeRoles are the possible roles that a Metropolis Node should run within the
 // cluster. These are configured by the cluster and can be retrieved through the
@@ -252,7 +252,7 @@ message LogFilter {
     // If leveled logs are returned, all entries at severity lower than `minimum`
     // will be discarded.
     message LeveledWithMinimumSeverity {
-        metropolis.pkg.logtree.proto.LeveledLogSeverity minimum = 1;
+        osbase.pkg.logtree.proto.LeveledLogSeverity minimum = 1;
     }
     oneof filter {
         WithChildren with_children = 1;

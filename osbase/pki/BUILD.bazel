@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "pki",
+    srcs = [
+        "ca.go",
+        "certificate.go",
+        "crl.go",
+        "x509.go",
+    ],
+    importpath = "source.monogon.dev/osbase/pki",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//osbase/event",
+        "//osbase/event/etcd",
+        "//osbase/fileargs",
+        "@io_etcd_go_etcd_client_v3//:client",
+    ],
+)
+
+go_test(
+    name = "pki_test",
+    srcs = [
+        "certificate_test.go",
+        "crl_test.go",
+    ],
+    embed = [":pki"],
+    deps = [
+        "//osbase/logtree",
+        "@io_etcd_go_etcd_client_pkg_v3//testutil",
+        "@io_etcd_go_etcd_tests_v3//integration",
+        "@org_uber_go_zap//:zap",
+    ],
+)

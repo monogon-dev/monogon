@@ -33,8 +33,8 @@ go_test(
     ],
     deps = [
         "//metropolis/node",
-        "//metropolis/pkg/localregistry",
-        "//metropolis/test/launch/cluster",
+        "//metropolis/test/launch",
+        "//metropolis/test/localregistry",
         "//metropolis/test/util",
         "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@io_k8s_api//core/v1:core",

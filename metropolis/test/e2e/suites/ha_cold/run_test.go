@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"source.monogon.dev/metropolis/test/launch"
-	"source.monogon.dev/metropolis/test/launch/cluster"
+	mlaunch "source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/util"
+	"source.monogon.dev/osbase/test/launch"
 
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
@@ -36,7 +36,7 @@ func TestE2EColdStartHA(t *testing.T) {
 	defer cancel()
 
 	// Launch cluster.
-	clusterOptions := cluster.ClusterOptions{
+	clusterOptions := mlaunch.ClusterOptions{
 		NumNodes:        3,
 		NodeLogsToFiles: true,
 		InitialClusterConfiguration: &cpb.ClusterConfiguration{
@@ -44,7 +44,7 @@ func TestE2EColdStartHA(t *testing.T) {
 			StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE,
 		},
 	}
-	cluster, err := cluster.LaunchCluster(ctx, clusterOptions)
+	cluster, err := mlaunch.LaunchCluster(ctx, clusterOptions)
 	if err != nil {
 		t.Fatalf("LaunchCluster failed: %v", err)
 	}

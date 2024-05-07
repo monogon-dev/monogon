@@ -16,10 +16,10 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/node/core/curator"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
-	"source.monogon.dev/metropolis/pkg/event/etcd"
-	"source.monogon.dev/metropolis/pkg/event/memory"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	mversion "source.monogon.dev/metropolis/version"
+	"source.monogon.dev/osbase/event/etcd"
+	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/version"
 	vpb "source.monogon.dev/version/spec"
 )

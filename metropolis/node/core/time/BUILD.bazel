@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//metropolis/node",
-        "//metropolis/pkg/fileargs",
-        "//metropolis/pkg/supervisor",
+        "//osbase/fileargs",
+        "//osbase/supervisor",
     ],
 )

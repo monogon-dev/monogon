@@ -6,9 +6,9 @@ go_library(
     importpath = "source.monogon.dev/metropolis/cli/dbg",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/pkg/logtree",
         "//metropolis/proto/api",
         "//metropolis/proto/common",
+        "//osbase/logtree",
         "@io_k8s_cli_runtime//pkg/genericclioptions",
         "@io_k8s_component_base//cli",
         "@io_k8s_kubectl//pkg/cmd",

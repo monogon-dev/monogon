@@ -40,7 +40,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 type Service struct {

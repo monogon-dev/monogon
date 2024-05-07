@@ -47,10 +47,10 @@ import (
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/node/core/update"
-	"source.monogon.dev/metropolis/pkg/event/memory"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // Config is the configuration of the role server.

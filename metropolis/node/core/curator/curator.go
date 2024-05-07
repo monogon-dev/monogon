@@ -27,8 +27,8 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/pkg/event/memory"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // Config is the configuration of the curator.

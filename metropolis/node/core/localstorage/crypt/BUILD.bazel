@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
-load("//metropolis/test/ktest:ktest.bzl", "ktest")
+load("//osbase/test/ktest:ktest.bzl", "ktest")
 
 go_library(
     name = "crypt",
@@ -14,12 +14,12 @@ go_library(
     visibility = ["//metropolis/node/core/localstorage:__subpackages__"],
     deps = [
         "//metropolis/node/core/update",
-        "//metropolis/pkg/blockdev",
-        "//metropolis/pkg/devicemapper",
-        "//metropolis/pkg/efivarfs",
-        "//metropolis/pkg/gpt",
-        "//metropolis/pkg/supervisor",
-        "//metropolis/pkg/sysfs",
+        "//osbase/blockdev",
+        "//osbase/devicemapper",
+        "//osbase/efivarfs",
+        "//osbase/gpt",
+        "//osbase/supervisor",
+        "//osbase/sysfs",
         "@com_github_google_uuid//:uuid",
         "@org_golang_x_sys//unix",
     ],

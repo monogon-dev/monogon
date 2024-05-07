@@ -9,10 +9,10 @@ import (
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 
-	"source.monogon.dev/metropolis/pkg/localregistry"
-	"source.monogon.dev/metropolis/test/launch"
-	"source.monogon.dev/metropolis/test/launch/cluster"
+	mlaunch "source.monogon.dev/metropolis/test/launch"
+	"source.monogon.dev/metropolis/test/localregistry"
 	"source.monogon.dev/metropolis/test/util"
+	"source.monogon.dev/osbase/test/launch"
 )
 
 const (
@@ -48,12 +48,12 @@ func TestE2ECoreHA(t *testing.T) {
 		t.Fatalf("Creating test image registry failed: %v", err)
 	}
 	// Launch cluster.
-	clusterOptions := cluster.ClusterOptions{
+	clusterOptions := mlaunch.ClusterOptions{
 		NumNodes:        3,
 		LocalRegistry:   lr,
 		NodeLogsToFiles: true,
 	}
-	cluster, err := cluster.LaunchCluster(ctx, clusterOptions)
+	cluster, err := mlaunch.LaunchCluster(ctx, clusterOptions)
 	if err != nil {
 		t.Fatalf("LaunchCluster failed: %v", err)
 	}

@@ -11,10 +11,10 @@ import (
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/update"
-	"source.monogon.dev/metropolis/pkg/blockdev"
-	"source.monogon.dev/metropolis/pkg/gpt"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/gpt"
+	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 var Variant = "U"

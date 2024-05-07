@@ -15,8 +15,8 @@ import (
 
 	"github.com/mdlayher/kobject"
 
-	"source.monogon.dev/metropolis/pkg/kmod"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/kmod"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 type Service struct{}

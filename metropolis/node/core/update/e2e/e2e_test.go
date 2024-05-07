@@ -19,8 +19,8 @@ import (
 	"github.com/bazelbuild/rules_go/go/runfiles"
 
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
-	"source.monogon.dev/metropolis/pkg/blkio"
-	"source.monogon.dev/metropolis/pkg/blockdev"
+	"source.monogon.dev/osbase/blkio"
+	"source.monogon.dev/osbase/blockdev"
 )
 
 const Mi = 1024 * 1024

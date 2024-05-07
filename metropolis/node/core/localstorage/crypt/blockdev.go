@@ -28,11 +28,11 @@ import (
 	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/metropolis/node/core/update"
-	"source.monogon.dev/metropolis/pkg/blockdev"
-	"source.monogon.dev/metropolis/pkg/efivarfs"
-	"source.monogon.dev/metropolis/pkg/gpt"
-	"source.monogon.dev/metropolis/pkg/supervisor"
-	"source.monogon.dev/metropolis/pkg/sysfs"
+	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/efivarfs"
+	"source.monogon.dev/osbase/gpt"
+	"source.monogon.dev/osbase/supervisor"
+	"source.monogon.dev/osbase/sysfs"
 )
 
 // NodeDataPartitionType is the partition type value for a Metropolis Node

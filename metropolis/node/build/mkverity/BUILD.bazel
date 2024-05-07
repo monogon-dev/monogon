@@ -15,5 +15,5 @@ go_library(
     srcs = ["mkverity.go"],
     importpath = "source.monogon.dev/metropolis/node/build/mkverity",
     visibility = ["//visibility:private"],
-    deps = ["//metropolis/pkg/verity"],
+    deps = ["//osbase/verity"],
 )

@@ -14,9 +14,9 @@ import (
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	ppb "source.monogon.dev/metropolis/proto/private"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // join implements Join Flow of an already registered node.

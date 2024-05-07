@@ -40,9 +40,9 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/pkg/fsquota"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/fsquota"
+	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // ONCHANGE(//metropolis/node/kubernetes/reconciler:resources_csi.go): needs to

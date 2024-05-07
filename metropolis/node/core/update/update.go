@@ -25,11 +25,11 @@ import (
 
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	abloaderpb "source.monogon.dev/metropolis/node/core/abloader/spec"
-	"source.monogon.dev/metropolis/pkg/blockdev"
-	"source.monogon.dev/metropolis/pkg/efivarfs"
-	"source.monogon.dev/metropolis/pkg/gpt"
-	"source.monogon.dev/metropolis/pkg/kexec"
-	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/efivarfs"
+	"source.monogon.dev/osbase/gpt"
+	"source.monogon.dev/osbase/kexec"
+	"source.monogon.dev/osbase/logtree"
 )
 
 // Service contains data and functionality to perform A/B updates on a

@@ -18,9 +18,9 @@ import (
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/curator"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/test/util"
 	mversion "source.monogon.dev/metropolis/version"
+	"source.monogon.dev/osbase/supervisor"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"

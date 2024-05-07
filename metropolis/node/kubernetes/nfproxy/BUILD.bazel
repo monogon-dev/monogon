@@ -6,7 +6,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/kubernetes/nfproxy",
     visibility = ["//metropolis/node/kubernetes:__subpackages__"],
     deps = [
-        "//metropolis/pkg/supervisor",
+        "//osbase/supervisor",
         "@com_github_sbezverk_nfproxy//pkg/controller",
         "@com_github_sbezverk_nfproxy//pkg/nftables",
         "@com_github_sbezverk_nfproxy//pkg/proxy",

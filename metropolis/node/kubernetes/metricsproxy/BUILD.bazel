@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//metropolis/node",
         "//metropolis/node/kubernetes/pki",
-        "//metropolis/pkg/supervisor",
+        "//osbase/supervisor",
         "@io_k8s_kubernetes//cmd/kubeadm/app/constants",
     ],
 )

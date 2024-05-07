@@ -34,8 +34,8 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/mgmt"
 	"source.monogon.dev/metropolis/node/core/roleserve"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/supervisor"
 
 	common "source.monogon.dev/metropolis/node"
 	apb "source.monogon.dev/metropolis/proto/api"

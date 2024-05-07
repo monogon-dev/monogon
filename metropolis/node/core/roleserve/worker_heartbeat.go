@@ -9,8 +9,8 @@ import (
 	"source.monogon.dev/metropolis/node/core/curator"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/network"
-	"source.monogon.dev/metropolis/pkg/event/memory"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // workerHeartbeat is a service that periodically updates node's heartbeat

@@ -33,7 +33,7 @@ import (
 	installrbac "k8s.io/kubernetes/pkg/apis/rbac/install"
 	installstorage "k8s.io/kubernetes/pkg/apis/storage/install"
 
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // TestExpectedUniqueNames ensures that all the Expected objects of any

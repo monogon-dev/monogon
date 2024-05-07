@@ -15,10 +15,10 @@ import (
 
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
-	"source.monogon.dev/metropolis/pkg/blockdev"
-	"source.monogon.dev/metropolis/pkg/efivarfs"
-	"source.monogon.dev/metropolis/pkg/logtree"
 	npb "source.monogon.dev/net/proto"
+	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/efivarfs"
+	"source.monogon.dev/osbase/logtree"
 )
 
 //go:embed metropolis/node/core/abloader/abloader_bin.efi

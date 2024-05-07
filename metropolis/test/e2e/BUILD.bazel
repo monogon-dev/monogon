@@ -1,4 +1,4 @@
-load("//metropolis/pkg/localregistry:def.bzl", "localregistry_manifest")
+load("//metropolis/test/localregistry:def.bzl", "localregistry_manifest")
 
 localregistry_manifest(
     name = "testimages_manifest",

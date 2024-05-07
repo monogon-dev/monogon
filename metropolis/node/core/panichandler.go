@@ -14,7 +14,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/osbase/logtree"
 )
 
 // This hooks into a global variable which is checked by runtime.write and used

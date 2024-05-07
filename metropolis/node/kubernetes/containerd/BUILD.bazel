@@ -7,7 +7,7 @@ go_library(
     visibility = ["//metropolis/node/core:__subpackages__"],
     deps = [
         "//metropolis/node/core/localstorage",
-        "//metropolis/pkg/supervisor",
+        "//osbase/supervisor",
         "@com_github_containerd_containerd//:containerd",
         "@com_github_containerd_containerd//namespaces",
     ],

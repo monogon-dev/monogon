@@ -8,7 +8,7 @@ go_library(
     deps = [
         "//metropolis/node",
         "//metropolis/node/core/consensus",
-        "//metropolis/pkg/pki",
+        "//osbase/pki",
         "@io_etcd_go_etcd_client_v3//:client",
         "@io_k8s_client_go//tools/clientcmd",
         "@io_k8s_client_go//tools/clientcmd/api",

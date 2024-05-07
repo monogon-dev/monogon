@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_test")
-load("//metropolis/test/ktest:ktest.bzl", "ktest")
+load("//osbase/test/ktest:ktest.bzl", "ktest")
 
 go_test(
     name = "lacptest_test",

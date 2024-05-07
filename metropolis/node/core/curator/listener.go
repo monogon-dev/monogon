@@ -16,9 +16,9 @@ import (
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
-	"source.monogon.dev/metropolis/pkg/event/memory"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
+	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // listener is the curator runnable responsible for listening for gRPC

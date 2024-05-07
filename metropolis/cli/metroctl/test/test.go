@@ -15,9 +15,9 @@ import (
 
 	mversion "source.monogon.dev/metropolis/version"
 
-	"source.monogon.dev/metropolis/pkg/cmd"
-	"source.monogon.dev/metropolis/test/launch/cluster"
+	mlaunch "source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/util"
+	"source.monogon.dev/osbase/cmd"
 	"source.monogon.dev/version"
 )
 
@@ -95,10 +95,10 @@ func TestMetroctl(t *testing.T) {
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
 
-	co := cluster.ClusterOptions{
+	co := mlaunch.ClusterOptions{
 		NumNodes: 2,
 	}
-	cl, err := cluster.LaunchCluster(context.Background(), co)
+	cl, err := mlaunch.LaunchCluster(context.Background(), co)
 	if err != nil {
 		t.Fatalf("LaunchCluster failed: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestMetroctl(t *testing.T) {
 		}
 	}()
 
-	socksRemote := fmt.Sprintf("localhost:%d", cl.Ports[cluster.SOCKSPort])
+	socksRemote := fmt.Sprintf("localhost:%d", cl.Ports[mlaunch.SOCKSPort])
 	var clusterEndpoints []string
 	// Use node starting order for endpoints
 	for _, ep := range cl.NodeIDs {
@@ -118,7 +118,7 @@ func TestMetroctl(t *testing.T) {
 
 	ownerPem := pem.EncodeToMemory(&pem.Block{
 		Type:  "METROPOLIS INITIAL OWNER PRIVATE KEY",
-		Bytes: cluster.InsecurePrivateKey,
+		Bytes: mlaunch.InsecurePrivateKey,
 	})
 	if err := os.WriteFile("owner-key.pem", ownerPem, 0644); err != nil {
 		log.Fatal("Couldn't write owner-key.pem")

@@ -5,7 +5,7 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/roleserve"
-	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/osbase/logtree"
 )
 
 // runDebugService runs the debug service if this is a debug build. Otherwise

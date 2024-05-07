@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "eventlog",
+    srcs = [
+        "compat.go",
+        "eventlog.go",
+        "secureboot.go",
+    ],
+    importpath = "source.monogon.dev/osbase/tpm/eventlog",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//osbase/tpm/eventlog/internal",
+        "@com_github_google_certificate_transparency_go//x509",
+        "@com_github_google_go_tpm//tpm2",
+    ],
+)

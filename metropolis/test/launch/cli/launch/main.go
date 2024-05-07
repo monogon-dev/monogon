@@ -24,8 +24,9 @@ import (
 	"path/filepath"
 
 	apb "source.monogon.dev/metropolis/proto/api"
-	"source.monogon.dev/metropolis/test/launch"
-	"source.monogon.dev/metropolis/test/launch/cluster"
+
+	mlaunch "source.monogon.dev/metropolis/test/launch"
+	"source.monogon.dev/osbase/test/launch"
 )
 
 func main() {
@@ -45,22 +46,22 @@ func main() {
 	defer os.RemoveAll(sd)
 
 	var ports []uint16
-	for _, p := range cluster.NodePorts {
+	for _, p := range mlaunch.NodePorts {
 		ports = append(ports, uint16(p))
 	}
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	doneC := make(chan error)
-	tpmf, err := cluster.NewTPMFactory(filepath.Join(ld, "tpm"))
+	tpmf, err := mlaunch.NewTPMFactory(filepath.Join(ld, "tpm"))
 	if err != nil {
 		log.Fatalf("NewTPMFactory: %v", err)
 	}
-	err = cluster.LaunchNode(ctx, ld, sd, tpmf, &cluster.NodeOptions{
+	err = mlaunch.LaunchNode(ctx, ld, sd, tpmf, &mlaunch.NodeOptions{
 		Name:       "test-node",
 		Ports:      launch.IdentityPortMap(ports),
 		SerialPort: os.Stdout,
 		NodeParameters: &apb.NodeParameters{
 			Cluster: &apb.NodeParameters_ClusterBootstrap_{
-				ClusterBootstrap: cluster.InsecureClusterBootstrap,
+				ClusterBootstrap: mlaunch.InsecureClusterBootstrap,
 			},
 		},
 	}, doneC)

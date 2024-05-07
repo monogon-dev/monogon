@@ -11,7 +11,7 @@ import (
 	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
-	"source.monogon.dev/metropolis/pkg/event/memory"
+	"source.monogon.dev/osbase/event/memory"
 )
 
 type curatorFollower struct {

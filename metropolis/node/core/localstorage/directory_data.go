@@ -25,9 +25,9 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/localstorage/crypt"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
-	"source.monogon.dev/metropolis/pkg/tpm"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	ppb "source.monogon.dev/metropolis/proto/private"
+	"source.monogon.dev/osbase/tpm"
 )
 
 var keySize uint16 = 256 / 8

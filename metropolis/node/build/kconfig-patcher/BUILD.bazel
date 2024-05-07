@@ -12,7 +12,7 @@ go_binary(
     embed = [":kconfig-patcher_lib"],
     visibility = [
         "//metropolis/node:__pkg__",
-        "//metropolis/test/ktest:__pkg__",
+        "//osbase/test/ktest:__pkg__",
     ],
 )
 

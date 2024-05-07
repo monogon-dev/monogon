@@ -9,7 +9,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/test/swtpm/swtpm_cert",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/pkg/pki",
+        "//osbase/pki",
         "@com_github_spf13_pflag//:pflag",
     ],
 )

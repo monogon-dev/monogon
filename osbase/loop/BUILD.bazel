@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//osbase/test/ktest:ktest.bzl", "ktest")
+
+go_library(
+    name = "loop",
+    srcs = ["loop.go"],
+    importpath = "source.monogon.dev/osbase/loop",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_x_sys//unix"],
+)
+
+go_test(
+    name = "loop_test",
+    srcs = ["loop_test.go"],
+    embed = [":loop"],
+    deps = [
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+        "@org_golang_x_sys//unix",
+    ],
+)
+
+ktest(
+    tester = ":loop_test",
+)

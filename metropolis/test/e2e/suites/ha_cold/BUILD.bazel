@@ -17,7 +17,7 @@ go_test(
     deps = [
         "//metropolis/proto/common",
         "//metropolis/test/launch",
-        "//metropolis/test/launch/cluster",
         "//metropolis/test/util",
+        "//osbase/test/launch",
     ],
 )

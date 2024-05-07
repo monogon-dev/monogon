@@ -45,9 +45,9 @@ import (
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	"source.monogon.dev/metropolis/pkg/supervisor"
-	"source.monogon.dev/metropolis/test/launch"
+	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/supervisor"
+	"source.monogon.dev/osbase/test/launch"
 )
 
 var switchIP = net.IP{10, 1, 0, 1}

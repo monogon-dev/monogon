@@ -20,7 +20,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/build/fsspec"
-	"source.monogon.dev/metropolis/pkg/kmod"
+	"source.monogon.dev/osbase/kmod"
 )
 
 // linkRegexp parses the Link: lines in the WHENCE file. This does not have

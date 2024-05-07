@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//osbase/test/ktest:ktest.bzl", "ktest")
+
+go_library(
+    name = "erofs",
+    srcs = [
+        "compression.go",
+        "defs.go",
+        "erofs.go",
+        "inode_types.go",
+        "uncompressed_inode_writer.go",
+    ],
+    importpath = "source.monogon.dev/osbase/erofs",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_x_sys//unix"],
+)
+
+go_test(
+    name = "erofs_test",
+    srcs = [
+        "compression_test.go",
+        "defs_test.go",
+        "erofs_test.go",
+    ],
+    embed = [":erofs"],
+    pure = "on",  # keep
+    deps = [
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+        "@org_golang_x_sys//unix",
+    ],
+)
+
+ktest(
+    cmdline = "ramdisk_size=128",
+    tester = ":erofs_test",
+)

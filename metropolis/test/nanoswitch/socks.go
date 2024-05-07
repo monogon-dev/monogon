@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net"
 
-	"source.monogon.dev/metropolis/pkg/socksproxy"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/socksproxy"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // SOCKSPort is the port at which nanoswitch listens for SOCKS conenctions.
 //
-// ONCHANGE(//metropolis/test/launch/cluster:cluster.go): port must be kept in sync
+// ONCHANGE(//metropolis/test/launch:cluster.go): port must be kept in sync
 const SOCKSPort uint16 = 1080
 
 // socksHandler implements a socksproxy.Handler which permits and logs

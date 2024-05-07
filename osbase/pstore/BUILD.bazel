@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "pstore",
+    srcs = ["pstore.go"],
+    importpath = "source.monogon.dev/osbase/pstore",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "pstore_test",
+    srcs = ["pstore_test.go"],
+    embed = [":pstore"],
+)

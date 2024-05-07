@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ref",
+    srcs = ["ref.go"],
+    cgo = True,
+    gc_goopts = ["-d=libfuzzer"],
+    importpath = "source.monogon.dev/osbase/bootparam/ref",
+    visibility = ["//visibility:public"],
+    deps = ["//osbase/bootparam"],
+)

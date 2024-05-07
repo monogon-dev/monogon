@@ -6,8 +6,8 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/devmgr",
     visibility = ["//visibility:public"],
     deps = [
-        "//metropolis/pkg/kmod",
-        "//metropolis/pkg/supervisor",
+        "//osbase/kmod",
+        "//osbase/supervisor",
         "@com_github_mdlayher_kobject//:kobject",
     ],
 )

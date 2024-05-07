@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/pkg/pki"
+	"source.monogon.dev/osbase/pki"
 )
 
 // NewEphemeralClusterCredentials creates a set of TLS certificates for use in a

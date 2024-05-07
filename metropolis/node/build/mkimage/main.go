@@ -34,8 +34,8 @@ import (
 	"os"
 
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
-	"source.monogon.dev/metropolis/pkg/blkio"
-	"source.monogon.dev/metropolis/pkg/blockdev"
+	"source.monogon.dev/osbase/blkio"
+	"source.monogon.dev/osbase/blockdev"
 )
 
 //go:embed metropolis/node/core/abloader/abloader_bin.efi

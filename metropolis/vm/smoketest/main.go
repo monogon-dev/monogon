@@ -65,7 +65,7 @@ func main() {
 		"-accel", "kvm", "-cpu", "host",
 		"-bios", biosPath,
 		"-M", "microvm,x-option-roms=off,pic=off,pit=off,rtc=off,isa-serial=off",
-		"-kernel", "metropolis/test/ktest/linux-testing.elf",
+		"-kernel", "osbase/test/ktest/linux-testing.elf",
 		"-append", "reboot=t console=hvc0 quiet",
 		"-initrd", "metropolis/vm/smoketest/initramfs.cpio.lz4",
 		"-device", "virtio-rng-device,max-bytes=1024,period=1000",

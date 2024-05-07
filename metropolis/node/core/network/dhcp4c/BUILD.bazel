@@ -15,7 +15,7 @@ go_library(
     ],
     deps = [
         "//metropolis/node/core/network/dhcp4c/transport",
-        "//metropolis/pkg/supervisor",
+        "//osbase/supervisor",
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_insomniacslk_dhcp//dhcpv4",
         "@com_github_insomniacslk_dhcp//iana",

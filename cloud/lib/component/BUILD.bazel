@@ -10,7 +10,7 @@ go_library(
     importpath = "source.monogon.dev/cloud/lib/component",
     visibility = ["//visibility:public"],
     deps = [
-        "//metropolis/pkg/pki",
+        "//osbase/pki",
         "@com_github_adrg_xdg//:xdg",
         "@com_github_cockroachdb_cockroach_go_v2//testserver",
         "@com_github_golang_migrate_migrate_v4//:migrate",

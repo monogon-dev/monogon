@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	"source.monogon.dev/metropolis/pkg/pstore"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/pstore"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // dumpAndCleanPstore dumps all files accumulated in the pstore into the log

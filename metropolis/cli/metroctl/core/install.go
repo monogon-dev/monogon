@@ -9,10 +9,10 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"source.monogon.dev/metropolis/pkg/blockdev"
-	"source.monogon.dev/metropolis/pkg/fat32"
-	"source.monogon.dev/metropolis/pkg/gpt"
 	"source.monogon.dev/metropolis/proto/api"
+	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/fat32"
+	"source.monogon.dev/osbase/gpt"
 )
 
 type MakeInstallerImageArgs struct {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"strconv"
 
-	"source.monogon.dev/metropolis/pkg/supervisor"
-	"source.monogon.dev/metropolis/pkg/sysctl"
+	"source.monogon.dev/osbase/supervisor"
+	"source.monogon.dev/osbase/sysctl"
 )
 
 func nodeSysctls(ctx context.Context) error {

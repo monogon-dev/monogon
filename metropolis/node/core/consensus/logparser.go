@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"source.monogon.dev/metropolis/pkg/logbuffer"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	"source.monogon.dev/metropolis/pkg/logtree/unraw"
+	"source.monogon.dev/osbase/logbuffer"
+	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/logtree/unraw"
 )
 
 // etcdLogEntry is a JSON-encoded, structured log entry received from a running

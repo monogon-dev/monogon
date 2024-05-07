@@ -9,7 +9,7 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/pkg/pki"
+	"source.monogon.dev/osbase/pki"
 
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 )

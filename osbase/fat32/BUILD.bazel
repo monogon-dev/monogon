@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//osbase/test/ktest:ktest.bzl", "ktest")
+
+go_library(
+    name = "fat32",
+    srcs = [
+        "dos83.go",
+        "fat32.go",
+        "structs.go",
+        "utils.go",
+    ],
+    importpath = "source.monogon.dev/osbase/fat32",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "fat32_test",
+    srcs = [
+        "fsck_test.go",
+        "linux_test.go",
+        "structs_test.go",
+    ],
+    data = ["@com_github_dosfstools_dosfstools//:fsck"],
+    embed = [":fat32"],
+    deps = [
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@org_golang_x_mod//semver",
+        "@org_golang_x_sys//unix",
+    ],
+)
+
+ktest(
+    cmdline = "ramdisk_size=266240",
+    tester = ":fat32_test",
+)

@@ -19,10 +19,10 @@ import (
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
-	"source.monogon.dev/metropolis/pkg/event"
-	"source.monogon.dev/metropolis/pkg/event/etcd"
-	"source.monogon.dev/metropolis/pkg/pki"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	"source.monogon.dev/osbase/event"
+	"source.monogon.dev/osbase/event/etcd"
+	"source.monogon.dev/osbase/pki"
 )
 
 // leaderCurator implements the Curator gRPC API (ipb.Curator) as a curator

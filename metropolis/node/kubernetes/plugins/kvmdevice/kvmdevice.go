@@ -40,8 +40,8 @@ import (
 	pluginregistration "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // Name is the name of the KVM devices this plugin exposes

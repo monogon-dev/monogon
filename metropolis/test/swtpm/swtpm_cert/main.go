@@ -24,7 +24,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"source.monogon.dev/metropolis/pkg/pki"
+	"source.monogon.dev/osbase/pki"
 )
 
 func getSignkey() *rsa.PrivateKey {

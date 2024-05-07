@@ -9,7 +9,7 @@ import (
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 
-	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/osbase/logtree"
 )
 
 // applyQuirks applies settings to drivers and/or hardware to make it work

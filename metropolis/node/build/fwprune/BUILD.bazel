@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//metropolis/node/build/fsspec",
-        "//metropolis/pkg/kmod",
+        "//osbase/kmod",
         "@org_golang_google_protobuf//encoding/prototext",
         "@org_golang_google_protobuf//proto",
     ],

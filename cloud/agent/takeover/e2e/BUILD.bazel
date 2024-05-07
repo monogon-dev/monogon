@@ -10,8 +10,8 @@ go_test(
     ],
     deps = [
         "//cloud/agent/api",
-        "//metropolis/pkg/fat32",
-        "//metropolis/pkg/freeport",
+        "//osbase/fat32",
+        "//osbase/freeport",
         "@com_github_pkg_sftp//:sftp",
         "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@org_golang_google_protobuf//proto",

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/osbase/logtree"
 )
 
 // TestSpanRecording exercises the span->logtree forwarding functionality by

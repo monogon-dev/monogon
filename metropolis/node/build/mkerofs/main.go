@@ -30,7 +30,7 @@ import (
 	"strings"
 
 	"source.monogon.dev/metropolis/node/build/fsspec"
-	"source.monogon.dev/metropolis/pkg/erofs"
+	"source.monogon.dev/osbase/erofs"
 )
 
 func (spec *entrySpec) writeRecursive(w *erofs.Writer, pathname string) {

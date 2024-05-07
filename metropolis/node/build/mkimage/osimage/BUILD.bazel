@@ -6,10 +6,10 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/build/mkimage/osimage",
     visibility = ["//visibility:public"],
     deps = [
-        "//metropolis/pkg/blockdev",
-        "//metropolis/pkg/efivarfs",
-        "//metropolis/pkg/fat32",
-        "//metropolis/pkg/gpt",
+        "//osbase/blockdev",
+        "//osbase/efivarfs",
+        "//osbase/fat32",
+        "//osbase/gpt",
         "@com_github_google_uuid//:uuid",
     ],
 )

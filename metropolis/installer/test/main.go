@@ -39,7 +39,7 @@ import (
 
 	mctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
-	"source.monogon.dev/metropolis/pkg/cmd"
+	"source.monogon.dev/osbase/cmd"
 )
 
 // Each variable in this block points to either a test dependency or a side

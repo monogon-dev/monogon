@@ -2,7 +2,7 @@ package curator
 
 import (
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/pkg/pki"
+	"source.monogon.dev/osbase/pki"
 )
 
 var (

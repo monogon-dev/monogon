@@ -35,8 +35,8 @@ import (
 	"source.monogon.dev/metropolis/node/kubernetes/metricsproxy"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	apb "source.monogon.dev/metropolis/proto/api"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 type ConfigController struct {

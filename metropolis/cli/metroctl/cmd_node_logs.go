@@ -8,10 +8,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	lpb "source.monogon.dev/metropolis/pkg/logtree/proto"
 	"source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	"source.monogon.dev/osbase/logtree"
+	lpb "source.monogon.dev/osbase/logtree/proto"
 )
 
 type metroctlLogFlags struct {

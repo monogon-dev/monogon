@@ -36,10 +36,10 @@ import (
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	timesvc "source.monogon.dev/metropolis/node/core/time"
 	"source.monogon.dev/metropolis/node/core/update"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	"source.monogon.dev/metropolis/pkg/supervisor"
-	"source.monogon.dev/metropolis/pkg/tpm"
 	mversion "source.monogon.dev/metropolis/version"
+	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/supervisor"
+	"source.monogon.dev/osbase/tpm"
 	"source.monogon.dev/version"
 )
 

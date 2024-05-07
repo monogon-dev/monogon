@@ -17,9 +17,9 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/node/core/network"
-	"source.monogon.dev/metropolis/pkg/event/memory"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/test/util"
+	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/supervisor"
 
 	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"

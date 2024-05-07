@@ -6,7 +6,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/test/e2e/k8s_cts",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/test/launch/cluster",
+        "//metropolis/test/launch",
         "@io_k8s_api//core/v1:core",
         "@io_k8s_api//rbac/v1:rbac",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",

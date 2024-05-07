@@ -34,10 +34,10 @@ import (
 	pluginregistration "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/pkg/fsquota"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	"source.monogon.dev/metropolis/pkg/loop"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/fsquota"
+	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/loop"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // Derived from K8s spec for acceptable names, but shortened to 130 characters

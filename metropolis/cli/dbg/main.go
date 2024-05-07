@@ -32,7 +32,7 @@ import (
 	"k8s.io/kubectl/pkg/cmd/plugin"
 	"k8s.io/kubectl/pkg/cmd/util"
 
-	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/osbase/logtree"
 
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"

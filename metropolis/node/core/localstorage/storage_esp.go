@@ -24,11 +24,11 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
-	"source.monogon.dev/metropolis/pkg/tpm"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	ppb "source.monogon.dev/metropolis/proto/private"
 	npb "source.monogon.dev/net/proto"
+	"source.monogon.dev/osbase/tpm"
 )
 
 // ESPDirectory is the EFI System Partition. It is a cleartext partition

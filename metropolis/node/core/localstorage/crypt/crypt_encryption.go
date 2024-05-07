@@ -7,8 +7,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"source.monogon.dev/metropolis/pkg/blockdev"
-	"source.monogon.dev/metropolis/pkg/devicemapper"
+	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/devicemapper"
 )
 
 func encryptionDevPath(name string) string {

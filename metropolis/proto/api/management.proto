@@ -4,7 +4,7 @@ option go_package = "source.monogon.dev/metropolis/proto/api";
 
 import "google/protobuf/duration.proto";
 
-import "metropolis/pkg/logtree/proto/logtree.proto";
+import "osbase/logtree/proto/logtree.proto";
 import "metropolis/proto/common/common.proto";
 import "metropolis/proto/ext/authorization.proto";
 
@@ -334,7 +334,7 @@ service NodeManagement {
   // GetLogs Returns historical and/or streaming logs for a given DN with given
   // filters from the system global LogTree.
   //
-  // For more information about this API, see //metropolis/pkg/logtree. But, in
+  // For more information about this API, see //osbase/logtree. But, in
   // summary:
   //   - All logging is performed to a DN (distinguished name), which is a
   //     dot-delimited string like foo.bar.baz.
@@ -398,11 +398,11 @@ message GetLogsRequest {
 message GetLogsResponse {
   // Entries from the requested historical entries (via WithBackLog). They will
   // all be served before the first stream_entries are served (if any).
-  repeated metropolis.pkg.logtree.proto.LogEntry backlog_entries = 1;
+  repeated osbase.pkg.logtree.proto.LogEntry backlog_entries = 1;
   // Entries streamed as they arrive. Currently no server-side buffering is
   // enabled, instead every line is served as early as it arrives. However, this
   // might change in the future, so this behaviour cannot be depended upon.
-  repeated metropolis.pkg.logtree.proto.LogEntry stream_entries = 2;
+  repeated osbase.pkg.logtree.proto.LogEntry stream_entries = 2;
 }
 
 enum ActivationMode {

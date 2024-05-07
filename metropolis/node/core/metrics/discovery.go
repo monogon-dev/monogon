@@ -9,7 +9,7 @@ import (
 
 	"source.monogon.dev/go/types/mapsets"
 	"source.monogon.dev/metropolis/node/core/curator/watcher"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/supervisor"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 )

@@ -17,8 +17,8 @@ import (
 	cpb "source.monogon.dev/metropolis/proto/common"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
-	"source.monogon.dev/metropolis/pkg/blkio"
-	"source.monogon.dev/metropolis/pkg/fat32"
+	"source.monogon.dev/osbase/blkio"
+	"source.monogon.dev/osbase/fat32"
 )
 
 var installCmd = &cobra.Command{

@@ -30,7 +30,7 @@ import (
 	"github.com/containerd/containerd/namespaces"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 const (

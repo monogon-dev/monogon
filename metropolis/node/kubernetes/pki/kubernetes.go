@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// package pki builds upon metropolis/pkg/pki/ to provide an
+// package pki builds upon osbase/pki/ to provide an
 // etcd-backed implementation of all x509 PKI Certificates/CAs required to run
 // Kubernetes.
 // Most elements of the PKI are 'static' long-standing certificates/credentials
@@ -41,7 +41,7 @@ import (
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
-	opki "source.monogon.dev/metropolis/pkg/pki"
+	opki "source.monogon.dev/osbase/pki"
 )
 
 // KubeCertificateName is an enum-like unique name of a static Kubernetes

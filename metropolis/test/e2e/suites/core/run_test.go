@@ -19,10 +19,10 @@ import (
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/rpc"
-	"source.monogon.dev/metropolis/pkg/localregistry"
-	"source.monogon.dev/metropolis/test/launch"
-	"source.monogon.dev/metropolis/test/launch/cluster"
+	mlaunch "source.monogon.dev/metropolis/test/launch"
+	"source.monogon.dev/metropolis/test/localregistry"
 	"source.monogon.dev/metropolis/test/util"
+	"source.monogon.dev/osbase/test/launch"
 
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -62,7 +62,7 @@ func TestE2ECore(t *testing.T) {
 		t.Fatalf("Creating test image registry failed: %v", err)
 	}
 	// Launch cluster.
-	clusterOptions := cluster.ClusterOptions{
+	clusterOptions := mlaunch.ClusterOptions{
 		NumNodes:      2,
 		LocalRegistry: lr,
 		InitialClusterConfiguration: &cpb.ClusterConfiguration{
@@ -70,7 +70,7 @@ func TestE2ECore(t *testing.T) {
 			StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE,
 		},
 	}
-	cluster, err := cluster.LaunchCluster(ctx, clusterOptions)
+	cluster, err := mlaunch.LaunchCluster(ctx, clusterOptions)
 	if err != nil {
 		t.Fatalf("LaunchCluster failed: %v", err)
 	}

@@ -23,7 +23,7 @@ go_binary(
     name = "smoketest",
     data = [
         ":initramfs",
-        "//metropolis/test/ktest:linux-testing",
+        "//osbase/test/ktest:linux-testing",
         "@qemu//:qemu-x86_64-softmmu",
     ],
     embed = [":smoketest_lib"],

@@ -8,7 +8,7 @@ import (
 	"source.monogon.dev/metropolis/node"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/curator/watcher"
-	"source.monogon.dev/metropolis/pkg/event/memory"
+	"source.monogon.dev/osbase/event/memory"
 )
 
 // updateLoadBalancerAPIServers provides a tinylb BackendSet memory value with

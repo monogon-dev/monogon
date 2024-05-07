@@ -22,8 +22,8 @@ import (
 
 	"source.monogon.dev/cloud/agent/api"
 
-	"source.monogon.dev/metropolis/pkg/fat32"
-	"source.monogon.dev/metropolis/pkg/freeport"
+	"source.monogon.dev/osbase/fat32"
+	"source.monogon.dev/osbase/freeport"
 )
 
 func TestE2E(t *testing.T) {

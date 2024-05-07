@@ -30,9 +30,9 @@ import (
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
 	"source.monogon.dev/metropolis/node/core/network/dns"
-	"source.monogon.dev/metropolis/pkg/event/memory"
-	"source.monogon.dev/metropolis/pkg/supervisor"
-	"source.monogon.dev/metropolis/pkg/sysctl"
+	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/supervisor"
+	"source.monogon.dev/osbase/sysctl"
 
 	netpb "source.monogon.dev/net/proto"
 )

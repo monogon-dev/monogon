@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/osbase/logtree"
 )
 
 // ServerSecurity are the security options of a RPC server that will run

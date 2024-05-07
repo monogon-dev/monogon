@@ -25,10 +25,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"source.monogon.dev/metropolis/pkg/blockdev"
-	"source.monogon.dev/metropolis/pkg/efivarfs"
-	"source.monogon.dev/metropolis/pkg/fat32"
-	"source.monogon.dev/metropolis/pkg/gpt"
+	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/efivarfs"
+	"source.monogon.dev/osbase/fat32"
+	"source.monogon.dev/osbase/gpt"
 )
 
 var (

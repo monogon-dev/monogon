@@ -9,7 +9,7 @@ go_library(
         "//metropolis/node",
         "//metropolis/node/core/identity",
         "//metropolis/node/kubernetes/pki",
-        "//metropolis/pkg/supervisor",
+        "//osbase/supervisor",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
     ],
 )

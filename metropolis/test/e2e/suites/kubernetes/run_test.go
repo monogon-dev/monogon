@@ -23,8 +23,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 
-	"source.monogon.dev/metropolis/pkg/localregistry"
-	"source.monogon.dev/metropolis/test/launch/cluster"
+	mlaunch "source.monogon.dev/metropolis/test/launch"
+	"source.monogon.dev/metropolis/test/localregistry"
 	"source.monogon.dev/metropolis/test/util"
 
 	common "source.monogon.dev/metropolis/node"
@@ -64,11 +64,11 @@ func TestE2EKubernetes(t *testing.T) {
 	}
 
 	// Launch cluster.
-	clusterOptions := cluster.ClusterOptions{
+	clusterOptions := mlaunch.ClusterOptions{
 		NumNodes:      2,
 		LocalRegistry: lr,
 	}
-	cluster, err := cluster.LaunchCluster(ctx, clusterOptions)
+	cluster, err := mlaunch.LaunchCluster(ctx, clusterOptions)
 	if err != nil {
 		t.Fatalf("LaunchCluster failed: %v", err)
 	}

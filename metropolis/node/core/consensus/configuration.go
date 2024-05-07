@@ -15,7 +15,7 @@ import (
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/pkg/pki"
+	"source.monogon.dev/osbase/pki"
 )
 
 // Config describes the startup configuration of a consensus instance.

@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "fileargs",
-    srcs = ["fileargs.go"],
-    importpath = "source.monogon.dev/metropolis/pkg/fileargs",
-    visibility = ["//metropolis:__subpackages__"],
-    deps = ["@org_golang_x_sys//unix"],
-)

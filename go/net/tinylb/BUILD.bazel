@@ -10,8 +10,8 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/types/mapsets",
-        "//metropolis/pkg/event",
-        "//metropolis/pkg/supervisor",
+        "//osbase/event",
+        "//osbase/supervisor",
     ],
 )
 
@@ -20,7 +20,7 @@ go_test(
     srcs = ["tinylb_test.go"],
     embed = [":tinylb"],
     deps = [
-        "//metropolis/pkg/event/memory",
-        "//metropolis/pkg/supervisor",
+        "//osbase/event/memory",
+        "//osbase/supervisor",
     ],
 )

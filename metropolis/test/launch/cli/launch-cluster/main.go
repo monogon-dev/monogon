@@ -23,12 +23,12 @@ import (
 	"os/signal"
 
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
-	"source.monogon.dev/metropolis/test/launch/cluster"
+	mlaunch "source.monogon.dev/metropolis/test/launch"
 )
 
 func main() {
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-	cl, err := cluster.LaunchCluster(ctx, cluster.ClusterOptions{
+	cl, err := mlaunch.LaunchCluster(ctx, mlaunch.ClusterOptions{
 		NumNodes:        3,
 		NodeLogsToFiles: true,
 	})
@@ -36,7 +36,7 @@ func main() {
 		log.Fatalf("LaunchCluster: %v", err)
 	}
 
-	mpath, err := cluster.MetroctlRunfilePath()
+	mpath, err := mlaunch.MetroctlRunfilePath()
 	if err != nil {
 		log.Fatalf("MetroctlRunfilePath: %v", err)
 	}

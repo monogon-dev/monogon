@@ -32,10 +32,10 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/cloud/agent/api"
-	"source.monogon.dev/metropolis/pkg/bootparam"
-	"source.monogon.dev/metropolis/pkg/kexec"
 	netdump "source.monogon.dev/net/dump"
 	netapi "source.monogon.dev/net/proto"
+	"source.monogon.dev/osbase/bootparam"
+	"source.monogon.dev/osbase/kexec"
 )
 
 //go:embed third_party/linux/bzImage

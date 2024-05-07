@@ -9,8 +9,8 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/network/dns",
     visibility = ["//metropolis/node:__subpackages__"],
     deps = [
-        "//metropolis/pkg/fileargs",
-        "//metropolis/pkg/supervisor",
+        "//osbase/fileargs",
+        "//osbase/supervisor",
         "@org_golang_x_sys//unix",
     ],
 )

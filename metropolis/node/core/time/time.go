@@ -18,8 +18,8 @@ import (
 	"strings"
 
 	"source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/pkg/fileargs"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/fileargs"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // Service implements the time service. See package documentation for further

@@ -13,7 +13,7 @@ import (
 	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 
-	"source.monogon.dev/metropolis/pkg/event/memory"
+	"source.monogon.dev/osbase/event/memory"
 )
 
 // TestCurator is a shim Curator implementation that serves pending Watch

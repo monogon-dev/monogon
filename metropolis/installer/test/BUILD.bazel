@@ -22,8 +22,8 @@ go_library(
     deps = [
         "//metropolis/cli/metroctl/core",
         "//metropolis/node/build/mkimage/osimage",
-        "//metropolis/pkg/cmd",
         "//metropolis/proto/api",
+        "//osbase/cmd",
         "@com_github_diskfs_go_diskfs//:go-diskfs",
         "@com_github_diskfs_go_diskfs//disk",
         "@com_github_diskfs_go_diskfs//partition/gpt",

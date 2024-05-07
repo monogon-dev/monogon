@@ -11,7 +11,7 @@ import (
 
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // Service is the Metropolis Metrics Service.

@@ -13,8 +13,8 @@ import (
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
-	"source.monogon.dev/metropolis/pkg/pki"
 	apb "source.monogon.dev/metropolis/proto/api"
+	"source.monogon.dev/osbase/pki"
 )
 
 const (

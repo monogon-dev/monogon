@@ -9,7 +9,7 @@ go_library(
     deps = [
         "//metropolis/proto/api",
         "//metropolis/test/launch",
-        "//metropolis/test/launch/cluster",
+        "//osbase/test/launch",
     ],
 )
 

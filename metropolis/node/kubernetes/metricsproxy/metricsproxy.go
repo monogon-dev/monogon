@@ -16,7 +16,7 @@ import (
 
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 type Service struct {

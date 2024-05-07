@@ -18,9 +18,9 @@ import (
 	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 
 	"source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/pkg/freeport"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/test/util"
+	"source.monogon.dev/osbase/freeport"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 func fakeExporter(name, value string) *Exporter {

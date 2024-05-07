@@ -13,7 +13,7 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"source.monogon.dev/metropolis/pkg/pki"
+	"source.monogon.dev/osbase/pki"
 )
 
 // GetDevCerts returns paths to this component's development certificate, key

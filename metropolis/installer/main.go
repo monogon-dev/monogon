@@ -35,9 +35,9 @@ import (
 	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
-	"source.monogon.dev/metropolis/pkg/blockdev"
-	"source.monogon.dev/metropolis/pkg/efivarfs"
-	"source.monogon.dev/metropolis/pkg/sysfs"
+	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/efivarfs"
+	"source.monogon.dev/osbase/sysfs"
 )
 
 //go:embed metropolis/node/core/abloader/abloader_bin.efi

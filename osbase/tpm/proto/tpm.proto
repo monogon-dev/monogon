@@ -1,0 +1,16 @@
+syntax = "proto3";
+option go_package = "source.monogon.dev/osbase/tpm/proto";
+package metropolis.pkg.tpm;
+
+import "proto/tpm/tpm.proto";
+
+// ExtendedSealedBytes contains data sealed by a TPM2 via an indirection to
+// allow for more than 128 bytes of payload. It seals an ephemeral key for
+// a nacl secretbox in the TPM and stores the encrypted box next to the sealed
+// key.
+message ExtendedSealedBytes {
+  // The secretbox key, as sealed by the TPM.
+  .tpm.SealedBytes sealed_key = 1;
+  // The encrypted box contents.
+  bytes encrypted_payload = 2;
+}

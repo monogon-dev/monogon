@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "devicemapper",
+    srcs = [
+        "ctype.go",
+        "devicemapper.go",
+    ],
+    importpath = "source.monogon.dev/osbase/devicemapper",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_pkg_errors//:errors",
+        "@com_github_yalue_native_endian//:native_endian",
+        "@org_golang_x_sys//unix",
+    ],
+)

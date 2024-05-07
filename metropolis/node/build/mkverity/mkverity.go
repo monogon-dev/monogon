@@ -19,7 +19,7 @@
 // outputs a Verity mapping table on success.
 //
 // For more information, see:
-// - source.monogon.dev/metropolis/pkg/verity
+// - source.monogon.dev/osbase/verity
 // - https://gitlab.com/cryptsetup/cryptsetup/wikis/DMVerity
 package main
 
@@ -30,7 +30,7 @@ import (
 	"log"
 	"os"
 
-	"source.monogon.dev/metropolis/pkg/verity"
+	"source.monogon.dev/osbase/verity"
 )
 
 // createImage creates a dm-verity target image by combining the input image

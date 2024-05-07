@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"source.monogon.dev/metropolis/pkg/logbuffer"
-	"source.monogon.dev/metropolis/pkg/logtree"
+	"source.monogon.dev/osbase/logbuffer"
+	"source.monogon.dev/osbase/logtree"
 )
 
 // TestParsing exercises the parseEtcdLogEntry function.

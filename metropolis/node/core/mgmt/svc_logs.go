@@ -7,10 +7,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"source.monogon.dev/metropolis/pkg/logtree"
-	lpb "source.monogon.dev/metropolis/pkg/logtree/proto"
 	"source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	"source.monogon.dev/osbase/logtree"
+	lpb "source.monogon.dev/osbase/logtree/proto"
 )
 
 const (

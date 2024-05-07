@@ -6,7 +6,7 @@ import (
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 
-	"source.monogon.dev/metropolis/pkg/event/memory"
+	"source.monogon.dev/osbase/event/memory"
 )
 
 type testServiceHandle struct {

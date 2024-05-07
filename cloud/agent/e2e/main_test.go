@@ -30,8 +30,8 @@ import (
 
 	apb "source.monogon.dev/cloud/agent/api"
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
-	"source.monogon.dev/metropolis/pkg/pki"
 	mpb "source.monogon.dev/metropolis/proto/api"
+	"source.monogon.dev/osbase/pki"
 )
 
 type fakeServer struct {

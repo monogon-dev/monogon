@@ -18,9 +18,9 @@ import (
 	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/cloud/agent/api"
-	"source.monogon.dev/metropolis/pkg/nvme"
-	"source.monogon.dev/metropolis/pkg/scsi"
-	"source.monogon.dev/metropolis/pkg/smbios"
+	"source.monogon.dev/osbase/nvme"
+	"source.monogon.dev/osbase/scsi"
+	"source.monogon.dev/osbase/smbios"
 )
 
 type hwReportContext struct {

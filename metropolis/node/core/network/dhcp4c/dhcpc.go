@@ -37,7 +37,7 @@ import (
 	"github.com/insomniacslk/dhcp/iana"
 
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c/transport"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 type state int

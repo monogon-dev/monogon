@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "logbuffer",
+    srcs = [
+        "linebuffer.go",
+        "logbuffer.go",
+    ],
+    importpath = "source.monogon.dev/osbase/logbuffer",
+    visibility = ["//visibility:public"],
+    deps = ["//osbase/logtree/proto"],
+)
+
+go_test(
+    name = "logbuffer_test",
+    srcs = [
+        "linebuffer_test.go",
+        "logbuffer_test.go",
+    ],
+    embed = [":logbuffer"],
+    deps = ["@com_github_stretchr_testify//require"],
+)

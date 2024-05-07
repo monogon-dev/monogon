@@ -38,7 +38,7 @@ package crypt
 import (
 	"fmt"
 
-	"source.monogon.dev/metropolis/pkg/blockdev"
+	"source.monogon.dev/osbase/blockdev"
 )
 
 // Mode of block device encryption and/or authentication, if any. See the

@@ -34,7 +34,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"source.monogon.dev/metropolis/test/launch/cluster"
+	mlaunch "source.monogon.dev/metropolis/test/launch"
 )
 
 // makeCTSPodSpec generates a spec for a standalone pod running the Kubernetes
@@ -100,7 +100,7 @@ func main() {
 	}()
 
 	// TODO(q3k): bump up number of nodes after multi-node workflow gets reimplemented.
-	cl, err := cluster.LaunchCluster(ctx, cluster.ClusterOptions{NumNodes: 1})
+	cl, err := mlaunch.LaunchCluster(ctx, mlaunch.ClusterOptions{NumNodes: 1})
 	if err != nil {
 		log.Fatalf("Failed to launch cluster: %v", err)
 	}

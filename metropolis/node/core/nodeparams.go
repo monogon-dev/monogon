@@ -16,7 +16,7 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 func nodeParamsFWCFG(ctx context.Context) (*apb.NodeParameters, error) {

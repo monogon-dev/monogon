@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "quotactl",
+    srcs = ["quotactl.go"],
+    importpath = "source.monogon.dev/osbase/fsquota/quotactl",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_x_sys//unix"],
+)

@@ -12,10 +12,10 @@ proto_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//metropolis/pkg/logtree/proto:proto_proto",
         "//metropolis/proto/common:common_proto",
         "//metropolis/proto/ext:ext_proto",
         "//net/proto:net_proto_proto",
+        "//osbase/logtree/proto:proto_proto",
         "@com_google_protobuf//:duration_proto",
     ],
 )
@@ -27,10 +27,10 @@ go_proto_library(
     proto = ":api_proto",
     visibility = ["//visibility:public"],
     deps = [
-        "//metropolis/pkg/logtree/proto",
         "//metropolis/proto/common",
         "//metropolis/proto/ext",
         "//net/proto",
+        "//osbase/logtree/proto",
     ],
 )
 

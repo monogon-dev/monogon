@@ -27,7 +27,7 @@ possible.
 
 Because this code calls the losetup utility which Metropolis doesn't want to ship and also repeatedly lists loop devices
 in an inefficient manner which will cause problems with the anticipated density of VM-hosting Metropolis nodes and
-does nothing for us, let's just nuke it instead of rewriting it against //metropolis/pkg/loop.
+does nothing for us, let's just nuke it instead of rewriting it against //osbase/loop.
 ---
  pkg/volume/util/util.go | 18 ------------------
  1 file changed, 18 deletions(-)

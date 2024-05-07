@@ -13,10 +13,10 @@ import (
 	"source.monogon.dev/metropolis/node/kubernetes"
 	"source.monogon.dev/metropolis/node/kubernetes/containerd"
 	kpki "source.monogon.dev/metropolis/node/kubernetes/pki"
-	"source.monogon.dev/metropolis/pkg/event"
-	"source.monogon.dev/metropolis/pkg/event/memory"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	"source.monogon.dev/osbase/event"
+	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // workerKubernetes is the Kubernetes Worker, responsible for launching

@@ -42,9 +42,9 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	oclusternet "source.monogon.dev/metropolis/node/core/clusternet"
-	"source.monogon.dev/metropolis/pkg/event"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/event"
+	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 type Service struct {

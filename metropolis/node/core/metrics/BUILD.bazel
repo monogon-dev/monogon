@@ -15,7 +15,7 @@ go_library(
         "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/curator/watcher",
         "//metropolis/node/core/identity",
-        "//metropolis/pkg/supervisor",
+        "//osbase/supervisor",
     ],
 )
 
@@ -30,9 +30,9 @@ go_test(
     deps = [
         "//metropolis/node",
         "//metropolis/node/core/curator/proto/api",
-        "//metropolis/pkg/freeport",
-        "//metropolis/pkg/supervisor",
         "//metropolis/test/util",
+        "//osbase/freeport",
+        "//osbase/supervisor",
         "@com_zx2c4_golang_wireguard_wgctrl//wgtypes",
         "@io_bazel_rules_go//go/runfiles:go_default_library",
     ],

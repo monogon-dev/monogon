@@ -8,9 +8,9 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"source.monogon.dev/metropolis/pkg/bootparam"
-	"source.monogon.dev/metropolis/pkg/logtree"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/bootparam"
+	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 var validTTYRegexp = regexp.MustCompile(`^[a-zA-Z0-9]+$`)

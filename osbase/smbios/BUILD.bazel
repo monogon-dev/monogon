@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "smbios",
+    srcs = [
+        "smbios.go",
+        "structures.go",
+    ],
+    importpath = "source.monogon.dev/osbase/smbios",
+    visibility = ["//visibility:public"],
+)

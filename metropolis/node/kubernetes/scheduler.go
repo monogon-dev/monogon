@@ -23,8 +23,8 @@ import (
 	"os/exec"
 
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
-	"source.monogon.dev/metropolis/pkg/fileargs"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/fileargs"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 type schedulerConfig struct {

@@ -12,8 +12,8 @@ import (
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
-	"source.monogon.dev/metropolis/pkg/event"
-	"source.monogon.dev/metropolis/pkg/event/etcd"
+	"source.monogon.dev/osbase/event"
+	"source.monogon.dev/osbase/event/etcd"
 )
 
 // preapreClusternetCacheUnlocked makes sure the leader's clusternetCache exists,

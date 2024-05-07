@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // An Exporter is a Prometheus binary running under the Metrics service which

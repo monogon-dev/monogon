@@ -12,11 +12,11 @@ import (
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
-	"source.monogon.dev/metropolis/pkg/event"
-	"source.monogon.dev/metropolis/pkg/event/memory"
-	"source.monogon.dev/metropolis/pkg/pki"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	"source.monogon.dev/osbase/event"
+	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/pki"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // workerControlPlane is the Control Plane Worker, responsible for maintaining a

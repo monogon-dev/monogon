@@ -15,10 +15,10 @@ go_test(
         "resources:ram:7000",
     ],
     deps = [
-        "//metropolis/pkg/localregistry",
         "//metropolis/test/launch",
-        "//metropolis/test/launch/cluster",
+        "//metropolis/test/localregistry",
         "//metropolis/test/util",
+        "//osbase/test/launch",
         "@io_bazel_rules_go//go/runfiles:go_default_library",
     ],
 )

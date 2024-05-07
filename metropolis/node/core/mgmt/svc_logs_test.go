@@ -16,10 +16,10 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 	"google.golang.org/protobuf/testing/protocmp"
 
-	"source.monogon.dev/metropolis/pkg/logtree"
-	lpb "source.monogon.dev/metropolis/pkg/logtree/proto"
 	"source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	"source.monogon.dev/osbase/logtree"
+	lpb "source.monogon.dev/osbase/logtree/proto"
 )
 
 func dut(t *testing.T) (*Service, *grpc.ClientConn) {

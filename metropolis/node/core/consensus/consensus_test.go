@@ -29,8 +29,8 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
-	"source.monogon.dev/metropolis/pkg/supervisor"
 	"source.monogon.dev/metropolis/test/util"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 type boilerplate struct {

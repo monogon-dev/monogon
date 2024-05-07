@@ -8,8 +8,8 @@ import (
 	cpb "source.monogon.dev/metropolis/proto/common"
 
 	"source.monogon.dev/metropolis/node/core/metrics"
-	"source.monogon.dev/metropolis/pkg/event/memory"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // workerMetrics runs the Metrics Service, which runs local Prometheus collectors

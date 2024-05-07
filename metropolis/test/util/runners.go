@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"source.monogon.dev/metropolis/test/launch"
+	"source.monogon.dev/osbase/test/launch"
 )
 
 // TestEventual creates a new subtest looping the given function until it either

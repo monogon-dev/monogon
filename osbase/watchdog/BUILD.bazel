@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "watchdog",
+    srcs = ["watchdog.go"],
+    importpath = "source.monogon.dev/osbase/watchdog",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_x_sys//unix"],
+)

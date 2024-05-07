@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "unraw",
+    srcs = ["unraw.go"],
+    importpath = "source.monogon.dev/osbase/logtree/unraw",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//osbase/logbuffer",
+        "//osbase/logtree",
+        "//osbase/supervisor",
+    ],
+)
+
+go_test(
+    name = "unraw_test",
+    srcs = ["unraw_test.go"],
+    embed = [":unraw"],
+    deps = [
+        "//osbase/logbuffer",
+        "//osbase/logtree",
+        "//osbase/supervisor",
+    ],
+)

@@ -16,8 +16,8 @@ import (
 	"sync"
 
 	"source.monogon.dev/go/types/mapsets"
-	"source.monogon.dev/metropolis/pkg/event"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/event"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // Backend is to be implemented by different kinds of loadbalancing backends, eg.

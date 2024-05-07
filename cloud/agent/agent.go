@@ -22,8 +22,8 @@ import (
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
 	"source.monogon.dev/metropolis/node/core/devmgr"
 	"source.monogon.dev/metropolis/node/core/network"
-	"source.monogon.dev/metropolis/pkg/pki"
-	"source.monogon.dev/metropolis/pkg/supervisor"
+	"source.monogon.dev/osbase/pki"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // This is similar to rpc.NewEphemeralCredentials, but that only deals with
