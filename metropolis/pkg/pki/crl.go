@@ -11,7 +11,6 @@ import (
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 
-	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/etcd"
 )
@@ -145,7 +144,7 @@ func (c *Certificate) makeCRL(ctx context.Context, kv clientv3.KV, revoked []pki
 
 // WatchCRL returns and Event Value compatible CRLWatcher which can be used to
 // retrieve and watch for the newest CRL available from this CA certificate.
-func (c *Certificate) WatchCRL(cl client.Namespaced) event.Watcher[*CRL] {
+func (c *Certificate) WatchCRL(cl etcd.ThinClient) event.Watcher[*CRL] {
 	value := etcd.NewValue(cl, c.crlPath(), func(_, data []byte) (*CRL, error) {
 		crl, err := x509.ParseCRL(data)
 		if err != nil {

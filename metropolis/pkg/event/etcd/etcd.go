@@ -10,7 +10,6 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
-	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/pkg/event"
 )
 
@@ -22,12 +21,19 @@ var (
 	_ event.ValueWatch[StringAt] = &Value[StringAt]{}
 )
 
+// ThinClient is a small wrapper interface to combine
+// clientv3.KV and clientv3.Watcher.
+type ThinClient interface {
+	clientv3.KV
+	clientv3.Watcher
+}
+
 // Value is an 'Event Value' backed in an etcd cluster, accessed over an
 // etcd client. This is a stateless handle and can be copied and shared across
 // goroutines.
 type Value[T any] struct {
 	decoder func(key, value []byte) (T, error)
-	etcd    client.Namespaced
+	etcd    ThinClient
 	key     string
 	keyEnd  string
 }
@@ -67,7 +73,7 @@ func Range(end string) *Option {
 // NewValue creates a new Value for a given key(s) in an etcd client. The
 // given decoder will be used to convert bytes retrieved from etcd into the
 // interface{} value retrieved by Get by this value's watcher.
-func NewValue[T any](etcd client.Namespaced, key string, decoder func(key, value []byte) (T, error), options ...*Option) *Value[T] {
+func NewValue[T any](etcd ThinClient, key string, decoder func(key, value []byte) (T, error), options ...*Option) *Value[T] {
 	res := &Value[T]{
 		decoder: decoder,
 		etcd:    etcd,

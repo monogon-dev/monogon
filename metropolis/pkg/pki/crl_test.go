@@ -7,8 +7,6 @@ import (
 
 	"go.etcd.io/etcd/client/pkg/v3/testutil"
 	"go.etcd.io/etcd/tests/v3/integration"
-
-	"source.monogon.dev/metropolis/node/core/consensus/client"
 )
 
 // TestRevoke exercises the CRL revocation and watching functionality of a CA
@@ -19,7 +17,7 @@ func TestRevoke(t *testing.T) {
 	cluster := integration.NewClusterV3(tb, &integration.ClusterConfig{
 		Size: 1,
 	})
-	cl := client.NewLocal(cluster.Client(0))
+	cl := cluster.Client(0)
 	defer cluster.Terminate(tb)
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()

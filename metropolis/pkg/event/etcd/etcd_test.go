@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 
-	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/logtree"
 )
@@ -81,7 +80,6 @@ func setSetupWg[T any](w event.Watcher[T]) *sync.WaitGroup {
 // testClient is an etcd connection to the test cluster.
 type testClient struct {
 	client     *clientv3.Client
-	namespaced client.Namespaced
 }
 
 func newTestClient(t *testing.T) *testClient {
@@ -96,10 +94,8 @@ func newTestClient(t *testing.T) *testClient {
 		t.Fatalf("clientv3.New: %v", err)
 	}
 
-	namespaced := client.NewLocal(cli)
 	return &testClient{
 		client:     cli,
-		namespaced: namespaced,
 	}
 }
 
@@ -126,7 +122,7 @@ func (d *testClient) put(t *testing.T, key, value string) {
 
 	for {
 		ctxT, ctxC := context.WithTimeout(ctx, 100*time.Millisecond)
-		_, err := d.namespaced.Put(ctxT, key, value)
+		_, err := d.client.Put(ctxT, key, value)
 		ctxC()
 		if err == nil {
 			return
@@ -154,7 +150,7 @@ func (d *testClient) remove(t *testing.T, key string) {
 	ctx, ctxC := context.WithCancel(context.Background())
 	defer ctxC()
 
-	_, err := d.namespaced.Delete(ctx, key)
+	_, err := d.client.Delete(ctx, key)
 	if err == nil {
 		return
 	}
@@ -227,7 +223,7 @@ func TestSimple(t *testing.T) {
 	defer tc.close()
 
 	k := "test-simple"
-	value := NewValue(tc.namespaced, k, DecoderStringAt)
+	value := NewValue(tc.client, k, DecoderStringAt)
 	tc.put(t, k, "one")
 
 	watcher := value.Watch()
@@ -275,7 +271,7 @@ func TestSimpleRange(t *testing.T) {
 
 	ks := "test-simple-range/"
 	ke := "test-simple-range0"
-	value := NewValue(tc.namespaced, ks, DecoderStringAt, Range(ke))
+	value := NewValue(tc.client, ks, DecoderStringAt, Range(ke))
 	tc.put(t, ks+"a", "one")
 	tc.put(t, ks+"b", "two")
 	tc.put(t, ks+"c", "three")
@@ -318,7 +314,7 @@ func TestCancel(t *testing.T) {
 	defer tc.close()
 
 	k := "test-cancel"
-	value := NewValue(tc.namespaced, k, DecoderStringAt)
+	value := NewValue(tc.client, k, DecoderStringAt)
 	tc.put(t, k, "one")
 
 	watcher := value.Watch()
@@ -353,7 +349,7 @@ func TestCancelOnGet(t *testing.T) {
 	defer tc.close()
 
 	k := "test-cancel-on-get"
-	value := NewValue(tc.namespaced, k, DecoderStringAt)
+	value := NewValue(tc.client, k, DecoderStringAt)
 	watcher := value.Watch()
 	tc.put(t, k, "one")
 
@@ -417,7 +413,7 @@ func TestClientReconnect(t *testing.T) {
 	tc.setEndpoints(0)
 
 	k := "test-client-reconnect"
-	value := NewValue(tc.namespaced, k, DecoderStringAt)
+	value := NewValue(tc.client, k, DecoderStringAt)
 	tc.put(t, k, "one")
 
 	watcher := value.Watch()
@@ -453,10 +449,10 @@ func TestClientPartition(t *testing.T) {
 	tcRest.setEndpoints(1, 2)
 
 	k := "test-client-partition"
-	valueOne := NewValue(tcOne.namespaced, k, DecoderStringAt)
+	valueOne := NewValue(tcOne.client, k, DecoderStringAt)
 	watcherOne := valueOne.Watch()
 	defer watcherOne.Close()
-	valueRest := NewValue(tcRest.namespaced, k, DecoderStringAt)
+	valueRest := NewValue(tcRest.client, k, DecoderStringAt)
 	watcherRest := valueRest.Watch()
 	defer watcherRest.Close()
 
@@ -487,7 +483,7 @@ func TestEarlyUse(t *testing.T) {
 
 	k := "test-early-use"
 
-	value := NewValue(tc.namespaced, k, DecoderStringAt)
+	value := NewValue(tc.client, k, DecoderStringAt)
 	watcher := value.Watch()
 	defer watcher.Close()
 
@@ -513,7 +509,7 @@ func TestRemove(t *testing.T) {
 	k := "test-remove"
 	tc.put(t, k, "one")
 
-	value := NewValue(tc.namespaced, k, DecoderStringAt)
+	value := NewValue(tc.client, k, DecoderStringAt)
 	watcher := value.Watch()
 	defer watcher.Close()
 
@@ -530,7 +526,7 @@ func TestRemoveRange(t *testing.T) {
 
 	ks := "test-remove-range/"
 	ke := "test-remove-range0"
-	value := NewValue(tc.namespaced, ks, DecoderStringAt, Range(ke))
+	value := NewValue(tc.client, ks, DecoderStringAt, Range(ke))
 	tc.put(t, ks+"a", "one")
 	tc.put(t, ks+"b", "two")
 	tc.put(t, ks+"c", "three")
@@ -571,7 +567,7 @@ func TestEmptyRace(t *testing.T) {
 	tc.put(t, k, "one")
 	tc.remove(t, k)
 
-	value := NewValue(tc.namespaced, k, DecoderStringAt)
+	value := NewValue(tc.client, k, DecoderStringAt)
 	watcher := value.Watch()
 	defer watcher.Close()
 
@@ -618,7 +614,7 @@ func TestDecoder(t *testing.T) {
 	defer ctxC()
 
 	k := "test-decoder"
-	value := NewValue(tc.namespaced, k, decoderDivisibleByThree)
+	value := NewValue(tc.client, k, decoderDivisibleByThree)
 	watcher := value.Watch()
 	defer watcher.Close()
 	tc.put(t, k, "3")
@@ -684,7 +680,7 @@ func TestBacklog(t *testing.T) {
 	defer tc.close()
 
 	k := "test-backlog"
-	value := NewValue(tc.namespaced, k, DecoderStringAt)
+	value := NewValue(tc.client, k, DecoderStringAt)
 	watcher := value.Watch()
 	defer watcher.Close()
 
@@ -716,7 +712,7 @@ func TestBacklogRange(t *testing.T) {
 
 	ks := "test-backlog-range/"
 	ke := "test-backlog-range0"
-	value := NewValue(tc.namespaced, ks, DecoderStringAt, Range(ke))
+	value := NewValue(tc.client, ks, DecoderStringAt, Range(ke))
 	w := value.Watch()
 	defer w.Close()
 
@@ -761,7 +757,7 @@ func TestBacklogOnly(t *testing.T) {
 	k := "test-backlog-only"
 	tc.put(t, k, "initial")
 
-	value := NewValue(tc.namespaced, k, DecoderStringAt)
+	value := NewValue(tc.client, k, DecoderStringAt)
 	watcher := value.Watch()
 	defer watcher.Close()
 
@@ -818,7 +814,7 @@ func TestBacklogOnlyRange(t *testing.T) {
 		}
 	}
 
-	value := NewValue(tc.namespaced, ks, DecoderStringAt, Range(ke))
+	value := NewValue(tc.client, ks, DecoderStringAt, Range(ke))
 	w := value.Watch()
 	defer w.Close()
 
