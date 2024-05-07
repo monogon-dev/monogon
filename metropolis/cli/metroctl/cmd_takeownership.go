@@ -6,12 +6,12 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -29,7 +29,7 @@ endpoint must be provided with the --endpoints parameter.`,
 }
 
 func doTakeOwnership(cmd *cobra.Command, _ []string) {
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	if len(flags.clusterEndpoints) != 1 {
 		log.Fatalf("takeownership requires a single cluster endpoint to be provided with the --endpoints parameter.")
 	}

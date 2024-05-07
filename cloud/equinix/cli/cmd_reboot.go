@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
 
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/equinix/wrapngo"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 )
 
 var rebootCmd = &cobra.Command{
@@ -22,7 +23,7 @@ func init() {
 }
 
 func doReboot(cmd *cobra.Command, args []string) {
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	api := wrapngo.New(&c)
 
 	klog.Infof("Requesting device list...")

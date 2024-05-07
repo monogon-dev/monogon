@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
@@ -16,7 +17,6 @@ import (
 	cpb "source.monogon.dev/metropolis/proto/common"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/pkg/blkio"
 	"source.monogon.dev/metropolis/pkg/fat32"
 )
@@ -63,7 +63,7 @@ func makeNodeParams() *api.NodeParameters {
 		log.Fatalf("Invalid --bootstrap-storage-security (must be one of: permissive, needs-encryption, needs-encryption-and-authentication, needs-insecure)")
 	}
 
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 
 	if err := os.MkdirAll(flags.configPath, 0700); err != nil && !os.IsExist(err) {
 		log.Fatalf("Failed to create config directory: %v", err)

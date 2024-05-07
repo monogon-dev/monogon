@@ -8,7 +8,6 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//cloud/bmaas/server",
-        "//metropolis/cli/pkg/context",
         "@io_k8s_klog_v2//:klog",
     ],
 )

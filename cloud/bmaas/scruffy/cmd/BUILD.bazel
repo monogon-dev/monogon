@@ -5,10 +5,7 @@ go_library(
     srcs = ["main.go"],
     importpath = "source.monogon.dev/cloud/bmaas/scruffy/cmd",
     visibility = ["//visibility:private"],
-    deps = [
-        "//cloud/bmaas/scruffy",
-        "//metropolis/cli/pkg/context",
-    ],
+    deps = ["//cloud/bmaas/scruffy"],
 )
 
 go_binary(

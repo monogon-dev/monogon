@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/packethost/packngo"
@@ -9,7 +11,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/equinix/wrapngo"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 )
 
 var deleteCmd = &cobra.Command{
@@ -24,7 +25,7 @@ func init() {
 }
 
 func doDelete(cmd *cobra.Command, args []string) {
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	api := wrapngo.New(&c)
 
 	klog.Infof("Listing devices for %q", args[0])

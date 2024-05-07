@@ -8,7 +8,6 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//metropolis/cli/metroctl/core",
-        "//metropolis/cli/pkg/context",
         "//metropolis/test/launch/cluster",
     ],
 )

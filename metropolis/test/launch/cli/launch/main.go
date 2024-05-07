@@ -20,8 +20,8 @@ import (
 	"context"
 	"log"
 	"os"
+	"os/signal"
 
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/launch/cluster"
@@ -47,7 +47,7 @@ func main() {
 	for _, p := range cluster.NodePorts {
 		ports = append(ports, uint16(p))
 	}
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	doneC := make(chan error)
 	err = cluster.LaunchNode(ctx, ld, sd, &cluster.NodeOptions{
 		Name:       "test-node",

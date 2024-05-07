@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
 	"sync"
 	"time"
@@ -16,7 +17,6 @@ import (
 
 	"source.monogon.dev/go/clitable"
 	"source.monogon.dev/metropolis/cli/metroctl/core"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/version"
 
@@ -33,7 +33,7 @@ var nodeDescribeCmd = &cobra.Command{
 	Use:     "describe [node-id] [--filter] [--output] [--format]",
 	Example: "metroctl node describe metropolis-c556e31c3fa2bf0a36e9ccb9fd5d6056",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := clicontext.WithInterrupt(context.Background())
+		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 		cc := dialAuthenticated(ctx)
 		mgmt := apb.NewManagementClient(cc)
 
@@ -52,7 +52,7 @@ var nodeListCmd = &cobra.Command{
 	Use:     "list [node-id] [--filter] [--output] [--format]",
 	Example: "metroctl node list --filter node.status.external_address==\"10.8.0.2\"",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := clicontext.WithInterrupt(context.Background())
+		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 		cc := dialAuthenticated(ctx)
 		mgmt := apb.NewManagementClient(cc)
 
@@ -106,7 +106,7 @@ var nodeUpdateCmd = &cobra.Command{
 		}
 		unavailableSemaphore := semaphore.NewWeighted(int64(maxUnavailable))
 
-		ctx := clicontext.WithInterrupt(context.Background())
+		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 
 		cacert, err := core.GetClusterCAWithTOFU(ctx, connectOptions())
 		if err != nil {
@@ -234,7 +234,7 @@ var nodeDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		ctx := clicontext.WithInterrupt(context.Background())
+		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 		mgmt := apb.NewManagementClient(dialAuthenticated(ctx))
 
 		nodes, err := core.GetNodes(ctx, mgmt, fmt.Sprintf("node.id==%q", args[0]))

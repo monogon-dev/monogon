@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 
 	"github.com/spf13/cobra"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/proto/api"
 )
@@ -35,7 +36,7 @@ func nodeById(nodes []*api.Node, id string) *api.Node {
 }
 
 func doApprove(cmd *cobra.Command, args []string) {
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	cc := dialAuthenticated(ctx)
 	mgmt := api.NewManagementClient(cc)
 

@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
 
 	"golang.org/x/crypto/ssh"
 	"k8s.io/klog/v2"
@@ -16,7 +17,6 @@ import (
 	"source.monogon.dev/cloud/lib/component"
 	"source.monogon.dev/cloud/shepherd/manager"
 	ssh2 "source.monogon.dev/go/net/ssh"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 )
 
 type Config struct {
@@ -72,7 +72,7 @@ func main() {
 	registry := c.Component.PrometheusRegistry()
 	c.BMDB.EnableMetrics(registry)
 
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	c.Component.StartPrometheus(ctx)
 
 	if c.API.APIKey == "" || c.API.User == "" {

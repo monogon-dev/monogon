@@ -13,7 +13,6 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//cloud/equinix/wrapngo",
-        "//metropolis/cli/pkg/context",
         "@com_github_packethost_packngo//:packngo",
         "@com_github_spf13_cobra//:cobra",
         "@io_k8s_klog_v2//:klog",

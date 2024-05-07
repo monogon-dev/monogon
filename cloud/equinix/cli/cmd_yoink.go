@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"os"
+	"os/signal"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/equinix/wrapngo"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 )
 
 var yoinkCmd = &cobra.Command{
@@ -73,7 +73,7 @@ func doYoink(cmd *cobra.Command, args []string) {
 		klog.Exitf("missing metro flag")
 	}
 
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	api := wrapngo.New(&c)
 
 	klog.Infof("Listing reservations for %q", srcProject)

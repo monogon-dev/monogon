@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"strings"
 
 	"k8s.io/klog/v2"
@@ -20,7 +21,6 @@ import (
 	"source.monogon.dev/cloud/lib/component"
 	"source.monogon.dev/cloud/shepherd"
 	"source.monogon.dev/cloud/shepherd/manager"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 )
 
 type Config struct {
@@ -133,7 +133,7 @@ func main() {
 	registry := c.Component.PrometheusRegistry()
 	c.BMDB.EnableMetrics(registry)
 
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	c.Component.StartPrometheus(ctx)
 
 	conn, err := c.BMDB.Open(true)

@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/signal"
 
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/server"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 		klog.Exitf("unexpected positional arguments: %v", flag.Args())
 	}
 
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	s.Start(ctx)
 	select {}
 }

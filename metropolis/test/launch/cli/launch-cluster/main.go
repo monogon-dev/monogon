@@ -19,14 +19,15 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"os/signal"
 
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/test/launch/cluster"
 )
 
 func main() {
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	cl, err := cluster.LaunchCluster(ctx, cluster.ClusterOptions{
 		NumNodes:        3,
 		NodeLogsToFiles: true,

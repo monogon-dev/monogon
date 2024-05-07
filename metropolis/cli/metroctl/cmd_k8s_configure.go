@@ -5,11 +5,11 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 
 	"github.com/spf13/cobra"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 )
 
 var k8sCommand = &cobra.Command{
@@ -28,7 +28,7 @@ to connect to a Metropolis cluster. A cluster endpoint must be provided with the
 }
 
 func doK8sConfigure(cmd *cobra.Command, _ []string) {
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	if len(flags.clusterEndpoints) < 1 {
 		log.Fatalf("k8s configure requires at least one cluster endpoint to be provided with the --endpoints parameter.")
 	}

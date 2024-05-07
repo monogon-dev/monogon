@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"os/signal"
 	"strings"
 
 	"github.com/spf13/cobra"
 
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 	"source.monogon.dev/metropolis/proto/api"
 )
 
@@ -46,7 +47,7 @@ func init() {
 }
 
 func doAdd(cmd *cobra.Command, args []string) {
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	cc := dialAuthenticated(ctx)
 	mgmt := api.NewManagementClient(cc)
 
@@ -84,7 +85,7 @@ func doAdd(cmd *cobra.Command, args []string) {
 }
 
 func doRemove(cmd *cobra.Command, args []string) {
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	cc := dialAuthenticated(ctx)
 	mgmt := api.NewManagementClient(cc)
 

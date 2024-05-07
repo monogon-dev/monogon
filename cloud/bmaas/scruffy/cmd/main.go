@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/signal"
 
 	"source.monogon.dev/cloud/bmaas/scruffy"
-	clicontext "source.monogon.dev/metropolis/cli/pkg/context"
 )
 
 func main() {
@@ -13,7 +14,7 @@ func main() {
 	s.Config.RegisterFlags()
 	flag.Parse()
 
-	ctx := clicontext.WithInterrupt(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	s.Start(ctx)
 	<-ctx.Done()
 }
