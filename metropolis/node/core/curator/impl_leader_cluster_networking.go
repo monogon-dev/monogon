@@ -9,12 +9,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/etcd"
-
-	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 )
 
 // preapreClusternetCacheUnlocked makes sure the leader's clusternetCache exists,
@@ -27,7 +26,7 @@ func (l *leaderCurator) prepareClusternetCacheUnlocked(ctx context.Context) erro
 	cache := make(map[string]string)
 
 	// Get all nodes.
-	start, end := nodeEtcdPrefix.KeyRange()
+	start, end := NodeEtcdPrefix.KeyRange()
 	value := etcd.NewValue[*nodeAtID](l.etcd, start, nodeValueConverter, etcd.Range(end))
 	w := value.Watch()
 	defer w.Close()

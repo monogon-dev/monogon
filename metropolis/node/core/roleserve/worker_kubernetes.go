@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"source.monogon.dev/metropolis/node/core/clusternet"
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
@@ -15,8 +16,6 @@ import (
 	"source.monogon.dev/metropolis/pkg/event"
 	"source.monogon.dev/metropolis/pkg/event/memory"
 	"source.monogon.dev/metropolis/pkg/supervisor"
-
-	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -161,6 +160,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			ClusterDomain:  clusterDomain,
 			KPKI:           pki,
 			Root:           s.storageRoot,
+			Consensus:      d.lcp.consensus,
 			Network:        s.network,
 		})
 		// Start Kubernetes.

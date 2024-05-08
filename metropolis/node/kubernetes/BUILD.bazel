@@ -19,6 +19,7 @@ go_library(
         "//go/net/tinylb",
         "//metropolis/node",
         "//metropolis/node/core/clusternet",
+        "//metropolis/node/core/consensus",
         "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/curator/watcher",
         "//metropolis/node/core/identity",

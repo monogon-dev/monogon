@@ -354,7 +354,7 @@ func TestWatchNodeInCluster(t *testing.T) {
 		t.Fatalf("GenerateKey: %v", err)
 	}
 	fakeNodeID := identity.NodeID(fakeNodePub)
-	fakeNodeKey, _ := nodeEtcdPrefix.Key(fakeNodeID)
+	fakeNodeKey, _ := NodeEtcdPrefix.Key(fakeNodeID)
 
 	w, err := cur.Watch(ctx, &ipb.WatchRequest{
 		Kind: &ipb.WatchRequest_NodeInCluster_{
@@ -446,7 +446,7 @@ func TestWatchNodeInCluster(t *testing.T) {
 	}
 
 	// Remove node. This should trigger an update from the watcher.
-	k, _ := nodeEtcdPrefix.Key(fakeNodeID)
+	k, _ := NodeEtcdPrefix.Key(fakeNodeID)
 	if _, err := cl.etcd.Delete(ctx, k); err != nil {
 		t.Fatalf("could not delete node from etcd: %v", err)
 	}
@@ -541,7 +541,7 @@ func TestWatchNodesInCluster(t *testing.T) {
 		t.Fatalf("GenerateKey: %v", err)
 	}
 	fakeNodeID := identity.NodeID(fakeNodePub)
-	fakeNodeKey, _ := nodeEtcdPrefix.Key(fakeNodeID)
+	fakeNodeKey, _ := NodeEtcdPrefix.Key(fakeNodeID)
 
 	fakeNode := &ppb.Node{
 		PublicKey: fakeNodePub,
@@ -634,7 +634,7 @@ func TestWatchNodesInCluster(t *testing.T) {
 	}
 
 	// Remove fake node, expect it to be removed from synced map.
-	k, _ := nodeEtcdPrefix.Key(fakeNodeID)
+	k, _ := NodeEtcdPrefix.Key(fakeNodeID)
 	if _, err := cl.etcd.Delete(ctx, k); err != nil {
 		t.Fatalf("could not delete node from etcd: %v", err)
 	}

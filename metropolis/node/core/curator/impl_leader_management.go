@@ -70,7 +70,7 @@ func (l *leaderManagement) GetRegisterTicket(ctx context.Context, req *apb.GetRe
 // GetClusterInfo implements Management.GetClusterInfo, which returns summary
 // information about the Metropolis cluster.
 func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClusterInfoRequest) (*apb.GetClusterInfoResponse, error) {
-	res, err := l.txnAsLeader(ctx, nodeEtcdPrefix.Range())
+	res, err := l.txnAsLeader(ctx, NodeEtcdPrefix.Range())
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "could not retrieve list of nodes: %v", err)
 	}
@@ -183,7 +183,7 @@ func (l *leaderManagement) GetNodes(req *apb.GetNodesRequest, srv apb.Management
 	defer l.muNodes.Unlock()
 
 	// Retrieve all nodes from etcd in a single Get call.
-	res, err := l.txnAsLeader(ctx, nodeEtcdPrefix.Range())
+	res, err := l.txnAsLeader(ctx, NodeEtcdPrefix.Range())
 	if err != nil {
 		return status.Errorf(codes.Unavailable, "could not retrieve list of nodes: %v", err)
 	}

@@ -3,6 +3,7 @@ option go_package = "source.monogon.dev/metropolis/node/core/curator/proto/priva
 package metropolis.node.core.curator.proto.private;
 
 import "metropolis/proto/common/common.proto";
+import "version/spec/spec.proto";
 
 // Node describes a single node's state in etcd. This is only ever visible to
 // the curator, and fully managed by the curator.
@@ -67,3 +68,28 @@ message RegisterTicket {
     bytes opaque = 1;
 }
 
+// KubernetesReconcilerStatus contains status reported by the reconciler.
+// This is used by the reconciler itself, and it is used by the Kubernetes
+// controller service to wait for reconciliation to be complete with a
+// compatible version.
+//
+// Stored under /kubernetes/reconciler/status
+message KubernetesReconcilerStatus {
+    enum State {
+        STATE_UNKNOWN = 0;
+        STATE_DONE = 1;
+        STATE_WORKING = 2;
+    };
+    // state tells whether reconciliation is in progress or complete.
+    // This is shown in logs, but not otherwise used.
+    State state = 1;
+
+    // version is the Metropolis version of the node that last set the status.
+    version.spec.Version version = 2;
+    // minimum_compatible_release is the minimum Metropolis release which is
+    // compatible with the changes made by the reconciler.
+    // A Kubernetes controller must not start serving as long as this is higher
+    // than its own release. This may not be increased if there are
+    // Kubernetes controllers with a lower release than the new value.
+    version.spec.Version.Release minimum_compatible_release = 3;
+}

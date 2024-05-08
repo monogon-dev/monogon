@@ -10,18 +10,17 @@ import (
 
 // Release converts a spec.Version's Release field into a SemVer 2.0.0 compatible
 // string in the X.Y.Z form.
-func Release(v *spec.Version) string {
-	if v == nil || v.Release == nil {
+func Release(rel *spec.Version_Release) string {
+	if rel == nil {
 		return "0.0.0"
 	}
-	rel := v.Release
 	return fmt.Sprintf("%d.%d.%d", rel.Major, rel.Minor, rel.Patch)
 }
 
 // Semver converts a spec.Version proto message into a SemVer 2.0.0 compatible
 // string.
 func Semver(v *spec.Version) string {
-	ver := "v" + Release(v)
+	ver := "v" + Release(v.Release)
 	var prerelease []string
 	if git := v.GitInformation; git != nil {
 		if n := git.CommitsSinceRelease; n != 0 {
@@ -37,4 +36,18 @@ func Semver(v *spec.Version) string {
 		ver += "-" + strings.Join(prerelease, ".")
 	}
 	return ver
+}
+
+// ReleaseLessThan returns true if Release a is lexicographically smaller than b.
+func ReleaseLessThan(a, b *spec.Version_Release) bool {
+	if a.Major != b.Major {
+		return a.Major < b.Major
+	}
+	if a.Minor != b.Minor {
+		return a.Minor < b.Minor
+	}
+	if a.Patch != b.Patch {
+		return a.Patch < b.Patch
+	}
+	return false
 }

@@ -8,11 +8,10 @@ import (
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
+	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/event/memory"
-
-	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 )
 
 type curatorFollower struct {
@@ -43,7 +42,7 @@ func (f *curatorFollower) GetCurrentLeader(_ *cpb.GetCurrentLeaderRequest, srv c
 		// Manually load node status data from etcd, even though we are not a leader.
 		// This is fine, as if we ever end up serving stale data, the client will
 		// realize and call us again.
-		key, err := nodeEtcdPrefix.Key(lock.NodeId)
+		key, err := NodeEtcdPrefix.Key(lock.NodeId)
 		if err != nil {
 			rpc.Trace(ctx).Printf("invalid leader node id %q: %v", lock.NodeId, err)
 			return status.Errorf(codes.Internal, "current leader has invalid node id")

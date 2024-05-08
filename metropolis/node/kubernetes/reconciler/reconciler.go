@@ -29,12 +29,9 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"time"
 
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-
-	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 // True is a sad workaround for all the pointer booleans in K8s specs
@@ -120,7 +117,7 @@ func allResources(clientSet kubernetes.Interface) map[string]resource {
 	}
 }
 
-func ReconcileAll(ctx context.Context, clientSet kubernetes.Interface) error {
+func reconcileAll(ctx context.Context, clientSet kubernetes.Interface) error {
 	resources := allResources(clientSet)
 	for name, resource := range resources {
 		err := reconcile(ctx, resource)
@@ -129,26 +126,6 @@ func ReconcileAll(ctx context.Context, clientSet kubernetes.Interface) error {
 		}
 	}
 	return nil
-}
-
-func Maintain(clientSet kubernetes.Interface) supervisor.Runnable {
-	return func(ctx context.Context) error {
-		log := supervisor.Logger(ctx)
-		supervisor.Signal(ctx, supervisor.SignalHealthy)
-		t := time.NewTicker(10 * time.Second)
-		defer t.Stop()
-		for {
-			select {
-			case <-t.C:
-				err := ReconcileAll(ctx, clientSet)
-				if err != nil {
-					log.Warning(err)
-				}
-			case <-ctx.Done():
-				return nil
-			}
-		}
-	}
 }
 
 func reconcile(ctx context.Context, r resource) error {

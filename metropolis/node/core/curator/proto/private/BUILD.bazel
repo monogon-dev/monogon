@@ -9,7 +9,10 @@ proto_library(
         "storage.proto",
     ],
     visibility = ["//visibility:public"],
-    deps = ["//metropolis/proto/common:common_proto"],
+    deps = [
+        "//metropolis/proto/common:common_proto",
+        "//version/spec:spec_proto",
+    ],
 )
 
 go_proto_library(
@@ -17,7 +20,10 @@ go_proto_library(
     importpath = "source.monogon.dev/metropolis/node/core/curator/proto/private",
     proto = ":private_proto",
     visibility = ["//visibility:public"],
-    deps = ["//metropolis/proto/common"],
+    deps = [
+        "//metropolis/proto/common",
+        "//version/spec",
+    ],
 )
 
 go_library(

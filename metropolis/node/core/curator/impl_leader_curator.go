@@ -66,7 +66,7 @@ func (l *leaderCurator) watchNodeInCluster(nic *ipb.WatchRequest_NodeInCluster, 
 	// underneath the NodeEtcdPrefix. Worst case an attacker can do is request a node
 	// that doesn't exist, and that will just hang . All access is privileged, so
 	// there's also no need to filter anything.
-	nodePath, err := nodeEtcdPrefix.Key(nic.NodeId)
+	nodePath, err := NodeEtcdPrefix.Key(nic.NodeId)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "invalid node name: %v", err)
 	}
@@ -99,7 +99,7 @@ func (l *leaderCurator) watchNodeInCluster(nic *ipb.WatchRequest_NodeInCluster, 
 func (l *leaderCurator) watchNodesInCluster(_ *ipb.WatchRequest_NodesInCluster, srv ipb.Curator_WatchServer) error {
 	ctx := srv.Context()
 
-	start, end := nodeEtcdPrefix.KeyRange()
+	start, end := NodeEtcdPrefix.KeyRange()
 	value := etcd.NewValue[*nodeAtID](l.etcd, start, nodeValueConverter, etcd.Range(end))
 
 	w := value.Watch()
@@ -170,7 +170,7 @@ type nodeAtID struct {
 // invariants.
 func nodeValueConverter(key, value []byte) (*nodeAtID, error) {
 	res := nodeAtID{
-		id: nodeEtcdPrefix.ExtractID(string(key)),
+		id: NodeEtcdPrefix.ExtractID(string(key)),
 	}
 	if len(value) > 0 {
 		node, err := nodeUnmarshal(value)

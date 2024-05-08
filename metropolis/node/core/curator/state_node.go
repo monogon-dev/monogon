@@ -218,9 +218,9 @@ func (n *Node) DisableConsensusMember() {
 }
 
 var (
-	// nodeEtcdPrefix is an etcd key prefix preceding cluster member node IDs,
+	// NodeEtcdPrefix is an etcd key prefix preceding cluster member node IDs,
 	// mapping to ppb.Node values.
-	nodeEtcdPrefix = mustNewEtcdPrefix("/nodes/")
+	NodeEtcdPrefix = mustNewEtcdPrefix("/nodes/")
 	// joinCredPrefix is an etcd key prefix preceding hex-encoded cluster member
 	// node join keys, mapping to node IDs.
 	joinCredPrefix = mustNewEtcdPrefix("/join_keys/")
@@ -229,7 +229,7 @@ var (
 // etcdNodePath builds the etcd path in which this node's protobuf-serialized
 // state is stored in etcd.
 func (n *Node) etcdNodePath() (string, error) {
-	return nodeEtcdPrefix.Key(n.ID())
+	return NodeEtcdPrefix.Key(n.ID())
 }
 
 func (n *Node) etcdJoinKeyPath() (string, error) {
@@ -361,7 +361,7 @@ var (
 // returned.
 func nodeLoad(ctx context.Context, l *leadership, id string) (*Node, error) {
 	rpc.Trace(ctx).Printf("loadNode(%s)...", id)
-	key, err := nodeEtcdPrefix.Key(id)
+	key, err := NodeEtcdPrefix.Key(id)
 	if err != nil {
 		rpc.Trace(ctx).Printf("invalid node id: %v", err)
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node id")
@@ -394,7 +394,7 @@ func nodeSave(ctx context.Context, l *leadership, n *Node) error {
 	// Build an etcd operation to save the node with a key based on its ID.
 	id := n.ID()
 	rpc.Trace(ctx).Printf("nodeSave(%s)...", id)
-	nkey, err := nodeEtcdPrefix.Key(id)
+	nkey, err := NodeEtcdPrefix.Key(id)
 	if err != nil {
 		rpc.Trace(ctx).Printf("invalid node id: %v", err)
 		return status.Errorf(codes.InvalidArgument, "invalid node id")
@@ -440,7 +440,7 @@ func nodeDestroy(ctx context.Context, l *leadership, n *Node) error {
 	rpc.Trace(ctx).Printf("nodeDestroy(%s)...", id)
 
 	// Get paths for node data and join key.
-	nkey, err := nodeEtcdPrefix.Key(id)
+	nkey, err := NodeEtcdPrefix.Key(id)
 	if err != nil {
 		rpc.Trace(ctx).Printf("invalid node id: %v", err)
 		return status.Errorf(codes.InvalidArgument, "invalid node id")
