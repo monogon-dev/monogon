@@ -3,7 +3,6 @@ package metropolis.proto.api;
 option go_package = "source.monogon.dev/metropolis/proto/api";
 
 import "google/protobuf/duration.proto";
-import "google/protobuf/timestamp.proto";
 
 import "metropolis/proto/common/common.proto";
 import "metropolis/proto/ext/authorization.proto";

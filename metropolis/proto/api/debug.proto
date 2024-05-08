@@ -18,7 +18,6 @@ syntax = "proto3";
 package metropolis.proto.api;
 option go_package = "source.monogon.dev/metropolis/proto/api";
 
-import "google/protobuf/timestamp.proto";
 import "metropolis/proto/api/management.proto";
 
 // NodeDebugService exposes debug and testing endpoints that allow introspection into a running Metropolis node.
