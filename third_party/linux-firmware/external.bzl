@@ -11,6 +11,7 @@ def linux_firmware_external(name, version):
         "f2eb058afc57348cde66852272d6bf11da1eef8f": "fcd570b8b259049dd84a0326f17a313271962f806ca32dbd9e40cdd9079857d0",
         "20230919": "1dac602218f83f2c81dd72e599ae6c926901b3d36babccce46cd84293a37e473",
         "20231211": "d0ba54f05f5dd34b0fc5a1e1970cd9cbc48491d2da97f3798a9e13530dc18298",
+        "20240513": "b7224364e1fd7ee6b803f861747f9ccde7c2030af939fdc1eeea083ea85ce51c",
     }
     all_content = """
 filegroup(name = "all_files", srcs = glob(["**"]), visibility = ["//visibility:public"])
