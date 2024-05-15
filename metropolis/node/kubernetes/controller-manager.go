@@ -77,7 +77,7 @@ func runControllerManager(config controllerManagerConfig) supervisor.Runnable {
 				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.rootCA})),
 			args.FileOpt("--client-ca-file", "root-ca.pem",
 				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.rootCA})),
-			"--use-service-account-credentials=true", // Enables things like PSP enforcement
+			"--use-service-account-credentials=true",
 			fmt.Sprintf("--cluster-cidr=%v", config.clusterNet.String()),
 			fmt.Sprintf("--service-cluster-ip-range=%v", config.serviceNet.String()),
 			args.FileOpt("--tls-cert-file", "server-cert.pem",

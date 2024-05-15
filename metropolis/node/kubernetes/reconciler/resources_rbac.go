@@ -25,8 +25,6 @@ import (
 )
 
 var (
-	clusterRolePSPDefault                    = builtinRBACName("psp-default")
-	clusterRoleBindingDefaultPSP             = builtinRBACName("default-psp-for-sa")
 	clusterRoleBindingAPIServerKubeletClient = builtinRBACName("apiserver-kubelet-client")
 	clusterRoleBindingOwnerAdmin             = builtinRBACName("owner-admin")
 	clusterRoleCSIProvisioner                = builtinRBACName("csi-provisioner")
@@ -67,23 +65,6 @@ func (r resourceClusterRoles) Delete(ctx context.Context, name string, opts meta
 
 func (r resourceClusterRoles) Expected() []meta.Object {
 	return []meta.Object{
-		&rbac.ClusterRole{
-			ObjectMeta: meta.ObjectMeta{
-				Name:   clusterRolePSPDefault,
-				Labels: builtinLabels(nil),
-				Annotations: map[string]string{
-					"kubernetes.io/description": "This role grants access to the \"default\" PSP.",
-				},
-			},
-			Rules: []rbac.PolicyRule{
-				{
-					APIGroups:     []string{"policy"},
-					Resources:     []string{"podsecuritypolicies"},
-					ResourceNames: []string{"default"},
-					Verbs:         []string{"use"},
-				},
-			},
-		},
 		&rbac.ClusterRole{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   clusterRoleCSIProvisioner,
@@ -166,29 +147,6 @@ func (r resourceClusterRoleBindings) Delete(ctx context.Context, name string, op
 
 func (r resourceClusterRoleBindings) Expected() []meta.Object {
 	return []meta.Object{
-		&rbac.ClusterRoleBinding{
-			ObjectMeta: meta.ObjectMeta{
-				Name:   clusterRoleBindingDefaultPSP,
-				Labels: builtinLabels(nil),
-				Annotations: map[string]string{
-					"kubernetes.io/description": "This binding grants every service account access to the \"default\" PSP. " +
-						"Creation of Pods is still restricted by other RBAC roles. Otherwise no pods (unprivileged or not) " +
-						"can be created.",
-				},
-			},
-			RoleRef: rbac.RoleRef{
-				APIGroup: rbac.GroupName,
-				Kind:     "ClusterRole",
-				Name:     clusterRolePSPDefault,
-			},
-			Subjects: []rbac.Subject{
-				{
-					APIGroup: rbac.GroupName,
-					Kind:     "Group",
-					Name:     "system:serviceaccounts",
-				},
-			},
-		},
 		&rbac.ClusterRoleBinding{
 			ObjectMeta: meta.ObjectMeta{
 				Name:   clusterRoleBindingAPIServerKubeletClient,
