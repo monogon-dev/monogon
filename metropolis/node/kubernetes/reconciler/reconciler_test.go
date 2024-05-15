@@ -21,8 +21,35 @@ import (
 	"fmt"
 	"testing"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	apivalidation "k8s.io/apimachinery/pkg/api/validation"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	installnode "k8s.io/kubernetes/pkg/apis/node/install"
+	installpolicy "k8s.io/kubernetes/pkg/apis/policy/install"
+	installrbac "k8s.io/kubernetes/pkg/apis/rbac/install"
+	installstorage "k8s.io/kubernetes/pkg/apis/storage/install"
+
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
+
+// TestExpectedUniqueNames ensures that all the Expected objects of any
+// given resource type have a unique name.
+func TestExpectedUniqueNames(t *testing.T) {
+	for reconciler, r := range allResources(nil) {
+		names := make(map[string]bool)
+		for _, v := range r.Expected() {
+			if names[v.GetName()] {
+				t.Errorf("reconciler %q: duplicate name %q", reconciler, v.GetName())
+				continue
+			}
+			names[v.GetName()] = true
+		}
+	}
+}
 
 // TestExpectedLabeledCorrectly ensures that all the Expected objects of all
 // resource types have a Kubernetes metadata label that signifies it's a
@@ -32,10 +59,36 @@ import (
 // selector corresponding to this label.
 func TestExpectedLabeledCorrectly(t *testing.T) {
 	for reconciler, r := range allResources(nil) {
-		for outer, v := range r.Expected() {
+		for _, v := range r.Expected() {
 			if data := v.GetLabels()[BuiltinLabelKey]; data != BuiltinLabelValue {
-				t.Errorf("reconciler %q, object %q: %q=%q, wanted =%q", reconciler, outer, BuiltinLabelKey, data, BuiltinLabelValue)
+				t.Errorf("reconciler %q, object %q: %q=%q, wanted =%q", reconciler, v.GetName(), BuiltinLabelKey, data, BuiltinLabelValue)
 				continue
+			}
+		}
+	}
+}
+
+// TestExpectedDefaulted ensures that all the Expected objects of all
+// resource types have defaults already applied. If this were not the case,
+// the reconciler would think that the object has changed and try to update it
+// in each iteration. If this test fails, the most likely fix is to add the
+// missing default values to the expected objects.
+func TestExpectedDefaulted(t *testing.T) {
+	scheme := runtime.NewScheme()
+	installnode.Install(scheme)
+	installpolicy.Install(scheme)
+	installrbac.Install(scheme)
+	installstorage.Install(scheme)
+
+	for reconciler, r := range allResources(nil) {
+		for _, v := range r.Expected() {
+			v_defaulted := v.(runtime.Object).DeepCopyObject()
+			if _, ok := scheme.IsUnversioned(v_defaulted); !ok {
+				t.Errorf("reconciler %q: type not installed in scheme", reconciler)
+			}
+			scheme.Default(v_defaulted)
+			if !apiequality.Semantic.DeepEqual(v, v_defaulted) {
+				t.Errorf("reconciler %q, object %q changed after defaulting\ngot: %+v\nwanted: %+v", reconciler, v.GetName(), v, v_defaulted)
 			}
 		}
 	}
@@ -44,14 +97,16 @@ func TestExpectedLabeledCorrectly(t *testing.T) {
 // testObject is the object type managed by testResource.
 type testObject struct {
 	meta.ObjectMeta
+	Val int
 }
 
-func makeTestObject(name string) *testObject {
+func makeTestObject(name string, val int) *testObject {
 	return &testObject{
 		ObjectMeta: meta.ObjectMeta{
 			Name:   name,
 			Labels: builtinLabels(nil),
 		},
+		Val: val,
 	}
 }
 
@@ -79,7 +134,12 @@ func (r *testResource) Create(ctx context.Context, el meta.Object) error {
 	return nil
 }
 
-func (r *testResource) Delete(ctx context.Context, name string) error {
+func (r *testResource) Update(ctx context.Context, el meta.Object) error {
+	r.current[el.GetName()] = el.(*testObject)
+	return nil
+}
+
+func (r *testResource) Delete(ctx context.Context, name string, opts meta.DeleteOptions) error {
 	delete(r.current, name)
 	return nil
 }
@@ -127,28 +187,71 @@ func (r *testResource) currentDiff(want ...*testObject) string {
 // TestBasicReconciliation ensures that the reconcile function does manipulate
 // a target state based on a set of expected resources.
 func TestBasicReconciliation(t *testing.T) {
-	ctx := context.Background()
-	r := newTestResource(makeTestObject("foo"), makeTestObject("bar"), makeTestObject("baz"))
+	// This needs to run in a TestHarness to make logging work.
+	supervisor.TestHarness(t, func(ctx context.Context) error {
+		r := newTestResource(makeTestObject("foo", 0), makeTestObject("bar", 0), makeTestObject("baz", 0))
+		rname := "testresource"
 
-	// nothing should have happened yet (testing the test)
-	if diff := r.currentDiff(); diff != "" {
-		t.Fatalf("wrong state after creation: %s", diff)
-	}
+		// nothing should have happened yet (testing the test)
+		if diff := r.currentDiff(); diff != "" {
+			return fmt.Errorf("wrong state after creation: %s", diff)
+		}
 
-	if err := reconcile(ctx, r); err != nil {
-		t.Fatalf("reconcile: %v", err)
-	}
-	// everything requested should have been created
-	if diff := r.currentDiff(makeTestObject("foo"), makeTestObject("bar"), makeTestObject("baz")); diff != "" {
-		t.Fatalf("wrong state after reconciliation: %s", diff)
-	}
+		if err := reconcile(ctx, r, rname); err != nil {
+			return fmt.Errorf("reconcile: %v", err)
+		}
+		// everything requested should have been created
+		if diff := r.currentDiff(makeTestObject("foo", 0), makeTestObject("bar", 0), makeTestObject("baz", 0)); diff != "" {
+			return fmt.Errorf("wrong state after reconciliation: %s", diff)
+		}
 
-	delete(r.expected, "foo")
-	if err := reconcile(ctx, r); err != nil {
-		t.Fatalf("reconcile: %v", err)
+		delete(r.expected, "foo")
+		if err := reconcile(ctx, r, rname); err != nil {
+			return fmt.Errorf("reconcile: %v", err)
+		}
+		// foo should now be missing
+		if diff := r.currentDiff(makeTestObject("bar", 0), makeTestObject("baz", 0)); diff != "" {
+			return fmt.Errorf("wrong state after deleting foo: %s", diff)
+		}
+
+		r.expected["bar"] = makeTestObject("bar", 1)
+		if err := reconcile(ctx, r, rname); err != nil {
+			return fmt.Errorf("reconcile: %v", err)
+		}
+		// bar should be updated
+		if diff := r.currentDiff(makeTestObject("bar", 1), makeTestObject("baz", 0)); diff != "" {
+			return fmt.Errorf("wrong state after deleting foo: %s", diff)
+		}
+
+		return nil
+	})
+}
+
+func TestIsImmutableError(t *testing.T) {
+	gk := schema.GroupKind{Group: "someGroup", Kind: "someKind"}
+	cases := []struct {
+		err         error
+		isImmutable bool
+	}{
+		{fmt.Errorf("something wrong"), false},
+		{apierrors.NewApplyConflict(nil, "conflict"), false},
+		{apierrors.NewInvalid(gk, "name", field.ErrorList{}), false},
+		{apierrors.NewInvalid(gk, "name", field.ErrorList{
+			field.Invalid(field.NewPath("field1"), true, apivalidation.FieldImmutableErrorMsg),
+			field.Invalid(field.NewPath("field2"), true, "some other error"),
+		}), false},
+		{apierrors.NewInvalid(gk, "name", field.ErrorList{
+			field.Invalid(field.NewPath("field1"), true, apivalidation.FieldImmutableErrorMsg),
+		}), true},
+		{apierrors.NewInvalid(gk, "name", field.ErrorList{
+			field.Invalid(field.NewPath("field1"), true, apivalidation.FieldImmutableErrorMsg),
+			field.Invalid(field.NewPath("field2"), true, apivalidation.FieldImmutableErrorMsg),
+		}), true},
 	}
-	// foo should now be missing
-	if diff := r.currentDiff(makeTestObject("bar"), makeTestObject("baz")); diff != "" {
-		t.Fatalf("wrong state after deleting foo: %s", diff)
+	for _, c := range cases {
+		actual := isImmutableError(c.err)
+		if actual != c.isImmutable {
+			t.Errorf("Expected %v, got %v for error: %v", c.isImmutable, actual, c.err)
+		}
 	}
 }

@@ -49,8 +49,13 @@ func (r resourceStorageClasses) Create(ctx context.Context, el meta.Object) erro
 	return err
 }
 
-func (r resourceStorageClasses) Delete(ctx context.Context, name string) error {
-	return r.StorageV1().StorageClasses().Delete(ctx, name, meta.DeleteOptions{})
+func (r resourceStorageClasses) Update(ctx context.Context, el meta.Object) error {
+	_, err := r.StorageV1().StorageClasses().Update(ctx, el.(*storage.StorageClass), meta.UpdateOptions{})
+	return err
+}
+
+func (r resourceStorageClasses) Delete(ctx context.Context, name string, opts meta.DeleteOptions) error {
+	return r.StorageV1().StorageClasses().Delete(ctx, name, opts)
 }
 
 func (r resourceStorageClasses) Expected() []meta.Object {

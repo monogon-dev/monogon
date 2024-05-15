@@ -45,8 +45,13 @@ func (r resourceRuntimeClasses) Create(ctx context.Context, el meta.Object) erro
 	return err
 }
 
-func (r resourceRuntimeClasses) Delete(ctx context.Context, name string) error {
-	return r.NodeV1().RuntimeClasses().Delete(ctx, name, meta.DeleteOptions{})
+func (r resourceRuntimeClasses) Update(ctx context.Context, el meta.Object) error {
+	_, err := r.NodeV1().RuntimeClasses().Update(ctx, el.(*node.RuntimeClass), meta.UpdateOptions{})
+	return err
+}
+
+func (r resourceRuntimeClasses) Delete(ctx context.Context, name string, opts meta.DeleteOptions) error {
+	return r.NodeV1().RuntimeClasses().Delete(ctx, name, opts)
 }
 
 func (r resourceRuntimeClasses) Expected() []meta.Object {

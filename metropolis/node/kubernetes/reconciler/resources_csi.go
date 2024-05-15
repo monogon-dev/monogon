@@ -52,8 +52,13 @@ func (r resourceCSIDrivers) Create(ctx context.Context, el meta.Object) error {
 	return err
 }
 
-func (r resourceCSIDrivers) Delete(ctx context.Context, name string) error {
-	return r.StorageV1().CSIDrivers().Delete(ctx, name, meta.DeleteOptions{})
+func (r resourceCSIDrivers) Update(ctx context.Context, el meta.Object) error {
+	_, err := r.StorageV1().CSIDrivers().Update(ctx, el.(*storage.CSIDriver), meta.UpdateOptions{})
+	return err
+}
+
+func (r resourceCSIDrivers) Delete(ctx context.Context, name string, opts meta.DeleteOptions) error {
+	return r.StorageV1().CSIDrivers().Delete(ctx, name, opts)
 }
 
 func (r resourceCSIDrivers) Expected() []meta.Object {
@@ -68,8 +73,10 @@ func (r resourceCSIDrivers) Expected() []meta.Object {
 				AttachRequired:       False(),
 				PodInfoOnMount:       False(),
 				VolumeLifecycleModes: []storage.VolumeLifecycleMode{storage.VolumeLifecyclePersistent},
-				// TODO(#288): Make sure this gets applied to existing clusters
-				FSGroupPolicy: &fsGroupPolicy,
+				StorageCapacity:      False(),
+				FSGroupPolicy:        &fsGroupPolicy,
+				RequiresRepublish:    False(),
+				SELinuxMount:         False(),
 			},
 		},
 	}

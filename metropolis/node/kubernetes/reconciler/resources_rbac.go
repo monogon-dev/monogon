@@ -56,8 +56,13 @@ func (r resourceClusterRoles) Create(ctx context.Context, el meta.Object) error 
 	return err
 }
 
-func (r resourceClusterRoles) Delete(ctx context.Context, name string) error {
-	return r.RbacV1().ClusterRoles().Delete(ctx, name, meta.DeleteOptions{})
+func (r resourceClusterRoles) Update(ctx context.Context, el meta.Object) error {
+	_, err := r.RbacV1().ClusterRoles().Update(ctx, el.(*rbac.ClusterRole), meta.UpdateOptions{})
+	return err
+}
+
+func (r resourceClusterRoles) Delete(ctx context.Context, name string, opts meta.DeleteOptions) error {
+	return r.RbacV1().ClusterRoles().Delete(ctx, name, opts)
 }
 
 func (r resourceClusterRoles) Expected() []meta.Object {
@@ -84,7 +89,7 @@ func (r resourceClusterRoles) Expected() []meta.Object {
 				Name:   clusterRoleCSIProvisioner,
 				Labels: builtinLabels(nil),
 				Annotations: map[string]string{
-					"kubernetes.io/description": "This role grants access to PersistentVolumes, PersistentVolumeClaims and StorageClassses, as used the the CSI provisioner running on nodes.",
+					"kubernetes.io/description": "This role grants access to PersistentVolumes, PersistentVolumeClaims and StorageClassses, as used by the CSI provisioner running on nodes.",
 				},
 			},
 			Rules: []rbac.PolicyRule{
@@ -150,8 +155,13 @@ func (r resourceClusterRoleBindings) Create(ctx context.Context, el meta.Object)
 	return err
 }
 
-func (r resourceClusterRoleBindings) Delete(ctx context.Context, name string) error {
-	return r.RbacV1().ClusterRoleBindings().Delete(ctx, name, meta.DeleteOptions{})
+func (r resourceClusterRoleBindings) Update(ctx context.Context, el meta.Object) error {
+	_, err := r.RbacV1().ClusterRoleBindings().Update(ctx, el.(*rbac.ClusterRoleBinding), meta.UpdateOptions{})
+	return err
+}
+
+func (r resourceClusterRoleBindings) Delete(ctx context.Context, name string, opts meta.DeleteOptions) error {
+	return r.RbacV1().ClusterRoleBindings().Delete(ctx, name, opts)
 }
 
 func (r resourceClusterRoleBindings) Expected() []meta.Object {

@@ -28,10 +28,17 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	apivalidation "k8s.io/apimachinery/pkg/api/validation"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"source.monogon.dev/metropolis/pkg/supervisor"
 )
 
 // True is a sad workaround for all the pointer booleans in K8s specs
@@ -100,8 +107,11 @@ type resource interface {
 	// Create creates an object on the target. The el argument is
 	// an object returned by the Expected() call.
 	Create(ctx context.Context, el meta.Object) error
+	// Update updates an existing object, by name, on the target.
+	// The el argument is an object returned by the Expected() call.
+	Update(ctx context.Context, el meta.Object) error
 	// Delete deletes an object, by name, from the target.
-	Delete(ctx context.Context, name string) error
+	Delete(ctx context.Context, name string, opts meta.DeleteOptions) error
 	// Expected returns a list of all objects expected to be present on the
 	// target. Objects are identified by their name, as returned by GetName.
 	Expected() []meta.Object
@@ -120,7 +130,7 @@ func allResources(clientSet kubernetes.Interface) map[string]resource {
 func reconcileAll(ctx context.Context, clientSet kubernetes.Interface) error {
 	resources := allResources(clientSet)
 	for name, resource := range resources {
-		err := reconcile(ctx, resource)
+		err := reconcile(ctx, resource, name)
 		if err != nil {
 			return fmt.Errorf("resource %s: %w", name, err)
 		}
@@ -128,7 +138,8 @@ func reconcileAll(ctx context.Context, clientSet kubernetes.Interface) error {
 	return nil
 }
 
-func reconcile(ctx context.Context, r resource) error {
+func reconcile(ctx context.Context, r resource, rname string) error {
+	log := supervisor.Logger(ctx)
 	present, err := r.List(ctx)
 	if err != nil {
 		return err
@@ -143,9 +154,49 @@ func reconcile(ctx context.Context, r resource) error {
 		expectedMap[el.GetName()] = el
 	}
 	for name, expectedEl := range expectedMap {
-		if _, ok := presentMap[name]; ok {
-			// TODO(#288): update the object if it is different than expected.
+		if presentEl, ok := presentMap[name]; ok {
+			// The object already exists. Update it if it is different than expected.
+
+			// The server rejects updates which don't have an up to date ResourceVersion.
+			expectedEl.SetResourceVersion(presentEl.GetResourceVersion())
+
+			// Clear out fields set by the server, such that comparison succeeds if
+			// there are no other changes.
+			presentEl.SetUID("")
+			presentEl.SetGeneration(0)
+			presentEl.SetCreationTimestamp(meta.Time{})
+			presentEl.SetManagedFields(nil)
+
+			if !apiequality.Semantic.DeepEqual(presentEl, expectedEl) {
+				log.Infof("Updating %s object %q", rname, name)
+				if err := r.Update(ctx, expectedEl); err != nil {
+					if !isImmutableError(err) {
+						return err
+					}
+					log.Infof("Failed to update object due to immutable fields; deleting and recreating: %v", err)
+
+					// Only delete if the ResourceVersion has not changed. If it has
+					// changed, that means another reconciler was faster than us and
+					// has already recreated the object.
+					resourceVersion := presentEl.GetResourceVersion()
+					deleteOpts := meta.DeleteOptions{
+						Preconditions: &meta.Preconditions{
+							ResourceVersion: &resourceVersion,
+						},
+					}
+					// ResourceVersion must be cleared when creating.
+					expectedEl.SetResourceVersion("")
+
+					if err := r.Delete(ctx, name, deleteOpts); err != nil {
+						return err
+					}
+					if err := r.Create(ctx, expectedEl); err != nil {
+						return err
+					}
+				}
+			}
 		} else {
+			log.Infof("Creating %s object %q", rname, name)
 			if err := r.Create(ctx, expectedEl); err != nil {
 				return err
 			}
@@ -153,10 +204,33 @@ func reconcile(ctx context.Context, r resource) error {
 	}
 	for name := range presentMap {
 		if _, ok := expectedMap[name]; !ok {
-			if err := r.Delete(ctx, name); err != nil {
+			log.Infof("Deleting %s object %q", rname, name)
+			if err := r.Delete(ctx, name, meta.DeleteOptions{}); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+// isImmutableError returns true if err indicates that an update failed because
+// of an attempt to update one or more immutable fields.
+func isImmutableError(err error) bool {
+	if !apierrors.IsInvalid(err) {
+		return false
+	}
+	var status apierrors.APIStatus
+	if !errors.As(err, &status) {
+		return false
+	}
+	details := status.Status().Details
+	if details == nil || len(details.Causes) == 0 {
+		return false
+	}
+	for _, cause := range details.Causes {
+		if !strings.Contains(cause.Message, apivalidation.FieldImmutableErrorMsg) {
+			return false
+		}
+	}
+	return true
 }
