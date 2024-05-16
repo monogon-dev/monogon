@@ -41,6 +41,7 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 
+	"source.monogon.dev/go/qcow2"
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/identity"
@@ -136,10 +137,17 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 	if err != nil {
 		return nil, fmt.Errorf("while resolving a path: %w", err)
 	}
-	di := filepath.Join(stdp, filepath.Base(si))
-	launch.Log("Cluster: copying node image: %s -> %s", si, di)
-	if err := copyFile(si, di); err != nil {
-		return nil, fmt.Errorf("while copying the node image: %w", err)
+
+	di := filepath.Join(stdp, "image.qcow2")
+	launch.Log("Cluster: generating node QCOW2 snapshot image: %s -> %s", si, di)
+
+	df, err := os.Create(di)
+	if err != nil {
+		return nil, fmt.Errorf("while opening image for writing: %w", err)
+	}
+	defer df.Close()
+	if err := qcow2.Generate(df, qcow2.GenerateWithBackingFile(si)); err != nil {
+		return nil, fmt.Errorf("while creating copy-on-write node image: %w", err)
 	}
 
 	// Initialize the OVMF firmware variables file.
@@ -285,13 +293,13 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions, doneC 
 
 	tpmSocketPath := filepath.Join(r.sd, "tpm-socket")
 	fwVarPath := filepath.Join(r.ld, "OVMF_VARS.fd")
-	storagePath := filepath.Join(r.ld, "image.img")
+	storagePath := filepath.Join(r.ld, "image.qcow2")
 	qemuArgs := []string{
 		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "2048",
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
 		"-drive", "if=pflash,format=raw,readonly=on,file=" + ovmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + fwVarPath,
-		"-drive", "if=virtio,format=raw,cache=unsafe,file=" + storagePath,
+		"-drive", "if=virtio,format=qcow2,cache=unsafe,file=" + storagePath,
 		"-netdev", qemuNetConfig.ToOption(qemuNetType),
 		"-device", "virtio-net-pci,netdev=net0,mac=" + options.Mac.String(),
 		"-chardev", "socket,id=chrtpm,path=" + tpmSocketPath,
