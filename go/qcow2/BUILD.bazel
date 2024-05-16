@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "qcow2",
+    srcs = ["qcow2.go"],
+    importpath = "source.monogon.dev/go/qcow2",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "qcow2_test",
+    srcs = ["qcow2_test.go"],
+    data = [
+        "@qemu//:qemu-img",
+    ],
+    embed = [":qcow2"],
+    deps = ["@io_bazel_rules_go//go/runfiles:go_default_library"],
+)
