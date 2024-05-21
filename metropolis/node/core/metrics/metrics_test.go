@@ -92,7 +92,7 @@ func TestMetricsForwarder(t *testing.T) {
 		req, _ := http.NewRequest("GET", url, nil)
 		res, err := cl.Do(req)
 		if err != nil {
-			return fmt.Errorf("Get(%q): %v", url, err)
+			return fmt.Errorf("Get(%q): %w", url, err)
 		}
 		defer res.Body.Close()
 		if res.StatusCode != 200 {
@@ -114,7 +114,7 @@ func TestMetricsForwarder(t *testing.T) {
 		req, _ := http.NewRequest("GET", url, nil)
 		res, err := cl.Do(req)
 		if err != nil {
-			return fmt.Errorf("Get(%q): %v", url, err)
+			return fmt.Errorf("Get(%q): %w", url, err)
 		}
 		defer res.Body.Close()
 		if res.StatusCode != 200 {
@@ -189,7 +189,7 @@ func TestDiscovery(t *testing.T) {
 		req, _ := http.NewRequest("GET", url, nil)
 		res, err := cl.Do(req)
 		if err != nil {
-			return fmt.Errorf("Get(%q): %v", url, err)
+			return fmt.Errorf("Get(%q): %w", url, err)
 		}
 		defer res.Body.Close()
 		if res.StatusCode != http.StatusServiceUnavailable {
@@ -211,7 +211,7 @@ func TestDiscovery(t *testing.T) {
 		req, _ := http.NewRequest("GET", url, nil)
 		res, err := cl.Do(req)
 		if err != nil {
-			return fmt.Errorf("Get(%q): %v", url, err)
+			return fmt.Errorf("Get(%q): %w", url, err)
 		}
 		defer res.Body.Close()
 		if res.StatusCode != http.StatusOK {
