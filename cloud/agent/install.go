@@ -74,7 +74,7 @@ func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Ne
 		bundleRes, err := http.Get(req.BundleUrl)
 		if err != nil {
 			l.Warningf("Metropolis bundle request failed: %v", err)
-			return fmt.Errorf("HTTP request failed: %v", err)
+			return fmt.Errorf("HTTP request failed: %w", err)
 		}
 		defer bundleRes.Body.Close()
 		switch bundleRes.StatusCode {
@@ -103,7 +103,7 @@ func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Ne
 		return nil
 	}, b)
 	if err != nil {
-		return fmt.Errorf("error downloading Metropolis bundle: %v", err)
+		return fmt.Errorf("error downloading Metropolis bundle: %w", err)
 	}
 	l.Info("Metropolis Bundle downloaded")
 	bundle, err := zip.NewReader(bytes.NewReader(bundleRaw.Bytes()), int64(bundleRaw.Len()))

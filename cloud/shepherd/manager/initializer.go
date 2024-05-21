@@ -169,7 +169,7 @@ func (i *Initializer) getMachines(ctx context.Context, q *model.Queries, limit i
 func (i *Initializer) processMachine(ctx context.Context, t *task) error {
 	machine, err := i.p.GetMachine(ctx, shepherd.ProviderID(t.machine.ProviderID))
 	if err != nil {
-		return fmt.Errorf("while fetching machine %q: %v", t.machine.ProviderID, err)
+		return fmt.Errorf("while fetching machine %q: %w", t.machine.ProviderID, err)
 	}
 
 	// Start the agent.

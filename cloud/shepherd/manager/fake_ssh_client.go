@@ -28,13 +28,13 @@ func (f *FakeSSHClient) Dial(ctx context.Context, address string, timeout time.D
 func (f *fakeSSHConnection) Execute(ctx context.Context, command string, stdin []byte) (stdout []byte, stderr []byte, err error) {
 	var aim apb.TakeoverInit
 	if err := proto.Unmarshal(stdin, &aim); err != nil {
-		return nil, nil, fmt.Errorf("while unmarshaling TakeoverInit message: %v", err)
+		return nil, nil, fmt.Errorf("while unmarshaling TakeoverInit message: %w", err)
 	}
 
 	// Agent should send back apb.TakeoverResponse on its standard output.
 	pub, _, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		return nil, nil, fmt.Errorf("while generating agent public key: %v", err)
+		return nil, nil, fmt.Errorf("while generating agent public key: %w", err)
 	}
 	arsp := apb.TakeoverResponse{
 		Result: &apb.TakeoverResponse_Success{Success: &apb.TakeoverSuccess{
@@ -44,7 +44,7 @@ func (f *fakeSSHConnection) Execute(ctx context.Context, command string, stdin [
 	}
 	arspb, err := proto.Marshal(&arsp)
 	if err != nil {
-		return nil, nil, fmt.Errorf("while marshaling TakeoverResponse message: %v", err)
+		return nil, nil, fmt.Errorf("while marshaling TakeoverResponse message: %w", err)
 	}
 	return arspb, nil, nil
 }

@@ -86,7 +86,7 @@ func fetchDeviceList(s string) (deviceList, error) {
 	var r io.Reader
 	u, err := url.Parse(s)
 	if err != nil {
-		return nil, fmt.Errorf("failed parsing device list url: %v", err)
+		return nil, fmt.Errorf("failed parsing device list url: %w", err)
 	}
 
 	if u.Scheme != "file" {

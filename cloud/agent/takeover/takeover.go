@@ -120,7 +120,7 @@ func setupTakeover() (*api.TakeoverSuccess, error) {
 	}
 	agentInitRaw, err := proto.Marshal(&agentInit)
 	if err != nil {
-		return nil, fmt.Errorf("unable to marshal AgentInit message: %v", err)
+		return nil, fmt.Errorf("unable to marshal AgentInit message: %w", err)
 	}
 
 	// Append AgentInit spec to initramfs

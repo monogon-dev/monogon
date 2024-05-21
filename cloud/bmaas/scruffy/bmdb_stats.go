@@ -179,7 +179,7 @@ func (b *bmdbStatsRunner) runOnce(ctx context.Context) error {
 		for _, c := range b.collectors {
 			res, err := c.def.query(q, ctx)
 			if err != nil {
-				return fmt.Errorf("collecting %s failed: %v", c.def.name, err)
+				return fmt.Errorf("collecting %s failed: %w", c.def.name, err)
 			} else {
 				results[c.def.name] = res
 			}

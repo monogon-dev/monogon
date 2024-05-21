@@ -129,15 +129,15 @@ func parseCpuinfoAMD64(cpuinfoRaw []byte) (*api.CPU, []error) {
 		cpu.Vendor = scannedVals["vendor_id"]
 		family, err := strconv.Atoi(scannedVals["cpu family"])
 		if err != nil {
-			return fmt.Errorf("unable to parse CPU family to int: %v", err)
+			return fmt.Errorf("unable to parse CPU family to int: %w", err)
 		}
 		model, err := strconv.Atoi(scannedVals["model"])
 		if err != nil {
-			return fmt.Errorf("unable to parse CPU model to int: %v", err)
+			return fmt.Errorf("unable to parse CPU model to int: %w", err)
 		}
 		stepping, err := strconv.Atoi(scannedVals["stepping"])
 		if err != nil {
-			return fmt.Errorf("unable to parse CPU stepping to int: %v", err)
+			return fmt.Errorf("unable to parse CPU stepping to int: %w", err)
 		}
 		cpu.Architecture = &api.CPU_X86_64_{
 			X86_64: &api.CPU_X86_64{
