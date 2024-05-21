@@ -36,7 +36,7 @@ func getBazelDNFFiles(path string) ([]*rpmDef, error) {
 
 		ext, err := newRPMDef(name.GoString(), sha256.GoString(), urlsS)
 		if err != nil {
-			return nil, fmt.Errorf("invalid rpm: %v", err)
+			return nil, fmt.Errorf("invalid rpm: %w", err)
 		}
 		res = append(res, ext)
 		return starlark.None, nil

@@ -94,7 +94,7 @@ var checkCmd = &cobra.Command{
 		path := getRepositoriesBzl()
 		rpms, err := getBazelDNFFiles(path)
 		if err != nil {
-			return fmt.Errorf("could not get RPMs from %s: %v", path, err)
+			return fmt.Errorf("could not get RPMs from %s: %w", path, err)
 		}
 
 		if err := checkMirrorURLs(rpms); err != nil {
@@ -111,7 +111,7 @@ var checkCmd = &cobra.Command{
 		for i, rpm := range rpms {
 			has, err := rpm.validateOurs(cmd.Context(), flagDeep)
 			if err != nil {
-				return fmt.Errorf("checking %s failed: %v", rpm.name, err)
+				return fmt.Errorf("checking %s failed: %w", rpm.name, err)
 			}
 			if !has {
 				log.Printf("Missing %s in mirror", rpm.name)
@@ -143,7 +143,7 @@ will be performed for verification.
 		path := getRepositoriesBzl()
 		rpms, err := getBazelDNFFiles(path)
 		if err != nil {
-			return fmt.Errorf("could not get RPMs from %s: %v", path, err)
+			return fmt.Errorf("could not get RPMs from %s: %w", path, err)
 		}
 
 		if err := checkMirrorURLs(rpms); err != nil {
@@ -155,7 +155,7 @@ will be performed for verification.
 			if strings.Contains(err.Error(), "could not find default credentials") {
 				log.Printf("Try running gcloud auth application-default login --no-browser")
 			}
-			return fmt.Errorf("could not build google cloud storage client: %v", err)
+			return fmt.Errorf("could not build google cloud storage client: %w", err)
 		}
 		bucket := client.Bucket(flagMirrorBucketName)
 
