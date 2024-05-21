@@ -64,7 +64,7 @@ func (s *socksHandler) Connect(ctx context.Context, req *socksproxy.ConnectReque
 func runSOCKSProxy(ctx context.Context) error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", SOCKSPort))
 	if err != nil {
-		return fmt.Errorf("failed to listen on :%d : %v", SOCKSPort, err)
+		return fmt.Errorf("failed to listen on :%d : %w", SOCKSPort, err)
 	}
 
 	h := &socksHandler{}

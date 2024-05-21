@@ -200,7 +200,7 @@ func (c *Cluster) CuratorClient() (*grpc.ClientConn, error) {
 		for _, n := range c.NodeIDs {
 			ep, err := resolver.NodeWithDefaultPort(n)
 			if err != nil {
-				return nil, fmt.Errorf("could not add node %q by DNS: %v", n, err)
+				return nil, fmt.Errorf("could not add node %q by DNS: %w", n, err)
 			}
 			r.AddEndpoint(ep)
 		}
@@ -503,7 +503,7 @@ func generateRandomEthernetMAC() (*net.HardwareAddr, error) {
 	macBuf := make([]byte, 6)
 	_, err := rand.Read(macBuf)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read randomness for MAC: %v", err)
+		return nil, fmt.Errorf("failed to read randomness for MAC: %w", err)
 	}
 
 	// Set U/L bit and clear I/G bit (locally administered individual MAC)

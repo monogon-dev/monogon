@@ -187,7 +187,7 @@ func addNetworkRoutes(link netlink.Link, addr net.IPNet, gw net.IP) error {
 		Scope: netlink.SCOPE_UNIVERSE,
 	}
 	if err := netlink.RouteAdd(route); err != nil {
-		return fmt.Errorf("could not add default route: netlink.RouteAdd(%+v): %v", route, err)
+		return fmt.Errorf("could not add default route: netlink.RouteAdd(%+v): %w", route, err)
 	}
 	return nil
 }
