@@ -25,7 +25,7 @@ func DialOpts(ctx context.Context, c *ConnectOptions) ([]grpc.DialOption, error)
 	if c.ProxyServer != "" {
 		socksDialer, err := proxy.SOCKS5("tcp", c.ProxyServer, nil, proxy.Direct)
 		if err != nil {
-			return nil, fmt.Errorf("failed to build a SOCKS dialer: %v", err)
+			return nil, fmt.Errorf("failed to build a SOCKS dialer: %w", err)
 		}
 		grpcd := func(_ context.Context, addr string) (net.Conn, error) {
 			return socksDialer.Dial("tcp", addr)
@@ -61,7 +61,7 @@ func DialNode(ctx context.Context, opkey ed25519.PrivateKey, ocert, ca *x509.Cer
 	if proxyAddr != "" {
 		socksDialer, err := proxy.SOCKS5("tcp", proxyAddr, nil, proxy.Direct)
 		if err != nil {
-			return nil, fmt.Errorf("failed to build a SOCKS dialer: %v", err)
+			return nil, fmt.Errorf("failed to build a SOCKS dialer: %w", err)
 		}
 		grpcd := func(_ context.Context, addr string) (net.Conn, error) {
 			return socksDialer.Dial("tcp", addr)

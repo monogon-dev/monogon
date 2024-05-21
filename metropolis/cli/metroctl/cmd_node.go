@@ -117,7 +117,7 @@ var nodeUpdateCmd = &cobra.Command{
 
 		nodes, err := core.GetNodes(ctx, mgmt, "")
 		if err != nil {
-			return fmt.Errorf("while calling Management.GetNodes: %v", err)
+			return fmt.Errorf("while calling Management.GetNodes: %w", err)
 		}
 		// Narrow down the output set to supplied node IDs, if any.
 		qids := make(map[string]bool)
@@ -239,7 +239,7 @@ var nodeDeleteCmd = &cobra.Command{
 
 		nodes, err := core.GetNodes(ctx, mgmt, fmt.Sprintf("node.id==%q", args[0]))
 		if err != nil {
-			return fmt.Errorf("while calling Management.GetNodes: %v", err)
+			return fmt.Errorf("while calling Management.GetNodes: %w", err)
 		}
 
 		if len(nodes) == 0 {

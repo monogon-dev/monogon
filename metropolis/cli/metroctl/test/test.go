@@ -58,7 +58,7 @@ func mctlExpectOutput(t *testing.T, ctx context.Context, args []string, expect s
 	}
 	found, err := cmd.RunCommand(ctx, path, args, cmd.TerminateIfFound(expect, logf))
 	if err != nil {
-		return false, fmt.Errorf("while running metroctl: %v", err)
+		return false, fmt.Errorf("while running metroctl: %w", err)
 	}
 	return found, nil
 }
@@ -187,7 +187,7 @@ func TestMetroctl(t *testing.T) {
 			}
 			od, err := os.ReadFile("list.txt")
 			if err != nil {
-				return fmt.Errorf("while reading metroctl output file: %v", err)
+				return fmt.Errorf("while reading metroctl output file: %w", err)
 			}
 			if !strings.Contains(string(od), cl.NodeIDs[0]) {
 				return fmt.Errorf("expected node ID hasn't been found in metroctl output")
@@ -231,7 +231,7 @@ func TestMetroctl(t *testing.T) {
 			// Try matching metroctl output against the advertised format.
 			f, err := os.Open("describe.txt")
 			if err != nil {
-				return fmt.Errorf("while opening metroctl output: %v", err)
+				return fmt.Errorf("while opening metroctl output: %w", err)
 			}
 			scanner := bufio.NewScanner(f)
 			if !scanner.Scan() {
@@ -248,7 +248,7 @@ func TestMetroctl(t *testing.T) {
 
 			_, err = fmt.Sscanf(line, "%s%s%s%s%s%s%s%ds", &onid, &ostate, &onaddr, &onstatus, &onroles, &ontpm, &onver, &ontimeout)
 			if err != nil {
-				return fmt.Errorf("while parsing metroctl output: %v", err)
+				return fmt.Errorf("while parsing metroctl output: %w", err)
 			}
 			if onid != nid {
 				return fmt.Errorf("node id mismatch")
