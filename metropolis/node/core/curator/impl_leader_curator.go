@@ -365,12 +365,40 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 		return nil, err
 	}
 
+	// Populate node labels if applicable.
+	labels := make(map[string]string)
+	if l := req.Labels; l != nil {
+		if nlabels := len(l.Pairs); nlabels > common.MaxLabelsPerNode {
+			rpc.Trace(ctx).Printf("Too many labels (%d, limit %d), truncating...", nlabels, common.MaxLabelsPerNode)
+			l.Pairs = l.Pairs[:common.MaxLabelsPerNode]
+		}
+		for _, pair := range l.Pairs {
+			k := pair.Key
+			v := pair.Value
+
+			if err := common.ValidateLabel(k); err != nil {
+				rpc.Trace(ctx).Printf("Label key %q is invalid: %v, skipping", k, err)
+				continue
+			}
+			if err := common.ValidateLabel(v); err != nil {
+				rpc.Trace(ctx).Printf("Label value %q (key %q) is invalid: %v, skipping", v, k, err)
+				continue
+			}
+			if _, ok := labels[k]; ok {
+				rpc.Trace(ctx).Printf("Label key %q is duplicate, skipping", k)
+				continue
+			}
+			labels[k] = v
+		}
+	}
+
 	// No node exists, create one.
 	node = &Node{
 		pubkey:   pubkey,
 		jkey:     req.JoinKey,
 		state:    cpb.NodeState_NODE_STATE_NEW,
 		tpmUsage: tpmUsage,
+		labels:   labels,
 	}
 	if err := nodeSave(ctx, l.leadership, node); err != nil {
 		return nil, err

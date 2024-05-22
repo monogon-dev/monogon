@@ -122,6 +122,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 		RegisterTicket: register.RegisterTicket,
 		JoinKey:        jpub,
 		HaveLocalTpm:   m.haveTPM,
+		Labels:         register.Labels,
 	})
 	if err != nil {
 		return fmt.Errorf("register call failed: %w", err)

@@ -68,6 +68,11 @@ message NodeParameters {
         // attempting to register into a cluster. It can be retrieved by
         // an operator from a running cluster via Management.GetClusterInfo.
         bytes ca_certificate = 3;
+
+        // Labels that the new node will start out with. The given labels must
+        // be valid (see NodeLabels for more details). Invalid labels will be
+        // discarded.
+        metropolis.proto.common.NodeLabels labels = 4;
     }
     oneof cluster {
         ClusterBootstrap cluster_bootstrap = 1;

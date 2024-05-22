@@ -967,6 +967,11 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 						RegisterTicket:   ticket,
 						ClusterDirectory: resI.ClusterDirectory,
 						CaCertificate:    resI.CaCertificate,
+						Labels: &cpb.NodeLabels{
+							Pairs: []*cpb.NodeLabels_Pair{
+								{Key: "test-node-id", Value: fmt.Sprintf("%d", i)},
+							},
+						},
 					},
 				},
 			},

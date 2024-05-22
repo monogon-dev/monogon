@@ -271,6 +271,7 @@ message RegisterNodeRequest {
     // successfully initialized. This information should be verified by the
     // Curator in high-assurance scenarios using hardware attestation.
     bool have_local_tpm = 3;
+    metropolis.proto.common.NodeLabels labels = 4;
 }
 
 message RegisterNodeResponse {
