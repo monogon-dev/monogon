@@ -64,6 +64,34 @@ message NodeRoles {
     KubernetesController kubernetes_controller = 3;
 }
 
+// NodeLabels are labels assigned to a node.
+//
+// Labels are string key/value pairs modeled after the Kubernetes label concept.
+// They can be used to assign user-specific metadata to nodes like IDs from other
+// systems or geographical location. They are treated like opaque strings by
+// Metropolis itself.
+//
+// Every key and value must be a string between 1 and 63 characters long
+// (inclusive). Each character must be a valid ASCII character from the following
+// range: a-z, A-Z, 0-9 '-', '_' or '.'. The first character must be a-z, A-Z or
+// 0-9. This is close but not exact to DNS label requirements (for example, '.'
+// or '_' are generally not valid DNS label parts... but that's a discussion for
+// another day).
+//
+// Keys must not repeat across node labels - that is, NodeLabels must be
+// convertable to/from a string/string map in Go. Pair ordering is not preserved,
+// but pair order in labels received from Metropolis API calls is stable (however
+// it is arbitrary).
+//
+// A node cannot have more than 128 labels.
+message NodeLabels {
+    message Pair {
+        string key = 1;
+        string value = 2;
+    }
+    repeated Pair pairs = 1;
+}
+
 // NodeState is the state of a Metropolis node from the point of view of the
 // cluster it is a part of (or intending to be a part of).
 enum NodeState {

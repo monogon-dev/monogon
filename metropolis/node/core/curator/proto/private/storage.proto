@@ -40,6 +40,8 @@ message Node {
     // tpm_usage describes whether this node has a TPM 2.0 and whether it's using
     // it.
     metropolis.proto.common.NodeTPMUsage tpm_usage = 8;
+
+    metropolis.proto.common.NodeLabels labels = 9;
 }
 
 // Information about the cluster owner, currently the only Metropolis management

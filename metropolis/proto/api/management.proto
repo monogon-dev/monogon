@@ -109,6 +109,14 @@ service Management {
             need: PERMISSION_DELETE_NODE
         };
     }
+
+    // Add, update or remove labels from a given node. The given node must exist,
+    // but can be in any state.
+    rpc UpdateNodeLabels(UpdateNodeLabelsRequest) returns (UpdateNodeLabelsResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_UPDATE_NODE_LABELS
+        };
+    }
 }
 
 message GetRegisterTicketRequest {
@@ -197,6 +205,9 @@ message Node {
     // node has actually passed high assurance hardware attestation against the
     // cluster.
     metropolis.proto.common.NodeTPMUsage tpm_usage = 8;
+
+    // Labels attached to the node.
+    metropolis.proto.common.NodeLabels labels = 9;
 }
 
 message ApproveNodeRequest {
@@ -417,3 +428,34 @@ message UpdateNodeRequest {
 }
 
 message UpdateNodeResponse {}
+
+message UpdateNodeLabelsRequest {
+  // node uniquely identifies the node subject to this request.
+  oneof node {
+    // pubkey is the Ed25519 public key of this node, which can be used to
+    // generate the node's ID.
+    bytes pubkey = 1;
+    // id is the human-readable identifier of the node, based on its public
+    // key.
+    string id = 2;
+  }
+
+  message Pair {
+    string key = 1;
+    string value = 2;
+  }
+  // Labels to be added (created or updated by key).
+  //
+  // The given pairs must have unique, valid keys and valid values.
+  repeated Pair upsert = 3;
+
+  // Labels to be removed (by key).
+  //
+  // The given keys do not have to exist on the node, but cannot intersect with
+  // keys given in the upsert list.
+  repeated string delete = 4;
+}
+
+message UpdateNodeLabelsResponse {
+}
+

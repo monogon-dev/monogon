@@ -200,6 +200,7 @@ func (n *Node) appendToEvent(ev *ipb.WatchEvent) {
 		Status:     np.Status,
 		Clusternet: np.Clusternet,
 		State:      np.FsmState,
+		Labels:     np.Labels,
 	})
 }
 

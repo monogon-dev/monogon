@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 	dpb "google.golang.org/protobuf/types/known/durationpb"
 
+	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
@@ -232,7 +233,17 @@ func (l *leaderManagement) GetNodes(req *apb.GetNodesRequest, srv apb.Management
 			TimeSinceHeartbeat: dpb.New(lhb),
 			Health:             health,
 			TpmUsage:           node.tpmUsage,
+			Labels:             &cpb.NodeLabels{},
 		}
+		for k, v := range node.labels {
+			entry.Labels.Pairs = append(entry.Labels.Pairs, &cpb.NodeLabels_Pair{
+				Key:   k,
+				Value: v,
+			})
+		}
+		sort.Slice(entry.Labels.Pairs, func(i, j int) bool {
+			return entry.Labels.Pairs[i].Key < entry.Labels.Pairs[j].Key
+		})
 
 		// Evaluate the filter expression for this node. Send the node, if it's
 		// kept by the filter.
@@ -459,4 +470,84 @@ func (l *leaderManagement) DeleteNode(ctx context.Context, req *apb.DeleteNodeRe
 
 	err = nodeDestroy(ctx, l.leadership, node)
 	return &apb.DeleteNodeResponse{}, err
+}
+
+func (l *leaderManagement) UpdateNodeLabels(ctx context.Context, req *apb.UpdateNodeLabelsRequest) (*apb.UpdateNodeLabelsResponse, error) {
+	// Get node ID from request.
+	var id string
+	switch rid := req.Node.(type) {
+	case *apb.UpdateNodeLabelsRequest_Pubkey:
+		if len(rid.Pubkey) != ed25519.PublicKeySize {
+			return nil, status.Errorf(codes.InvalidArgument, "pubkey must be %d bytes long", ed25519.PublicKeySize)
+		}
+		// Convert the pubkey into node ID.
+		id = identity.NodeID(rid.Pubkey)
+	case *apb.UpdateNodeLabelsRequest_Id:
+		id = rid.Id
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "exactly one of pubkey or id must be set")
+	}
+
+	keysToUpsert := make(map[string]string)
+	keysToDelete := make(map[string]bool)
+
+	for _, pair := range req.Upsert {
+		k := pair.Key
+		v := pair.Value
+		if err := common.ValidateLabel(k); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid upsert key %q: %v", k, err)
+		}
+		if err := common.ValidateLabel(v); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid upsert value %q (key %q): %v", v, k, err)
+		}
+		if _, ok := keysToUpsert[k]; ok {
+			return nil, status.Errorf(codes.InvalidArgument, "repeated upsert key %q", k)
+		}
+		keysToUpsert[k] = v
+	}
+	for _, k := range req.Delete {
+		if err := common.ValidateLabel(k); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid delete key %q: %v", k, err)
+		}
+		if _, ok := keysToUpsert[k]; ok {
+			return nil, status.Errorf(codes.InvalidArgument, "delete key %q conflicts with upsert key", k)
+		}
+		if _, ok := keysToDelete[k]; ok {
+			return nil, status.Errorf(codes.InvalidArgument, "repeated delete key %q", k)
+		}
+		keysToDelete[k] = true
+	}
+
+	// Take l.muNodes before modifying the node.
+	l.muNodes.Lock()
+	defer l.muNodes.Unlock()
+
+	// Load the node matching the request.
+	node, err := nodeLoad(ctx, l.leadership, id)
+	if errors.Is(err, errNodeNotFound) {
+		return nil, status.Errorf(codes.NotFound, "node %s not found", id)
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "while loading node %s: %v", id, err)
+	}
+
+	// Apply changes.
+	for k, v := range keysToUpsert {
+		node.labels[k] = v
+	}
+	for k := range keysToDelete {
+		delete(node.labels, k)
+	}
+
+	// Check we don't end up with too many labels.
+	if nlabels := len(node.labels); nlabels > common.MaxLabelsPerNode {
+		return nil, status.Errorf(codes.OutOfRange, "change would result in too many labels on node (%d, limit %d)", nlabels, common.MaxLabelsPerNode)
+	}
+
+	// Save changes.
+	if err := nodeSave(ctx, l.leadership, node); err != nil {
+		return nil, err
+	}
+
+	return &apb.UpdateNodeLabelsResponse{}, nil
 }

@@ -22,17 +22,20 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/netip"
+	"sort"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
-	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/pkg/pki"
+
+	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -99,6 +102,8 @@ type Node struct {
 	// wireguard peer, but only the pod network will have a single large route
 	// installed into the host routing table.
 	networkPrefixes []netip.Prefix
+
+	labels map[string]string
 }
 
 // NewNodeForBootstrap creates a brand new node without regard for any other
@@ -247,6 +252,7 @@ func (n *Node) proto() *ppb.Node {
 		Roles:            &cpb.NodeRoles{},
 		Status:           n.status,
 		TpmUsage:         n.tpmUsage,
+		Labels:           &cpb.NodeLabels{},
 	}
 	if n.kubernetesWorker != nil {
 		msg.Roles.KubernetesWorker = &cpb.NodeRoles_KubernetesWorker{}
@@ -281,6 +287,15 @@ func (n *Node) proto() *ppb.Node {
 			Prefixes:        prefixes,
 		}
 	}
+	for k, v := range n.labels {
+		msg.Labels.Pairs = append(msg.Labels.Pairs, &cpb.NodeLabels_Pair{
+			Key:   k,
+			Value: v,
+		})
+	}
+	sort.Slice(msg.Labels.Pairs, func(i, j int) bool {
+		return msg.Labels.Pairs[i].Key < msg.Labels.Pairs[j].Key
+	})
 	return msg
 }
 
@@ -296,6 +311,7 @@ func nodeUnmarshal(data []byte) (*Node, error) {
 		state:            msg.FsmState,
 		status:           msg.Status,
 		tpmUsage:         msg.TpmUsage,
+		labels:           make(map[string]string),
 	}
 	if msg.Roles.KubernetesWorker != nil {
 		n.kubernetesWorker = &NodeRoleKubernetesWorker{}
@@ -346,6 +362,19 @@ func nodeUnmarshal(data []byte) (*Node, error) {
 				continue
 			}
 			n.networkPrefixes = append(n.networkPrefixes, nip)
+		}
+	}
+	if l := msg.Labels; l != nil {
+		for _, pair := range l.Pairs {
+			// Skip invalid keys/values that were somehow persisted into etcd. They will be
+			// removed on next marshal/save.
+			if err := common.ValidateLabel(pair.Key); err != nil {
+				continue
+			}
+			if err := common.ValidateLabel(pair.Value); err != nil {
+				continue
+			}
+			n.labels[pair.Key] = pair.Value
 		}
 	}
 	return n, nil

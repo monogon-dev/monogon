@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 load("//metropolis/node/build:def.bzl", "erofs_image", "verity_image")
 load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
 load("//metropolis/node/build/mkimage:def.bzl", "node_image")
@@ -8,6 +8,7 @@ go_library(
     name = "node",
     srcs = [
         "ids.go",
+        "labels.go",
         "net_ips.go",
         "net_protocols.go",
         "ports.go",
@@ -138,4 +139,10 @@ os_release(
     os_id = "metropolis-node",
     os_name = "Metropolis Node",
     stamp_var = "STABLE_MONOGON_metropolis_version",
+)
+
+go_test(
+    name = "node_test",
+    srcs = ["labels_test.go"],
+    embed = [":node"],
 )

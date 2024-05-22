@@ -61,6 +61,9 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 		if optI.icc != nil {
 			opt.icc = optI.icc
 		}
+		if optI.labels != nil {
+			opt.labels = optI.labels
+		}
 	}
 
 	// Start a single-node etcd cluster.
@@ -108,6 +111,10 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 
 	// Here we would enable the leader node's roles. But for tests, we don't enable
 	// any.
+
+	if opt.labels != nil {
+		cNode.labels = opt.labels
+	}
 
 	cc := DefaultClusterConfiguration()
 	if opt.icc != nil {
@@ -248,7 +255,8 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 type fakeLeaderOption struct {
 	// icc is the initial cluster configuration to be set when bootstrapping the
 	//fake cluster. If not set, uses system defaults.
-	icc *cpb.ClusterConfiguration
+	icc    *cpb.ClusterConfiguration
+	labels map[string]string
 }
 
 // fakeLeaderData is returned by fakeLeader and contains information about the
@@ -1759,6 +1767,111 @@ func TestClusterTPMModeSetting(t *testing.T) {
 			if err != nil {
 				t.Fatalf("join failed: %v", err)
 			}
+		})
+	}
+}
+
+func TestNodeLabels(t *testing.T) {
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	cl := fakeLeader(t, &fakeLeaderOption{
+		labels: map[string]string{
+			"test1": "a",
+			"test2": "b",
+			"test3": "c",
+		},
+	})
+	checkLabels := func(t *testing.T, n *apb.Node, labels map[string]string) {
+		t.Helper()
+		if n.Labels == nil || len(n.Labels.Pairs) != len(labels) {
+			t.Fatalf("Expected %d label pair(s), got: %+v", len(labels), n.Labels)
+		}
+		got := make(map[string]string)
+		for _, pair := range n.Labels.Pairs {
+			got[pair.Key] = pair.Value
+		}
+		errors := false
+		for k, v := range labels {
+			if got[k] != v {
+				t.Errorf("Wanted label %q with value %q, got %q", k, v, got[k])
+				errors = true
+			}
+		}
+		for k, v := range got {
+			if labels[k] == "" {
+				t.Errorf("Unexpected label %q with value %q", k, v)
+				errors = true
+			}
+		}
+		if errors {
+			t.Fatalf("Label differences found")
+		}
+	}
+
+	// Expect preconfigured labels to be set.
+	mgmt := apb.NewManagementClient(cl.mgmtConn)
+	nodes := getNodes(t, ctx, mgmt, "")
+	if len(nodes) != 1 {
+		t.Fatalf("Expected 1 node, got %d", len(nodes))
+	}
+	checkLabels(t, nodes[0], map[string]string{"test1": "a", "test2": "b", "test3": "c"})
+
+	// Expect label mutation to work.
+	_, err := mgmt.UpdateNodeLabels(ctx, &apb.UpdateNodeLabelsRequest{
+		Node: &apb.UpdateNodeLabelsRequest_Id{
+			Id: nodes[0].Id,
+		},
+		Upsert: []*apb.UpdateNodeLabelsRequest_Pair{
+			{Key: "test2", Value: "d"},
+		},
+		Delete: []string{"test1"},
+	})
+	if err != nil {
+		t.Fatalf("UpdateNodeLabels: %v", err)
+	}
+	nodes = getNodes(t, ctx, mgmt, "")
+	if len(nodes) != 1 {
+		t.Fatalf("Expected 1 node, got %d", len(nodes))
+	}
+	checkLabels(t, nodes[0], map[string]string{"test2": "d", "test3": "c"})
+
+	// Test some invalid mutations, make sure they error out and don't change the
+	// label state.
+	for i, te := range []*apb.UpdateNodeLabelsRequest{
+		// Invalid because of repeat upsert key.
+		{
+			Upsert: []*apb.UpdateNodeLabelsRequest_Pair{
+				{Key: "repeat", Value: "a"},
+				{Key: "repeat", Value: "b"},
+			},
+			Delete: []string{},
+		},
+		// Invalid because of repeat delete key.
+		{
+			Upsert: []*apb.UpdateNodeLabelsRequest_Pair{},
+			Delete: []string{"test3", "test3"},
+		},
+		// Invalid because of key contained both in upsert and delete.
+		{
+			Upsert: []*apb.UpdateNodeLabelsRequest_Pair{
+				{Key: "test3", Value: "e"},
+			},
+			Delete: []string{"test3"},
+		},
+	} {
+		t.Run(fmt.Sprintf("bad%d", i), func(t *testing.T) {
+			te.Node = &apb.UpdateNodeLabelsRequest_Id{Id: nodes[0].Id}
+			_, err := mgmt.UpdateNodeLabels(ctx, te)
+			if err == nil {
+				t.Errorf("Should have errored out")
+			}
+			// Make sure that the state didn't get mutated, even if an error occurred.
+			nodes = getNodes(t, ctx, mgmt, "")
+			if len(nodes) != 1 {
+				t.Fatalf("Expected 1 node, got %d", len(nodes))
+			}
+			checkLabels(t, nodes[0], map[string]string{"test2": "d", "test3": "c"})
 		})
 	}
 }

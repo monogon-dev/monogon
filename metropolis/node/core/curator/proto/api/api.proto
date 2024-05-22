@@ -176,6 +176,7 @@ message Node {
     metropolis.proto.common.NodeClusterNetworking clusternet = 4;
     // The node's 'lifecycle' state from the point of view of the cluster.
     metropolis.proto.common.NodeState state = 5;
+    metropolis.proto.common.NodeLabels labels = 6;
 };
 
 // WatchRequest specifies what data the caller is interested in. This influences
