@@ -14,22 +14,12 @@ go_library(
 )
 
 go_binary(
-    name = "launch_bin",
+    name = "launch",
     data = [
         "//metropolis/node:image",
         "//metropolis/node:swtpm_data",
         "//third_party/edk2:firmware",
     ],
     embed = [":launch_lib"],
-    visibility = ["//:__pkg__"],
-)
-
-# Wrap the binary in a native_test so that we can run it with the
-# `bazel test` command inside the sandbox.
-native_test(
-    name = "launch",
-    src = ":launch_bin",
-    out = "launch",
-    tags = ["manual"],
     visibility = ["//visibility:public"],
 )

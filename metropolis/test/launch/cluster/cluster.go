@@ -165,17 +165,8 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 	if err := os.Mkdir(tpmt, 0o755); err != nil {
 		return nil, fmt.Errorf("while creating the TPM directory: %w", err)
 	}
-	tpms, err := runfiles.Rlocation("_main/metropolis/node/tpm")
-	if err != nil {
-		return nil, fmt.Errorf("while resolving a path: %w", err)
-	}
-	tpmf, err := os.ReadDir(tpms)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read TPM directory: %w", err)
-	}
-	for _, file := range tpmf {
-		name := file.Name()
-		src, err := runfiles.Rlocation(filepath.Join(tpms, name))
+	for _, name := range []string{"issuercert.pem", "signkey.pem", "tpm2-00.permall"} {
+		src, err := runfiles.Rlocation(filepath.Join("_main/metropolis/node/tpm", name))
 		if err != nil {
 			return nil, fmt.Errorf("while resolving a path: %w", err)
 		}

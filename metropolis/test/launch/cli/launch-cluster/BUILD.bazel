@@ -13,20 +13,10 @@ go_library(
 )
 
 go_binary(
-    name = "launch-cluster_bin",
+    name = "launch-cluster",
     data = [
         "//metropolis/cli/metroctl",
     ],
     embed = [":launch-cluster_lib"],
-    visibility = ["//:__pkg__"],
-)
-
-# Wrap the binary in a native_test so that we can run it with the
-# `bazel test` command inside the sandbox.
-native_test(
-    name = "launch-cluster",
-    src = ":launch-cluster_bin",
-    out = "launch",
-    tags = ["manual"],
     visibility = ["//visibility:public"],
 )

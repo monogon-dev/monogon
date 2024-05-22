@@ -1,17 +1,11 @@
-test_suite(
+alias(
     name = "launch",
-    tags = ["manual"],
-    tests = [
-        "//metropolis/test/launch/cli/launch",
-    ],
+    actual = "//metropolis/test/launch/cli/launch",
 )
 
-test_suite(
+alias(
     name = "launch-cluster",
-    tags = ["manual"],
-    tests = [
-        "//metropolis/test/launch/cli/launch-cluster",
-    ],
+    actual = "//metropolis/test/launch/cli/launch-cluster",
 )
 
 alias(
