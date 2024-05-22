@@ -30,7 +30,7 @@ var nodeCmd = &cobra.Command{
 
 var nodeDescribeCmd = &cobra.Command{
 	Short:   "Describes cluster nodes.",
-	Use:     "describe [node-id] [--filter] [--output] [--format]",
+	Use:     "describe [node-id] [--filter] [--output] [--format] [--columns]",
 	Example: "metroctl node describe metropolis-c556e31c3fa2bf0a36e9ccb9fd5d6056",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -42,7 +42,16 @@ var nodeDescribeCmd = &cobra.Command{
 			log.Fatalf("While calling Management.GetNodes: %v", err)
 		}
 
-		printNodes(nodes, args, nil)
+		var columns map[string]bool
+		if flags.columns != "" {
+			columns = make(map[string]bool)
+			for _, p := range strings.Split(flags.columns, ",") {
+				p = strings.ToLower(p)
+				p = strings.TrimSpace(p)
+				columns[p] = true
+			}
+		}
+		printNodes(nodes, args, columns)
 	},
 	Args: cobra.ArbitraryArgs,
 }

@@ -41,6 +41,10 @@ type metroctlFlags struct {
 	// certificate of the cluster as the trusted CA certificate for this cluster.
 	// This is unsafe and should only be used for testing.
 	acceptAnyCA bool
+	// columns is a comma-separated list of column names which selects which columns
+	// will be output to the user. An empty string means all columns will be
+	// displayed.
+	columns string
 }
 
 var flags metroctlFlags
@@ -52,6 +56,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&flags.verbose, "verbose", false, "Log additional runtime information")
 	rootCmd.PersistentFlags().StringVar(&flags.format, "format", "plaintext", "Data output format")
 	rootCmd.PersistentFlags().StringVar(&flags.filter, "filter", "", "The object filter applied to the output data")
+	rootCmd.PersistentFlags().StringVar(&flags.columns, "columns", "", "Comma-separated list of column names to show. If not set, all columns will be shown")
 	rootCmd.PersistentFlags().StringVarP(&flags.output, "output", "o", "", "Redirects output to the specified file")
 	rootCmd.PersistentFlags().BoolVar(&flags.acceptAnyCA, "insecure-accept-and-persist-first-encountered-ca", false, "Accept the first encountered CA while connecting as the trusted CA for future metroctl connections with this config path. This is very insecure and should only be used for testing.")
 }
