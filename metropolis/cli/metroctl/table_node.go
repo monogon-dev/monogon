@@ -57,5 +57,13 @@ func nodeEntry(n *apb.Node) clitable.Entry {
 	tshs := n.TimeSinceHeartbeat.GetSeconds()
 	res.Add("heartbeat", fmt.Sprintf("%ds", tshs))
 
+	if l := n.Labels; l != nil {
+		var labels []string
+		for _, pair := range l.Pairs {
+			labels = append(labels, fmt.Sprintf("%s:%s", pair.Key, pair.Value))
+		}
+		res.Add("labels", strings.Join(labels, ","))
+	}
+
 	return res
 }
