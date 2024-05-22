@@ -38,9 +38,16 @@ message NodeParameters {
         // management credentials for the cluster via an AAA.Escrow call.
         bytes owner_public_key = 1;
 
+        reserved 2;
+
         // If not set, defaults to:
         //   - TPM mode: REQUIRED
         common.ClusterConfiguration initial_cluster_configuration = 3;
+
+        // Labels that the first node will start out with. The given labels must
+        // be valid (see NodeLabels for more details). Invalid labels will be
+        // discarded.
+        metropolis.proto.common.NodeLabels labels = 4;
     }
     // ClusterRegister configures the node to attempt to register into an
     // existing cluster, ie. contact an existing running cluster and become

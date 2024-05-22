@@ -11,6 +11,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/cluster",
     visibility = ["//metropolis/node/core:__subpackages__"],
     deps = [
+        "//metropolis/node",
         "//metropolis/node/core/curator",
         "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/identity",

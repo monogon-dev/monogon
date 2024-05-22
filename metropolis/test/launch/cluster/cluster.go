@@ -774,6 +774,11 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 				ClusterBootstrap: &apb.NodeParameters_ClusterBootstrap{
 					OwnerPublicKey:              InsecurePublicKey,
 					InitialClusterConfiguration: opts.InitialClusterConfiguration,
+					Labels: &cpb.NodeLabels{
+						Pairs: []*cpb.NodeLabels_Pair{
+							{Key: "test-node-id", Value: "0"},
+						},
+					},
 				},
 			},
 		},

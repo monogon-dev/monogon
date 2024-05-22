@@ -106,17 +106,26 @@ type Node struct {
 	labels map[string]string
 }
 
+type NewNodeData struct {
+	CUK      []byte
+	Pubkey   []byte
+	JPub     []byte
+	TPMUsage cpb.NodeTPMUsage
+	Labels   map[string]string
+}
+
 // NewNodeForBootstrap creates a brand new node without regard for any other
 // cluster state.
 //
 // This can only be used by the cluster bootstrap logic.
-func NewNodeForBootstrap(cuk, pubkey, jpub []byte, tpmUsage cpb.NodeTPMUsage) Node {
+func NewNodeForBootstrap(n *NewNodeData) Node {
 	return Node{
-		clusterUnlockKey: cuk,
-		pubkey:           pubkey,
-		jkey:             jpub,
+		clusterUnlockKey: n.CUK,
+		pubkey:           n.Pubkey,
+		jkey:             n.JPub,
 		state:            cpb.NodeState_NODE_STATE_UP,
-		tpmUsage:         tpmUsage,
+		tpmUsage:         n.TPMUsage,
+		labels:           n.Labels,
 	}
 }
 

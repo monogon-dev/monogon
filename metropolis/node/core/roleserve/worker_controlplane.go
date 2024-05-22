@@ -23,7 +23,7 @@ import (
 // locally running Control Plane (Consensus and Curator service pair) if needed.
 //
 // The Control Plane will run under the following conditions:
-//   - This node has been started in BOOTSTRAP mode and bootstrapData was provided
+//   - This node has been started in BOOTSTRAP mode and BootstrapData was provided
 //     by the cluster enrolment logic. In this case, the Control Plane Worker will
 //     perform the required bootstrap steps, creating a local node with appropriate
 //     roles, and will start Consensus and the Curator.
@@ -38,8 +38,8 @@ import (
 type workerControlPlane struct {
 	storageRoot *localstorage.Root
 
-	// bootstrapData will be read.
-	bootstrapData *memory.Value[*bootstrapData]
+	// BootstrapData will be read.
+	bootstrapData *memory.Value[*BootstrapData]
 	// localRoles will be read.
 	localRoles *memory.Value[*cpb.NodeRoles]
 	// resolver will be read and used to populate curatorConnection when
@@ -61,7 +61,7 @@ type controlPlaneStartup struct {
 	consensusConfig *consensus.Config
 	// bootstrap is set if this node should bootstrap consensus. It contains all
 	// data required to perform this bootstrap step.
-	bootstrap *bootstrapData
+	bootstrap *BootstrapData
 	existing  *curatorConnection
 }
 
@@ -94,13 +94,13 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 	// Channels are used as intermediaries between map stages and the final reduce,
 	// which is okay as long as the entire tree restarts simultaneously (which we
 	// ensure via RunGroup).
-	bootstrapDataC := make(chan *bootstrapData)
+	bootstrapDataC := make(chan *BootstrapData)
 	curatorConnectionC := make(chan *curatorConnection)
 	rolesC := make(chan *cpb.NodeRoles)
 
 	supervisor.RunGroup(ctx, map[string]supervisor.Runnable{
 		// Plain conversion from Event Value to channel.
-		"map-bootstrap-data": event.Pipe[*bootstrapData](s.bootstrapData, bootstrapDataC),
+		"map-bootstrap-data": event.Pipe[*BootstrapData](s.bootstrapData, bootstrapDataC),
 		// Plain conversion from Event Value to channel.
 		"map-curator-connection": event.Pipe[*curatorConnection](s.curatorConnection, curatorConnectionC),
 		// Plain conversion from Event Value to channel.
@@ -110,7 +110,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 			supervisor.Signal(ctx, supervisor.SignalHealthy)
 			var lr *cpb.NodeRoles
 			var cc *curatorConnection
-			var bd *bootstrapData
+			var bd *BootstrapData
 			for {
 				select {
 				case <-ctx.Done():
@@ -145,7 +145,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 						consensusConfig: &consensus.Config{
 							Data:           &s.storageRoot.Data.Etcd,
 							Ephemeral:      &s.storageRoot.Ephemeral.Consensus,
-							NodePrivateKey: bd.nodePrivateKey,
+							NodePrivateKey: bd.Node.PrivateKey,
 						},
 						bootstrap: bd,
 					})
@@ -269,10 +269,16 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				// curator startup.
 				//
 				// TODO(q3k): collapse the curator bootstrap shenanigans into a single function.
-				npub := b.nodePrivateKey.Public().(ed25519.PublicKey)
-				jpub := b.nodePrivateJoinKey.Public().(ed25519.PublicKey)
+				npub := b.Node.PrivateKey.Public().(ed25519.PublicKey)
+				jpub := b.Node.JoinKey.Public().(ed25519.PublicKey)
 
-				n := curator.NewNodeForBootstrap(b.clusterUnlockKey, npub, jpub, b.nodeTPMUsage)
+				n := curator.NewNodeForBootstrap(&curator.NewNodeData{
+					CUK:      b.Node.ClusterUnlockKey,
+					Pubkey:   npub,
+					JPub:     jpub,
+					TPMUsage: b.Node.TPMUsage,
+					Labels:   b.Node.Labels,
+				})
 
 				// The first node always runs consensus.
 				join, err := st.AddNode(ctx, npub)
@@ -284,12 +290,12 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				n.EnableKubernetesController()
 
 				var nodeCert []byte
-				caCert, nodeCert, err = curator.BootstrapNodeFinish(ctx, ckv, &n, b.initialOwnerKey, b.initialClusterConfiguration)
+				caCert, nodeCert, err = curator.BootstrapNodeFinish(ctx, ckv, &n, b.Cluster.InitialOwnerKey, b.Cluster.Configuration)
 				if err != nil {
 					return fmt.Errorf("while bootstrapping node: %w", err)
 				}
 				// ... and build new credentials from bootstrap step.
-				creds, err = identity.NewNodeCredentials(b.nodePrivateKey, nodeCert, caCert)
+				creds, err = identity.NewNodeCredentials(b.Node.PrivateKey, nodeCert, caCert)
 				if err != nil {
 					return fmt.Errorf("when creating bootstrap node credentials: %w", err)
 				}
@@ -297,12 +303,12 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				if err = creds.Save(&s.storageRoot.Data.Node.Credentials); err != nil {
 					return fmt.Errorf("while saving node credentials: %w", err)
 				}
-				sc, err := s.storageRoot.ESP.Metropolis.SealedConfiguration.Unseal(b.nodeTPMUsage)
+				sc, err := s.storageRoot.ESP.Metropolis.SealedConfiguration.Unseal(b.Node.TPMUsage)
 				if err != nil {
 					return fmt.Errorf("reading sealed configuration failed: %w", err)
 				}
 				sc.ClusterCa = caCert
-				if err = s.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(sc, b.nodeTPMUsage); err != nil {
+				if err = s.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(sc, b.Node.TPMUsage); err != nil {
 					return fmt.Errorf("writing sealed configuration failed: %w", err)
 				}
 				supervisor.Logger(ctx).Infof("Control plane bootstrap complete, starting curator...")

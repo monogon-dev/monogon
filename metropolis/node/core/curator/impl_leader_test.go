@@ -107,7 +107,12 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 	if err != nil {
 		t.Fatalf("could not generate node keypair: %v", err)
 	}
-	cNode := NewNodeForBootstrap(nil, nodePub, nodeJoinPub, cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED)
+	cNode := NewNodeForBootstrap(&NewNodeData{
+		CUK:      nil,
+		Pubkey:   nodePub,
+		JPub:     nodeJoinPub,
+		TPMUsage: cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED,
+	})
 
 	// Here we would enable the leader node's roles. But for tests, we don't enable
 	// any.

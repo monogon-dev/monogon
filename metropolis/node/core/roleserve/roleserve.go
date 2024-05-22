@@ -81,7 +81,7 @@ type Service struct {
 	Config
 
 	KubernetesStatus      memory.Value[*KubernetesStatus]
-	bootstrapData         memory.Value[*bootstrapData]
+	bootstrapData         memory.Value[*BootstrapData]
 	localRoles            memory.Value[*cpb.NodeRoles]
 	podNetwork            memory.Value[*clusternet.Prefixes]
 	clusterDirectorySaved memory.Value[bool]
@@ -178,8 +178,38 @@ func New(c Config) *Service {
 	return s
 }
 
-func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk, jkey []byte, icc *curator.Cluster, tpmUsage cpb.NodeTPMUsage) {
-	pubkey := privkey.Public().(ed25519.PublicKey)
+// BootstrapData contains all the information needed to be injected into the
+// roleserver by the cluster bootstrap logic via ProvideBootstrapData.
+type BootstrapData struct {
+	// Data about the bootstrapping node.
+	Node struct {
+		PrivateKey ed25519.PrivateKey
+
+		// CUK/NUK for storage, if storage encryption is enabled.
+		ClusterUnlockKey []byte
+		NodeUnlockKey    []byte
+
+		// Join key for subsequent reboots.
+		JoinKey ed25519.PrivateKey
+
+		// Reported TPM usage by the node.
+		TPMUsage cpb.NodeTPMUsage
+
+		// Initial labels for the node.
+		Labels map[string]string
+	}
+	// Cluster-specific data.
+	Cluster struct {
+		// Public keys of initial owner of cluster. Used to escrow real user credentials
+		// during the takeownership metroctl process.
+		InitialOwnerKey []byte
+		// Initial cluster configuration.
+		Configuration *curator.Cluster
+	}
+}
+
+func (s *Service) ProvideBootstrapData(data *BootstrapData) {
+	pubkey := data.Node.PrivateKey.Public().(ed25519.PublicKey)
 	nid := identity.NodeID(pubkey)
 
 	// This is the first time we have the node ID, tell the resolver that it's
@@ -187,15 +217,7 @@ func (s *Service) ProvideBootstrapData(privkey ed25519.PrivateKey, iok, cuk, nuk
 	s.Resolver.AddOverride(nid, resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 	s.Resolver.AddEndpoint(resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 
-	s.bootstrapData.Set(&bootstrapData{
-		nodePrivateKey:              privkey,
-		initialOwnerKey:             iok,
-		clusterUnlockKey:            cuk,
-		nodeUnlockKey:               nuk,
-		nodePrivateJoinKey:          jkey,
-		initialClusterConfiguration: icc,
-		nodeTPMUsage:                tpmUsage,
-	})
+	s.bootstrapData.Set(data)
 }
 
 func (s *Service) ProvideRegisterData(credentials identity.NodeCredentials, directory *cpb.ClusterDirectory) {

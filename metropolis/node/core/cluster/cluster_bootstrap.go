@@ -26,8 +26,10 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/curator"
 	"source.monogon.dev/metropolis/node/core/identity"
+	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/pkg/supervisor"
 
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -132,7 +134,38 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	}
 	supervisor.Logger(ctx).Infof("Saved bootstrapped node's credentials.")
 
-	m.roleServer.ProvideBootstrapData(priv, ownerKey, cuk, nuk, jpriv, cc, tpmUsage)
+	labels := make(map[string]string)
+	if l := bootstrap.Labels; l != nil {
+		if nlabels := len(l.Pairs); nlabels > common.MaxLabelsPerNode {
+			supervisor.Logger(ctx).Warningf("Too many labels (%d, limit %d), truncating...", nlabels, common.MaxLabelsPerNode)
+			l.Pairs = l.Pairs[:common.MaxLabelsPerNode]
+		}
+		for _, pair := range l.Pairs {
+			if err := common.ValidateLabel(pair.Key); err != nil {
+				supervisor.Logger(ctx).Warningf("Skipping label %q/%q: key invalid: %v", pair.Key, pair.Value, err)
+				continue
+			}
+			if err := common.ValidateLabel(pair.Value); err != nil {
+				supervisor.Logger(ctx).Warningf("Skipping label %q/%q: value invalid: %v", pair.Key, pair.Value, err)
+				continue
+			}
+			if _, ok := labels[pair.Key]; ok {
+				supervisor.Logger(ctx).Warningf("Label %q/%q: repeated key, overwriting previous value", pair.Key, pair.Value)
+			}
+			labels[pair.Key] = pair.Value
+		}
+	}
+
+	bd := roleserve.BootstrapData{}
+	bd.Node.PrivateKey = priv
+	bd.Node.ClusterUnlockKey = cuk
+	bd.Node.NodeUnlockKey = nuk
+	bd.Node.JoinKey = jpriv
+	bd.Node.TPMUsage = tpmUsage
+	bd.Node.Labels = labels
+	bd.Cluster.InitialOwnerKey = ownerKey
+	bd.Cluster.Configuration = cc
+	m.roleServer.ProvideBootstrapData(&bd)
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)
