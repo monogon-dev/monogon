@@ -72,7 +72,7 @@ func New(directiveRegistration chan *ExtraDirective) *Service {
 }
 
 func (s *Service) makeCorefile(fargs *fileargs.FileArgs) []byte {
-	corefile := bytes.Buffer{}
+	var corefile bytes.Buffer
 	corefile.WriteString(corefileBase)
 	bindIPs := []string{"127.0.0.1", "::1"}
 	for _, ip := range s.ExtraListenerIPs {

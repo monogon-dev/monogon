@@ -15,7 +15,7 @@ import (
 
 func TestLoadbalancer(t *testing.T) {
 	v := memory.Value[BackendSet]{}
-	set := BackendSet{}
+	var set BackendSet
 	v.Set(set.Clone())
 
 	ln, err := net.Listen("tcp", ":0")
@@ -163,7 +163,7 @@ func TestLoadbalancer(t *testing.T) {
 
 func BenchmarkLB(b *testing.B) {
 	v := memory.Value[BackendSet]{}
-	set := BackendSet{}
+	var set BackendSet
 	v.Set(set.Clone())
 
 	ln, err := net.Listen("tcp", ":0")

@@ -133,7 +133,7 @@ func (c *Cluster) ValidateNodeStorage(ns cpb.NodeStorageSecurity) error {
 }
 
 func clusterUnmarshal(data []byte) (*Cluster, error) {
-	msg := cpb.ClusterConfiguration{}
+	var msg cpb.ClusterConfiguration
 	if err := proto.Unmarshal(data, &msg); err != nil {
 		return nil, fmt.Errorf("could not unmarshal proto: %w", err)
 	}

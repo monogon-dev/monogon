@@ -13,9 +13,10 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"google.golang.org/protobuf/proto"
 
+	apb "source.monogon.dev/metropolis/proto/api"
+
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/pkg/supervisor"
-	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 func nodeParamsFWCFG(ctx context.Context) (*apb.NodeParameters, error) {
@@ -24,7 +25,7 @@ func nodeParamsFWCFG(ctx context.Context) (*apb.NodeParameters, error) {
 		return nil, fmt.Errorf("could not read firmware enrolment file: %w", err)
 	}
 
-	config := apb.NodeParameters{}
+	var config apb.NodeParameters
 	err = proto.Unmarshal(bytes, &config)
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal: %v", err)
@@ -58,7 +59,7 @@ func nodeParamsGCPMetadata(ctx context.Context) (*apb.NodeParameters, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode base64: %w", err)
 	}
-	config := apb.NodeParameters{}
+	var config apb.NodeParameters
 	err = proto.Unmarshal(decoded, &config)
 	if err != nil {
 		return nil, fmt.Errorf("failed unmarshalling NodeParameters: %w", err)

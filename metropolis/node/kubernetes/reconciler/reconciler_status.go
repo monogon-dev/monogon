@@ -194,7 +194,7 @@ func (s *Service) watchNodes(ctx context.Context) error {
 		if len(kv.Value) == 0 {
 			return
 		}
-		node := ppb.Node{}
+		var node ppb.Node
 		if err := proto.Unmarshal(kv.Value, &node); err != nil {
 			supervisor.Logger(ctx).Errorf("Failed to unmarshal node %q: %w", nodeKey, err)
 			return

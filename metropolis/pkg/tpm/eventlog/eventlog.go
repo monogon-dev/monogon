@@ -489,8 +489,8 @@ func parseSpecIDEvent(b []byte) (*specIDEvent, error) {
 	// TODO(ericchiang): Check errata? Or do we expect that to change in ways
 	// we're okay with?
 
-	specAlg := specAlgSize{}
-	e := specIDEvent{}
+	var specAlg specAlgSize
+	var e specIDEvent
 	for i := 0; i < int(header.NumAlgs); i++ {
 		if err := binary.Read(r, binary.LittleEndian, &specAlg); err != nil {
 			return nil, fmt.Errorf("reading algorithm: %v", err)

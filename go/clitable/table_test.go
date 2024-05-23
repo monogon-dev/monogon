@@ -8,9 +8,9 @@ import (
 
 // TestTableLayout performs a smoke test of the table layout functionality.
 func TestTableLayout(t *testing.T) {
-	tab := Table{}
+	var tab Table
 
-	e := Entry{}
+	var e Entry
 	e.Add("id", "short")
 	e.Add("labels", "")
 	tab.Add(e)

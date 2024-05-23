@@ -63,7 +63,7 @@ func TestMain(m *testing.M) {
 // it starts the watcher. This is used to test potential race conditions
 // present between these two steps.
 func setRaceWg[T any](w event.Watcher[T]) *sync.WaitGroup {
-	wg := sync.WaitGroup{}
+	var wg sync.WaitGroup
 	w.(*watcher[T]).testRaceWG = &wg
 	return &wg
 }
@@ -72,7 +72,7 @@ func setRaceWg[T any](w event.Watcher[T]) *sync.WaitGroup {
 // thie WG after an etcd watch channel is created. This is used in tests to
 // ensure that the watcher is fully created before it is tested.
 func setSetupWg[T any](w event.Watcher[T]) *sync.WaitGroup {
-	wg := sync.WaitGroup{}
+	var wg sync.WaitGroup
 	w.(*watcher[T]).testSetupWG = &wg
 	return &wg
 }

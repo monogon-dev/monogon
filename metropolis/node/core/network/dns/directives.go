@@ -40,7 +40,7 @@ type ExtraDirective struct {
 // NewUpstreamDirective creates a forward with no fallthrough that forwards all
 // requests not yet matched to the given upstream DNS servers.
 func NewUpstreamDirective(dnsServers []net.IP) *ExtraDirective {
-	strb := strings.Builder{}
+	var strb strings.Builder
 	if len(dnsServers) > 0 {
 		strb.WriteString("forward .")
 		for _, ip := range dnsServers {

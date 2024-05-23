@@ -25,7 +25,7 @@ type testServiceHandle struct {
 func TestServiceHandle(t *testing.T, cl *clientv3.Client) ServiceHandle {
 	ca := pkiCA()
 
-	tsh := testServiceHandle{}
+	var tsh testServiceHandle
 	st := &Status{
 		cl:                        cl,
 		ca:                        ca,

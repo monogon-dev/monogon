@@ -115,7 +115,7 @@ func (e *ESPNodeParameters) Unmarshal() (*apb.NodeParameters, error) {
 		return nil, fmt.Errorf("%w: when reading sealed data: %v", ErrNoParameters, err)
 	}
 
-	config := apb.NodeParameters{}
+	var config apb.NodeParameters
 	err = proto.Unmarshal(bytes, &config)
 	if err != nil {
 		return nil, fmt.Errorf("%w: when unmarshaling: %v", ErrParametersCorrupted, err)
@@ -133,7 +133,7 @@ func (e *ESPClusterDirectory) Unmarshal() (*cpb.ClusterDirectory, error) {
 		return nil, fmt.Errorf("%w: when reading: %v", ErrNoDirectory, err)
 	}
 
-	dir := cpb.ClusterDirectory{}
+	var dir cpb.ClusterDirectory
 	err = proto.Unmarshal(bytes, &dir)
 	if err != nil {
 		return nil, fmt.Errorf("%w: when unmarshaling: %v", ErrDirectoryCorrupted, err)
@@ -150,7 +150,7 @@ func (e *ESPNetworkConfiguration) Unmarshal() (*npb.Net, error) {
 		return nil, fmt.Errorf("%w: when reading: %v", ErrNetworkConfigCorrupted, err)
 	}
 
-	netConf := npb.Net{}
+	var netConf npb.Net
 	err = proto.Unmarshal(bytes, &netConf)
 	if err != nil {
 		return nil, fmt.Errorf("%w: when unmarshaling: %v", ErrNetworkConfigCorrupted, err)
@@ -219,7 +219,7 @@ func (e *ESPSealedConfiguration) Unseal(tpmUsage cpb.NodeTPMUsage) (*ppb.SealedC
 		return nil, fmt.Errorf("unknown tpmUsage %d", tpmUsage)
 	}
 
-	config := ppb.SealedConfiguration{}
+	var config ppb.SealedConfiguration
 	err = proto.Unmarshal(bytes, &config)
 	if err != nil {
 		return nil, fmt.Errorf("%w: when unmarshaling: %v", ErrSealedCorrupted, err)

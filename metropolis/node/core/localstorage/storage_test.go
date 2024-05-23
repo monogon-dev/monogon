@@ -23,14 +23,14 @@ import (
 )
 
 func TestValidateAll(t *testing.T) {
-	r := Root{}
+	var r Root
 	if err := declarative.Validate(&r); err != nil {
 		t.Errorf("Validation failed: %v", err)
 	}
 }
 
 func TestPlaceFS(t *testing.T) {
-	rr := Root{}
+	var rr Root
 	err := declarative.PlaceFS(&rr, "")
 	if err != nil {
 		t.Errorf("Placement failed: %v", err)

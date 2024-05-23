@@ -122,7 +122,7 @@ type controlLoopRunner struct {
 func (r *controlLoopRunner) run(ctx context.Context, conn *bmdb.Connection) error {
 	pinfo := r.loop.getProcessInfo()
 
-	eg := errgroup.Group{}
+	var eg errgroup.Group
 	for j := 0; j < r.config.Parallelism; j += 1 {
 		eg.Go(func() error {
 			return r.runOne(ctx, conn, &pinfo)

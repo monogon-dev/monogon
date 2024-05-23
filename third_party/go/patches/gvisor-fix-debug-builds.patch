@@ -407,7 +407,7 @@ index 000000000..5feb45c19
 +			// interrupted KVM. Since we're in a signal handler
 +			// currently, all signals are masked and the signal
 +			// must have been delivered directly to this thread.
-+			timeout := unix.Timespec{}
++			var timeout unix.Timespec
 +			sig, _, errno := unix.RawSyscall6( // escapes: no.
 +				unix.SYS_RT_SIGTIMEDWAIT,
 +				uintptr(unsafe.Pointer(&bounceSignalMask)),

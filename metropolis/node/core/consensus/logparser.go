@@ -36,7 +36,7 @@ func parseEtcdLogEntry(l *logbuffer.Line, write unraw.LeveledWriter) {
 		return
 	}
 
-	e := etcdLogEntry{}
+	var e etcdLogEntry
 	// Parse constant fields
 	if err := json.Unmarshal([]byte(l.Data), &e); err != nil {
 		write(&logtree.ExternalLeveledPayload{

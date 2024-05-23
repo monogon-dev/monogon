@@ -65,7 +65,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	supervisor.Logger(ctx).Infof("Storage Security: cluster policy: %s, node: %s", cc.StorageSecurityPolicy, storageSecurity)
 
 	ownerKey := bootstrap.OwnerPublicKey
-	configuration := ppb.SealedConfiguration{}
+	var configuration ppb.SealedConfiguration
 
 	// Mount new storage with generated CUK, and save NUK into sealed config proto.
 	supervisor.Logger(ctx).Infof("Bootstrapping: mounting new storage...")

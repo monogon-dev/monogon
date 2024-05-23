@@ -28,7 +28,7 @@ var rootCmd = &cobra.Command{
 // ourMirrorURL returns a fully formed URL-string to our mirror (as defined by
 // flags), optionally appending the given parts as file path parts.
 func ourMirrorURL(parts ...string) string {
-	u := url.URL{}
+	var u url.URL
 	u.Scheme = "https"
 	u.Host = "storage.googleapis.com"
 

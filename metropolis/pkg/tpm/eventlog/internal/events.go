@@ -275,7 +275,7 @@ func parseEfiSignatureList(b []byte) ([]x509.Certificate, [][]byte, error) {
 		// Being passed an empty signature list here appears to be valid
 		return nil, nil, nil
 	}
-	signatures := efiSignatureList{}
+	var signatures efiSignatureList
 	buf := bytes.NewReader(b)
 	var certificates []x509.Certificate
 	var hashes [][]byte
@@ -297,7 +297,7 @@ func parseEfiSignatureList(b []byte) ([]x509.Certificate, [][]byte, error) {
 		switch signatureType {
 		case certX509SigGUID: // X509 certificate
 			for sigOffset := 0; uint32(sigOffset) < signatures.Header.SignatureListSize-28; {
-				signature := efiSignatureData{}
+				var signature efiSignatureData
 				signature.SignatureData = make([]byte, signatures.Header.SignatureSize-16)
 				err := binary.Read(buf, binary.LittleEndian, &signature.SignatureOwner)
 				if err != nil {
@@ -316,7 +316,7 @@ func parseEfiSignatureList(b []byte) ([]x509.Certificate, [][]byte, error) {
 			}
 		case hashSHA256SigGUID: // SHA256
 			for sigOffset := 0; uint32(sigOffset) < signatures.Header.SignatureListSize-28; {
-				signature := efiSignatureData{}
+				var signature efiSignatureData
 				signature.SignatureData = make([]byte, signatures.Header.SignatureSize-16)
 				err := binary.Read(buf, binary.LittleEndian, &signature.SignatureOwner)
 				if err != nil {
@@ -375,7 +375,7 @@ func parseEfiSignature(b []byte) ([]x509.Certificate, error) {
 	}
 
 	buf := bytes.NewReader(b)
-	signature := EFISignatureData{}
+	var signature EFISignatureData
 	signature.SignatureData = make([]byte, len(b)-16)
 
 	if err := binary.Read(buf, binary.LittleEndian, &signature.SignatureOwner); err != nil {

@@ -285,7 +285,7 @@ func (n *Node) proto() *ppb.Node {
 }
 
 func nodeUnmarshal(data []byte) (*Node, error) {
-	msg := ppb.Node{}
+	var msg ppb.Node
 	if err := proto.Unmarshal(data, &msg); err != nil {
 		return nil, fmt.Errorf("could not unmarshal proto: %w", err)
 	}

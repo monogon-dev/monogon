@@ -82,7 +82,7 @@ func ExampleValue_full() {
 	defer ctxC()
 
 	// Create a fake NetworkService.
-	ns := NetworkService{}
+	var ns NetworkService
 
 	// Run an /etc/hosts updater. It will watch for updates from the NetworkService
 	// about the current IP address of the node.

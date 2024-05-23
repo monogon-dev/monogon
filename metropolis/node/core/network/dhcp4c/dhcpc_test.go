@@ -175,7 +175,7 @@ func TestClient_runTransactionState(t *testing.T) {
 // TestAcceptableLease tests if a minimal valid lease is accepted by
 // acceptableLease
 func TestAcceptableLease(t *testing.T) {
-	c := Client{}
+	var c Client
 	offer := &dhcpv4.DHCPv4{
 		OpCode: dhcpv4.OpcodeBootReply,
 	}

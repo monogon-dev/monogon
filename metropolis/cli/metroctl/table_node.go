@@ -13,7 +13,7 @@ import (
 )
 
 func nodeEntry(n *apb.Node) clitable.Entry {
-	res := clitable.Entry{}
+	var res clitable.Entry
 
 	res.Add("node id", identity.NodeID(n.Pubkey))
 	state := n.State.String()

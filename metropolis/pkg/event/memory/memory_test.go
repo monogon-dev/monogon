@@ -71,7 +71,7 @@ func TestSync(t *testing.T) {
 		Sync: true,
 	}
 	values := make(chan int, 100)
-	wg := sync.WaitGroup{}
+	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		ctx := context.Background()
