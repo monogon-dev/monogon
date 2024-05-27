@@ -154,11 +154,8 @@ func (s *Service) statusCallback(old, new *dhcp4c.Lease) error {
 }
 
 func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
-	netIface, err := net.InterfaceByIndex(iface.Attrs().Index)
-	if err != nil {
-		return fmt.Errorf("cannot create Go net.Interface from netlink.Link: %w", err)
-	}
-	s.dhcp, err = dhcp4c.NewClient(netIface)
+	var err error
+	s.dhcp, err = dhcp4c.NewClient(netlinkLinkToNetInterface(iface))
 	if err != nil {
 		return fmt.Errorf("failed to create DHCP client on interface %v: %w", iface.Attrs().Name, err)
 	}
