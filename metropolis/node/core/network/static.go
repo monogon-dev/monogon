@@ -325,11 +325,7 @@ func deviceIfaceFromSpec(it *netpb.Interface_Device, hostDevices []deviceIfData,
 	if len(matchedDevices) <= int(it.Device.Index) || it.Device.Index < 0 {
 		return nil, fmt.Errorf("there are %d matching host devices but requested device index is %d", len(matchedDevices), it.Device.Index)
 	}
-	dev := &netlink.Device{
-		LinkAttrs: netlink.NewLinkAttrs(),
-	}
-	dev.Index = matchedDevices[it.Device.Index].Index
-	return dev, nil
+	return matchedDevices[it.Device.Index], nil
 }
 
 var lacpRateMap = map[netpb.Bond_LACP_Rate]netlink.BondLacpRate{
