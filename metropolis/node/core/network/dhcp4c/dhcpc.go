@@ -235,6 +235,20 @@ func NewClient(iface *net.Interface) (*Client, error) {
 	// Increase maximum interval to reduce chatter when the server is down
 	renewBackoff.MaxInterval = 5 * time.Minute
 
+	// Check if the hardware address contains at least one non-zero value.
+	// This exists to catch undefined/non-supplied hardware address values,
+	// it does not check for L2 protocol-specific hardware address constraints.
+	hasValidHWAddr := false
+	for _, b := range iface.HardwareAddr {
+		if b != 0x00 {
+			hasValidHWAddr = true
+			break
+		}
+	}
+	if !hasValidHWAddr {
+		return nil, fmt.Errorf("iface HardwareAddr is invalid (only zeroes or invalid length): %x", iface.HardwareAddr)
+	}
+
 	return &Client{
 		state:               stateDiscovering,
 		broadcastConn:       broadcastConn,
