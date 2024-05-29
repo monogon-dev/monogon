@@ -1,7 +1,9 @@
 package toposort
 
 import (
+	"cmp"
 	"errors"
+	"slices"
 	"testing"
 )
 
@@ -23,6 +25,12 @@ func TestBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 	validateSolution(t, g, solution)
+
+	detSolution, err := g.DetTopologicalOrder(cmp.Compare)
+	if err != nil {
+		t.Fatal(err)
+	}
+	validateSolution(t, g, detSolution)
 }
 
 func TestImplicitNodesEmpty(t *testing.T) {
@@ -71,6 +79,34 @@ func TestImplicitNodesBackwards(t *testing.T) {
 	}
 }
 
+func TestTopoSortDet(t *testing.T) {
+	var g Graph[int]
+	g.AddEdge(5, 11)
+	g.AddEdge(11, 2)
+	g.AddEdge(7, 11)
+	g.AddEdge(7, 8)
+	g.AddEdge(11, 9)
+	g.AddEdge(8, 9)
+	g.AddEdge(11, 10)
+	g.AddEdge(3, 8)
+	g.AddEdge(3, 10)
+
+	firstSolution, err := g.DetTopologicalOrder(cmp.Compare)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; i < 100; i++ {
+		sol, err := g.DetTopologicalOrder(cmp.Compare)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !slices.Equal(firstSolution, sol) {
+			t.Fatalf("solution in iteration %v (%v) is not equal to first solution (%v)", i, firstSolution, sol)
+		}
+	}
+}
+
 // Fuzzer can be run with
 // bazel test //go/algorithm/toposort:toposort_test
 //   --test_arg=-test.fuzz=FuzzTopoSort
@@ -94,6 +130,16 @@ func FuzzTopoSort(f *testing.F) {
 			t.Error(err)
 		}
 		validateSolution(t, g, solution)
+
+		detSolution, err := g.DetTopologicalOrder(cmp.Compare)
+		if errors.Is(err, ErrCycle) {
+			// Cycle found
+			return
+		}
+		if err != nil {
+			t.Error(err)
+		}
+		validateSolution(t, g, detSolution)
 	})
 }
 

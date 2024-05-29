@@ -1,6 +1,9 @@
 package toposort
 
-import "errors"
+import (
+	"errors"
+	"slices"
+)
 
 type outEdges[Node comparable] map[Node]bool
 
@@ -103,33 +106,79 @@ func (g *Graph[T]) TopologicalOrder() ([]T, error) {
 
 	nodeVisitStack := make(map[T]bool)
 
-	var visit func(n T) error
-	visit = func(n T) error {
-		if !unmarkedNodes[n] {
-			return nil
-		}
-		// If we're revisiting a node already on the visit stack, we have a
-		// cycle.
-		if nodeVisitStack[n] {
-			return ErrCycle
-		}
-		nodeVisitStack[n] = true
-		// Visit every node m pointed to by an edge from the current node n.
-		for m := range g.nodes[n] {
-			if err := visit(m); err != nil {
+	var visit func(nodes map[T]bool) error
+	visit = func(nodes map[T]bool) error {
+		for n := range nodes {
+			if !unmarkedNodes[n] {
+				continue
+			}
+			// If we're revisiting a node already on the visit stack, we have a
+			// cycle.
+			if nodeVisitStack[n] {
+				return ErrCycle
+			}
+			nodeVisitStack[n] = true
+			// Visit every node m pointed to by an edge from the current node n.
+			if err := visit(g.nodes[n]); err != nil {
 				return err
 			}
+			delete(nodeVisitStack, n)
+			delete(unmarkedNodes, n)
+			solution = append(solution, n)
 		}
-		delete(nodeVisitStack, n)
-		delete(unmarkedNodes, n)
-		solution = append(solution, n)
 		return nil
 	}
 
-	for n := range unmarkedNodes {
-		if err := visit(n); err != nil {
-			return nil, err
+	if err := visit(unmarkedNodes); err != nil {
+		return nil, err
+	}
+	return solution, nil
+}
+
+// DetTopologicalOrder is a deterministic version of TopologicalSort which has
+// higher cyclomatic complexity. See TopologicalSort for further documentation.
+func (g *Graph[T]) DetTopologicalOrder(cmp func(a, b T) int) ([]T, error) {
+	g.ensureNodes()
+	// Depth-first search-based implementation with
+	// O(|n| log(|n|) + |E| log(|E|)) complexity.
+	var solution []T
+	unmarkedNodes := make(map[T]bool)
+	for n := range g.nodes {
+		unmarkedNodes[n] = true
+	}
+
+	nodeVisitStack := make(map[T]bool)
+
+	var visit func(nodes map[T]bool) error
+	visit = func(nodes map[T]bool) error {
+		sortedOrder := make([]T, 0, len(nodes))
+		for n := range nodes {
+			if !unmarkedNodes[n] {
+				continue
+			}
+			sortedOrder = append(sortedOrder, n)
 		}
+		slices.SortFunc(sortedOrder, cmp)
+		for _, n := range sortedOrder {
+			// If we're revisiting a node already on the visit stack, we have a
+			// cycle.
+			if nodeVisitStack[n] {
+				return ErrCycle
+			}
+			nodeVisitStack[n] = true
+			// Visit every node m pointed to by an edge from the current node n.
+			if err := visit(g.nodes[n]); err != nil {
+				return err
+			}
+			delete(nodeVisitStack, n)
+			delete(unmarkedNodes, n)
+			solution = append(solution, n)
+		}
+		return nil
+	}
+
+	if err := visit(unmarkedNodes); err != nil {
+		return nil, err
 	}
 	return solution, nil
 }
