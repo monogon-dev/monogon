@@ -1,0 +1,42 @@
+From 2cd6a191b0940d03d557941eda3395bdafbdb662 Mon Sep 17 00:00:00 2001
+From: Serge Bazanski <serge@monogon.tech>
+Date: Tue, 4 Jun 2024 12:59:11 +0200
+Subject: [PATCH 3/6] boringssl compat: removed EC_POINTs_mul
+
+This was deprecated in OpenSSL 3.0, we just need to 'fix' the ifdef
+guard to use the undeprecated APIs.
+---
+ src/tpm2/crypto/openssl/BnToOsslMath.c | 10 ----------
+ 1 file changed, 10 deletions(-)
+
+diff --git a/src/tpm2/crypto/openssl/BnToOsslMath.c b/src/tpm2/crypto/openssl/BnToOsslMath.c
+index 1b9fb81..7d13ce8 100644
+--- a/src/tpm2/crypto/openssl/BnToOsslMath.c
++++ b/src/tpm2/crypto/openssl/BnToOsslMath.c
+@@ -622,7 +622,6 @@ LIB_EXPORT BOOL BnEccModMult2(bigPoint            R,  // OUT: computed point
+ 	EC_POINT_mul(E->G, pR, bnD, pQ, bnU, E->CTX);
+     else
+ 	{
+-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+ 	    EC_POINT *pR1 = EC_POINT_new(E->G);
+ 	    EC_POINT *pR2 = EC_POINT_new(E->G);
+ 	    int OK;
+@@ -635,15 +634,6 @@ LIB_EXPORT BOOL BnEccModMult2(bigPoint            R,  // OUT: computed point
+ 
+ 	    EC_POINT_clear_free(pR1);
+ 	    EC_POINT_clear_free(pR2);
+-#else
+-	    const EC_POINT* points[2];
+-	    const BIGNUM*   scalars[2];
+-	    points[0]  = pS;
+-	    points[1]  = pQ;
+-	    scalars[0] = bnD;
+-	    scalars[1] = bnU;
+-	    EC_POINTs_mul(E->G, pR, NULL, 2, points, scalars, E->CTX);
+-#endif
+ 	}
+     PointFromOssl(R, pR, E);
+     EC_POINT_clear_free(pR); // libtpms changed
+-- 
+2.42.0
+

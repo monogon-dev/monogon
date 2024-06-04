@@ -1,0 +1,54 @@
+From 42c0bd4522b06361bdbbb1fec182bdc363db9982 Mon Sep 17 00:00:00 2001
+From: Serge Bazanski <serge@monogon.tech>
+Date: Tue, 4 Jun 2024 12:58:37 +0200
+Subject: [PATCH 2/6] boringssl compat: removed const_DES_cblock
+
+This was some kind of hack for GCC 2.8.1 that never made it into
+BoringSSL.
+---
+ src/tpm2/crypto/openssl/TpmToOsslDesSupport.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/src/tpm2/crypto/openssl/TpmToOsslDesSupport.c b/src/tpm2/crypto/openssl/TpmToOsslDesSupport.c
+index d27aad2..9f972d6 100644
+--- a/src/tpm2/crypto/openssl/TpmToOsslDesSupport.c
++++ b/src/tpm2/crypto/openssl/TpmToOsslDesSupport.c
+@@ -78,14 +78,14 @@ TDES_set_encrypt_key(
+ 		     tpmKeyScheduleTDES          *keySchedule
+ 		     )
+ {
+-    DES_set_key_unchecked((const_DES_cblock *)key, &keySchedule[0]);
+-    DES_set_key_unchecked((const_DES_cblock *)&key[8], &keySchedule[1]);
++    DES_set_key_unchecked((const DES_cblock *)key, &keySchedule[0]);
++    DES_set_key_unchecked((const DES_cblock *)&key[8], &keySchedule[1]);
+     // If is two-key, copy the schedule for K1 into K3, otherwise, compute the
+     // the schedule for K3
+     if(keySizeInBits == 128)
+ 	keySchedule[2] = keySchedule[0];
+     else
+-	DES_set_key_unchecked((const_DES_cblock *)&key[16],
++	DES_set_key_unchecked((const DES_cblock *)&key[16],
+ 			      &keySchedule[2]);
+ }
+ /* B.2.3.1.3.2. TDES_encyrpt() */
+@@ -97,7 +97,7 @@ void TDES_encrypt(
+ 		  tpmKeyScheduleTDES      *ks
+ 		  )
+ {
+-    DES_ecb3_encrypt((const_DES_cblock *)in, (DES_cblock *)out,
++    DES_ecb3_encrypt((const DES_cblock *)in, (DES_cblock *)out,
+ 		     &ks[0], &ks[1], &ks[2],
+ 		     DES_ENCRYPT);
+ }
+@@ -111,7 +111,7 @@ void TDES_decrypt(
+ 		  tpmKeyScheduleTDES   *ks
+ 		  )
+ {
+-    DES_ecb3_encrypt((const_DES_cblock *)in, (DES_cblock *)out,
++    DES_ecb3_encrypt((const DES_cblock *)in, (DES_cblock *)out,
+ 		     &ks[0], &ks[1], &ks[2],
+ 		     DES_DECRYPT);
+ }
+-- 
+2.42.0
+

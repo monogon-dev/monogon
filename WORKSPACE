@@ -412,3 +412,23 @@ http_archive(
         "https://github.com/sluongng/nogo-analyzer/archive/refs/tags/v0.0.2.tar.gz",
     ],
 )
+
+git_repository(
+    name = "boringssl",
+    commit = "d7278cebad5b8eda0901246f2215344cffece4f4",
+    remote = "https://boringssl.googlesource.com/boringssl",
+)
+
+load("//third_party/libtpms:external.bzl", "libtpms_external")
+
+libtpms_external(
+    name = "libtpms",
+    version = "93a827aeccd3ab2178281571b1545dcfffa2991b",
+)
+
+load("//third_party/swtpm:external.bzl", "swtpm_external")
+
+swtpm_external(
+    name = "swtpm",
+    version = "0c9a6c4a12a63b86ab472e69e95bd75853d4fa96",
+)

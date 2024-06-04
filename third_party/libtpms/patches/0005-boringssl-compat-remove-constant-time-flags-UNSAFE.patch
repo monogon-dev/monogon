@@ -1,0 +1,176 @@
+From 98df8cd09ec7a5b91f05c665529ed6f579f231d9 Mon Sep 17 00:00:00 2001
+From: Serge Bazanski <serge@monogon.tech>
+Date: Tue, 4 Jun 2024 13:53:48 +0200
+Subject: [PATCH 5/6] boringssl compat: remove constant time flags (UNSAFE)
+
+OpenSSL has a quirky little API to mark bignums as 'secret' ie.
+'constant time' which is supposed to influence operations performed on
+them to be constant time.
+
+This API was tricky to use and caused security issues, so it was removed
+by BoringSSL.
+
+https://github.com/google/boringssl/commit/0a211dfe91588d2986a8735e1969dd9202a8b025
+
+Ideally we would replace all relevent BN_mod_exp calls with
+constant-time versions, but that's not trivial to do: the constant time
+versions of modular exponentiation and multiplicative inverse operations
+rely on Montgomery modular multiplication which seems to reduce the
+domain of the exponent to |0, N>. Unfortunately libtpms has plenty of
+eg. ModExp operations that work on exponents outside this range. OpenSSL
+seems to not have applied the constant time request to BN_mod_exp if
+that was the case, but BoringSSL refuses to perform constant time
+operations then.
+
+As I'm not a cryptographer and not able to fix this properly (or even
+fully reason about this), I'm just adding a big fat warning to be shown
+whenever potentially unsafe operations are now performed.
+---
+ src/monogon_unsafe.c                   | 28 ++++++++++++++++++++++++++
+ src/tpm2/crypto/openssl/BnToOsslMath.c | 10 +++++----
+ src/tpm2/crypto/openssl/ExpDCache.c    |  5 +++--
+ 3 files changed, 37 insertions(+), 6 deletions(-)
+ create mode 100644 src/monogon_unsafe.c
+
+diff --git a/src/monogon_unsafe.c b/src/monogon_unsafe.c
+new file mode 100644
+index 0000000..abaef79
+--- /dev/null
++++ b/src/monogon_unsafe.c
+@@ -0,0 +1,28 @@
++#include <stdio.h>
++#include <stdlib.h>
++
++// This library was built against BoringSSL without the BN constant time API,
++// thus all cryptographic operations are performed timing-unsafe which might
++// lead to side channel leaks. This is fine for Monogon's usecase (swtpm in
++// tests) but this code must not end up being used to secure any real systems.
++//
++// Note: I am not sure this code was safe from side channels in the first
++// place. See RsaPrivateKeyOp and compare with BoringSSL's
++// rsa_default_private_transform implementation... ~q3k
++
++static int _warned = 0;
++
++void monogon_warn_unsafe_library(void)
++{
++    if (getenv("MONOGON_LIBTPMS_ACKNOWLEDGE_UNSAFE") != NULL) {
++        return;
++    }
++    if (_warned) {
++        return;
++    }
++    _warned = 1;
++    fprintf(stderr, "--------------------------------------------------------------------------------\n");
++    fprintf(stderr, "WARNING: This fork of libtpms/swtpm contains UNSAFE cryptographic operations and\n");
++    fprintf(stderr, "         MUST NOT be used to secure sensitive data.\n");
++    fprintf(stderr, "--------------------------------------------------------------------------------\n");
++}
+diff --git a/src/tpm2/crypto/openssl/BnToOsslMath.c b/src/tpm2/crypto/openssl/BnToOsslMath.c
+index 7d13ce8..54d5916 100644
+--- a/src/tpm2/crypto/openssl/BnToOsslMath.c
++++ b/src/tpm2/crypto/openssl/BnToOsslMath.c
+@@ -83,6 +83,8 @@
+ //#include "Tpm.h"
+ #include "BnOssl.h"
+ 
++extern void monogon_warn_unsafe_library();
++
+ #ifdef MATH_LIB_OSSL
+ #  include "BnToOsslMath_fp.h"
+ 
+@@ -133,6 +135,7 @@ BOOL OsslToTpmBn(bigNum bn, const BIGNUM* osslBn)	// libtpms: added 'const'
+ // function prototype. Instead, use BnNewVariable().
+ BIGNUM* BigInitialized(BIGNUM* toInit, bigConst initializer)
+ {
++    monogon_warn_unsafe_library();
+ #if 1		// libtpms: added begin
+     BIGNUM *_toInit;
+     unsigned char buffer[LARGEST_NUMBER + 1];
+@@ -147,7 +150,6 @@ BIGNUM* BigInitialized(BIGNUM* toInit, bigConst initializer)
+ #if 1		// libtpms: added begin
+     BnToBytes(initializer, buffer, &buffer_len);	/* TPM to bin */
+     _toInit = BN_bin2bn(buffer, buffer_len, NULL);	/* bin to ossl */
+-    BN_set_flags(_toInit, BN_FLG_CONSTTIME);
+     BN_copy(toInit, _toInit);
+     BN_clear_free(_toInit);
+ #else		// libtpms: added end
+@@ -355,13 +357,13 @@ LIB_EXPORT BOOL BnGcd(bigNum   gcd,      // OUT: the common divisor
+ 		      bigConst number2   // IN:
+ 		      )
+ {
++    monogon_warn_unsafe_library();
+     OSSL_ENTER();
+     BIGNUM* bnGcd = BN_NEW();
+     BOOL    OK    = TRUE;
+     BIG_INITIALIZED(bn1, number1);
+     BIG_INITIALIZED(bn2, number2);
+     //
+-    BN_set_flags(bn1, BN_FLG_CONSTTIME); // number1 is secret prime number
+     GOTO_ERROR_UNLESS(BN_gcd(bnGcd, bn1, bn2, CTX));
+     GOTO_ERROR_UNLESS(OsslToTpmBn(gcd, bnGcd));
+     goto Exit;
+@@ -387,6 +389,7 @@ LIB_EXPORT BOOL BnModExp(bigNum   result,    // OUT: the result
+ 			 bigConst modulus    // IN:
+ 			 )
+ {
++    monogon_warn_unsafe_library();
+     OSSL_ENTER();
+     BIGNUM* bnResult = BN_NEW();
+     BOOL    OK       = TRUE;
+@@ -394,7 +397,6 @@ LIB_EXPORT BOOL BnModExp(bigNum   result,    // OUT: the result
+     BIG_INITIALIZED(bnE, exponent);
+     BIG_INITIALIZED(bnM, modulus);
+     //
+-    BN_set_flags(bnE, BN_FLG_CONSTTIME); // exponent may be private
+     GOTO_ERROR_UNLESS(BN_mod_exp(bnResult, bnN, bnE, bnM, CTX));
+     GOTO_ERROR_UNLESS(OsslToTpmBn(result, bnResult));
+     goto Exit;
+@@ -416,13 +418,13 @@ LIB_EXPORT BOOL BnModExp(bigNum   result,    // OUT: the result
+ //      FALSE(0)        failure in operation
+ LIB_EXPORT BOOL BnModInverse(bigNum result, bigConst number, bigConst modulus)
+ {
++    monogon_warn_unsafe_library();
+     OSSL_ENTER();
+     BIGNUM* bnResult = BN_NEW();
+     BOOL    OK       = TRUE;
+     BIG_INITIALIZED(bnN, number);
+     BIG_INITIALIZED(bnM, modulus);
+     //
+-    BN_set_flags(bnN, BN_FLG_CONSTTIME); // number may be private
+     GOTO_ERROR_UNLESS(BN_mod_inverse(bnResult, bnN, bnM, CTX) != NULL);
+     GOTO_ERROR_UNLESS(OsslToTpmBn(result, bnResult));
+     goto Exit;
+diff --git a/src/tpm2/crypto/openssl/ExpDCache.c b/src/tpm2/crypto/openssl/ExpDCache.c
+index 5aeaf14..133e9ed 100644
+--- a/src/tpm2/crypto/openssl/ExpDCache.c
++++ b/src/tpm2/crypto/openssl/ExpDCache.c
+@@ -61,6 +61,8 @@
+ #include "Tpm.h"
+ #include "ExpDCache_fp.h"
+ 
++extern void monogon_warn_unsafe_library(void);
++
+ /* Implement a cache for the private exponent D so it doesn't need to be
+  * recalculated every time from P, Q, E and N (modulus). The cache has a
+  * number of entries that cache D and use P, Q, and E for lookup.
+@@ -169,6 +171,7 @@ BIGNUM *ExpDCacheFind(const BIGNUM *P, const BIGNUM *N, const BIGNUM *E, BIGNUM
+     unsigned myage;
+     BIGNUM *D;
+ 
++    monogon_warn_unsafe_library();
+     for (i = 0; i < ARRAY_SIZE(ExpDCache); i++) {
+         if (BN_cmp(ExpDCache[i].P, P) == 0 && BN_cmp(ExpDCache[i].N, N) == 0 &&
+             BN_cmp(ExpDCache[i].E, E) == 0) {
+@@ -190,8 +193,6 @@ BIGNUM *ExpDCacheFind(const BIGNUM *P, const BIGNUM *N, const BIGNUM *E, BIGNUM
+                 *Q = NULL;
+                 return NULL;
+             }
+-            BN_set_flags(*Q, BN_FLG_CONSTTIME);
+-            BN_set_flags(D, BN_FLG_CONSTTIME);
+             return D;
+         }
+     }
+-- 
+2.42.0
+

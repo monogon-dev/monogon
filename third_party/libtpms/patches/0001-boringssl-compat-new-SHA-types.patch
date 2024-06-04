@@ -1,0 +1,57 @@
+From 51935c4f084265833951e5439b682913bfbac03a Mon Sep 17 00:00:00 2001
+From: Serge Bazanski <serge@monogon.tech>
+Date: Tue, 4 Jun 2024 12:58:10 +0200
+Subject: [PATCH 1/6] boringssl compat: new SHA types
+
+See: https://github.com/google/boringssl/commit/51011b4a262046a3d9a2eb5690e54af80377f15a
+---
+ src/tpm2/NVMarshal.c | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/src/tpm2/NVMarshal.c b/src/tpm2/NVMarshal.c
+index a4a9498..6d42a97 100644
+--- a/src/tpm2/NVMarshal.c
++++ b/src/tpm2/NVMarshal.c
+@@ -58,6 +58,9 @@
+ #define TPM_HAVE_TPM2_DECLARATIONS
+ #include "tpm_library_intern.h"
+ 
++#define SHA_LONG uint32_t
++#define SHA_LONG64 uint64_t
++
+ /*
+  * The TPM2 maintains a pcrAllocated shadow variable; the current active one is
+  * in gp.pcrAllocated and the one to be active after reboot is in NVRAM. So,
+@@ -1943,9 +1946,9 @@ tpmHashStateSHA512_Marshal(SHA512_CTX *data, BYTE **buffer, INT32 *size,
+     written += SHA_LONG64_Marshal(&data->Nl, buffer, size);
+     written += SHA_LONG64_Marshal(&data->Nh, buffer, size);
+ 
+-    array_size = sizeof(data->u.p);
++    array_size = sizeof(data->p);
+     written += UINT16_Marshal(&array_size, buffer, size);
+-    written += Array_Marshal(&data->u.p[0], array_size, buffer, size);
++    written += Array_Marshal(&data->p[0], array_size, buffer, size);
+ 
+     written += UINT32_Marshal(&data->num, buffer, size);
+     written += UINT32_Marshal(&data->md_len, buffer, size);
+@@ -2005,14 +2008,14 @@ tpmHashStateSHA512_Unmarshal(SHA512_CTX *data, BYTE **buffer, INT32 *size,
+         rc = UINT16_Unmarshal(&array_size, buffer, size);
+     }
+     if (rc == TPM_RC_SUCCESS &&
+-        array_size != sizeof(data->u.p)) {
++        array_size != sizeof(data->p)) {
+         TPMLIB_LogTPM2Error("HASH_STATE_SHA512: Bad array size for u.p; "
+                             "expected %zu, got %u\n",
+-                            sizeof(data->u.p), array_size);
++                            sizeof(data->p), array_size);
+         rc = TPM_RC_BAD_PARAMETER;
+     }
+     if (rc == TPM_RC_SUCCESS) {
+-        rc = Array_Unmarshal(&data->u.p[0], array_size, buffer, size);
++        rc = Array_Unmarshal(&data->p[0], array_size, buffer, size);
+     }
+     if (rc == TPM_RC_SUCCESS) {
+         rc = UINT32_Unmarshal(&data->num, buffer, size);
+-- 
+2.42.0
+

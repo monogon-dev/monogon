@@ -1,0 +1,197 @@
+From c7932ca7f91b92002048e0e59470b0af6156aa8d Mon Sep 17 00:00:00 2001
+From: Serge Bazanski <serge@monogon.tech>
+Date: Tue, 4 Jun 2024 11:59:31 +0200
+Subject: [PATCH 1/4] bazel compat: <glib.h> -> "glib/glib.h"
+
+---
+ src/swtpm/cuse_tpm.c                    | 2 +-
+ src/swtpm/threadpool.c                  | 2 +-
+ src/swtpm_localca/swtpm_localca.c       | 2 +-
+ src/swtpm_localca/swtpm_localca.h       | 2 +-
+ src/swtpm_localca/swtpm_localca_utils.h | 2 +-
+ src/swtpm_setup/swtpm.c                 | 2 +-
+ src/swtpm_setup/swtpm.h                 | 2 +-
+ src/swtpm_setup/swtpm_setup.c           | 6 +++---
+ src/swtpm_setup/swtpm_setup.h           | 2 +-
+ src/swtpm_setup/swtpm_setup_utils.c     | 2 +-
+ src/swtpm_setup/swtpm_setup_utils.h     | 2 +-
+ src/utils/swtpm_utils.c                 | 2 +-
+ src/utils/swtpm_utils.h                 | 2 +-
+ 13 files changed, 15 insertions(+), 15 deletions(-)
+
+diff --git a/src/swtpm/cuse_tpm.c b/src/swtpm/cuse_tpm.c
+index 5977b63..4bcc503 100644
+--- a/src/swtpm/cuse_tpm.c
++++ b/src/swtpm/cuse_tpm.c
+@@ -56,7 +56,7 @@
+ 
+ #include <fuse/cuse_lowlevel.h>
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include <libtpms/tpm_library.h>
+ #include <libtpms/tpm_tis.h>
+diff --git a/src/swtpm/threadpool.c b/src/swtpm/threadpool.c
+index 770c16a..95d0085 100644
+--- a/src/swtpm/threadpool.c
++++ b/src/swtpm/threadpool.c
+@@ -37,7 +37,7 @@
+ 
+ #include <stdbool.h>
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include "threadpool.h"
+ 
+diff --git a/src/swtpm_localca/swtpm_localca.c b/src/swtpm_localca/swtpm_localca.c
+index 3a9fa6f..2842f22 100644
+--- a/src/swtpm_localca/swtpm_localca.c
++++ b/src/swtpm_localca/swtpm_localca.c
+@@ -22,7 +22,7 @@
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include <gmp.h>
+ 
+diff --git a/src/swtpm_localca/swtpm_localca.h b/src/swtpm_localca/swtpm_localca.h
+index c1cb19f..e203a4d 100644
+--- a/src/swtpm_localca/swtpm_localca.h
++++ b/src/swtpm_localca/swtpm_localca.h
+@@ -10,7 +10,7 @@
+ #ifndef SWTPM_LOCALCA_H
+ #define SWTPM_LOCALCA_H
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ extern gchar *gl_LOGFILE;
+ 
+diff --git a/src/swtpm_localca/swtpm_localca_utils.h b/src/swtpm_localca/swtpm_localca_utils.h
+index 2fd33b8..487738a 100644
+--- a/src/swtpm_localca/swtpm_localca_utils.h
++++ b/src/swtpm_localca/swtpm_localca_utils.h
+@@ -10,7 +10,7 @@
+ #ifndef SWTPM_LOCALCA_UTILS_H
+ #define SWTPM_LOCALCA_UTILS_H
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ gchar *get_config_value(gchar **config_file_lines, const gchar *varname, const gchar *fallback);
+ int get_config_envvars(gchar **config_file_lines, gchar  ***env);
+diff --git a/src/swtpm_setup/swtpm.c b/src/swtpm_setup/swtpm.c
+index 822215e..66eac0b 100644
+--- a/src/swtpm_setup/swtpm.c
++++ b/src/swtpm_setup/swtpm.c
+@@ -21,7 +21,7 @@
+ #include <sys/wait.h>
+ #include <unistd.h>
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include <openssl/bn.h>
+ #include <openssl/evp.h>
+diff --git a/src/swtpm_setup/swtpm.h b/src/swtpm_setup/swtpm.h
+index 2f81dce..1377d38 100644
+--- a/src/swtpm_setup/swtpm.h
++++ b/src/swtpm_setup/swtpm.h
+@@ -10,7 +10,7 @@
+ #ifndef SWTPM_SETUP_SWTPM_H
+ #define SWTPM_SETUP_SWTPM_H
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ #include <pwd.h>
+ 
+ #include <openssl/sha.h>
+diff --git a/src/swtpm_setup/swtpm_setup.c b/src/swtpm_setup/swtpm_setup.c
+index 8f87ad4..96e8b9f 100644
+--- a/src/swtpm_setup/swtpm_setup.c
++++ b/src/swtpm_setup/swtpm_setup.c
+@@ -23,9 +23,9 @@
+ #include <sys/types.h>
+ #include <sys/wait.h>
+ 
+-#include <glib.h>
+-#include <glib/gstdio.h>
+-#include <glib/gprintf.h>
++#include "glib/glib.h"
++#include "glib/gstdio.h"
++#include "glib/gprintf.h"
+ 
+ #include <glib-object.h>
+ #include <json-glib/json-glib.h>
+diff --git a/src/swtpm_setup/swtpm_setup.h b/src/swtpm_setup/swtpm_setup.h
+index 913b36f..b87e501 100644
+--- a/src/swtpm_setup/swtpm_setup.h
++++ b/src/swtpm_setup/swtpm_setup.h
+@@ -10,7 +10,7 @@
+ #ifndef SWTPM_SETUP_H
+ #define SWTPM_SETUP_H
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ extern gchar *gl_LOGFILE;
+ 
+diff --git a/src/swtpm_setup/swtpm_setup_utils.c b/src/swtpm_setup/swtpm_setup_utils.c
+index 923e175..eddae73 100644
+--- a/src/swtpm_setup/swtpm_setup_utils.c
++++ b/src/swtpm_setup/swtpm_setup_utils.c
+@@ -17,7 +17,7 @@
+ #include <sys/utsname.h>
+ #include <unistd.h>
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include "swtpm_conf.h"
+ #include "swtpm_utils.h"
+diff --git a/src/swtpm_setup/swtpm_setup_utils.h b/src/swtpm_setup/swtpm_setup_utils.h
+index d074d3a..6c4be5e 100644
+--- a/src/swtpm_setup/swtpm_setup_utils.h
++++ b/src/swtpm_setup/swtpm_setup_utils.h
+@@ -10,7 +10,7 @@
+ #ifndef SWTPM_SETUP_UTILS_H
+ #define SWTPM_SETUP_UTILS_H
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ gchar *get_config_value(gchar **config_file_lines, const gchar *configname);
+ int create_config_files(gboolean overwrite, gboolean root_flag,
+diff --git a/src/utils/swtpm_utils.c b/src/utils/swtpm_utils.c
+index 35a4243..db32615 100644
+--- a/src/utils/swtpm_utils.c
++++ b/src/utils/swtpm_utils.c
+@@ -20,7 +20,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #include "swtpm_utils.h"
+ 
+diff --git a/src/utils/swtpm_utils.h b/src/utils/swtpm_utils.h
+index 22f1f4b..78ef97b 100644
+--- a/src/utils/swtpm_utils.h
++++ b/src/utils/swtpm_utils.h
+@@ -12,7 +12,7 @@
+ 
+ #include <pwd.h>
+ 
+-#include <glib.h>
++#include "glib/glib.h"
+ 
+ #define min(X,Y) ((X) < (Y) ? (X) : (Y))
+ #define ARRAY_LEN(a) (sizeof(a) / sizeof((a)[0]))
+-- 
+2.42.0
+

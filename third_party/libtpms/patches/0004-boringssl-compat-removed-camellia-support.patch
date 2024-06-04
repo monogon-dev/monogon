@@ -1,0 +1,33 @@
+From 00f0c95d643bc714f3361fa4f10dee3bf9f9384e Mon Sep 17 00:00:00 2001
+From: Serge Bazanski <serge@monogon.tech>
+Date: Tue, 4 Jun 2024 12:59:30 +0200
+Subject: [PATCH 4/6] boringssl compat: removed camellia support
+
+BoringSSL removed Camellia support out of principle, we don't care for
+it either and the TPM spec doesn't mandate it.
+---
+ src/tpm2/TpmProfile_Common.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/tpm2/TpmProfile_Common.h b/src/tpm2/TpmProfile_Common.h
+index a4bf462..78842a6 100644
+--- a/src/tpm2/TpmProfile_Common.h
++++ b/src/tpm2/TpmProfile_Common.h
+@@ -133,11 +133,11 @@
+ 
+ #define     SM4_128                     (NO  * ALG_SM4)
+ 
+-#define ALG_CAMELLIA                ALG_YES
++#define ALG_CAMELLIA                ALG_NO
+ 
+-#define     CAMELLIA_128                (YES * ALG_CAMELLIA)
++#define     CAMELLIA_128                (NO  * ALG_CAMELLIA)
+ #define     CAMELLIA_192                (NO  * ALG_CAMELLIA)
+-#define     CAMELLIA_256                (YES * ALG_CAMELLIA)
++#define     CAMELLIA_256                (NO  * ALG_CAMELLIA)
+ 
+ #define ALG_TDES                        ALG_YES /* libtpms enabled */
+ 
+-- 
+2.42.0
+

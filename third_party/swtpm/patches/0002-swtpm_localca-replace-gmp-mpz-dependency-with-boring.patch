@@ -1,0 +1,80 @@
+From 9410d7d0e3093380bb9d5cff3241107ff55435dd Mon Sep 17 00:00:00 2001
+From: Serge Bazanski <serge@monogon.tech>
+Date: Tue, 4 Jun 2024 12:06:17 +0200
+Subject: [PATCH 2/4] swtpm_localca: replace gmp/mpz dependency with boringssl
+ bignum
+
+---
+ src/swtpm_localca/swtpm_localca.c | 26 +++++++++++++-------------
+ 1 file changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/src/swtpm_localca/swtpm_localca.c b/src/swtpm_localca/swtpm_localca.c
+index 2842f22..d42d3a2 100644
+--- a/src/swtpm_localca/swtpm_localca.c
++++ b/src/swtpm_localca/swtpm_localca.c
+@@ -24,7 +24,8 @@
+ 
+ #include "glib/glib.h"
+ 
+-#include <gmp.h>
++#include <openssl/bn.h>
++#include <openssl/crypto.h>
+ 
+ #include "swtpm_conf.h"
+ #include "swtpm_utils.h"
+@@ -313,7 +314,8 @@ static int get_next_serial(const gchar *certserial, const gchar *lockfile,
+     g_autofree gchar *buffer = NULL;
+     char serialbuffer[50];
+     size_t buffer_len;
+-    mpz_t serial;
++    BIGNUM *serial = BN_new();
++    char *serial_dec = NULL;
+     int lockfd;
+     int ret = 1;
+ 
+@@ -328,22 +330,18 @@ static int get_next_serial(const gchar *certserial, const gchar *lockfile,
+     if (read_file(certserial, &buffer, &buffer_len) != 0)
+         goto error;
+ 
+-    mpz_init(serial);
+-
+     if (buffer_len > 0 && buffer_len <= 49) {
+         memcpy(serialbuffer, buffer, buffer_len);
+         serialbuffer[buffer_len] = 0;
+ 
+-        if (gmp_sscanf(serialbuffer, "%Zu", serial) != 1)
+-            goto new_serial;
+-        mpz_add_ui(serial, serial, 1);
+-
+-        if ((mpz_sizeinbase(serial, 2) + 7) / 8 > 20)
++        if (BN_dec2bn(&serial, serialbuffer) == 0)
+             goto new_serial;
++        BN_add_word(serial, 1);
+ 
+-        if (gmp_snprintf(serialbuffer,
++        serial_dec = BN_bn2dec(serial);
++        if (snprintf(serialbuffer,
+                          sizeof(serialbuffer),
+-                         "%Zu", serial) >= (int)sizeof(serialbuffer))
++                         "%s", serial_dec) >= (int)sizeof(serialbuffer))
+             goto new_serial;
+     } else {
+ new_serial:
+@@ -356,10 +354,12 @@ new_serial:
+     write_file(certserial, (unsigned char *)*serial_str, strlen(*serial_str));
+     ret = 0;
+ 
+-    mpz_clear(serial);
+-
+ error:
+     unlock_file(lockfd);
++    if (serial_dec) {
++        OPENSSL_free(serial_dec);
++    }
++    BN_free(serial);
+ 
+     return ret;
+ }
+-- 
+2.42.0
+
