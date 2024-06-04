@@ -326,10 +326,18 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions, doneC 
 	}
 
 	// Start TPM emulator as a subprocess
+	swtpm, err := runfiles.Rlocation("swtpm/swtpm")
+	if err != nil {
+		return fmt.Errorf("could not find swtpm: %w", err)
+	}
+
 	tpmCtx, tpmCancel := context.WithCancel(options.Runtime.ctxT)
 
 	tpmd := filepath.Join(r.ld, "tpm")
-	tpmEmuCmd := exec.CommandContext(tpmCtx, "swtpm", "socket", "--tpm2", "--tpmstate", "dir="+tpmd, "--ctrl", "type=unixio,path="+tpmSocketPath)
+	tpmEmuCmd := exec.CommandContext(tpmCtx, swtpm, "socket", "--tpm2", "--tpmstate", "dir="+tpmd, "--ctrl", "type=unixio,path="+tpmSocketPath)
+	// Silence warnings from unsafe libtpms build (uses non-constant-time
+	// cryptographic operations).
+	tpmEmuCmd.Env = append(tpmEmuCmd.Env, "MONOGON_LIBTPMS_ACKNOWLEDGE_UNSAFE=yes")
 	tpmEmuCmd.Stderr = os.Stderr
 	tpmEmuCmd.Stdout = os.Stdout
 

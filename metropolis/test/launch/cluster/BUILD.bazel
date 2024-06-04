@@ -15,6 +15,7 @@ go_library(
         "//metropolis/test/nanoswitch:initramfs",
         "//third_party/edk2:firmware",
         "@com_github_bonzini_qboot//:qboot-bin",
+        "@swtpm",
     ],
     importpath = "source.monogon.dev/metropolis/test/launch/cluster",
     visibility = ["//visibility:public"],

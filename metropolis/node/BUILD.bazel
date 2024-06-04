@@ -141,10 +141,17 @@ genrule(
     cmd = """
     mkdir -p tpm/ca
 
+
     cat <<EOF > tpm/swtpm.conf
-create_certs_tool= /usr/share/swtpm/swtpm-localca
+create_certs_tool= $(location @swtpm//:swtpm_localca)
 create_certs_tool_config = tpm/swtpm-localca.conf
-create_certs_tool_options = /etc/swtpm-localca.options
+create_certs_tool_options = tpm/swtpm-localca.options
+EOF
+
+    cat <<EOF > tpm/swtpm-localca.options
+--platform-manufacturer Monogon
+--platform-version 23.42
+--platform-model SWTPM
 EOF
 
     cat <<EOF > tpm/swtpm-localca.conf
@@ -154,7 +161,10 @@ issuercert = tpm/ca/issuercert.pem
 certserial = tpm/ca/certserial
 EOF
 
-    swtpm_setup \
+    export PATH="$$(dirname $(location //metropolis/test/swtpm/certtool)):$$PATH"
+    export PATH="$$(dirname $(location //metropolis/test/swtpm/swtpm_cert)):$$PATH"
+    $(location @swtpm//:swtpm_setup) \
+        --tpm "$(location @swtpm//:swtpm) socket" \
         --tpmstate tpm \
         --create-ek-cert \
         --create-platform-cert \
@@ -168,6 +178,13 @@ EOF
     cp tpm/ca/issuercert.pem $(location tpm/issuercert.pem)
     cp tpm/ca/signkey.pem $(location tpm/signkey.pem)
     """,
+    tools = [
+        "//metropolis/test/swtpm/certtool",
+        "//metropolis/test/swtpm/swtpm_cert",
+        "@swtpm",
+        "@swtpm//:swtpm_localca",
+        "@swtpm//:swtpm_setup",
+    ],
     visibility = [
         "//metropolis/cli/metroctl/test:__subpackages__",
         "//metropolis/test/e2e:__subpackages__",
