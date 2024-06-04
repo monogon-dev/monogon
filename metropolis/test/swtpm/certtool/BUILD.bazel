@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "certtool_lib",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/metropolis/test/swtpm/certtool",
+    visibility = ["//visibility:private"],
+    deps = ["@com_github_spf13_pflag//:pflag"],
+)
+
+go_binary(
+    name = "certtool",
+    embed = [":certtool_lib"],
+    visibility = ["//visibility:public"],
+)
