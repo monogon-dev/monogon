@@ -24,6 +24,14 @@ aforementioned tooling without depending on GnuTLS. This is done by patching
 some tools to rip out GnuTLS support, and by replacing other with native Go
 reimplementations.
 
+swtpm_cert
+----------
+
+This is a reimplementation of swtpm_cert in Go. The upstream swtpm_cert is implemented in C and has a hard dependency on
+GnuTLS and libtasn1. Rewriting it in Go and using plain stdlib functions seems like the correct solution here (the
+alternative being either bringing in GnuTLS/libtasn1 into `third_party`, or rewriting swtpm_cert to use
+OpenSSL/BoringSSL).
+
 certtool
 --------
 

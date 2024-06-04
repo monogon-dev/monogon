@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "swtpm_cert_lib",
+    srcs = [
+        "asn1.go",
+        "main.go",
+    ],
+    importpath = "source.monogon.dev/metropolis/test/swtpm/swtpm_cert",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//metropolis/pkg/pki",
+        "@com_github_spf13_pflag//:pflag",
+    ],
+)
+
+go_binary(
+    name = "swtpm_cert",
+    embed = [":swtpm_cert_lib"],
+    visibility = ["//visibility:public"],
+)
