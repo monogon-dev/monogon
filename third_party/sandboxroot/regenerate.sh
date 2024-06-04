@@ -36,9 +36,6 @@ PKGS=(
   # patch tool, as used by gazelle
   "patch"
 
-  # TPM emulator for testing
-  "swtpm-tools"
-
   # Clang/LLVM (for EFI toolchain)
   "clang"
   "llvm"

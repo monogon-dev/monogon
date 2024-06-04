@@ -36,16 +36,17 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "audit-libs-0__3.1.2-1.fc37.x86_64",
-        sha256 = "6193619a12f238f2e94c390d4e584094755f4b23e592ceafd53e65c6e22498ff",
+        name = "audit-libs-0__3.1.2-5.fc37.x86_64",
+        sha256 = "56809f13db465de0aa647f15400b18acbe000431a3cbf011b7357b92a545cdf5",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1.2-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1.2-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1.2-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1.2-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1.2-1.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1.2-5.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1.2-5.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1.2-5.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1.2-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/a/audit-libs-3.1.2-5.fc37.x86_64.rpm",
         ],
     )
+
     rpm(
         name = "authselect-0__1.4.2-1.fc37.x86_64",
         sha256 = "c356d05e80f2b57ea2598b45b168fff6da189038e3f3ef0305dd90cfdd2a045f",
@@ -80,18 +81,18 @@ def sandbox_dependencies():
             "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/b/basesystem-11-14.fc37.noarch.rpm",
         ],
     )
-
     rpm(
-        name = "bash-0__5.2.15-1.fc37.x86_64",
-        sha256 = "e50ddbdb35ecec1a9bf4e19fd87c6216382be313c3b671704d444053a1cfd183",
+        name = "bash-0__5.2.21-1.fc37.x86_64",
+        sha256 = "87584360b373568a72e7fe752069afba747f0f3c699589797dc1bfe3e32b4767",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.15-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.15-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.15-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.15-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.15-1.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.21-1.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.21-1.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.21-1.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.21-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/b/bash-5.2.21-1.fc37.x86_64.rpm",
         ],
     )
+
     rpm(
         name = "bc-0__1.07.1-16.fc37.x86_64",
         sha256 = "5641d8a1ffc675c13d108fa5218024ae8b35164abff34176ead3289756c79b8c",
@@ -263,14 +264,14 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "curl-minimal-0__7.85.0-11.fc37.x86_64",
-        sha256 = "adb3465ab738b946595b987502674c0b8608d780692a0e46aaf105d7dc57a416",
+        name = "curl-minimal-0__7.85.0-12.fc37.x86_64",
+        sha256 = "6023972d6f4dd8645e9838a334fc93f17c15f6750788b601e09694c47d4e9eaf",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-11.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-11.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-11.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-11.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-11.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-12.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-12.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-12.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-12.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/c/curl-minimal-7.85.0-12.fc37.x86_64.rpm",
         ],
     )
 
@@ -395,63 +396,62 @@ def sandbox_dependencies():
             "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/e/efi-srpm-macros-5-6.fc37.noarch.rpm",
         ],
     )
+    rpm(
+        name = "elfutils-debuginfod-client-0__0.190-2.fc37.x86_64",
+        sha256 = "341bc148ecf6cf46442fc8bda5fdf49b271c145029294ff9a3ec8d78d243be97",
+        urls = [
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.190-2.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.190-2.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.190-2.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.190-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.190-2.fc37.x86_64.rpm",
+        ],
+    )
+    rpm(
+        name = "elfutils-default-yama-scope-0__0.190-2.fc37.x86_64",
+        sha256 = "c0c6787799985a3963607a6addbf6007778d4840f2d61334785debe4083cb738",
+        urls = [
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.190-2.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.190-2.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.190-2.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.190-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.190-2.fc37.noarch.rpm",
+        ],
+    )
+    rpm(
+        name = "elfutils-libelf-0__0.190-2.fc37.x86_64",
+        sha256 = "b43d0cee41d3afe288a69646fd2965c786e58f74a01615bbaf17a215336dd5c7",
+        urls = [
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.190-2.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.190-2.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.190-2.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.190-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.190-2.fc37.x86_64.rpm",
+        ],
+    )
+    rpm(
+        name = "elfutils-libelf-devel-0__0.190-2.fc37.x86_64",
+        sha256 = "6a6ff8f4c56edb6c8e614c59523d8902ec8258ecaa4523ecca45be86ab98ed1e",
+        urls = [
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.190-2.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.190-2.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.190-2.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.190-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.190-2.fc37.x86_64.rpm",
+        ],
+    )
+    rpm(
+        name = "elfutils-libs-0__0.190-2.fc37.x86_64",
+        sha256 = "44643de7cec6d27f68fb3b96cb642fe687dfb56189ab8ab2075edcd5fce05dde",
+        urls = [
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.190-2.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.190-2.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.190-2.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.190-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.190-2.fc37.x86_64.rpm",
+        ],
+    )
 
-    rpm(
-        name = "elfutils-debuginfod-client-0__0.189-3.fc37.x86_64",
-        sha256 = "e07cb3382bf16c9d452b693015fab9a6da32cdb3581f97882bf91463ec05d706",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.189-3.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.189-3.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.189-3.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.189-3.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-debuginfod-client-0.189-3.fc37.x86_64.rpm",
-        ],
-    )
-    rpm(
-        name = "elfutils-default-yama-scope-0__0.189-3.fc37.x86_64",
-        sha256 = "108933bfd4359472c97e6a691053154705e164da743f0f639c04fa61cd52d0a4",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.189-3.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.189-3.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.189-3.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.189-3.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-default-yama-scope-0.189-3.fc37.noarch.rpm",
-        ],
-    )
-    rpm(
-        name = "elfutils-libelf-0__0.189-3.fc37.x86_64",
-        sha256 = "3e77093e7641f4879554287cebf692f1b5ecb44523e108e0a6da3d454b25208e",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.189-3.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.189-3.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.189-3.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.189-3.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-0.189-3.fc37.x86_64.rpm",
-        ],
-    )
-    rpm(
-        name = "elfutils-libelf-devel-0__0.189-3.fc37.x86_64",
-        sha256 = "fbd48678fdc48235be3e647e5bff7d9653a389586d7ee1acb580a173f021662e",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.189-3.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.189-3.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.189-3.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.189-3.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libelf-devel-0.189-3.fc37.x86_64.rpm",
-        ],
-    )
-
-    rpm(
-        name = "elfutils-libs-0__0.189-3.fc37.x86_64",
-        sha256 = "7e35cc9b4ff561984268e7548e445c1b0e9d69c2e2a37f9acc3c41c966de754e",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.189-3.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.189-3.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.189-3.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.189-3.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/e/elfutils-libs-0.189-3.fc37.x86_64.rpm",
-        ],
-    )
     rpm(
         name = "expat-0__2.5.0-1.fc37.x86_64",
         sha256 = "0e49c2393e5507bbaa16ededf0176e731e0196dd3230f6371d67be8b919e3429",
@@ -475,39 +475,37 @@ def sandbox_dependencies():
             "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-gpg-keys-37-2.noarch.rpm",
         ],
     )
-
     rpm(
-        name = "fedora-release-common-0__37-16.x86_64",
-        sha256 = "5887ea74e3b3525a31fc0a685e10b8ef0be80afe223a9d327c53a5a3168e36d7",
+        name = "fedora-release-common-0__37-18.x86_64",
+        sha256 = "369f270582960ced7b3aeb406739b6436cc5cbf87cf6c8a7811bcde6bb8721da",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-16.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-16.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-16.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-16.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-16.noarch.rpm",
-        ],
-    )
-
-    rpm(
-        name = "fedora-release-container-0__37-16.x86_64",
-        sha256 = "2321ec7a64f24b616f6fef130a97f257aff81b7068b1ede4f81938395e8bab56",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-16.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-16.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-16.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-16.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-16.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-18.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-18.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-18.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-18.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-common-37-18.noarch.rpm",
         ],
     )
     rpm(
-        name = "fedora-release-identity-container-0__37-16.x86_64",
-        sha256 = "c70aef6b122b352afa7e5eff5c80d0a3dc5b019bf878be80862b94ee986d06ec",
+        name = "fedora-release-container-0__37-18.x86_64",
+        sha256 = "ecdb5b4dc4b4a206f96eb6a99fe5e013f6aa2a6326b6ff6fa59c0167aa47b7a5",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-16.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-16.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-16.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-16.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-16.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-18.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-18.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-18.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-18.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-container-37-18.noarch.rpm",
+        ],
+    )
+    rpm(
+        name = "fedora-release-identity-container-0__37-18.x86_64",
+        sha256 = "3d582c2532c10619f01adac5a9eab9ef8b77c1c879f34d85144d328f3d1e91c9",
+        urls = [
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-18.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-18.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-18.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-18.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/f/fedora-release-identity-container-37-18.noarch.rpm",
         ],
     )
 
@@ -691,69 +689,69 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "glibc-0__2.36-14.fc37.x86_64",
-        sha256 = "3b6233e52001303bf8cdb086823603f4752e82416a13ce01a0e7dd37f632799e",
+        name = "glibc-0__2.36-18.fc37.x86_64",
+        sha256 = "1d0b9c31ac9cf7412b2e3ec09c21e778c7ed2c2095353e965060578f4eb167a6",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-14.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-14.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-14.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-14.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-14.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-18.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-18.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-18.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-18.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-2.36-18.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "glibc-common-0__2.36-14.fc37.x86_64",
-        sha256 = "5de953a10d5ea3d333be43ac80d20cbabd6fe01ae4ed7a1ae1b312cd736af30a",
+        name = "glibc-common-0__2.36-18.fc37.x86_64",
+        sha256 = "b56dd0d07d751e765ce8c801dd07a91ea53b9719330aa0736d734f3060d51341",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-14.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-14.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-14.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-14.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-14.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-18.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-18.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-18.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-18.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-common-2.36-18.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "glibc-devel-0__2.36-14.fc37.x86_64",
-        sha256 = "06286d96e9570787a767d3662f6523a84c236977f6cfaccb3fc74c0692da44e4",
+        name = "glibc-devel-0__2.36-18.fc37.x86_64",
+        sha256 = "9741c724bd685050f4d22fc248c52c33e7d1d90251bf0a51ee5a166228fed1ce",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-14.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-14.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-14.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-14.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-14.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-18.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-18.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-18.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-18.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-devel-2.36-18.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "glibc-headers-x86-0__2.36-14.fc37.x86_64",
-        sha256 = "37a1c9c12d25037abc28086efd39d7c984648916ed86ec34bced103b77f92e7b",
+        name = "glibc-headers-x86-0__2.36-18.fc37.x86_64",
+        sha256 = "f1287fbc5b4881a99bb7cac9ee1911a7bc5bd0154fb8ce132c038a9976904eb7",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-14.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-14.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-14.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-14.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-14.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-18.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-18.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-18.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-18.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-headers-x86-2.36-18.fc37.noarch.rpm",
         ],
     )
     rpm(
-        name = "glibc-langpack-en-0__2.36-14.fc37.x86_64",
-        sha256 = "ed7407a8ddacf440f2ce83a619004529b7ce141d713ef1aaf2e4693cfd65b638",
+        name = "glibc-langpack-en-0__2.36-18.fc37.x86_64",
+        sha256 = "e13133a615810a06d342fc7f76812f4f4a81415c0ff5c116b05f36373110e17f",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-14.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-14.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-14.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-14.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-14.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-18.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-18.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-18.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-18.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-langpack-en-2.36-18.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "glibc-static-0__2.36-14.fc37.x86_64",
-        sha256 = "7e137aa15a5ea7eedc3fce9cee9d6d4e183b04e25255d8991ef41aacaff8ebc2",
+        name = "glibc-static-0__2.36-18.fc37.x86_64",
+        sha256 = "c3f9c2d2cebd2e910f6c253ba080ed972e0b70feee39ae123c910e1b2cd422d8",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-14.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-14.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-14.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-14.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-14.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-18.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-18.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-18.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-18.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/glibc-static-2.36-18.fc37.x86_64.rpm",
         ],
     )
 
@@ -802,36 +800,14 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "gnutls-dane-0__3.8.1-1.fc37.x86_64",
-        sha256 = "617d0468ec726306037a0e8ab405702495adeb4f0c6e38b8c4209db2dfff5004",
+        name = "go-srpm-macros-0__3.3.1-1.fc37.x86_64",
+        sha256 = "a1e2e28ef6c6cad322883658c218aafe6a8784b0183e75b17f0b33469cfc28f5",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-dane-3.8.1-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-dane-3.8.1-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-dane-3.8.1-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-dane-3.8.1-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-dane-3.8.1-1.fc37.x86_64.rpm",
-        ],
-    )
-    rpm(
-        name = "gnutls-utils-0__3.8.1-1.fc37.x86_64",
-        sha256 = "a3ff7ad783c35942d952923eaab0e2c29bfcd903d97d6437590d3472b0d5ba68",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-utils-3.8.1-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-utils-3.8.1-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-utils-3.8.1-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-utils-3.8.1-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/gnutls-utils-3.8.1-1.fc37.x86_64.rpm",
-        ],
-    )
-    rpm(
-        name = "go-srpm-macros-0__3.2.0-1.fc37.x86_64",
-        sha256 = "aa3c1ee081411f844d22f293cf0fdefbb51e95b54987279aa6c3155aff14207d",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/go-srpm-macros-3.2.0-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/go-srpm-macros-3.2.0-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/go-srpm-macros-3.2.0-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/go-srpm-macros-3.2.0-1.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/g/go-srpm-macros-3.2.0-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/go-srpm-macros-3.3.1-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/g/go-srpm-macros-3.3.1-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/g/go-srpm-macros-3.3.1-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/g/go-srpm-macros-3.3.1-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/g/go-srpm-macros-3.3.1-1.fc37.noarch.rpm",
         ],
     )
 
@@ -891,17 +867,7 @@ def sandbox_dependencies():
             "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/i/ipxe-roms-qemu-20220210-2.git64113751.fc37.noarch.rpm",
         ],
     )
-    rpm(
-        name = "json-glib-0__1.6.6-3.fc37.x86_64",
-        sha256 = "598ddb966e5ac4f664f2cbe9d0087b62c1a4067a1f1af24f290d7f681956e29c",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/j/json-glib-1.6.6-3.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/j/json-glib-1.6.6-3.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/j/json-glib-1.6.6-3.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/j/json-glib-1.6.6-3.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/j/json-glib-1.6.6-3.fc37.x86_64.rpm",
-        ],
-    )
+
     rpm(
         name = "kernel-headers-0__6.5.4-100.fc37.x86_64",
         sha256 = "97bc098d779955036f6fa3da9f0fe0370cfea2e160ced91f2b1fac837e078877",
@@ -1086,14 +1052,14 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "libcurl-minimal-0__7.85.0-11.fc37.x86_64",
-        sha256 = "6c492a408997b9e02e7bd21de07d2e9d3c2693a12b967711bd5b1ab60faee9b0",
+        name = "libcurl-minimal-0__7.85.0-12.fc37.x86_64",
+        sha256 = "632b54bd742c529dbef950233b91cc9359d64595dfd25e783e17e14e3c21ab63",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-11.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-11.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-11.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-11.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-11.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-12.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-12.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-12.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-12.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libcurl-minimal-7.85.0-12.fc37.x86_64.rpm",
         ],
     )
 
@@ -1288,18 +1254,18 @@ def sandbox_dependencies():
             "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libmpc-1.2.1-5.fc37.x86_64.rpm",
         ],
     )
-
     rpm(
-        name = "libnghttp2-0__1.51.0-1.fc37.x86_64",
-        sha256 = "42fbaaacbeb241755d8448dd5672bbbcc48cbe9548c095ce0efef4140bc12520",
+        name = "libnghttp2-0__1.51.0-2.fc37.x86_64",
+        sha256 = "838afe759e053b20da799cd9b94975bc05e260c871a90350a009c73e7b8747be",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-1.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-2.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-2.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-2.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-2.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libnghttp2-1.51.0-2.fc37.x86_64.rpm",
         ],
     )
+
     rpm(
         name = "libnl3-0__3.7.0-2.fc37.x86_64",
         sha256 = "4543c991e6f536468d9d47527a201b58b9bc049364a6bdfe15a2f910a02e68f6",
@@ -1536,17 +1502,6 @@ def sandbox_dependencies():
             "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libtool-ltdl-2.4.7-2.fc37.x86_64.rpm",
             "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libtool-ltdl-2.4.7-2.fc37.x86_64.rpm",
             "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/l/libtool-ltdl-2.4.7-2.fc37.x86_64.rpm",
-        ],
-    )
-    rpm(
-        name = "libtpms-0__0.9.6-1.fc37.x86_64",
-        sha256 = "d61fd47b4126e4d89d425af91a224718493b7c7c4eab148508699d577d191dbe",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtpms-0.9.6-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtpms-0.9.6-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtpms-0.9.6-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtpms-0.9.6-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/l/libtpms-0.9.6-1.fc37.x86_64.rpm",
         ],
     )
 
@@ -1987,27 +1942,28 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "p11-kit-0__0.25.0-1.fc37.x86_64",
-        sha256 = "22cb0f9bd16493d0f15c40851a387d8d6b9896291a98752412a0e99af35f22f4",
+        name = "p11-kit-0__0.25.3-1.fc37.x86_64",
+        sha256 = "9fe3c7521f98feab2501a6e4f2e2d1d05c55cdd3e2b9c83526f88f129810fdb5",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-0.25.0-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-0.25.0-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-0.25.0-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-0.25.0-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-0.25.0-1.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-0.25.3-1.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-0.25.3-1.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-0.25.3-1.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-0.25.3-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-0.25.3-1.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "p11-kit-trust-0__0.25.0-1.fc37.x86_64",
-        sha256 = "a735cc2a9f096362cf44ef6e8c317311c1b7a153cf26b9b8a2d4d8a4de06fb44",
+        name = "p11-kit-trust-0__0.25.3-1.fc37.x86_64",
+        sha256 = "1184020f93255aec58b158a9ebacea672603bb322f0669b104103f8721db2139",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-trust-0.25.0-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-trust-0.25.0-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-trust-0.25.0-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-trust-0.25.0-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-trust-0.25.0-1.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-trust-0.25.3-1.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-trust-0.25.3-1.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-trust-0.25.3-1.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-trust-0.25.3-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/p11-kit-trust-0.25.3-1.fc37.x86_64.rpm",
         ],
     )
+
     rpm(
         name = "package-notes-srpm-macros-0__0.5-7.fc37.x86_64",
         sha256 = "31ce86bd115ddfc662b3248e80216754b5607599e4ab4db1ab3988ac554e6c44",
@@ -3189,25 +3145,25 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "perl-Module-CoreList-1__5.20230920-1.fc37.x86_64",
-        sha256 = "d137961c24cde75906515b442ff807bbdcdb82b4191cd2baf582dcd68e26e995",
+        name = "perl-Module-CoreList-1__5.20231120-1.fc37.x86_64",
+        sha256 = "969e5408dbd49fb2a315ae04b50faff70e2a63e40be07f55c961acf8471217de",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230920-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230920-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230920-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230920-1.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20230920-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20231120-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20231120-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20231120-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20231120-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-5.20231120-1.fc37.noarch.rpm",
         ],
     )
     rpm(
-        name = "perl-Module-CoreList-tools-1__5.20230920-1.fc37.x86_64",
-        sha256 = "1f08f95f9a256c45b2a84768b9892e20f59e02ea2adc88f1c5ebc166c0142891",
+        name = "perl-Module-CoreList-tools-1__5.20231120-1.fc37.x86_64",
+        sha256 = "91b5ffee610ee6ce0cbae120679d60c5b1f175ec757925ea82e2b99de0ed0697",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230920-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230920-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230920-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230920-1.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20230920-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20231120-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20231120-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20231120-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20231120-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Module-CoreList-tools-5.20231120-1.fc37.noarch.rpm",
         ],
     )
 
@@ -3322,16 +3278,17 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "perl-Object-HashBase-0__0.009-10.fc37.x86_64",
-        sha256 = "0bce10ae9482863a391edb2e83dff59df629f323cd284808949c87137f0f22cb",
+        name = "perl-Object-HashBase-0__0.010-1.fc37.x86_64",
+        sha256 = "81981869c07183d984dece73d9a13dbe84bb430cec9c58a66e643a7cfbcc1f33",
         urls = [
-            "https://ftp.fau.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Object-HashBase-0.009-10.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Object-HashBase-0.009-10.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Object-HashBase-0.009-10.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Object-HashBase-0.009-10.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/perl-Object-HashBase-0.009-10.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Object-HashBase-0.010-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Object-HashBase-0.010-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Object-HashBase-0.010-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Object-HashBase-0.010-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/perl-Object-HashBase-0.010-1.fc37.noarch.rpm",
         ],
     )
+
     rpm(
         name = "perl-Opcode-0__1.57-494.fc37.x86_64",
         sha256 = "2a80b4548a5cd4c6d25812efcd5d29bf35c357b686324235d7949f917667498c",
@@ -4567,17 +4524,7 @@ def sandbox_dependencies():
             "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/popt-1.19-1.fc37.x86_64.rpm",
         ],
     )
-    rpm(
-        name = "protobuf-c-0__1.4.1-2.fc37.x86_64",
-        sha256 = "46a9be44b3444815a0197dd85953bf87710d3ea3d8f9fbfff23068ca85885070",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/protobuf-c-1.4.1-2.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/protobuf-c-1.4.1-2.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/protobuf-c-1.4.1-2.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/protobuf-c-1.4.1-2.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/p/protobuf-c-1.4.1-2.fc37.x86_64.rpm",
-        ],
-    )
+
     rpm(
         name = "pyproject-srpm-macros-0__1.10.0-1.fc37.x86_64",
         sha256 = "ef1fedf2055be30fe22ea9f87ff8d69b47595e800033178ba89e32b81d447299",
@@ -4624,38 +4571,39 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "python-unversioned-command-0__3.11.5-1.fc37.x86_64",
-        sha256 = "0320c592389677ade74dbb8c4d3390e77e1a30857fa701c0ba1a344cc685b5ba",
+        name = "python-unversioned-command-0__3.11.6-1.fc37.x86_64",
+        sha256 = "b1de67c1c67902d378897883c6950febca01dac01a2907911ecfb9b0e7d292a7",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.5-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.5-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.5-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.5-1.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.5-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.6-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.6-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.6-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.6-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python-unversioned-command-3.11.6-1.fc37.noarch.rpm",
         ],
     )
     rpm(
-        name = "python3-0__3.11.5-1.fc37.x86_64",
-        sha256 = "9d67caa894f86665e7172c6c0e71e284a183850fd22f4723bce1d62466c3ac73",
+        name = "python3-0__3.11.6-1.fc37.x86_64",
+        sha256 = "771b2eaac53bddaa68642f9d8dadfa6ff980a8f845533ac42b12941b3a95cd2f",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.5-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.5-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.5-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.5-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.5-1.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.6-1.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.6-1.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.6-1.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.6-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-3.11.6-1.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "python3-audit-0__3.1.2-1.fc37.x86_64",
-        sha256 = "3ac574431a4e03f28dfc2f756393f159dd5e4ff868b24f687b7a34d9ba6ff597",
+        name = "python3-audit-0__3.1.2-5.fc37.x86_64",
+        sha256 = "7298e151f0a151c73983d9ee672d8fd87d3fa6bd999f1e206a9bf7e5cf84ca5a",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1.2-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1.2-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1.2-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1.2-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1.2-1.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1.2-5.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1.2-5.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1.2-5.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1.2-5.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-audit-3.1.2-5.fc37.x86_64.rpm",
         ],
     )
+
     rpm(
         name = "python3-distro-0__1.7.0-3.fc37.x86_64",
         sha256 = "6427a8b877a51be140e06665b3680a911816c9eb581aa54ecf29c77f51b6e898",
@@ -4668,16 +4616,17 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "python3-libs-0__3.11.5-1.fc37.x86_64",
-        sha256 = "c03cebe52be793cb1c00d3417d906252fcd4eb95ededf36a1e6664268667ff1d",
+        name = "python3-libs-0__3.11.6-1.fc37.x86_64",
+        sha256 = "eb2dbe73ed34cf2e9393cb0977866a4e41bea5b3ce5ffd3320eff6085922cb92",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.5-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.5-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.5-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.5-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.5-1.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.6-1.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.6-1.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.6-1.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.6-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/p/python3-libs-3.11.6-1.fc37.x86_64.rpm",
         ],
     )
+
     rpm(
         name = "python3-libselinux-0__3.5-1.fc37.x86_64",
         sha256 = "d6a8fff22472e9629ae8d61c678448215a4f3fb3314b26d0fde0dee70996b3a0",
@@ -4767,14 +4716,25 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "qt5-srpm-macros-0__5.15.9-1.fc37.x86_64",
-        sha256 = "0815803ae72a90fa4ebaad878a75ba1bd80a1dc6691f2ab923373d82b1b430df",
+        name = "qt5-srpm-macros-0__5.15.10-1.fc37.x86_64",
+        sha256 = "7768183143514a3d93d8b10dbb6cc086a9c3eb185efb837e8e7200a475968294",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.9-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.9-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.9-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.9-1.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.9-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.10-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.10-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.10-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.10-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt5-srpm-macros-5.15.10-1.fc37.noarch.rpm",
+        ],
+    )
+    rpm(
+        name = "qt6-srpm-macros-0__6.5.1-2.fc37.x86_64",
+        sha256 = "688ea77818e55d9f03e5d0dd615a08404c3887e39c035e2326083e716c49b822",
+        urls = [
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt6-srpm-macros-6.5.1-2.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt6-srpm-macros-6.5.1-2.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt6-srpm-macros-6.5.1-2.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt6-srpm-macros-6.5.1-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/q/qt6-srpm-macros-6.5.1-2.fc37.noarch.rpm",
         ],
     )
 
@@ -4790,60 +4750,61 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "redhat-rpm-config-0__229-1.fc37.x86_64",
-        sha256 = "9678d9f500321a9e69493e47bdb35dd7f9f51737b7fb5c368cdfe82293b6213a",
+        name = "redhat-rpm-config-0__230-1.fc37.x86_64",
+        sha256 = "cf79b5afe5ed0a7adec3878381e6e58d0b1535165e11b2533cfe9ebfa079a69c",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-229-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-229-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-229-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-229-1.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-229-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-230-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-230-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-230-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-230-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/redhat-rpm-config-230-1.fc37.noarch.rpm",
         ],
     )
     rpm(
-        name = "rpm-0__4.18.1-2.fc37.x86_64",
-        sha256 = "ac3915164eb1e4dd24a94fe7f77f5722c5b7e50ccb3bde29804ffe5c97ae49ae",
+        name = "rpm-0__4.18.2-1.fc37.x86_64",
+        sha256 = "2292e5183404cf8d8af6ab2ae2daf809da445d243b9c806414fb73c715ef1264",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-4.18.1-2.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-4.18.1-2.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-4.18.1-2.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-4.18.1-2.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-4.18.1-2.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-4.18.2-1.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-4.18.2-1.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-4.18.2-1.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-4.18.2-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-4.18.2-1.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "rpm-libs-0__4.18.1-2.fc37.x86_64",
-        sha256 = "e1a55d458afb2e5c30ceb704ec7424da64a7b7bb872249522590799a5aa786df",
+        name = "rpm-libs-0__4.18.2-1.fc37.x86_64",
+        sha256 = "ff568304ec5bbfd2c76ccc354ade7c683e5f6f382c39eb8e732066756c1589da",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-libs-4.18.1-2.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-libs-4.18.1-2.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-libs-4.18.1-2.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-libs-4.18.1-2.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-libs-4.18.1-2.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-libs-4.18.2-1.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-libs-4.18.2-1.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-libs-4.18.2-1.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-libs-4.18.2-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-libs-4.18.2-1.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "rpm-plugin-selinux-0__4.18.1-2.fc37.x86_64",
-        sha256 = "f98bfc30379e94251f50ed2542cf7b3e3c313478f2ab2f6319bbac6a2e945bc3",
+        name = "rpm-plugin-selinux-0__4.18.2-1.fc37.x86_64",
+        sha256 = "b3b02f43af9022a31f7eb8d2015094a696dc7d7c186b1be7243c006e1170235a",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-plugin-selinux-4.18.1-2.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-plugin-selinux-4.18.1-2.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-plugin-selinux-4.18.1-2.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-plugin-selinux-4.18.1-2.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-plugin-selinux-4.18.1-2.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-plugin-selinux-4.18.2-1.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-plugin-selinux-4.18.2-1.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-plugin-selinux-4.18.2-1.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-plugin-selinux-4.18.2-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpm-plugin-selinux-4.18.2-1.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "rpmautospec-rpm-macros-0__0.3.5-1.fc37.x86_64",
-        sha256 = "75099655c00a959dca4de2b0e7661078991d1d26972563b7ac4588c9ec61e083",
+        name = "rpmautospec-rpm-macros-0__0.3.8-1.fc37.x86_64",
+        sha256 = "e0c0bec0cf6bf0bef46caa7a86eac702e980bdeda8b2e2a6d843635e7571ff58",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.5-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.5-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.5-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.5-1.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.5-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.8-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.8-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.8-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.8-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rpmautospec-rpm-macros-0.3.8-1.fc37.noarch.rpm",
         ],
     )
+
     rpm(
         name = "rsync-0__3.2.7-1.fc37.x86_64",
         sha256 = "82e02be388b28292136440b3a11e72db8cdc615b2adc8a4073dd3721ae383ef1",
@@ -4856,14 +4817,14 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "rust-srpm-macros-0__25.2-1.fc37.x86_64",
-        sha256 = "f92a23148f33d3c5845ab8351aa18915f5d0dbba7f06afae581258f45f279030",
+        name = "rust-srpm-macros-0__25.2-2.fc37.x86_64",
+        sha256 = "5429bead43f28712767c32bf306ef61c997f37e11c679a7b19097b7de4477f28",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-25.2-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-25.2-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-25.2-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-25.2-1.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-25.2-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-25.2-2.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-25.2-2.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-25.2-2.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-25.2-2.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/r/rust-srpm-macros-25.2-2.fc37.noarch.rpm",
         ],
     )
 
@@ -4902,25 +4863,25 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "selinux-policy-0__37.22-1.fc37.x86_64",
-        sha256 = "715397068619030c805adafcaee3b524a7807b4b69ed76daf3e07fb3d37841f9",
+        name = "selinux-policy-0__37.23-1.fc37.x86_64",
+        sha256 = "e2f8edd7b0f468d8c3b08c109cda6a7d12d808d1f11a39ac6d04553a299f0c1b",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.22-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.22-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.22-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.22-1.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.22-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.23-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.23-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.23-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.23-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-37.23-1.fc37.noarch.rpm",
         ],
     )
     rpm(
-        name = "selinux-policy-minimum-0__37.22-1.fc37.x86_64",
-        sha256 = "8b6c61cc1f96a21c48482833586aad47b5fdf3eba5c95300a00e25fbfe589051",
+        name = "selinux-policy-minimum-0__37.23-1.fc37.x86_64",
+        sha256 = "49e4e227e5f98490ca24a2cd1337844e3b4956ac1ffd38e5187f781f8f2911ef",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.22-1.fc37.noarch.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.22-1.fc37.noarch.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.22-1.fc37.noarch.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.22-1.fc37.noarch.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.22-1.fc37.noarch.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.23-1.fc37.noarch.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.23-1.fc37.noarch.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.23-1.fc37.noarch.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.23-1.fc37.noarch.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/selinux-policy-minimum-37.23-1.fc37.noarch.rpm",
         ],
     )
 
@@ -4980,71 +4941,39 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "swtpm-0__0.7.3-2.20220427gitf2268ee.fc37.x86_64",
-        sha256 = "4dd0ae80effe40033c02e3d2b9c4f4824c4faa7f58d7e3ba8c946316dc578ba5",
+        name = "systemd-0__251.19-1.fc37.x86_64",
+        sha256 = "b6b266bb2b05df9f2aefbbb893b277ef4d9810ce401f16ce59ba2d1a9ad06a2d",
         urls = [
-            "https://ftp.fau.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.19-1.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.19-1.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.19-1.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.19-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.19-1.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "swtpm-libs-0__0.7.3-2.20220427gitf2268ee.fc37.x86_64",
-        sha256 = "3b28d0e464f9aefb3c109c56508740c8958a4475235c75ed996f0b80e8caeb0f",
+        name = "systemd-libs-0__251.19-1.fc37.x86_64",
+        sha256 = "9d1b796cee3a5c7abc22eb9ded927cff80dc062cf9e167d68cfee58047fda8a4",
         urls = [
-            "https://ftp.fau.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-libs-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-libs-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-libs-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-libs-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-libs-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.19-1.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.19-1.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.19-1.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.19-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.19-1.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "swtpm-tools-0__0.7.3-2.20220427gitf2268ee.fc37.x86_64",
-        sha256 = "4e6e001a6c6f8793d4b7abd824396ce7560c9524c636f75346f4721461082d1f",
+        name = "systemd-pam-0__251.19-1.fc37.x86_64",
+        sha256 = "c7c7fe1a6c98ee1deb40a91cdde22231670082c0cdd288288f416052bdc75fa1",
         urls = [
-            "https://ftp.fau.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-tools-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-tools-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-tools-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-tools-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/s/swtpm-tools-0.7.3-2.20220427gitf2268ee.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.19-1.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.19-1.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.19-1.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.19-1.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.19-1.fc37.x86_64.rpm",
         ],
     )
-    rpm(
-        name = "systemd-0__251.14-2.fc37.x86_64",
-        sha256 = "ec407a50153db3d466ed6063bc9274ce73192197e08e22ee88f7c364036ffc66",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.14-2.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.14-2.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.14-2.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.14-2.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-251.14-2.fc37.x86_64.rpm",
-        ],
-    )
-    rpm(
-        name = "systemd-libs-0__251.14-2.fc37.x86_64",
-        sha256 = "37934c2adce2bf1559a8b74a9e6c62510acb0d0653ab5d80b2676f69388beee5",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.14-2.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.14-2.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.14-2.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.14-2.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-libs-251.14-2.fc37.x86_64.rpm",
-        ],
-    )
-    rpm(
-        name = "systemd-pam-0__251.14-2.fc37.x86_64",
-        sha256 = "c3f416c1d6cb05491f61e4f9cf2e976b0ccda4cb3eebc2c1b6dfa633e876bbef",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.14-2.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.14-2.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.14-2.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.14-2.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/s/systemd-pam-251.14-2.fc37.x86_64.rpm",
-        ],
-    )
+
     rpm(
         name = "systemtap-sdt-devel-0__4.9-2.fc37.x86_64",
         sha256 = "0e4da701910ce174353603a75bf89e0bead813b7ee0aab43679a6a2ebb457074",
@@ -5067,28 +4996,6 @@ def sandbox_dependencies():
             "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/t/tar-1.34-6.fc37.x86_64.rpm",
         ],
     )
-    rpm(
-        name = "trousers-0__0.3.15-7.fc37.x86_64",
-        sha256 = "9ec34885483cd25c7ae39b9e5b0af020f6db54123cdc3e38d898badbafb8ca43",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-0.3.15-7.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-0.3.15-7.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-0.3.15-7.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-0.3.15-7.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-0.3.15-7.fc37.x86_64.rpm",
-        ],
-    )
-    rpm(
-        name = "trousers-lib-0__0.3.15-7.fc37.x86_64",
-        sha256 = "b33af58d16302786d9b793c4f780aeb3b4d96d944868a998eecdcc37e71cfc50",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-lib-0.3.15-7.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-lib-0.3.15-7.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-lib-0.3.15-7.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-lib-0.3.15-7.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/37/Everything/x86_64/os/Packages/t/trousers-lib-0.3.15-7.fc37.x86_64.rpm",
-        ],
-    )
 
     rpm(
         name = "tzdata-0__2023c-1.fc37.x86_64",
@@ -5099,17 +5006,6 @@ def sandbox_dependencies():
             "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/t/tzdata-2023c-1.fc37.noarch.rpm",
             "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/t/tzdata-2023c-1.fc37.noarch.rpm",
             "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/t/tzdata-2023c-1.fc37.noarch.rpm",
-        ],
-    )
-    rpm(
-        name = "unbound-libs-0__1.18.0-1.fc37.x86_64",
-        sha256 = "da15635fa34e54c59977fac06495235c33f23a13445213276bbdfe17f567042b",
-        urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/u/unbound-libs-1.18.0-1.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/u/unbound-libs-1.18.0-1.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/u/unbound-libs-1.18.0-1.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/u/unbound-libs-1.18.0-1.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/u/unbound-libs-1.18.0-1.fc37.x86_64.rpm",
         ],
     )
 
@@ -5147,25 +5043,25 @@ def sandbox_dependencies():
         ],
     )
     rpm(
-        name = "xen-libs-0__4.16.5-2.fc37.x86_64",
-        sha256 = "7cd508bc3e28cf77e9145e035e32f6a31f3e20f2b27c0dce2538003e33312015",
+        name = "xen-libs-0__4.16.5-4.fc37.x86_64",
+        sha256 = "c19cdc5c82abaedc5c364aa29daf00a716547eaed9b26a65067b46c5234a8aa6",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.5-2.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.5-2.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.5-2.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.5-2.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.5-2.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.5-4.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.5-4.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.5-4.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.5-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-libs-4.16.5-4.fc37.x86_64.rpm",
         ],
     )
     rpm(
-        name = "xen-licenses-0__4.16.5-2.fc37.x86_64",
-        sha256 = "d5fae68edf0170e273dab0d5ffaa7bbb434deea69dd0fa3efd92f8c116fa83c8",
+        name = "xen-licenses-0__4.16.5-4.fc37.x86_64",
+        sha256 = "d1ef102942f7cfcf18fb571c324348b4f22467b50ff5f34154bc1d33edaf74b8",
         urls = [
-            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.5-2.fc37.x86_64.rpm",
-            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.5-2.fc37.x86_64.rpm",
-            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.5-2.fc37.x86_64.rpm",
-            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.5-2.fc37.x86_64.rpm",
-            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.5-2.fc37.x86_64.rpm",
+            "https://ftp.fau.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.5-4.fc37.x86_64.rpm",
+            "https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.5-4.fc37.x86_64.rpm",
+            "https://mirror.23m.com/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.5-4.fc37.x86_64.rpm",
+            "https://ftp.plusline.net/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.5-4.fc37.x86_64.rpm",
+            "https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/37/Everything/x86_64/Packages/x/xen-licenses-4.16.5-4.fc37.x86_64.rpm",
         ],
     )
 
