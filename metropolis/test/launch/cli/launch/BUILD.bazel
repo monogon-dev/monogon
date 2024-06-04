@@ -17,7 +17,6 @@ go_binary(
     name = "launch",
     data = [
         "//metropolis/node:image",
-        "//metropolis/node:swtpm_data",
         "//third_party/edk2:firmware",
     ],
     embed = [":launch_lib"],

@@ -21,6 +21,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 
 	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/metropolis/test/launch"
@@ -49,7 +50,11 @@ func main() {
 	}
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	doneC := make(chan error)
-	err = cluster.LaunchNode(ctx, ld, sd, &cluster.NodeOptions{
+	tpmf, err := cluster.NewTPMFactory(filepath.Join(ld, "tpm"))
+	if err != nil {
+		log.Fatalf("NewTPMFactory: %v", err)
+	}
+	err = cluster.LaunchNode(ctx, ld, sd, tpmf, &cluster.NodeOptions{
 		Name:       "test-node",
 		Ports:      launch.IdentityPortMap(ports),
 		SerialPort: os.Stdout,

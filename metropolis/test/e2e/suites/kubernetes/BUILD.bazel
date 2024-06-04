@@ -21,7 +21,6 @@ go_test(
     srcs = ["run_test.go"],
     data = [
         "//metropolis/node:image",
-        "//metropolis/node:swtpm_data",
         "//metropolis/test/e2e:testimages_manifest",
         "//third_party/edk2:firmware",
     ],

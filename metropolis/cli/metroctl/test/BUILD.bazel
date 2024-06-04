@@ -8,7 +8,6 @@ go_test(
     data = [
         "//metropolis/cli/metroctl",
         "//metropolis/node:image",
-        "//metropolis/node:swtpm_data",
         "//third_party/edk2:firmware",
     ],
     rundir = ".",

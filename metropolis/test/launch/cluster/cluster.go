@@ -160,22 +160,6 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 		return nil, fmt.Errorf("while copying firmware variables: %w", err)
 	}
 
-	// Create the TPM state directory and initialize all files required by swtpm.
-	tpmt := filepath.Join(stdp, "tpm")
-	if err := os.Mkdir(tpmt, 0o755); err != nil {
-		return nil, fmt.Errorf("while creating the TPM directory: %w", err)
-	}
-	for _, name := range []string{"issuercert.pem", "signkey.pem", "tpm2-00.permall"} {
-		src, err := runfiles.Rlocation(filepath.Join("_main/metropolis/node/tpm", name))
-		if err != nil {
-			return nil, fmt.Errorf("while resolving a path: %w", err)
-		}
-		tgt := filepath.Join(tpmt, name)
-		if err := copyFile(src, tgt); err != nil {
-			return nil, fmt.Errorf("while copying TPM state: file %q to %q: %w", src, tgt, err)
-		}
-	}
-
 	// Create the socket directory.
 	sotdp, err := os.MkdirTemp(sd, "node_sock*")
 	if err != nil {
@@ -225,7 +209,7 @@ func (c *Cluster) CuratorClient() (*grpc.ClientConn, error) {
 // (swtpm <-> QEMU interplay) respectively. The directories must exist before
 // LaunchNode is called. LaunchNode will update options.Runtime and options.Mac
 // if either are not initialized.
-func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions, doneC chan error) error {
+func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, options *NodeOptions, doneC chan error) error {
 	// TODO(mateusz@monogon.tech) try using QEMU's abstract socket namespace instead
 	// of /tmp (requires QEMU version >5.0).
 	// https://github.com/qemu/qemu/commit/776b97d3605ed0fc94443048fdf988c7725e38a9).
@@ -325,6 +309,17 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions, doneC 
 		qemuArgs = append(qemuArgs, "-object", qemuNetDump.ToOption("filter-dump"))
 	}
 
+	// Manufacture TPM if needed.
+	tpmd := filepath.Join(r.ld, "tpm")
+	err = tpmFactory.Manufacture(ctx, tpmd, &TPMPlatform{
+		Manufacturer: "Monogon",
+		Version:      "1.0",
+		Model:        "TestCluster",
+	})
+	if err != nil {
+		return fmt.Errorf("could not manufacture TPM: %w", err)
+	}
+
 	// Start TPM emulator as a subprocess
 	swtpm, err := runfiles.Rlocation("swtpm/swtpm")
 	if err != nil {
@@ -333,7 +328,6 @@ func LaunchNode(ctx context.Context, ld, sd string, options *NodeOptions, doneC 
 
 	tpmCtx, tpmCancel := context.WithCancel(options.Runtime.ctxT)
 
-	tpmd := filepath.Join(r.ld, "tpm")
 	tpmEmuCmd := exec.CommandContext(tpmCtx, swtpm, "socket", "--tpm2", "--tpmstate", "dir="+tpmd, "--ctrl", "type=unixio,path="+tpmSocketPath)
 	// Silence warnings from unsafe libtpms build (uses non-constant-time
 	// cryptographic operations).
@@ -612,6 +606,8 @@ type Cluster struct {
 	// ctxC is used by Close to cancel the context under which the nodes are
 	// running.
 	ctxC context.CancelFunc
+
+	tpmFactory *TPMFactory
 }
 
 // NodeInCluster represents information about a node that's part of a Cluster.
@@ -739,6 +735,12 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		return nil, fmt.Errorf("failed to create the socket directory: %w", err)
 	}
 
+	// Set up TPM factory.
+	tpmf, err := NewTPMFactory(filepath.Join(ld, "tpm"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TPM factory: %w", err)
+	}
+
 	// Prepare links between nodes and nanoswitch.
 	var switchPorts []*os.File
 	var vmPorts []*os.File
@@ -791,7 +793,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	// Start the first node.
 	ctxT, ctxC := context.WithCancel(ctx)
 	launch.Log("Cluster: Starting node %d...", 1)
-	if err := LaunchNode(ctxT, ld, sd, &nodeOpts[0], done[0]); err != nil {
+	if err := LaunchNode(ctxT, ld, sd, tpmf, &nodeOpts[0], done[0]); err != nil {
 		ctxC()
 		return nil, fmt.Errorf("failed to launch first node: %w", err)
 	}
@@ -911,6 +913,8 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 
 		ctxT: ctxT,
 		ctxC: ctxC,
+
+		tpmFactory: tpmf,
 	}
 
 	// Now start the rest of the nodes and register them into the cluster.
@@ -977,7 +981,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	// Now run the rest of the nodes.
 	for i := 1; i < opts.NumNodes; i++ {
 		launch.Log("Cluster: Starting node %d...", i+1)
-		err := LaunchNode(ctxT, ld, sd, &nodeOpts[i], done[i])
+		err := LaunchNode(ctxT, ld, sd, tpmf, &nodeOpts[i], done[i])
 		if err != nil {
 			return nil, fmt.Errorf("failed to launch node %d: %w", i+1, err)
 		}
@@ -1099,7 +1103,7 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 
 	// Start QEMU again.
 	launch.Log("Cluster: restarting node %d (%s).", idx, id)
-	if err := LaunchNode(c.ctxT, c.launchDir, c.socketDir, &c.nodeOpts[idx], c.nodesDone[idx]); err != nil {
+	if err := LaunchNode(c.ctxT, c.launchDir, c.socketDir, c.tpmFactory, &c.nodeOpts[idx], c.nodesDone[idx]); err != nil {
 		return fmt.Errorf("failed to launch node %d: %w", idx, err)
 	}
 
@@ -1145,6 +1149,7 @@ func (c *Cluster) ShutdownNode(idx int) error {
 	if err != nil {
 		return fmt.Errorf("while shutting down node: %w", err)
 	}
+	launch.Log("Cluster: node %d (%s) stopped.", idx, id)
 	return nil
 }
 
@@ -1164,9 +1169,10 @@ func (c *Cluster) StartNode(idx int) error {
 
 	// Start QEMU again.
 	launch.Log("Cluster: starting node %d (%s).", idx, id)
-	if err := LaunchNode(c.ctxT, c.launchDir, c.socketDir, &c.nodeOpts[idx], c.nodesDone[idx]); err != nil {
+	if err := LaunchNode(c.ctxT, c.launchDir, c.socketDir, c.tpmFactory, &c.nodeOpts[idx], c.nodesDone[idx]); err != nil {
 		return fmt.Errorf("failed to launch node %d: %w", idx, err)
 	}
+	launch.Log("Cluster: node %d (%s) started.", idx, id)
 	return nil
 }
 
