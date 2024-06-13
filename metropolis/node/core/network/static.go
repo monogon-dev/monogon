@@ -331,6 +331,10 @@ func deviceIfaceFromSpec(it *netpb.Interface_Device, hostDevices []deviceIfData,
 	if len(matchedDevices) <= int(it.Device.Index) || it.Device.Index < 0 {
 		return nil, fmt.Errorf("there are %d matching host devices but requested device index is %d", len(matchedDevices), it.Device.Index)
 	}
+	// Return new Device stuct with empty LinkAttrs other than Index, which is
+	// used to identify the device. Add/Modify operations will otherwise try to
+	// set attributes returned by the kernel, some of which cause an ENOTSUPP
+	// error.
 	dev := &netlink.Device{
 		LinkAttrs: netlink.NewLinkAttrs(),
 	}
