@@ -118,15 +118,21 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 			}()
 		}
 		nameLinkMap[i.Name] = newLink
+		// Get the link from the kernel again to get all defaulted and
+		// hardware-derived attributes.
+		newLinkWithAttrs, err := netlink.LinkByIndex(newLink.Attrs().Index)
+		if err != nil {
+			return fmt.Errorf("while getting just-configured link: %w", err)
+		}
 		if i.Ipv4Autoconfig != nil {
-			if err := s.runDHCPv4(ctx, newLink); err != nil {
+			if err := s.runDHCPv4(ctx, newLinkWithAttrs); err != nil {
 				return fmt.Errorf("error enabling DHCPv4 on %q: %w", newLink.Attrs().Name, err)
 			}
 			hasIPv4Autoconfig = true
 		}
 		if i.Ipv6Autoconfig != nil {
 			opts := sysctl.Options{
-				"net.ipv6.conf." + newLink.Attrs().Name + ".accept_ra": "1",
+				"net.ipv6.conf." + newLinkWithAttrs.Attrs().Name + ".accept_ra": "1",
 			}
 			if err := opts.Apply(); err != nil {
 				return fmt.Errorf("failed enabling accept_ra for interface %q: %w", newLink.Attrs().Name, err)
