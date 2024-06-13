@@ -242,7 +242,7 @@ func getSortedIfaces(s *Service) ([]*netpb.Interface, error) {
 		}
 		return nil, errors.New(strings.Join(errMsgs, "; "))
 	}
-	interfaceOrder, err := depGraph.TopologicalOrder()
+	interfaceOrder, err := depGraph.DetTopologicalOrder(strings.Compare)
 	if err != nil {
 		return nil, fmt.Errorf("unable to calculate interface setup order: %w", err)
 	}
