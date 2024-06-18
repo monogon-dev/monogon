@@ -3,6 +3,8 @@ package node
 import (
 	"fmt"
 	"regexp"
+
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 var (
@@ -61,4 +63,15 @@ func ValidateLabel(v string) error {
 		return ErrLabelInvalidCharacter
 	}
 	return nil
+}
+
+// GetNodeLabel retrieves a node label by key, returning its value or an empty
+// string if no labels with this key is set on the node.
+func GetNodeLabel(labels *cpb.NodeLabels, key string) string {
+	for _, pair := range labels.Pairs {
+		if pair.Key == key {
+			return pair.Value
+		}
+	}
+	return ""
 }

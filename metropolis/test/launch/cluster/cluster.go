@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -49,6 +50,12 @@ import (
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/pkg/localregistry"
 	"source.monogon.dev/metropolis/test/launch"
+)
+
+const (
+	// nodeNumberKey is the key of the node label used to carry a node's numerical
+	// index in the test system.
+	nodeNumberKey string = "test-node-number"
 )
 
 // NodeOptions contains all options that can be passed to Launch()
@@ -776,7 +783,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 					InitialClusterConfiguration: opts.InitialClusterConfiguration,
 					Labels: &cpb.NodeLabels{
 						Pairs: []*cpb.NodeLabels_Pair{
-							{Key: "test-node-id", Value: "0"},
+							{Key: nodeNumberKey, Value: "0"},
 						},
 					},
 				},
@@ -896,7 +903,9 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		return nil, fmt.Errorf("could not write owner certificate: %w", err)
 	}
 
-	// Set up a partially initialized cluster instance, to be filled in in the
+	launch.Log("Cluster: Node %d is %s", 0, firstNode.ID)
+
+	// Set up a partially initialized cluster instance, to be filled in the
 	// later steps.
 	cluster := &Cluster{
 		Owner: *cert,
@@ -969,7 +978,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 						CaCertificate:    resI.CaCertificate,
 						Labels: &cpb.NodeLabels{
 							Pairs: []*cpb.NodeLabels_Pair{
-								{Key: "test-node-id", Value: fmt.Sprintf("%d", i)},
+								{Key: nodeNumberKey, Value: fmt.Sprintf("%d", i)},
 							},
 						},
 					},
@@ -997,7 +1006,10 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		}
 	}
 
+	// Wait for nodes to appear as NEW, populate a map from node number (index into
+	// NodeOpts, etc.) to Metropolis Node ID.
 	seenNodes := make(map[string]bool)
+	nodeNumberToID := make(map[int]string)
 	launch.Log("Cluster: waiting for nodes to appear as NEW...")
 	for i := 1; i < opts.NumNodes; i++ {
 		for {
@@ -1018,7 +1030,13 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 					ID:     n.Id,
 					Pubkey: n.Pubkey,
 				}
-				cluster.NodeIDs = append(cluster.NodeIDs, n.Id)
+
+				num, err := strconv.Atoi(node.GetNodeLabel(n.Labels, nodeNumberKey))
+				if err != nil {
+					return nil, fmt.Errorf("node %s has undecodable number label: %w", n.Id, err)
+				}
+				launch.Log("Cluster: Node %d is %s", num, n.Id)
+				nodeNumberToID[num] = n.Id
 			}
 
 			if len(seenNodes) == opts.NumNodes-1 {
@@ -1028,6 +1046,11 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		}
 	}
 	launch.Log("Found all expected nodes")
+
+	// Build the rest of NodeIDs from map.
+	for i := 1; i < opts.NumNodes; i++ {
+		cluster.NodeIDs = append(cluster.NodeIDs, nodeNumberToID[i])
+	}
 
 	approvedNodes := make(map[string]bool)
 	upNodes := make(map[string]bool)
