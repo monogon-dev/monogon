@@ -4,35 +4,35 @@ go 1.22.0
 
 // Kubernetes is not fully consumable as a module, fix that
 replace (
-	k8s.io/api => k8s.io/api v0.30.0
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.30.0
-	k8s.io/apimachinery => k8s.io/apimachinery v0.30.0
-	k8s.io/apiserver => k8s.io/apiserver v0.30.0
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.30.0
-	k8s.io/client-go => k8s.io/client-go v0.30.0
-	k8s.io/cloud-provider => k8s.io/cloud-provider v0.30.0
-	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.30.0
-	k8s.io/code-generator => k8s.io/code-generator v0.30.0
-	k8s.io/component-base => k8s.io/component-base v0.30.0
-	k8s.io/component-helpers => k8s.io/component-helpers v0.30.0
-	k8s.io/controller-manager => k8s.io/controller-manager v0.30.0
-	k8s.io/cri-api => k8s.io/cri-api v0.30.0
-	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.30.0
-	k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.30.0
-	k8s.io/endpointslice => k8s.io/endpointslice v0.30.0
-	k8s.io/kms => k8s.io/kms v0.30.0
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.30.0
-	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.30.0
-	k8s.io/kube-proxy => k8s.io/kube-proxy v0.30.0
-	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.30.0
-	k8s.io/kubectl => k8s.io/kubectl v0.30.0
-	k8s.io/kubelet => k8s.io/kubelet v0.30.0
-	k8s.io/kubernetes => k8s.io/kubernetes v1.30.0
-	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.30.0
-	k8s.io/metrics => k8s.io/metrics v0.30.0
-	k8s.io/mount-utils => k8s.io/mount-utils v0.30.0
-	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.30.0
-	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.30.0
+	k8s.io/api => k8s.io/api v0.30.2
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.30.2
+	k8s.io/apimachinery => k8s.io/apimachinery v0.30.2
+	k8s.io/apiserver => k8s.io/apiserver v0.30.2
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.30.2
+	k8s.io/client-go => k8s.io/client-go v0.30.2
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.30.2
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.30.2
+	k8s.io/code-generator => k8s.io/code-generator v0.30.2
+	k8s.io/component-base => k8s.io/component-base v0.30.2
+	k8s.io/component-helpers => k8s.io/component-helpers v0.30.2
+	k8s.io/controller-manager => k8s.io/controller-manager v0.30.2
+	k8s.io/cri-api => k8s.io/cri-api v0.30.2
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.30.2
+	k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.30.2
+	k8s.io/endpointslice => k8s.io/endpointslice v0.30.2
+	k8s.io/kms => k8s.io/kms v0.30.2
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.30.2
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.30.2
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.30.2
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.30.2
+	k8s.io/kubectl => k8s.io/kubectl v0.30.2
+	k8s.io/kubelet => k8s.io/kubelet v0.30.2
+	k8s.io/kubernetes => k8s.io/kubernetes v1.30.2
+	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.30.2
+	k8s.io/metrics => k8s.io/metrics v0.30.2
+	k8s.io/mount-utils => k8s.io/mount-utils v0.30.2
+	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.30.2
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.30.2
 )
 
 // Override version for Bazel support
@@ -146,15 +146,15 @@ require (
 	google.golang.org/protobuf v1.33.0
 	gvisor.dev/gvisor v0.0.0-20230911190645-2e1d76499fd5
 	honnef.co/go/tools v0.4.2
-	k8s.io/api v0.30.0
-	k8s.io/apimachinery v0.30.0
-	k8s.io/apiserver v0.30.0
-	k8s.io/cli-runtime v0.30.0
-	k8s.io/client-go v0.30.0
-	k8s.io/component-base v0.30.0
+	k8s.io/api v0.30.2
+	k8s.io/apimachinery v0.30.2
+	k8s.io/apiserver v0.30.2
+	k8s.io/cli-runtime v0.30.2
+	k8s.io/client-go v0.30.2
+	k8s.io/component-base v0.30.2
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/kubectl v0.0.0
-	k8s.io/kubelet v0.30.0
+	k8s.io/kubelet v0.30.2
 	k8s.io/kubernetes v1.20.1
 	k8s.io/pod-security-admission v0.0.0
 )
@@ -448,22 +448,22 @@ require (
 	howett.net/plist v1.0.0 // indirect
 	inet.af/netaddr v0.0.0-20220811202034-502d2d690317 // indirect
 	k8s.io/apiextensions-apiserver v0.0.0 // indirect
-	k8s.io/cloud-provider v0.30.0 // indirect
+	k8s.io/cloud-provider v0.30.2 // indirect
 	k8s.io/cluster-bootstrap v0.0.0 // indirect
-	k8s.io/component-helpers v0.30.0 // indirect
-	k8s.io/controller-manager v0.30.0 // indirect
-	k8s.io/cri-api v0.30.0 // indirect
+	k8s.io/component-helpers v0.30.2 // indirect
+	k8s.io/controller-manager v0.30.2 // indirect
+	k8s.io/cri-api v0.30.2 // indirect
 	k8s.io/csi-translation-lib v0.0.0 // indirect
 	k8s.io/dynamic-resource-allocation v0.0.0 // indirect
 	k8s.io/endpointslice v0.0.0 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/kms v0.30.0 // indirect
+	k8s.io/kms v0.30.2 // indirect
 	k8s.io/kube-aggregator v0.0.0 // indirect
 	k8s.io/kube-controller-manager v0.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/kube-scheduler v0.0.0 // indirect
 	k8s.io/legacy-cloud-providers v0.0.0 // indirect
-	k8s.io/metrics v0.30.0 // indirect
+	k8s.io/metrics v0.30.2 // indirect
 	k8s.io/mount-utils v0.0.0 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
