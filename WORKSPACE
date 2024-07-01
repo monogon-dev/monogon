@@ -24,6 +24,7 @@ http_archive(
     patch_args = ["-p1"],
     patches = [
         "//third_party/go/patches:rules_go_absolute_embedsrc.patch",
+        "//third_party/go/patches:rules_go_gopackagesdriver_anchor_kind.patch",
     ],
     sha256 = "80a98277ad1311dacd837f9b16db62887702e9f1d1c4c9f796d0121a46c8e184",
     urls = [

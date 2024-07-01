@@ -1,0 +1,37 @@
+    gopackagesdriver: Make kind query regexes anchored
+
+    A query like kind("go_library", ...) also returns rules that are not go
+    libraries but have go_library as a substring of the rule name, such as
+    sqlc_go_library in the Monogon monorepo. To fix that, add regex anchors.
+
+diff --git a/go/tools/gopackagesdriver/bazel_json_builder.go b/go/tools/gopackagesdriver/bazel_json_builder.go
+index c19f0308..242eeef8 100644
+--- a/go/tools/gopackagesdriver/bazel_json_builder.go
++++ b/go/tools/gopackagesdriver/bazel_json_builder.go
+@@ -80,7 +80,7 @@ func (b *BazelJSONBuilder) fileQuery(filename string) string {
+ 	}
+
+ 	kinds := append(_defaultKinds, additionalKinds...)
+-	return fmt.Sprintf(`kind("%s", same_pkg_direct_rdeps("%s"))`, strings.Join(kinds, "|"), label)
++	return fmt.Sprintf(`kind("^(%s) rule$", same_pkg_direct_rdeps("%s"))`, strings.Join(kinds, "|"), label)
+ }
+
+ func (b *BazelJSONBuilder) getKind() string {
+@@ -104,7 +104,7 @@ func (b *BazelJSONBuilder) localQuery(request string) string {
+ 		request = fmt.Sprintf("%s:*", request)
+ 	}
+
+-	return fmt.Sprintf(`kind("%s", %s)`, b.getKind(), request)
++	return fmt.Sprintf(`kind("^(%s) rule$", %s)`, b.getKind(), request)
+ }
+
+ func (b *BazelJSONBuilder) packageQuery(importPath string) string {
+@@ -113,7 +113,7 @@ func (b *BazelJSONBuilder) packageQuery(importPath string) string {
+ 	}
+
+ 	return fmt.Sprintf(
+-		`kind("%s", attr(importpath, "%s", deps(%s)))`,
++		`kind("^(%s) rule$", attr(importpath, "%s", deps(%s)))`,
+ 		b.getKind(),
+ 		importPath,
+ 		bazelQueryScope)
