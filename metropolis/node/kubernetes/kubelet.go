@@ -102,8 +102,12 @@ func (s *kubeletService) configure(fargs *fileargs.FileArgs) *kubeletconfig.Kube
 		EnableControllerAttachDetach: reconciler.False(),
 		HairpinMode:                  "none",
 		MakeIPTablesUtilChains:       reconciler.False(), // We don't have iptables
-		FailSwapOn:                   reconciler.False(), // Our kernel doesn't have swap enabled which breaks Kubelet's detection
-		CgroupRoot:                   "/",
+		FailSwapOn:                   reconciler.False(),
+		MemorySwap: kubeletconfig.MemorySwapConfiguration{
+			// Only allow burstable pods to use swap
+			SwapBehavior: "LimitedSwap",
+		},
+		CgroupRoot: "/",
 		KubeReserved: map[string]string{
 			"cpu":    "200m",
 			"memory": "300Mi",
@@ -114,7 +118,7 @@ func (s *kubeletService) configure(fargs *fileargs.FileArgs) *kubeletconfig.Kube
 		VolumePluginDir: s.EphemeralDirectory.FlexvolumePlugins.FullPath(),
 		// Currently we allocate a /24 per node, so we can have a maximum of
 		// 253 pods per node.
-		MaxPods: 253,
+		MaxPods:    253,
 		PodLogsDir: "/data/kubelet/logs",
 	}
 }

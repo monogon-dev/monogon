@@ -19,8 +19,8 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
+	"github.com/opencontainers/runc/libcontainer/cgroups"
 	"golang.org/x/sys/unix"
 )
 
@@ -50,39 +50,15 @@ func setupMounts() error {
 		}
 	}
 
-	// Mount all available CGroups for v1 (v2 uses a single unified hierarchy
-	// and is not supported by our runtimes yet)
-	if err := unix.Mount("tmpfs", "/sys/fs/cgroup", "tmpfs", unix.MS_NOEXEC|unix.MS_NOSUID|unix.MS_NODEV, ""); err != nil {
+	if err := unix.Mount("cgroup2", "/sys/fs/cgroup", "cgroup2", unix.MS_NOEXEC|unix.MS_NOSUID|unix.MS_NODEV, "nsdelegate,memory_recursiveprot"); err != nil {
 		panic(err)
 	}
-	cgroupsRaw, err := os.ReadFile("/proc/cgroups")
-	if err != nil {
+	// Create main cgroup "everything" and move ourselves into it.
+	if err := os.Mkdir("/sys/fs/cgroup/everything", 0755); err != nil {
 		panic(err)
 	}
-
-	cgroupLines := strings.Split(string(cgroupsRaw), "\n")
-	for _, cgroupLine := range cgroupLines {
-		if cgroupLine == "" || strings.HasPrefix(cgroupLine, "#") {
-			continue
-		}
-		cgroupParts := strings.Split(cgroupLine, "\t")
-		cgroupName := cgroupParts[0]
-		if err := os.Mkdir("/sys/fs/cgroup/"+cgroupName, 0755); err != nil {
-			panic(err)
-		}
-		if err := unix.Mount("cgroup", "/sys/fs/cgroup/"+cgroupName, "cgroup", unix.MS_NOEXEC|unix.MS_NOSUID|unix.MS_NODEV, cgroupName); err != nil {
-			panic(err)
-		}
-	}
-
-	// Enable hierarchical memory accounting
-	useMemoryHierarchy, err := os.OpenFile("/sys/fs/cgroup/memory/memory.use_hierarchy", os.O_RDWR, 0)
-	if err != nil {
+	if err := cgroups.WriteCgroupProc("/sys/fs/cgroup/everything", os.Getpid()); err != nil {
 		panic(err)
 	}
-	if _, err := useMemoryHierarchy.WriteString("1"); err != nil {
-		panic(err)
-	}
-	useMemoryHierarchy.Close()
 	return nil
 }
