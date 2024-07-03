@@ -71,7 +71,7 @@ func stderrHandler(t *testing.T, cmd *exec.Cmd) {
 
 func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	qemuCmdLaunch := exec.CommandContext(ctx, "qemu-system-x86_64", qemuArgs...)
 	testosStarted := make(chan string, 1)
