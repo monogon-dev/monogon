@@ -19,6 +19,7 @@ bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "rules_pkg", version = "0.10.1")
 bazel_dep(name = "rules_oci", version = "1.7.6")
 bazel_dep(name = "aspect_bazel_lib", version = "2.7.8")
+bazel_dep(name = "rules_multirun", version = "0.9.0")
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 

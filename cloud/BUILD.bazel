@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_multirun//:defs.bzl", "multirun")
 
 write_file(
     name = "tags_tmpl",
@@ -55,4 +56,15 @@ oci_push(
     image = "//cloud/shepherd/mini:mini_image",
     remote_tags = ":stamped",
     repository = "gcr.io/monogon-infra/cloud/shepherd/mini",
+)
+
+multirun(
+    name = "push",
+    commands = [
+        ":apigw_image",
+        ":shepherd_equinix",
+        ":bmsrv",
+        ":scruffy",
+        ":shepherd_mini",
+    ],
 )
