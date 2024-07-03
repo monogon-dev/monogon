@@ -26,7 +26,7 @@ cc_binary(
         "src/msdos_fs.h",
         ":version.h",
     ],
-    copts = ["-DHAVE_ENDIAN_H"],
+    copts = ["-DHAVE_ENDIAN_H", "-DHAVE_VASPRINTF"],
     visibility = ["//visibility:public"],
     includes = ["."],
 )

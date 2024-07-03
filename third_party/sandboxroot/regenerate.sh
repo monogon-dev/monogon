@@ -54,8 +54,8 @@ PKGS=(
   # Packages included to stabilize SAT solution when there are equal scores.
   "fedora-release-identity-container"
   "coreutils-single"
-  "curl-minimal"
-  "libcurl-minimal"
+  "curl"
+  "libcurl"
   "glibc-langpack-en"
   "selinux-policy-minimum"
 )

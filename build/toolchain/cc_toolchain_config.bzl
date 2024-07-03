@@ -199,7 +199,7 @@ host_cc_toolchain_config = rule(
         "is_glibc": attr.bool(default = True),
         "host_includes": attr.string_list(
             default = [
-                "/usr/lib/gcc/x86_64-redhat-linux/12/include/",
+                "/usr/lib/gcc/x86_64-redhat-linux/14/include/",
                 "/usr/include",
             ],
         ),

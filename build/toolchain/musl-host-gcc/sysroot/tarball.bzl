@@ -34,7 +34,7 @@ def _musl_gcc_tarball(ctx):
     linux_headers = ctx.file.linux_headers
     linux_headers_path = linux_headers.path
 
-    compiler_headers_path = "lib/gcc/x86_64-redhat-linux/12/include"
+    compiler_headers_path = "lib/gcc/x86_64-redhat-linux/14/include"
 
     musl_root = detect_root(ctx.attr.musl)
     musl_files = ctx.files.musl

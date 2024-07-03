@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000000..436f8c5cf3
 --- /dev/null
 +++ b/BUILD
-@@ -0,0 +1,1358 @@
+@@ -0,0 +1,1356 @@
 +load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 +load("@rules_python//python:defs.bzl", "py_binary")
 +load("@dev_source_monogon//build/utils:template_file.bzl", "template_file")
@@ -126,8 +126,6 @@ index 0000000000..436f8c5cf3
 +        "io/**/*.inc",
 +        "libdecnumber/**/*.h",
 +        "libdecnumber/**/*.inc",
-+        "linux-headers/**/*.h",
-+        "linux-headers/**/*.inc",
 +        "linux-user/**/*.h",
 +        "linux-user/**/*.inc",
 +        "migration/**/*.h",
@@ -1116,7 +1114,7 @@ index 0000000000..436f8c5cf3
 +        "@zlib//:zlib",
 +    ],
 +    visibility = ["//visibility:public"],
-+    includes = ["linux-headers", "include"],
++    includes = ["include"],
 +)
 +
 +cc_binary(
@@ -1262,7 +1260,7 @@ index 0000000000..436f8c5cf3
 +        "@zlib//:zlib",
 +    ],
 +    visibility = ["//visibility:public"],
-+    includes = ["target/i386", "tcg/i386", "accel/tcg", "linux-headers"],
++    includes = ["target/i386", "tcg/i386", "accel/tcg"],
 +)
 +
 +genrule(

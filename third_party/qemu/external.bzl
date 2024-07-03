@@ -29,6 +29,8 @@ def qemu_external(name, version):
             "//third_party/qemu/patches:bazel_support.patch",
             "//third_party/qemu/patches:pregenerated_config_files.patch",
             "//third_party/qemu/patches:headers_fix.patch",
+            "//third_party/qemu/patches:linux-headers-update.patch",
+            "//third_party/qemu/patches:standard-headers-removal.patch",
         ],
         sha256 = sums[version],
         strip_prefix = "qemu-" + version,

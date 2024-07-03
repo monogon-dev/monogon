@@ -493,7 +493,7 @@ index 000000000..a13711316
 +
 +#define HAVE_STRCASECMP 1
 +
-+#define HAVE_STRERROR_R 1
++#undef HAVE_STRERROR_R
 +
 +#define HAVE_STRINGS_H 1
 +
@@ -640,7 +640,7 @@ index 000000000..a13711316
 +#define STATFS_ARGS 2
 +
 +/* Defined if strerror_r returns char * */
-+#define STRERROR_R_CHAR_P 1
++#undef STRERROR_R_CHAR_P
 +
 +#define THREADS_POSIX 1
 +

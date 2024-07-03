@@ -198,7 +198,7 @@ def _efi_k8_cc_toolchain_impl(ctx):
         features = [default_link_flags_feature, default_compile_flags_feature, hybrid_gnu_msvc_feature, lto_feature],
         # Needed for various compiler built-in headers and auxiliary data. No system libraries are being used.
         cxx_builtin_include_directories = [
-            "/usr/lib64/clang",
+            "/usr/lib/clang/18/include/"
         ],
         toolchain_identifier = "k8-toolchain",
         host_system_name = "local",
