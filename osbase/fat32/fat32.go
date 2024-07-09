@@ -345,26 +345,91 @@ func (i *Inode) placeRecursively(p *planningState) error {
 // WriteFS writes a filesystem described by a root inode and its children to a
 // given io.Writer.
 func WriteFS(w io.Writer, rootInode Inode, opts Options) error {
+	bs, fsi, p, err := prepareFS(&opts, rootInode)
+	if err != nil {
+		return err
+	}
+
+	wb := newBlockWriter(w)
+
+	// Write superblock
+	if err := binary.Write(wb, binary.LittleEndian, bs); err != nil {
+		return err
+	}
+	if err := wb.FinishBlock(int64(opts.BlockSize), true); err != nil {
+		return err
+	}
+	if err := binary.Write(wb, binary.LittleEndian, fsi); err != nil {
+		return err
+	}
+	if err := wb.FinishBlock(int64(opts.BlockSize), true); err != nil {
+		return err
+	}
+
+	block := make([]byte, opts.BlockSize)
+	for i := 0; i < 4; i++ {
+		if _, err := wb.Write(block); err != nil {
+			return err
+		}
+	}
+	// Backup of superblock at block 6
+	if err := binary.Write(wb, binary.LittleEndian, bs); err != nil {
+		return err
+	}
+	if err := wb.FinishBlock(int64(opts.BlockSize), true); err != nil {
+		return err
+	}
+	if err := binary.Write(wb, binary.LittleEndian, fsi); err != nil {
+		return err
+	}
+	if err := wb.FinishBlock(int64(opts.BlockSize), true); err != nil {
+		return err
+	}
+
+	for i := uint8(0); i < bs.NumFATs; i++ {
+		if err := binary.Write(wb, binary.LittleEndian, p.fat); err != nil {
+			return err
+		}
+		if err := wb.FinishBlock(int64(opts.BlockSize), true); err != nil {
+			return err
+		}
+	}
+
+	for _, i := range p.orderedInodes {
+		if err := i.writeData(wb, bs.Label); err != nil {
+			return fmt.Errorf("failed to write inode %q: %v", i.Name, err)
+		}
+		if err := wb.FinishBlock(int64(opts.BlockSize)*int64(bs.BlocksPerCluster), false); err != nil {
+			return err
+		}
+	}
+	// Creatively use block writer to write out all empty data at the end
+	if err := wb.FinishBlock(int64(opts.BlockSize)*int64(bs.TotalBlocks), false); err != nil {
+		return err
+	}
+	return nil
+}
+
+func prepareFS(opts *Options, rootInode Inode) (*bootSector, *fsinfo, *planningState, error) {
 	if opts.BlockSize == 0 {
 		opts.BlockSize = 512
 	}
 	if bits.OnesCount16(opts.BlockSize) != 1 {
-		return fmt.Errorf("option BlockSize is not a power of two")
+		return nil, nil, nil, fmt.Errorf("option BlockSize is not a power of two")
 	}
 	if opts.BlockSize < 512 {
-		return fmt.Errorf("option BlockSize must be at least 512 bytes")
+		return nil, nil, nil, fmt.Errorf("option BlockSize must be at least 512 bytes")
 	}
 	if opts.ID == 0 {
 		var buf [4]byte
 		if _, err := rand.Read(buf[:]); err != nil {
-			return fmt.Errorf("failed to assign random FAT ID: %v", err)
+			return nil, nil, nil, fmt.Errorf("failed to assign random FAT ID: %v", err)
 		}
 		opts.ID = binary.BigEndian.Uint32(buf[:])
 	}
 	if rootInode.Attrs&AttrDirectory == 0 {
-		return errors.New("root inode must be a directory (i.e. have AttrDirectory set)")
+		return nil, nil, nil, errors.New("root inode must be a directory (i.e. have AttrDirectory set)")
 	}
-	wb := newBlockWriter(w)
 	bs := bootSector{
 		// Assembled x86_32 machine code corresponding to
 		// jmp $
@@ -401,7 +466,7 @@ func WriteFS(w io.Writer, rootInode Inode, opts Options) error {
 
 	copy(bs.Label[:], opts.Label)
 
-	fs := fsinfo{
+	fsi := fsinfo{
 		// Signatures
 		LeadSignature:     [4]byte{0x52, 0x52, 0x61, 0x41},
 		StructSignature:   [4]byte{0x72, 0x72, 0x41, 0x61},
@@ -426,12 +491,12 @@ func WriteFS(w io.Writer, rootInode Inode, opts Options) error {
 	p.fat = append(p.fat, 0x0fffff00|uint32(bs.MediaCode), 0x0fffffff)
 	err := rootInode.placeRecursively(&p)
 	if err != nil {
-		return err
+		return nil, nil, nil, err
 	}
 
 	allocClusters := len(p.fat)
 	if allocClusters >= fatMask&math.MaxUint32 {
-		return fmt.Errorf("filesystem contains more than 2^28 FAT entries, this is unsupported. Note that this package currently always creates minimal clusters")
+		return nil, nil, nil, fmt.Errorf("filesystem contains more than 2^28 FAT entries, this is unsupported. Note that this package currently always creates minimal clusters")
 	}
 
 	// Fill out FAT to minimum size for FAT32
@@ -446,7 +511,7 @@ func WriteFS(w io.Writer, rootInode Inode, opts Options) error {
 	if bs.TotalBlocks == 0 {
 		bs.TotalBlocks = occupiedBlocks
 	} else if bs.TotalBlocks < occupiedBlocks {
-		return fmt.Errorf("content (minimum %d blocks) would exceed number of blocks specified (%d blocks)", occupiedBlocks, bs.TotalBlocks)
+		return nil, nil, nil, fmt.Errorf("content (minimum %d blocks) would exceed number of blocks specified (%d blocks)", occupiedBlocks, bs.TotalBlocks)
 	} else { // Fixed-size file system with enough space
 		blocksToDistribute := bs.TotalBlocks - uint32(bs.ReservedBlocks)
 		// Number of data blocks which can be described by one metadata/FAT
@@ -469,65 +534,21 @@ func WriteFS(w io.Writer, rootInode Inode, opts Options) error {
 			p.fat = append(p.fat, fatFree)
 		}
 	}
-	fs.FreeCount = uint32(len(p.fat) - allocClusters)
-	if fs.FreeCount > 1 {
-		fs.NextFreeCluster = uint32(allocClusters) + 1
+	fsi.FreeCount = uint32(len(p.fat) - allocClusters)
+	if fsi.FreeCount > 1 {
+		fsi.NextFreeCluster = uint32(allocClusters) + 1
+	}
+	return &bs, &fsi, &p, nil
+}
+
+// SizeFS returns the number of blocks required to hold the filesystem defined
+// by rootInode and opts. This can be used for sizing calculations before
+// calling WriteFS.
+func SizeFS(rootInode Inode, opts Options) (int64, error) {
+	bs, _, _, err := prepareFS(&opts, rootInode)
+	if err != nil {
+		return 0, err
 	}
 
-	// Write superblock
-	if err := binary.Write(wb, binary.LittleEndian, bs); err != nil {
-		return err
-	}
-	if err := wb.FinishBlock(int64(opts.BlockSize), true); err != nil {
-		return err
-	}
-	if err := binary.Write(wb, binary.LittleEndian, fs); err != nil {
-		return err
-	}
-	if err := wb.FinishBlock(int64(opts.BlockSize), true); err != nil {
-		return err
-	}
-
-	block := make([]byte, opts.BlockSize)
-	for i := 0; i < 4; i++ {
-		if _, err := wb.Write(block); err != nil {
-			return err
-		}
-	}
-	// Backup of superblock at block 6
-	if err := binary.Write(wb, binary.LittleEndian, bs); err != nil {
-		return err
-	}
-	if err := wb.FinishBlock(int64(opts.BlockSize), true); err != nil {
-		return err
-	}
-	if err := binary.Write(wb, binary.LittleEndian, fs); err != nil {
-		return err
-	}
-	if err := wb.FinishBlock(int64(opts.BlockSize), true); err != nil {
-		return err
-	}
-
-	for i := uint8(0); i < bs.NumFATs; i++ {
-		if err := binary.Write(wb, binary.LittleEndian, p.fat); err != nil {
-			return err
-		}
-		if err := wb.FinishBlock(int64(opts.BlockSize), true); err != nil {
-			return err
-		}
-	}
-
-	for _, i := range p.orderedInodes {
-		if err := i.writeData(wb, bs.Label); err != nil {
-			return fmt.Errorf("failed to write inode %q: %v", i.Name, err)
-		}
-		if err := wb.FinishBlock(int64(opts.BlockSize)*int64(bs.BlocksPerCluster), false); err != nil {
-			return err
-		}
-	}
-	// Creatively use block writer to write out all empty data at the end
-	if err := wb.FinishBlock(int64(opts.BlockSize)*int64(bs.TotalBlocks), false); err != nil {
-		return err
-	}
-	return nil
+	return int64(bs.TotalBlocks), nil
 }
