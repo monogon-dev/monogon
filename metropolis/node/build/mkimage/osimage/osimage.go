@@ -94,85 +94,35 @@ type Params struct {
 	PartitionSize PartitionSizeInfo
 }
 
-const Mi = 1024 * 1024
+type plan struct {
+	*Params
+	rootInode        fat32.Inode
+	tbl              *gpt.Table
+	efiPartition     *gpt.Partition
+	systemPartitionA *gpt.Partition
+	systemPartitionB *gpt.Partition
+	dataPartition    *gpt.Partition
+}
 
-// Create writes a Metropolis OS image to a block device.
-func Create(params *Params) (*efivarfs.LoadOption, error) {
+// Apply actually writes the planned installation to the blockdevice.
+func (i *plan) Apply() (*efivarfs.LoadOption, error) {
 	// Discard the entire device, we're going to write new data over it.
 	// Ignore errors, this is only advisory.
-	params.Output.Discard(0, params.Output.BlockCount()*params.Output.BlockSize())
+	i.Output.Discard(0, i.Output.BlockCount()*i.Output.BlockSize())
 
-	tbl, err := gpt.New(params.Output)
-	if err != nil {
-		return nil, fmt.Errorf("invalid block device: %w", err)
-	}
-	tbl.ID = params.DiskGUID
-	esp := gpt.Partition{
-		Type: gpt.PartitionTypeEFISystem,
-		Name: ESPLabel,
-	}
-	if err := tbl.AddPartition(&esp, params.PartitionSize.ESP*Mi); err != nil {
-		return nil, fmt.Errorf("failed to allocate ESP: %w", err)
-	}
-
-	rootInode := fat32.Inode{
-		Attrs: fat32.AttrDirectory,
-	}
-	if err := rootInode.PlaceFile(strings.TrimPrefix(EFIBootAPath, "/"), params.EFIPayload); err != nil {
-		return nil, err
-	}
-	// Place the A/B loader at the EFI bootloader autodiscovery path.
-	if err := rootInode.PlaceFile(strings.TrimPrefix(EFIPayloadPath, "/"), params.ABLoader); err != nil {
-		return nil, err
-	}
-	if params.NodeParameters != nil {
-		if err := rootInode.PlaceFile(nodeParamsPath, params.NodeParameters); err != nil {
-			return nil, err
-		}
-	}
-	if err := fat32.WriteFS(blockdev.NewRWS(esp), rootInode, fat32.Options{
-		BlockSize:  uint16(esp.BlockSize()),
-		BlockCount: uint32(esp.BlockCount()),
+	if err := fat32.WriteFS(blockdev.NewRWS(i.efiPartition), i.rootInode, fat32.Options{
+		BlockSize:  uint16(i.efiPartition.BlockSize()),
+		BlockCount: uint32(i.efiPartition.BlockCount()),
 		Label:      "MNGN_BOOT",
 	}); err != nil {
 		return nil, fmt.Errorf("failed to write FAT32: %w", err)
 	}
 
-	// Create the system partition only if its size is specified.
-	if params.PartitionSize.System != 0 && params.SystemImage != nil {
-		systemPartitionA := gpt.Partition{
-			Type: SystemAType,
-			Name: SystemALabel,
-		}
-		if err := tbl.AddPartition(&systemPartitionA, params.PartitionSize.System*Mi); err != nil {
-			return nil, fmt.Errorf("failed to allocate system partition A: %w", err)
-		}
-		if _, err := io.Copy(blockdev.NewRWS(systemPartitionA), params.SystemImage); err != nil {
-			return nil, fmt.Errorf("failed to write system partition A: %w", err)
-		}
-		systemPartitionB := gpt.Partition{
-			Type: SystemBType,
-			Name: SystemBLabel,
-		}
-		if err := tbl.AddPartition(&systemPartitionB, params.PartitionSize.System*Mi); err != nil {
-			return nil, fmt.Errorf("failed to allocate system partition B: %w", err)
-		}
-	} else if params.PartitionSize.System == 0 && params.SystemImage != nil {
-		// Safeguard against contradicting parameters.
-		return nil, fmt.Errorf("the system image parameter was passed while the associated partition size is zero")
-	}
-	// Create the data partition only if its size is specified.
-	if params.PartitionSize.Data != 0 {
-		dataPartition := gpt.Partition{
-			Type: DataType,
-			Name: DataLabel,
-		}
-		if err := tbl.AddPartition(&dataPartition, -1); err != nil {
-			return nil, fmt.Errorf("failed to allocate data partition: %w", err)
-		}
+	if _, err := io.Copy(blockdev.NewRWS(i.systemPartitionA), i.SystemImage); err != nil {
+		return nil, fmt.Errorf("failed to write system partition A: %w", err)
 	}
 
-	if err := tbl.Write(); err != nil {
+	if err := i.tbl.Write(); err != nil {
 		return nil, fmt.Errorf("failed to write Table: %w", err)
 	}
 
@@ -182,13 +132,106 @@ func Create(params *Params) (*efivarfs.LoadOption, error) {
 		FilePath: efivarfs.DevicePath{
 			&efivarfs.HardDrivePath{
 				PartitionNumber:     1,
-				PartitionStartBlock: esp.FirstBlock,
-				PartitionSizeBlocks: esp.SizeBlocks(),
+				PartitionStartBlock: i.efiPartition.FirstBlock,
+				PartitionSizeBlocks: i.efiPartition.SizeBlocks(),
 				PartitionMatch: efivarfs.PartitionGPT{
-					PartitionUUID: esp.ID,
+					PartitionUUID: i.efiPartition.ID,
 				},
 			},
 			efivarfs.FilePath(EFIPayloadPath),
 		},
 	}, nil
+}
+
+// Plan allows to prepare an installation without modifying any data on the
+// system. To apply the planned installation, call Apply on the returned plan.
+func Plan(p *Params) (*plan, error) {
+	params := &plan{Params: p}
+
+	var err error
+	params.tbl, err = gpt.New(params.Output)
+	if err != nil {
+		return nil, fmt.Errorf("invalid block device: %w", err)
+	}
+
+	params.tbl.ID = params.DiskGUID
+	params.efiPartition = &gpt.Partition{
+		Type: gpt.PartitionTypeEFISystem,
+		Name: ESPLabel,
+	}
+
+	if err := params.tbl.AddPartition(params.efiPartition, params.PartitionSize.ESP*Mi); err != nil {
+		return nil, fmt.Errorf("failed to allocate ESP: %w", err)
+	}
+
+	params.rootInode = fat32.Inode{
+		Attrs: fat32.AttrDirectory,
+	}
+	if err := params.rootInode.PlaceFile(strings.TrimPrefix(EFIBootAPath, "/"), params.EFIPayload); err != nil {
+		return nil, err
+	}
+	// Place the A/B loader at the EFI bootloader autodiscovery path.
+	if err := params.rootInode.PlaceFile(strings.TrimPrefix(EFIPayloadPath, "/"), params.ABLoader); err != nil {
+		return nil, err
+	}
+	if params.NodeParameters != nil {
+		if err := params.rootInode.PlaceFile(nodeParamsPath, params.NodeParameters); err != nil {
+			return nil, err
+		}
+	}
+
+	// Try to layout the fat32 partition. If it detects that the disk is too
+	// small, an error will be returned.
+	if _, err := fat32.SizeFS(params.rootInode, fat32.Options{
+		BlockSize:  uint16(params.efiPartition.BlockSize()),
+		BlockCount: uint32(params.efiPartition.BlockCount()),
+		Label:      "MNGN_BOOT",
+	}); err != nil {
+		return nil, fmt.Errorf("failed to calculate size of FAT32: %w", err)
+	}
+
+	// Create the system partition only if its size is specified.
+	if params.PartitionSize.System != 0 && params.SystemImage != nil {
+		params.systemPartitionA = &gpt.Partition{
+			Type: SystemAType,
+			Name: SystemALabel,
+		}
+		if err := params.tbl.AddPartition(params.systemPartitionA, params.PartitionSize.System*Mi); err != nil {
+			return nil, fmt.Errorf("failed to allocate system partition A: %w", err)
+		}
+		params.systemPartitionB = &gpt.Partition{
+			Type: SystemBType,
+			Name: SystemBLabel,
+		}
+		if err := params.tbl.AddPartition(params.systemPartitionB, params.PartitionSize.System*Mi); err != nil {
+			return nil, fmt.Errorf("failed to allocate system partition B: %w", err)
+		}
+	} else if params.PartitionSize.System == 0 && params.SystemImage != nil {
+		// Safeguard against contradicting parameters.
+		return nil, fmt.Errorf("the system image parameter was passed while the associated partition size is zero")
+	}
+	// Create the data partition only if its size is specified.
+	if params.PartitionSize.Data != 0 {
+		params.dataPartition = &gpt.Partition{
+			Type: DataType,
+			Name: DataLabel,
+		}
+		if err := params.tbl.AddPartition(params.dataPartition, -1); err != nil {
+			return nil, fmt.Errorf("failed to allocate data partition: %w", err)
+		}
+	}
+
+	return params, nil
+}
+
+const Mi = 1024 * 1024
+
+// Create writes a Metropolis OS image to a block device.
+func Create(params *Params) (*efivarfs.LoadOption, error) {
+	p, err := Plan(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.Apply()
 }
