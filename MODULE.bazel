@@ -5,20 +5,20 @@
 # For more details, please check https://github.com/bazelbuild/bazel/issues/18958
 ###############################################################################
 
-bazel_dep(name = "platforms", version = "0.0.8")
+bazel_dep(name = "platforms")
 single_version_override(
     module_name = "platforms",
-    version = "0.0.8",
+    version = "0.0.10",
     patches = [
         "//third_party:platforms-add-uefi.patch",
     ],
     patch_strip = 1,
 )
 
-bazel_dep(name = "bazel_skylib", version = "1.5.0")
-bazel_dep(name = "rules_pkg", version = "0.9.1")
-bazel_dep(name = "rules_oci", version = "1.6.0")
-bazel_dep(name = "aspect_bazel_lib", version = "2.4.1")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "rules_pkg", version = "0.10.1")
+bazel_dep(name = "rules_oci", version = "1.7.6")
+bazel_dep(name = "aspect_bazel_lib", version = "2.7.8")
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 
