@@ -129,7 +129,7 @@ type BroadcastTransport interface {
 	Open() error
 }
 
-type LeaseCallback func(old, new *Lease) error
+type LeaseCallback func(*Lease) error
 
 // Client implements a DHCPv4 client.
 //
@@ -652,7 +652,7 @@ func (c *Client) Run(ctx context.Context) error {
 func (c *Client) cleanup() {
 	c.unicastConn.Close()
 	if c.lease != nil {
-		c.LeaseCallback(leaseFromAck(c.lease, c.leaseDeadline), nil)
+		c.LeaseCallback(nil)
 	}
 	c.broadcastConn.Close()
 }
@@ -670,11 +670,11 @@ func (c *Client) leaseToDiscovering() error {
 		}
 	}
 	c.state = stateDiscovering
+	c.lease = nil
 	c.DiscoverBackoff.Reset()
-	if err := c.LeaseCallback(leaseFromAck(c.lease, c.leaseDeadline), nil); err != nil {
+	if err := c.LeaseCallback(nil); err != nil {
 		return fmt.Errorf("lease callback failed: %w", err)
 	}
-	c.lease = nil
 	return nil
 }
 
@@ -688,12 +688,11 @@ func leaseFromAck(ack *dhcpv4.DHCPv4, expiresAt time.Time) *Lease {
 func (c *Client) transitionToBound(ack *dhcpv4.DHCPv4, sentTime time.Time) error {
 	// Guaranteed to exist, leases without a lease time are filtered
 	leaseTime := ack.IPAddressLeaseTime(0)
-	origLeaseDeadline := c.leaseDeadline
 	c.leaseDeadline = sentTime.Add(leaseTime)
 	c.leaseBoundDeadline = sentTime.Add(ack.IPAddressRenewalTime(time.Duration(float64(leaseTime) * 0.5)))
 	c.leaseRenewDeadline = sentTime.Add(ack.IPAddressRebindingTime(time.Duration(float64(leaseTime) * 0.85)))
 
-	if err := c.LeaseCallback(leaseFromAck(c.lease, origLeaseDeadline), leaseFromAck(ack, c.leaseDeadline)); err != nil {
+	if err := c.LeaseCallback(leaseFromAck(ack, c.leaseDeadline)); err != nil {
 		return fmt.Errorf("lease callback failed: %w", err)
 	}
 

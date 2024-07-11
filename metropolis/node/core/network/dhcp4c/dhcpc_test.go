@@ -264,9 +264,8 @@ func TestRequestingBound(t *testing.T) {
 
 	p.bmt.sendPackets(offer)
 	p.c.offer = offer
-	p.c.LeaseCallback = func(old, new *Lease) error {
-		assert.Nil(t, old, "old lease is not nil for new lease")
-		assert.Equal(t, testIP, new.AssignedIP, "new lease has wrong IP")
+	p.c.LeaseCallback = func(lease *Lease) error {
+		assert.Equal(t, testIP, lease.AssignedIP, "new lease has wrong IP")
 		return nil
 	}
 
@@ -319,10 +318,9 @@ func TestDiscoverRapidCommit(t *testing.T) {
 	offer.YourIPAddr = testIP
 
 	p := newPuppetClient(stateDiscovering)
-	p.c.LeaseCallback = func(old, new *Lease) error {
-		assert.Nil(t, old, "old is not nil")
-		assert.Equal(t, testIP, new.AssignedIP, "callback called with wrong IP")
-		assert.Equal(t, p.ft.Now().Add(leaseTime), new.ExpiresAt, "invalid ExpiresAt")
+	p.c.LeaseCallback = func(lease *Lease) error {
+		assert.Equal(t, testIP, lease.AssignedIP, "callback called with wrong IP")
+		assert.Equal(t, p.ft.Now().Add(leaseTime), lease.ExpiresAt, "invalid ExpiresAt")
 		return nil
 	}
 	p.bmt.sendPackets(offer)
@@ -372,12 +370,10 @@ func TestBoundRenewingBound(t *testing.T) {
 	assert.Equal(t, stateRenewing, p.c.state, "DHCP client not renewing")
 	offer.UpdateOption(dhcpv4.OptGeneric(TestOption(1), []byte{0x12}))
 	p.umt.sendPackets(offer)
-	p.c.LeaseCallback = func(old, new *Lease) error {
-		assert.Equal(t, testIP, old.AssignedIP, "callback called with wrong old IP")
-		assert.Equal(t, testIP, new.AssignedIP, "callback called with wrong IP")
-		assert.Equal(t, p.ft.Now().Add(leaseTime), new.ExpiresAt, "invalid ExpiresAt")
-		assert.Empty(t, old.Options.Get(TestOption(1)), "old contains options from new")
-		assert.Equal(t, []byte{0x12}, new.Options.Get(TestOption(1)), "renewal didn't add new option")
+	p.c.LeaseCallback = func(lease *Lease) error {
+		assert.Equal(t, testIP, lease.AssignedIP, "callback called with wrong IP")
+		assert.Equal(t, p.ft.Now().Add(leaseTime), lease.ExpiresAt, "invalid ExpiresAt")
+		assert.Equal(t, []byte{0x12}, lease.Options.Get(TestOption(1)), "renewal didn't add new option")
 		return nil
 	}
 	if err := p.c.runState(context.Background()); err != nil {
@@ -410,7 +406,7 @@ func TestRenewingRebinding(t *testing.T) {
 	startTime := p.ft.Now()
 	p.ft.Advance(5 * time.Second)
 
-	p.c.LeaseCallback = func(old, new *Lease) error {
+	p.c.LeaseCallback = func(*Lease) error {
 		t.Fatal("Lease callback called without valid offer")
 		return nil
 	}
@@ -462,12 +458,10 @@ func TestRebindingBound(t *testing.T) {
 	offer.UpdateOption(dhcpv4.OptGeneric(TestOption(1), []byte{0x12})) // Mark answer
 	p.bmt.sendPackets(offer)
 	p.bmt.sentPacket = nil
-	p.c.LeaseCallback = func(old, new *Lease) error {
-		assert.Equal(t, testIP, old.AssignedIP, "callback called with wrong old IP")
-		assert.Equal(t, testIP, new.AssignedIP, "callback called with wrong IP")
-		assert.Equal(t, p.ft.Now().Add(leaseTime), new.ExpiresAt, "invalid ExpiresAt")
-		assert.Empty(t, old.Options.Get(TestOption(1)), "old contains options from new")
-		assert.Equal(t, []byte{0x12}, new.Options.Get(TestOption(1)), "renewal didn't add new option")
+	p.c.LeaseCallback = func(lease *Lease) error {
+		assert.Equal(t, testIP, lease.AssignedIP, "callback called with wrong IP")
+		assert.Equal(t, p.ft.Now().Add(leaseTime), lease.ExpiresAt, "invalid ExpiresAt")
+		assert.Equal(t, []byte{0x12}, lease.Options.Get(TestOption(1)), "renewal didn't add new option")
 		return nil
 	}
 	if err := p.c.runState(context.Background()); err != nil {
@@ -495,9 +489,8 @@ func TestRebindingDiscovering(t *testing.T) {
 	p.c.leaseDeadline = p.ft.Now().Add(10000 * time.Millisecond)
 
 	p.ft.Advance(9 * time.Second)
-	p.c.LeaseCallback = func(old, new *Lease) error {
-		assert.Equal(t, testIP, old.AssignedIP, "callback called with wrong old IP")
-		assert.Nil(t, new, "transition to discovering didn't clear new lease on callback")
+	p.c.LeaseCallback = func(lease *Lease) error {
+		assert.Nil(t, lease, "transition to discovering didn't clear new lease on callback")
 		return nil
 	}
 	for i := 0; i < 10; i++ {

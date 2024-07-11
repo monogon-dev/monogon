@@ -58,24 +58,22 @@ func TestAssignedIPCallback(t *testing.T) {
 	}
 
 	var tests = []struct {
-		name               string
-		initialAddrs       []netlink.Addr
-		oldLease, newLease *dhcp4c.Lease
-		expectedAddrs      []netlink.Addr
+		name          string
+		initialAddrs  []netlink.Addr
+		newLease      *dhcp4c.Lease
+		expectedAddrs []netlink.Addr
 	}{
 		// Lifetimes are necessary, otherwise the Kernel sets the
 		// IFA_F_PERMANENT flag behind our back.
 		{
 			name:          "RemoveOldIPs",
 			initialAddrs:  []netlink.Addr{{IPNet: &testNet1, ValidLft: 60}, {IPNet: &testNet2, ValidLft: 60}},
-			oldLease:      nil,
 			newLease:      nil,
 			expectedAddrs: nil,
 		},
 		{
 			name:         "IgnoresPermanentIPs",
 			initialAddrs: []netlink.Addr{{IPNet: &testNet1, Flags: unix.IFA_F_PERMANENT}, {IPNet: &testNet2, ValidLft: 60}},
-			oldLease:     nil,
 			newLease:     trivialLeaseFromNet(testNet2),
 			expectedAddrs: []netlink.Addr{
 				{IPNet: &testNet1, Flags: unix.IFA_F_PERMANENT, ValidLft: math.MaxUint32, PreferedLft: math.MaxUint32, Broadcast: testNet1Broadcast},
@@ -85,7 +83,6 @@ func TestAssignedIPCallback(t *testing.T) {
 		{
 			name:         "AssignsNewIP",
 			initialAddrs: []netlink.Addr{},
-			oldLease:     nil,
 			newLease:     trivialLeaseFromNet(testNet2),
 			expectedAddrs: []netlink.Addr{
 				{IPNet: &testNet2, ValidLft: 1, PreferedLft: 1, Broadcast: testNet2Broadcast},
@@ -94,7 +91,6 @@ func TestAssignedIPCallback(t *testing.T) {
 		{
 			name:         "UpdatesIP",
 			initialAddrs: []netlink.Addr{},
-			oldLease:     trivialLeaseFromNet(testNet2),
 			newLease:     trivialLeaseFromNet(testNet1),
 			expectedAddrs: []netlink.Addr{
 				{IPNet: &testNet1, ValidLft: 1, PreferedLft: 1, Broadcast: testNet1Broadcast},
@@ -103,7 +99,6 @@ func TestAssignedIPCallback(t *testing.T) {
 		{
 			name:          "RemovesIPOnRelease",
 			initialAddrs:  []netlink.Addr{{IPNet: &testNet1, ValidLft: 60, PreferedLft: 60}},
-			oldLease:      trivialLeaseFromNet(testNet1),
 			newLease:      nil,
 			expectedAddrs: nil,
 		},
@@ -131,7 +126,7 @@ func TestAssignedIPCallback(t *testing.T) {
 				test.expectedAddrs[i].LinkIndex = testLink.Index
 			}
 			cb := ManageIP(testLink)
-			if err := cb(test.oldLease, test.newLease); err != nil {
+			if err := cb(test.newLease); err != nil {
 				t.Fatalf("callback returned an error: %v", err)
 			}
 			addrs, err := netlink.AddrList(testLink, netlink.FAMILY_V4)
@@ -179,15 +174,14 @@ func TestDefaultRouteCallback(t *testing.T) {
 	// correct link index for this test interface at runtime for both
 	// initialRoutes and expectedRoutes.
 	var tests = []struct {
-		name               string
-		initialRoutes      []netlink.Route
-		oldLease, newLease *dhcp4c.Lease
-		expectedRoutes     []netlink.Route
+		name           string
+		initialRoutes  []netlink.Route
+		newLease       *dhcp4c.Lease
+		expectedRoutes []netlink.Route
 	}{
 		{
 			name:          "AddsDefaultRoute",
 			initialRoutes: []netlink.Route{},
-			oldLease:      nil,
 			newLease:      leaseAddRouter(trivialLeaseFromNet(testNet1), testNet1Router),
 			expectedRoutes: []netlink.Route{{
 				Protocol: unix.RTPROT_DHCP,
@@ -205,7 +199,6 @@ func TestDefaultRouteCallback(t *testing.T) {
 		{
 			name:           "IgnoresLeasesWithoutRouter",
 			initialRoutes:  []netlink.Route{},
-			oldLease:       nil,
 			newLease:       trivialLeaseFromNet(testNet1),
 			expectedRoutes: nil,
 		},
@@ -219,7 +212,6 @@ func TestDefaultRouteCallback(t *testing.T) {
 				Gw:        testNet2Router,
 				Scope:     netlink.SCOPE_UNIVERSE,
 			}},
-			oldLease:       nil,
 			newLease:       nil,
 			expectedRoutes: nil,
 		},
@@ -232,7 +224,6 @@ func TestDefaultRouteCallback(t *testing.T) {
 				Protocol:  unix.RTPROT_BIRD,
 				Gw:        testNet2Router,
 			}},
-			oldLease: trivialLeaseFromNet(testNet1),
 			newLease: nil,
 			expectedRoutes: []netlink.Route{{
 				Protocol:  unix.RTPROT_BIRD,
@@ -253,7 +244,6 @@ func TestDefaultRouteCallback(t *testing.T) {
 				Protocol:  unix.RTPROT_DHCP,
 				Gw:        testNet2Router,
 			}},
-			oldLease:       leaseAddRouter(trivialLeaseFromNet(testNet2), testNet2Router),
 			newLease:       nil,
 			expectedRoutes: nil,
 		},
@@ -267,7 +257,6 @@ func TestDefaultRouteCallback(t *testing.T) {
 				Src:       testNet1.IP,
 				Gw:        testNet1Router,
 			}},
-			oldLease: leaseAddRouter(trivialLeaseFromNet(testNet1), testNet1Router),
 			newLease: leaseAddRouter(trivialLeaseFromNet(testNet2), testNet2Router),
 			expectedRoutes: []netlink.Route{{
 				Protocol:  unix.RTPROT_DHCP,
@@ -283,7 +272,6 @@ func TestDefaultRouteCallback(t *testing.T) {
 		{
 			name:          "AddsClasslessStaticRoutes",
 			initialRoutes: []netlink.Route{},
-			oldLease:      nil,
 			newLease: leaseAddClasslessRoutes(
 				// Router should be ignored
 				leaseAddRouter(trivialLeaseFromNet(testNet1), testNet1Router),
@@ -359,7 +347,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 			}
 
 			cb := ManageRoutes(testLink)
-			if err := cb(test.oldLease, test.newLease); err != nil {
+			if err := cb(test.newLease); err != nil {
 				t.Fatalf("callback returned an error: %v", err)
 			}
 			routes, err := netlink.RouteListFiltered(netlink.FAMILY_V4, &netlink.Route{}, 0)

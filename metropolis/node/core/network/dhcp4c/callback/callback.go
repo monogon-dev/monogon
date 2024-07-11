@@ -43,9 +43,9 @@ import (
 
 // Compose can be used to chain multiple callbacks
 func Compose(callbacks ...dhcp4c.LeaseCallback) dhcp4c.LeaseCallback {
-	return func(old, new *dhcp4c.Lease) error {
+	return func(lease *dhcp4c.Lease) error {
 		for _, cb := range callbacks {
-			if err := cb(old, new); err != nil {
+			if err := cb(lease); err != nil {
 				return err
 			}
 		}
@@ -70,8 +70,8 @@ func isIPNetEqual(a, b *net.IPNet) bool {
 // IFA_F_PERMANENT set, so it's not possible to run multiple dynamic addressing
 // clients on a single interface.
 func ManageIP(iface netlink.Link) dhcp4c.LeaseCallback {
-	return func(old, new *dhcp4c.Lease) error {
-		newNet := new.IPNet()
+	return func(lease *dhcp4c.Lease) error {
+		newNet := lease.IPNet()
 
 		addrs, err := netlink.AddrList(iface, netlink.FAMILY_V4)
 		if err != nil {
@@ -85,7 +85,7 @@ func ManageIP(iface netlink.Link) dhcp4c.LeaseCallback {
 				// So don't touch addresses which match on these properties as
 				// AddrReplace will atomically reconfigure them anyways without
 				// interrupting things.
-				if isIPNetEqual(addr.IPNet, newNet) && addr.Peer == nil && new != nil {
+				if isIPNetEqual(addr.IPNet, newNet) && addr.Peer == nil && lease != nil {
 					continue
 				}
 
@@ -95,10 +95,9 @@ func ManageIP(iface netlink.Link) dhcp4c.LeaseCallback {
 			}
 		}
 
-		if new != nil {
-
-			remainingLifetimeSecs := int(math.Ceil(time.Until(new.ExpiresAt).Seconds()))
-			newBroadcastIP := dhcpv4.GetIP(dhcpv4.OptionBroadcastAddress, new.Options)
+		if lease != nil {
+			remainingLifetimeSecs := int(math.Ceil(time.Until(lease.ExpiresAt).Seconds()))
+			newBroadcastIP := dhcpv4.GetIP(dhcpv4.OptionBroadcastAddress, lease.Options)
 			if err := netlink.AddrReplace(iface, &netlink.Addr{
 				IPNet:       newNet,
 				ValidLft:    remainingLifetimeSecs,
@@ -117,8 +116,8 @@ func ManageIP(iface netlink.Link) dhcp4c.LeaseCallback {
 // It takes ownership of all RTPROTO_DHCP routes on the given interface, so it's
 // not possible to run multiple DHCP clients on the given interface.
 func ManageRoutes(iface netlink.Link) dhcp4c.LeaseCallback {
-	return func(old, new *dhcp4c.Lease) error {
-		newRoutes := new.Routes()
+	return func(lease *dhcp4c.Lease) error {
+		newRoutes := lease.Routes()
 
 		dhcpRoutes, err := netlink.RouteListFiltered(netlink.FAMILY_V4, &netlink.Route{
 			Protocol:  unix.RTPROT_DHCP,
@@ -155,7 +154,7 @@ func ManageRoutes(iface netlink.Link) dhcp4c.LeaseCallback {
 				Protocol:  unix.RTPROT_DHCP,
 				Dst:       route.Dest,
 				Gw:        route.Router,
-				Src:       new.AssignedIP,
+				Src:       lease.AssignedIP,
 				LinkIndex: iface.Attrs().Index,
 				Scope:     netlink.SCOPE_UNIVERSE,
 			}

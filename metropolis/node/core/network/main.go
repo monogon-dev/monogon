@@ -62,6 +62,10 @@ type Service struct {
 
 	// dhcp client for the 'main' interface of the node.
 	dhcp *dhcp4c.Client
+	// dhcpAddress is the current address obtained from DHCP.
+	dhcpAddress net.IP
+	// dnsServers are the current DNS servers obtained from DHCP.
+	dnsServers dhcp4c.DNSServers
 
 	// nftConn is a shared file descriptor handle to nftables, automatically
 	// initialized on first use.
@@ -92,7 +96,6 @@ func New(staticConfig *netpb.Net) *Service {
 // meaningful to them.
 type Status struct {
 	ExternalAddress net.IP
-	DNSServers      dhcp4c.DNSServers
 }
 
 // ConfigureDNS sets a DNS ExtraDirective on the built-in DNS server of the
@@ -138,19 +141,33 @@ func nfifname(n string) []byte {
 // current lease to the rest of Metropolis. It updates the DNS service's
 // configuration to use the received upstream servers, and notifies the rest of
 // Metropolis via en event value that the network configuration has changed.
-func (s *Service) statusCallback(old, new *dhcp4c.Lease) error {
-	// Reconfigure DNS if needed.
-	oldServers := old.DNSServers()
-	newServers := new.DNSServers()
-	if !newServers.Equal(oldServers) {
-		s.ConfigureDNS(dns.NewUpstreamDirective(newServers))
+func (s *Service) statusCallback(ctx context.Context) dhcp4c.LeaseCallback {
+	return func(lease *dhcp4c.Lease) error {
+		// Reconfigure DNS if needed.
+		newServers := lease.DNSServers()
+		if !newServers.Equal(s.dnsServers) {
+			s.dnsServers = newServers
+			s.ConfigureDNS(dns.NewUpstreamDirective(newServers))
+		}
+
+		var newAddress net.IP
+		if lease != nil {
+			newAddress = lease.AssignedIP
+		}
+		if !newAddress.Equal(s.dhcpAddress) {
+			s.dhcpAddress = newAddress
+			// Notify status waiters.
+			s.Status.Set(&Status{
+				ExternalAddress: newAddress,
+			})
+			if newAddress != nil {
+				supervisor.Logger(ctx).Infof("New DHCP address: %s", newAddress)
+			} else {
+				supervisor.Logger(ctx).Warning("Lost DHCP address")
+			}
+		}
+		return nil
 	}
-	// Notify status waiters.
-	s.Status.Set(&Status{
-		ExternalAddress: new.AssignedIP,
-		DNSServers:      new.DNSServers(),
-	})
-	return nil
 }
 
 func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
@@ -161,12 +178,7 @@ func (s *Service) useInterface(ctx context.Context, iface netlink.Link) error {
 	}
 	s.dhcp.VendorClassIdentifier = s.DHCPVendorClassID
 	s.dhcp.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter, dhcpv4.OptionDomainNameServer, dhcpv4.OptionClasslessStaticRoute}
-	s.dhcp.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(iface), dhcpcb.ManageRoutes(iface), s.statusCallback, func(old, new *dhcp4c.Lease) error {
-		if old == nil || !old.AssignedIP.Equal(new.AssignedIP) {
-			supervisor.Logger(ctx).Infof("New DHCP address: %s", new.AssignedIP.String())
-		}
-		return nil
-	})
+	s.dhcp.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(iface), dhcpcb.ManageRoutes(iface), s.statusCallback(ctx))
 	err = supervisor.Run(ctx, "dhcp", s.dhcp.Run)
 	if err != nil {
 		return err

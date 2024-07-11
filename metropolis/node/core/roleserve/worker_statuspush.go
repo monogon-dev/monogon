@@ -126,6 +126,9 @@ func (s *workerStatusPush) run(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("getting network status failed: %w", err)
 			}
+			if st.ExternalAddress == nil {
+				continue
+			}
 			select {
 			case chans.address <- st.ExternalAddress.String():
 			case <-ctx.Done():
