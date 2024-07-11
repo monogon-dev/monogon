@@ -8,11 +8,11 @@
 bazel_dep(name = "platforms")
 single_version_override(
     module_name = "platforms",
-    version = "0.0.10",
+    patch_strip = 1,
     patches = [
         "//third_party:platforms-add-uefi.patch",
     ],
-    patch_strip = 1,
+    version = "0.0.10",
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
@@ -31,7 +31,10 @@ oci.pull(
     # values which you can use here in place of 'tag' to pin for reproducibility.
     digest = "sha256:6c1e34e2f084fe6df17b8bceb1416f1e11af0fcdb1cef11ee4ac8ae127cb507c",
     image = "gcr.io/distroless/base",
-    platforms = ["linux/amd64", "linux/arm64/v8"],
+    platforms = [
+        "linux/amd64",
+        "linux/arm64/v8",
+    ],
 )
 
 # For each oci.pull call, repeat the "name" here to expose them as dependencies.
