@@ -76,7 +76,7 @@ require (
 	github.com/adrg/xdg v0.4.0
 	github.com/bazelbuild/rules_go v0.43.0
 	github.com/cavaliergopher/cpio v1.0.1
-	github.com/cenkalti/backoff/v4 v4.2.1
+	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cockroachdb/cockroach-go/v2 v2.2.10
 	github.com/container-storage-interface/spec v1.8.0
 	github.com/containerd/containerd v1.7.15

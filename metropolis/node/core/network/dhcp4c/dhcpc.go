@@ -163,8 +163,6 @@ type Client struct {
 
 	state state
 
-	lastBoundTransition time.Time
-
 	iface *net.Interface
 
 	// now can be used to override time for testing
@@ -189,10 +187,9 @@ type Client struct {
 	leaseRenewDeadline time.Time
 }
 
-// newDefaultBackoff returns an infinitely-retrying randomized exponential
-// backoff with a DHCP-appropriate InitialInterval
-func newDefaultBackoff() *backoff.ExponentialBackOff {
-	b := backoff.NewExponentialBackOff()
+// defaultBackoffOpts can be passed to NewExponentialBackOff and configures it
+// to retry infinitely and use a DHCP-appropriate InitialInterval.
+func defaultBackoffOpts(b *backoff.ExponentialBackOff) {
 	b.MaxElapsedTime = 0 // No Timeout
 	// Lots of servers wait 1s for existing users of an IP. Wait at least for
 	// that and keep some slack for randomization, communication and processing
@@ -200,7 +197,6 @@ func newDefaultBackoff() *backoff.ExponentialBackOff {
 	b.InitialInterval = 1400 * time.Millisecond
 	b.MaxInterval = 30 * time.Second
 	b.RandomizationFactor = 0.2
-	return b
 }
 
 // NewClient instantiates (but doesn't start) a new DHCPv4 client.
@@ -221,19 +217,19 @@ func NewClient(iface *net.Interface) (*Client, error) {
 		return nil, fmt.Errorf("failed to create DHCP broadcast transport: %w", err)
 	}
 
-	discoverBackoff := newDefaultBackoff()
+	discoverBackoff := backoff.NewExponentialBackOff(defaultBackoffOpts)
 
-	acceptOfferBackoff := newDefaultBackoff()
-	// Abort after 30s and go back to discovering
-	acceptOfferBackoff.MaxElapsedTime = 30 * time.Second
+	acceptOfferBackoff := backoff.NewExponentialBackOff(defaultBackoffOpts,
+		// Abort after 30s and go back to discovering
+		backoff.WithMaxElapsedTime(30*time.Second))
 
-	renewBackoff := newDefaultBackoff()
-	// Increase maximum interval to reduce chatter when the server is down
-	renewBackoff.MaxInterval = 5 * time.Minute
+	renewBackoff := backoff.NewExponentialBackOff(defaultBackoffOpts,
+		// Increase maximum interval to reduce chatter when the server is down
+		backoff.WithMaxInterval(5*time.Minute))
 
-	rebindBackoff := newDefaultBackoff()
-	// Increase maximum interval to reduce chatter when the server is down
-	renewBackoff.MaxInterval = 5 * time.Minute
+	rebindBackoff := backoff.NewExponentialBackOff(defaultBackoffOpts,
+		// Increase maximum interval to reduce chatter when the server is down
+		backoff.WithMaxInterval(5*time.Minute))
 
 	// Check if the hardware address contains at least one non-zero value.
 	// This exists to catch undefined/non-supplied hardware address values,
@@ -250,17 +246,16 @@ func NewClient(iface *net.Interface) (*Client, error) {
 	}
 
 	return &Client{
-		state:               stateDiscovering,
-		broadcastConn:       broadcastConn,
-		unicastConn:         transport.NewUnicastTransport(iface),
-		iface:               iface,
-		RequestedOptions:    dhcpv4.OptionCodeList{},
-		lastBoundTransition: time.Now(),
-		now:                 time.Now,
-		DiscoverBackoff:     discoverBackoff,
-		AcceptOfferBackoff:  acceptOfferBackoff,
-		RenewBackoff:        renewBackoff,
-		RebindBackoff:       rebindBackoff,
+		state:              stateDiscovering,
+		broadcastConn:      broadcastConn,
+		unicastConn:        transport.NewUnicastTransport(iface),
+		iface:              iface,
+		RequestedOptions:   dhcpv4.OptionCodeList{},
+		now:                time.Now,
+		DiscoverBackoff:    discoverBackoff,
+		AcceptOfferBackoff: acceptOfferBackoff,
+		RenewBackoff:       renewBackoff,
+		RebindBackoff:      rebindBackoff,
 	}, nil
 }
 
@@ -453,14 +448,14 @@ func (c *Client) runTransactionState(s transactionStateSpec) error {
 	receiveDeadline := sentTime.Add(wait)
 	if !s.stateDeadline.IsZero() {
 		receiveDeadline = earliestDeadline(s.stateDeadline, receiveDeadline)
-	}
 
-	// Jump out if deadline expires in less than 10ms. Minimum lease time is 1s
-	// and if we have less than 10ms to wait for an answer before switching
-	// state it makes no sense to send out another request. This nearly
-	// eliminates the problem of sending two different requests back-to-back.
-	if receiveDeadline.Add(-10 * time.Millisecond).Before(sentTime) {
-		return s.stateDeadlineExceeded()
+		// Jump out if deadline expires in less than 10ms. Minimum lease time is 1s
+		// and if we have less than 10ms to wait for an answer before switching
+		// state it makes no sense to send out another request. This nearly
+		// eliminates the problem of sending two different requests back-to-back.
+		if s.stateDeadline.Add(-10 * time.Millisecond).Before(sentTime) {
+			return s.stateDeadlineExceeded()
+		}
 	}
 
 	if err := s.transport.Send(msg); err != nil {
