@@ -91,4 +91,4 @@ try-import %workspace%/.bazelrc.user
 
 test --experimental_allow_tags_propagation
 # Assume a 10k IOPS device (average NVMe) and 64GiB of RAM for test scheduling.
-test --local_extra_resources=iops=10000 --local_extra_resources=ram=64000
+test --local_resources=iops=10000 --local_resources=ram=64000
