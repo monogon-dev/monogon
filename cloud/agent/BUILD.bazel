@@ -32,7 +32,7 @@ go_library(
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_mdlayher_ethtool//:ethtool",
         "@com_github_vishvananda_netlink//:netlink",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//credentials",
         "@org_golang_google_protobuf//proto",
         "@org_golang_x_sys//unix",

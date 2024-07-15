@@ -19,7 +19,7 @@ go_library(
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_google_uuid//:uuid",
         "@io_k8s_klog_v2//:klog",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//reflection",
         "@org_golang_google_grpc//status",
@@ -41,7 +41,7 @@ go_test(
         "//cloud/lib/component",
         "//metropolis/node/core/rpc",
         "@com_github_google_uuid//:uuid",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_google_protobuf//proto",
     ],
 )

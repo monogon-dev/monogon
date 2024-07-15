@@ -15,7 +15,7 @@ go_library(
     deps = [
         "//osbase/logtree",
         "@com_github_cenkalti_backoff_v4//:backoff",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
     ],
 )
 

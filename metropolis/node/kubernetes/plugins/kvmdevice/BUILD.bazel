@@ -12,7 +12,7 @@ go_library(
         "@io_k8s_api//core/v1:core",
         "@io_k8s_kubelet//pkg/apis/deviceplugin/v1beta1",
         "@io_k8s_kubelet//pkg/apis/pluginregistration/v1:pluginregistration",
-        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//:grpc",
         "@org_golang_x_sys//unix",
     ],
 )
