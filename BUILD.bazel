@@ -20,7 +20,7 @@ gazelle(
 # Shortcut for the Go SDK
 alias(
     name = "go",
-    actual = "@go_sdk//:bin/go",
+    actual = "@io_bazel_rules_go//go",
     visibility = ["//visibility:public"],
 )
 
