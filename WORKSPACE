@@ -105,14 +105,13 @@ grpc_extra_deps()
 # Rust rules
 http_archive(
     name = "rules_rust",
-    integrity = "sha256-ZQGWDD5NoySV0eEAfe0HaaU0yxlcMN6jaqVPnYo/A2E=",
+    integrity = "sha256-35cwdTOaqqu4y+aXgIUU2C2PAKMz4+uyJ7/UMIGCmFs=",
     patch_args = ["-p1"],
     patches = [
         "//third_party:rust-uefi-platform.patch",
         "//third_party:rust-prost-nostd.patch",
-        "//third_party:rust-reproducibility.patch",
     ],
-    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.38.0/rules_rust-v0.38.0.tar.gz"],
+    urls = ["https://github.com/bazelbuild/rules_rust/releases/download/0.47.1/rules_rust-v0.47.1.tar.gz"],
 )
 
 load("@rules_rust//rust:repositories.bzl", "rules_rust_dependencies", "rust_register_toolchains")
