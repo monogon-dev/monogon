@@ -6,7 +6,7 @@ index 0000000000..436f8c5cf3
 @@ -0,0 +1,1356 @@
 +load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 +load("@rules_python//python:defs.bzl", "py_binary")
-+load("@dev_source_monogon//build/utils:template_file.bzl", "template_file")
++load("@@//build/utils:template_file.bzl", "template_file")
 +load(":defs.bzl", "filter_label_suffix", "filter_label_contains")
 +load("//:defs.bzl", "cc_qemu_keymaps")
 +
@@ -1433,7 +1433,7 @@ index 0000000000..3a8d50d429
 +            cfg = "exec",
 +        ),
 +        "_savestdout": attr.label(
-+            default = Label("@dev_source_monogon//build/savestdout"),
++            default = Label("@@//build/savestdout"),
 +            executable = True,
 +            cfg = "exec",
 +        ),
@@ -1724,7 +1724,7 @@ index 0000000000..70ce080a62
 +            cfg = "exec",
 +        ),
 +        "_savestdout": attr.label(
-+            default = Label("@dev_source_monogon//build/savestdout"),
++            default = Label("@@//build/savestdout"),
 +            executable = True,
 +            cfg = "exec",
 +        ),

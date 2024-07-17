@@ -1,5 +1,5 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary")
-load("@dev_source_monogon//build/utils:template_file.bzl", "template_file")
+load("@@//build/utils:template_file.bzl", "template_file")
 
 cc_binary(
     name = "fsck",

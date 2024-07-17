@@ -15,7 +15,7 @@
 #  limitations under the License.
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("@dev_source_monogon//build/utils:template_file.bzl", "template_file")
+load("@@//build/utils:template_file.bzl", "template_file")
 
 # These are only for the headers of libcommon, which is a private dependency of libblkid and
 # libuuid. Bazel doesn't support private dependencies and we want to avoid propagating these up

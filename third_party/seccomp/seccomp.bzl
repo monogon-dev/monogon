@@ -15,7 +15,7 @@
 #  limitations under the License.
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("@dev_source_monogon//build/utils:template_file.bzl", "template_file")
+load("@@//build/utils:template_file.bzl", "template_file")
 
 genrule(
     name = "config-h",

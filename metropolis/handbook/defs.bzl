@@ -37,7 +37,7 @@ def _mdbook_html_impl(ctx):
     # root, which is where our SUMMARY.md path is itself rooted.
     #
     # For example, if book.toml lives in:
-    #   execroot/dev_source_monogon/bazel-out/k8-fastbuild/bin/metropolis/handbook/handbook_/book.toml
+    #   execroot/_main/bazel-out/k8-fastbuild/bin/metropolis/handbook/handbook_/book.toml
     # Then we will need to prepend:
     #   ../../../../../../../
     # To get back to execroot/.

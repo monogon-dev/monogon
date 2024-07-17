@@ -36,7 +36,7 @@ var (
 // nil is returned.
 func ParseBazelLabel(s string) *BazelLabel {
 	res := BazelLabel{
-		WorkspaceName: "dev_source_monogon",
+		WorkspaceName: "@",
 	}
 
 	// Split label into workspace name (if set) and a workspace root relative

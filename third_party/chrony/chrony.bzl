@@ -1,9 +1,9 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
-load("@dev_source_monogon//build/utils:template_file.bzl", "template_file")
+load("@@//build/utils:template_file.bzl", "template_file")
 
 template_file(
     name = "config.h",
-    src = "@dev_source_monogon//third_party/chrony:config.h.in",
+    src = "@@//third_party/chrony:config.h.in",
     substitutions = {
         # ONCHANGE(//third_party/chrony:external.bzl): version needs to be kept in sync
         "%CHRONY_VERSION%": "4.1-monogon",
