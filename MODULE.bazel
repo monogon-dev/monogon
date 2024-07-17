@@ -75,6 +75,7 @@ bazel_dep(name = "rules_python", version = "0.34.0")
 bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "grpc", version = "1.65.0")
 bazel_dep(name = "rules_proto", version = "6.0.2")
+bazel_dep(name = "toolchains_protoc", version = "0.3.1")
 bazel_dep(name = "protobuf", version = "27.2")
 
 # Register our custom CC toolchains. Order matters - more specific toolchains must be registered first.
