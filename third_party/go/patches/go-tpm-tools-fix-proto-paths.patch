@@ -4,43 +4,12 @@ Date: Wed, 30 Mar 2022 15:48:23 +0200
 Subject: [PATCH] Fix proto file paths
 
 ---
- proto/0001-Fix-proto-file-paths.patch | 23 +++++++++++++++++++++++
  proto/{ => attest}/attest.proto       |  2 +-
  proto/{ => tpm}/tpm.proto             |  0
- 3 files changed, 24 insertions(+), 1 deletion(-)
- create mode 100644 proto/0001-Fix-proto-file-paths.patch
+ 2 files changed, 1 insertion(+), 1 deletion(-)
  rename proto/{ => attest}/attest.proto (99%)
  rename proto/{ => tpm}/tpm.proto (100%)
 
-diff --git a/proto/0001-Fix-proto-file-paths.patch b/proto/0001-Fix-proto-file-paths.patch
-new file mode 100644
-index 0000000..22e3b45
---- /dev/null
-+++ b/proto/0001-Fix-proto-file-paths.patch
-@@ -0,0 +1,23 @@
-+From ba5bf5ac1e0b3d92e8f19a0feb2307515c0e2baf Mon Sep 17 00:00:00 2001
-+From: Lorenz Brun <lorenz@monogon.tech>
-+Date: Wed, 30 Mar 2022 15:48:23 +0200
-+Subject: [PATCH] Fix proto file paths
-+
-+---
-+ proto/{ => attest}/attest.proto | 0
-+ proto/{ => tpm}/tpm.proto       | 0
-+ 2 files changed, 0 insertions(+), 0 deletions(-)
-+ rename proto/{ => attest}/attest.proto (100%)
-+ rename proto/{ => tpm}/tpm.proto (100%)
-+
-+diff --git a/proto/attest.proto b/proto/attest/attest.proto
-+similarity index 100%
-+rename from proto/attest.proto
-+rename to proto/attest/attest.proto
-+diff --git a/proto/tpm.proto b/proto/tpm/tpm.proto
-+similarity index 100%
-+rename from proto/tpm.proto
-+rename to proto/tpm/tpm.proto
-+-- 
-+2.25.1
-+
 diff --git a/proto/attest.proto b/proto/attest/attest.proto
 similarity index 99%
 rename from proto/attest.proto
