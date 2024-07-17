@@ -1,0 +1,6 @@
+# TODO: Workaround for https://github.com/bazelbuild/bazel/issues/19301
+alias(
+    name = "seccomp",
+    actual = "@seccomp",
+    visibility = ["//visibility:public"],
+)

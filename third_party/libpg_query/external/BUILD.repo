@@ -58,6 +58,6 @@ cc_library(
         "-Iexternal/libpg_query/vendor/xxhash",
     ],
     visibility = [
-        "@com_github_pganalyze_pg_query_go_v4//:__subpackages__",
+        "@//third_party/libpg_query:__pkg__",
     ],
 )

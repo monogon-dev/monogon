@@ -1,0 +1,6 @@
+# TODO: Workaround for https://github.com/bazelbuild/bazel/issues/19301
+alias(
+    name = "libpg_query",
+    actual = "@libpg_query//:libpg_query",
+    visibility = ["//visibility:public"],
+)

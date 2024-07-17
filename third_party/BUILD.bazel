@@ -18,3 +18,10 @@ cpio_ucode(
     },
     visibility = ["//visibility:public"],
 )
+
+# TODO: Workaround for https://github.com/bazelbuild/bazel/issues/19301
+alias(
+    name = "zlib",
+    actual = "@zlib",
+    visibility = ["//visibility:public"],
+)

@@ -5,7 +5,7 @@
          "seccomp_internal.go",
      ],
 +    cdeps = [
-+        "@seccomp",
++        "@@//third_party/seccomp",
 +    ],
      cgo = True,
      importpath = "github.com/seccomp/libseccomp-golang",
