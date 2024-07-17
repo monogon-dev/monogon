@@ -297,8 +297,6 @@ libpg_query_external(
     version = "15-4.2.3",
 )
 
-register_toolchains("//:host_python")
-
 # Derived from Mozilla NSS, currently needed for containerd to be able to pull images
 http_file(
     name = "cacerts",
