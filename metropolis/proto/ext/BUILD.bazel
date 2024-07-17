@@ -6,7 +6,7 @@ proto_library(
     name = "ext_proto",
     srcs = ["authorization.proto"],
     visibility = ["//visibility:public"],
-    deps = ["@com_google_protobuf//:descriptor_proto"],
+    deps = ["@protobuf//:descriptor_proto"],
 )
 
 go_proto_library(

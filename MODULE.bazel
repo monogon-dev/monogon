@@ -18,28 +18,84 @@ single_version_override(
     version = "0.0.10",
 )
 
+bazel_dep(name = "rules_go", repo_name = "io_bazel_rules_go")
+single_version_override(
+    module_name = "rules_go",
+    patch_strip = 1,
+    patches = [
+        "//third_party/go/patches:rules_go_absolute_embedsrc.patch",
+    ],
+    version = "0.49.0",
+)
+
+bazel_dep(name = "gazelle", repo_name = "bazel_gazelle")
+single_version_override(
+    module_name = "gazelle",
+    patch_strip = 1,
+    patches = [
+        "//third_party/gazelle:add-prepatching.patch",
+    ],
+    version = "0.37.0",
+)
+
+bazel_dep(name = "rules_rust")
+single_version_override(
+    module_name = "rules_rust",
+    patch_strip = 1,
+    patches = [
+        "//third_party:rust-uefi-platform.patch",
+        "//third_party:rust-prost-nostd.patch",
+        "//third_party:rust-reproducibility.patch",
+    ],
+    version = "0.47.1",
+)
+
+bazel_dep(name = "zlib")
+single_version_override(
+    module_name = "zlib",
+    version = "1.3.1",
+)
+
+# Fix bazel 7.2 compatibility https://github.com/grpc/grpc-java/issues/11275
+# This is coming from the grpc dependency.
+# ├───grpc@1.65.0
+# │   ├───googleapis@0.0.0-20240326-1c8d509c5
+# │   │   └───grpc-java@1.64.0
+single_version_override(
+    module_name = "grpc-java",
+    version = "1.64.0",
+)
+
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_oci", version = "1.8.0")
 bazel_dep(name = "aspect_bazel_lib", version = "2.7.8")
 bazel_dep(name = "rules_multirun", version = "0.9.0")
 bazel_dep(name = "rules_python", version = "0.34.0")
+bazel_dep(name = "rules_cc", version = "0.0.9")
+bazel_dep(name = "grpc", version = "1.65.0")
+bazel_dep(name = "rules_proto", version = "6.0.2")
+bazel_dep(name = "protobuf", version = "27.2")
 
-oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+# Register our custom CC toolchains. Order matters - more specific toolchains must be registered first.
+# (host_cc_toolchain won't care about //build/platforms/linkmode, but musl_host_toolchain won't
+# match anything unless its linkmode is set).
+register_toolchains("//build/toolchain/musl-host-gcc:musl_host_toolchain")
 
-# Declare external images you need to pull, for example:
-oci.pull(
-    name = "distroless_base",
-    # 'latest' is not reproducible, but it's convenient.
-    # During the build we print a WARNING message that includes recommended 'digest' and 'platforms'
-    # values which you can use here in place of 'tag' to pin for reproducibility.
-    digest = "sha256:6c1e34e2f084fe6df17b8bceb1416f1e11af0fcdb1cef11ee4ac8ae127cb507c",
-    image = "gcr.io/distroless/base",
-    platforms = [
-        "linux/amd64",
-        "linux/arm64/v8",
-    ],
-)
+register_toolchains("//build/toolchain/llvm-efi:efi_k8_toolchain")
 
-# For each oci.pull call, repeat the "name" here to expose them as dependencies.
-use_repo(oci, "distroless_base")
+register_toolchains("//build/toolchain:host_cc_toolchain")
+
+# Rust Toolchains
+register_toolchains("@rust_toolchains//:all")
+
+# Protobuf Toolchains
+register_toolchains("@rules_rust//proto/protobuf:default-proto-toolchain")
+
+register_toolchains("//build/rust:prost_efi_toolchain")
+
+include("//:rust.MODULE.bazel")
+
+include("//:go.MODULE.bazel")
+
+include("//:oci.MODULE.bazel")

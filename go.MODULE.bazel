@@ -1,0 +1,415 @@
+go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.22.5")
+go_sdk.nogo(nogo = "//build/analysis:nogo")
+
+go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")
+go_deps.from_file(go_mod = "//:go.mod")
+
+# All *direct* Go dependencies of the module have to be listed explicitly.
+# This list can be automatically updated by running "bazel mod tidy".
+use_repo(
+    go_deps,
+    "co_honnef_go_tools",
+    "com_4d63_gocheckcompilerdirectives",
+    "com_github_adrg_xdg",
+    "com_github_cavaliergopher_cpio",
+    "com_github_cenkalti_backoff_v4",
+    "com_github_cockroachdb_cockroach_go_v2",
+    "com_github_container_storage_interface_spec",
+    "com_github_containerd_containerd",
+    "com_github_containernetworking_plugins",
+    "com_github_coredns_coredns",
+    "com_github_coreos_go_semver",
+    "com_github_corverroos_commentwrap",
+    "com_github_diskfs_go_diskfs",
+    "com_github_docker_distribution",
+    "com_github_go_delve_delve",
+    "com_github_golang_migrate_migrate_v4",
+    "com_github_google_cel_go",
+    "com_github_google_certificate_transparency_go",
+    "com_github_google_go_cmp",
+    "com_github_google_go_tpm",
+    "com_github_google_go_tpm_tools",
+    "com_github_google_gopacket",
+    "com_github_google_nftables",
+    "com_github_google_uuid",
+    "com_github_iancoleman_strcase",
+    "com_github_improbable_eng_grpc_web",
+    "com_github_insomniacslk_dhcp",
+    "com_github_joho_godotenv",
+    "com_github_kballard_go_shellquote",
+    "com_github_kevinburke_go_bindata",
+    "com_github_klauspost_compress",
+    "com_github_lib_pq",
+    "com_github_mattn_go_shellwords",
+    "com_github_mdlayher_arp",
+    "com_github_mdlayher_ethernet",
+    "com_github_mdlayher_ethtool",
+    "com_github_mdlayher_genetlink",
+    "com_github_mdlayher_kobject",
+    "com_github_mdlayher_netlink",
+    "com_github_mdlayher_packet",
+    "com_github_mitchellh_go_wordwrap",
+    "com_github_opencontainers_go_digest",
+    "com_github_opencontainers_runc",
+    "com_github_packethost_packngo",
+    "com_github_pkg_errors",
+    "com_github_pkg_sftp",
+    "com_github_prometheus_client_golang",
+    "com_github_prometheus_node_exporter",
+    "com_github_pseudomuto_protoc_gen_doc",
+    "com_github_rmohr_bazeldnf",
+    "com_github_sbezverk_nfproxy",
+    "com_github_spf13_cobra",
+    "com_github_spf13_pflag",
+    "com_github_sqlc_dev_sqlc",
+    "com_github_stretchr_testify",
+    "com_github_vishvananda_netlink",
+    "com_github_yalue_native_endian",
+    "com_google_cloud_go_storage",
+    "com_zx2c4_golang_wireguard_wgctrl",
+    "dev_gvisor_gvisor",
+    "io_etcd_go_etcd_api_v3",
+    "io_etcd_go_etcd_client_pkg_v3",
+    "io_etcd_go_etcd_client_v3",
+    "io_etcd_go_etcd_server_v3",
+    "io_etcd_go_etcd_tests_v3",
+    "io_k8s_api",
+    "io_k8s_apimachinery",
+    "io_k8s_apiserver",
+    "io_k8s_cli_runtime",
+    "io_k8s_client_go",
+    "io_k8s_code_generator",
+    "io_k8s_component_base",
+    "io_k8s_klog_v2",
+    "io_k8s_kubectl",
+    "io_k8s_kubelet",
+    "io_k8s_kubernetes",
+    "io_k8s_pod_security_admission",
+    "net_starlark_go",
+    "org_golang_google_genproto_googleapis_api",
+    "org_golang_google_grpc",
+    "org_golang_google_protobuf",
+    "org_golang_x_crypto",
+    "org_golang_x_mod",
+    "org_golang_x_net",
+    "org_golang_x_sync",
+    "org_golang_x_sys",
+    "org_golang_x_text",
+    "org_golang_x_time",
+    "org_golang_x_tools",
+    "org_uber_go_multierr",
+    "org_uber_go_zap",
+)
+
+# Instead of defining a gazelle/module override for every dependency, we have a
+# big dict containing all of them.
+OVERRIDES = {
+    "github.com/containerd/cgroups": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "github.com/containerd/containerd": {
+        "directives": [
+            "gazelle:proto disable",
+            "gazelle:build_tags no_btrfs,no_zfs",
+        ],
+        "pre_patches": [
+            # We build with newer CRI API definitions.
+            "//third_party/go/patches:containerd-grpc-inherit-unimplemented.patch",
+        ],
+    },
+    "github.com/containerd/cgroups/v3": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "github.com/containerd/nri": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "github.com/gogo/protobuf": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "github.com/google/cel-go": {
+        "build_file_generation": "on",
+        "directives": [
+            "gazelle:go_naming_convention go_default_library",
+        ],
+    },
+    "github.com/google/go-tpm-tools": {
+        "directives": [
+            "gazelle:proto file",
+        ],
+        "pre_patches": [
+            "//third_party/go/patches:go-tpm-tools-fix-proto-paths.patch",
+        ],
+    },
+    "github.com/googleapis/gax-go/v2": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "github.com/Microsoft/hcsshim": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "github.com/opencontainers/runc": {
+        "directives": [
+            "gazelle:build_tags seccomp",
+        ],
+        "patches": [
+            "//third_party/go/patches:runc-add-cdeps.patch",
+        ],
+    },
+    "github.com/prometheus/node_exporter": {
+        "directives": [
+            "gazelle:build_tags nobtrfs,nozfs,notapestats,norapl",
+        ],
+    },
+    "github.com/pseudomuto/protoc-gen-doc": {
+        "directives": [
+            "gazelle:resolve go github.com/mwitkow/go-proto-validators @com_github_mwitkow_go_proto_validators//:validators_golang",
+        ],
+        "pre_patches": [
+            "//third_party/go/patches:protoc-gen-doc-no-gogo.patch",
+        ],
+    },
+    "github.com/pseudomuto/protokit": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "github.com/google/cadvisor": {
+        "directives": [
+            "gazelle:proto disable_global",
+        ],
+    },
+    "github.com/sqlc-dev/sqlc": {
+        "build_extra_args": [
+            "-exclude=internal/ext/wasm/wasm.go",
+        ],
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "github.com/containerd/ttrpc": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "go.etcd.io/etcd/api/v3": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "go.etcd.io/etcd/raft/v3": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "go.etcd.io/etcd/server/v3": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+        "patches": [
+            "//third_party/go/patches:etcd-fix-embed-close.patch",
+        ],
+    },
+    "github.com/grpc-ecosystem/grpc-gateway": {
+        # Force generation of new build files for this package, required due to changes in how gazelle handles @go_googleapis.
+        "build_file_generation": "on",
+        "directives": [
+            "gazelle:exclude **/**_test.go",
+            "gazelle:exclude examples",
+            "gazelle:resolve go github.com/grpc-ecosystem/grpc-gateway/internal //internal",
+            "gazelle:resolve go github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options //protoc-gen-swagger/options",
+            "gazelle:proto disable_global",
+        ],
+    },
+    "k8s.io/api": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "k8s.io/apiextensions-apiserver": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "k8s.io/apiserver": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "k8s.io/cri-api": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "k8s.io/kube-aggregator": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "k8s.io/kubelet": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+        "patches": [
+            "//third_party/go/patches:kubelet-fix-path.patch",
+        ],
+    },
+    "k8s.io/kubernetes": {
+        "directives": [
+            "gazelle:proto disable",
+            "gazelle:build_tags providerless,dockerless",
+        ],
+        "patches": [
+            "//third_party/go/patches:k8s-native-metrics.patch",
+            "//third_party/go/patches:k8s-removed-block-device-pseudo-locks.patch",
+            "//third_party/go/patches:k8s-add-pause-build-file.patch",
+            "//third_party/go/patches:k8s-reserve-metropolis-ports-import.patch",
+        ],
+        "pre_patches": [
+            "//third_party/go/patches:k8s-drop-legacy-log-path.patch",
+            "//third_party/go/patches:k8s-reserve-metropolis-ports.patch",
+        ],
+    },
+    "k8s.io/metrics": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "google.golang.org/genproto/googleapis/api": {
+        "directives": [
+            "gazelle:proto disable_global",
+        ],
+    },
+    "google.golang.org/genproto/googleapis/rpc": {
+        "directives": [
+            "gazelle:proto disable_global",
+        ],
+    },
+    "google.golang.org/grpc": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "github.com/pingcap/tidb/parser": {
+        "build_file_generation": "on",
+    },
+    "golang.org/x/mod": {
+        "build_extra_args": [
+            "-go_naming_convention=import_alias",
+            "-go_naming_convention_external=import_alias",
+        ],
+    },
+    "golang.org/x/sync": {
+        "build_extra_args": [
+            "-go_naming_convention=import_alias",
+            "-go_naming_convention_external=import_alias",
+        ],
+    },
+    "github.com/containernetworking/cni": {
+        "patches": [
+            "//third_party/go/patches:cni-fix-cachepath.patch",
+        ],
+    },
+    "github.com/coredns/coredns": {
+        "pre_patches": [
+            "//third_party/go/patches:coredns-remove-unused-plugins.patch",
+        ],
+    },
+    "github.com/corverroos/commentwrap": {
+        "patches": [
+            "//third_party/go/patches:commentwrap-uri.patch",
+        ],
+    },
+    "github.com/go-delve/delve": {
+        "patches": [
+            "//third_party/go/patches:delve-fix-cgo.patch",
+        ],
+    },
+    "github.com/pganalyze/pg_query_go/v4": {
+        "patches": [
+            "//third_party/go/patches:pganalyze-add-cdeps.patch",
+        ],
+    },
+    "github.com/sbezverk/nfproxy": {
+        "pre_patches": [
+            "//third_party/go/patches:nfproxy-adapt-to-k8s-1.28.patch",
+        ],
+    },
+    "k8s.io/kubectl": {
+        "patches": [
+            "//third_party/go/patches:kubectl-fix-embed.patch",
+        ],
+    },
+    "github.com/seccomp/libseccomp-golang": {
+        "patches": [
+            "//third_party/go/patches:libseccomp.patch",
+        ],
+    },
+    "github.com/vishvananda/netlink": {
+        "patches": [
+            "//third_party/go/patches:netlink-permhwaddr.patch",
+            "//third_party/go/patches:netlink-use-rtm_setlink.patch",
+        ],
+    },
+    "gvisor.dev/gvisor": {
+        "patches": [
+            "//third_party/go/patches:gvisor-fix-syslog.patch",
+            # Gazelle doesn't understand conditional build files.
+            # https://github.com/bazelbuild/bazel-gazelle/issues/1262
+            "//third_party/go/patches:gvisor-fix-gazelle-debug-builds.patch",
+        ],
+        "pre_patches": [
+            "//third_party/go/patches:gvisor-containerd-compat.patch",
+            # Modified patch for the go branch.
+            # Upstream issue https://github.com/google/gvisor/issues/9039
+            # Upstream patch https://github.com/google/gvisor/commit/62afa160fe8ad17302d43f7c6016061de57c7f4d
+            "//third_party/go/patches:gvisor-fix-debug-builds.patch",
+        ],
+    },
+    "go.etcd.io/etcd/tests/v3": {
+        "patches": [
+            "//third_party/go/patches:etcd-integration-logging.patch",
+        ],
+    },
+    "k8s.io/mount-utils": {
+        "pre_patches": [
+            "//third_party/go/patches:k8s-native-mounter.patch",
+        ],
+    },
+    "golang.org/x/tools": {
+        "patches": [
+            "//third_party/go/patches:goimports-group-merging.patch",
+        ],
+    },
+}
+
+# MODULE.bazel doesn't support loops, but since we have lots of overrides,
+# this is the more readable approach.
+[
+    [
+        go_deps.gazelle_override(
+            build_extra_args = overrides.get("build_extra_args") or [],
+            build_file_generation = overrides.get("build_file_generation") or "auto",
+            directives = overrides.get("directives") or [],
+            path = path,
+        ),
+        go_deps.module_override(
+            patch_strip = 1,
+            patches = overrides.get("patches") or [],
+            path = path,
+            pre_patches = overrides.get("pre_patches") or [],
+        ),
+    ]
+    for path, overrides in OVERRIDES.items()
+]

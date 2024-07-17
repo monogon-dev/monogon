@@ -16,7 +16,7 @@ proto_library(
         "//metropolis/proto/ext:ext_proto",
         "//net/proto:net_proto_proto",
         "//osbase/logtree/proto:proto_proto",
-        "@com_google_protobuf//:duration_proto",
+        "@protobuf//:duration_proto",
     ],
 )
 

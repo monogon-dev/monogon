@@ -49,7 +49,6 @@ pipeline {
                         sh "git clean -fdx -e '/bazel-*'"
                         sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci mod deps --lockfile_mode=update"
                         sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci run //:go -- mod tidy"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci run //:gazelle-update-repos"
                         sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci run //:gazelle -- update"
 
                         script {
@@ -61,7 +60,7 @@ pipeline {
                                     Please run:
 
                                        \$ bazel mod deps --lockfile_mode=update
-                                       \$ bazel run //:gazelle-update-repos
+                                       \$ bazel run //:go -- mod tidy
                                        \$ bazel run //:gazelle -- update
 
                                     In your git checkout and amend the resulting diff to this changelist.

@@ -147,57 +147,44 @@ for product in ["metropolis", "cloud"]:
 
 # Special treatment for Kubernetes, which uses these stamp values in its build
 # system. We populate the Kubernetes version from whatever is in
-# //third_party/go/repositories.bzl.
-def parse_repositories_bzl(path: str) -> dict[str, str]:
+# //go.mod.
+def parse_go_mod(path: str) -> dict[str, str]:
     """
-    Shoddily parse a Gazelle-created repositories.bzl into a map of
-    name->version.
+    Shoddily parse a go.mod into a map of name->version.
 
-    This relies heavily on repositories.bzl being correctly formatted and
+    This relies heavily on go.mod being correctly formatted and
     sorted.
 
-    If this breaks, it's probably best to try to use the actual Python parser
-    to deal with this, eg. by creating a fake environment for the .bzl file to
-    be parsed.
+    If this breaks, it's probably best to try to port this to Go
+    and parse it using golang.org/x/mod/modfile, shell out to
+    "go mod edit -json", or similar.
     """
 
-    # Main parser state: None where we don't expect a version line, set to some
-    # value otherwise.
-    name: Optional[str] = None
+    # Just a copied together regex to find the url followed by a semver.
+    NAME_VERSION_REGEX = r"([-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*) v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)"
 
     res = {}
     for line in open(path):
-        line = line.strip()
-        if line == "go_repository(":
-            name = None
+        matches = re.findall(NAME_VERSION_REGEX, line)
+        if not matches:
             continue
-        if line.startswith("name ="):
-            if name is not None:
-                raise Exception("parse error in repositories.bzl: repeated name?")
-            if line.count('"') != 2:
-                raise Exception(
-                    "parse error in repositories.bzl: invalid name line: " + name
-                )
-            name = line.split('"')[1]
+
+        [name, version] = matches[0][0].strip().split(" ")
+
+        # If we already saw a package, skip it.
+        if name in res:
             continue
-        if line.startswith("version ="):
-            if name is None:
-                raise Exception("parse error in repositories.bzl: version before name")
-            if line.count('"') != 2:
-                raise Exception(
-                    "parse error in repositories.bzl: invalid name line: " + name
-                )
-            version = line.split('"')[1]
-            res[name] = version
-            name = None
+
+        res[name] = version
+
     return res
 
 
-# Parse repositories.bzl.
-go_versions = parse_repositories_bzl("third_party/go/repositories.bzl")
+# Parse go.mod.
+go_versions = parse_go_mod("go.mod")
 
 # Find Kubernetes version.
-kubernetes_version: str = go_versions.get("io_k8s_kubernetes")
+kubernetes_version: str = go_versions.get("k8s.io/kubernetes")
 if kubernetes_version is None:
     raise Exception("could not figure out Kubernetes version")
 kubernetes_version_parsed = re.match(

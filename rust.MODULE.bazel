@@ -1,0 +1,29 @@
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = "2021",
+    extra_target_triples = [
+        "x86_64-unknown-uefi",
+    ],
+    versions = ["1.71.0"],
+)
+use_repo(rust, "rust_toolchains")
+
+crate = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
+crate.from_cargo(
+    name = "crate_index",
+    cargo_lockfile = "//third_party/rust:Cargo.lock",
+    generate_binaries = True,
+    manifests = ["//third_party/rust:Cargo.toml"],
+)
+crate.from_cargo(
+    name = "crate_index_efi",
+    cargo_lockfile = "//third_party/rust_efi:Cargo.lock",
+    generate_binaries = True,
+    manifests = ["//third_party/rust_efi:Cargo.toml"],
+    supported_platform_triples = [
+        "x86_64-unknown-linux-gnu",
+        "x86_64-unknown-uefi",
+    ],
+)
+use_repo(crate, "crate_index")
+use_repo(crate, "crate_index_efi")

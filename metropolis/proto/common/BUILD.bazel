@@ -9,7 +9,7 @@ proto_library(
     deps = [
         "//osbase/logtree/proto:proto_proto",
         "//version/spec:spec_proto",
-        "@com_google_protobuf//:timestamp_proto",
+        "@protobuf//:timestamp_proto",
     ],
 )
 

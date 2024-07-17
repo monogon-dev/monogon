@@ -6,7 +6,7 @@ proto_library(
     name = "proto_proto",
     srcs = ["logtree.proto"],
     visibility = ["//visibility:public"],
-    deps = ["@com_google_protobuf//:timestamp_proto"],
+    deps = ["@protobuf//:timestamp_proto"],
 )
 
 go_proto_library(

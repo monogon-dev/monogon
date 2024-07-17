@@ -20,12 +20,12 @@ def _proto_docs(ctx):
 
     for src in transitive_sources.to_list():
         # Due to the built-in import path for well-known types (see AddDefaultProtoPaths
-        # in @com_google_protobuf//src/google/protobuf/compiler:command_line_interface.cc)
+        # in @protobuf//src/google/protobuf/compiler:command_line_interface.cc)
         # in protoc the Bazel-generated well-known protos are considered to contain
         #  "duplicate" types.
         # Since generating documentation for well-known types is not that useful just
         # skip them.
-        if src.path.find("/bin/external/com_github_protocolbuffers_protobuf/_virtual_imports/") != -1:
+        if src.path.find("/external/protobuf~/") != -1:
             continue
         args.append(src.path)
 
@@ -51,7 +51,7 @@ proto_docs = rule(
             default = [],
         ),
         "_protoc": attr.label(
-            default = Label("@com_google_protobuf//:protoc"),
+            default = Label("@protobuf//:protoc"),
             cfg = "exec",
             executable = True,
             allow_files = True,
