@@ -647,8 +647,8 @@ def go_repositories():
     go_repository(
         name = "com_github_blang_semver",
         importpath = "github.com/blang/semver",
-        sum = "h1:7hqmJYuaEK3qwVjWubYiht3j93YI0WQBuysxHIfUriU=",
-        version = "v3.1.0+incompatible",
+        sum = "h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdnnjpJbkM4JQ=",
+        version = "v3.5.1+incompatible",
     )
     go_repository(
         name = "com_github_blang_semver_v4",
@@ -2801,8 +2801,8 @@ def go_repositories():
     go_repository(
         name = "com_github_iancoleman_strcase",
         importpath = "github.com/iancoleman/strcase",
-        sum = "h1:05I4QRnGpI0m37iZQRuskXh+w77mr6Z41lwQzuHLwW0=",
-        version = "v0.2.0",
+        sum = "h1:nTXanmYxhfFAMjZL34Ov6gkzEsSJZ5DbhxWjvSASxEI=",
+        version = "v0.3.0",
     )
     go_repository(
         name = "com_github_ianlancetaylor_demangle",
@@ -3760,6 +3760,12 @@ def go_repositories():
         importpath = "github.com/mitchellh/reflectwalk",
         sum = "h1:FVzMWA5RllMAKIdUSC8mdWo3XtwoecrH79BY70sEEpE=",
         version = "v1.0.1",
+    )
+    go_repository(
+        name = "com_github_mndrix_tap_go",
+        importpath = "github.com/mndrix/tap-go",
+        sum = "h1:Ga1nclDSe8gOw37MVLMhfu2QKWtD6gvtQ298zsKVh8g=",
+        version = "v0.0.0-20171203230836-629fa407e90b",
     )
     go_repository(
         name = "com_github_moby_ipvs",
@@ -4726,8 +4732,8 @@ def go_repositories():
     go_repository(
         name = "com_github_spf13_afero",
         importpath = "github.com/spf13/afero",
-        sum = "h1:j49Hj62F0n+DaZ1dDCvhABaPNSGNkt32oRFxI33IEMw=",
-        version = "v1.9.2",
+        sum = "h1:EaGW2JJh15aKOejeuJ+wpFSHnbd7GE6Wvp3TsNhb6LY=",
+        version = "v1.10.0",
     )
     go_repository(
         name = "com_github_spf13_cast",
