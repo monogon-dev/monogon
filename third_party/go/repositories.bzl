@@ -1806,8 +1806,6 @@ def go_repositories():
         name = "com_github_go_delve_delve",
         importpath = "github.com/go-delve/delve",
         patch_args = ["-p1"],
-        # https://github.com/bazelbuild/bazel-gazelle/issues/1424#issuecomment-1568744161
-        patch_tool = "patch",
         patches = [
             "//third_party/go/patches:delve-fix-cgo.patch",
         ],
