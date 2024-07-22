@@ -5,7 +5,7 @@ sqlc_go_library(
     name = "sqlc_model",
     dialect = "cockroachdb",
     importpath = "source.monogon.dev/cloud/bmaas/bmdb/model",
-    migrations = glob(["migrations/*sql"]),
+    migrations = glob(["migrations/*.sql"]),
     queries = [
         "queries_base.sql",
         "queries_stats.sql",
@@ -23,7 +23,7 @@ go_library(
     embed = [
         ":sqlc_model",  # keep
     ],
-    embedsrcs = glob(["migrations/*sql"]),
+    embedsrcs = glob(["migrations/*.sql"]),  # keep
     importpath = "source.monogon.dev/cloud/bmaas/bmdb/model",
     visibility = ["//visibility:public"],
     deps = [

@@ -11,7 +11,7 @@ go_library(
     embed = select({
         "//metropolis/build/kube-code-generator:embed_deepcopy": [":go_kubernetes_library"],
         "//conditions:default": [],
-    }),
+    }),  # keep
     importpath = "source.monogon.dev/metropolis/vm/kube/apis/vm/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [
