@@ -25,10 +25,12 @@ go_test(
     name = "metrics_test",
     srcs = ["metrics_test.go"],
     data = [
-        # keep
         "//metropolis/node/core/metrics/fake_exporter",
     ],
     embed = [":metrics"],
+    x_defs = {
+        "xFakeExporterPath": "$(rlocationpath //metropolis/node/core/metrics/fake_exporter )",
+    },
     deps = [
         "//metropolis/node",
         "//metropolis/node/core/curator/proto/api",

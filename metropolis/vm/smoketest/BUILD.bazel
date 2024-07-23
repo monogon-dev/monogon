@@ -4,8 +4,14 @@ load("//metropolis/node/build:def.bzl", "node_initramfs")
 go_library(
     name = "smoketest_lib",
     srcs = ["main.go"],
+    data = [
+        "@qemu//:qemu-x86_64-softmmu",
+    ],
     importpath = "source.monogon.dev/metropolis/vm/smoketest",
     visibility = ["//visibility:private"],
+    x_defs = {
+        "xQemuPath": "$(rlocationpath @qemu//:qemu-x86_64-softmmu )",
+    },
     deps = ["@io_bazel_rules_go//go/runfiles:go_default_library"],
 )
 
@@ -21,11 +27,6 @@ node_initramfs(
 
 go_binary(
     name = "smoketest",
-    data = [
-        ":initramfs",
-        "//osbase/test/ktest:linux-testing",
-        "@qemu//:qemu-x86_64-softmmu",
-    ],
     embed = [":smoketest_lib"],
     pure = "on",
     visibility = ["//visibility:private"],

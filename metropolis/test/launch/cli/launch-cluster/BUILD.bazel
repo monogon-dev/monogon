@@ -14,9 +14,6 @@ go_library(
 
 go_binary(
     name = "launch-cluster",
-    data = [
-        "//metropolis/cli/metroctl",
-    ],
     embed = [":launch-cluster_lib"],
     visibility = ["//visibility:public"],
 )

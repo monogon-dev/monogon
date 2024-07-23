@@ -25,9 +25,29 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 )
+
+var (
+	// These are filled by bazel at linking time with the canonical path of
+	// their corresponding file. Inside the init function we resolve it
+	// with the rules_go runfiles package to the real path.
+	xQemuPath string
+)
+
+func init() {
+	var err error
+	for _, path := range []*string{
+		&xQemuPath,
+	} {
+		*path, err = runfiles.Rlocation(*path)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
 
 func main() {
 	testSocket, err := net.Listen("unix", "@metropolis/vm/smoketest")
@@ -49,17 +69,9 @@ func main() {
 		}
 	}()
 
-	qemuPath, err := runfiles.Rlocation("qemu/qemu-x86_64-softmmu")
-	if err != nil {
-		panic(err)
-	}
-
 	// TODO(lorenz): This explicitly doesn't use our own qboot because it cannot be built in a musl configuration.
 	// This will be fixed once we have a proper multi-target toolchain.
-	biosPath, err := runfiles.Rlocation("qemu/pc-bios/qboot.rom")
-	if err != nil {
-		panic(err)
-	}
+	biosPath := filepath.Join(filepath.Dir(xQemuPath), "pc-bios/qboot.rom")
 
 	baseArgs := []string{"-nodefaults", "-no-user-config", "-nographic", "-no-reboot",
 		"-accel", "kvm", "-cpu", "host",
@@ -74,7 +86,7 @@ func main() {
 		"-chardev", "socket,id=test,path=metropolis/vm/smoketest,abstract=on",
 		"-device", "virtserialport,chardev=test",
 	}
-	qemuCmd := exec.Command(qemuPath, baseArgs...)
+	qemuCmd := exec.Command(xQemuPath, baseArgs...)
 	qemuCmd.Stdout = os.Stdout
 	qemuCmd.Stderr = os.Stderr
 	if err := qemuCmd.Run(); err != nil {

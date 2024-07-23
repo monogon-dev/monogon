@@ -42,6 +42,30 @@ import (
 	"source.monogon.dev/osbase/cmd"
 )
 
+var (
+	// These are filled by bazel at linking time with the canonical path of
+	// their corresponding file. Inside the init function we resolve it
+	// with the rules_go runfiles package to the real path.
+	xOvmfCodePath  string
+	xOvmfVarsPath  string
+	xQemuPath      string
+	xInstallerPath string
+	xBundlePath    string
+)
+
+func init() {
+	var err error
+	for _, path := range []*string{
+		&xOvmfCodePath, &xOvmfVarsPath, &xQemuPath,
+		&xInstallerPath, &xBundlePath,
+	} {
+		*path, err = runfiles.Rlocation(*path)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 // Each variable in this block points to either a test dependency or a side
 // effect. These variables are initialized in TestMain using Bazel.
 var (
@@ -57,31 +81,19 @@ var (
 // QEMU is killed shortly after the string is found, or when the context is
 // cancelled.
 func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, error) {
-	ovmfVarsPath, err := runfiles.Rlocation("edk2/OVMF_VARS.fd")
-	if err != nil {
-		return false, err
-	}
-	ovmfCodePath, err := runfiles.Rlocation("edk2/OVMF_CODE.fd")
-	if err != nil {
-		return false, err
-	}
-	qemuPath, err := runfiles.Rlocation("qemu/qemu-x86_64-softmmu")
-	if err != nil {
-		return false, err
-	}
 	defaultArgs := []string{
 		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults",
 		"-m", "512",
 		"-smp", "2",
 		"-cpu", "host",
-		"-drive", "if=pflash,format=raw,snapshot=on,file=" + ovmfCodePath,
-		"-drive", "if=pflash,format=raw,readonly=on,file=" + ovmfVarsPath,
+		"-drive", "if=pflash,format=raw,snapshot=on,file=" + xOvmfCodePath,
+		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfVarsPath,
 		"-serial", "stdio",
 		"-no-reboot",
 	}
 	qemuArgs := append(defaultArgs, args...)
 	pf := cmd.TerminateIfFound(expectedOutput, nil)
-	return cmd.RunCommand(ctx, qemuPath, qemuArgs, pf)
+	return cmd.RunCommand(ctx, xQemuPath, qemuArgs, pf)
 }
 
 // runQemuWithInstaller runs the Metropolis Installer in a qemu, performing the
@@ -136,20 +148,12 @@ func checkEspContents(image *disk.Disk) error {
 func TestMain(m *testing.M) {
 	installerImage = filepath.Join(os.Getenv("TEST_TMPDIR"), "installer.img")
 
-	installerPath, err := runfiles.Rlocation("_main/metropolis/installer/test/kernel.efi")
-	if err != nil {
-		log.Fatal(err)
-	}
-	installer, err := os.ReadFile(installerPath)
+	installer, err := os.ReadFile(xInstallerPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bundlePath, err := runfiles.Rlocation("_main/metropolis/installer/test/testos/testos_bundle.zip")
-	if err != nil {
-		log.Fatal(err)
-	}
-	bundle, err := os.ReadFile(bundlePath)
+	bundle, err := os.ReadFile(xBundlePath)
 	if err != nil {
 		log.Fatal(err)
 	}

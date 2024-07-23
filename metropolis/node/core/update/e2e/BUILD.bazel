@@ -5,7 +5,8 @@ go_test(
     srcs = ["e2e_test.go"],
     data = [
         # For emulation
-        "//third_party/edk2:firmware",
+        "//third_party/edk2:OVMF_CODE.fd",
+        "//third_party/edk2:OVMF_VARS.fd",
         # For the initial image creation
         "//metropolis/node/core/update/e2e/testos:verity_rootfs_x",
         "//metropolis/node/core/update/e2e/testos:kernel_efi_x",
@@ -14,6 +15,16 @@ go_test(
         "//metropolis/node/core/update/e2e/testos:testos_bundle_y",
         "//metropolis/node/core/update/e2e/testos:testos_bundle_z",
     ],
+    x_defs = {
+        "xBundleYPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:testos_bundle_y )",
+        "xBundleZPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:testos_bundle_z )",
+        "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
+        "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
+        "xBootPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:kernel_efi_x )",
+        "xSystemXPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:verity_rootfs_x )",
+        # TODO(tim): Hardcoded because of https://github.com/monogon-dev/monogon/issues/316
+        "xAbloaderPath": "_main/metropolis/node/core/abloader/abloader_bin.efi",
+    },
     deps = [
         "//metropolis/node/build/mkimage/osimage",
         "//osbase/blkio",

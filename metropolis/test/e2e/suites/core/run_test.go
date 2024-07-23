@@ -28,6 +28,25 @@ import (
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
+var (
+	// These are filled by bazel at linking time with the canonical path of
+	// their corresponding file. Inside the init function we resolve it
+	// with the rules_go runfiles package to the real path.
+	xTestImagesManifestPath string
+)
+
+func init() {
+	var err error
+	for _, path := range []*string{
+		&xTestImagesManifestPath,
+	} {
+		*path, err = runfiles.Rlocation(*path)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 const (
 	// Timeout for the global test context.
 	//
@@ -49,11 +68,7 @@ func TestE2ECore(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), globalTestTimeout)
 	defer cancel()
 
-	rPath, err := runfiles.Rlocation("_main/metropolis/test/e2e/testimages_manifest.prototxt")
-	if err != nil {
-		t.Fatalf("Resolving registry manifest failed: %v", err)
-	}
-	df, err := os.ReadFile(rPath)
+	df, err := os.ReadFile(xTestImagesManifestPath)
 	if err != nil {
 		t.Fatalf("Reading registry manifest failed: %v", err)
 	}

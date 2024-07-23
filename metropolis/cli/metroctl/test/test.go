@@ -21,14 +21,23 @@ import (
 	"source.monogon.dev/version"
 )
 
-// resolveMetroctl resolves metroctl filesystem path. It will return a correct
-// path, or terminate test execution.
-func resolveMetroctl() string {
-	path, err := runfiles.Rlocation("_main/metropolis/cli/metroctl/metroctl_/metroctl")
-	if err != nil {
-		log.Fatalf("Couldn't resolve metroctl binary: %v", err)
+var (
+	// These are filled by bazel at linking time with the canonical path of
+	// their corresponding file. Inside the init function we resolve it
+	// with the rules_go runfiles package to the real path.
+	xMetroctlPath string
+)
+
+func init() {
+	var err error
+	for _, path := range []*string{
+		&xMetroctlPath,
+	} {
+		*path, err = runfiles.Rlocation(*path)
+		if err != nil {
+			panic(err)
+		}
 	}
-	return path
 }
 
 // mctlRun starts metroctl, and waits till it exits. It returns nil, if the run
@@ -36,12 +45,11 @@ func resolveMetroctl() string {
 func mctlRun(t *testing.T, ctx context.Context, args []string) error {
 	t.Helper()
 
-	path := resolveMetroctl()
 	log.Printf("$ metroctl %s", strings.Join(args, " "))
 	logf := func(line string) {
 		log.Printf("metroctl: %s", line)
 	}
-	_, err := cmd.RunCommand(ctx, path, args, cmd.WaitUntilCompletion(logf))
+	_, err := cmd.RunCommand(ctx, xMetroctlPath, args, cmd.WaitUntilCompletion(logf))
 	return err
 }
 
@@ -50,13 +58,12 @@ func mctlRun(t *testing.T, ctx context.Context, args []string) error {
 func mctlExpectOutput(t *testing.T, ctx context.Context, args []string, expect string) (bool, error) {
 	t.Helper()
 
-	path := resolveMetroctl()
 	log.Printf("$ metroctl %s", strings.Join(args, " "))
 	// Terminate metroctl as soon as the expected output is found.
 	logf := func(line string) {
 		log.Printf("metroctl: %s", line)
 	}
-	found, err := cmd.RunCommand(ctx, path, args, cmd.TerminateIfFound(expect, logf))
+	found, err := cmd.RunCommand(ctx, xMetroctlPath, args, cmd.TerminateIfFound(expect, logf))
 	if err != nil {
 		return false, fmt.Errorf("while running metroctl: %w", err)
 	}

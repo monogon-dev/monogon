@@ -20,8 +20,13 @@ go_test(
         "linux_test.go",
         "structs_test.go",
     ],
-    data = ["@com_github_dosfstools_dosfstools//:fsck"],
+    data = [
+        "@com_github_dosfstools_dosfstools//:fsck",
+    ],
     embed = [":fat32"],
+    x_defs = {
+        "xFsckPath": "$(rlocationpath @com_github_dosfstools_dosfstools//:fsck )",
+    },
     deps = [
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

@@ -4,9 +4,7 @@ go_test(
     name = "ha_test",
     srcs = ["run_test.go"],
     data = [
-        "//metropolis/node:image",
         "//metropolis/test/e2e:testimages_manifest",
-        "//third_party/edk2:firmware",
     ],
     tags = [
         "resources:iops:5000",
@@ -14,6 +12,9 @@ go_test(
         # 3x2048 for nodes plus some extra.
         "resources:ram:7000",
     ],
+    x_defs = {
+        "xTestImagesManifestPath": "$(rlocationpath //metropolis/test/e2e:testimages_manifest )",
+    },
     deps = [
         "//metropolis/test/launch",
         "//metropolis/test/localregistry",

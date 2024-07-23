@@ -4,9 +4,7 @@ go_test(
     name = "core_test",
     srcs = ["run_test.go"],
     data = [
-        "//metropolis/node:image",
         "//metropolis/test/e2e:testimages_manifest",
-        "//third_party/edk2:firmware",
     ],
     tags = [
         "resources:iops:5000",
@@ -14,6 +12,9 @@ go_test(
         # 2x2048 for nodes plus some extra.
         "resources:ram:4500",
     ],
+    x_defs = {
+        "xTestImagesManifestPath": "$(rlocationpath //metropolis/test/e2e:testimages_manifest )",
+    },
     deps = [
         "//metropolis/node",
         "//metropolis/node/core/rpc",

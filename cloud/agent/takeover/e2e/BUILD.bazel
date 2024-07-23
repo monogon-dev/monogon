@@ -5,9 +5,16 @@ go_test(
     srcs = ["main_test.go"],
     data = [
         "//cloud/agent/takeover",
-        "//third_party/edk2:firmware",
+        "//third_party/edk2:OVMF_CODE.fd",
+        "//third_party/edk2:OVMF_VARS.fd",
         "@debian_11_cloudimage//file",
     ],
+    x_defs = {
+        "xCloudImagePath": "$(rlocationpath @debian_11_cloudimage//file )",
+        "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
+        "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
+        "xTakeoverPath": "$(rlocationpath //cloud/agent/takeover )",
+    },
     deps = [
         "//cloud/agent/api",
         "//osbase/fat32",

@@ -11,12 +11,31 @@ import (
 	"github.com/bazelbuild/rules_go/go/runfiles"
 )
 
+var (
+	// These are filled by bazel at linking time with the canonical path of
+	// their corresponding file. Inside the init function we resolve it
+	// with the rules_go runfiles package to the real path.
+	xFsckPath string
+)
+
+func init() {
+	if os.Getenv("IN_KTEST") == "true" {
+		return
+	}
+
+	var err error
+	for _, path := range []*string{
+		&xFsckPath,
+	} {
+		*path, err = runfiles.Rlocation(*path)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 func testWithFsck(t *testing.T, rootInode Inode, opts Options) {
 	t.Helper()
-	fsckPath, err := runfiles.Rlocation("com_github_dosfstools_dosfstools/fsck")
-	if err != nil {
-		t.Fatalf("unable to get path to fsck: %v", err)
-	}
 	testFile, err := os.CreateTemp("", "fat32-fsck-test")
 	if err != nil {
 		t.Fatal(err)
@@ -29,7 +48,7 @@ func testWithFsck(t *testing.T, rootInode Inode, opts Options) {
 	// as well as perform deep verification (-V)
 	// If the file system is OK (i.e. fsck does not want to fix it) it returns
 	// 0, otherwise 1.
-	fsckCmd := exec.Command(fsckPath, "-n", "-S", "-V", testFile.Name())
+	fsckCmd := exec.Command(xFsckPath, "-n", "-S", "-V", testFile.Name())
 	result, err := fsckCmd.CombinedOutput()
 	if err != nil {
 		t.Errorf("fsck failed: %v", string(result))

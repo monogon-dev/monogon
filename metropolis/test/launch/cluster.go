@@ -26,7 +26,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/multierr"
 	"golang.org/x/net/proxy"
@@ -140,30 +139,21 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 	}
 
 	// Initialize the node's storage with a prebuilt image.
-	si, err := runfiles.Rlocation("_main/metropolis/node/image.img")
-	if err != nil {
-		return nil, fmt.Errorf("while resolving a path: %w", err)
-	}
-
 	di := filepath.Join(stdp, "image.qcow2")
-	launch.Log("Cluster: generating node QCOW2 snapshot image: %s -> %s", si, di)
+	launch.Log("Cluster: generating node QCOW2 snapshot image: %s -> %s", xNodeImagePath, di)
 
 	df, err := os.Create(di)
 	if err != nil {
 		return nil, fmt.Errorf("while opening image for writing: %w", err)
 	}
 	defer df.Close()
-	if err := qcow2.Generate(df, qcow2.GenerateWithBackingFile(si)); err != nil {
+	if err := qcow2.Generate(df, qcow2.GenerateWithBackingFile(xNodeImagePath)); err != nil {
 		return nil, fmt.Errorf("while creating copy-on-write node image: %w", err)
 	}
 
 	// Initialize the OVMF firmware variables file.
-	sv, err := runfiles.Rlocation("edk2/OVMF_VARS.fd")
-	if err != nil {
-		return nil, fmt.Errorf("while resolving a path: %w", err)
-	}
-	dv := filepath.Join(stdp, filepath.Base(sv))
-	if err := copyFile(sv, dv); err != nil {
+	dv := filepath.Join(stdp, filepath.Base(xOvmfVarsPath))
+	if err := copyFile(xOvmfVarsPath, dv); err != nil {
 		return nil, fmt.Errorf("while copying firmware variables: %w", err)
 	}
 
@@ -268,18 +258,13 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 		options.Mac = mac
 	}
 
-	ovmfCodePath, err := runfiles.Rlocation("edk2/OVMF_CODE.fd")
-	if err != nil {
-		return err
-	}
-
 	tpmSocketPath := filepath.Join(r.sd, "tpm-socket")
 	fwVarPath := filepath.Join(r.ld, "OVMF_VARS.fd")
 	storagePath := filepath.Join(r.ld, "image.qcow2")
 	qemuArgs := []string{
 		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "2048",
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
-		"-drive", "if=pflash,format=raw,readonly=on,file=" + ovmfCodePath,
+		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + fwVarPath,
 		"-drive", "if=virtio,format=qcow2,cache=unsafe,file=" + storagePath,
 		"-netdev", qemuNetConfig.ToOption(qemuNetType),
@@ -318,7 +303,7 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 
 	// Manufacture TPM if needed.
 	tpmd := filepath.Join(r.ld, "tpm")
-	err = tpmFactory.Manufacture(ctx, tpmd, &TPMPlatform{
+	err := tpmFactory.Manufacture(ctx, tpmd, &TPMPlatform{
 		Manufacturer: "Monogon",
 		Version:      "1.0",
 		Model:        "TestCluster",
@@ -328,14 +313,9 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 	}
 
 	// Start TPM emulator as a subprocess
-	swtpm, err := runfiles.Rlocation("swtpm/swtpm")
-	if err != nil {
-		return fmt.Errorf("could not find swtpm: %w", err)
-	}
-
 	tpmCtx, tpmCancel := context.WithCancel(options.Runtime.ctxT)
 
-	tpmEmuCmd := exec.CommandContext(tpmCtx, swtpm, "socket", "--tpm2", "--tpmstate", "dir="+tpmd, "--ctrl", "type=unixio,path="+tpmSocketPath)
+	tpmEmuCmd := exec.CommandContext(tpmCtx, xSwtpmPath, "socket", "--tpm2", "--tpmstate", "dir="+tpmd, "--ctrl", "type=unixio,path="+tpmSocketPath)
 	// Silence warnings from unsafe libtpms build (uses non-constant-time
 	// cryptographic operations).
 	tpmEmuCmd.Env = append(tpmEmuCmd.Env, "MONOGON_LIBTPMS_ACKNOWLEDGE_UNSAFE=yes")
@@ -854,18 +834,10 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		} else {
 			serialPort = newPrefixedStdio(99)
 		}
-		kernelPath, err := runfiles.Rlocation("_main/osbase/test/ktest/vmlinux")
-		if err != nil {
-			launch.Fatal("Failed to resolved nanoswitch kernel: %v", err)
-		}
-		initramfsPath, err := runfiles.Rlocation("_main/metropolis/test/nanoswitch/initramfs.cpio.zst")
-		if err != nil {
-			launch.Fatal("Failed to resolved nanoswitch initramfs: %v", err)
-		}
 		if err := launch.RunMicroVM(ctxT, &launch.MicroVMOptions{
 			Name:                   "nanoswitch",
-			KernelPath:             kernelPath,
-			InitramfsPath:          initramfsPath,
+			KernelPath:             xKernelPath,
+			InitramfsPath:          xInitramfsPath,
 			ExtraNetworkInterfaces: switchPorts,
 			PortMap:                portMap,
 			GuestServiceMap:        guestSvcMap,

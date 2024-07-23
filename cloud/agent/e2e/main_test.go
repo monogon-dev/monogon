@@ -34,6 +34,30 @@ import (
 	"source.monogon.dev/osbase/pki"
 )
 
+var (
+	// These are filled by bazel at linking time with the canonical path of
+	// their corresponding file. Inside the init function we resolve it
+	// with the rules_go runfiles package to the real path.
+	xBundleFilePath    string
+	xOvmfVarsPath      string
+	xOvmfCodePath      string
+	xKernelPath        string
+	xInitramfsOrigPath string
+)
+
+func init() {
+	var err error
+	for _, path := range []*string{
+		&xBundleFilePath, &xOvmfVarsPath, &xOvmfCodePath,
+		&xKernelPath, &xInitramfsOrigPath,
+	} {
+		*path, err = runfiles.Rlocation(*path)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 type fakeServer struct {
 	hardwareReport      *bpb.AgentHardwareReport
 	installationRequest *bpb.OSInstallationRequest
@@ -139,12 +163,9 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	grpcListenAddr := grpcLis.Addr().(*net.TCPAddr)
 
 	m := http.NewServeMux()
-	bundleFilePath, err := runfiles.Rlocation("_main/metropolis/installer/test/testos/testos_bundle.zip")
-	if err != nil {
-		t.Fatal(err)
-	}
+
 	m.HandleFunc("/bundle.bin", func(w http.ResponseWriter, req *http.Request) {
-		http.ServeFile(w, req, bundleFilePath)
+		http.ServeFile(w, req, xBundleFilePath)
 	})
 	blobLis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -178,23 +199,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 		t.Fatalf("ftruncate failed: %v", err)
 	}
 
-	ovmfVarsPath, err := runfiles.Rlocation("edk2/OVMF_VARS.fd")
-	if err != nil {
-		t.Fatal(err)
-	}
-	ovmfCodePath, err := runfiles.Rlocation("edk2/OVMF_CODE.fd")
-	if err != nil {
-		t.Fatal(err)
-	}
-	kernelPath, err := runfiles.Rlocation("_main/third_party/linux/bzImage")
-	if err != nil {
-		t.Fatal(err)
-	}
-	initramfsOrigPath, err := runfiles.Rlocation("_main/cloud/agent/takeover/initramfs.cpio.zst")
-	if err != nil {
-		t.Fatal(err)
-	}
-	initramfsOrigFile, err := os.Open(initramfsOrigPath)
+	initramfsOrigFile, err := os.Open(xInitramfsOrigPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,7 +240,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ovmfVarsTmpl, err := os.Open(ovmfVarsPath)
+	ovmfVarsTmpl, err := os.Open(xOvmfVarsPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -246,7 +251,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	qemuArgs := []string{
 		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "1024",
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
-		"-drive", "if=pflash,format=raw,readonly=on,file=" + ovmfCodePath,
+		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + ovmfVars.Name(),
 		"-drive", "if=virtio,format=raw,cache=unsafe,file=" + rootDisk.Name(),
 		"-netdev", fmt.Sprintf("user,id=net0,net=10.42.0.0/24,dhcpstart=10.42.0.10,%s,%s", grpcGuestFwd, blobGuestFwd),
@@ -256,7 +261,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 		"-no-reboot",
 	}
 	stage1Args := append(qemuArgs,
-		"-kernel", kernelPath,
+		"-kernel", xKernelPath,
 		"-initrd", initramfsFile.Name(),
 		"-append", "console=ttyS0 quiet")
 	qemuCmdAgent := exec.Command("qemu-system-x86_64", stage1Args...)

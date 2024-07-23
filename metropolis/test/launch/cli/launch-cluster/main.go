@@ -20,6 +20,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
@@ -36,10 +37,6 @@ func main() {
 		log.Fatalf("LaunchCluster: %v", err)
 	}
 
-	mpath, err := mlaunch.MetroctlRunfilePath()
-	if err != nil {
-		log.Fatalf("MetroctlRunfilePath: %v", err)
-	}
 	wpath, err := cl.MakeMetroctlWrapper()
 	if err != nil {
 		log.Fatalf("MakeWrapper: %v", err)
@@ -53,8 +50,19 @@ func main() {
 		log.Fatalf("Cluster has no Kubernetes controller nodes")
 	}
 
+	// If the user has metroctl in their path, use the metroctl from path as
+	// a credential plugin. Otherwise use the path to the currently-running
+	// metroctl.
+	metroctlPath := "metroctl"
+	if _, err := exec.LookPath("metroctl"); err != nil {
+		metroctlPath, err = os.Executable()
+		if err != nil {
+			log.Fatalf("Failed to create kubectl entry as metroctl is neither in PATH nor can its absolute path be determined: %v", err)
+		}
+	}
+
 	configName := "launch-cluster"
-	if err := metroctl.InstallKubeletConfig(ctx, mpath, cl.ConnectOptions(), configName, apiservers[0]); err != nil {
+	if err := metroctl.InstallKubeletConfig(ctx, metroctlPath, cl.ConnectOptions(), configName, apiservers[0]); err != nil {
 		log.Fatalf("InstallKubeletConfig: %v", err)
 	}
 

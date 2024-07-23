@@ -3,3 +3,15 @@ alias(
     actual = "@edk2//:firmware",
     visibility = ["//visibility:public"],
 )
+
+alias(
+    name = "OVMF_CODE.fd",
+    actual = "@edk2//:OVMF_CODE.fd",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "OVMF_VARS.fd",
+    actual = "@edk2//:OVMF_VARS.fd",
+    visibility = ["//visibility:public"],
+)

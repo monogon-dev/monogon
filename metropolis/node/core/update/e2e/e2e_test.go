@@ -23,6 +23,33 @@ import (
 	"source.monogon.dev/osbase/blockdev"
 )
 
+var (
+	// These are filled by bazel at linking time with the canonical path of
+	// their corresponding file. Inside the init function we resolve it
+	// with the rules_go runfiles package to the real path.
+	xBundleYPath  string
+	xBundleZPath  string
+	xOvmfVarsPath string
+	xOvmfCodePath string
+	xBootPath     string
+	xSystemXPath  string
+	xAbloaderPath string
+)
+
+func init() {
+	var err error
+	for _, path := range []*string{
+		&xBundleYPath, &xBundleZPath, &xOvmfVarsPath,
+		&xOvmfCodePath, &xBootPath, &xSystemXPath,
+		&xAbloaderPath,
+	} {
+		*path, err = runfiles.Rlocation(*path)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 const Mi = 1024 * 1024
 
 var variantRegexp = regexp.MustCompile(`TESTOS_VARIANT=([A-Z])`)
@@ -137,16 +164,8 @@ func setup(t *testing.T) (*bundleServing, []string) {
 	}
 
 	m := http.NewServeMux()
-	bundleYPath, err := runfiles.Rlocation("_main/metropolis/node/core/update/e2e/testos/testos_bundle_y.zip")
-	if err != nil {
-		t.Fatal(err)
-	}
-	b.bundlePaths["Y"] = bundleYPath
-	bundleZPath, err := runfiles.Rlocation("_main/metropolis/node/core/update/e2e/testos/testos_bundle_z.zip")
-	if err != nil {
-		t.Fatal(err)
-	}
-	b.bundlePaths["Z"] = bundleZPath
+	b.bundlePaths["Y"] = xBundleYPath
+	b.bundlePaths["Z"] = xBundleZPath
 	m.HandleFunc("/bundle.bin", func(w http.ResponseWriter, req *http.Request) {
 		b.m.Lock()
 		bundleFilePath := b.bundleFilePath
@@ -175,38 +194,18 @@ func setup(t *testing.T) (*bundleServing, []string) {
 	t.Cleanup(func() { os.Remove(rootDevPath) })
 	defer rootDisk.Close()
 
-	ovmfVarsPath, err := runfiles.Rlocation("edk2/OVMF_VARS.fd")
-	if err != nil {
-		t.Fatal(err)
-	}
-	ovmfCodePath, err := runfiles.Rlocation("edk2/OVMF_CODE.fd")
-	if err != nil {
-		t.Fatal(err)
-	}
-	bootPath, err := runfiles.Rlocation("_main/metropolis/node/core/update/e2e/testos/kernel_efi_x.efi")
-	if err != nil {
-		t.Fatal(err)
-	}
-	boot, err := blkio.NewFileReader(bootPath)
+	boot, err := blkio.NewFileReader(xBootPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer boot.Close()
-	systemXPath, err := runfiles.Rlocation("_main/metropolis/node/core/update/e2e/testos/verity_rootfs_x.img")
-	if err != nil {
-		t.Fatal(err)
-	}
-	system, err := os.Open(systemXPath)
+	system, err := os.Open(xSystemXPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer system.Close()
 
-	abloaderPath, err := runfiles.Rlocation("_main/metropolis/node/core/abloader/abloader_bin.efi")
-	if err != nil {
-		t.Fatal(err)
-	}
-	loader, err := blkio.NewFileReader(abloaderPath)
+	loader, err := blkio.NewFileReader(xAbloaderPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -233,7 +232,7 @@ func setup(t *testing.T) (*bundleServing, []string) {
 	}
 	defer ovmfVars.Close()
 	t.Cleanup(func() { os.Remove(ovmfVars.Name()) })
-	ovmfVarsTmpl, err := os.Open(ovmfVarsPath)
+	ovmfVarsTmpl, err := os.Open(xOvmfVarsPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,7 +244,7 @@ func setup(t *testing.T) (*bundleServing, []string) {
 	qemuArgs := []string{
 		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "1024",
 		"-cpu", "max", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
-		"-drive", "if=pflash,format=raw,readonly=on,file=" + ovmfCodePath,
+		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + ovmfVars.Name(),
 		"-drive", "if=virtio,format=raw,cache=unsafe,file=" + rootDevPath,
 		"-netdev", fmt.Sprintf("user,id=net0,net=10.42.0.0/24,dhcpstart=10.42.0.10,%s", blobGuestFwd),

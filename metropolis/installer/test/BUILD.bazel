@@ -1,24 +1,26 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
 load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
 
 go_test(
-    name = "installer",
+    name = "test_test",
     size = "medium",
+    srcs = ["run_test.go"],
     data = [
         ":kernel",
         "//metropolis/installer/test/testos:testos_bundle",
-        "//third_party/edk2:firmware",
+        "//third_party/edk2:OVMF_CODE.fd",
+        "//third_party/edk2:OVMF_VARS.fd",
         "@qemu//:qemu-x86_64-softmmu",
     ],
-    embed = [":test"],
-    rundir = ".",
-)
-
-go_library(
-    name = "test",
-    srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/installer/test",
     visibility = ["//visibility:private"],
+    x_defs = {
+        "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
+        "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
+        "xQemuPath": "$(rlocationpath @qemu//:qemu-x86_64-softmmu )",
+        "xInstallerPath": "$(rlocationpath :kernel )",
+        "xBundlePath": "$(rlocationpath //metropolis/installer/test/testos:testos_bundle )",
+    },
     deps = [
         "//metropolis/cli/metroctl/core",
         "//metropolis/node/build/mkimage/osimage",

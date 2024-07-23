@@ -26,6 +26,29 @@ import (
 	"source.monogon.dev/osbase/freeport"
 )
 
+var (
+	// These are filled by bazel at linking time with the canonical path of
+	// their corresponding file. Inside the init function we resolve it
+	// with the rules_go runfiles package to the real path.
+	xCloudImagePath string
+	xOvmfVarsPath   string
+	xOvmfCodePath   string
+	xTakeoverPath   string
+)
+
+func init() {
+	var err error
+	for _, path := range []*string{
+		&xCloudImagePath, &xOvmfVarsPath, &xOvmfCodePath,
+		&xTakeoverPath,
+	} {
+		*path, err = runfiles.Rlocation(*path)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 func TestE2E(t *testing.T) {
 	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -74,18 +97,6 @@ func TestE2E(t *testing.T) {
 	if err := fat32.WriteFS(cloudInitDataFile, rootInode, fat32.Options{Label: "cidata"}); err != nil {
 		t.Fatal(err)
 	}
-	cloudImagePath, err := runfiles.Rlocation("debian_11_cloudimage/file/downloaded")
-	if err != nil {
-		t.Fatal(err)
-	}
-	ovmfVarsPath, err := runfiles.Rlocation("edk2/OVMF_VARS.fd")
-	if err != nil {
-		t.Fatal(err)
-	}
-	ovmfCodePath, err := runfiles.Rlocation("edk2/OVMF_CODE.fd")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	sshPort, sshPortCloser, err := freeport.AllocateTCPPort()
 	if err != nil {
@@ -95,9 +106,9 @@ func TestE2E(t *testing.T) {
 	qemuArgs := []string{
 		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "1024",
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
-		"-drive", "if=pflash,format=raw,readonly=on,file=" + ovmfCodePath,
-		"-drive", "if=pflash,format=raw,snapshot=on,file=" + ovmfVarsPath,
-		"-drive", "if=virtio,format=qcow2,snapshot=on,cache=unsafe,file=" + cloudImagePath,
+		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfCodePath,
+		"-drive", "if=pflash,format=raw,snapshot=on,file=" + xOvmfVarsPath,
+		"-drive", "if=virtio,format=qcow2,snapshot=on,cache=unsafe,file=" + xCloudImagePath,
 		"-drive", "if=virtio,format=raw,snapshot=on,file=" + cloudInitDataFile.Name(),
 		"-netdev", fmt.Sprintf("user,id=net0,net=10.42.0.0/24,dhcpstart=10.42.0.10,hostfwd=tcp::%d-:22", sshPort),
 		"-device", "virtio-net-pci,netdev=net0,mac=22:d5:8e:76:1d:07",
@@ -158,11 +169,7 @@ func TestE2E(t *testing.T) {
 	if err := takeoverFile.Chmod(0o755); err != nil {
 		t.Fatal(err)
 	}
-	takeoverPath, err := runfiles.Rlocation("_main/cloud/agent/takeover/takeover_/takeover")
-	if err != nil {
-		t.Fatal(err)
-	}
-	takeoverSrcFile, err := os.Open(takeoverPath)
+	takeoverSrcFile, err := os.Open(xTakeoverPath)
 	if err != nil {
 		t.Fatal(err)
 	}

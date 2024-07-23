@@ -10,13 +10,27 @@ import (
 	"github.com/bazelbuild/rules_go/go/runfiles"
 )
 
+var (
+	// These are filled by bazel at linking time with the canonical path of
+	// their corresponding file. Inside the init function we resolve it
+	// with the rules_go runfiles package to the real path.
+	xQemuImgPath string
+)
+
+func init() {
+	var err error
+	for _, path := range []*string{
+		&xQemuImgPath,
+	} {
+		*path, err = runfiles.Rlocation(*path)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 // TestGenerate exercises the Generate function for a variety of image sizes.
 func TestGenerate(t *testing.T) {
-	qemuImg, err := runfiles.Rlocation("qemu/qemu-img")
-	if err != nil {
-		t.Fatalf("Could not locate qemu-img: %v", err)
-	}
-
 	// Test all orders of magnitude from 1KiB to 1PiB.
 	for i := 20; i < 50; i++ {
 		t.Run(fmt.Sprintf("%d", 1<<i), func(t *testing.T) {
@@ -33,7 +47,7 @@ func TestGenerate(t *testing.T) {
 				t.Fatalf("Close: %v", err)
 			}
 
-			cmd := exec.Command(qemuImg, "check", path)
+			cmd := exec.Command(xQemuImgPath, "check", path)
 			if err := cmd.Run(); err != nil {
 				t.Fatalf("qemu-img check failed: %v", err)
 			}

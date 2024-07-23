@@ -23,9 +23,26 @@ import (
 	"source.monogon.dev/osbase/supervisor"
 )
 
-func fakeExporter(name, value string) *Exporter {
-	path, _ := runfiles.Rlocation("_main/metropolis/node/core/metrics/fake_exporter/fake_exporter_/fake_exporter")
+var (
+	// These are filled by bazel at linking time with the canonical path of
+	// their corresponding file. Inside the init function we resolve it
+	// with the rules_go runfiles package to the real path.
+	xFakeExporterPath string
+)
 
+func init() {
+	var err error
+	for _, path := range []*string{
+		&xFakeExporterPath,
+	} {
+		*path, err = runfiles.Rlocation(*path)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func fakeExporter(name, value string) *Exporter {
 	p, closer, err := freeport.AllocateTCPPort()
 	if err != nil {
 		panic(err)
@@ -36,7 +53,7 @@ func fakeExporter(name, value string) *Exporter {
 	return &Exporter{
 		Name:       name,
 		Port:       port,
-		Executable: path,
+		Executable: xFakeExporterPath,
 		Arguments: []string{
 			"-listen", "127.0.0.1:" + port.PortString(),
 			"-value", value,
