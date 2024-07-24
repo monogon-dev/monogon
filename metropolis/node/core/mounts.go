@@ -41,6 +41,11 @@ func setupMounts() error {
 		{"/proc", "proc", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
 		{"/dev", "devtmpfs", unix.MS_NOEXEC | unix.MS_NOSUID},
 		{"/dev/pts", "devpts", unix.MS_NOEXEC | unix.MS_NOSUID},
+		// Nothing in Metropolis currently uses /dev/shm, but it's required
+		// by containerd when the host IPC namespace is shared, which
+		// is required by "kubectl debug node/" and specific customer applications.
+		// https://github.com/monogon-dev/monogon/issues/305.
+		{"/dev/shm", "tmpfs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
 	} {
 		if err := os.MkdirAll(el.dir, 0755); err != nil {
 			return fmt.Errorf("could not make %s: %w", el.dir, err)
