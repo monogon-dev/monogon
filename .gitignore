@@ -6,3 +6,6 @@
 .bazelrc.sandbox
 .bazeldnf
 .direnv
+
+third_party/rust/target/*
+third_party/rust_efi/target/*

@@ -1,7 +1,7 @@
-From 2aff5ddecae1bbbe85b07c047bc6cbfa2da5ba96 Mon Sep 17 00:00:00 2001
+From 8b464f085c9b255d81ee0e8501914ff7cb3cadd8 Mon Sep 17 00:00:00 2001
 From: Tim Windelschmidt <tim@monogon.tech>
 Date: Fri, 12 Jan 2024 15:41:50 +0100
-Subject: [PATCH] Support no_std in Prost toolchain
+Subject: [PATCH 1/2] Support no_std in Prost toolchain
 
 ---
  proto/prost/private/prost.bzl         |  8 ++++++++
@@ -9,10 +9,10 @@ Subject: [PATCH] Support no_std in Prost toolchain
  2 files changed, 22 insertions(+), 3 deletions(-)
 
 diff --git a/proto/prost/private/prost.bzl b/proto/prost/private/prost.bzl
-index 0a9f3500..e3e5e382 100644
+index c3a7d4e0..6f7449d0 100644
 --- a/proto/prost/private/prost.bzl
 +++ b/proto/prost/private/prost.bzl
-@@ -58,6 +58,9 @@ def _compile_proto(ctx, crate_name, proto_info, deps, prost_toolchain, rustfmt_t
+@@ -65,6 +65,9 @@ def _compile_proto(ctx, crate_name, proto_info, deps, prost_toolchain, rustfmt_t
      additional_args.add("--descriptor_set={}".format(proto_info.direct_descriptor_set.path))
      additional_args.add_all(prost_toolchain.prost_opts, format_each = "--prost_opt=%s")
 
@@ -22,7 +22,7 @@ index 0a9f3500..e3e5e382 100644
      if prost_toolchain.tonic_plugin:
          tonic_plugin = prost_toolchain.tonic_plugin[DefaultInfo].files_to_run
          additional_args.add(prost_toolchain.tonic_plugin_flag % tonic_plugin.executable.path)
-@@ -335,6 +338,7 @@ def _rust_prost_toolchain_impl(ctx):
+@@ -372,6 +375,7 @@ def _rust_prost_toolchain_impl(ctx):
          tonic_plugin = ctx.attr.tonic_plugin,
          tonic_plugin_flag = ctx.attr.tonic_plugin_flag,
          tonic_runtime = ctx.attr.tonic_runtime,
@@ -30,7 +30,7 @@ index 0a9f3500..e3e5e382 100644
      )]
 
  rust_prost_toolchain = rule(
-@@ -387,6 +391,10 @@ rust_prost_toolchain = rule(
+@@ -423,6 +427,10 @@ rust_prost_toolchain = rule(
              doc = "The Tonic runtime crates to use.",
              providers = [[rust_common.crate_info], [rust_common.crate_group_info]],
          ),
@@ -38,11 +38,11 @@ index 0a9f3500..e3e5e382 100644
 +            doc = "If a no_std tag should be put into the generated code.",
 +            default = False,
 +        ),
-     },
- )
-
+     }, **proto_toolchains.if_legacy_toolchain({
+         "_legacy_proto_toolchain": attr.label(
+             default = "//proto/protobuf:legacy_proto_toolchain",
 diff --git a/proto/prost/private/protoc_wrapper.rs b/proto/prost/private/protoc_wrapper.rs
-index f8be6478..44f6ad8e 100644
+index 9c41892c..5d67640d 100644
 --- a/proto/prost/private/protoc_wrapper.rs
 +++ b/proto/prost/private/protoc_wrapper.rs
 @@ -117,7 +117,7 @@ struct Module {
@@ -119,5 +119,5 @@ index f8be6478..44f6ad8e 100644
          package_info_file,
          extern_paths
 --
-2.42.0
+2.44.1
 

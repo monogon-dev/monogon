@@ -47,7 +47,7 @@ single_version_override(
         "//third_party:rust-prost-nostd.patch",
         "//third_party:rust-reproducibility.patch",
     ],
-    version = "0.47.1",
+    version = "0.48.0",
 )
 
 bazel_dep(name = "zlib")

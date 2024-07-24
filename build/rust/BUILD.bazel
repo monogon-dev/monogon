@@ -14,7 +14,6 @@ rust_prost_toolchain(
     prost_plugin = "@crate_index//:protoc-gen-prost__protoc-gen-prost",
     prost_runtime = ":prost_runtime_efi",
     prost_types = "@crate_index_efi//:prost-types",
-    proto_compiler = "@protobuf//:protoc",
     # This defaults to a non-empty value, which triggers an error that not all
     # tonic flags are set. We do not want tonic, so explicitly set this to
     # an empty string.
