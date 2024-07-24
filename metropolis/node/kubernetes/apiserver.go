@@ -185,6 +185,7 @@ func (s *apiserverService) Run(ctx context.Context) error {
 		args.FileOpt("--tls-private-key-file", "server-key.pem",
 			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: s.serverKey})),
 		args.FileOpt("--admission-control-config-file", "admission-control.json", admissionConfigRaw),
+		"--allow-privileged=true",
 	)
 	if args.Error() != nil {
 		return err
