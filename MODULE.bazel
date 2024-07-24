@@ -5,6 +5,9 @@
 # For more details, please check https://github.com/bazelbuild/bazel/issues/18958
 ###############################################################################
 
+# NOTE: When editing this file, also update the lockfile.
+#   bazel mod deps --lockfile_mode=update
+
 bazel_dep(name = "platforms")
 single_version_override(
     module_name = "platforms",

@@ -4,6 +4,10 @@ import %workspace%/third_party/bazelrc/aspect/convenience.bazelrc
 import %workspace%/third_party/bazelrc/aspect/correctness.bazelrc
 import %workspace%/third_party/bazelrc/aspect/performance.bazelrc
 
+# Actually make the lock file a lock file by not updating it without any
+# request to do so.
+common --lockfile_mode=error
+
 # Allow empty globs as there are a lot until we replace our rust toolchain and
 # qemu BUILD files.
 common --noincompatible_disallow_empty_glob
