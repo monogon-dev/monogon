@@ -11,7 +11,7 @@ common --noincompatible_disallow_empty_glob
 # Don't warn about too high test timeout as these can vary a lot.
 test --notest_verbose_timeout_warnings
 
-# Set compilation mode (-c) to debug when running with --config debug.
+# Set compilation mode (-c) to debug when running with --config dbg.
 build:dbg --compilation_mode=dbg
 
 # Run all spawns in our own hermetic sandbox sysroot.
