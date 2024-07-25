@@ -1,69 +1,137 @@
-From 88112dc534d2179784c26d093f46210320b9d0a1 Mon Sep 17 00:00:00 2001
+From b206ad03bdbe5dab70cd11f2afa54dd06b6074b1 Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
-Date: Thu, 4 Jul 2024 15:27:25 +0200
+Date: Mon, 7 Mar 2022 19:06:11 +0100
 Subject: [PATCH] Disable -Werror as it breaks newer compilers
 
 ---
- BaseTools/Conf/tools_def.template            | 6 +++---
- BaseTools/Source/C/Makefiles/header.makefile | 6 +++---
- 2 files changed, 6 insertions(+), 6 deletions(-)
+ BaseTools/Conf/tools_def.template              | 18 +++++++++---------
+ BaseTools/Source/C/Makefiles/header.makefile   |  6 +++---
+ CryptoPkg/Library/OpensslLib/OpensslLib.inf    |  8 ++++----
+ .../Library/OpensslLib/OpensslLibCrypto.inf    |  8 ++++----
+ 4 files changed, 20 insertions(+), 20 deletions(-)
 
 diff --git a/BaseTools/Conf/tools_def.template b/BaseTools/Conf/tools_def.template
-index c34ecfd557..d18f1afe07 100755
+index f2bb6247e8..ef1997187c 100755
 --- a/BaseTools/Conf/tools_def.template
 +++ b/BaseTools/Conf/tools_def.template
-@@ -739,7 +739,7 @@ NOOPT_*_*_OBJCOPY_ADDDEBUGFLAG     = --add-gnu-debuglink="$(DEBUG_DIR)/$(MODULE_
+@@ -1867,7 +1867,7 @@ NOOPT_*_*_OBJCOPY_ADDDEBUGFLAG     = --add-gnu-debuglink=$(DEBUG_DIR)/$(MODULE_N
  *_*_*_DTCPP_PATH                   = DEF(DTCPP_BIN)
  *_*_*_DTC_PATH                     = DEF(DTC_BIN)
  
 -DEFINE GCC_ALL_CC_FLAGS            = -g -Os -fshort-wchar -fno-builtin -fno-strict-aliasing -Wall -Werror -Wno-array-bounds -include AutoGen.h -fno-common
-+DEFINE GCC_ALL_CC_FLAGS            = -g -Os -fshort-wchar -fno-builtin -fno-strict-aliasing -Wall -Wno-array-bounds -include AutoGen.h -fno-common
- DEFINE GCC_ARM_CC_FLAGS            = DEF(GCC_ALL_CC_FLAGS) -mlittle-endian -mabi=aapcs -fno-short-enums -funsigned-char -ffunction-sections -fdata-sections -fomit-frame-pointer -Wno-address -mthumb -fno-pic -fno-pie
- DEFINE GCC_LOONGARCH64_CC_FLAGS    = DEF(GCC_ALL_CC_FLAGS) -mabi=lp64d -fno-asynchronous-unwind-tables -fno-plt -Wno-address -fno-short-enums -fsigned-char -ffunction-sections -fdata-sections
- DEFINE GCC_ARM_CC_XIPFLAGS         = -mno-unaligned-access
-@@ -848,7 +848,7 @@ DEFINE GCC5_ARM_ASLDLINK_FLAGS       = DEF(GCC49_ARM_ASLDLINK_FLAGS)
++DEFINE GCC_ALL_CC_FLAGS            = -g -Os -fshort-wchar -fno-builtin -fno-strict-aliasing -Wall  -Wno-array-bounds -include AutoGen.h -fno-common
+ DEFINE GCC_IA32_CC_FLAGS           = DEF(GCC_ALL_CC_FLAGS) -m32 -malign-double -freorder-blocks -freorder-blocks-and-partition -O2 -mno-stack-arg-probe
+ DEFINE GCC_X64_CC_FLAGS            = DEF(GCC_ALL_CC_FLAGS) -mno-red-zone -Wno-address -mno-stack-arg-probe
+ DEFINE GCC_ARM_CC_FLAGS            = DEF(GCC_ALL_CC_FLAGS) -mlittle-endian -mabi=aapcs -fno-short-enums -funsigned-char -ffunction-sections -fdata-sections -fomit-frame-pointer -Wno-address -mthumb -mfloat-abi=soft -fno-pic -fno-pie
+@@ -1971,7 +1971,7 @@ DEFINE GCC5_ARM_ASLDLINK_FLAGS       = DEF(GCC49_ARM_ASLDLINK_FLAGS)
  DEFINE GCC5_AARCH64_ASLDLINK_FLAGS   = DEF(GCC49_AARCH64_ASLDLINK_FLAGS)
  DEFINE GCC5_ASLCC_FLAGS              = DEF(GCC49_ASLCC_FLAGS) -fno-lto
  
 -DEFINE GCC5_RISCV_ALL_CC_FLAGS                    = -g -fshort-wchar -fno-strict-aliasing -Wall -Werror -Wno-array-bounds -ffunction-sections -fdata-sections -include AutoGen.h -fno-common -DSTRING_ARRAY_NAME=$(BASE_NAME)Strings -msmall-data-limit=0
-+DEFINE GCC5_RISCV_ALL_CC_FLAGS                    = -g -fshort-wchar -fno-strict-aliasing -Wall -Wno-array-bounds -ffunction-sections -fdata-sections -include AutoGen.h -fno-common -DSTRING_ARRAY_NAME=$(BASE_NAME)Strings -msmall-data-limit=0
++DEFINE GCC5_RISCV_ALL_CC_FLAGS                    = -g -fshort-wchar -fno-strict-aliasing -Wall  -Wno-array-bounds -ffunction-sections -fdata-sections -include AutoGen.h -fno-common -DSTRING_ARRAY_NAME=$(BASE_NAME)Strings -msmall-data-limit=0
  DEFINE GCC5_RISCV_ALL_DLINK_COMMON                = -nostdlib -Wl,-n,-q,--gc-sections -z common-page-size=0x40
  DEFINE GCC5_RISCV_ALL_DLINK_FLAGS                 = DEF(GCC5_RISCV_ALL_DLINK_COMMON) -Wl,--entry,$(IMAGE_ENTRY_POINT) -u $(IMAGE_ENTRY_POINT) -Wl,-Map,$(DEST_DIR_DEBUG)/$(BASE_NAME).map
  DEFINE GCC5_RISCV_ALL_DLINK2_FLAGS                = -Wl,--defsym=PECOFF_HEADER_SIZE=0x220,--script=$(EDK_TOOLS_PATH)/Scripts/GccBase.lds
-@@ -864,7 +864,7 @@ DEFINE GCC5_RISCV64_DLINK_FLAGS            = DEF(GCC5_RISCV_ALL_DLINK_FLAGS) -Wl
- DEFINE GCC5_RISCV64_DLINK2_FLAGS           = DEF(GCC5_RISCV_ALL_DLINK2_FLAGS)
- DEFINE GCC5_RISCV64_ASM_FLAGS              = DEF(GCC5_RISCV_ALL_ASM_FLAGS) -march=DEF(GCC5_RISCV64_ARCH) -mcmodel=medany -mabi=lp64
+@@ -2961,7 +2961,7 @@ NOOPT_CLANGDWARF_X64_DLINK2_FLAGS     = DEF(CLANGDWARF_X64_DLINK2_FLAGS) -O0 -fu
+ ##################
+ # ASL definitions
+ ##################
+-*_XCODE5_*_ASLCC_FLAGS      = -x c -save-temps -g -O0 -fshort-wchar -fno-strict-aliasing -Wall -Werror -Wno-missing-braces -c -include AutoGen.h
++*_XCODE5_*_ASLCC_FLAGS      = -x c -save-temps -g -O0 -fshort-wchar -fno-strict-aliasing -Wall  -Wno-missing-braces -c -include AutoGen.h
+ *_XCODE5_*_ASLDLINK_FLAGS   = -e _ReferenceAcpiTable -preload -segalign 0x20  -pie -seg1addr 0x240 -read_only_relocs suppress -map $(DEST_DIR_DEBUG)/$(BASE_NAME).map
+ *_XCODE5_*_ASLPP_FLAGS      = -x c -E -include AutoGen.h
+ *_XCODE5_*_ASL_FLAGS        =
+@@ -2989,9 +2989,9 @@ RELEASE_XCODE5_IA32_ASM_FLAGS  = -arch i386
+       *_XCODE5_IA32_NASM_FLAGS = -f macho32
  
--DEFINE GCC5_LOONGARCH64_CC_FLAGS           = DEF(GCC_LOONGARCH64_CC_FLAGS) -march=loongarch64 -mno-memcpy -Werror -Wno-maybe-uninitialized -Wno-stringop-overflow -Wno-pointer-to-int-cast -no-pie -fno-stack-protector -mno-explicit-relocs
-+DEFINE GCC5_LOONGARCH64_CC_FLAGS           = DEF(GCC_LOONGARCH64_CC_FLAGS) -march=loongarch64 -mno-memcpy -Wno-maybe-uninitialized -Wno-stringop-overflow -Wno-pointer-to-int-cast -no-pie -fno-stack-protector -mno-explicit-relocs
- DEFINE GCC5_LOONGARCH64_DLINK_FLAGS        = DEF(GCC_LOONGARCH64_DLINK_FLAGS)
- DEFINE GCC5_LOONGARCH64_DLINK2_FLAGS       = DEF(GCC_DLINK2_FLAGS_COMMON) -Wl,--defsym=PECOFF_HEADER_SIZE=0x228
- DEFINE GCC5_LOONGARCH64_ASLDLINK_FLAGS     = DEF(GCC_LOONGARCH64_ASLDLINK_FLAGS) DEF(GCC5_LOONGARCH64_DLINK2_FLAGS)
+ 
+-  DEBUG_XCODE5_IA32_CC_FLAGS   = -arch i386 -c -g -Os       -Wall -Werror -include AutoGen.h -funsigned-char -fno-stack-protector -fno-builtin -fshort-wchar -fasm-blocks -mdynamic-no-pic -mno-implicit-float -mms-bitfields -msoft-float -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang $(PLATFORM_FLAGS)
+-RELEASE_XCODE5_IA32_CC_FLAGS   = -arch i386 -c    -Os       -Wall -Werror -include AutoGen.h -funsigned-char -fno-stack-protector -fno-builtin -fshort-wchar -fasm-blocks -mdynamic-no-pic -mno-implicit-float -mms-bitfields -msoft-float -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -Wno-unused-const-variable -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang $(PLATFORM_FLAGS)
+-  NOOPT_XCODE5_IA32_CC_FLAGS   = -arch i386 -c -g -O0       -Wall -Werror -include AutoGen.h -funsigned-char -fno-stack-protector -fno-builtin -fshort-wchar -fasm-blocks -mdynamic-no-pic -mno-implicit-float -mms-bitfields -msoft-float -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang $(PLATFORM_FLAGS)
++  DEBUG_XCODE5_IA32_CC_FLAGS   = -arch i386 -c -g -Os       -Wall  -include AutoGen.h -funsigned-char -fno-stack-protector -fno-builtin -fshort-wchar -fasm-blocks -mdynamic-no-pic -mno-implicit-float -mms-bitfields -msoft-float -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang $(PLATFORM_FLAGS)
++RELEASE_XCODE5_IA32_CC_FLAGS   = -arch i386 -c    -Os       -Wall  -include AutoGen.h -funsigned-char -fno-stack-protector -fno-builtin -fshort-wchar -fasm-blocks -mdynamic-no-pic -mno-implicit-float -mms-bitfields -msoft-float -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -Wno-unused-const-variable -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang $(PLATFORM_FLAGS)
++  NOOPT_XCODE5_IA32_CC_FLAGS   = -arch i386 -c -g -O0       -Wall  -include AutoGen.h -funsigned-char -fno-stack-protector -fno-builtin -fshort-wchar -fasm-blocks -mdynamic-no-pic -mno-implicit-float -mms-bitfields -msoft-float -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang $(PLATFORM_FLAGS)
+ 
+ ##################
+ # X64 definitions
+@@ -3008,9 +3008,9 @@ RELEASE_XCODE5_X64_ASM_FLAGS  = -arch x86_64
+ *_XCODE5_*_PP_FLAGS         = -E -x assembler-with-cpp -include AutoGen.h
+ *_XCODE5_*_VFRPP_FLAGS      = -x c -E -P -DVFRCOMPILE -include $(MODULE_NAME)StrDefs.h
+ 
+-  DEBUG_XCODE5_X64_CC_FLAGS   = -target x86_64-pc-win32-macho -c -g -gdwarf -Os       -Wall -Werror -Wextra -include AutoGen.h -funsigned-char -fno-ms-extensions -fno-stack-protector -fno-builtin -fshort-wchar -mno-implicit-float -mms-bitfields -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang -D NO_MSABI_VA_FUNCS $(PLATFORM_FLAGS)
+-  NOOPT_XCODE5_X64_CC_FLAGS   = -target x86_64-pc-win32-macho -c -g -gdwarf -O0       -Wall -Werror -Wextra -include AutoGen.h -funsigned-char -fno-ms-extensions -fno-stack-protector -fno-builtin -fshort-wchar -mno-implicit-float -mms-bitfields -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang -D NO_MSABI_VA_FUNCS $(PLATFORM_FLAGS)
+-RELEASE_XCODE5_X64_CC_FLAGS   = -target x86_64-pc-win32-macho -c    -Os       -Wall -Werror -Wextra -include AutoGen.h -funsigned-char -fno-ms-extensions -fno-stack-protector -fno-builtin -fshort-wchar -mno-implicit-float -mms-bitfields -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -Wno-unused-const-variable -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang -D NO_MSABI_VA_FUNCS $(PLATFORM_FLAGS)
++  DEBUG_XCODE5_X64_CC_FLAGS   = -target x86_64-pc-win32-macho -c -g -gdwarf -Os       -Wall  -Wextra -include AutoGen.h -funsigned-char -fno-ms-extensions -fno-stack-protector -fno-builtin -fshort-wchar -mno-implicit-float -mms-bitfields -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang -D NO_MSABI_VA_FUNCS $(PLATFORM_FLAGS)
++  NOOPT_XCODE5_X64_CC_FLAGS   = -target x86_64-pc-win32-macho -c -g -gdwarf -O0       -Wall  -Wextra -include AutoGen.h -funsigned-char -fno-ms-extensions -fno-stack-protector -fno-builtin -fshort-wchar -mno-implicit-float -mms-bitfields -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang -D NO_MSABI_VA_FUNCS $(PLATFORM_FLAGS)
++RELEASE_XCODE5_X64_CC_FLAGS   = -target x86_64-pc-win32-macho -c    -Os       -Wall  -Wextra -include AutoGen.h -funsigned-char -fno-ms-extensions -fno-stack-protector -fno-builtin -fshort-wchar -mno-implicit-float -mms-bitfields -Wno-unused-parameter -Wno-missing-braces -Wno-missing-field-initializers -Wno-tautological-compare -Wno-sign-compare -Wno-varargs -Wno-unused-const-variable -ftrap-function=undefined_behavior_has_been_optimized_away_by_clang -D NO_MSABI_VA_FUNCS $(PLATFORM_FLAGS)
+ 
+ ####################################################################################
+ #
 diff --git a/BaseTools/Source/C/Makefiles/header.makefile b/BaseTools/Source/C/Makefiles/header.makefile
-index d369908a09..1bf4caaa53 100644
+index 0df728f327..49f9706b1d 100644
 --- a/BaseTools/Source/C/Makefiles/header.makefile
 +++ b/BaseTools/Source/C/Makefiles/header.makefile
-@@ -92,17 +92,17 @@ BUILD_OPTFLAGS = -O2 $(EXTRA_OPTFLAGS)
+@@ -82,17 +82,17 @@ BUILD_OPTFLAGS = -O2 $(EXTRA_OPTFLAGS)
  
  ifeq ($(DARWIN),Darwin)
  # assume clang or clang compatible flags on OS X
--CFLAGS = -MD -fshort-wchar -fno-strict-aliasing -Wall -Werror \
-+CFLAGS = -MD -fshort-wchar -fno-strict-aliasing -Wall \
+-BUILD_CFLAGS = -MD -fshort-wchar -fno-strict-aliasing -Wall -Werror \
++BUILD_CFLAGS = -MD -fshort-wchar -fno-strict-aliasing -Wall  \
  -Wno-deprecated-declarations -Wno-self-assign -Wno-unused-result -nostdlib -g
  else
- ifneq ($(CLANG),)
- CFLAGS = -MD -fshort-wchar -fno-strict-aliasing -fwrapv \
+ ifeq ($(CXX), llvm)
+ BUILD_CFLAGS = -MD -fshort-wchar -fno-strict-aliasing -fwrapv \
 --fno-delete-null-pointer-checks -Wall -Werror \
-+-fno-delete-null-pointer-checks -Wall \
++-fno-delete-null-pointer-checks -Wall  \
  -Wno-deprecated-declarations -Wno-self-assign \
  -Wno-unused-result -nostdlib -g
  else
- CFLAGS = -MD -fshort-wchar -fno-strict-aliasing -fwrapv \
+ BUILD_CFLAGS = -MD -fshort-wchar -fno-strict-aliasing -fwrapv \
 --fno-delete-null-pointer-checks -Wall -Werror \
-+-fno-delete-null-pointer-checks -Wall \
++-fno-delete-null-pointer-checks -Wall  \
  -Wno-deprecated-declarations -Wno-stringop-truncation -Wno-restrict \
  -Wno-unused-result -nostdlib -g
  endif
+diff --git a/CryptoPkg/Library/OpensslLib/OpensslLib.inf b/CryptoPkg/Library/OpensslLib/OpensslLib.inf
+index d84bde056a..0638489866 100644
+--- a/CryptoPkg/Library/OpensslLib/OpensslLib.inf
++++ b/CryptoPkg/Library/OpensslLib/OpensslLib.inf
+@@ -611,11 +611,11 @@
+   INTEL:*_*_X64_CC_FLAGS   = -U_WIN32 -U_WIN64 -U_MSC_VER -U__ICC $(OPENSSL_FLAGS) /w
+ 
+   #
+-  # Suppress the following build warnings in openssl so we don't break the build with -Werror
+-  #   -Werror=maybe-uninitialized: there exist some other paths for which the variable is not initialized.
+-  #   -Werror=format: Check calls to printf and scanf, etc., to make sure that the arguments supplied have
++  # Suppress the following build warnings in openssl so we don't break the build with 
++  #   =maybe-uninitialized: there exist some other paths for which the variable is not initialized.
++  #   =format: Check calls to printf and scanf, etc., to make sure that the arguments supplied have
+   #                   types appropriate to the format string specified.
+-  #   -Werror=unused-but-set-variable: Warn whenever a local variable is assigned to, but otherwise unused (aside from its declaration).
++  #   =unused-but-set-variable: Warn whenever a local variable is assigned to, but otherwise unused (aside from its declaration).
+   #
+   GCC:*_*_IA32_CC_FLAGS    = -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized -Wno-error=unused-but-set-variable
+   GCC:*_*_X64_CC_FLAGS     = -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized -Wno-error=format -Wno-format -Wno-error=unused-but-set-variable -DNO_MSABI_VA_FUNCS
+diff --git a/CryptoPkg/Library/OpensslLib/OpensslLibCrypto.inf b/CryptoPkg/Library/OpensslLib/OpensslLibCrypto.inf
+index cdeed0d073..48ed8d23f7 100644
+--- a/CryptoPkg/Library/OpensslLib/OpensslLibCrypto.inf
++++ b/CryptoPkg/Library/OpensslLib/OpensslLibCrypto.inf
+@@ -560,11 +560,11 @@
+   INTEL:*_*_X64_CC_FLAGS   = -U_WIN32 -U_WIN64 -U_MSC_VER -U__ICC $(OPENSSL_FLAGS) /w
+ 
+   #
+-  # Suppress the following build warnings in openssl so we don't break the build with -Werror
+-  #   -Werror=maybe-uninitialized: there exist some other paths for which the variable is not initialized.
+-  #   -Werror=format: Check calls to printf and scanf, etc., to make sure that the arguments supplied have
++  # Suppress the following build warnings in openssl so we don't break the build with 
++  #   =maybe-uninitialized: there exist some other paths for which the variable is not initialized.
++  #   =format: Check calls to printf and scanf, etc., to make sure that the arguments supplied have
+   #                   types appropriate to the format string specified.
+-  #   -Werror=unused-but-set-variable: Warn whenever a local variable is assigned to, but otherwise unused (aside from its declaration).
++  #   =unused-but-set-variable: Warn whenever a local variable is assigned to, but otherwise unused (aside from its declaration).
+   #
+   GCC:*_*_IA32_CC_FLAGS    = -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized -Wno-error=unused-but-set-variable
+   GCC:*_*_X64_CC_FLAGS     = -U_WIN32 -U_WIN64 $(OPENSSL_FLAGS) -Wno-error=maybe-uninitialized -Wno-error=format -Wno-format -Wno-error=unused-but-set-variable -DNO_MSABI_VA_FUNCS
 -- 
-2.44.1
+2.25.1
 
