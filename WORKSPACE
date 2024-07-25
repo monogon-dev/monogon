@@ -137,8 +137,8 @@ libpg_query_external(
 # Derived from Mozilla NSS, currently needed for containerd to be able to pull images
 http_file(
     name = "cacerts",
-    sha256 = "1794c1d4f7055b7d02c2170337b61b48a2ef6c90d77e95444fd2596f4cac609f",
-    urls = ["https://curl.se/ca/cacert-2024-03-11.pem"],
+    sha256 = "1bf458412568e134a4514f5e170a328d11091e071c7110955c9884ed87972ac9",
+    urls = ["https://curl.se/ca/cacert-2024-07-02.pem"],
 )
 
 # lz4, the library and the tool.
