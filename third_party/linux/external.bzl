@@ -20,6 +20,7 @@ def linux_external(name, version):
     sums = {
         "6.6.13": "88b89e7dd41ead4e3ab1e411c8bb8d592575acf815cf1df3c0dc57e2e882c0bc",
         "6.6.30": "b66a5b863b0f8669448b74ca83bd641a856f164b29956e539bbcb5fdeeab9cc6",
+        "6.6.42": "8801c8c297d774e76044977ec3d0684399dc4e7cce347d730874ec78b774e683",
     }
     http_archive(
         name = name,
