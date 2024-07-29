@@ -18,7 +18,6 @@ use_repo(
     "com_github_container_storage_interface_spec",
     "com_github_containerd_containerd",
     "com_github_containernetworking_plugins",
-    "com_github_coredns_coredns",
     "com_github_coreos_go_semver",
     "com_github_corverroos_commentwrap",
     "com_github_diskfs_go_diskfs",
@@ -321,11 +320,6 @@ OVERRIDES = {
     "github.com/containernetworking/cni": {
         "patches": [
             "//third_party/go/patches:cni-fix-cachepath.patch",
-        ],
-    },
-    "github.com/coredns/coredns": {
-        "pre_patches": [
-            "//third_party/go/patches:coredns-remove-unused-plugins.patch",
         ],
     },
     "github.com/corverroos/commentwrap": {
