@@ -162,6 +162,7 @@ require (
 	k8s.io/kubelet v0.30.2
 	k8s.io/kubernetes v1.20.1
 	k8s.io/pod-security-admission v0.0.0
+	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 )
 
 require (
@@ -500,7 +501,6 @@ require (
 	k8s.io/legacy-cloud-providers v0.0.0 // indirect
 	k8s.io/metrics v0.30.2 // indirect
 	k8s.io/mount-utils v0.0.0 // indirect
-	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.29.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect

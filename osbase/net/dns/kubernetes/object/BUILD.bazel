@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "object",
+    srcs = [
+        "endpoint.go",
+        "informer.go",
+        "namespace.go",
+        "object.go",
+        "service.go",
+    ],
+    importpath = "source.monogon.dev/osbase/net/dns/kubernetes/object",
+    visibility = ["//osbase/net/dns/kubernetes:__subpackages__"],
+    deps = [
+        "@com_github_miekg_dns//:dns",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_api//discovery/v1:discovery",
+        "@io_k8s_apimachinery//pkg/api/meta",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_apimachinery//pkg/runtime",
+        "@io_k8s_apimachinery//pkg/runtime/schema",
+        "@io_k8s_apimachinery//pkg/types",
+        "@io_k8s_client_go//tools/cache",
+    ],
+)
+
+go_test(
+    name = "object_test",
+    srcs = ["informer_test.go"],
+    embed = [":object"],
+    deps = [
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_client_go//tools/cache",
+    ],
+)

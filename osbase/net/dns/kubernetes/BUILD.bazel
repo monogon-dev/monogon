@@ -1,0 +1,43 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "kubernetes",
+    srcs = [
+        "controller.go",
+        "handler.go",
+        "kubernetes.go",
+        "metrics.go",
+    ],
+    importpath = "source.monogon.dev/osbase/net/dns/kubernetes",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//osbase/net/dns",
+        "//osbase/net/dns/kubernetes/object",
+        "//osbase/supervisor",
+        "@com_github_miekg_dns//:dns",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_api//discovery/v1:discovery",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_apimachinery//pkg/runtime",
+        "@io_k8s_apimachinery//pkg/watch",
+        "@io_k8s_client_go//kubernetes",
+        "@io_k8s_client_go//tools/cache",
+    ],
+)
+
+go_test(
+    name = "kubernetes_test",
+    srcs = ["handler_test.go"],
+    embed = [":kubernetes"],
+    deps = [
+        "//osbase/net/dns",
+        "@com_github_miekg_dns//:dns",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_api//discovery/v1:discovery",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_apimachinery//pkg/util/intstr",
+        "@io_k8s_client_go//kubernetes/fake",
+        "@io_k8s_utils//ptr",
+    ],
+)
