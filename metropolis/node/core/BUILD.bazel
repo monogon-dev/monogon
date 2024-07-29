@@ -38,6 +38,7 @@ go_library(
         "//metropolis/proto/api",
         "//metropolis/version",
         "//osbase/logtree",
+        "//osbase/net/dns",
         "//osbase/pstore",
         "//osbase/supervisor",
         "//osbase/sysctl",

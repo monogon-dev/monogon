@@ -17,12 +17,14 @@
 package hostsfile
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net"
-	"sort"
+	"regexp"
+	"strings"
+	"sync"
 
+	"github.com/miekg/dns"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -31,6 +33,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/osbase/event"
+	netDNS "source.monogon.dev/osbase/net/dns"
 	"source.monogon.dev/osbase/supervisor"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
@@ -39,7 +42,7 @@ import (
 
 type Config struct {
 	// Network will be read to retrieve the current status of the Network service.
-	Network event.Value[*network.Status]
+	Network *network.Service
 	// Ephemeral is the root of the ephemeral storage of the node, into which the
 	// service will write its managed files.
 	Ephemeral *localstorage.EphemeralDirectory
@@ -63,6 +66,12 @@ type Service struct {
 	// available information about the cluster nodes. It is automatically created and
 	// closed by Run.
 	clusterC chan nodeMap
+
+	// nodes contains the current information about nodes maintained by Run.
+	nodes nodeMap
+
+	// mu guards the nodes field.
+	mu sync.RWMutex
 }
 
 type ClusterDialer func(ctx context.Context) (*grpc.ClientConn, error)
@@ -71,7 +80,7 @@ type ClusterDialer func(ctx context.Context) (*grpc.ClientConn, error)
 // either hostsfile or ClusterDirectory.
 type nodeInfo struct {
 	// address is the node's IP address.
-	address string
+	address net.IP
 	// local is true if address belongs to the local node.
 	local bool
 	// controlPlane is true if this node can be expected to run the control plane
@@ -81,7 +90,7 @@ type nodeInfo struct {
 }
 
 func (n *nodeInfo) equals(o *nodeInfo) bool {
-	if n.address != o.address {
+	if !n.address.Equal(o.address) {
 		return false
 	}
 	if n.controlPlane != o.controlPlane {
@@ -93,32 +102,6 @@ func (n *nodeInfo) equals(o *nodeInfo) bool {
 // nodeMap is a map from node ID (effectively DNS name) to node IP address.
 type nodeMap map[string]nodeInfo
 
-// hosts generates a complete /etc/hosts file based on the contents of the
-// nodeMap. Apart from the addresses in the nodeMap, entries for localhost
-// pointing to 127.0.0.1 and ::1 will also be generated.
-func (m nodeMap) hosts(ctx context.Context) []byte {
-	var nodeIdsSorted []string
-	for k := range m {
-		nodeIdsSorted = append(nodeIdsSorted, k)
-	}
-	sort.Slice(nodeIdsSorted, func(i, j int) bool {
-		return nodeIdsSorted[i] < nodeIdsSorted[j]
-	})
-
-	lines := [][]byte{
-		[]byte("127.0.0.1 localhost"),
-		[]byte("::1 localhost"),
-	}
-	for _, nid := range nodeIdsSorted {
-		addr := m[nid].address
-		line := fmt.Sprintf("%s %s", addr, nid)
-		lines = append(lines, []byte(line))
-	}
-	lines = append(lines, []byte(""))
-
-	return bytes.Join(lines, []byte("\n"))
-}
-
 // clusterDirectory builds a ClusterDirectory based on nodeMap contents. If m
 // is empty, an empty ClusterDirectory is returned.
 func (m nodeMap) clusterDirectory(ctx context.Context) *cpb.ClusterDirectory {
@@ -129,7 +112,7 @@ func (m nodeMap) clusterDirectory(ctx context.Context) *cpb.ClusterDirectory {
 		}
 		supervisor.Logger(ctx).Infof("ClusterDirectory entry: %s", ni.address)
 		addresses := []*cpb.ClusterDirectory_Node_Address{
-			{Host: ni.address},
+			{Host: ni.address.String()},
 		}
 		node := &cpb.ClusterDirectory_Node{
 			Id:        nid,
@@ -163,7 +146,7 @@ func (s *Service) Run(ctx context.Context) error {
 					continue
 				}
 				nodes[node.Id] = nodeInfo{
-					address:      node.Addresses[0].Host,
+					address:      net.ParseIP(node.Addresses[0].Host),
 					local:        false,
 					controlPlane: true,
 				}
@@ -176,7 +159,7 @@ func (s *Service) Run(ctx context.Context) error {
 	localC := make(chan *network.Status)
 	s.clusterC = make(chan nodeMap)
 
-	if err := supervisor.Run(ctx, "local", event.Pipe(s.Network, localC)); err != nil {
+	if err := supervisor.Run(ctx, "local", event.Pipe(&s.Network.Status, localC)); err != nil {
 		return err
 	}
 	if err := supervisor.Run(ctx, "cluster", s.runCluster); err != nil {
@@ -192,11 +175,13 @@ func (s *Service) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to set runtime hostname: %w", err)
 	}
 
-	// Immediately write an /etc/hosts just containing localhost and persisted
-	// cluster directory nodes, even if we don't yet have a network address.
-	if err := s.Ephemeral.Hosts.Write(nodes.hosts(ctx), 0644); err != nil {
-		return fmt.Errorf("failed to write %s: %w", s.Ephemeral.Hosts.FullPath(), err)
-	}
+	// Set the nodes field to start serving DNS queries.
+	s.mu.Lock()
+	s.nodes = nodes
+	s.mu.Unlock()
+
+	// Inject the hostsfile service into the DNS service as handler for hosts queries.
+	s.Network.DNS.SetHandler("hosts", s)
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 
@@ -216,15 +201,17 @@ func (s *Service) Run(ctx context.Context) error {
 			if st.ExternalAddress == nil {
 				continue
 			}
-			u := st.ExternalAddress.String()
-			if nodes[s.NodeID].address == u {
+			u := st.ExternalAddress
+			if nodes[s.NodeID].address.Equal(u) {
 				continue
 			}
 			supervisor.Logger(ctx).Infof("Got new local address: %s", u)
+			s.mu.Lock()
 			nodes[s.NodeID] = nodeInfo{
 				address: u,
 				local:   true,
 			}
+			s.mu.Unlock()
 			changed = true
 		case u := <-s.clusterC:
 			// Loop through the nodeMap from the cluster subrunnable, making note of what
@@ -248,7 +235,9 @@ func (s *Service) Run(ctx context.Context) error {
 					if existing.controlPlane != info.controlPlane {
 						changed = true
 						existing.controlPlane = info.controlPlane
+						s.mu.Lock()
 						nodes[id] = existing
+						s.mu.Unlock()
 					}
 					continue
 				}
@@ -256,7 +245,9 @@ func (s *Service) Run(ctx context.Context) error {
 					continue
 				}
 				supervisor.Logger(ctx).Infof("Update for node %s: address %s, control plane %v", id, info.address, info.controlPlane)
+				s.mu.Lock()
 				nodes[id] = info
+				s.mu.Unlock()
 				changed = true
 			}
 			haveRemoteData = true
@@ -264,11 +255,6 @@ func (s *Service) Run(ctx context.Context) error {
 
 		if !changed {
 			continue
-		}
-
-		supervisor.Logger(ctx).Infof("Updating hosts file: %d nodes", len(nodes))
-		if err := s.Ephemeral.Hosts.Write(nodes.hosts(ctx), 0644); err != nil {
-			return fmt.Errorf("failed to write %s: %w", s.Ephemeral.Hosts.FullPath(), err)
 		}
 
 		// Check that we are self-resolvable.
@@ -301,7 +287,7 @@ func (s *Service) runCluster(ctx context.Context) error {
 	nodes := make(nodeMap)
 	return watcher.WatchNodes(ctx, s.Curator, watcher.SimpleFollower{
 		FilterFn: func(a *ipb.Node) bool {
-			if a.Status == nil || a.Status.ExternalAddress == "" {
+			if a.Status == nil || net.ParseIP(a.Status.ExternalAddress) == nil {
 				return false
 			}
 			return true
@@ -317,7 +303,7 @@ func (s *Service) runCluster(ctx context.Context) error {
 		},
 		OnNewUpdated: func(new *ipb.Node) error {
 			nodes[new.Id] = nodeInfo{
-				address:      new.Status.ExternalAddress,
+				address:      net.ParseIP(new.Status.ExternalAddress),
 				local:        false,
 				controlPlane: new.Roles.ConsensusMember != nil,
 			}
@@ -338,4 +324,51 @@ func (s *Service) runCluster(ctx context.Context) error {
 			return nil
 		},
 	})
+}
+
+const hostsTtl = 10
+
+var reHostname = regexp.MustCompile(`^metropolis-[0-9a-f]+\.$`)
+
+// HandleDNS serves DNS queries for node IDs.
+func (s *Service) HandleDNS(r *netDNS.Request) {
+	// Regexp matching is somewhat expensive, so we first do a cheaper
+	// string comparison to filter out most names.
+	if !strings.HasPrefix(r.QnameCanonical, "metropolis-") ||
+		!reHostname.MatchString(r.QnameCanonical) {
+		return
+	}
+
+	r.SetAuthoritative()
+
+	// Extract node ID by removing the trailing dot.
+	nodeID := r.QnameCanonical[:len(r.QnameCanonical)-1]
+
+	s.mu.RLock()
+	node, ok := s.nodes[nodeID]
+	s.mu.RUnlock()
+
+	if ok {
+		if v4 := node.address.To4(); v4 != nil {
+			if r.Qtype == dns.TypeA || r.Qtype == dns.TypeANY {
+				rr := new(dns.A)
+				rr.Hdr = dns.RR_Header{Name: r.Qname, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: hostsTtl}
+				rr.A = v4
+				r.Reply.Answer = append(r.Reply.Answer, rr)
+			}
+		} else if len(node.address) == net.IPv6len {
+			if r.Qtype == dns.TypeAAAA || r.Qtype == dns.TypeANY {
+				rr := new(dns.AAAA)
+				rr.Hdr = dns.RR_Header{Name: r.Qname, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: hostsTtl}
+				rr.AAAA = node.address
+				r.Reply.Answer = append(r.Reply.Answer, rr)
+			}
+		} else {
+			r.AddExtendedError(dns.ExtendedErrorCodeInvalidData, "host IP address is missing or invalid")
+			r.Reply.Rcode = dns.RcodeServerFailure
+		}
+	} else {
+		r.Reply.Rcode = dns.RcodeNameError
+	}
+	r.SendReply()
 }

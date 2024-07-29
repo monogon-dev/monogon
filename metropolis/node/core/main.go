@@ -19,14 +19,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"net"
 	"os"
 	"strings"
 	"time"
 
 	"golang.org/x/sys/unix"
 
-	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/cluster"
 	"source.monogon.dev/metropolis/node/core/devmgr"
 	"source.monogon.dev/metropolis/node/core/localstorage"
@@ -39,6 +37,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/update"
 	mversion "source.monogon.dev/metropolis/version"
 	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/net/dns"
 	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/osbase/tpm"
 	"source.monogon.dev/version"
@@ -120,9 +119,9 @@ func main() {
 		haveTPM = false
 	}
 
-	networkSvc := network.New(nil)
+	metrics.CoreRegistry.MustRegister(dns.MetricsRegistry)
+	networkSvc := network.New(nil, []string{"hosts", "kubernetes"})
 	networkSvc.DHCPVendorClassID = "dev.monogon.metropolis.node.v1"
-	networkSvc.ExtraDNSListenerIPs = []net.IP{node.ContainerDNSIP}
 	timeSvc := timesvc.New()
 	devmgrSvc := devmgr.New()
 

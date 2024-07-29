@@ -30,7 +30,6 @@ import (
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
-	"source.monogon.dev/metropolis/node/core/network/dns"
 	"source.monogon.dev/metropolis/node/kubernetes/authproxy"
 	"source.monogon.dev/metropolis/node/kubernetes/metricsproxy"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
@@ -42,7 +41,6 @@ import (
 type ConfigController struct {
 	ServiceIPRange net.IPNet
 	ClusterNet     net.IPNet
-	ClusterDomain  string
 
 	KPKI      *pki.PKI
 	Root      *localstorage.Root
@@ -194,13 +192,8 @@ func (s *Controller) Run(ctx context.Context) error {
 		}
 	}
 
-	supervisor.Logger(ctx).Info("Registering K8s CoreDNS")
-	clusterDNSDirective := dns.NewKubernetesDirective(s.c.ClusterDomain, masterKubeconfig)
-	s.c.Network.ConfigureDNS(clusterDNSDirective)
-
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	<-ctx.Done()
-	s.c.Network.ConfigureDNS(dns.CancelDirective(clusterDNSDirective))
 	return nil
 }
 

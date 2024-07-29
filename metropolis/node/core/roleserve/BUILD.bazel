@@ -41,6 +41,7 @@ go_library(
         "//osbase/event",
         "//osbase/event/memory",
         "//osbase/logtree",
+        "//osbase/net/dns",
         "//osbase/pki",
         "//osbase/supervisor",
         "@org_golang_google_grpc//:grpc",

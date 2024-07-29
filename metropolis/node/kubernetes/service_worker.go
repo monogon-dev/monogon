@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"fmt"
 	"net"
+	"net/netip"
 	"time"
 
 	"k8s.io/client-go/informers"
@@ -16,13 +17,13 @@ import (
 	oclusternet "source.monogon.dev/metropolis/node/core/clusternet"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
-	"source.monogon.dev/metropolis/node/core/network/dns"
 	"source.monogon.dev/metropolis/node/kubernetes/clusternet"
 	"source.monogon.dev/metropolis/node/kubernetes/nfproxy"
 	kpki "source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/node/kubernetes/plugins/kvmdevice"
 	"source.monogon.dev/osbase/event"
 	"source.monogon.dev/osbase/event/memory"
+	kubernetesDNS "source.monogon.dev/osbase/net/dns/kubernetes"
 	"source.monogon.dev/osbase/supervisor"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
@@ -201,6 +202,33 @@ func (s *Worker) Run(ctx context.Context) error {
 		ClientSet:   clients["netserv"].client,
 	}
 
+	var dnsIPRanges []netip.Prefix
+	for _, ipNet := range []net.IPNet{s.c.ServiceIPRange, s.c.ClusterNet} {
+		ipPrefix, err := netip.ParsePrefix(ipNet.String())
+		if err != nil {
+			return fmt.Errorf("invalid IP range %s", ipNet)
+		}
+		dnsIPRanges = append(dnsIPRanges, ipPrefix)
+	}
+	dnsService := kubernetesDNS.New(s.c.ClusterDomain, dnsIPRanges)
+	dnsService.ClientSet = clients["netserv"].client
+	// Set the DNS handler. When the node has no Kubernetes Worker role,
+	// or the role is removed, this is set to an empty handler in
+	// //metropolis/node/core/roleserve/worker_kubernetes.go.
+	s.c.Network.DNS.SetHandler("kubernetes", dnsService)
+
+	if err := s.c.Network.AddLoopbackIP(node.ContainerDNSIP); err != nil {
+		return fmt.Errorf("failed to add local IP for container DNS: %w", err)
+	}
+	defer func() {
+		if err := s.c.Network.ReleaseLoopbackIP(node.ContainerDNSIP); err != nil {
+			supervisor.Logger(ctx).Errorf("Failed to release local IP for container DNS: %v", err)
+		}
+	}()
+	runDNSListener := func(ctx context.Context) error {
+		return s.c.Network.DNS.RunListenerAddr(ctx, net.JoinHostPort(node.ContainerDNSIP.String(), "53"))
+	}
+
 	kvmDevicePlugin := kvmdevice.Plugin{
 		KubeletDirectory: &s.c.Root.Data.Kubernetes.Kubelet,
 	}
@@ -213,6 +241,8 @@ func (s *Worker) Run(ctx context.Context) error {
 		{"csi-provisioner", csiProvisioner.Run},
 		{"clusternet", clusternet.Run},
 		{"nfproxy", nfproxy.Run},
+		{"dns-service", dnsService.Run},
+		{"dns-listener", runDNSListener},
 		{"kvmdeviceplugin", kvmDevicePlugin.Run},
 		{"kubelet", kubelet.Run},
 	} {
@@ -222,13 +252,8 @@ func (s *Worker) Run(ctx context.Context) error {
 		}
 	}
 
-	supervisor.Logger(ctx).Info("Registering K8s CoreDNS")
-	clusterDNSDirective := dns.NewKubernetesDirective(s.c.ClusterDomain, clients["netserv"].kubeconfig)
-	s.c.Network.ConfigureDNS(clusterDNSDirective)
-
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	<-ctx.Done()
-	s.c.Network.ConfigureDNS(dns.CancelDirective(clusterDNSDirective))
 	return nil
 }
 

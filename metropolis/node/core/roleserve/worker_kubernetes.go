@@ -16,6 +16,7 @@ import (
 	cpb "source.monogon.dev/metropolis/proto/common"
 	"source.monogon.dev/osbase/event"
 	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/net/dns"
 	"source.monogon.dev/osbase/supervisor"
 )
 
@@ -157,7 +158,6 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			Node:           d.node,
 			ServiceIPRange: serviceIPRange,
 			ClusterNet:     clusterIPRange,
-			ClusterDomain:  clusterDomain,
 			KPKI:           pki,
 			Root:           s.storageRoot,
 			Consensus:      d.lcp.consensus,
@@ -206,6 +206,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			supervisor.Logger(ctx).Infof("Got new startup data.")
 			if d.roles.KubernetesWorker == nil {
 				supervisor.Logger(ctx).Infof("No Kubernetes worker role, not starting.")
+				s.network.DNS.SetHandler("kubernetes", dns.EmptyDNSHandler{})
 				continue
 			}
 			break

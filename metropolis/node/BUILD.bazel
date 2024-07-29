@@ -37,11 +37,12 @@ erofs_image(
     files = {
         "//metropolis/node/core": "/core",
 
-        # CA Certificate bundle & os-release & resolv.conf
+        # CA Certificate bundle & os-release & resolv.conf & hosts
         # These should not be explicitly used by Metropolis code and are only here for compatibility with
         # paths hardcoded by standard libraries (like Go's).
         "@cacerts//file": "/etc/ssl/cert.pem",
-        "//metropolis/node/core/network/dns:resolv.conf": "/etc/resolv.conf",
+        "//osbase/net/dns:resolv.conf": "/etc/resolv.conf",
+        "//osbase/net/dns:hosts": "/etc/hosts",
         ":os-release-info": "/etc/os-release",
 
         # Metrics exporters
@@ -49,9 +50,6 @@ erofs_image(
 
         # Hyperkube
         "//metropolis/node/kubernetes/hyperkube": "/kubernetes/bin/kube",
-
-        # CoreDNS
-        "@com_github_coredns_coredns//:coredns": "/kubernetes/bin/coredns",
 
         # runsc/gVisor
         "@dev_gvisor_gvisor//runsc": "/containerd/bin/runsc",
@@ -94,7 +92,6 @@ erofs_image(
     ],
     symlinks = {
         "/ephemeral/machine-id": "/etc/machine-id",
-        "/ephemeral/hosts": "/etc/hosts",
     },
 )
 

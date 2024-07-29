@@ -10,8 +10,7 @@ def testos(variant):
         name = "rootfs_" + variant,
         files = {
             ":testos_" + variant: "/init",
-            "//metropolis/node/core/network/dns:resolv.conf": "/etc/resolv.conf",
-            "@com_github_coredns_coredns//:coredns": "/kubernetes/bin/coredns",
+            "//osbase/net/dns:resolv.conf": "/etc/resolv.conf",
         },
         fsspecs = [
             "//osbase/build:earlydev.fsspec",

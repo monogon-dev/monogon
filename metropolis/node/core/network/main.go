@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"slices"
 	"strconv"
 
 	"github.com/google/nftables"
@@ -29,8 +30,9 @@ import (
 
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
-	"source.monogon.dev/metropolis/node/core/network/dns"
 	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/net/dns"
+	"source.monogon.dev/osbase/net/dns/forward"
 	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/osbase/sysctl"
 
@@ -47,18 +49,11 @@ type Service struct {
 	// autoconfiguration.
 	StaticConfig *netpb.Net
 
-	// List of IPs which get configured onto the loopback interface and the
-	// integrated DNS server is serving on. Cannot be changed at runtime.
-	// This is a hack to work around CoreDNS not being able to change listeners
-	// on-the-fly without breaking everything. This will go away once its
-	// frontend got replaced by something which can do that.
-	ExtraDNSListenerIPs []net.IP
-
 	// Vendor Class identifier of the system
 	DHCPVendorClassID string
 
-	dnsReg chan *dns.ExtraDirective
-	dnsSvc *dns.Service
+	DNS        *dns.Service
+	dnsForward *forward.Forward
 
 	// dhcp client for the 'main' interface of the node.
 	dhcp *dhcp4c.Client
@@ -80,12 +75,17 @@ type Service struct {
 // New instantiates a new network service. If autoconfiguration is desired,
 // staticConfig must be set to nil. If staticConfig is set to a non-nil value,
 // it will be used instead of autoconfiguration.
-func New(staticConfig *netpb.Net) *Service {
-	dnsReg := make(chan *dns.ExtraDirective)
-	dnsSvc := dns.New(dnsReg)
+// If dnsHandlerNames is non-nil, DNS handlers with these names must be set
+// on the DNS service with s.DNS.SetHandler. When serving DNS queries, they
+// will be tried in the order they appear here before forwarding.
+func New(staticConfig *netpb.Net, dnsHandlerNames []string) *Service {
+	dnsSvc := dns.New(slices.Concat(dnsHandlerNames, []string{"forward"}))
+	dnsForward := forward.New()
+	dnsSvc.SetHandler("forward", dnsForward)
+
 	return &Service{
-		dnsReg:       dnsReg,
-		dnsSvc:       dnsSvc,
+		DNS:          dnsSvc,
+		dnsForward:   dnsForward,
 		StaticConfig: staticConfig,
 	}
 }
@@ -96,13 +96,6 @@ func New(staticConfig *netpb.Net) *Service {
 // meaningful to them.
 type Status struct {
 	ExternalAddress net.IP
-}
-
-// ConfigureDNS sets a DNS ExtraDirective on the built-in DNS server of the
-// network Service. See //metropolis/node/core/network/dns for more
-// information.
-func (s *Service) ConfigureDNS(d *dns.ExtraDirective) {
-	s.dnsReg <- d
 }
 
 func singleIPtoNetlinkAddr(ip net.IP, label string) *netlink.Addr {
@@ -129,6 +122,34 @@ func singleIPtoNetlinkAddr(ip net.IP, label string) *netlink.Addr {
 	}
 }
 
+// AddLoopbackIP adds the given IP to a loopback interface which can then be
+// used to bind listeners to. Once this function returns, the IP is assigned and
+// is ready to use. It's recommended to use defer to call ReleaseLoopbackIP to
+// make sure IPs are released when the goroutine using it exits.
+func (s *Service) AddLoopbackIP(ip net.IP) error {
+	loopbackIf, err := netlink.LinkByName("lo")
+	if err != nil {
+		return fmt.Errorf("no loopback interface: %w", err)
+	}
+	if err := netlink.AddrAdd(loopbackIf, singleIPtoNetlinkAddr(ip, "localsvc")); err != nil {
+		return fmt.Errorf("failed to add IP: %w", err)
+	}
+	return nil
+}
+
+// ReleaseLoopbackIP releases an IP allocated by AddLoopbackIP.
+// Calling it multiple times for the same IP is an error.
+func (s *Service) ReleaseLoopbackIP(ip net.IP) error {
+	loopbackIf, err := netlink.LinkByName("lo")
+	if err != nil {
+		return fmt.Errorf("no loopback interface: %w", err)
+	}
+	if err := netlink.AddrDel(loopbackIf, singleIPtoNetlinkAddr(ip, "localsvc")); err != nil {
+		return fmt.Errorf("failed to delete IP: %w", err)
+	}
+	return nil
+}
+
 // nfifname converts an interface name into 16 bytes padded with zeroes (for
 // nftables)
 func nfifname(n string) []byte {
@@ -140,14 +161,18 @@ func nfifname(n string) []byte {
 // statusCallback is the main DHCP client callback connecting updates to the
 // current lease to the rest of Metropolis. It updates the DNS service's
 // configuration to use the received upstream servers, and notifies the rest of
-// Metropolis via en event value that the network configuration has changed.
+// Metropolis via an event value that the network configuration has changed.
 func (s *Service) statusCallback(ctx context.Context) dhcp4c.LeaseCallback {
 	return func(lease *dhcp4c.Lease) error {
 		// Reconfigure DNS if needed.
 		newServers := lease.DNSServers()
 		if !newServers.Equal(s.dnsServers) {
 			s.dnsServers = newServers
-			s.ConfigureDNS(dns.NewUpstreamDirective(newServers))
+			newAddrs := make([]string, len(newServers))
+			for i, ip := range newServers {
+				newAddrs[i] = net.JoinHostPort(ip.String(), "53")
+			}
+			s.dnsForward.DNSServers.Set(newAddrs)
 		}
 
 		var newAddress net.IP
@@ -193,8 +218,6 @@ const dscpCS7 = 0x7 << 3
 
 func (s *Service) Run(ctx context.Context) error {
 	logger := supervisor.Logger(ctx)
-	s.dnsSvc.ExtraListenerIPs = s.ExtraDNSListenerIPs
-	supervisor.Run(ctx, "dns", s.dnsSvc.Run)
 
 	earlySysctlOpts := sysctl.Options{
 		// Enable strict reverse path filtering on all interfaces (important
@@ -219,6 +242,14 @@ func (s *Service) Run(ctx context.Context) error {
 		logger.Errorf("Applying quirks failed, continuing without: %v", err)
 	}
 
+	loopbackIf, err := netlink.LinkByName("lo")
+	if err != nil {
+		logger.Fatalf("No loopback interface: %v", err)
+	}
+	if err := netlink.LinkSetUp(loopbackIf); err != nil {
+		logger.Errorf("Failed to bring up loopback interface: %v", err)
+	}
+
 	supervisor.Run(ctx, "announce", s.runNeighborAnnounce)
 
 	// Choose between autoconfig and static config runnables
@@ -227,6 +258,9 @@ func (s *Service) Run(ctx context.Context) error {
 	} else {
 		supervisor.Run(ctx, "static", s.runStaticConfig)
 	}
+
+	supervisor.Run(ctx, "dns", s.DNS.Run)
+	supervisor.Run(ctx, "dns-forward", s.dnsForward.Run)
 
 	s.natTable = s.nftConn.AddTable(&nftables.Table{
 		Family: nftables.TableFamilyIPv4,
@@ -327,15 +361,6 @@ func (s *Service) runDynamicConfig(ctx context.Context) error {
 				ethernetLinks = append(ethernetLinks, link)
 			} else {
 				logger.Infof("Ignoring non-Ethernet interface %s", attrs.Name)
-			}
-		} else if link.Attrs().Name == "lo" {
-			if err := netlink.LinkSetUp(link); err != nil {
-				logger.Errorf("Failed to bring up loopback interface: %v", err)
-			}
-			for _, addr := range s.ExtraDNSListenerIPs {
-				if err := netlink.AddrAdd(link, singleIPtoNetlinkAddr(addr, "")); err != nil {
-					logger.Errorf("Failed to assign extra loopback IP: %v", err)
-				}
 			}
 		}
 	}

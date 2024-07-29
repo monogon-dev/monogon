@@ -31,8 +31,7 @@ node_initramfs(
     name = "initramfs",
     files = {
         "//cloud/agent:agent": "/init",
-        "@com_github_coredns_coredns//:coredns": "/kubernetes/bin/coredns",
-        "//metropolis/node/core/network/dns:resolv.conf": "/etc/resolv.conf",
+        "//osbase/net/dns:resolv.conf": "/etc/resolv.conf",
         "@cacerts//file": "/etc/ssl/cert.pem",
     },
     fsspecs = [

@@ -13,8 +13,9 @@ import (
 )
 
 // workerHostsfile run the //metropolis/node/core/network/hostsfile service,
-// which in turn populates /etc/hosts, /etc/machine-id and updates the ESP-stored
-// ClusterDirectory (used to Join the cluster after a machine reboots).
+// which in turn serves DNS for hosts, populates /etc/machine-id
+// and updates the ESP-stored ClusterDirectory
+// (used to Join the cluster after a machine reboots).
 type workerHostsfile struct {
 	storageRoot *localstorage.Root
 
@@ -41,7 +42,7 @@ func (s *workerHostsfile) run(ctx context.Context) error {
 
 	svc := hostsfile.Service{
 		Config: hostsfile.Config{
-			Network:               &s.network.Status,
+			Network:               s.network,
 			Ephemeral:             &s.storageRoot.Ephemeral,
 			ESP:                   &s.storageRoot.ESP,
 			NodeID:                cc.nodeID(),

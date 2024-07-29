@@ -18,7 +18,6 @@ import (
 	"source.monogon.dev/go/algorithm/toposort"
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
-	"source.monogon.dev/metropolis/node/core/network/dns"
 	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/osbase/sysctl"
@@ -39,20 +38,9 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 		return err
 	}
 
-	hostDevices, loopbackLink, err := listHostDeviceIfaces()
+	hostDevices, err := listHostDeviceIfaces()
 	if err != nil {
 		return err
-	}
-	if loopbackLink == nil {
-		return errors.New("no loopback interface present, weird/broken kernel?")
-	}
-	if err := netlink.LinkSetUp(loopbackLink); err != nil {
-		l.Error("Failed to enable loopback interface: %w", err)
-	}
-	for _, addr := range s.ExtraDNSListenerIPs {
-		if err := netlink.AddrAdd(loopbackLink, singleIPtoNetlinkAddr(addr, "")); err != nil {
-			l.Errorf("Failed to assign extra loopback IP: %v", err)
-		}
 	}
 
 	var hasIPv4Autoconfig bool
@@ -151,17 +139,18 @@ func (s *Service) runStaticConfig(ctx context.Context) error {
 		}
 		l.Infof("Configured interface %q", i.Name)
 	}
-	var nsIPList []net.IP
+	var nsAddrList []string
 	for _, ns := range s.StaticConfig.Nameserver {
 		nsIP := net.ParseIP(ns.Ip)
 		if nsIP == nil {
 			l.Warningf("failed to parse %q as nameserver IP", ns.Ip)
 			continue
 		}
-		nsIPList = append(nsIPList, nsIP)
+		nsAddr := net.JoinHostPort(nsIP.String(), "53")
+		nsAddrList = append(nsAddrList, nsAddr)
 	}
-	if len(nsIPList) > 0 {
-		s.ConfigureDNS(dns.NewUpstreamDirective(nsIPList))
+	if len(nsAddrList) > 0 {
+		s.dnsForward.DNSServers.Set(nsAddrList)
 	}
 
 	if !hasIPv4Autoconfig {
@@ -257,24 +246,15 @@ type deviceIfData struct {
 	driver string
 }
 
-func listHostDeviceIfaces() ([]deviceIfData, netlink.Link, error) {
+func listHostDeviceIfaces() ([]deviceIfData, error) {
 	links, err := netlink.LinkList()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to list network links: %w", err)
+		return nil, fmt.Errorf("failed to list network links: %w", err)
 	}
 
 	var hostDevices []deviceIfData
 
-	var loopbackLink netlink.Link
-
 	for _, link := range links {
-		// Modern Linux versions always create a loopback device named "lo" with
-		// constant interface index 1 in every network namespace. Since Linux
-		// 3.6 there is a BUG_ON in the loopback driver, asserting that this is
-		// true for every loopback interface created.
-		if link.Attrs().Index == 1 {
-			loopbackLink = link
-		}
 		d, ok := link.(*netlink.Device)
 		if !ok {
 			continue
@@ -289,7 +269,7 @@ func listHostDeviceIfaces() ([]deviceIfData, netlink.Link, error) {
 			driver: driver,
 		})
 	}
-	return hostDevices, loopbackLink, nil
+	return hostDevices, nil
 }
 
 func deviceIfaceFromSpec(it *netpb.Interface_Device, hostDevices []deviceIfData, l logtree.LeveledLogger) (*netlink.Device, error) {

@@ -47,7 +47,7 @@ type Root struct {
 	ESP ESPDirectory `dir:"esp"`
 	// Persistent Data partition, mounted from encrypted and authenticated storage.
 	Data DataDirectory `dir:"data"`
-	// FHS-standard /etc directory, containes /etc/hosts, /etc/machine-id, and
+	// FHS-standard /etc directory, contains /etc/hosts, /etc/machine-id, and
 	// other compatibility files.
 	Etc EtcDirectory `dir:"etc"`
 	// Ephemeral data, used by runtime, stored in tmpfs. Things like sockets,
@@ -157,8 +157,6 @@ type DataVolumesDirectory struct {
 
 type EtcDirectory struct {
 	declarative.Directory
-	// Symlinked to /ephemeral/hosts, baked into the erofs system image
-	Hosts declarative.File `file:"hosts"`
 	// Symlinked to /ephemeral/machine-id, baked into the erofs system image
 	MachineID declarative.File `file:"machine-id"`
 }
@@ -168,7 +166,6 @@ type EphemeralDirectory struct {
 	Consensus         EphemeralConsensusDirectory  `dir:"consensus"`
 	Containerd        EphemeralContainerdDirectory `dir:"containerd"`
 	FlexvolumePlugins declarative.Directory        `dir:"flexvolume_plugins"`
-	Hosts             declarative.File             `file:"hosts"`
 	MachineID         declarative.File             `file:"machine-id"`
 }
 
