@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "dns",
+    srcs = [
+        "dns.go",
+        "metrics.go",
+        "name.go",
+        "testhelpers.go",
+    ],
+    importpath = "source.monogon.dev/osbase/net/dns",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//osbase/supervisor",
+        "@com_github_miekg_dns//:dns",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_prometheus_client_golang//prometheus/promauto",
+    ],
+)
+
+exports_files([
+    "resolv.conf",
+    "hosts",
+])
+
+go_test(
+    name = "dns_test",
+    srcs = [
+        "dns_test.go",
+        "name_test.go",
+    ],
+    embed = [":dns"],
+    deps = [
+        "//osbase/net/dns/test",
+        "@com_github_miekg_dns//:dns",
+    ],
+)

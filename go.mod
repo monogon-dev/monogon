@@ -110,6 +110,7 @@ require (
 	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
 	github.com/mdlayher/netlink v1.7.2
 	github.com/mdlayher/packet v1.1.2
+	github.com/miekg/dns v1.1.58
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/runc v1.1.12
@@ -353,7 +354,6 @@ require (
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/mdlayher/socket v0.5.0 // indirect
 	github.com/mdlayher/wifi v0.1.0 // indirect
-	github.com/miekg/dns v1.1.55 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/mistifyio/go-zfs v2.1.2-0.20190413222219-f784269be439+incompatible // indirect

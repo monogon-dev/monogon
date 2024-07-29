@@ -49,6 +49,7 @@ use_repo(
     "com_github_mdlayher_kobject",
     "com_github_mdlayher_netlink",
     "com_github_mdlayher_packet",
+    "com_github_miekg_dns",
     "com_github_mitchellh_go_wordwrap",
     "com_github_opencontainers_go_digest",
     "com_github_opencontainers_runc",
