@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "up",
+    srcs = ["up.go"],
+    importpath = "source.monogon.dev/osbase/net/dns/forward/up",
+    visibility = ["//osbase/net/dns/forward:__subpackages__"],
+)
+
+go_test(
+    name = "up_test",
+    srcs = ["up_test.go"],
+    embed = [":up"],
+)

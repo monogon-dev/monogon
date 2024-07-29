@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "proxy",
+    srcs = [
+        "connect.go",
+        "health.go",
+        "metrics.go",
+        "persistent.go",
+        "proxy.go",
+        "type.go",
+    ],
+    importpath = "source.monogon.dev/osbase/net/dns/forward/proxy",
+    visibility = ["//osbase/net/dns/forward:__subpackages__"],
+    deps = [
+        "//osbase/net/dns",
+        "//osbase/net/dns/forward/up",
+        "@com_github_miekg_dns//:dns",
+        "@com_github_prometheus_client_golang//prometheus",
+    ],
+)
+
+go_test(
+    name = "proxy_test",
+    srcs = [
+        "health_test.go",
+        "persistent_test.go",
+        "proxy_test.go",
+    ],
+    embed = [":proxy"],
+    deps = [
+        "//osbase/net/dns/test",
+        "@com_github_miekg_dns//:dns",
+    ],
+)

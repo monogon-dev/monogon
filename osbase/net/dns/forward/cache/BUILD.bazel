@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cache",
+    srcs = ["cache.go"],
+    importpath = "source.monogon.dev/osbase/net/dns/forward/cache",
+    visibility = ["//osbase/net/dns/forward:__subpackages__"],
+    deps = ["@org_golang_x_sys//cpu"],
+)
+
+go_test(
+    name = "cache_test",
+    srcs = [
+        "cache_test.go",
+        "shard_test.go",
+    ],
+    embed = [":cache"],
+)

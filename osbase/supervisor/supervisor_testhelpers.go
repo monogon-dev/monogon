@@ -96,7 +96,7 @@ func TestHarness(t testing.TB, r func(ctx context.Context) error) (context.Cance
 				}
 			}
 
-			time.Sleep(time.Second)
+			time.Sleep(10 * time.Millisecond)
 		}
 	})
 	return ctxC, lt

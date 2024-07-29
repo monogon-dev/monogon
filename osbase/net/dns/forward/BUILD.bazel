@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "forward",
+    srcs = [
+        "cache.go",
+        "forward.go",
+        "metrics.go",
+    ],
+    importpath = "source.monogon.dev/osbase/net/dns/forward",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//osbase/event/memory",
+        "//osbase/net/dns",
+        "//osbase/net/dns/forward/cache",
+        "//osbase/net/dns/forward/proxy",
+        "//osbase/supervisor",
+        "@com_github_miekg_dns//:dns",
+        "@com_github_prometheus_client_golang//prometheus",
+    ],
+)
+
+go_test(
+    name = "forward_test",
+    srcs = ["forward_test.go"],
+    embed = [":forward"],
+    deps = [
+        "//osbase/net/dns",
+        "//osbase/net/dns/test",
+        "//osbase/supervisor",
+        "@com_github_miekg_dns//:dns",
+    ],
+)
