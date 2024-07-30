@@ -100,3 +100,5 @@ include("//:rust.MODULE.bazel")
 include("//:go.MODULE.bazel")
 
 include("//:oci.MODULE.bazel")
+
+include("//:third_party.MODULE.bazel")

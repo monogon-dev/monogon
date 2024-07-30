@@ -1,0 +1,102 @@
+# third_party external repositories
+
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+# Used by tests in cloud/takeover
+http_file(
+    name = "debian_11_cloudimage",
+    sha256 = "14caeec68ba3129a115a9b57396d08dc0973cc9f569ce049232d7d15d768ad41",
+    urls = [
+        "https://cloud.debian.org/images/cloud/bullseye/20230124-1270/debian-11-genericcloud-amd64-20230124-1270.qcow2",
+    ],
+)
+
+# Used to include staticcheck as nogo analyzer
+http_archive(
+    name = "com_github_sluongng_nogo_analyzer",
+    integrity = "sha256-p0peRHUdKS0XvYeeWqi0C6qUtdwvBD3x46y7PiPq0HM=",
+    strip_prefix = "nogo-analyzer-0.0.2",
+    urls = [
+        "https://github.com/sluongng/nogo-analyzer/archive/refs/tags/v0.0.2.tar.gz",
+    ],
+)
+
+git_repository(
+    name = "boringssl",
+    commit = "d7278cebad5b8eda0901246f2215344cffece4f4",
+    remote = "https://boringssl.googlesource.com/boringssl",
+)
+
+# CockroachDB binary used for tests.
+#
+# WARNING: Not distributed under an OSI certified license. Must only be used in
+# tests, not be redistributed!
+http_archive(
+    name = "cockroach",
+    build_file_content = """
+exports_files([
+    "cockroach"
+])
+""",
+    sha256 = "0821cff5770400fb94c8b6c2ab338d96f4114fbf2b3206bc8a6dcf62f9c0f4ea",
+    strip_prefix = "cockroach-v22.1.6.linux-amd64",
+    urls = [
+        # TODO: select() to pick other host architectures.
+        "https://binaries.cockroachdb.com/cockroach-v22.1.6.linux-amd64.tgz",
+    ],
+)
+
+# CockroachDB repository used for linter passes.
+http_archive(
+    name = "com_github_cockroachdb_cockroach",
+    integrity = "sha256-3xYgvXmuPvrGgtSzfoK/K9p/FCH0eMZywAAL10A41k0=",
+    strip_prefix = "cockroach-23.2.4",
+    urls = [
+        "https://github.com/cockroachdb/cockroach/archive/v23.2.4.tar.gz",
+    ],
+)
+
+
+# Derived from Mozilla NSS, currently needed for containerd to be able to pull images
+http_file(
+    name = "cacerts",
+    sha256 = "1bf458412568e134a4514f5e170a328d11091e071c7110955c9884ed87972ac9",
+    urls = ["https://curl.se/ca/cacert-2024-07-02.pem"],
+)
+
+# lz4, the library and the tool.
+http_archive(
+    name = "com_github_lz4_lz4",
+    patch_args = ["-p1"],
+    patches = ["//third_party/lz4:build.patch"],
+    sha256 = "658ba6191fa44c92280d4aa2c271b0f4fbc0e34d249578dd05e50e76d0e5efcc",
+    strip_prefix = "lz4-1.9.2",
+    urls = ["https://github.com/lz4/lz4/archive/v1.9.2.tar.gz"],
+)
+
+# ini.h, a tiny ini parser library
+http_archive(
+    name = "inih",
+    build_file = "@//third_party/inih:inih.bzl",
+    sha256 = "01b0366fdfdf6363efc070c2f856f1afa33e7a6546548bada5456ad94a516241",
+    strip_prefix = "inih-r53",
+    urls = ["https://github.com/benhoyt/inih/archive/r53.tar.gz"],
+)
+
+# qboot bootloader for MicroVMs
+http_archive(
+    name = "com_github_bonzini_qboot",
+    build_file = "//third_party/qboot:qboot.bzl",
+    sha256 = "a643b2486fbee57b969659d408984094ca9afa1a048317dd3f5d3022e47213e8",
+    strip_prefix = "qboot-a5300c4949b8d4de2d34bedfaed66793f48ec948",
+    urls = ["https://github.com/bonzini/qboot/archive/a5300c4949b8d4de2d34bedfaed66793f48ec948.tar.gz"],
+)
+
+git_repository(
+    name = "gperf",
+    commit = "de9373c2d48a3edf29862eb8be44764a7f7d24c6",
+    remote = "https://github.com/monogon-dev/gperf.git",
+    shallow_since = "1615306886 +0100",
+)
