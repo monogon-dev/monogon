@@ -3,7 +3,7 @@ workspace(name = "dev_source_monogon")
 # Assert minimum Bazel version
 load("@bazel_skylib//lib:versions.bzl", "versions")
 
-versions.check(minimum_bazel_version = "7.0.0")
+versions.check(minimum_bazel_version = "7.2.1")
 
 # third_party external repositories
 load("//third_party/linux:external.bzl", "linux_external")
