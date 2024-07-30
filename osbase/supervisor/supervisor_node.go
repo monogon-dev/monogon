@@ -54,7 +54,7 @@ type node struct {
 	groups []map[string]bool
 
 	// The current state of the runnable in this node.
-	state nodeState
+	state NodeState
 
 	// Backoff used to keep runnables from being restarted too fast.
 	bo *backoff.ExponentialBackOff
@@ -64,37 +64,37 @@ type node struct {
 	ctxC context.CancelFunc
 }
 
-// nodeState is the state of a runnable within a node, and in a way the node
+// NodeState is the state of a runnable within a node, and in a way the node
 // itself. This follows the state diagram from go/supervision.
-type nodeState int
+type NodeState int
 
 const (
 	// A node that has just been created, and whose runnable has been started
 	// already but hasn't signaled anything yet.
-	nodeStateNew nodeState = iota
+	NodeStateNew NodeState = iota
 	// A node whose runnable has signaled being healthy - this means it's ready
 	// to serve/act.
-	nodeStateHealthy
+	NodeStateHealthy
 	// A node that has unexpectedly returned or panicked.
-	nodeStateDead
+	NodeStateDead
 	// A node that has declared that its done with its work and should not be
 	// restarted, unless a supervision tree failure requires that.
-	nodeStateDone
+	NodeStateDone
 	// A node that has returned after being requested to cancel.
-	nodeStateCanceled
+	NodeStateCanceled
 )
 
-func (s nodeState) String() string {
+func (s NodeState) String() string {
 	switch s {
-	case nodeStateNew:
+	case NodeStateNew:
 		return "NODE_STATE_NEW"
-	case nodeStateHealthy:
+	case NodeStateHealthy:
 		return "NODE_STATE_HEALTHY"
-	case nodeStateDead:
+	case NodeStateDead:
 		return "NODE_STATE_DEAD"
-	case nodeStateDone:
+	case NodeStateDone:
 		return "NODE_STATE_DONE"
-	case nodeStateCanceled:
+	case NodeStateCanceled:
 		return "NODE_STATE_CANCELED"
 	}
 	return "UNKNOWN"
@@ -201,7 +201,7 @@ func (n *node) reset() {
 	n.ctxC = ctxC
 
 	// Clear children and state
-	n.state = nodeStateNew
+	n.state = NodeStateNew
 	n.children = make(map[string]*node)
 	n.reserved = make(map[string]bool)
 	n.groups = nil
@@ -237,7 +237,7 @@ var reNodeName = regexp.MustCompile(`[a-z90-9_]{1,64}`)
 // runGroup schedules a new group of runnables to run on a node.
 func (n *node) runGroup(runnables map[string]Runnable) error {
 	// Check that the parent node is in the right state.
-	if n.state != nodeStateNew {
+	if n.state != NodeStateNew {
 		return fmt.Errorf("cannot run new runnable on non-NEW node")
 	}
 
@@ -288,16 +288,16 @@ func (n *node) runGroup(runnables map[string]Runnable) error {
 func (n *node) signal(signal SignalType) {
 	switch signal {
 	case SignalHealthy:
-		if n.state != nodeStateNew {
+		if n.state != NodeStateNew {
 			panic(fmt.Errorf("node %s signaled healthy", n))
 		}
-		n.state = nodeStateHealthy
+		n.state = NodeStateHealthy
 		n.bo.Reset()
 	case SignalDone:
-		if n.state != nodeStateHealthy {
+		if n.state != NodeStateHealthy {
 			panic(fmt.Errorf("node %s signaled done", n))
 		}
-		n.state = nodeStateDone
+		n.state = NodeStateDone
 		n.bo.Reset()
 	}
 }

@@ -134,13 +134,13 @@ func (s *supervisor) liquidator() {
 			s.ilogger.Infof("liquidator: refusing to schedule %s", r.schedule.dn)
 			s.mu.Lock()
 			n := s.nodeByDN(r.schedule.dn)
-			n.state = nodeStateDead
+			n.state = NodeStateDead
 			s.mu.Unlock()
 		case r.died != nil:
 			s.ilogger.Infof("liquidator: %s exited", r.died.dn)
 			s.mu.Lock()
 			n := s.nodeByDN(r.died.dn)
-			n.state = nodeStateDead
+			n.state = NodeStateDead
 			s.mu.Unlock()
 		}
 		live := s.liveRunnables()
@@ -179,7 +179,7 @@ func (s *supervisor) liveRunnables() []string {
 		}
 		seen[eldn] = true
 
-		if el.state != nodeStateDead && el.state != nodeStateDone {
+		if el.state != NodeStateDead && el.state != NodeStateDone {
 			live = append(live, eldn)
 		}
 
@@ -267,7 +267,7 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 	ctx := n.ctx
 
 	// Simple case: it was marked as Done and quit with no error.
-	if n.state == nodeStateDone && r.err == nil {
+	if n.state == NodeStateDone && r.err == nil {
 		// Do nothing. This was supposed to happen. Keep the process as DONE.
 		return
 	}
@@ -276,7 +276,7 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 	// context error.
 	if r.err != nil && ctx.Err() != nil && errors.Is(r.err, ctx.Err()) {
 		// Mark the node as canceled successfully.
-		n.state = nodeStateCanceled
+		n.state = NodeStateCanceled
 		return
 	}
 
@@ -290,7 +290,7 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 
 	s.ilogger.Errorf("%s: %v", n.dn(), err)
 	// Mark as dead.
-	n.state = nodeStateDead
+	n.state = NodeStateDead
 
 	// Cancel that node's context, just in case something still depends on it.
 	n.ctxC()
@@ -413,16 +413,16 @@ func (s *supervisor) processGC() {
 		// DONE, DEAD or CANCELED).
 		curReady := false
 		switch cur.state {
-		case nodeStateDone:
+		case NodeStateDone:
 			curReady = true
-		case nodeStateCanceled:
+		case NodeStateCanceled:
 			curReady = true
-		case nodeStateDead:
+		case NodeStateDead:
 			curReady = true
 		default:
 		}
 
-		if cur.state == nodeStateDead && !childrenReady {
+		if cur.state == NodeStateDead && !childrenReady {
 			s.ilogger.Warningf("Not restarting %s: children not ready to be restarted: %v", curDn, childrenNotReady)
 		}
 
@@ -460,7 +460,7 @@ func (s *supervisor) processGC() {
 		queue = queue[1:]
 
 		// If this node is DEAD or CANCELED it should be restarted.
-		if cur.state == nodeStateDead || cur.state == nodeStateCanceled {
+		if cur.state == NodeStateDead || cur.state == NodeStateCanceled {
 			want[cur.dn()] = true
 		}
 
@@ -488,7 +488,7 @@ func (s *supervisor) processGC() {
 		// Only back off when the node unexpectedly died - not when it got
 		// canceled.
 		bo := time.Duration(0)
-		if n.state == nodeStateDead {
+		if n.state == NodeStateDead {
 			bo = n.bo.NextBackOff()
 		}
 
