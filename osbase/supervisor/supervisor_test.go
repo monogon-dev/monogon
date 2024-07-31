@@ -616,6 +616,108 @@ func TestSubLoggers(t *testing.T) {
 	}
 }
 
+func TestMetrics(t *testing.T) {
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	// Build a supervision tree with 'wait'/step channels per runnable:
+	//
+	// root: wait, start one, wait, healthy
+	//   one: wait, start two, crash, wait, start two, healthy, wait, done
+	//     two: wait, healthy, run forever
+	//
+	// This tree allows us to exercise a few flows, like two getting canceled when
+	// one crashes, runnables returning done, runnables staying healthy, etc.
+
+	stepRoot := make(chan struct{})
+	stepOne := make(chan struct{})
+	stepTwo := make(chan struct{})
+	m := InMemoryMetrics{}
+
+	New(ctx, func(ctx context.Context) error {
+		<-stepRoot
+
+		attempts := 0
+		Run(ctx, "one", func(ctx context.Context) error {
+			<-stepOne
+			Run(ctx, "two", func(ctx context.Context) error {
+				<-stepTwo
+				Signal(ctx, SignalHealthy)
+				<-ctx.Done()
+				return ctx.Err()
+			})
+			if attempts == 0 {
+				attempts += 1
+				return fmt.Errorf("failed")
+			}
+			Signal(ctx, SignalHealthy)
+			<-stepOne
+			Signal(ctx, SignalDone)
+			return nil
+		})
+
+		<-stepRoot
+		Signal(ctx, SignalHealthy)
+		return nil
+	}, WithPropagatePanic, WithMetrics(&m))
+
+	// expectDN waits a second until a given DN is at a given state and fails the
+	// test otherwise.
+	expectDN := func(dn string, state NodeState) {
+		t.Helper()
+		start := time.Now()
+		for {
+			snap := m.DNs()
+			if _, ok := snap[dn]; !ok {
+				if time.Since(start) > time.Second {
+					t.Fatalf("No DN %q", dn)
+				} else {
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+			}
+			if want, got := state, snap[dn].State; want != got {
+				if time.Since(start) > time.Second {
+					t.Fatalf("Expected %q to be %s, got %s", dn, want, got)
+				} else {
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+			}
+			break
+		}
+	}
+
+	// Make progress thorugh the runnable tree and check expected states.
+
+	expectDN("root", NodeStateNew)
+
+	stepRoot <- struct{}{}
+	expectDN("root", NodeStateNew)
+	expectDN("root.one", NodeStateNew)
+
+	stepOne <- struct{}{}
+	stepTwo <- struct{}{}
+	expectDN("root", NodeStateNew)
+	expectDN("root.one", NodeStateDead)
+	expectDN("root.one.two", NodeStateCanceled)
+
+	stepOne <- struct{}{}
+	expectDN("root", NodeStateNew)
+	expectDN("root.one", NodeStateHealthy)
+	expectDN("root.one.two", NodeStateNew)
+
+	stepOne <- struct{}{}
+	expectDN("root", NodeStateNew)
+	expectDN("root.one", NodeStateDone)
+	expectDN("root.one.two", NodeStateNew)
+
+	stepTwo <- struct{}{}
+	expectDN("root", NodeStateNew)
+	expectDN("root.one", NodeStateDone)
+	expectDN("root.one.two", NodeStateHealthy)
+}
+
 func ExampleNew() {
 	// Minimal runnable that is immediately done.
 	childC := make(chan struct{})

@@ -292,12 +292,14 @@ func (n *node) signal(signal SignalType) {
 			panic(fmt.Errorf("node %s signaled healthy", n))
 		}
 		n.state = NodeStateHealthy
+		n.sup.metrics.NotifyNodeState(n.dn(), n.state)
 		n.bo.Reset()
 	case SignalDone:
 		if n.state != NodeStateHealthy {
 			panic(fmt.Errorf("node %s signaled done", n))
 		}
 		n.state = NodeStateDone
+		n.sup.metrics.NotifyNodeState(n.dn(), n.state)
 		n.bo.Reset()
 	}
 }

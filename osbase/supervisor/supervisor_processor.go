@@ -230,6 +230,10 @@ func (s *supervisor) processSchedule(r *processorRequestSchedule) {
 	defer s.mu.Unlock()
 
 	n := s.nodeByDN(r.dn)
+	if n.state != NodeStateNew {
+		panic("programming error: scheduled node not new")
+	}
+	s.metrics.NotifyNodeState(r.dn, n.state)
 	go func() {
 		if !s.propagatePanic {
 			defer func() {
@@ -268,6 +272,7 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 
 	// Simple case: it was marked as Done and quit with no error.
 	if n.state == NodeStateDone && r.err == nil {
+		s.metrics.NotifyNodeState(r.dn, n.state)
 		// Do nothing. This was supposed to happen. Keep the process as DONE.
 		return
 	}
@@ -277,6 +282,7 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 	if r.err != nil && ctx.Err() != nil && errors.Is(r.err, ctx.Err()) {
 		// Mark the node as canceled successfully.
 		n.state = NodeStateCanceled
+		s.metrics.NotifyNodeState(r.dn, n.state)
 		return
 	}
 
@@ -291,6 +297,7 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 	s.ilogger.Errorf("%s: %v", n.dn(), err)
 	// Mark as dead.
 	n.state = NodeStateDead
+	s.metrics.NotifyNodeState(r.dn, n.state)
 
 	// Cancel that node's context, just in case something still depends on it.
 	n.ctxC()

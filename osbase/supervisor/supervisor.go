@@ -102,6 +102,8 @@ type supervisor struct {
 
 	// propagate panics, ie. don't catch them.
 	propagatePanic bool
+
+	metrics *metricsFanout
 }
 
 // SupervisorOpt are runtime configurable options for the supervisor.
@@ -120,6 +122,15 @@ func WithExistingLogtree(lt *logtree.LogTree) SupervisorOpt {
 	}
 }
 
+// WithMetrics makes the Supervisor export per-DN metrics into a given Metrics
+// implementation. This can be called repeatedly to export the same data into
+// multiple Metrics implementations.
+func WithMetrics(m Metrics) SupervisorOpt {
+	return func(s *supervisor) {
+		s.metrics.sub = append(s.metrics.sub, m)
+	}
+}
+
 // New creates a new supervisor with its root running the given root runnable.
 // The given context can be used to cancel the entire supervision tree.
 //
@@ -130,6 +141,7 @@ func New(ctx context.Context, rootRunnable Runnable, opts ...SupervisorOpt) *sup
 	sup := &supervisor{
 		logtree: logtree.New(),
 		pReq:    make(chan *processorRequest),
+		metrics: &metricsFanout{},
 	}
 
 	for _, o := range opts {

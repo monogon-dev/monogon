@@ -4,6 +4,7 @@ go_library(
     name = "supervisor",
     srcs = [
         "supervisor.go",
+        "supervisor_metrics.go",
         "supervisor_node.go",
         "supervisor_processor.go",
         "supervisor_support.go",
