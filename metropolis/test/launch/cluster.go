@@ -793,18 +793,18 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		PcapDump:   true,
 	}
 	if opts.NodeLogsToFiles {
-		path := path.Join(ld, "node-1.txt")
+		path := path.Join(ld, "node-0.txt")
 		port, err := NewSerialFileLogger(path)
 		if err != nil {
-			return nil, fmt.Errorf("could not open log file for node 1: %w", err)
+			return nil, fmt.Errorf("could not open log file for node 0: %w", err)
 		}
-		launch.Log("Node 1 logs at %s", path)
+		launch.Log("Node 0 logs at %s", path)
 		nodeOpts[0].SerialPort = port
 	}
 
 	// Start the first node.
 	ctxT, ctxC := context.WithCancel(ctx)
-	launch.Log("Cluster: Starting node %d...", 1)
+	launch.Log("Cluster: Starting node %d...", 0)
 	if err := LaunchNode(ctxT, ld, sd, tpmf, &nodeOpts[0], done[0]); err != nil {
 		ctxC()
 		return nil, fmt.Errorf("failed to launch first node: %w", err)
@@ -987,22 +987,22 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			SerialPort: newPrefixedStdio(i),
 		}
 		if opts.NodeLogsToFiles {
-			path := path.Join(ld, fmt.Sprintf("node-%d.txt", i+1))
+			path := path.Join(ld, fmt.Sprintf("node-%d.txt", i))
 			port, err := NewSerialFileLogger(path)
 			if err != nil {
-				return nil, fmt.Errorf("could not open log file for node %d: %w", i+1, err)
+				return nil, fmt.Errorf("could not open log file for node %d: %w", i, err)
 			}
-			launch.Log("Node %d logs at %s", i+1, path)
+			launch.Log("Node %d logs at %s", i, path)
 			nodeOpts[i].SerialPort = port
 		}
 	}
 
 	// Now run the rest of the nodes.
 	for i := 1; i < opts.NumNodes; i++ {
-		launch.Log("Cluster: Starting node %d...", i+1)
+		launch.Log("Cluster: Starting node %d...", i)
 		err := LaunchNode(ctxT, ld, sd, tpmf, &nodeOpts[i], done[i])
 		if err != nil {
-			return nil, fmt.Errorf("failed to launch node %d: %w", i+1, err)
+			return nil, fmt.Errorf("failed to launch node %d: %w", i, err)
 		}
 	}
 
@@ -1089,7 +1089,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 				}
 			}
 
-			launch.Log("Cluster: want %d up nodes, have %d", opts.NumNodes-1, len(upNodes))
+			launch.Log("Cluster: want %d up nodes, have %d", opts.NumNodes, len(upNodes)+1)
 			if len(upNodes) == opts.NumNodes-1 {
 				break
 			}
@@ -1098,8 +1098,8 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	}
 
 	launch.Log("Cluster: all nodes up:")
-	for _, node := range cluster.Nodes {
-		launch.Log("Cluster:  - %s at %s", node.ID, node.ManagementAddress)
+	for i, nodeID := range cluster.NodeIDs {
+		launch.Log("Cluster:  %d. %s at %s", i, nodeID, cluster.Nodes[nodeID].ManagementAddress)
 	}
 	launch.Log("Cluster: starting tests...")
 
