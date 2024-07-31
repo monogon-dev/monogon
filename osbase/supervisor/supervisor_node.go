@@ -84,6 +84,15 @@ const (
 	NodeStateCanceled
 )
 
+// NodeStates is a list of all possible values of a NodeState.
+var NodeStates = []NodeState{
+	NodeStateNew,
+	NodeStateHealthy,
+	NodeStateDead,
+	NodeStateDone,
+	NodeStateCanceled,
+}
+
 func (s NodeState) String() string {
 	switch s {
 	case NodeStateNew:

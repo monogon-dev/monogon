@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "supervisor.go",
         "supervisor_metrics.go",
+        "supervisor_metrics_prometheus.go",
         "supervisor_node.go",
         "supervisor_processor.go",
         "supervisor_support.go",
@@ -16,6 +17,7 @@ go_library(
     deps = [
         "//osbase/logtree",
         "@com_github_cenkalti_backoff_v4//:backoff",
+        "@com_github_prometheus_client_golang//prometheus",
         "@org_golang_google_grpc//:grpc",
     ],
 )
