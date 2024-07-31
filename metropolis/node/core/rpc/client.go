@@ -147,9 +147,8 @@ func WantInsecure() CredentialsOpt {
 	}
 }
 
-// NewAuthenticatedCredentials returns gRPC TransportCredentials that can be used
-// to dial a cluster with a given TLS certificate (from node or manager
-// credentials).
+// NewAuthenticatedTLSConfig returns a tls.Config that can be used to dial a
+// cluster with a given TLS certificate (from node or manager credentials).
 //
 // The provided CredentialsOpt specify the verification of the remote side of the
 // connection. When connecting to a cluster (any node), use WantRemoteCluster. If
@@ -158,7 +157,7 @@ func WantInsecure() CredentialsOpt {
 // WantInsecure.
 //
 // The given options are parsed on a first-wins basis.
-func NewAuthenticatedCredentials(cert tls.Certificate, opts ...CredentialsOpt) credentials.TransportCredentials {
+func NewAuthenticatedTLSConfig(cert tls.Certificate, opts ...CredentialsOpt) *tls.Config {
 	config := &tls.Config{
 		Certificates:       []tls.Certificate{cert},
 		InsecureSkipVerify: true,
@@ -188,7 +187,22 @@ func NewAuthenticatedCredentials(cert tls.Certificate, opts ...CredentialsOpt) c
 		}
 	}
 
-	return credentials.NewTLS(config)
+	return config
+}
+
+// NewAuthenticatedCredentials returns gRPC TransportCredentials that can be used
+// to dial a cluster with a given TLS certificate (from node or manager
+// credentials).
+//
+// The provided CredentialsOpt specify the verification of the remote side of the
+// connection. When connecting to a cluster (any node), use WantRemoteCluster. If
+// you also want to verify the connection to a particular node, specify
+// WantRemoteNode alongside it. If no verification should be performed use
+// WantInsecure.
+//
+// The given options are parsed on a first-wins basis.
+func NewAuthenticatedCredentials(cert tls.Certificate, opts ...CredentialsOpt) credentials.TransportCredentials {
+	return credentials.NewTLS(NewAuthenticatedTLSConfig(cert, opts...))
 }
 
 // RetrieveOwnerCertificate uses AAA.Escrow to retrieve a cluster manager
