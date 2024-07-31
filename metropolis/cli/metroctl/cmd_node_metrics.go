@@ -28,6 +28,8 @@ for the cluster.
 
 A node ID and exporter must be provided. Currently available exporters are:
 
+  - core: metrics from the core process of the node (which contains the
+    supervision tree)
   - node: node_exporter metrics for the node
   - etcd: etcd metrics, if the node is running the cluster control plane
   - kubernetes-scheduler, kubernetes-controller-manager, kubernetes-apiserver:

@@ -16,6 +16,8 @@ go_library(
         "//metropolis/node/core/curator/watcher",
         "//metropolis/node/core/identity",
         "//osbase/supervisor",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_prometheus_client_golang//prometheus/promhttp",
     ],
 )
 

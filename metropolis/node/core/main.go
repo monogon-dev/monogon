@@ -31,6 +31,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/devmgr"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
+	"source.monogon.dev/metropolis/node/core/metrics"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
@@ -221,6 +222,12 @@ func main() {
 		return m.Run(ctx)
 	}
 
+	pm, err := supervisor.NewMetricsPrometheus(metrics.CoreRegistry)
+	if err != nil {
+		// Fatal, because this generally shouldn't happen.
+		logger.Fatalf("Failed to register supervisor metrics: %v", err)
+	}
+
 	// Start the init function in a one-shot runnable. Smuggle out any errors from
 	// the init function and stuff them into the fatal channel. This is where the
 	// system supervisor takes over as the main process management system.
@@ -232,11 +239,11 @@ func main() {
 			select {}
 		}
 		return nil
-	}, supervisor.WithExistingLogtree(lt))
+	}, supervisor.WithExistingLogtree(lt), supervisor.WithMetrics(pm))
 
 	// Meanwhile, wait for any fatal error from the init process, and handle it
 	// accordingly.
-	err := <-fatal
+	err = <-fatal
 	// Log error with primary logging mechanism still active.
 	logger.Infof("Node startup failed: %v", err)
 	// Start shutting down the supervision tree...
