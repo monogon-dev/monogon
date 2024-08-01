@@ -100,7 +100,7 @@ func main() {
 	cfg.ABLoader = bytes.NewReader(abloader)
 
 	// Write the parametrized OS image.
-	if _, err := osimage.Create(&cfg); err != nil {
+	if _, err := osimage.Write(&cfg); err != nil {
 		log.Fatalf("while creating a Metropolis OS image: %v", err)
 	}
 }

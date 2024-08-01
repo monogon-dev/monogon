@@ -210,7 +210,7 @@ func setup(t *testing.T) (*bundleServing, []string) {
 		t.Fatal(err)
 	}
 
-	if _, err := osimage.Create(&osimage.Params{
+	if _, err := osimage.Write(&osimage.Params{
 		Output:      rootDisk,
 		ABLoader:    loader,
 		EFIPayload:  boot,

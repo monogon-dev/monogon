@@ -144,7 +144,7 @@ func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Ne
 		Output:         rootDev,
 	}
 
-	be, err := osimage.Create(&installParams)
+	be, err := osimage.Write(&installParams)
 	if err != nil {
 		return err
 	}

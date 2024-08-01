@@ -66,7 +66,7 @@ type PartitionSizeInfo struct {
 	Data int64
 }
 
-// Params contains parameters used by Create to build a Metropolis OS
+// Params contains parameters used by Plan or Write to build a Metropolis OS
 // image.
 type Params struct {
 	// Output is the block device to which the OS image is written.
@@ -226,8 +226,8 @@ func Plan(p *Params) (*plan, error) {
 
 const Mi = 1024 * 1024
 
-// Create writes a Metropolis OS image to a block device.
-func Create(params *Params) (*efivarfs.LoadOption, error) {
+// Write writes a Metropolis OS image to a block device.
+func Write(params *Params) (*efivarfs.LoadOption, error) {
 	p, err := Plan(params)
 	if err != nil {
 		return nil, err

@@ -89,7 +89,7 @@ func findInstallableBlockDevices(espDev string, minSize uint64) ([]string, error
 	// Use the partition's name to find and return the name of its parent
 	// device. It will be excluded from the list of suitable target devices.
 	srcDev, err := sysfs.ParentBlockDevice(espDev)
-	if err != nil{
+	if err != nil {
 		return nil, fmt.Errorf("failed to fetch parent device: %w", err)
 	}
 	// Build the exclusion list containing forbidden handle prefixes.
@@ -264,9 +264,9 @@ func main() {
 	installParams.Output = tgtBlockDev
 
 	// Use osimage to partition the target block device and set up its ESP.
-	// Create will return an EFI boot entry on success.
+	// Write will return an EFI boot entry on success.
 	logf("Installing to %s...", tgtBlkdevPath)
-	be, err := osimage.Create(&installParams)
+	be, err := osimage.Write(&installParams)
 	if err != nil {
 		panicf("While installing: %v", err)
 	}
