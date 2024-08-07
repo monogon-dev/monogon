@@ -7,7 +7,10 @@ go_library(
     importpath = "source.monogon.dev/metropolis/test/launch/cli/launch-cluster",
     visibility = ["//visibility:private"],
     deps = [
+        "//metropolis/cli/flagdefs",
         "//metropolis/cli/metroctl/core",
+        "//metropolis/node",
+        "//metropolis/proto/common",
         "//metropolis/test/launch",
     ],
 )

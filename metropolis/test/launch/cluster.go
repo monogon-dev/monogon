@@ -62,6 +62,16 @@ type NodeOptions struct {
 	// Name is a human-readable identifier to be used in debug output.
 	Name string
 
+	// CPUs is the number of virtual CPUs of the VM.
+	CPUs int
+
+	// ThreadsPerCPU is the number of threads per CPU. This is multiplied by
+	// CPUs to get the total number of threads.
+	ThreadsPerCPU int
+
+	// MemoryMiB is the RAM size in MiB of the VM.
+	MemoryMiB int
+
 	// Ports contains the port mapping where to expose the internal ports of the VM to
 	// the host. See IdentityPortMap() and ConflictFreePortMap(). Ignored when
 	// ConnectToSocket is set.
@@ -215,6 +225,16 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 	// swtpm and qemu because we run into UNIX socket length limitations (for legacy
 	// reasons 108 chars).
 
+	if options.CPUs == 0 {
+		options.CPUs = 1
+	}
+	if options.ThreadsPerCPU == 0 {
+		options.ThreadsPerCPU = 1
+	}
+	if options.MemoryMiB == 0 {
+		options.MemoryMiB = 2048
+	}
+
 	// If it's the node's first start, set up its runtime directories.
 	if options.Runtime == nil {
 		r, err := setupRuntime(ld, sd)
@@ -262,8 +282,13 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 	fwVarPath := filepath.Join(r.ld, "OVMF_VARS.fd")
 	storagePath := filepath.Join(r.ld, "image.qcow2")
 	qemuArgs := []string{
-		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "2048",
-		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
+		"-machine", "q35",
+		"-accel", "kvm",
+		"-nographic",
+		"-nodefaults",
+		"-cpu", "host",
+		"-m", fmt.Sprintf("%dM", options.MemoryMiB),
+		"-smp", fmt.Sprintf("cores=%d,threads=%d", options.CPUs, options.ThreadsPerCPU),
 		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + fwVarPath,
 		"-drive", "if=virtio,format=qcow2,cache=unsafe,file=" + storagePath,
@@ -520,6 +545,9 @@ type ClusterOptions struct {
 	// The number of nodes this cluster should be started with.
 	NumNodes int
 
+	// Node are default options of all nodes.
+	Node NodeOptions
+
 	// If true, node logs will be saved to individual files instead of being printed
 	// out to stderr. The path of these files will be still printed to stdout.
 	//
@@ -704,6 +732,32 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		return nil, errors.New("refusing to start cluster with zero nodes")
 	}
 
+	// Prepare the node options. These will be kept as part of Cluster.
+	// nodeOpts[].Runtime will be initialized by LaunchNode during the first
+	// launch. The runtime information can be later used to restart a node.
+	// The 0th node will be initialized first. The rest will follow after it
+	// had bootstrapped the cluster.
+	nodeOpts := make([]NodeOptions, opts.NumNodes)
+	for i := range opts.NumNodes {
+		nodeOpts[i] = opts.Node
+		nodeOpts[i].Name = fmt.Sprintf("node%d", i)
+		nodeOpts[i].SerialPort = newPrefixedStdio(i)
+	}
+	nodeOpts[0].NodeParameters = &apb.NodeParameters{
+		Cluster: &apb.NodeParameters_ClusterBootstrap_{
+			ClusterBootstrap: &apb.NodeParameters_ClusterBootstrap{
+				OwnerPublicKey:              InsecurePublicKey,
+				InitialClusterConfiguration: opts.InitialClusterConfiguration,
+				Labels: &cpb.NodeLabels{
+					Pairs: []*cpb.NodeLabels_Pair{
+						{Key: nodeNumberKey, Value: "0"},
+					},
+				},
+			},
+		},
+	}
+	nodeOpts[0].PcapDump = true
+
 	// Create the launch directory.
 	ld, err := os.MkdirTemp(os.Getenv("TEST_TMPDIR"), "cluster-*")
 	if err != nil {
@@ -730,14 +784,13 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 
 	// Prepare links between nodes and nanoswitch.
 	var switchPorts []*os.File
-	var vmPorts []*os.File
-	for i := 0; i < opts.NumNodes; i++ {
+	for i := range opts.NumNodes {
 		switchPort, vmPort, err := launch.NewSocketPair()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get socketpair: %w", err)
 		}
 		switchPorts = append(switchPorts, switchPort)
-		vmPorts = append(vmPorts, vmPort)
+		nodeOpts[i].ConnectToSocket = vmPort
 	}
 
 	// Make a list of channels that will be populated by all running node qemu
@@ -747,39 +800,16 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		done[i] = make(chan error, 1)
 	}
 
-	// Prepare the node options. These will be kept as part of Cluster.
-	// nodeOpts[].Runtime will be initialized by LaunchNode during the first
-	// launch. The runtime information can be later used to restart a node.
-	// The 0th node will be initialized first. The rest will follow after it
-	// had bootstrapped the cluster.
-	nodeOpts := make([]NodeOptions, opts.NumNodes)
-	nodeOpts[0] = NodeOptions{
-		Name:            "node0",
-		ConnectToSocket: vmPorts[0],
-		NodeParameters: &apb.NodeParameters{
-			Cluster: &apb.NodeParameters_ClusterBootstrap_{
-				ClusterBootstrap: &apb.NodeParameters_ClusterBootstrap{
-					OwnerPublicKey:              InsecurePublicKey,
-					InitialClusterConfiguration: opts.InitialClusterConfiguration,
-					Labels: &cpb.NodeLabels{
-						Pairs: []*cpb.NodeLabels_Pair{
-							{Key: nodeNumberKey, Value: "0"},
-						},
-					},
-				},
-			},
-		},
-		SerialPort: newPrefixedStdio(0),
-		PcapDump:   true,
-	}
 	if opts.NodeLogsToFiles {
-		path := path.Join(ld, "node-0.txt")
-		port, err := NewSerialFileLogger(path)
-		if err != nil {
-			return nil, fmt.Errorf("could not open log file for node 0: %w", err)
+		for i := range opts.NumNodes {
+			path := path.Join(ld, fmt.Sprintf("node-%d.txt", i))
+			port, err := NewSerialFileLogger(path)
+			if err != nil {
+				return nil, fmt.Errorf("could not open log file for node %d: %w", i, err)
+			}
+			launch.Log("Node %d logs at %s", i, path)
+			nodeOpts[i].SerialPort = port
 		}
-		launch.Log("Node 0 logs at %s", path)
-		nodeOpts[0].SerialPort = port
 	}
 
 	// Start the first node.
@@ -939,33 +969,19 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 
 	// Use the retrieved information to configure the rest of the node options.
 	for i := 1; i < opts.NumNodes; i++ {
-		nodeOpts[i] = NodeOptions{
-			Name:            fmt.Sprintf("node%d", i),
-			ConnectToSocket: vmPorts[i],
-			NodeParameters: &apb.NodeParameters{
-				Cluster: &apb.NodeParameters_ClusterRegister_{
-					ClusterRegister: &apb.NodeParameters_ClusterRegister{
-						RegisterTicket:   ticket,
-						ClusterDirectory: resI.ClusterDirectory,
-						CaCertificate:    resI.CaCertificate,
-						Labels: &cpb.NodeLabels{
-							Pairs: []*cpb.NodeLabels_Pair{
-								{Key: nodeNumberKey, Value: fmt.Sprintf("%d", i)},
-							},
+		nodeOpts[i].NodeParameters = &apb.NodeParameters{
+			Cluster: &apb.NodeParameters_ClusterRegister_{
+				ClusterRegister: &apb.NodeParameters_ClusterRegister{
+					RegisterTicket:   ticket,
+					ClusterDirectory: resI.ClusterDirectory,
+					CaCertificate:    resI.CaCertificate,
+					Labels: &cpb.NodeLabels{
+						Pairs: []*cpb.NodeLabels_Pair{
+							{Key: nodeNumberKey, Value: fmt.Sprintf("%d", i)},
 						},
 					},
 				},
 			},
-			SerialPort: newPrefixedStdio(i),
-		}
-		if opts.NodeLogsToFiles {
-			path := path.Join(ld, fmt.Sprintf("node-%d.txt", i))
-			port, err := NewSerialFileLogger(path)
-			if err != nil {
-				return nil, fmt.Errorf("could not open log file for node %d: %w", i, err)
-			}
-			launch.Log("Node %d logs at %s", i, path)
-			nodeOpts[i].SerialPort = port
 		}
 	}
 
@@ -979,7 +995,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	}
 
 	// Wait for nodes to appear as NEW, populate a map from node number (index into
-	// NodeOpts, etc.) to Metropolis Node ID.
+	// nodeOpts, etc.) to Metropolis Node ID.
 	seenNodes := make(map[string]bool)
 	nodeNumberToID := make(map[int]string)
 	launch.Log("Cluster: waiting for nodes to appear as NEW...")
@@ -1386,6 +1402,25 @@ func (c *Cluster) MakeKubernetesWorker(ctx context.Context, id string) error {
 			Id: id,
 		},
 		KubernetesWorker: &tr,
+	})
+	return err
+}
+
+// MakeKubernetesController adds the KubernetesController role to a node by ID.
+func (c *Cluster) MakeKubernetesController(ctx context.Context, id string) error {
+	curC, err := c.CuratorClient()
+	if err != nil {
+		return err
+	}
+	mgmt := apb.NewManagementClient(curC)
+
+	tr := true
+	launch.Log("Cluster: %s: adding KubernetesController", id)
+	_, err = mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
+		Node: &apb.UpdateNodeRolesRequest_Id{
+			Id: id,
+		},
+		KubernetesController: &tr,
 	})
 	return err
 }

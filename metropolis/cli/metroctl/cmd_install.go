@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/spf13/cobra"
@@ -16,6 +15,7 @@ import (
 	"source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 
+	"source.monogon.dev/metropolis/cli/flagdefs"
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/osbase/blkio"
 	"source.monogon.dev/osbase/fat32"
@@ -31,38 +31,11 @@ var installCmd = &cobra.Command{
 // it will try to connect to the cluster which endpoints were provided with
 // the --endpoints flag.
 var bootstrap = installCmd.PersistentFlags().Bool("bootstrap", false, "Create a bootstrap installer image.")
-var bootstrapTPMMode = installCmd.PersistentFlags().String("bootstrap-tpm-mode", "required", "TPM mode to set on cluster (required, best-effort, disabled)")
-var bootstrapStorageSecurityPolicy = installCmd.PersistentFlags().String("bootstrap-storage-security", "needs-encryption-and-authentication", "Storage security policy to set on cluster (permissive, needs-encryption, needs-encryption-and-authentication, needs-insecure)")
+var bootstrapTPMMode = flagdefs.TPMModePflag(installCmd.PersistentFlags(), "bootstrap-tpm-mode", cpb.ClusterConfiguration_TPM_MODE_REQUIRED, "TPM mode to set on cluster")
+var bootstrapStorageSecurityPolicy = flagdefs.StorageSecurityPolicyPflag(installCmd.PersistentFlags(), "bootstrap-storage-security", cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION, "Storage security policy to set on cluster")
 var bundlePath = installCmd.PersistentFlags().StringP("bundle", "b", "", "Path to the Metropolis bundle to be installed")
 
 func makeNodeParams() *api.NodeParameters {
-	var tpmMode cpb.ClusterConfiguration_TPMMode
-	switch strings.ToLower(*bootstrapTPMMode) {
-	case "required", "require":
-		tpmMode = cpb.ClusterConfiguration_TPM_MODE_REQUIRED
-	case "best-effort", "besteffort":
-		tpmMode = cpb.ClusterConfiguration_TPM_MODE_BEST_EFFORT
-	case "disabled", "disable":
-		tpmMode = cpb.ClusterConfiguration_TPM_MODE_DISABLED
-	default:
-		log.Fatalf("Invalid --bootstrap-tpm-mode (must be one of: required, best-effort, disabled)")
-	}
-
-	var bootstrapStorageSecurity cpb.ClusterConfiguration_StorageSecurityPolicy
-	switch strings.ToLower(*bootstrapStorageSecurityPolicy) {
-	case "permissive":
-		bootstrapStorageSecurity = cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_PERMISSIVE
-	case "needs-encryption":
-		bootstrapStorageSecurity = cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION
-	case "needs-encryption-and-authentication":
-		bootstrapStorageSecurity = cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION
-	case "needs-insecure":
-		bootstrapStorageSecurity = cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE
-	default:
-
-		log.Fatalf("Invalid --bootstrap-storage-security (must be one of: permissive, needs-encryption, needs-encryption-and-authentication, needs-insecure)")
-	}
-
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 
 	if err := os.MkdirAll(flags.configPath, 0700); err != nil && !os.IsExist(err) {
@@ -82,8 +55,8 @@ func makeNodeParams() *api.NodeParameters {
 				ClusterBootstrap: &api.NodeParameters_ClusterBootstrap{
 					OwnerPublicKey: pub,
 					InitialClusterConfiguration: &cpb.ClusterConfiguration{
-						StorageSecurityPolicy: bootstrapStorageSecurity,
-						TpmMode:               tpmMode,
+						StorageSecurityPolicy: *bootstrapStorageSecurityPolicy,
+						TpmMode:               *bootstrapTPMMode,
 					},
 				},
 			},

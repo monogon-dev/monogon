@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "flagdefs",
+    srcs = ["flagdefs.go"],
+    importpath = "source.monogon.dev/metropolis/cli/flagdefs",
+    visibility = ["//metropolis:__subpackages__"],
+    deps = [
+        "//metropolis/proto/common",
+        "@com_github_spf13_pflag//:pflag",
+    ],
+)
