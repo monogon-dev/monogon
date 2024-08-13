@@ -7,5 +7,6 @@
 .bazeldnf
 .direnv
 
+# Ignore misplaced build output from Intellij's Rust plugin.
 third_party/rust/target/*
 third_party/rust_efi/target/*
