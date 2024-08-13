@@ -14,8 +14,8 @@ proto_library(
     deps = [
         "//metropolis/proto/common:common_proto",
         "//metropolis/proto/ext:ext_proto",
-        "//net/proto:net_proto_proto",
         "//osbase/logtree/proto:proto_proto",
+        "//osbase/net/proto:net_proto_proto",
         "@protobuf//:duration_proto",
     ],
 )
@@ -29,8 +29,8 @@ go_proto_library(
     deps = [
         "//metropolis/proto/common",
         "//metropolis/proto/ext",
-        "//net/proto",
         "//osbase/logtree/proto",
+        "//osbase/net/proto",
     ],
 )
 

@@ -16,10 +16,10 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//cloud/agent/api",
-        "//net/dump",
-        "//net/proto",
         "//osbase/bootparam",
         "//osbase/kexec",
+        "//osbase/net/dump",
+        "//osbase/net/proto",
         "@com_github_cavaliergopher_cpio//:cpio",
         "@com_github_klauspost_compress//zstd",
         "@org_golang_google_protobuf//proto",

@@ -12,7 +12,7 @@ import (
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 
-	netapi "source.monogon.dev/net/proto"
+	netapi "source.monogon.dev/osbase/net/proto"
 )
 
 var vlanProtoMap = map[netlink.VlanProtocol]netapi.VLAN_Protocol{
@@ -29,7 +29,7 @@ const (
 )
 
 // Dump dumps the network configuration of the current network namespace into
-// a net.proto.Net structure. This is currently only expected to work for
+// a osbase.net.proto.Net structure. This is currently only expected to work for
 // systems which do not use a dynamic routing protocol to establish basic
 // internet connectivity.
 // The second return value is a list of warnings, i.e. things which might be

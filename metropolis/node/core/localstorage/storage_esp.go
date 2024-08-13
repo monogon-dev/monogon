@@ -27,7 +27,7 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	ppb "source.monogon.dev/metropolis/proto/private"
-	npb "source.monogon.dev/net/proto"
+	npb "source.monogon.dev/osbase/net/proto"
 	"source.monogon.dev/osbase/tpm"
 )
 

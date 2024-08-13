@@ -22,7 +22,7 @@ import (
 	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/osbase/sysctl"
 
-	netpb "source.monogon.dev/net/proto"
+	netpb "source.monogon.dev/osbase/net/proto"
 )
 
 var vlanProtoMap = map[netpb.VLAN_Protocol]netlink.VlanProtocol{

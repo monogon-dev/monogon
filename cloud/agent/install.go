@@ -14,11 +14,11 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
-	npb "source.monogon.dev/net/proto"
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
 	"source.monogon.dev/osbase/logtree"
+	npb "source.monogon.dev/osbase/net/proto"
 )
 
 //go:embed metropolis/node/core/abloader/abloader_bin.efi

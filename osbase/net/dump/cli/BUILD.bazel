@@ -3,10 +3,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "cli_lib",
     srcs = ["main.go"],
-    importpath = "source.monogon.dev/net/dump/cli",
+    importpath = "source.monogon.dev/osbase/net/dump/cli",
     visibility = ["//visibility:private"],
     deps = [
-        "//net/dump",
+        "//osbase/net/dump",
         "@org_golang_google_protobuf//encoding/prototext",
     ],
 )

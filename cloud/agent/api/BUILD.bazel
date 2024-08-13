@@ -10,7 +10,7 @@ proto_library(
         "takeover.proto",
     ],
     visibility = ["//visibility:public"],
-    deps = ["//net/proto:net_proto_proto"],
+    deps = ["//osbase/net/proto:net_proto_proto"],
 )
 
 go_proto_library(
@@ -18,7 +18,7 @@ go_proto_library(
     importpath = "source.monogon.dev/cloud/agent/api",
     proto = ":api_proto",
     visibility = ["//visibility:public"],
-    deps = ["//net/proto"],
+    deps = ["//osbase/net/proto"],
 )
 
 go_library(

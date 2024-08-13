@@ -6,8 +6,8 @@ syntax = "proto3";
 // configuration information needs to be provided to non-Monogon systems.
 // It's kept human-readable as it may be written by humans directly when
 // configuring Monogon systems.
-package net.proto;
-option go_package = "source.monogon.dev/net/proto";
+package osbase.net.proto;
+option go_package = "source.monogon.dev/osbase/net/proto";
 
 // Device references one or more network adapters, i.e. network devices which
 // connect this kernel to an outside system.

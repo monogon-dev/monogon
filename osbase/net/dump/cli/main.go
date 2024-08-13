@@ -6,7 +6,7 @@ import (
 
 	"google.golang.org/protobuf/encoding/prototext"
 
-	netdump "source.monogon.dev/net/dump"
+	netdump "source.monogon.dev/osbase/net/dump"
 )
 
 func main() {

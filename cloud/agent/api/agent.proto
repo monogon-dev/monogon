@@ -1,6 +1,6 @@
 syntax = "proto3";
 package cloud.agent.api;
-import "net/proto/net.proto";
+import "osbase/net/proto/net.proto";
 import "cloud/agent/api/takeover.proto";
 option go_package = "source.monogon.dev/cloud/agent/api";
 
@@ -14,5 +14,5 @@ message AgentInit {
   bytes private_key = 2;
   // A network configuration in case automatic configuration does not work or is
   // not desired. If left unset, automatic configuration is used.
-  net.proto.Net network_config = 3;
+  osbase.net.proto.Net network_config = 3;
 }
