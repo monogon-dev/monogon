@@ -26,9 +26,9 @@ go_test(
         "xAbloaderPath": "_main/metropolis/node/core/abloader/abloader_bin.efi",
     },
     deps = [
-        "//metropolis/node/build/mkimage/osimage",
         "//osbase/blkio",
         "//osbase/blockdev",
+        "//osbase/build/mkimage/osimage",
         "@io_bazel_rules_go//go/runfiles:go_default_library",
     ],
 )

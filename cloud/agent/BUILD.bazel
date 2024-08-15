@@ -16,12 +16,12 @@ go_library(
     deps = [
         "//cloud/agent/api",
         "//cloud/bmaas/server/api",
-        "//metropolis/node/build/mkimage/osimage",
         "//metropolis/node/core/devmgr",
         "//metropolis/node/core/network",
         "//net/proto",
         "//osbase/blockdev",
         "//osbase/bootparam",
+        "//osbase/build/mkimage/osimage",
         "//osbase/efivarfs",
         "//osbase/logtree",
         "//osbase/nvme",

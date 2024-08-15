@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("//metropolis/node/build:def.bzl", "node_initramfs")
+load("//osbase/build:def.bzl", "node_initramfs")
 
 go_library(
     name = "smoketest_lib",
@@ -21,7 +21,7 @@ node_initramfs(
         "//metropolis/vm/smoketest/payload": "/init",
     },
     fsspecs = [
-        "//metropolis/node/build:earlydev.fsspec",
+        "//osbase/build:earlydev.fsspec",
     ],
 )
 

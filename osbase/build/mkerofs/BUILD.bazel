@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "mkerofs_lib",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/osbase/build/mkerofs",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//osbase/build/fsspec",
+        "//osbase/erofs",
+    ],
+)
+
+go_binary(
+    name = "mkerofs",
+    embed = [":mkerofs_lib"],
+    visibility = ["//visibility:public"],
+)

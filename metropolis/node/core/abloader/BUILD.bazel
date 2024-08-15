@@ -1,5 +1,5 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
-load("//metropolis/node/build:def.bzl", "platform_transition_binary")
+load("//osbase/build:def.bzl", "platform_transition_binary")
 
 rust_binary(
     name = "abloader_bin",

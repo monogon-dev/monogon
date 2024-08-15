@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("//metropolis/node/build/kconfig-patcher:kconfig-patcher.bzl", "kconfig_patch")
+load("//osbase/build/kconfig-patcher:kconfig-patcher.bzl", "kconfig_patch")
 load("//third_party/linux:def.bzl", "linux_image")
 
 go_library(

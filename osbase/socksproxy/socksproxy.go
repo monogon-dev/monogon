@@ -1,4 +1,4 @@
-// package socksproxy implements a limited subset of the SOCKS 5 (RFC1928)
+// Package socksproxy implements a limited subset of the SOCKS 5 (RFC1928)
 // protocol in the form of a pluggable Proxy object. However, this
 // implementation is _not_ RFC1928 compliant, as it does not implement GSSAPI
 // (which is mandated by the spec). It currently only implements CONNECT

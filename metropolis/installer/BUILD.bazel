@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("//metropolis/node/build:def.bzl", "node_initramfs")
-load("//metropolis/node/build/genosrelease:defs.bzl", "os_release")
-load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
+load("//osbase/build:def.bzl", "node_initramfs")
+load("//osbase/build/genosrelease:defs.bzl", "os_release")
+load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
 
 go_library(
     name = "installer_lib",
@@ -15,8 +15,8 @@ go_library(
     importpath = "source.monogon.dev/metropolis/installer",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/node/build/mkimage/osimage",
         "//osbase/blockdev",
+        "//osbase/build/mkimage/osimage",
         "//osbase/efivarfs",
         "//osbase/sysfs",
         "@org_golang_x_sys//unix",
@@ -35,7 +35,7 @@ node_initramfs(
         "//metropolis/installer": "/init",
     },
     fsspecs = [
-        "//metropolis/node/build:earlydev.fsspec",
+        "//osbase/build:earlydev.fsspec",
     ],
     visibility = ["//metropolis/installer/test:__pkg__"],
 )

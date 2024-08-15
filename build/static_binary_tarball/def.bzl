@@ -14,7 +14,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-load("//metropolis/node/build:def.bzl", "build_static_transition")
+load("//osbase/build:def.bzl", "build_static_transition")
 
 def _static_binary_tarball_impl(ctx):
     layer_spec = ctx.actions.declare_file(ctx.label.name + ".prototxt")

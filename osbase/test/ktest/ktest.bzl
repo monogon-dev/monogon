@@ -18,7 +18,7 @@
 Ktest provides a macro to run tests under a normal Metropolis node kernel
 """
 
-load("//metropolis/node/build:def.bzl", "node_initramfs")
+load("//osbase/build:def.bzl", "node_initramfs")
 
 def _dict_union(x, y):
     z = {}
@@ -30,7 +30,7 @@ def ktest(tester, cmdline = "", files = {}, fsspecs = [], files_cc = {}):
     node_initramfs(
         name = "test_initramfs",
         fsspecs = [
-            "//metropolis/node/build:earlydev.fsspec",
+            "//osbase/build:earlydev.fsspec",
         ] + fsspecs,
         files = _dict_union({
             "//osbase/test/ktest/init": "/init",

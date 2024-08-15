@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_binary(
+    name = "mkpayload",
+    embed = [":mkpayload_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "mkpayload_lib",
+    srcs = ["mkpayload.go"],
+    importpath = "source.monogon.dev/osbase/build/mkpayload",
+    visibility = ["//visibility:private"],
+)

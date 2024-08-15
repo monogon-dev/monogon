@@ -1,6 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("//metropolis/node/build:def.bzl", "erofs_image", "verity_image")
-load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
+load("//osbase/build:def.bzl", "erofs_image", "verity_image")
+load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
 erofs_image(

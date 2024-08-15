@@ -34,8 +34,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
 	"source.monogon.dev/osbase/sysfs"
 )

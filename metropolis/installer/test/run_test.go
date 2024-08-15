@@ -38,7 +38,7 @@ import (
 	"source.monogon.dev/metropolis/proto/api"
 
 	mctl "source.monogon.dev/metropolis/cli/metroctl/core"
-	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
+	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/cmd"
 )
 

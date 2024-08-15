@@ -1,7 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
-load("//metropolis/node/build:def.bzl", "erofs_image", "verity_image")
-load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
-load("//metropolis/node/build/mkimage:def.bzl", "node_image")
+load("//osbase/build:def.bzl", "erofs_image", "verity_image")
+load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
+load("//osbase/build/mkimage:def.bzl", "node_image")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
 go_library(
@@ -89,7 +89,7 @@ erofs_image(
     },
     fsspecs = [
         ":erofs-layout.fsspec",
-        "//metropolis/node/build:earlydev.fsspec",
+        "//osbase/build:earlydev.fsspec",
         "//third_party:firmware",
     ],
     symlinks = {
@@ -135,7 +135,7 @@ node_image(
     ],
 )
 
-load("//metropolis/node/build/genosrelease:defs.bzl", "os_release")
+load("//osbase/build/genosrelease:defs.bzl", "os_release")
 
 os_release(
     name = "os-release-info",

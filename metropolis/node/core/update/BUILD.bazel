@@ -9,9 +9,9 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/update",
     visibility = ["//visibility:public"],
     deps = [
-        "//metropolis/node/build/mkimage/osimage",
         "//metropolis/node/core/abloader/spec",
         "//osbase/blockdev",
+        "//osbase/build/mkimage/osimage",
         "//osbase/efivarfs",
         "//osbase/gpt",
         "//osbase/kexec",

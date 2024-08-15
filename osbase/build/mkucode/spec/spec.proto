@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package osbase.build.mkucode;
+option go_package = "source.monogon.dev/osbase/build/mkucode/spec";
+
+message UCode {
+  repeated UCodeVendor vendor = 1;
+}
+
+message UCodeVendor {
+  // The vendor id (as given in cpuid) of the CPU the microcode is for, like
+  // GenuineIntel or AuthenticAMD.
+  string id = 1;
+
+  // List of paths to microcode files from for CPUs from the vendor.
+  repeated string file = 2;
+}

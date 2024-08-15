@@ -1,8 +1,8 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("//metropolis/node/build/mkucode:def.bzl", "cpio_ucode")
+load("//osbase/build/mkucode:def.bzl", "cpio_ucode")
 load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
-load("//metropolis/node/build:def.bzl", "node_initramfs")
-load("//metropolis/node/build/fwprune:def.bzl", "fsspec_linux_firmware")
+load("//osbase/build:def.bzl", "node_initramfs")
+load("//osbase/build/fwprune:def.bzl", "fsspec_linux_firmware")
 
 go_library(
     name = "takeover_lib",
@@ -36,7 +36,7 @@ node_initramfs(
         "@cacerts//file": "/etc/ssl/cert.pem",
     },
     fsspecs = [
-        "//metropolis/node/build:earlydev.fsspec",
+        "//osbase/build:earlydev.fsspec",
         "//third_party:firmware",
     ],
     visibility = ["//cloud/agent:__subpackages__"],

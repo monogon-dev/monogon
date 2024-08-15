@@ -1,5 +1,5 @@
-// unraw implements a facility to convert raw logs from external sources into
-// leveled logs.
+// Package unraw implements a facility to convert raw logs from external sources
+// into leveled logs.
 //
 // This is not the same as raw logging inside the logtree, which exists to
 // ingest logs that are either fully arbitrary or do not map cleanly to the

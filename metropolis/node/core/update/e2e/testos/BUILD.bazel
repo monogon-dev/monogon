@@ -13,10 +13,10 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/update/e2e/testos",
     visibility = ["//visibility:private"],
     deps = [
-        "//metropolis/node/build/mkimage/osimage",
         "//metropolis/node/core/network",
         "//metropolis/node/core/update",
         "//osbase/blockdev",
+        "//osbase/build/mkimage/osimage",
         "//osbase/gpt",
         "//osbase/logtree",
         "//osbase/supervisor",

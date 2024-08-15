@@ -14,9 +14,9 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
-	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	npb "source.monogon.dev/net/proto"
 	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
 	"source.monogon.dev/osbase/logtree"
 )

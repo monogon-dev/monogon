@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("//metropolis/node/build:def.bzl", "node_initramfs")
+load("//osbase/build:def.bzl", "node_initramfs")
 
 go_library(
     name = "nanoswitch_lib",
@@ -42,7 +42,7 @@ node_initramfs(
         "@cacerts//file": "/etc/ssl/cert.pem",
     },
     fsspecs = [
-        "//metropolis/node/build:earlydev.fsspec",
+        "//osbase/build:earlydev.fsspec",
     ],
     visibility = ["//metropolis/test:__subpackages__"],
 )

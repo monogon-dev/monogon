@@ -18,9 +18,9 @@ import (
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 
-	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	"source.monogon.dev/osbase/blkio"
 	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/build/mkimage/osimage"
 )
 
 var (

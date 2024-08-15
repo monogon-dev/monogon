@@ -1,6 +1,6 @@
 syntax = "proto3";
 option go_package = "source.monogon.dev/osbase/tpm/proto";
-package metropolis.pkg.tpm;
+package osbase.pkg.tpm;
 
 import "proto/tpm/tpm.proto";
 

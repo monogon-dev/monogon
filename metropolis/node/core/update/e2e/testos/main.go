@@ -8,10 +8,10 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/update"
 	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/gpt"
 	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/supervisor"

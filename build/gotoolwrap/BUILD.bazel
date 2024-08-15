@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "gotoolwrap_lib",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/build/gotoolwrap",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "gotoolwrap",
+    embed = [":gotoolwrap_lib"],
+    visibility = ["//visibility:public"],
+)

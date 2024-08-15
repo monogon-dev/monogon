@@ -168,7 +168,7 @@ go_kubernetes_library = rule(
 )
 
 # _gotool_run is a helper function which runs an executable under
-# //metropolis/build/gotoolwrap, effectively setting up everything required to
+# //osbase/build/gotoolwrap, effectively setting up everything required to
 # use standard Go tooling on the monogon workspace (ie. GOPATH/GOROOT). This is
 # required by generators to run 'go fmt'.
 #
@@ -524,7 +524,7 @@ go_kubernetes_resource_bundle = rule(
             default = "@io_bazel_rules_go//:go_context_data",
         ),
         "_gotoolwrap": attr.label(
-            default = Label("//metropolis/build/gotoolwrap"),
+            default = Label("//build/gotoolwrap"),
             allow_single_file = True,
             executable = True,
             cfg = "exec",

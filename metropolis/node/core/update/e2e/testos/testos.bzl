@@ -1,6 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
-load("//metropolis/node/build:def.bzl", "erofs_image", "verity_image")
-load("//metropolis/node/build:efi.bzl", "efi_unified_kernel_image")
+load("//osbase/build:def.bzl", "erofs_image", "verity_image")
+load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("@rules_pkg//:mappings.bzl", "pkg_files")
 
@@ -14,7 +14,7 @@ def testos(variant):
             "@com_github_coredns_coredns//:coredns": "/kubernetes/bin/coredns",
         },
         fsspecs = [
-            "//metropolis/node/build:earlydev.fsspec",
+            "//osbase/build:earlydev.fsspec",
             ":rootfs.fsspec",
         ],
     )

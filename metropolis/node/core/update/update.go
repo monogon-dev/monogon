@@ -23,9 +23,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"source.monogon.dev/metropolis/node/build/mkimage/osimage"
 	abloaderpb "source.monogon.dev/metropolis/node/core/abloader/spec"
 	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
 	"source.monogon.dev/osbase/gpt"
 	"source.monogon.dev/osbase/kexec"
