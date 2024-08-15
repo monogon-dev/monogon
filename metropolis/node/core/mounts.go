@@ -38,9 +38,6 @@ func setupMounts() error {
 		{"/sys/kernel/tracing", "tracefs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
 		{"/sys/firmware/efi/efivars", "efivarfs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
 		{"/sys/fs/pstore", "pstore", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
-		// Nothing in Metropolis currently requires BPF maps,
-		// but some privileged customer applications do.
-		{"/sys/fs/bpf", "bpf", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
 		{"/proc", "proc", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
 		{"/dev", "devtmpfs", unix.MS_NOEXEC | unix.MS_NOSUID},
 		{"/dev/pts", "devpts", unix.MS_NOEXEC | unix.MS_NOSUID},
