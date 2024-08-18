@@ -103,6 +103,7 @@ func doRemove(cmd *cobra.Command, args []string) {
 				Id: node,
 			},
 		}
+
 		switch role {
 		case "kubernetescontroller", "kc":
 			req.KubernetesController = opt(false)
@@ -111,7 +112,7 @@ func doRemove(cmd *cobra.Command, args []string) {
 		case "consensusmember", "cm":
 			req.ConsensusMember = opt(false)
 		default:
-			log.Fatalf("Unknown role: %s. Must be one of: KubernetesWorker, ConsensusMember.", role)
+			log.Fatalf("Unknown role: %s. Must be one of: KubernetesController, KubernetesWorker, ConsensusMember.", role)
 		}
 
 		_, err := mgmt.UpdateNodeRoles(ctx, req)
