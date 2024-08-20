@@ -219,7 +219,7 @@ func (s *csiPluginServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExp
 		}
 		return &csi.NodeExpandVolumeResponse{CapacityBytes: req.CapacityRange.LimitBytes}, nil
 	}
-	if err := fsquota.SetQuota(req.VolumePath, uint64(req.CapacityRange.LimitBytes), 0); err != nil {
+	if err := fsquota.SetQuota(req.VolumePath, uint64(req.CapacityRange.LimitBytes), uint64(req.CapacityRange.LimitBytes)/inodeCapacityRatio); err != nil {
 		return nil, status.Errorf(codes.Unavailable, "failed to update quota: %v", err)
 	}
 	return &csi.NodeExpandVolumeResponse{CapacityBytes: req.CapacityRange.LimitBytes}, nil

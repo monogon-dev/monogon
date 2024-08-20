@@ -45,6 +45,11 @@ import (
 	"source.monogon.dev/osbase/supervisor"
 )
 
+// inodeCapacityRatio describes the ratio between the byte capacity of a volume
+// and its inode capacity. One inode on XFS is 512 bytes and by default 25%
+// (1/4) of capacity can be used for metadata.
+const inodeCapacityRatio = 4 * 512
+
 // ONCHANGE(//metropolis/node/kubernetes/reconciler:resources_csi.go): needs to
 // match csiProvisionerServerName declared.
 const csiProvisionerServerName = "dev.monogon.metropolis.vfs"
@@ -293,7 +298,7 @@ func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, stora
 		if len(files) > 0 {
 			return errors.New("newly-created volume already contains data, bailing")
 		}
-		if err := fsquota.SetQuota(volumePath, uint64(capacity), 100000); err != nil {
+		if err := fsquota.SetQuota(volumePath, uint64(capacity), uint64(capacity)/inodeCapacityRatio); err != nil {
 			return fmt.Errorf("failed to update quota: %w", err)
 		}
 	case v1.PersistentVolumeBlock:
