@@ -260,7 +260,11 @@ var nodeDeleteCmd = &cobra.Command{
 		}
 
 		n := nodes[0]
-		log.Printf("deleting node: %s (%s)", n.Id, n.Status.ExternalAddress)
+		if n.Status != nil && n.Status.ExternalAddress != "" {
+			log.Printf("deleting node: %s (%s)", n.Id, n.Status.ExternalAddress)
+		} else {
+			log.Printf("deleting node: %s", n.Id)
+		}
 
 		req := &apb.DeleteNodeRequest{
 			Node: &apb.DeleteNodeRequest_Id{
