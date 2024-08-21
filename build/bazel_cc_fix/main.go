@@ -209,6 +209,9 @@ func (m rewriteMetadata) fixIncludesAndGetRefs(filePath string, quoteIncludes, s
 			workspaceRelativeFilePath = findFileInWorkspace(searchPath, inclFile, isGeneratedFile)
 		}
 		workspaceRelativeFilePath = applyReplaceDirectives(spec.Replace, ccfixspec.Replace_WORKSPACE, workspaceRelativeFilePath, true)
+		if workspaceRelativeFilePath == "" {
+			continue
+		}
 
 		// Mark generated files as generated
 		foundGenerated := isGeneratedFile[filepath.Join(*workspacePath, workspaceRelativeFilePath)]
