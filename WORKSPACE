@@ -55,7 +55,7 @@ load("//third_party/xfsprogs:external.bzl", "xfsprogs_external")
 
 xfsprogs_external(
     name = "xfsprogs",
-    version = "5.10.0",
+    version = "6.9.0",
 )
 
 load("//third_party/pixman:external.bzl", "pixman_external")

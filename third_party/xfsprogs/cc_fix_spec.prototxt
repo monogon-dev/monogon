@@ -57,18 +57,6 @@ replace {
   to: "include/"
 }
 
-# platform_defs.h is generated and cannot be placed in include/ as targets depend on random
-# things in there. Fix up all includes to instead point to the workspace root where it will be
-# generated.
-generated_file {
-  path: "include/platform_defs.h"
-}
-replace {
-  type: WORKSPACE
-  from: "include/platform_defs.h"
-  to: "platform_defs.h"
-}
-
 # Properly include CRC32 generated file which is also generated in the wrong place
 generated_file {
   path: "libfrog/crc32table.h"

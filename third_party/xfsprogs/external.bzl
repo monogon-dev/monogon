@@ -20,6 +20,7 @@ def xfsprogs_external(name, version):
     sums = {
         "5.2.1": "6187f25f1744d1ecbb028b0ea210ad586d0f2dae24e258e4688c67740cc861ef",
         "5.10.0": "e807ca9fd8f01e45c9ec8ffb3c123bdb7dfcfd8e05340520d2ff1ddbc3bd7c88",
+        "6.9.0": "fe7206968bbd8177754ba732f639f851b69c8f70ac5f96bb0e182d88664140bf",
     }
 
     http_archive(

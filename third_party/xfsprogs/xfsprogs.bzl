@@ -28,32 +28,30 @@ defs = [
     "VERSION=\\\"0.0.0\\\"",
 ]
 
-template_file(
-    name = "platform_defs.h",
-    src = "include/platform_defs.h.in",
-    substitutions = {
-        "#undef SIZEOF_LONG": "#define SIZEOF_LONG sizeof(long)",  # Because C reasons
-    },
-)
-
 cc_library(
     name = "util",
     srcs = [
         "libfrog/util.c",
-        ":platform_defs.h",
+        "include/platform_defs.h",
     ],
     hdrs = ["libfrog/util.h"],
     local_defines = defs,
+    deps = [
+        "@urcu",
+    ],
 )
 
 cc_library(
     name = "radix_tree",
     srcs = [
         "libfrog/radix-tree.c",
-        ":platform_defs.h",
+        "include/platform_defs.h",
     ],
     hdrs = ["libfrog/radix-tree.h"],
     local_defines = defs,
+    deps = [
+        "@urcu",
+    ],
 )
 
 cc_binary(
@@ -79,9 +77,11 @@ cc_library(
         "libfrog/crc32.c",
         "libfrog/crc32defs.h",
         ":crc32table",
-        ":platform_defs.h",
+        "include/platform_defs.h",
     ],
-    hdrs = ["libfrog/crc32c.h"],
+    hdrs = [
+        "libfrog/crc32c.h",
+    ],
     local_defines = defs,
 )
 
@@ -109,7 +109,7 @@ cc_library(
         "include/input.h",
         "libfrog/projects.c",
         "libfrog/projects.h",
-        ":platform_defs.h",
+        "include/platform_defs.h",
     ],
     hdrs = ["libfrog/projects.h"],
     local_defines = defs,
@@ -123,30 +123,12 @@ cc_library(
     srcs = [
         "include/input.h",
         "libfrog/convert.c",
-        ":platform_defs.h",
+        "include/platform_defs.h",
     ],
     hdrs = ["libfrog/convert.h"],
     local_defines = defs,
     deps = [
         ":projects",
-    ],
-)
-
-cc_library(
-    name = "topology",
-    srcs = [
-        "include/xfs_multidisk.h",
-        "libfrog/topology.c",
-    ],
-    hdrs = [
-        "include/libxcmd.h",
-        "libfrog/topology.h",
-    ],
-    local_defines = defs,
-    visibility = ["//visibility:public"],
-    deps = [
-        ":libxfs",
-        "@util_linux//:blkid",
     ],
 )
 
@@ -159,12 +141,22 @@ cc_library(
 )
 
 cc_library(
+    name = "randbytes",
+    srcs = ["libfrog/randbytes.c"],
+    hdrs = ["libfrog/randbytes.h"],
+    local_defines = defs,
+    deps = [
+        ":util",
+    ],
+)
+
+cc_library(
     name = "libxfs",
     srcs = glob([
         "libxfs/*.c",
         "libxfs/*.h",
     ]) + [
-        ":platform_defs.h",
+        "include/platform_defs.h",
         "include/xfs.h",
         "libfrog/platform.h",
         "include/linux.h",
@@ -177,8 +169,13 @@ cc_library(
         "include/xfs_inode.h",
         "include/xfs_trans.h",
         "include/xfs_trace.h",
+        "include/xfs_multidisk.h",
         "libfrog/linux.c",
+        "libfrog/bitmask.h",
+        "libfrog/div64.h",
+        "include/spinlock.h",
         "include/xfs_fs_compat.h",
+        "include/libxcmd.h",
     ],
     hdrs = ["include/libxfs.h"],
     local_defines = defs,
@@ -186,7 +183,10 @@ cc_library(
         ":crc32c",
         ":list_sort",
         ":radix_tree",
+        ":randbytes",
         "@util_linux//:uuid",
+        "@urcu",
+        "@util_linux//:blkid",
     ],
 )
 
@@ -196,6 +196,10 @@ cc_binary(
         "include/xfs_multidisk.h",
         "mkfs/proto.c",
         "mkfs/xfs_mkfs.c",
+        "libfrog/crc32cselftest.h",
+        "libfrog/randbytes.h",
+        "libfrog/dahashselftest.h",
+        "mkfs/proto.h",
     ],
     linkopts = ["-lpthread"],
     local_defines = defs,
@@ -204,9 +208,9 @@ cc_binary(
         ":fsgeom",
         ":libxfs",
         ":platform",
-        ":topology",
         ":util",
         "@inih",
+        "@urcu",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,52 +1,47 @@
-Copyright 2020 The Monogon Project Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-
-From e0c4f6a85bccab7d7e19d01bb790482e558d3f21 Mon Sep 17 00:00:00 2001
-From: Lorenz Brun <lorenz@nexantic.com>
-Date: Thu, 4 Mar 2021 16:59:13 +0100
+From 141475429a100ff9b994002f1186705dce2e6657 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Wed, 21 Aug 2024 17:21:22 +0200
 Subject: [PATCH] bazel_cc_fix patch
 
 ---
- include/libxfs.h            | 76 ++++++++++++++++++-------------------
+ include/libxfs.h            | 86 ++++++++++++++++++-------------------
  include/linux.h             |  2 +-
  include/xfs.h               |  8 ++--
  include/xfs_inode.h         |  4 +-
- libfrog/bitmap.c            |  4 +-
+ libfrog/avl64.c             |  2 +-
+ libfrog/bitmap.c            |  6 +--
  libfrog/bulkstat.c          |  2 +-
- libfrog/convert.c           |  2 +-
+ libfrog/convert.c           |  4 +-
  libfrog/crc32.c             |  2 +-
- libfrog/fsgeom.c            |  4 +-
- libfrog/linux.c             |  4 +-
+ libfrog/crc32cselftest.h    |  2 +-
+ libfrog/dahashselftest.h    |  2 +-
+ libfrog/fsgeom.c            |  6 +--
+ libfrog/linux.c             |  8 ++--
  libfrog/list_sort.c         |  2 +-
  libfrog/paths.c             |  2 +-
- libfrog/projects.h          |  2 +-
+ libfrog/paths.h             |  2 +-
+ libfrog/projects.h          |  4 +-
+ libfrog/ptvar.c             |  2 +-
+ libfrog/radix-tree.c        |  2 +-
+ libfrog/randbytes.c         |  4 +-
  libfrog/scrub.c             |  2 +-
- libfrog/topology.c          |  8 ++--
- libxcmd/command.c           |  4 +-
- libxcmd/help.c              |  4 +-
- libxcmd/input.c             |  2 +-
- libxcmd/quit.c              |  4 +-
+ libfrog/util.c              |  2 +-
+ libxcmd/command.c           |  6 +--
+ libxcmd/help.c              |  6 +--
+ libxcmd/input.c             |  4 +-
+ libxcmd/quit.c              |  6 +--
+ libxfs/buf_mem.c            |  6 +--
  libxfs/cache.c              |  2 +-
- libxfs/defer_item.c         |  6 +--
- libxfs/init.c               |  8 ++--
- libxfs/libxfs_priv.h        | 16 ++++----
+ libxfs/defer_item.c         |  8 ++--
+ libxfs/init.c               | 12 +++---
+ libxfs/libxfs_priv.h        | 22 +++++-----
  libxfs/logitem.c            |  6 +--
- libxfs/rdwr.c               |  8 ++--
+ libxfs/rdwr.c               | 12 +++---
+ libxfs/topology.c           |  6 +--
  libxfs/trans.c              |  8 ++--
  libxfs/util.c               |  8 ++--
- libxfs/xfs_ag.c             |  2 +-
+ libxfs/xfile.c              |  4 +-
+ libxfs/xfs_ag.c             |  8 ++--
  libxfs/xfs_ag_resv.c        |  6 +--
  libxfs/xfs_alloc.c          |  6 +--
  libxfs/xfs_alloc_btree.c    |  6 +--
@@ -56,6 +51,7 @@ Subject: [PATCH] bazel_cc_fix patch
  libxfs/xfs_bmap.c           |  8 ++--
  libxfs/xfs_bmap_btree.c     |  8 ++--
  libxfs/xfs_btree.c          |  8 ++--
+ libxfs/xfs_btree_mem.c      |  6 +--
  libxfs/xfs_btree_staging.c  |  8 ++--
  libxfs/xfs_da_btree.c       |  8 ++--
  libxfs/xfs_defer.c          |  8 ++--
@@ -71,7 +67,7 @@ Subject: [PATCH] bazel_cc_fix patch
  libxfs/xfs_iext_tree.c      |  6 +--
  libxfs/xfs_inode_buf.c      |  6 +--
  libxfs/xfs_inode_fork.c     |  8 ++--
- libxfs/xfs_log_rlimit.c     |  2 +-
+ libxfs/xfs_log_rlimit.c     |  4 +-
  libxfs/xfs_refcount.c       |  6 +--
  libxfs/xfs_refcount_btree.c |  6 +--
  libxfs/xfs_rmap.c           |  8 ++--
@@ -84,24 +80,24 @@ Subject: [PATCH] bazel_cc_fix patch
  libxfs/xfs_types.c          |  2 +-
  mkfs/proto.c                |  2 +-
  mkfs/xfs_mkfs.c             |  8 ++--
- 65 files changed, 224 insertions(+), 224 deletions(-)
+ 76 files changed, 267 insertions(+), 267 deletions(-)
 
 diff --git a/include/libxfs.h b/include/libxfs.h
-index ad077eaa..d17e7424 100644
+index fb8efb69..7cfed63b 100644
 --- a/include/libxfs.h
 +++ b/include/libxfs.h
-@@ -7,7 +7,7 @@
- #ifndef __LIBXFS_H__
- #define __LIBXFS_H__
+@@ -12,7 +12,7 @@
+ /* Ditto in-memory btrees */
+ #define CONFIG_XFS_BTREE_IN_MEM
  
 -#include "libxfs_api_defs.h"
 +#include "libxfs/libxfs_api_defs.h"
  #include "platform_defs.h"
  #include "xfs.h"
  
-@@ -19,15 +19,15 @@
- #include "libfrog/radix-tree.h"
+@@ -27,15 +27,15 @@
  #include "atomic.h"
+ #include "spinlock.h"
  
 -#include "xfs_types.h"
 -#include "xfs_fs.h"
@@ -122,7 +118,7 @@ index ad077eaa..d17e7424 100644
  
  
  /* CRC stuff, buffer API dependent on it */
-@@ -36,7 +36,7 @@ extern uint32_t crc32c_le(uint32_t crc, unsigned char const *p, size_t len);
+@@ -44,7 +44,7 @@ extern uint32_t crc32c_le(uint32_t crc, unsigned char const *p, size_t len);
  
  /* fake up kernel's iomap, (not) used in xfs_bmap.[ch] */
  struct iomap;
@@ -131,7 +127,7 @@ index ad077eaa..d17e7424 100644
  
  #define __round_mask(x, y) ((__typeof__(x))((y)-1))
  #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
-@@ -46,35 +46,35 @@ struct iomap;
+@@ -55,41 +55,41 @@ struct iomap;
   * This mirrors the kernel include for xfs_buf.h - it's implicitly included in
   * every files via a similar include in the kernel xfs_linux.h.
   */
@@ -157,6 +153,7 @@ index ad077eaa..d17e7424 100644
 -#include "xfs_bmap_btree.h"
 -#include "xfs_alloc_btree.h"
 -#include "xfs_ialloc_btree.h"
+-#include "xfs_attr.h"
 -#include "xfs_attr_sf.h"
 -#include "xfs_inode_fork.h"
 -#include "xfs_inode_buf.h"
@@ -168,6 +165,7 @@ index ad077eaa..d17e7424 100644
 +#include "libxfs/xfs_bmap_btree.h"
 +#include "libxfs/xfs_alloc_btree.h"
 +#include "libxfs/xfs_ialloc_btree.h"
++#include "libxfs/xfs_attr.h"
 +#include "libxfs/xfs_attr_sf.h"
 +#include "libxfs/xfs_inode_fork.h"
 +#include "libxfs/xfs_inode_buf.h"
@@ -182,16 +180,24 @@ index ad077eaa..d17e7424 100644
 -#include "xfs_refcount_btree.h"
 -#include "xfs_refcount.h"
 -#include "xfs_btree_staging.h"
+-#include "xfs_rtbitmap.h"
+-#include "xfs_symlink_remote.h"
 +#include "libxfs/xfs_ag.h"
 +#include "libxfs/xfs_rmap_btree.h"
 +#include "libxfs/xfs_rmap.h"
 +#include "libxfs/xfs_refcount_btree.h"
 +#include "libxfs/xfs_refcount.h"
 +#include "libxfs/xfs_btree_staging.h"
++#include "libxfs/xfs_rtbitmap.h"
++#include "libxfs/xfs_symlink_remote.h"
+ #include "libxfs/xfile.h"
+ #include "libxfs/buf_mem.h"
+-#include "xfs_btree_mem.h"
++#include "libxfs/xfs_btree_mem.h"
  
  #ifndef ARRAY_SIZE
  #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-@@ -165,11 +165,11 @@ extern void cmn_err(int, char *, ...);
+@@ -178,11 +178,11 @@ extern void cmn_err(int, char *, ...);
  enum ce { CE_DEBUG, CE_CONT, CE_NOTE, CE_WARN, CE_ALERT, CE_PANIC };
  #endif
  
@@ -207,21 +213,24 @@ index ad077eaa..d17e7424 100644
  
  #define XFS_INOBT_IS_FREE_DISK(rp,i)		\
  			((be64_to_cpu((rp)->ir_free) & XFS_INOBT_MASK(i)) != 0)
-@@ -212,6 +212,6 @@ libxfs_bmbt_disk_get_all(
+@@ -225,8 +225,8 @@ libxfs_bmbt_disk_get_all(
  int libxfs_rtfree_extent(struct xfs_trans *, xfs_rtblock_t, xfs_extlen_t);
  bool libxfs_verify_rtbno(struct xfs_mount *mp, xfs_rtblock_t rtbno);
  
 -#include "xfs_attr.h"
+-#include "topology.h"
 +#include "libxfs/xfs_attr.h"
++#include "libxfs/topology.h"
  
- #endif	/* __LIBXFS_H__ */
+ /*
+  * Superblock helpers for programs that act on independent superblock
 diff --git a/include/linux.h b/include/linux.h
-index 03b3278b..b1e03f19 100644
+index a13072d2..99374334 100644
 --- a/include/linux.h
 +++ b/include/linux.h
-@@ -5,7 +5,7 @@
- #ifndef __XFS_LINUX_H__
- #define __XFS_LINUX_H__
+@@ -10,7 +10,7 @@
+  * userspace projects!
+  */
  
 -#include <uuid/uuid.h>
 +#include "libuuid/src/uuid.h"
@@ -229,7 +238,7 @@ index 03b3278b..b1e03f19 100644
  #include <sys/ioctl.h>
  #include <sys/param.h>
 diff --git a/include/xfs.h b/include/xfs.h
-index e97158c8..95d63036 100644
+index e97158c8..6b93b993 100644
 --- a/include/xfs.h
 +++ b/include/xfs.h
 @@ -6,7 +6,7 @@
@@ -237,7 +246,7 @@ index e97158c8..95d63036 100644
  
  #if defined(__linux__)
 -#include <xfs/linux.h>
-+#include "include/linux.h"
++#include "linux.h"
  #else
  # error unknown platform... have fun porting!
  #endif
@@ -250,12 +259,12 @@ index e97158c8..95d63036 100644
  /* Include deprecated/compat pre-vfs xfs-specific symbols */
 -#include <xfs/xfs_fs_compat.h>
 -#include <xfs/xfs_fs.h>
-+#include "include/xfs_fs_compat.h"
++#include "xfs_fs_compat.h"
 +#include "libxfs/xfs_fs.h"
  
  #endif	/* __XFS_H__ */
 diff --git a/include/xfs_inode.h b/include/xfs_inode.h
-index 742aebc8..b24e9aa9 100644
+index a351bb0d..a209179d 100644
 --- a/include/xfs_inode.h
 +++ b/include/xfs_inode.h
 @@ -8,8 +8,8 @@
@@ -269,8 +278,21 @@ index 742aebc8..b24e9aa9 100644
  
  struct xfs_trans;
  struct xfs_mount;
+diff --git a/libfrog/avl64.c b/libfrog/avl64.c
+index 2547bf3b..c5c032b0 100644
+--- a/libfrog/avl64.c
++++ b/libfrog/avl64.c
+@@ -5,7 +5,7 @@
+  */
+ #include <stdint.h>
+ #include <stdio.h>
+-#include "platform_defs.h"
++#include "include/platform_defs.h"
+ #include "avl64.h"
+ 
+ #define CERT	ASSERT
 diff --git a/libfrog/bitmap.c b/libfrog/bitmap.c
-index 5af5ab8d..25cd291c 100644
+index 5af5ab8d..d91a65f4 100644
 --- a/libfrog/bitmap.c
 +++ b/libfrog/bitmap.c
 @@ -3,14 +3,14 @@
@@ -283,7 +305,8 @@ index 5af5ab8d..25cd291c 100644
  #include <stdlib.h>
  #include <assert.h>
  #include <pthread.h>
- #include "platform_defs.h"
+-#include "platform_defs.h"
++#include "include/platform_defs.h"
  #include "avl64.h"
 -#include "list.h"
 +#include "include/list.h"
@@ -291,7 +314,7 @@ index 5af5ab8d..25cd291c 100644
  
  /*
 diff --git a/libfrog/bulkstat.c b/libfrog/bulkstat.c
-index 195f6ea0..f347b266 100644
+index c863bcb6..13149c1a 100644
 --- a/libfrog/bulkstat.c
 +++ b/libfrog/bulkstat.c
 @@ -5,7 +5,7 @@
@@ -304,63 +327,97 @@ index 195f6ea0..f347b266 100644
  #include "bulkstat.h"
  
 diff --git a/libfrog/convert.c b/libfrog/convert.c
-index 0ceeb389..46fd3ba0 100644
+index 0ceeb389..0768c19a 100644
 --- a/libfrog/convert.c
 +++ b/libfrog/convert.c
-@@ -4,7 +4,7 @@
+@@ -3,8 +3,8 @@
+  * Copyright (c) 2003-2005 Silicon Graphics, Inc.
   * All Rights Reserved.
   */
- #include "platform_defs.h"
+-#include "platform_defs.h"
 -#include "input.h"
++#include "include/platform_defs.h"
 +#include "include/input.h"
  #include <ctype.h>
  #include <stdbool.h>
  
 diff --git a/libfrog/crc32.c b/libfrog/crc32.c
-index 526ce950..c1ef084f 100644
+index d07e5371..59d4a170 100644
 --- a/libfrog/crc32.c
 +++ b/libfrog/crc32.c
-@@ -34,7 +34,7 @@
+@@ -39,7 +39,7 @@
+ #include <asm/types.h>
  #include <sys/time.h>
- #include "platform_defs.h"
  /* For endian conversion routines */
 -#include "xfs_arch.h"
 +#include "include/xfs_arch.h"
  #include "crc32defs.h"
  #include "crc32c.h"
  
+diff --git a/libfrog/crc32cselftest.h b/libfrog/crc32cselftest.h
+index ad9c74c7..f972a142 100644
+--- a/libfrog/crc32cselftest.h
++++ b/libfrog/crc32cselftest.h
+@@ -30,7 +30,7 @@
+  */
+ 
+ /* This is just the crc32 self test bits from crc32.c. */
+-#include "libfrog/randbytes.h"
++#include "randbytes.h"
+ 
+ #ifndef __LIBFROG_CRC32CSELFTEST_H__
+ #define __LIBFROG_CRC32CSELFTEST_H__
+diff --git a/libfrog/dahashselftest.h b/libfrog/dahashselftest.h
+index ea9d925b..92549277 100644
+--- a/libfrog/dahashselftest.h
++++ b/libfrog/dahashselftest.h
+@@ -3,7 +3,7 @@
+  * Copyright (C) 2023 Oracle.  All Rights Reserved.
+  * Author: Darrick J. Wong <djwong@kernel.org>
+  */
+-#include "libfrog/randbytes.h"
++#include "randbytes.h"
+ 
+ #ifndef __LIBFROG_DAHASHSELFTEST_H__
+ #define __LIBFROG_DAHASHSELFTEST_H__
 diff --git a/libfrog/fsgeom.c b/libfrog/fsgeom.c
-index 14507668..eb344ba4 100644
+index 3e7f0797..688b644d 100644
 --- a/libfrog/fsgeom.c
 +++ b/libfrog/fsgeom.c
-@@ -3,8 +3,8 @@
+@@ -2,9 +2,9 @@
+ /*
   * Copyright (c) 2000-2005 Silicon Graphics, Inc. All Rights Reserved.
   */
- #include "platform_defs.h"
+-#include "platform_defs.h"
 -#include "xfs.h"
 -#include "bitops.h"
++#include "include/platform_defs.h"
 +#include "include/xfs.h"
 +#include "include/bitops.h"
  #include "fsgeom.h"
  #include "util.h"
  
 diff --git a/libfrog/linux.c b/libfrog/linux.c
-index a45d99ab..3c906342 100644
+index 46a5ff39..1f312f16 100644
 --- a/libfrog/linux.c
 +++ b/libfrog/linux.c
-@@ -10,8 +10,8 @@
+@@ -9,10 +9,10 @@
+ #include <sys/ioctl.h>
  #include <sys/sysinfo.h>
  
- #include "platform_defs.h"
+-#include "platform_defs.h"
 -#include "xfs.h"
 -#include "init.h"
+-#include "libfrog/platform.h"
++#include "include/platform_defs.h"
 +#include "include/xfs.h"
 +#include "libxfs/init.h"
++#include "platform.h"
  
  extern char *progname;
  static int max_block_alignment;
 diff --git a/libfrog/list_sort.c b/libfrog/list_sort.c
-index b77eece5..e6ad2266 100644
+index 994a51fe..58e1537d 100644
 --- a/libfrog/list_sort.c
 +++ b/libfrog/list_sort.c
 @@ -1,7 +1,7 @@
@@ -373,7 +430,7 @@ index b77eece5..e6ad2266 100644
  #define unlikely(x)	(x)
  #define MAX_LIST_LENGTH_BITS 20
 diff --git a/libfrog/paths.c b/libfrog/paths.c
-index d6793764..2fa74eac 100644
+index 320b26db..b144b438 100644
 --- a/libfrog/paths.c
 +++ b/libfrog/paths.c
 @@ -13,7 +13,7 @@
@@ -383,23 +440,79 @@ index d6793764..2fa74eac 100644
 -#include "input.h"
 +#include "include/input.h"
  #include "projects.h"
+ #include <mntent.h>
  #include <limits.h>
+diff --git a/libfrog/paths.h b/libfrog/paths.h
+index f20a2c3e..b874f0f1 100644
+--- a/libfrog/paths.h
++++ b/libfrog/paths.h
+@@ -6,7 +6,7 @@
+ #ifndef __LIBFROG_PATH_H__
+ #define __LIBFROG_PATH_H__
  
+-#include "platform_defs.h"
++#include "include/platform_defs.h"
+ 
+ /*
+  * XFS Filesystem Paths
 diff --git a/libfrog/projects.h b/libfrog/projects.h
-index 77919474..e88a39c1 100644
+index 77919474..32ea47b4 100644
 --- a/libfrog/projects.h
 +++ b/libfrog/projects.h
-@@ -7,7 +7,7 @@
+@@ -6,8 +6,8 @@
+ #ifndef __LIBFROG_PROJECTS_H__
  #define __LIBFROG_PROJECTS_H__
  
- #include "platform_defs.h"
+-#include "platform_defs.h"
 -#include "xfs.h"
++#include "include/platform_defs.h"
 +#include "include/xfs.h"
  
  extern int setprojid(const char *__name, int __fd, prid_t __id);
  extern int getprojid(const char *__name, int __fd, prid_t *__id);
+diff --git a/libfrog/ptvar.c b/libfrog/ptvar.c
+index 7ac8c541..85193841 100644
+--- a/libfrog/ptvar.c
++++ b/libfrog/ptvar.c
+@@ -10,7 +10,7 @@
+ #include <assert.h>
+ #include <pthread.h>
+ #include <unistd.h>
+-#include "platform_defs.h"
++#include "include/platform_defs.h"
+ #include "ptvar.h"
+ 
+ /*
+diff --git a/libfrog/radix-tree.c b/libfrog/radix-tree.c
+index 261fc248..f3a21db7 100644
+--- a/libfrog/radix-tree.c
++++ b/libfrog/radix-tree.c
+@@ -8,7 +8,7 @@
+ #include <string.h>
+ #include <errno.h>
+ #include <stdint.h>
+-#include "platform_defs.h"
++#include "include/platform_defs.h"
+ #include "radix-tree.h"
+ 
+ #ifndef ARRAY_SIZE
+diff --git a/libfrog/randbytes.c b/libfrog/randbytes.c
+index f22da0d3..c12d2fd1 100644
+--- a/libfrog/randbytes.c
++++ b/libfrog/randbytes.c
+@@ -6,8 +6,8 @@
+  *
+  * This is the buffer of random bytes used for self tests.
+  */
+-#include "platform_defs.h"
+-#include "libfrog/randbytes.h"
++#include "include/platform_defs.h"
++#include "randbytes.h"
+ 
+ /* 4096 random bytes */
+ uint8_t __attribute__((__aligned__(8))) randbytes_test_buf[] =
 diff --git a/libfrog/scrub.c b/libfrog/scrub.c
-index d900bf2a..0d58114c 100644
+index 1df2965f..129546e5 100644
 --- a/libfrog/scrub.c
 +++ b/libfrog/scrub.c
 @@ -3,7 +3,7 @@
@@ -411,85 +524,102 @@ index d900bf2a..0d58114c 100644
  #include "fsgeom.h"
  #include "scrub.h"
  
-diff --git a/libfrog/topology.c b/libfrog/topology.c
-index b1b470c9..b44e5b69 100644
---- a/libfrog/topology.c
-+++ b/libfrog/topology.c
-@@ -4,12 +4,12 @@
+diff --git a/libfrog/util.c b/libfrog/util.c
+index 8fb10cf8..124d7c88 100644
+--- a/libfrog/util.c
++++ b/libfrog/util.c
+@@ -3,7 +3,7 @@
+  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
+  * All Rights Reserved.
+  */
+-#include "platform_defs.h"
++#include "include/platform_defs.h"
+ #include "util.h"
+ 
+ /*
+diff --git a/libxcmd/command.c b/libxcmd/command.c
+index e2603097..f95a45d9 100644
+--- a/libxcmd/command.c
++++ b/libxcmd/command.c
+@@ -4,9 +4,9 @@
   * All Rights Reserved.
   */
  
--#include "libxfs.h"
--#include "libxcmd.h"
-+#include "include/libxfs.h"
-+#include "include/libxcmd.h"
- #ifdef ENABLE_BLKID
--#  include <blkid/blkid.h>
-+#include "blkid.h"
- #endif /* ENABLE_BLKID */
--#include "xfs_multidisk.h"
-+#include "include/xfs_multidisk.h"
- #include "topology.h"
- #include "platform.h"
- 
-diff --git a/libxcmd/command.c b/libxcmd/command.c
-index a76d1515..d3ae840a 100644
---- a/libxcmd/command.c
-+++ b/libxcmd/command.c
-@@ -5,8 +5,8 @@
-  */
- 
- #include "platform_defs.h"
+-#include "platform_defs.h"
 -#include "command.h"
 -#include "input.h"
++#include "include/platform_defs.h"
 +#include "include/command.h"
 +#include "include/input.h"
  
  cmdinfo_t	*cmdtab;
  int		ncmds;
 diff --git a/libxcmd/help.c b/libxcmd/help.c
-index b7e02073..36cb59ef 100644
+index b7e02073..cbe195d7 100644
 --- a/libxcmd/help.c
 +++ b/libxcmd/help.c
-@@ -5,8 +5,8 @@
+@@ -4,9 +4,9 @@
+  * All Rights Reserved.
   */
  
- #include "platform_defs.h"
+-#include "platform_defs.h"
 -#include "command.h"
 -#include "../quota/init.h"
++#include "include/platform_defs.h"
 +#include "include/command.h"
 +#include "quota/init.h"
  
  static cmdinfo_t help_cmd;
  static void help_onecmd(const char *cmd, const cmdinfo_t *ct);
 diff --git a/libxcmd/input.c b/libxcmd/input.c
-index e3fa626a..94907182 100644
+index fa80e5ab..35a9188a 100644
 --- a/libxcmd/input.c
 +++ b/libxcmd/input.c
-@@ -5,7 +5,7 @@
+@@ -4,8 +4,8 @@
+  * All Rights Reserved.
   */
  
- #include "platform_defs.h"
+-#include "platform_defs.h"
 -#include "input.h"
++#include "include/platform_defs.h"
 +#include "include/input.h"
  #include <ctype.h>
  #include <stdbool.h>
  
 diff --git a/libxcmd/quit.c b/libxcmd/quit.c
-index 7c2d04f8..de618392 100644
+index 7c2d04f8..153e959f 100644
 --- a/libxcmd/quit.c
 +++ b/libxcmd/quit.c
-@@ -5,8 +5,8 @@
+@@ -4,9 +4,9 @@
+  * All Rights Reserved.
   */
  
- #include "platform_defs.h"
+-#include "platform_defs.h"
 -#include "command.h"
 -#include "../quota/init.h"
++#include "include/platform_defs.h"
 +#include "include/command.h"
 +#include "quota/init.h"
  
  static cmdinfo_t quit_cmd;
  
+diff --git a/libxfs/buf_mem.c b/libxfs/buf_mem.c
+index e5b91d3c..4fa15a28 100644
+--- a/libxfs/buf_mem.c
++++ b/libxfs/buf_mem.c
+@@ -4,9 +4,9 @@
+  * Author: Darrick J. Wong <djwong@kernel.org>
+  */
+ #include "libxfs_priv.h"
+-#include "libxfs.h"
+-#include "libxfs/xfile.h"
+-#include "libxfs/buf_mem.h"
++#include "include/libxfs.h"
++#include "xfile.h"
++#include "buf_mem.h"
+ #include <sys/mman.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
 diff --git a/libxfs/cache.c b/libxfs/cache.c
 index 139c7c1b..f2e955b5 100644
 --- a/libxfs/cache.c
@@ -504,10 +634,10 @@ index 139c7c1b..f2e955b5 100644
  
  #define CACHE_DEBUG 1
 diff --git a/libxfs/defer_item.c b/libxfs/defer_item.c
-index b18182e9..4f31d224 100644
+index 21dd1d0f..7ef7d8fe 100644
 --- a/libxfs/defer_item.c
 +++ b/libxfs/defer_item.c
-@@ -11,15 +11,15 @@
+@@ -12,18 +12,18 @@
  #include "xfs_trans_resv.h"
  #include "xfs_bit.h"
  #include "xfs_sb.h"
@@ -523,14 +653,18 @@ index b18182e9..4f31d224 100644
  #include "xfs_bmap.h"
 -#include "xfs_inode.h"
 +#include "include/xfs_inode.h"
+ #include "xfs_da_btree.h"
+ #include "xfs_attr.h"
+-#include "libxfs.h"
++#include "include/libxfs.h"
+ #include "defer_item.h"
  
  /* Dummy defer item ops, since we don't do logging. */
- 
 diff --git a/libxfs/init.c b/libxfs/init.c
-index bd176b50..94024e9c 100644
+index de91bbf3..c74a39f1 100644
 --- a/libxfs/init.c
 +++ b/libxfs/init.c
-@@ -13,17 +13,17 @@
+@@ -13,24 +13,24 @@
  #include "xfs_format.h"
  #include "xfs_log_format.h"
  #include "xfs_trans_resv.h"
@@ -546,36 +680,53 @@ index bd176b50..94024e9c 100644
  #include "xfs_rmap_btree.h"
  #include "xfs_refcount_btree.h"
  #include "libfrog/platform.h"
+-#include "libxfs/xfile.h"
+-#include "libxfs/buf_mem.h"
++#include "xfile.h"
++#include "buf_mem.h"
+ 
+ #include "xfs_format.h"
+ #include "xfs_da_format.h"
+ #include "xfs_log_format.h"
+ #include "xfs_ondisk.h"
  
 -#include "libxfs.h"		/* for now */
 +#include "include/libxfs.h"		/* for now */
  
- char *progname = "libxfs";	/* default, changed by each tool */
- 
+ #ifndef HAVE_LIBURCU_ATOMIC64
+ pthread_mutex_t	atomic64_lock = PTHREAD_MUTEX_INITIALIZER;
 diff --git a/libxfs/libxfs_priv.h b/libxfs/libxfs_priv.h
-index e92269f0..ec9b0da2 100644
+index 81f641f3..78a70a54 100644
 --- a/libxfs/libxfs_priv.h
 +++ b/libxfs/libxfs_priv.h
-@@ -39,18 +39,18 @@
+@@ -41,23 +41,23 @@
+ #define CONFIG_XFS_BTREE_IN_MEM
  
  #include "libxfs_api_defs.h"
- #include "platform_defs.h"
+-#include "platform_defs.h"
 -#include "xfs.h"
-+#include "include/xfs.h"
- 
+-
 -#include "list.h"
 -#include "hlist.h"
 -#include "cache.h"
 -#include "bitops.h"
 -#include "kmem.h"
++#include "include/platform_defs.h"
++#include "include/xfs.h"
++
 +#include "include/list.h"
 +#include "include/hlist.h"
 +#include "include/cache.h"
 +#include "include/bitops.h"
 +#include "include/kmem.h"
  #include "libfrog/radix-tree.h"
+ #include "libfrog/bitmask.h"
+ #include "libfrog/div64.h"
 -#include "atomic.h"
+-#include "spinlock.h"
 +#include "include/atomic.h"
++#include "include/spinlock.h"
+ #include "linux-err.h"
  
  #include "xfs_types.h"
 -#include "xfs_arch.h"
@@ -584,7 +735,7 @@ index e92269f0..ec9b0da2 100644
  #include "xfs_fs.h"
  #include "libfrog/crc32c.h"
 diff --git a/libxfs/logitem.c b/libxfs/logitem.c
-index 43a98f28..357bf4e5 100644
+index 7757259d..f5030506 100644
 --- a/libxfs/logitem.c
 +++ b/libxfs/logitem.c
 @@ -10,11 +10,11 @@
@@ -599,14 +750,14 @@ index 43a98f28..357bf4e5 100644
 -#include "xfs_trans.h"
 +#include "include/xfs_inode.h"
 +#include "include/xfs_trans.h"
+ #include "xfs_rtbitmap.h"
  
- kmem_zone_t	*xfs_buf_item_zone;
- kmem_zone_t	*xfs_ili_zone;		/* inode log item zone */
+ struct kmem_cache	*xfs_buf_item_cache;
 diff --git a/libxfs/rdwr.c b/libxfs/rdwr.c
-index 2e038401..28000567 100644
+index 0a87e5b6..14a93edf 100644
 --- a/libxfs/rdwr.c
 +++ b/libxfs/rdwr.c
-@@ -12,14 +12,14 @@
+@@ -12,15 +12,15 @@
  #include "xfs_format.h"
  #include "xfs_log_format.h"
  #include "xfs_trans_resv.h"
@@ -619,14 +770,34 @@ index 2e038401..28000567 100644
 +#include "include/xfs_inode.h"
 +#include "include/xfs_trans.h"
  #include "libfrog/platform.h"
- 
+-#include "libxfs/xfile.h"
+-#include "libxfs/buf_mem.h"
 -#include "libxfs.h"
++#include "xfile.h"
++#include "buf_mem.h"
 +#include "include/libxfs.h"
  
  static void libxfs_brelse(struct cache_node *node);
  
+diff --git a/libxfs/topology.c b/libxfs/topology.c
+index 94adb5be..60499192 100644
+--- a/libxfs/topology.c
++++ b/libxfs/topology.c
+@@ -5,9 +5,9 @@
+  */
+ 
+ #include "libxfs_priv.h"
+-#include "libxcmd.h"
+-#include <blkid/blkid.h>
+-#include "xfs_multidisk.h"
++#include "include/libxcmd.h"
++#include "blkid.h"
++#include "include/xfs_multidisk.h"
+ #include "libfrog/platform.h"
+ 
+ #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
 diff --git a/libxfs/trans.c b/libxfs/trans.c
-index bc4af26c..45bcc8ce 100644
+index 7fec2caf..e9c81eb8 100644
 --- a/libxfs/trans.c
 +++ b/libxfs/trans.c
 @@ -11,14 +11,14 @@
@@ -645,11 +816,11 @@ index bc4af26c..45bcc8ce 100644
  #include "xfs_defer.h"
 -#include "xfs_trace.h"
 +#include "include/xfs_trace.h"
+ #include "xfs_rtbitmap.h"
  
  static void xfs_trans_free_items(struct xfs_trans *tp);
- STATIC struct xfs_trans *xfs_trans_dup(struct xfs_trans *tp);
 diff --git a/libxfs/util.c b/libxfs/util.c
-index 252cf91e..810809e8 100644
+index 841f4b96..db2ea546 100644
 --- a/libxfs/util.c
 +++ b/libxfs/util.c
 @@ -5,7 +5,7 @@
@@ -677,8 +848,23 @@ index 252cf91e..810809e8 100644
  #include "xfs_bmap.h"
  #include "xfs_bmap_btree.h"
  #include "xfs_trans_space.h"
+diff --git a/libxfs/xfile.c b/libxfs/xfile.c
+index fdb76f40..31485494 100644
+--- a/libxfs/xfile.c
++++ b/libxfs/xfile.c
+@@ -4,8 +4,8 @@
+  * Author: Darrick J. Wong <djwong@kernel.org>
+  */
+ #include "libxfs_priv.h"
+-#include "libxfs.h"
+-#include "libxfs/xfile.h"
++#include "include/libxfs.h"
++#include "xfile.h"
+ #include <linux/memfd.h>
+ #include <sys/mman.h>
+ #include <sys/types.h>
 diff --git a/libxfs/xfs_ag.c b/libxfs/xfs_ag.c
-index af8a0afd..30cc25ed 100644
+index a9aae099..3e8775fc 100644
 --- a/libxfs/xfs_ag.c
 +++ b/libxfs/xfs_ag.c
 @@ -12,7 +12,7 @@
@@ -690,8 +876,21 @@ index af8a0afd..30cc25ed 100644
  #include "xfs_btree.h"
  #include "xfs_alloc_btree.h"
  #include "xfs_rmap_btree.h"
+@@ -25,9 +25,9 @@
+ #include "xfs_bmap.h"
+ #include "xfs_defer.h"
+ #include "xfs_log_format.h"
+-#include "xfs_trans.h"
+-#include "xfs_trace.h"
+-#include "xfs_inode.h"
++#include "include/xfs_trans.h"
++#include "include/xfs_trace.h"
++#include "include/xfs_inode.h"
+ 
+ 
+ /*
 diff --git a/libxfs/xfs_ag_resv.c b/libxfs/xfs_ag_resv.c
-index 530455a5..ab3a031c 100644
+index 3a80b161..f56845d8 100644
 --- a/libxfs/xfs_ag_resv.c
 +++ b/libxfs/xfs_ag_resv.c
 @@ -9,11 +9,11 @@
@@ -710,13 +909,13 @@ index 530455a5..ab3a031c 100644
  #include "xfs_btree.h"
  #include "xfs_refcount_btree.h"
 diff --git a/libxfs/xfs_alloc.c b/libxfs/xfs_alloc.c
-index 92f61fae..9e426889 100644
+index 0eefb16c..948580c3 100644
 --- a/libxfs/xfs_alloc.c
 +++ b/libxfs/xfs_alloc.c
-@@ -11,15 +11,15 @@
+@@ -10,15 +10,15 @@
+ #include "xfs_shared.h"
  #include "xfs_trans_resv.h"
  #include "xfs_bit.h"
- #include "xfs_sb.h"
 -#include "xfs_mount.h"
 +#include "include/xfs_mount.h"
  #include "xfs_defer.h"
@@ -729,17 +928,17 @@ index 92f61fae..9e426889 100644
 -#include "xfs_trans.h"
 +#include "include/xfs_trace.h"
 +#include "include/xfs_trans.h"
+ #include "xfs_ag.h"
  #include "xfs_ag_resv.h"
  #include "xfs_bmap.h"
- 
 diff --git a/libxfs/xfs_alloc_btree.c b/libxfs/xfs_alloc_btree.c
-index 2198bbff..1a7a6f1e 100644
+index 949eb02c..394a7c3d 100644
 --- a/libxfs/xfs_alloc_btree.c
 +++ b/libxfs/xfs_alloc_btree.c
-@@ -10,13 +10,13 @@
+@@ -9,13 +9,13 @@
+ #include "xfs_format.h"
  #include "xfs_log_format.h"
  #include "xfs_trans_resv.h"
- #include "xfs_sb.h"
 -#include "xfs_mount.h"
 +#include "include/xfs_mount.h"
  #include "xfs_btree.h"
@@ -750,11 +949,11 @@ index 2198bbff..1a7a6f1e 100644
 -#include "xfs_trans.h"
 +#include "include/xfs_trace.h"
 +#include "include/xfs_trans.h"
+ #include "xfs_ag.h"
+ #include "xfs_health.h"
  
- 
- STATIC struct xfs_btree_cur *
 diff --git a/libxfs/xfs_attr.c b/libxfs/xfs_attr.c
-index 0c75f46f..218d1efd 100644
+index caf04daa..7f435308 100644
 --- a/libxfs/xfs_attr.c
 +++ b/libxfs/xfs_attr.c
 @@ -9,13 +9,13 @@
@@ -781,10 +980,10 @@ index 0c75f46f..218d1efd 100644
 -#include "xfs_trace.h"
 +#include "include/xfs_trace.h"
  
- /*
-  * xfs_attr.c
+ struct kmem_cache		*xfs_attr_intent_cache;
+ 
 diff --git a/libxfs/xfs_attr_leaf.c b/libxfs/xfs_attr_leaf.c
-index a59660f2..089df469 100644
+index a44312cd..99de29f0 100644
 --- a/libxfs/xfs_attr_leaf.c
 +++ b/libxfs/xfs_attr_leaf.c
 @@ -11,18 +11,18 @@
@@ -802,16 +1001,16 @@ index a59660f2..089df469 100644
  #include "xfs_bmap_btree.h"
  #include "xfs_bmap.h"
  #include "xfs_attr_sf.h"
- #include "xfs_attr_remote.h"
  #include "xfs_attr.h"
+ #include "xfs_attr_remote.h"
  #include "xfs_attr_leaf.h"
 -#include "xfs_trace.h"
 +#include "include/xfs_trace.h"
  #include "xfs_dir2.h"
- 
- 
+ #include "xfs_ag.h"
+ #include "xfs_errortag.h"
 diff --git a/libxfs/xfs_attr_remote.c b/libxfs/xfs_attr_remote.c
-index 3807cd3d..f9f56d1d 100644
+index 855d090c..142fa9e3 100644
 --- a/libxfs/xfs_attr_remote.c
 +++ b/libxfs/xfs_attr_remote.c
 @@ -11,16 +11,16 @@
@@ -832,11 +1031,11 @@ index 3807cd3d..f9f56d1d 100644
  #include "xfs_attr_remote.h"
 -#include "xfs_trace.h"
 +#include "include/xfs_trace.h"
+ #include "xfs_health.h"
  
  #define ATTR_RMTVALUE_MAPSIZE	1	/* # of map entries at once */
- 
 diff --git a/libxfs/xfs_bmap.c b/libxfs/xfs_bmap.c
-index e0ca8b05..03999b7e 100644
+index b089f53e..3d61b799 100644
 --- a/libxfs/xfs_bmap.c
 +++ b/libxfs/xfs_bmap.c
 @@ -11,18 +11,18 @@
@@ -863,10 +1062,10 @@ index e0ca8b05..03999b7e 100644
  #include "xfs_quota_defs.h"
  #include "xfs_rmap.h"
 diff --git a/libxfs/xfs_bmap_btree.c b/libxfs/xfs_bmap_btree.c
-index 1ec9f5ff..c28bba13 100644
+index 2a603b4d..94540f28 100644
 --- a/libxfs/xfs_bmap_btree.c
 +++ b/libxfs/xfs_bmap_btree.c
-@@ -10,14 +10,14 @@
+@@ -10,15 +10,15 @@
  #include "xfs_log_format.h"
  #include "xfs_trans_resv.h"
  #include "xfs_bit.h"
@@ -878,15 +1077,16 @@ index 1ec9f5ff..c28bba13 100644
 +#include "include/xfs_trans.h"
  #include "xfs_alloc.h"
  #include "xfs_btree.h"
+ #include "xfs_btree_staging.h"
  #include "xfs_bmap_btree.h"
  #include "xfs_bmap.h"
 -#include "xfs_trace.h"
 +#include "include/xfs_trace.h"
  #include "xfs_rmap.h"
- 
- /*
+ #include "xfs_ag.h"
+ #include "xfs_quota_defs.h"
 diff --git a/libxfs/xfs_btree.c b/libxfs/xfs_btree.c
-index a408aa42..cab61bbb 100644
+index a91441b4..70d01d37 100644
 --- a/libxfs/xfs_btree.c
 +++ b/libxfs/xfs_btree.c
 @@ -10,12 +10,12 @@
@@ -905,9 +1105,31 @@ index a408aa42..cab61bbb 100644
 +#include "include/xfs_trace.h"
  #include "xfs_alloc.h"
  #include "xfs_btree_staging.h"
+ #include "xfs_ag.h"
+diff --git a/libxfs/xfs_btree_mem.c b/libxfs/xfs_btree_mem.c
+index ae9302b9..1a78a4c5 100644
+--- a/libxfs/xfs_btree_mem.c
++++ b/libxfs/xfs_btree_mem.c
+@@ -9,14 +9,14 @@
+ #include "xfs_format.h"
+ #include "xfs_log_format.h"
+ #include "xfs_trans_resv.h"
+-#include "xfs_mount.h"
+-#include "xfs_trans.h"
++#include "include/xfs_mount.h"
++#include "include/xfs_trans.h"
+ #include "xfs_btree.h"
+ #include "xfile.h"
+ #include "buf_mem.h"
+ #include "xfs_btree_mem.h"
+ #include "xfs_ag.h"
+-#include "xfs_trace.h"
++#include "include/xfs_trace.h"
  
+ /* Set the root of an in-memory btree. */
+ void
 diff --git a/libxfs/xfs_btree_staging.c b/libxfs/xfs_btree_staging.c
-index fe17538d..d0f5c651 100644
+index 2f5b1d0b..90b7320c 100644
 --- a/libxfs/xfs_btree_staging.c
 +++ b/libxfs/xfs_btree_staging.c
 @@ -10,11 +10,11 @@
@@ -927,7 +1149,7 @@ index fe17538d..d0f5c651 100644
  
  /*
 diff --git a/libxfs/xfs_da_btree.c b/libxfs/xfs_da_btree.c
-index 7448ee6c..db8fa1bf 100644
+index 8ace7622..65045144 100644
 --- a/libxfs/xfs_da_btree.c
 +++ b/libxfs/xfs_da_btree.c
 @@ -11,14 +11,14 @@
@@ -946,11 +1168,11 @@ index 7448ee6c..db8fa1bf 100644
  #include "xfs_attr_leaf.h"
 -#include "xfs_trace.h"
 +#include "include/xfs_trace.h"
+ #include "xfs_health.h"
  
  /*
-  * xfs_da_btree.c
 diff --git a/libxfs/xfs_defer.c b/libxfs/xfs_defer.c
-index 1fdf6c72..68c24aab 100644
+index b80ac04a..ab711c67 100644
 --- a/libxfs/xfs_defer.c
 +++ b/libxfs/xfs_defer.c
 @@ -9,11 +9,11 @@
@@ -966,11 +1188,11 @@ index 1fdf6c72..68c24aab 100644
 +#include "include/xfs_trans.h"
 +#include "include/xfs_inode.h"
 +#include "include/xfs_trace.h"
- 
- /*
-  * Deferred Operations in XFS
+ #include "xfs_rmap.h"
+ #include "xfs_refcount.h"
+ #include "xfs_bmap.h"
 diff --git a/libxfs/xfs_dir2.c b/libxfs/xfs_dir2.c
-index 79196788..0e773062 100644
+index 530c3e22..0bdb8ade 100644
 --- a/libxfs/xfs_dir2.c
 +++ b/libxfs/xfs_dir2.c
 @@ -9,14 +9,14 @@
@@ -989,11 +1211,11 @@ index 79196788..0e773062 100644
  #include "xfs_errortag.h"
 -#include "xfs_trace.h"
 +#include "include/xfs_trace.h"
+ #include "xfs_health.h"
  
- struct xfs_name xfs_name_dotdot = { (unsigned char *)"..", 2, XFS_DIR3_FT_DIR };
- 
+ const struct xfs_name xfs_name_dotdot = {
 diff --git a/libxfs/xfs_dir2_block.c b/libxfs/xfs_dir2_block.c
-index eaa2b47a..f8670fe7 100644
+index 9d87735e..3cbe4ce5 100644
 --- a/libxfs/xfs_dir2_block.c
 +++ b/libxfs/xfs_dir2_block.c
 @@ -10,13 +10,13 @@
@@ -1011,11 +1233,11 @@ index eaa2b47a..f8670fe7 100644
  #include "xfs_dir2_priv.h"
 -#include "xfs_trace.h"
 +#include "include/xfs_trace.h"
+ #include "xfs_health.h"
  
  /*
-  * Local function prototypes.
 diff --git a/libxfs/xfs_dir2_data.c b/libxfs/xfs_dir2_data.c
-index ddd5e885..4f3d62e5 100644
+index aaf3f62a..fca7f511 100644
 --- a/libxfs/xfs_dir2_data.c
 +++ b/libxfs/xfs_dir2_data.c
 @@ -10,11 +10,11 @@
@@ -1030,11 +1252,11 @@ index ddd5e885..4f3d62e5 100644
  #include "xfs_dir2_priv.h"
 -#include "xfs_trans.h"
 +#include "include/xfs_trans.h"
+ #include "xfs_health.h"
  
  static xfs_failaddr_t xfs_dir2_data_freefind_verify(
- 		struct xfs_dir2_data_hdr *hdr, struct xfs_dir2_data_free *bf,
 diff --git a/libxfs/xfs_dir2_leaf.c b/libxfs/xfs_dir2_leaf.c
-index 0cecd698..c65545f8 100644
+index 80cea8a2..6ecf2bef 100644
 --- a/libxfs/xfs_dir2_leaf.c
 +++ b/libxfs/xfs_dir2_leaf.c
 @@ -10,13 +10,13 @@
@@ -1052,11 +1274,11 @@ index 0cecd698..c65545f8 100644
 -#include "xfs_trans.h"
 +#include "include/xfs_trace.h"
 +#include "include/xfs_trans.h"
+ #include "xfs_health.h"
  
  /*
-  * Local function declarations.
 diff --git a/libxfs/xfs_dir2_node.c b/libxfs/xfs_dir2_node.c
-index ab156a8e..1a098688 100644
+index 44c8f3f2..91bfdb54 100644
 --- a/libxfs/xfs_dir2_node.c
 +++ b/libxfs/xfs_dir2_node.c
 @@ -10,13 +10,13 @@
@@ -1074,11 +1296,11 @@ index ab156a8e..1a098688 100644
 -#include "xfs_trans.h"
 +#include "include/xfs_trace.h"
 +#include "include/xfs_trans.h"
+ #include "xfs_health.h"
  
  /*
-  * Function declarations.
 diff --git a/libxfs/xfs_dir2_sf.c b/libxfs/xfs_dir2_sf.c
-index fbbb6387..8624bc3f 100644
+index aaf73cd3..d3684ace 100644
 --- a/libxfs/xfs_dir2_sf.c
 +++ b/libxfs/xfs_dir2_sf.c
 @@ -9,12 +9,12 @@
@@ -1099,7 +1321,7 @@ index fbbb6387..8624bc3f 100644
  /*
   * Prototypes for internal functions.
 diff --git a/libxfs/xfs_dquot_buf.c b/libxfs/xfs_dquot_buf.c
-index 0a5a237d..4af23c41 100644
+index db603cab..ec35baf0 100644
 --- a/libxfs/xfs_dquot_buf.c
 +++ b/libxfs/xfs_dquot_buf.c
 @@ -10,10 +10,10 @@
@@ -1117,13 +1339,13 @@ index 0a5a237d..4af23c41 100644
  int
  xfs_calc_dquots_per_chunk(
 diff --git a/libxfs/xfs_ialloc.c b/libxfs/xfs_ialloc.c
-index d78f960c..b4407b00 100644
+index c30e7683..55e2a44e 100644
 --- a/libxfs/xfs_ialloc.c
 +++ b/libxfs/xfs_ialloc.c
-@@ -11,16 +11,16 @@
+@@ -10,16 +10,16 @@
+ #include "xfs_log_format.h"
  #include "xfs_trans_resv.h"
  #include "xfs_bit.h"
- #include "xfs_sb.h"
 -#include "xfs_mount.h"
 -#include "xfs_inode.h"
 +#include "include/xfs_mount.h"
@@ -1139,10 +1361,10 @@ index d78f960c..b4407b00 100644
 +#include "include/xfs_trans.h"
 +#include "include/xfs_trace.h"
  #include "xfs_rmap.h"
- 
- /*
+ #include "xfs_ag.h"
+ #include "xfs_health.h"
 diff --git a/libxfs/xfs_ialloc_btree.c b/libxfs/xfs_ialloc_btree.c
-index 95341715..af0b1057 100644
+index 58c520ec..dd081fd8 100644
 --- a/libxfs/xfs_ialloc_btree.c
 +++ b/libxfs/xfs_ialloc_btree.c
 @@ -10,14 +10,14 @@
@@ -1161,46 +1383,46 @@ index 95341715..af0b1057 100644
 +#include "include/xfs_trace.h"
 +#include "include/xfs_trans.h"
  #include "xfs_rmap.h"
- 
- STATIC int
+ #include "xfs_ag.h"
+ #include "xfs_health.h"
 diff --git a/libxfs/xfs_iext_tree.c b/libxfs/xfs_iext_tree.c
-index a52eed04..aafe5541 100644
+index cdbb72d6..b840ab0f 100644
 --- a/libxfs/xfs_iext_tree.c
 +++ b/libxfs/xfs_iext_tree.c
-@@ -8,10 +8,10 @@
- #include "xfs_format.h"
+@@ -9,9 +9,9 @@
  #include "xfs_bit.h"
  #include "xfs_log_format.h"
--#include "xfs_inode.h"
-+#include "include/xfs_inode.h"
  #include "xfs_trans_resv.h"
 -#include "xfs_mount.h"
+-#include "xfs_inode.h"
 -#include "xfs_trace.h"
 +#include "include/xfs_mount.h"
++#include "include/xfs_inode.h"
 +#include "include/xfs_trace.h"
  
  /*
   * In-core extent record layout:
 diff --git a/libxfs/xfs_inode_buf.c b/libxfs/xfs_inode_buf.c
-index 6722d5af..4e5ef001 100644
+index 82cf64db..cf3854a7 100644
 --- a/libxfs/xfs_inode_buf.c
 +++ b/libxfs/xfs_inode_buf.c
-@@ -9,10 +9,10 @@
+@@ -9,11 +9,11 @@
  #include "xfs_format.h"
  #include "xfs_log_format.h"
  #include "xfs_trans_resv.h"
 -#include "xfs_mount.h"
--#include "xfs_inode.h"
 +#include "include/xfs_mount.h"
+ #include "xfs_ag.h"
+-#include "xfs_inode.h"
 +#include "include/xfs_inode.h"
  #include "xfs_errortag.h"
 -#include "xfs_trans.h"
 +#include "include/xfs_trans.h"
  #include "xfs_ialloc.h"
  #include "xfs_dir2.h"
- 
+ #include "xfs_health.h"
 diff --git a/libxfs/xfs_inode_fork.c b/libxfs/xfs_inode_fork.c
-index 0b1af501..3e0c4f2d 100644
+index d9f0a21a..f5f5b127 100644
 --- a/libxfs/xfs_inode_fork.c
 +++ b/libxfs/xfs_inode_fork.c
 @@ -10,13 +10,13 @@
@@ -1222,10 +1444,10 @@ index 0b1af501..3e0c4f2d 100644
  #include "xfs_da_btree.h"
  #include "xfs_dir2_priv.h"
 diff --git a/libxfs/xfs_log_rlimit.c b/libxfs/xfs_log_rlimit.c
-index c8398b7d..0632887d 100644
+index cba24493..4315f039 100644
 --- a/libxfs/xfs_log_rlimit.c
 +++ b/libxfs/xfs_log_rlimit.c
-@@ -9,7 +9,7 @@
+@@ -9,12 +9,12 @@
  #include "xfs_format.h"
  #include "xfs_log_format.h"
  #include "xfs_trans_resv.h"
@@ -1234,8 +1456,14 @@ index c8398b7d..0632887d 100644
  #include "xfs_da_format.h"
  #include "xfs_trans_space.h"
  #include "xfs_da_btree.h"
+ #include "xfs_bmap_btree.h"
+-#include "xfs_trace.h"
++#include "include/xfs_trace.h"
+ 
+ /*
+  * Calculate the maximum length in bytes that would be required for a local
 diff --git a/libxfs/xfs_refcount.c b/libxfs/xfs_refcount.c
-index 723c903e..1fec6a77 100644
+index 47049488..04425043 100644
 --- a/libxfs/xfs_refcount.c
 +++ b/libxfs/xfs_refcount.c
 @@ -9,15 +9,15 @@
@@ -1258,18 +1486,19 @@ index 723c903e..1fec6a77 100644
  #include "xfs_refcount.h"
  #include "xfs_rmap.h"
 diff --git a/libxfs/xfs_refcount_btree.c b/libxfs/xfs_refcount_btree.c
-index eb48197b..c378b024 100644
+index 362b2a2d..77edeb0d 100644
 --- a/libxfs/xfs_refcount_btree.c
 +++ b/libxfs/xfs_refcount_btree.c
-@@ -10,13 +10,13 @@
+@@ -9,14 +9,14 @@
+ #include "xfs_format.h"
  #include "xfs_log_format.h"
  #include "xfs_trans_resv.h"
- #include "xfs_sb.h"
 -#include "xfs_mount.h"
 +#include "include/xfs_mount.h"
  #include "xfs_btree.h"
  #include "xfs_btree_staging.h"
  #include "xfs_refcount_btree.h"
+ #include "xfs_refcount.h"
  #include "xfs_alloc.h"
 -#include "xfs_trace.h"
 -#include "xfs_trans.h"
@@ -1277,17 +1506,18 @@ index eb48197b..c378b024 100644
 +#include "include/xfs_trans.h"
  #include "xfs_bit.h"
  #include "xfs_rmap.h"
- 
+ #include "xfs_ag.h"
 diff --git a/libxfs/xfs_rmap.c b/libxfs/xfs_rmap.c
-index 6205b8ed..d0eb95b8 100644
+index c3195e53..8fb2f2b0 100644
 --- a/libxfs/xfs_rmap.c
 +++ b/libxfs/xfs_rmap.c
-@@ -10,16 +10,16 @@
+@@ -10,17 +10,17 @@
  #include "xfs_log_format.h"
  #include "xfs_trans_resv.h"
  #include "xfs_bit.h"
 -#include "xfs_mount.h"
 +#include "include/xfs_mount.h"
+ #include "xfs_sb.h"
  #include "xfs_defer.h"
  #include "xfs_btree.h"
 -#include "xfs_trans.h"
@@ -1300,17 +1530,17 @@ index 6205b8ed..d0eb95b8 100644
  #include "xfs_errortag.h"
 -#include "xfs_inode.h"
 +#include "include/xfs_inode.h"
+ #include "xfs_ag.h"
+ #include "xfs_health.h"
  
- /*
-  * Lookup the first record less than or equal to [bno, len, owner, offset]
 diff --git a/libxfs/xfs_rmap_btree.c b/libxfs/xfs_rmap_btree.c
-index 8ddc1790..18b2a8a9 100644
+index a2730e29..d66cca63 100644
 --- a/libxfs/xfs_rmap_btree.c
 +++ b/libxfs/xfs_rmap_btree.c
-@@ -10,14 +10,14 @@
+@@ -9,14 +9,14 @@
+ #include "xfs_format.h"
  #include "xfs_log_format.h"
  #include "xfs_trans_resv.h"
- #include "xfs_sb.h"
 -#include "xfs_mount.h"
 -#include "xfs_trans.h"
 +#include "include/xfs_mount.h"
@@ -1322,11 +1552,11 @@ index 8ddc1790..18b2a8a9 100644
  #include "xfs_rmap_btree.h"
 -#include "xfs_trace.h"
 +#include "include/xfs_trace.h"
+ #include "xfs_ag.h"
  #include "xfs_ag_resv.h"
- 
- /*
+ #include "xfs_health.h"
 diff --git a/libxfs/xfs_rtbitmap.c b/libxfs/xfs_rtbitmap.c
-index dcb94f20..dcbc5a95 100644
+index 543cfd2f..329d86b4 100644
 --- a/libxfs/xfs_rtbitmap.c
 +++ b/libxfs/xfs_rtbitmap.c
 @@ -10,10 +10,10 @@
@@ -1340,11 +1570,11 @@ index dcb94f20..dcbc5a95 100644
  #include "xfs_bmap.h"
 -#include "xfs_trans.h"
 +#include "include/xfs_trans.h"
+ #include "xfs_rtbitmap.h"
+ #include "xfs_health.h"
  
- /*
-  * Realtime allocator bitmap functions shared with userspace.
 diff --git a/libxfs/xfs_sb.c b/libxfs/xfs_sb.c
-index fb2212b8..bd07b00f 100644
+index 895d646b..45153e91 100644
 --- a/libxfs/xfs_sb.c
 +++ b/libxfs/xfs_sb.c
 @@ -11,11 +11,11 @@
@@ -1363,7 +1593,7 @@ index fb2212b8..bd07b00f 100644
  #include "xfs_alloc_btree.h"
  #include "xfs_rmap_btree.h"
 diff --git a/libxfs/xfs_symlink_remote.c b/libxfs/xfs_symlink_remote.c
-index 8eb3d59f..bc184484 100644
+index 875e03bc..c88318a6 100644
 --- a/libxfs/xfs_symlink_remote.c
 +++ b/libxfs/xfs_symlink_remote.c
 @@ -10,9 +10,9 @@
@@ -1376,11 +1606,11 @@ index 8eb3d59f..bc184484 100644
 +#include "include/xfs_mount.h"
 +#include "include/xfs_inode.h"
 +#include "include/xfs_trans.h"
- 
- 
- /*
+ #include "xfs_symlink_remote.h"
+ #include "xfs_bit.h"
+ #include "xfs_bmap.h"
 diff --git a/libxfs/xfs_trans_inode.c b/libxfs/xfs_trans_inode.c
-index 66dadd87..02ae86ff 100644
+index f8484eb2..8d30af38 100644
 --- a/libxfs/xfs_trans_inode.c
 +++ b/libxfs/xfs_trans_inode.c
 @@ -9,9 +9,9 @@
@@ -1397,7 +1627,7 @@ index 66dadd87..02ae86ff 100644
  
  /*
 diff --git a/libxfs/xfs_trans_resv.c b/libxfs/xfs_trans_resv.c
-index 9ce7d8f9..07845084 100644
+index 82b3d152..24ae60a4 100644
 --- a/libxfs/xfs_trans_resv.c
 +++ b/libxfs/xfs_trans_resv.c
 @@ -10,12 +10,12 @@
@@ -1415,9 +1645,9 @@ index 9ce7d8f9..07845084 100644
 +#include "include/xfs_trans.h"
  #include "xfs_trans_space.h"
  #include "xfs_quota_defs.h"
- 
+ #include "xfs_rtbitmap.h"
 diff --git a/libxfs/xfs_types.c b/libxfs/xfs_types.c
-index fa113727..b95e6e2a 100644
+index 74ab1965..8ed74f53 100644
 --- a/libxfs/xfs_types.c
 +++ b/libxfs/xfs_types.c
 @@ -10,7 +10,7 @@
@@ -1426,11 +1656,11 @@ index fa113727..b95e6e2a 100644
  #include "xfs_bit.h"
 -#include "xfs_mount.h"
 +#include "include/xfs_mount.h"
+ #include "xfs_ag.h"
  
- /* Find the size of the AG, in blocks. */
- xfs_agblock_t
+ 
 diff --git a/mkfs/proto.c b/mkfs/proto.c
-index 0fa6ffb0..a45c4a5c 100644
+index a923f9c1..cf59db31 100644
 --- a/mkfs/proto.c
 +++ b/mkfs/proto.c
 @@ -4,7 +4,7 @@
@@ -1441,12 +1671,12 @@ index 0fa6ffb0..a45c4a5c 100644
 +#include "include/libxfs.h"
  #include <sys/stat.h>
  #include "libfrog/convert.h"
- 
+ #include "proto.h"
 diff --git a/mkfs/xfs_mkfs.c b/mkfs/xfs_mkfs.c
-index 47acc127..3bfa5607 100644
+index 6d2469c3..c8e4ec16 100644
 --- a/mkfs/xfs_mkfs.c
 +++ b/mkfs/xfs_mkfs.c
-@@ -4,14 +4,14 @@
+@@ -4,16 +4,16 @@
   * All Rights Reserved.
   */
  #include "libfrog/util.h"
@@ -1458,13 +1688,15 @@ index 47acc127..3bfa5607 100644
 +#include "include/xfs_multidisk.h"
 +#include "include/libxcmd.h"
  #include "libfrog/fsgeom.h"
- #include "libfrog/topology.h"
  #include "libfrog/convert.h"
+ #include "libfrog/crc32cselftest.h"
+ #include "libfrog/dahashselftest.h"
+ #include "proto.h"
 -#include <ini.h>
 +#include "ini.h"
  
  #define TERABYTES(count, blog)	((uint64_t)(count) << (40 - (blog)))
  #define GIGABYTES(count, blog)	((uint64_t)(count) << (30 - (blog)))
 -- 
-2.25.1
+2.44.1
 

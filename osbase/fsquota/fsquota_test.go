@@ -49,9 +49,13 @@ func TestBasic(t *testing.T) {
 	if os.Getenv("IN_KTEST") != "true" {
 		t.Skip("Not in ktest")
 	}
-	mkfsCmd := exec.Command("/mkfs.xfs", "-qf", "/dev/ram0")
-	if _, err := mkfsCmd.Output(); err != nil {
-		t.Fatal(err)
+	// xfsprogs since 5.19.0 / commit 6e0ed3d19c5 refuses to create filesystems
+	// smaller than 300MiB for dubious reasons. Running tests with smaller
+	// filesystems is acceptable according to the commit message, so we do that
+	// here with the unsupported flag.
+	mkfsCmd := exec.Command("/mkfs.xfs", "--unsupported", "-qf", "/dev/ram0")
+	if out, err := mkfsCmd.CombinedOutput(); err != nil {
+		t.Fatal(err, string(out))
 	}
 	if err := os.Mkdir("/test", 0755); err != nil {
 		t.Error(err)
