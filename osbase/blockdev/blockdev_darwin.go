@@ -45,20 +45,24 @@ func (d *Device) BlockSize() int64 {
 	return d.blockSize
 }
 
+func (d *Device) OptimalBlockSize() int64 {
+	return d.blockSize
+}
+
 func (d *Device) Discard(startByte int64, endByte int64) error {
 	// Can be implemented using DKIOCUNMAP, but needs x/sys/unix extension.
 	// Not mandatory, so this is fine for now.
 	return errors.ErrUnsupported
 }
 
-func (d *Device) OptimalBlockSize() int64 {
-	return d.blockSize
-}
-
 func (d *Device) Zero(startByte int64, endByte int64) error {
 	// It doesn't look like MacOS even has any zeroing acceleration, so just
 	// use the generic one.
 	return GenericZero(d, startByte, endByte)
+}
+
+func (d *Device) Sync() error {
+	return d.backend.Sync()
 }
 
 // Open opens a block device given a path to its inode.
@@ -156,16 +160,20 @@ func (d *File) BlockSize() int64 {
 	return d.blockSize
 }
 
+func (d *File) OptimalBlockSize() int64 {
+	return d.blockSize
+}
+
 func (d *File) Discard(startByte int64, endByte int64) error {
 	// Can be supported in the future via fnctl.
 	return errors.ErrUnsupported
 }
 
-func (d *File) OptimalBlockSize() int64 {
-	return d.blockSize
-}
-
 func (d *File) Zero(startByte int64, endByte int64) error {
 	// Can possibly be accelerated in the future via fnctl.
 	return GenericZero(d, startByte, endByte)
+}
+
+func (d *File) Sync() error {
+	return d.backend.Sync()
 }

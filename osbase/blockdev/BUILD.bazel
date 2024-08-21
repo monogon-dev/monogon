@@ -1,4 +1,5 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//osbase/test/ktest:ktest.bzl", "ktest")
 
 go_library(
     name = "blockdev",
@@ -25,4 +26,26 @@ go_library(
         ],
         "//conditions:default": [],
     }),
+)
+
+go_test(
+    name = "blockdev_test",
+    srcs = [
+        "blockdev_linux_test.go",
+        "blockdev_test.go",
+    ],
+    embed = [":blockdev"],
+    deps = select({
+        "@io_bazel_rules_go//go/platform:android": [
+            "//osbase/loop",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "//osbase/loop",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+ktest(
+    tester = ":blockdev_test",
 )

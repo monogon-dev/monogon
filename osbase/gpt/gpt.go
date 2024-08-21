@@ -281,7 +281,10 @@ func (gpt *Table) AddPartition(p *Partition, size int64, options ...AddOption) e
 			} else {
 				gpt.Partitions[newPartPos] = p
 			}
-			p.Section = blockdev.NewSection(gpt.b, int64(p.FirstBlock), int64(p.LastBlock)+1)
+			p.Section, err = blockdev.NewSection(gpt.b, int64(p.FirstBlock), int64(p.LastBlock)+1)
+			if err != nil {
+				return fmt.Errorf("failed to create blockdev Section for partition: %w", err)
+			}
 			return nil
 		}
 	}

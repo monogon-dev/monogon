@@ -5,6 +5,7 @@ package blockdev
 import (
 	"errors"
 	"fmt"
+	"io"
 	"math/bits"
 	"os"
 	"syscall"
@@ -21,10 +22,32 @@ type Device struct {
 }
 
 func (d *Device) ReadAt(p []byte, off int64) (n int, err error) {
+	size := d.blockSize * d.blockCount
+	if off > size {
+		return 0, io.EOF
+	}
+	if int64(len(p)) > size-off {
+		n, err = d.backend.ReadAt(p[:size-off], off)
+		if err == nil {
+			err = io.EOF
+		}
+		return
+	}
 	return d.backend.ReadAt(p, off)
 }
 
 func (d *Device) WriteAt(p []byte, off int64) (n int, err error) {
+	size := d.blockSize * d.blockCount
+	if off > size {
+		return 0, ErrOutOfBounds
+	}
+	if int64(len(p)) > size-off {
+		n, err = d.backend.WriteAt(p[:size-off], off)
+		if err == nil {
+			err = ErrOutOfBounds
+		}
+		return
+	}
 	return d.backend.WriteAt(p, off)
 }
 
@@ -40,7 +63,17 @@ func (d *Device) BlockSize() int64 {
 	return d.blockSize
 }
 
+func (d *Device) OptimalBlockSize() int64 {
+	return d.blockSize
+}
+
 func (d *Device) Discard(startByte int64, endByte int64) error {
+	if err := validAlignedRange(d, startByte, endByte); err != nil {
+		return err
+	}
+	if startByte == endByte {
+		return nil
+	}
 	var args [2]uint64
 	var err unix.Errno
 	args[0] = uint64(startByte)
@@ -59,11 +92,13 @@ func (d *Device) Discard(startByte int64, endByte int64) error {
 	return nil
 }
 
-func (d *Device) OptimalBlockSize() int64 {
-	return d.blockSize
-}
-
 func (d *Device) Zero(startByte int64, endByte int64) error {
+	if err := validAlignedRange(d, startByte, endByte); err != nil {
+		return err
+	}
+	if startByte == endByte {
+		return nil
+	}
 	var args [2]uint64
 	var err error
 	args[0] = uint64(startByte)
@@ -90,6 +125,10 @@ func (d *Device) Zero(startByte int64, endByte int64) error {
 		return fmt.Errorf("failed to zero out: %w", err)
 	}
 	return nil
+}
+
+func (d *Device) Sync() error {
+	return d.backend.Sync()
 }
 
 // RefreshPartitionTable refreshes the kernel's view of the partition table
@@ -165,7 +204,7 @@ type File struct {
 
 func CreateFile(name string, blockSize int64, blockCount int64) (*File, error) {
 	if blockSize < 512 {
-		return nil, fmt.Errorf("blockSize must be bigger than 512 bytes")
+		return nil, fmt.Errorf("blockSize must be at least 512 bytes")
 	}
 	if bits.OnesCount64(uint64(blockSize)) != 1 {
 		return nil, fmt.Errorf("blockSize must be a power of two")
@@ -187,10 +226,32 @@ func CreateFile(name string, blockSize int64, blockCount int64) (*File, error) {
 }
 
 func (d *File) ReadAt(p []byte, off int64) (n int, err error) {
+	size := d.blockSize * d.blockCount
+	if off > size {
+		return 0, io.EOF
+	}
+	if int64(len(p)) > size-off {
+		n, err = d.backend.ReadAt(p[:size-off], off)
+		if err == nil {
+			err = io.EOF
+		}
+		return
+	}
 	return d.backend.ReadAt(p, off)
 }
 
 func (d *File) WriteAt(p []byte, off int64) (n int, err error) {
+	size := d.blockSize * d.blockCount
+	if off > size {
+		return 0, ErrOutOfBounds
+	}
+	if int64(len(p)) > size-off {
+		n, err = d.backend.WriteAt(p[:size-off], off)
+		if err == nil {
+			err = ErrOutOfBounds
+		}
+		return
+	}
 	return d.backend.WriteAt(p, off)
 }
 
@@ -206,7 +267,17 @@ func (d *File) BlockSize() int64 {
 	return d.blockSize
 }
 
+func (d *File) OptimalBlockSize() int64 {
+	return d.blockSize
+}
+
 func (d *File) Discard(startByte int64, endByte int64) error {
+	if err := validAlignedRange(d, startByte, endByte); err != nil {
+		return err
+	}
+	if startByte == endByte {
+		return nil
+	}
 	var err error
 	if ctrlErr := d.rawConn.Control(func(fd uintptr) {
 		// There is FALLOC_FL_NO_HIDE_STALE, but it's not implemented by
@@ -224,11 +295,13 @@ func (d *File) Discard(startByte int64, endByte int64) error {
 	return nil
 }
 
-func (d *File) OptimalBlockSize() int64 {
-	return d.blockSize
-}
-
 func (d *File) Zero(startByte int64, endByte int64) error {
+	if err := validAlignedRange(d, startByte, endByte); err != nil {
+		return err
+	}
+	if startByte == endByte {
+		return nil
+	}
 	var err error
 	if ctrlErr := d.rawConn.Control(func(fd uintptr) {
 		// Tell the filesystem to punch out the given blocks.
@@ -245,4 +318,8 @@ func (d *File) Zero(startByte int64, endByte int64) error {
 		return fmt.Errorf("failed to zero out: %w", err)
 	}
 	return nil
+}
+
+func (d *File) Sync() error {
+	return d.backend.Sync()
 }

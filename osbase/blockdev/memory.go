@@ -43,70 +43,47 @@ func MustNewMemory(blockSize, blockCount int64) *Memory {
 	return m
 }
 
-func (m *Memory) ReadAt(p []byte, off int64) (int, error) {
-	devSize := m.blockSize * m.blockCount
-	if off > devSize {
+func (m *Memory) ReadAt(p []byte, off int64) (n int, err error) {
+	if off < 0 {
+		return 0, errors.New("blockdev.Memory.ReadAt: negative offset")
+	}
+	if off > int64(len(m.data)) {
 		return 0, io.EOF
 	}
 	// TODO: Alignment checks?
-	copy(p, m.data[off:])
-	n := len(m.data[off:])
+	n = copy(p, m.data[off:])
 	if n < len(p) {
-		return n, io.EOF
+		err = io.EOF
 	}
-	return len(p), nil
+	return
 }
 
-func (m *Memory) WriteAt(p []byte, off int64) (int, error) {
-	devSize := m.blockSize * m.blockCount
-	if off > devSize {
-		return 0, io.EOF
+func (m *Memory) WriteAt(p []byte, off int64) (n int, err error) {
+	if off < 0 || off > int64(len(m.data)) {
+		return 0, ErrOutOfBounds
 	}
 	// TODO: Alignment checks?
-	copy(m.data[off:], p)
-	n := len(m.data[off:])
+	n = copy(m.data[off:], p)
 	if n < len(p) {
-		return n, io.EOF
+		err = ErrOutOfBounds
 	}
-	return len(p), nil
-}
-
-func (m *Memory) BlockSize() int64 {
-	return m.blockSize
+	return
 }
 
 func (m *Memory) BlockCount() int64 {
 	return m.blockCount
 }
 
+func (m *Memory) BlockSize() int64 {
+	return m.blockSize
+}
+
 func (m *Memory) OptimalBlockSize() int64 {
 	return m.blockSize
 }
 
-func (m *Memory) validRange(startByte, endByte int64) error {
-	if startByte > endByte {
-		return fmt.Errorf("startByte (%d) larger than endByte (%d), invalid interval", startByte, endByte)
-	}
-	devSize := m.blockSize * m.blockCount
-	if startByte >= devSize || startByte < 0 {
-		return fmt.Errorf("startByte (%d) out of range (0-%d)", endByte, devSize)
-	}
-	if endByte > devSize || endByte < 0 {
-		return fmt.Errorf("endByte (%d) out of range (0-%d)", endByte, devSize)
-	}
-	// Alignment check works for powers of two by looking at every bit below
-	// the bit set in the block size.
-	if startByte&(m.blockSize-1) != 0 {
-		return fmt.Errorf("startByte (%d) is not aligned to blockSize (%d)", startByte, m.blockSize)
-	}
-	if endByte&(m.blockSize-1) != 0 {
-		return fmt.Errorf("endByte (%d) is not aligned to blockSize (%d)", startByte, m.blockSize)
-	}
-	return nil
-}
-
 func (m *Memory) Discard(startByte, endByte int64) error {
-	if err := m.validRange(startByte, endByte); err != nil {
+	if err := validAlignedRange(m, startByte, endByte); err != nil {
 		return err
 	}
 	for i := startByte; i < endByte; i++ {
@@ -118,11 +95,15 @@ func (m *Memory) Discard(startByte, endByte int64) error {
 }
 
 func (m *Memory) Zero(startByte, endByte int64) error {
-	if err := m.validRange(startByte, endByte); err != nil {
+	if err := validAlignedRange(m, startByte, endByte); err != nil {
 		return err
 	}
 	for i := startByte; i < endByte; i++ {
 		m.data[i] = 0x00
 	}
+	return nil
+}
+
+func (m *Memory) Sync() error {
 	return nil
 }
