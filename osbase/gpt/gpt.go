@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/crc32"
-	"sort"
+	"slices"
 	"strings"
 	"unicode/utf16"
 
@@ -21,7 +21,8 @@ import (
 )
 
 var gptSignature = [8]byte{'E', 'F', 'I', ' ', 'P', 'A', 'R', 'T'}
-var gptRevision uint32 = 0x00010000 // First 2 bytes major, second 2 bytes minor
+
+const gptRevision uint32 = 0x00010000 // First 2 bytes major, second 2 bytes minor
 
 // See UEFI Specification 2.9 Table 5-5
 type header struct {
@@ -190,14 +191,15 @@ func WithKeepEmptyEntries() AddOption {
 // value. By default, these are aligned to 1MiB.
 // Only use this flag if you are certain you need it, it can cause quite severe
 // performance degradation under certain conditions.
-func WithAlignment(alignmenet int64) AddOption {
+func WithAlignment(alignment int64) AddOption {
 	return func(options *addOptions) {
-		options.alignment = alignmenet
+		options.alignment = alignment
 	}
 }
 
 // AddPartition takes a pointer to a partition and adds it, placing it into
 // the first (or last using WithPreferEnd) continuous free space which fits it.
+// If size is -1, the partition will fill the largest free space.
 // It writes the placement information (FirstBlock, LastBlock) back to p.
 // By default, AddPartition aligns FirstBlock to 1MiB boundaries, but this can
 // be overridden using WithAlignment.
@@ -212,9 +214,13 @@ func (gpt *Table) AddPartition(p *Partition, size int64, options ...AddOption) e
 	for _, o := range options {
 		o(&opts)
 	}
+	if opts.alignment <= 0 {
+		return fmt.Errorf("alignment (%d bytes) must be positive", opts.alignment)
+	}
 	if opts.alignment%blockSize != 0 {
 		return fmt.Errorf("requested alignment (%d bytes) is not an integer multiple of the block size (%d), unable to align", opts.alignment, blockSize)
 	}
+	alignBlocks := opts.alignment / blockSize
 	if p.ID == uuid.Nil {
 		p.ID = uuid.New()
 	}
@@ -225,71 +231,61 @@ func (gpt *Table) AddPartition(p *Partition, size int64, options ...AddOption) e
 	}
 	if opts.preferEnd {
 		// Reverse fs slice to start iteration at the end
-		for i, j := 0, len(fs)-1; i < j; i, j = i+1, j-1 {
-			fs[i], fs[j] = fs[j], fs[i]
-		}
+		slices.Reverse(fs)
 	}
-	// Number of blocks the partition should occupy, rounded up.
-	blocks := (size + blockSize - 1) / blockSize
-	if size == -1 {
-		var largestFreeSpace int64
-		for _, freeInt := range fs {
-			intSz := freeInt[1] - freeInt[0]
-			if intSz > largestFreeSpace {
-				largestFreeSpace = intSz
-			}
-		}
-		blocks = largestFreeSpace
-	}
-	var maxFreeBlocks int64
+	var largestFreeSpace int64
 	for _, freeInt := range fs {
-		start := freeInt[0]
-		end := freeInt[1]
-		freeBlocks := end - start
-		// Align start properly
-		alignTo := opts.alignment / blockSize
-		// Go doesn't implement the euclidean modulus, thus this construction
-		// is necessary.
-		paddingBlocks := ((alignTo - start) % alignTo) % alignTo
-		freeBlocks -= paddingBlocks
-		start += paddingBlocks
-		if maxFreeBlocks < freeBlocks {
-			maxFreeBlocks = freeBlocks
-		}
-		if freeBlocks >= blocks {
-			if !opts.preferEnd {
-				p.FirstBlock = uint64(start)
-				p.LastBlock = uint64(start + blocks - 1)
-			} else {
-				// Realign FirstBlock. This will always succeed as
-				// there is enough space to align to the start.
-				moveLeft := (end - blocks - 1) % (opts.alignment / blockSize)
-				p.FirstBlock = uint64(end - (blocks + 1 + moveLeft))
-				p.LastBlock = uint64(end - (2 + moveLeft))
-			}
-			newPartPos := -1
-			if !opts.keepEmptyEntries {
-				for i, part := range gpt.Partitions {
-					if part.IsUnused() {
-						newPartPos = i
-						break
-					}
-				}
-			}
-			if newPartPos == -1 {
-				gpt.Partitions = append(gpt.Partitions, p)
-			} else {
-				gpt.Partitions[newPartPos] = p
-			}
-			p.Section, err = blockdev.NewSection(gpt.b, int64(p.FirstBlock), int64(p.LastBlock)+1)
-			if err != nil {
-				return fmt.Errorf("failed to create blockdev Section for partition: %w", err)
-			}
-			return nil
+		startAligned := (freeInt[0] + alignBlocks - 1) / alignBlocks * alignBlocks
+		freeBlocks := freeInt[1] - startAligned
+		if freeBlocks > largestFreeSpace {
+			largestFreeSpace = freeBlocks
 		}
 	}
 
-	return fmt.Errorf("no space for partition of %d blocks, largest continuous free space after alignment is %d blocks", blocks, maxFreeBlocks)
+	// Number of blocks the partition should occupy, rounded up.
+	blocks := (size + blockSize - 1) / blockSize
+	if size == -1 {
+		if largestFreeSpace == 0 {
+			return errors.New("no free space")
+		}
+		blocks = largestFreeSpace
+	} else if size <= 0 {
+		return fmt.Errorf("partition size (%d bytes) must be positive or the special value -1", size)
+	}
+	for _, freeInt := range fs {
+		startAligned := (freeInt[0] + alignBlocks - 1) / alignBlocks * alignBlocks
+		freeBlocks := freeInt[1] - startAligned
+		if freeBlocks < blocks {
+			continue
+		}
+		if opts.preferEnd {
+			startAligned += (freeBlocks - blocks) / alignBlocks * alignBlocks
+		}
+		p.FirstBlock = uint64(startAligned)
+		p.LastBlock = uint64(startAligned + blocks - 1)
+
+		newPartPos := -1
+		if !opts.keepEmptyEntries {
+			for i, part := range gpt.Partitions {
+				if part.IsUnused() {
+					newPartPos = i
+					break
+				}
+			}
+		}
+		if newPartPos == -1 {
+			gpt.Partitions = append(gpt.Partitions, p)
+		} else {
+			gpt.Partitions[newPartPos] = p
+		}
+		p.Section, err = blockdev.NewSection(gpt.b, int64(p.FirstBlock), int64(p.LastBlock)+1)
+		if err != nil {
+			return fmt.Errorf("failed to create blockdev Section for partition: %w", err)
+		}
+		return nil
+	}
+
+	return fmt.Errorf("no space for partition of %d blocks, largest continuous free space after alignment is %d blocks", blocks, largestFreeSpace)
 }
 
 // FirstUsableBlock returns the first usable (i.e. a partition can start there)
@@ -364,8 +360,8 @@ func (gpt *Table) GetFreeSpaces() ([][2]int64, bool, error) {
 	// Sort both sets of blocks independently in ascending order. Note that it
 	// is now no longer possible to extract the original intervals. Integers
 	// have no identity thus it doesn't matter if the sort is stable or not.
-	sort.Slice(startBlocks, func(i, j int) bool { return startBlocks[i] < startBlocks[j] })
-	sort.Slice(endBlocks, func(i, j int) bool { return endBlocks[i] < endBlocks[j] })
+	slices.Sort(startBlocks)
+	slices.Sort(endBlocks)
 
 	var freeSpaces [][2]int64
 
