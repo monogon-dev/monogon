@@ -1,0 +1,39 @@
+From 9801dd97397d77ff0dd9d7d57a4915ca604f49c2 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Wed, 21 Aug 2024 16:59:02 +0200
+Subject: [PATCH] Add generated configs
+
+---
+ include/config.h      | 8 ++++++++
+ include/urcu/config.h | 4 ++++
+ 2 files changed, 12 insertions(+)
+ create mode 100644 include/config.h
+ create mode 100644 include/urcu/config.h
+
+diff --git a/include/config.h b/include/config.h
+new file mode 100644
+index 0000000..9d25ae3
+--- /dev/null
++++ b/include/config.h
+@@ -0,0 +1,8 @@
++#define CONFIG_RCU_HAVE_CLOCK_GETTIME 1
++#define CONFIG_RCU_SMP 1
++#define CONFIG_RCU_TLS 1
++
++#define HAVE_SCHED_SETAFFINITY 1
++#define HAVE_GETTID 1
++#define HAVE_SCHED_GETCPU 1
++#define HAVE_SYSCONF 1
+diff --git a/include/urcu/config.h b/include/urcu/config.h
+new file mode 100644
+index 0000000..1a07402
+--- /dev/null
++++ b/include/urcu/config.h
+@@ -0,0 +1,4 @@
++#define CONFIG_RCU_SMP 1
++#define CONFIG_RCU_TLS 1
++#define CONFIG_RCU_HAVE_CLOCK_GETTIME 1
++#define CONFIG_RCU_HAVE_MULTIFLAVOR 1
+-- 
+2.44.1
+

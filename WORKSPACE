@@ -44,6 +44,12 @@ util_linux_external(
     name = "util_linux",
     version = "2.36.2",
 )
+load("//third_party/urcu:external.bzl", "urcu_external")
+
+urcu_external(
+    name = "urcu",
+    version = "0.14.0",
+)
 
 load("//third_party/xfsprogs:external.bzl", "xfsprogs_external")
 
