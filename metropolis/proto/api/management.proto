@@ -328,6 +328,45 @@ message DeleteNodeRequest {
 message DeleteNodeResponse {
 }
 
+message RebootRequest {
+  enum Type {
+    TYPE_INVALID = 0;
+    // FIRMWARE performs a firmware-assisted (EFI, PSCI, ...) reboot and
+    // signals the firmware to perform a thorough reset if possible. This
+    // maximizes chances to clear hardware-related issues. The exact
+    // implementation is up to firmware.
+    FIRMWARE = 1;
+    // KEXEC performs a KEXEC reboot without going through firmware at all.
+    // This is the fastest reboot option, but does not fully reset most
+    // hardware and has compatibility issues on certain hardware.
+    KEXEC = 2;
+    // POWER_OFF fully powers off the system. It can only be started again by
+    // a physical power button, Wake On LAN if set supported by the NIC or
+    // an out-of-band management controller if available.
+    POWER_OFF = 3;
+  }
+  Type type = 1;
+  enum NextBoot {
+    // START_NORMAL starts the system normally, respecting standard A/B slot
+    // booting rules. Any staged but not activated updates will be activated
+    // as with a normal reboot.
+    START_NORMAL = 0;
+    // START_ROLLBACK tries to boot into the currently inactive slot on reboot.
+    START_ROLLBACK = 1;
+    // START_FIRMWARE_UI tries to boot into the EFI firmware UI. Cannot be used
+    // together with KEXEC as firmare is not involved there.
+    START_FIRMWARE_UI = 2;
+  }
+  // NextBoot can be used to select the boot slot to reboot into. This works
+  // even for POWER_OFF, but there the next boot will need to be triggered
+  // externally. START_FIRMWARE_UI cannot be used together with KEXEC.
+  NextBoot next_boot = 2;
+}
+
+message RebootResponse {
+
+}
+
 // NodeManagement runs on every node of the cluster and providers management
 // and troubleshooting RPCs to operators. All requests must be authenticated.
 service NodeManagement {
@@ -360,6 +399,14 @@ service NodeManagement {
   rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse) {
     option (metropolis.proto.ext.authorization) = {
       need: PERMISSION_UPDATE_NODE
+    };
+  }
+
+  // Reboot initiates a node reboot or power-off. It can also be used to roll
+  // back to the inactive slot.
+  rpc Reboot(RebootRequest) returns (RebootResponse) {
+    option (metropolis.proto.ext.authorization) = {
+      need: PERMISSION_NODE_POWER_MANAGEMENT
     };
   }
 }

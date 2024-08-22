@@ -4,6 +4,7 @@ go_library(
     name = "mgmt",
     srcs = [
         "mgmt.go",
+        "power.go",
         "svc_logs.go",
         "update.go",
     ],
@@ -16,6 +17,7 @@ go_library(
         "//metropolis/node/core/update",
         "//metropolis/proto/api",
         "//metropolis/proto/common",
+        "//osbase/efivarfs",
         "//osbase/logtree",
         "//osbase/logtree/proto",
         "//osbase/supervisor",

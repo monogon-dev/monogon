@@ -29,6 +29,7 @@ enum Permission {
     PERMISSION_DECOMMISSION_NODE = 8;
     PERMISSION_DELETE_NODE = 9;
     PERMISSION_UPDATE_NODE_LABELS = 10;
+    PERMISSION_NODE_POWER_MANAGEMENT = 11;
 }
 
 // Authorization policy for an RPC method. This message/API does not have the
