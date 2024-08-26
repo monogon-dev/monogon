@@ -1,26 +1,26 @@
-From d56a2d05e536534730660813c182055bb705b22a Mon Sep 17 00:00:00 2001
+From 2c25c4cdf0a3526625bf38c0d16519d8b5c80132 Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@brun.one>
 Date: Tue, 17 Mar 2020 21:41:08 +0100
 Subject: [PATCH] Provide native mounter implementation for Linux
 
 ---
- mount_linux.go | 141 +++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 141 insertions(+)
+ mount_linux.go | 140 ++++++++++++++++++
+ 1 file changed, 140 insertions(+)
 
 diff --git a/mount_linux.go b/mount_linux.go
-index 07ce76d..e925185 100644
+index 541af2c391e..23523bf5d30 100644
 --- a/mount_linux.go
 +++ b/mount_linux.go
-@@ -69,6 +70,8 @@ type Mounter struct {
+@@ -70,6 +70,8 @@ type Mounter struct {
  	withSystemd                *bool
  	trySystemd                 bool
  	withSafeNotMountedBehavior bool
 +	withLinuxUtils             bool
 +	nativeSupportedFstypes     map[string]struct{}
  }
-
+ 
  var _ MounterForceUnmounter = &Mounter{}
-@@ -81,6 +84,8 @@ func New(mounterPath string) Interface {
+@@ -82,6 +84,8 @@ func New(mounterPath string) Interface {
  		mounterPath:                mounterPath,
  		trySystemd:                 true,
  		withSafeNotMountedBehavior: detectSafeNotMountedBehavior(),
@@ -28,8 +28,8 @@ index 07ce76d..e925185 100644
 +		nativeSupportedFstypes:     detectNativeSupportedFstypes(),
  	}
  }
-
-@@ -93,6 +98,8 @@ func NewWithoutSystemd(mounterPath string) Interface {
+ 
+@@ -94,6 +98,8 @@ func NewWithoutSystemd(mounterPath string) Interface {
  		mounterPath:                mounterPath,
  		trySystemd:                 false,
  		withSafeNotMountedBehavior: detectSafeNotMountedBehavior(),
@@ -37,11 +37,11 @@ index 07ce76d..e925185 100644
 +		nativeSupportedFstypes:     detectNativeSupportedFstypes(),
  	}
  }
-
-@@ -111,6 +118,29 @@ func (mounter *Mounter) hasSystemd() bool {
- 	return *mounter.withSystemd
+ 
+@@ -165,6 +171,29 @@ func (mounter *Mounter) bindMountSensitive(mounterPath string, mountCmd string,
+ 	}
  }
-
+ 
 +func (mounter *Mounter) mountNative(source string, target string, fstype string, options []string, sensitiveOptions []string) error {
 +	flags, pflags, fsoptions := parseMountOptions(options)
 +	if len(pflags) > 0 {
@@ -68,7 +68,7 @@ index 07ce76d..e925185 100644
  // Mount mounts source to target as fstype with given options. 'source' and 'fstype' must
  // be an empty string in case it's not required, e.g. for remount, or for auto filesystem
  // type, where kernel handles fstype for you. The mount 'options' is a list of options,
-@@ -126,6 +156,10 @@ func (mounter *Mounter) Mount(source string, target string, fstype string, optio
+@@ -180,6 +209,10 @@ func (mounter *Mounter) Mount(source string, target string, fstype string, optio
  // method should be used by callers that pass sensitive material (like
  // passwords) as mount options.
  func (mounter *Mounter) MountSensitive(source string, target string, fstype string, options []string, sensitiveOptions []string) error {
@@ -79,8 +79,8 @@ index 07ce76d..e925185 100644
  	// Path to mounter binary if containerized mounter is needed. Otherwise, it is set to empty.
  	// All Linux distros are expected to be shipped with a mount utility that a support bind mounts.
  	mounterPath := ""
-@@ -157,6 +191,9 @@ func (mounter *Mounter) MountSensitiveWithoutSystemd(source string, target strin
-
+@@ -207,6 +240,9 @@ func (mounter *Mounter) MountSensitiveWithoutSystemd(source string, target strin
+ 
  // MountSensitiveWithoutSystemdWithMountFlags is the same as MountSensitiveWithoutSystemd with additional mount flags.
  func (mounter *Mounter) MountSensitiveWithoutSystemdWithMountFlags(source string, target string, fstype string, options []string, sensitiveOptions []string, mountFlags []string) error {
 +	if !mounter.withLinuxUtils {
@@ -89,10 +89,10 @@ index 07ce76d..e925185 100644
  	mounterPath := ""
  	bind, bindOpts, bindRemountOpts, bindRemountOptsSensitive := MakeBindOptsSensitive(options, sensitiveOptions)
  	if bind {
-@@ -179,6 +216,80 @@ func (mounter *Mounter) MountSensitiveWithoutSystemdWithMountFlags(source string
+@@ -225,6 +261,80 @@ func (mounter *Mounter) MountSensitiveWithoutSystemdWithMountFlags(source string
  	return mounter.doMount(mounterPath, defaultMountCommand, source, target, fstype, options, sensitiveOptions, mountFlags, false)
  }
-
+ 
 +// nativeSupportsFstype checks if the native mounter can mount the given fstype
 +func (mounter *Mounter) nativeSupportsFstype(fstype string) bool {
 +	_, ok := mounter.nativeSupportedFstypes[fstype]
@@ -170,10 +170,10 @@ index 07ce76d..e925185 100644
  // doMount runs the mount command. mounterPath is the path to mounter binary if containerized mounter is used.
  // sensitiveOptions is an extension of options except they will not be logged (because they may contain sensitive material)
  // systemdMountRequired is an extension of option to decide whether uses systemd mount.
-@@ -294,6 +405,30 @@ func detectSafeNotMountedBehaviorWithExec(exec utilexec.Interface) bool {
+@@ -340,6 +450,30 @@ func detectSafeNotMountedBehaviorWithExec(exec utilexec.Interface) bool {
  	return false
  }
-
+ 
 +// detectLinuxUtils detects if the host operating system has the mount and unmount commands present
 +func detectLinuxUtils() bool {
 +	_, err := exec.LookPath("mount")
@@ -201,7 +201,7 @@ index 07ce76d..e925185 100644
  // MakeMountArgs makes the arguments to the mount(8) command.
  // options MUST not contain sensitive material (like passwords).
  func MakeMountArgs(source, target, fstype string, options []string) (mountArgs []string) {
-@@ -364,6 +499,12 @@ func AddSystemdScopeSensitive(systemdRunPath, mountName, command string, args []
+@@ -410,6 +544,12 @@ func AddSystemdScopeSensitive(systemdRunPath, mountName, command string, args []
  // If the mounter has safe "not mounted" behavior, no error will be returned when the target is not a mount point.
  func (mounter *Mounter) Unmount(target string) error {
  	klog.V(4).Infof("Unmounting %s", target)
@@ -214,6 +214,6 @@ index 07ce76d..e925185 100644
  	command := exec.Command("umount", target)
  	output, err := command.CombinedOutput()
  	if err != nil {
---
-2.41.0
+-- 
+2.44.1
 

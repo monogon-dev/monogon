@@ -8,9 +8,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "@com_github_spf13_cobra//:cobra",
-        "@com_github_spf13_pflag//:pflag",
-        "@io_k8s_component_base//cli/flag",
-        "@io_k8s_component_base//logs",
+        "@io_k8s_component_base//cli",
         "@io_k8s_component_base//metrics/prometheus/restclient",
         "@io_k8s_component_base//metrics/prometheus/version",
         "@io_k8s_kubernetes//cmd/kube-apiserver/app",

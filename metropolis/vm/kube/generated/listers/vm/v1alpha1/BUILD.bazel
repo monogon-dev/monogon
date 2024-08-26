@@ -16,6 +16,7 @@ go_kubernetes_library(
         "//metropolis/vm/kube/apis/vm/v1alpha1",
         "@io_k8s_apimachinery//pkg/api/errors",
         "@io_k8s_apimachinery//pkg/labels",
+        "@io_k8s_client_go//listers",
         "@io_k8s_client_go//tools/cache",
     ],
 )

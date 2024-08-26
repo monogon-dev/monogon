@@ -23,11 +23,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 
+	common "source.monogon.dev/metropolis/node"
+	cpb "source.monogon.dev/metropolis/proto/common"
 	mlaunch "source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/localregistry"
 	"source.monogon.dev/metropolis/test/util"
-
-	common "source.monogon.dev/metropolis/node"
 )
 
 var (
@@ -82,6 +82,10 @@ func TestE2EKubernetes(t *testing.T) {
 	clusterOptions := mlaunch.ClusterOptions{
 		NumNodes:      2,
 		LocalRegistry: lr,
+		InitialClusterConfiguration: &cpb.ClusterConfiguration{
+			TpmMode:               cpb.ClusterConfiguration_TPM_MODE_DISABLED,
+			StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE,
+		},
 	}
 	cluster, err := mlaunch.LaunchCluster(ctx, clusterOptions)
 	if err != nil {

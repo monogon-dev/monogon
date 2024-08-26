@@ -1,4 +1,4 @@
-From 93c9d8f8f44f2d3b67bdd51471b92dd108df3ca4 Mon Sep 17 00:00:00 2001
+From 4d98a0637eee66923b854ef75653f74aeb37240b Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
 Date: Wed, 16 Mar 2022 18:10:09 +0100
 Subject: [PATCH] Drop legacy log path
@@ -12,13 +12,13 @@ Subject: [PATCH] Drop legacy log path
  5 files changed, 115 deletions(-)
 
 diff --git a/pkg/kubelet/kubelet.go b/pkg/kubelet/kubelet.go
-index e8918472ee8..f80bfc41240 100644
+index 5d848de88fb..0495eaed7d1 100644
 --- a/pkg/kubelet/kubelet.go
 +++ b/pkg/kubelet/kubelet.go
-@@ -1459,13 +1459,6 @@ func (kl *Kubelet) initializeModules() error {
+@@ -1506,13 +1506,6 @@ func (kl *Kubelet) initializeModules() error {
  		return err
  	}
-
+ 
 -	// If the container logs directory does not exist, create it.
 -	if _, err := os.Stat(ContainerLogsDir); err != nil {
 -		if err := kl.os.MkdirAll(ContainerLogsDir, 0755); err != nil {
@@ -26,17 +26,17 @@ index e8918472ee8..f80bfc41240 100644
 -		}
 -	}
 -
- 	// Start the image manager.
- 	kl.imageManager.Start()
-
+ 	if sysruntime.GOOS == "windows" {
+ 		// On Windows we should not allow other users to read the logs directory
+ 		// to avoid allowing non-root containers from reading the logs of other containers.
 diff --git a/pkg/kubelet/kuberuntime/kuberuntime_container.go b/pkg/kubelet/kuberuntime/kuberuntime_container.go
-index 97abc229335..458333dafcb 100644
+index b049540d0d3..7b1baa29c14 100644
 --- a/pkg/kubelet/kuberuntime/kuberuntime_container.go
 +++ b/pkg/kubelet/kuberuntime/kuberuntime_container.go
-@@ -257,25 +257,6 @@ func (m *kubeGenericRuntimeManager) startContainer(ctx context.Context, podSandb
+@@ -285,25 +285,6 @@ func (m *kubeGenericRuntimeManager) startContainer(ctx context.Context, podSandb
  	}
  	m.recordContainerEvent(pod, container, containerID, v1.EventTypeNormal, events.StartedContainer, fmt.Sprintf("Started container %s", container.Name))
-
+ 
 -	// Symlink container logs to the legacy container log location for cluster logging
 -	// support.
 -	// TODO(random-liu): Remove this after cluster logging supports CRI container log path.
@@ -59,10 +59,10 @@ index 97abc229335..458333dafcb 100644
  	// Step 4: execute the post start hook.
  	if container.Lifecycle != nil && container.Lifecycle.PostStart != nil {
  		kubeContainerID := kubecontainer.ContainerID{
-@@ -1217,23 +1198,6 @@ func (m *kubeGenericRuntimeManager) removeContainerLog(ctx context.Context, cont
+@@ -1317,23 +1298,6 @@ func (m *kubeGenericRuntimeManager) removeContainerLog(ctx context.Context, cont
  		return err
  	}
-
+ 
 -	resp, err := m.runtimeService.ContainerStatus(ctx, containerID, false)
 -	if err != nil {
 -		return fmt.Errorf("failed to get container status %q: %v", containerID, err)
@@ -82,9 +82,9 @@ index 97abc229335..458333dafcb 100644
 -	}
  	return nil
  }
-
+ 
 diff --git a/pkg/kubelet/kuberuntime/kuberuntime_gc.go b/pkg/kubelet/kuberuntime/kuberuntime_gc.go
-index 35a19704b95..6ac4883eab1 100644
+index 6189b1f07ca..3cd3daa5a6c 100644
 --- a/pkg/kubelet/kuberuntime/kuberuntime_gc.go
 +++ b/pkg/kubelet/kuberuntime/kuberuntime_gc.go
 @@ -19,7 +19,6 @@ package kuberuntime
@@ -95,7 +95,7 @@ index 35a19704b95..6ac4883eab1 100644
  	"path/filepath"
  	"sort"
  	"time"
-@@ -346,51 +345,6 @@ func (cgc *containerGC) evictPodLogsDirectories(ctx context.Context, allSourcesR
+@@ -347,51 +346,6 @@ func (cgc *containerGC) evictPodLogsDirectories(ctx context.Context, allSourcesR
  			}
  		}
  	}
@@ -146,9 +146,9 @@ index 35a19704b95..6ac4883eab1 100644
 -	}
  	return nil
  }
-
+ 
 diff --git a/pkg/kubelet/runonce.go b/pkg/kubelet/runonce.go
-index b11442ae902..10c783eb868 100644
+index 448df444869..d5ecd47337f 100644
 --- a/pkg/kubelet/runonce.go
 +++ b/pkg/kubelet/runonce.go
 @@ -19,7 +19,6 @@ package kubelet
@@ -157,12 +157,12 @@ index b11442ae902..10c783eb868 100644
  	"fmt"
 -	"os"
  	"time"
-
+ 
  	v1 "k8s.io/api/core/v1"
 @@ -50,13 +49,6 @@ func (kl *Kubelet) RunOnce(updates <-chan kubetypes.PodUpdate) ([]RunPodResult,
  		return nil, err
  	}
-
+ 
 -	// If the container logs directory does not exist, create it.
 -	if _, err := os.Stat(ContainerLogsDir); err != nil {
 -		if err := kl.os.MkdirAll(ContainerLogsDir, 0755); err != nil {
@@ -174,7 +174,7 @@ index b11442ae902..10c783eb868 100644
  	case u := <-updates:
  		klog.InfoS("Processing manifest with pods", "numPods", len(u.Pods))
 diff --git a/test/e2e_node/log_path_test.go b/test/e2e_node/log_path_test.go
-index 68f2cf544aa..f5493d7f88e 100644
+index a1589e6d91e..179206eb1dd 100644
 --- a/test/e2e_node/log_path_test.go
 +++ b/test/e2e_node/log_path_test.go
 @@ -22,8 +22,6 @@ import (
@@ -186,7 +186,7 @@ index 68f2cf544aa..f5493d7f88e 100644
  	"k8s.io/kubernetes/test/e2e/framework"
  	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
  	admissionapi "k8s.io/pod-security-admission/api"
-@@ -122,22 +120,6 @@ var _ = SIGDescribe("ContainerLogPath [NodeConformance]", func() {
+@@ -122,22 +120,6 @@ var _ = SIGDescribe("ContainerLogPath", framework.WithNodeConformance(), func()
  				err := createAndWaitPod(ctx, makeLogPod(logPodName, logString))
  				framework.ExpectNoError(err, "Failed waiting for pod: %s to enter success state", logPodName)
  			})
@@ -206,9 +206,9 @@ index 68f2cf544aa..f5493d7f88e 100644
 -				err = createAndWaitPod(ctx, makeLogCheckPod(logCheckPodName, logString, expectedlogFile))
 -				framework.ExpectNoError(err, "Failed waiting for pod: %s to enter success state", logCheckPodName)
 -			})
-
+ 
  			ginkgo.It("should print log to correct cri log path", func(ctx context.Context) {
-
---
-2.41.0
+ 
+-- 
+2.44.1
 

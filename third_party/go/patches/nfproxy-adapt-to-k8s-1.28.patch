@@ -1,17 +1,18 @@
-From bb611be1b10448316ba21defeede6bec3217febc Mon Sep 17 00:00:00 2001
+From 046483de1453fb8cc1823066844d4617f4f04f85 Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
 Date: Tue, 14 Nov 2023 13:49:46 +0100
-Subject: [PATCH 1/2] Adapt to K8s 1.28
+Subject: [PATCH] Adapt to K8s 1.28
 
 ---
- cmd/nfproxy.go                             | 6 +++---
- pkg/controller/controller_endpointslice.go | 6 +++---
- pkg/proxy/cache.go                         | 2 +-
- pkg/proxy/proxy.go                         | 2 +-
- pkg/proxy/proxy_endpointslice.go           | 2 +-
- pkg/proxy/service.go                       | 4 ++--
- pkg/proxy/tools.go                         | 2 +-
- 7 files changed, 12 insertions(+), 12 deletions(-)
+ cmd/nfproxy.go                             |  6 +++---
+ pkg/controller/controller_endpointslice.go |  6 +++---
+ pkg/proxy/cache.go                         |  2 +-
+ pkg/proxy/endpoints.go                     | 10 +++++++++-
+ pkg/proxy/proxy.go                         |  2 +-
+ pkg/proxy/proxy_endpointslice.go           |  2 +-
+ pkg/proxy/service.go                       |  6 +++---
+ pkg/proxy/tools.go                         |  2 +-
+ 8 files changed, 22 insertions(+), 14 deletions(-)
 
 diff --git a/cmd/nfproxy.go b/cmd/nfproxy.go
 index 66972ab..83d8b01 100644
@@ -83,6 +84,27 @@ index 92d06ca..7ef0e6f 100644
  	"k8s.io/apimachinery/pkg/types"
  	"k8s.io/klog"
  )
+diff --git a/pkg/proxy/endpoints.go b/pkg/proxy/endpoints.go
+index e040285..e288a05 100644
+--- a/pkg/proxy/endpoints.go
++++ b/pkg/proxy/endpoints.go
+@@ -75,7 +75,15 @@ func (info *BaseEndpointInfo) IP() string {
+ 
+ // Port returns just the Port part of the endpoint.
+ func (info *BaseEndpointInfo) Port() (int, error) {
+-	return utilproxy.PortPart(info.Endpoint)
++	_, port, err := net.SplitHostPort(info.Endpoint)
++	if err != nil {
++		return -1, err
++	}
++	portNumber, err := strconv.Atoi(port)
++	if err != nil {
++		return -1, err
++	}
++	return portNumber, nil
+ }
+ 
+ // Equal is part of proxy.Endpoint interface.
 diff --git a/pkg/proxy/proxy.go b/pkg/proxy/proxy.go
 index 7839820..5876784 100644
 --- a/pkg/proxy/proxy.go
@@ -145,5 +167,5 @@ index 06c4ae3..3f7f0b9 100644
  	"k8s.io/apimachinery/pkg/types"
  	"k8s.io/apimachinery/pkg/util/intstr"
 -- 
-2.40.1
+2.44.1
 

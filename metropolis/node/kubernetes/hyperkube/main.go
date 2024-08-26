@@ -27,19 +27,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Adapted from https://github.com/dims/hyperkube
-
+// This is the entry point for our multicall Kubernetes binary. It can act as
+// any of the Kubernetes components we use depending on its first argument.
+// This saves us a bunch of duplicated code and thus system partition size as
+// a large amount of library code is shared between all of the Kubernetes
+// components.
+//
+// As this is not intended by the K8s developers the Cobra setup is unusual
+// in that even the command structs are only created on-demand and not
+// registered with AddCommand. This is done as Kubernetes performs one-off
+// global setup inside their NewXYZCommand functions, for example for signal
+// handling and their global registries.
 package main
 
 import (
-	goflag "flag"
+	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	cliflag "k8s.io/component-base/cli/flag"
-	"k8s.io/component-base/logs"
+	"k8s.io/component-base/cli"
 	_ "k8s.io/component-base/metrics/prometheus/restclient" // for client metric registration
 	_ "k8s.io/component-base/metrics/prometheus/version"    // for version metric registration
 	kubeapiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
@@ -48,70 +54,22 @@ import (
 	kubelet "k8s.io/kubernetes/cmd/kubelet/app"
 )
 
+// Map of subcommand to Cobra command generator for all subcommands
+var subcommands = map[string]func() *cobra.Command{
+	"kube-apiserver":          kubeapiserver.NewAPIServerCommand,
+	"kube-controller-manager": kubecontrollermanager.NewControllerManagerCommand,
+	"kube-scheduler":          func() *cobra.Command { return kubescheduler.NewSchedulerCommand() },
+	"kubelet":                 kubelet.NewKubeletCommand,
+}
+
 func main() {
-	hyperkubeCommand, allCommandFns := NewHyperKubeCommand()
-
-	// TODO: once we switch everything over to Cobra commands, we can go back
-	// to calling cliflag.InitFlags() (by removing its pflag.Parse() call). For
-	// now, we have to set the normalize func and add the go flag set by hand.
-	pflag.CommandLine.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)
-	pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
-	// cliflag.InitFlags()
-	logs.InitLogs()
-	defer logs.FlushLogs()
-
-	basename := filepath.Base(os.Args[0])
-	if err := commandFor(basename, hyperkubeCommand, allCommandFns).Execute(); err != nil {
-		os.Exit(1)
+	if len(os.Args) < 2 || subcommands[os.Args[1]] == nil {
+		fmt.Fprintf(os.Stderr, "Unknown subcommand\n")
+	} else {
+		cmdGen := subcommands[os.Args[1]]
+		cmd := cmdGen()
+		// Strip first argument as it has already been consumed
+		cmd.SetArgs(os.Args[2:])
+		os.Exit(cli.Run(cmd))
 	}
-}
-
-func commandFor(basename string, defaultCommand *cobra.Command, commands []func() *cobra.Command) *cobra.Command {
-	for _, commandFn := range commands {
-		command := commandFn()
-		if command.Name() == basename {
-			return command
-		}
-		for _, alias := range command.Aliases {
-			if alias == basename {
-				return command
-			}
-		}
-	}
-
-	return defaultCommand
-}
-
-// NewHyperKubeCommand is the entry point for hyperkube
-func NewHyperKubeCommand() (*cobra.Command, []func() *cobra.Command) {
-	// these have to be functions since the command is polymorphic. Cobra wants
-	// you to be top level command to get executed
-	apiserver := func() *cobra.Command { return kubeapiserver.NewAPIServerCommand() }
-	controller := func() *cobra.Command { return kubecontrollermanager.NewControllerManagerCommand() }
-	scheduler := func() *cobra.Command { return kubescheduler.NewSchedulerCommand() }
-	kubelet := func() *cobra.Command { return kubelet.NewKubeletCommand() }
-
-	commandFns := []func() *cobra.Command{
-		apiserver,
-		controller,
-		scheduler,
-		kubelet,
-	}
-
-	cmd := &cobra.Command{
-		Use:   "kube",
-		Short: "Combines all Kubernetes components in a single binary",
-		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 0 {
-				cmd.Help()
-				os.Exit(1)
-			}
-		},
-	}
-
-	for i := range commandFns {
-		cmd.AddCommand(commandFns[i]())
-	}
-
-	return cmd, commandFns
 }

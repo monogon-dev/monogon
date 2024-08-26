@@ -371,6 +371,7 @@ OVERRIDES = {
             # Upstream issue https://github.com/google/gvisor/issues/9039
             # Upstream patch https://github.com/google/gvisor/commit/62afa160fe8ad17302d43f7c6016061de57c7f4d
             "//third_party/go/patches:gvisor-fix-debug-builds.patch",
+            "//third_party/go/patches:gvisor-unix-0.20.patch",
         ],
     },
     "go.etcd.io/etcd/tests/v3": {
