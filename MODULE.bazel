@@ -95,10 +95,10 @@ register_toolchains("@rules_rust//proto/protobuf:default-proto-toolchain")
 
 register_toolchains("//build/rust:prost_efi_toolchain")
 
-include("//:rust.MODULE.bazel")
+include("//build/bazel:rust.MODULE.bazel")
 
-include("//:go.MODULE.bazel")
+include("//build/bazel:go.MODULE.bazel")
 
-include("//:oci.MODULE.bazel")
+include("//build/bazel:oci.MODULE.bazel")
 
-include("//:third_party.MODULE.bazel")
+include("//build/bazel:third_party.MODULE.bazel")
