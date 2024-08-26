@@ -24,11 +24,12 @@ import (
 	"log"
 	"net"
 	"os"
-	"os/exec"
 	"os/signal"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bazelbuild/rules_go/go/runfiles"
 
 	"source.monogon.dev/metropolis/cli/flagdefs"
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
@@ -36,6 +37,25 @@ import (
 	cpb "source.monogon.dev/metropolis/proto/common"
 	mlaunch "source.monogon.dev/metropolis/test/launch"
 )
+
+var (
+	// These are filled by bazel at linking time with the canonical path of
+	// their corresponding file. Inside the init function we resolve it
+	// with the rules_go runfiles package to the real path.
+	xMetroctlPath string
+)
+
+func init() {
+	var err error
+	for _, path := range []*string{
+		&xMetroctlPath,
+	} {
+		*path, err = runfiles.Rlocation(*path)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
 
 const maxNodes = 256
 
@@ -176,19 +196,8 @@ func main() {
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	// If the user has metroctl in their path, use the metroctl from path as
-	// a credential plugin. Otherwise use the path to the currently-running
-	// metroctl.
-	metroctlPath := "metroctl"
-	if _, err := exec.LookPath("metroctl"); err != nil {
-		metroctlPath, err = os.Executable()
-		if err != nil {
-			log.Fatalf("Failed to create kubectl entry as metroctl is neither in PATH nor can its absolute path be determined: %v", err)
-		}
-	}
-
 	configName := "launch-cluster"
-	if err := metroctl.InstallKubeletConfig(ctx, metroctlPath, cl.ConnectOptions(), configName, apiserver); err != nil {
+	if err := metroctl.InstallKubeletConfig(ctx, xMetroctlPath, cl.ConnectOptions(), configName, apiserver); err != nil {
 		log.Fatalf("InstallKubeletConfig: %v", err)
 	}
 
