@@ -533,6 +533,12 @@ func (gpt *Table) Write() error {
 		return fmt.Errorf("failed to write alternate header: %v", err)
 	}
 
+	// Sync device after writing each GPT, to ensure there is at least one valid
+	// GPT at all times.
+	if err := gpt.b.Sync(); err != nil {
+		return fmt.Errorf("failed to sync device after writing alternate GPT: %w", err)
+	}
+
 	// Primary header
 	hdr.HeaderBlock = 1
 	hdr.AlternateHeaderBlock = uint64(blockCount - 1)
@@ -564,6 +570,9 @@ func (gpt *Table) Write() error {
 
 	if _, err := gpt.b.WriteAt(hdrRaw.Bytes(), 0); err != nil {
 		return fmt.Errorf("failed to write primary GPT: %w", err)
+	}
+	if err := gpt.b.Sync(); err != nil {
+		return fmt.Errorf("failed to sync device after writing primary GPT: %w", err)
 	}
 	return nil
 }
