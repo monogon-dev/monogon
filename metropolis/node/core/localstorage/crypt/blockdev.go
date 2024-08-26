@@ -271,3 +271,129 @@ func (b blockUEvent) readPartitionInfo() (pi partInfo, err error) {
 
 	return
 }
+
+// GrowPartition grows the GPT partition corresponding to the given block device
+// path, by adding all free space immediately following the partition to the
+// partition. The main use for this are virtual machines which are launched from
+// an image which is smaller than the virtual disk.
+func GrowPartition(partitionPath string) error {
+	// Obtain sysfs path of the partition.
+	var partS unix.Stat_t
+	if err := unix.Stat(partitionPath, &partS); err != nil {
+		return fmt.Errorf("inspecting partition %q: %w", partitionPath, err)
+	}
+	if partS.Mode&unix.S_IFMT != unix.S_IFBLK {
+		return fmt.Errorf("%q is not a block device", partitionPath)
+	}
+	partitionSysPath := fmt.Sprintf("/sys/dev/block/%d:%d", unix.Major(partS.Rdev), unix.Minor(partS.Rdev))
+
+	// Obtain partition number.
+	partitionUevent, err := sysfs.ReadUevents(partitionSysPath + "/uevent")
+	if err != nil {
+		return fmt.Errorf("when reading uevent: %w", err)
+	}
+	if partitionUevent["DEVTYPE"] != "partition" {
+		return fmt.Errorf("%q is not a partition", partitionPath)
+	}
+	partitionInfo, err := blockUEvent(partitionUevent).readPartitionInfo()
+	if err != nil {
+		return fmt.Errorf("when reading partition info: %w", err)
+	}
+
+	// Obtain disk info. Note that partitionSysPath is a symlink, and the ..
+	// leads to the parent of the symlink target.
+	diskUevent, err := sysfs.ReadUevents(partitionSysPath + "/../uevent")
+	if err != nil {
+		return fmt.Errorf("when reading uevent: %w", err)
+	}
+	if diskUevent["DEVTYPE"] != "disk" {
+		return fmt.Errorf("parent of %q is not a disk", partitionPath)
+	}
+
+	// Open the disk device and read the GPT.
+	blkdev, err := blockdev.Open(fmt.Sprintf("/dev/%v", diskUevent["DEVNAME"]))
+	if err != nil {
+		return fmt.Errorf("failed to open block device: %w", err)
+	}
+	defer blkdev.Close()
+
+	table, err := gpt.Read(blkdev)
+	if err != nil {
+		//nolint:returnerrcheck
+		return nil // Probably just not a GPT-partitioned disk
+	}
+
+	if partitionInfo.partNumber-1 > len(table.Partitions) {
+		return fmt.Errorf("partition number %d out of bounds", partitionInfo.partNumber)
+	}
+	tableEntry := table.Partitions[partitionInfo.partNumber-1]
+	if tableEntry.IsUnused() {
+		return fmt.Errorf("partition %d is unused in the GPT", partitionInfo.partNumber)
+	}
+
+	freeSpaces, overlap, err := table.GetFreeSpaces()
+	if err != nil {
+		return err
+	}
+	var freeSpace [2]int64
+	for _, sp := range freeSpaces {
+		if sp[0] == int64(tableEntry.LastBlock)+1 {
+			freeSpace = sp
+			break
+		}
+	}
+	if freeSpace[0] == 0 {
+		// There is no free space after the partition, cannot grow.
+		return nil
+	}
+
+	// Align the new partition end to 1 MiB to make sure that we do not constantly
+	// overwrite hardware blocks containing the alternate GPT at the end,
+	// increasing the possibility of corruption.
+	alignBlocks := max(1*1024*1024/blkdev.BlockSize(), 1)
+	alignedEnd := freeSpace[1] / alignBlocks * alignBlocks
+	if alignedEnd <= freeSpace[0] {
+		// There is no free space after aligning.
+		return nil
+	}
+
+	if overlap {
+		return fmt.Errorf("found overlap in GPT partitions, refusing to grow partition")
+	}
+
+	// We found free space after the partition to grow into.
+	tableEntry.LastBlock = uint64(alignedEnd - 1)
+	err = table.Write()
+	if err != nil {
+		return fmt.Errorf("failed to write GPT with grown partition: %w", err)
+	}
+
+	// Tell the kernel about the new partition size.
+	err = blkdev.ResizePartition(
+		int32(partitionInfo.partNumber),
+		int64(tableEntry.FirstBlock)*blkdev.BlockSize(),
+		int64(tableEntry.SizeBlocks())*blkdev.BlockSize(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to resize partition in kernel after growing partition: %w", err)
+	}
+
+	partBlkdev, err := blockdev.Open(partitionPath)
+	if err != nil {
+		return fmt.Errorf("failed to open partition as block device: %w", err)
+	}
+	defer partBlkdev.Close()
+
+	// Discard the newly allocated space. Do this on the partition instead of the
+	// whole device, because that works more reliably. When using the whole
+	// device, discard may fail if there are dirty pages, but when using the
+	// partition, discard can take an exclusive lock, which avoids this problem.
+	//
+	// Ignore errors, this is only advisory.
+	partBlkdev.Discard(
+		(freeSpace[0]-int64(tableEntry.FirstBlock))*blkdev.BlockSize(),
+		int64(tableEntry.SizeBlocks())*blkdev.BlockSize(),
+	)
+
+	return nil
+}

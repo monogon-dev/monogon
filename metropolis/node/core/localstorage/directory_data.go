@@ -146,6 +146,10 @@ func (d *DataDirectory) MountNew(config *ppb.SealedConfiguration, security cpb.N
 		}
 	}
 
+	err := crypt.GrowPartition(crypt.NodeDataRawPath)
+	if err != nil {
+		return nil, fmt.Errorf("growing data partition: %w", err)
+	}
 	target, err := crypt.Init("data", crypt.NodeDataRawPath, key, mode)
 	if err != nil {
 		return nil, fmt.Errorf("initializing encrypted block device: %w", err)
