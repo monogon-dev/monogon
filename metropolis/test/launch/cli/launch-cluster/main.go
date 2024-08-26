@@ -72,7 +72,7 @@ func nodeSetFlag(p *[]int, name string, usage string) {
 	})
 }
 
-func sizeFlagMiB(p *int, name string, usage string) {
+func memoryMiBFlag(p *int, name string, usage string) {
 	flag.Func(name, usage, func(val string) error {
 		multiplier := 1
 		switch {
@@ -83,6 +83,28 @@ func sizeFlagMiB(p *int, name string, usage string) {
 			return errors.New("must have suffix M for MiB or G for GiB")
 		}
 		intVal, err := strconv.Atoi(val[:len(val)-1])
+		if err != nil {
+			return err
+		}
+		*p = multiplier * intVal
+		return nil
+	})
+}
+
+func diskBytesFlag(p *uint64, name string, usage string) {
+	flag.Func(name, usage, func(val string) error {
+		var multiplier uint64
+		switch {
+		case strings.HasSuffix(val, "M"):
+			multiplier = 1024 * 1024
+		case strings.HasSuffix(val, "G"):
+			multiplier = 1024 * 1024 * 1024
+		case strings.HasSuffix(val, "T"):
+			multiplier = 1024 * 1024 * 1024 * 1024
+		default:
+			return errors.New("must have suffix M for MiB, G for GiB or T for TiB")
+		}
+		intVal, err := strconv.ParseUint(val[:len(val)-1], 10, 64)
 		if err != nil {
 			return err
 		}
@@ -104,7 +126,8 @@ func main() {
 	flagdefs.StorageSecurityPolicyVar(flag.CommandLine, &clusterConfig.StorageSecurityPolicy, "storage-security", cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE, "Storage security policy to set on cluster")
 	flag.IntVar(&opts.Node.CPUs, "cpu", 1, "Number of virtual CPUs of each node")
 	flag.IntVar(&opts.Node.ThreadsPerCPU, "threads-per-cpu", 1, "Number of threads per CPU")
-	sizeFlagMiB(&opts.Node.MemoryMiB, "ram", "RAM size of each node, with suffix M for MiB or G for GiB")
+	memoryMiBFlag(&opts.Node.MemoryMiB, "ram", "RAM size of each node, with suffix M for MiB or G for GiB")
+	diskBytesFlag(&opts.Node.DiskBytes, "disk", "Disk size of each node, with suffix M for MiB, G for GiB or T for TiB")
 	nodeSetFlag(&consensusMemberList, "consensus-member", "List of nodes which get the Consensus Member role. Example: 0,3-5")
 	nodeSetFlag(&kubernetesControllerList, "kubernetes-controller", "List of nodes which get the Kubernetes Controller role. Example: 0,3-5")
 	nodeSetFlag(&kubernetesWorkerList, "kubernetes-worker", "List of nodes which get the Kubernetes Worker role. Example: 0,3-5")

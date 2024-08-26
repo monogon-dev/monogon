@@ -72,6 +72,10 @@ type NodeOptions struct {
 	// MemoryMiB is the RAM size in MiB of the VM.
 	MemoryMiB int
 
+	// DiskBytes contains the size of the root disk in bytes or zero if the
+	// unmodified image size is used.
+	DiskBytes uint64
+
 	// Ports contains the port mapping where to expose the internal ports of the VM to
 	// the host. See IdentityPortMap() and ConflictFreePortMap(). Ignored when
 	// ConnectToSocket is set.
@@ -146,7 +150,7 @@ var NodePorts = []node.Port{
 // files required to preserve its state, a level below the chosen path ld. The
 // node's socket directory is similarily created a level below sd. It may
 // return an I/O error.
-func setupRuntime(ld, sd string) (*NodeRuntime, error) {
+func setupRuntime(ld, sd string, diskBytes uint64) (*NodeRuntime, error) {
 	// Create a temporary directory to keep all the runtime files.
 	stdp, err := os.MkdirTemp(ld, "node_state*")
 	if err != nil {
@@ -154,6 +158,12 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 	}
 
 	// Initialize the node's storage with a prebuilt image.
+	st, err := os.Stat(xNodeImagePath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read image file: %w", err)
+	}
+	diskBytes = max(diskBytes, uint64(st.Size()))
+
 	di := filepath.Join(stdp, "image.qcow2")
 	launch.Log("Cluster: generating node QCOW2 snapshot image: %s -> %s", xNodeImagePath, di)
 
@@ -162,7 +172,7 @@ func setupRuntime(ld, sd string) (*NodeRuntime, error) {
 		return nil, fmt.Errorf("while opening image for writing: %w", err)
 	}
 	defer df.Close()
-	if err := qcow2.Generate(df, qcow2.GenerateWithBackingFile(xNodeImagePath)); err != nil {
+	if err := qcow2.Generate(df, qcow2.GenerateWithBackingFile(xNodeImagePath), qcow2.GenerateWithFileSize(diskBytes)); err != nil {
 		return nil, fmt.Errorf("while creating copy-on-write node image: %w", err)
 	}
 
@@ -242,7 +252,7 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 
 	// If it's the node's first start, set up its runtime directories.
 	if options.Runtime == nil {
-		r, err := setupRuntime(ld, sd)
+		r, err := setupRuntime(ld, sd, options.DiskBytes)
 		if err != nil {
 			return fmt.Errorf("while setting up node runtime: %w", err)
 		}
