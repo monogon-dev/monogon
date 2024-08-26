@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/bits"
 	"os"
+	"runtime"
 	"syscall"
 	"unsafe"
 
@@ -142,6 +143,37 @@ func (d *Device) RefreshPartitionTable() error {
 	}
 	if err != unix.Errno(0) {
 		return fmt.Errorf("ioctl(BLKRRPART): %w", err)
+	}
+	return nil
+}
+
+// ResizePartition updates the start and length of one partition in the kernel.
+// This can be used as an alternative to RefreshPartitionTable, which cannot
+// be used if any partition on this device is currently mounted.
+func (d *Device) ResizePartition(partitionNo int32, startByte, lengthBytes int64) error {
+	var ioctlPins runtime.Pinner
+	defer ioctlPins.Unpin()
+
+	partition := unix.BlkpgPartition{
+		Start:  startByte,
+		Length: lengthBytes,
+		Pno:    partitionNo,
+	}
+	ioctlPins.Pin(&partition)
+	arg := unix.BlkpgIoctlArg{
+		Op:      unix.BLKPG_RESIZE_PARTITION,
+		Datalen: int32(unsafe.Sizeof(partition)),
+		Data:    (*byte)(unsafe.Pointer(&partition)),
+	}
+
+	var err unix.Errno
+	if ctrlErr := d.rawConn.Control(func(fd uintptr) {
+		_, _, err = unix.Syscall(unix.SYS_IOCTL, fd, unix.BLKPG, uintptr(unsafe.Pointer(&arg)))
+	}); ctrlErr != nil {
+		return ctrlErr
+	}
+	if err != unix.Errno(0) {
+		return fmt.Errorf("ioctl(BLKPG): %w", err)
 	}
 	return nil
 }
