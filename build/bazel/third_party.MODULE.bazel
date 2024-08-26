@@ -9,7 +9,7 @@ http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_
 # Used by tests in cloud/takeover
 http_file(
     name = "debian_11_cloudimage",
-    sha256 = "14caeec68ba3129a115a9b57396d08dc0973cc9f569ce049232d7d15d768ad41",
+    integrity = "sha256-FMruxoujEpoRWptXOW0I3AlzzJ9WnOBJIy19FddorUE=",
     urls = [
         "https://cloud.debian.org/images/cloud/bullseye/20230124-1270/debian-11-genericcloud-amd64-20230124-1270.qcow2",
     ],
@@ -35,64 +35,67 @@ git_repository(
 #
 # WARNING: Not distributed under an OSI certified license. Must only be used in
 # tests, not be redistributed!
+COCKROACH_VERSION = "22.1.6"
+
 http_archive(
     name = "cockroach",
-    build_file_content = """
-exports_files([
-    "cockroach"
-])
-""",
-    sha256 = "0821cff5770400fb94c8b6c2ab338d96f4114fbf2b3206bc8a6dcf62f9c0f4ea",
-    strip_prefix = "cockroach-v22.1.6.linux-amd64",
+    build_file = "//third_party/cockroach:BUILD.repo",
+    integrity = "sha256-CCHP9XcEAPuUyLbCqzONlvQRT78rMga8im3PYvnA9Oo=",
+    strip_prefix = "cockroach-v%s.linux-amd64" % COCKROACH_VERSION,
     urls = [
         # TODO: select() to pick other host architectures.
-        "https://binaries.cockroachdb.com/cockroach-v22.1.6.linux-amd64.tgz",
+        "https://binaries.cockroachdb.com/cockroach-v%s.linux-amd64.tgz" % COCKROACH_VERSION,
     ],
 )
 
 # CockroachDB repository used for linter passes.
 http_archive(
     name = "com_github_cockroachdb_cockroach",
-    integrity = "sha256-3xYgvXmuPvrGgtSzfoK/K9p/FCH0eMZywAAL10A41k0=",
-    strip_prefix = "cockroach-23.2.4",
+    integrity = "sha256-bDVo7yRM5rh0aU7u7Lg+1PXV3/bPA3yVLs3naCimxQI=",
+    strip_prefix = "cockroach-" + COCKROACH_VERSION,
     urls = [
-        "https://github.com/cockroachdb/cockroach/archive/v23.2.4.tar.gz",
+        "https://github.com/cockroachdb/cockroach/archive/v%s.tar.gz" % COCKROACH_VERSION,
     ],
 )
 
 # Derived from Mozilla NSS, currently needed for containerd to be able to pull images
 http_file(
     name = "cacerts",
-    sha256 = "1bf458412568e134a4514f5e170a328d11091e071c7110955c9884ed87972ac9",
+    integrity = "sha256-G/RYQSVo4TSkUU9eFwoyjREJHgcccRCVXJiE7YeXKsk=",
     urls = ["https://curl.se/ca/cacert-2024-07-02.pem"],
 )
 
 # lz4, the library and the tool.
+LZ4_VERSION = "1.9.2"
+
 http_archive(
     name = "com_github_lz4_lz4",
     patch_args = ["-p1"],
     patches = ["//third_party/lz4:build.patch"],
-    sha256 = "658ba6191fa44c92280d4aa2c271b0f4fbc0e34d249578dd05e50e76d0e5efcc",
-    strip_prefix = "lz4-1.9.2",
-    urls = ["https://github.com/lz4/lz4/archive/v1.9.2.tar.gz"],
+    strip_prefix = "lz4-" + LZ4_VERSION,
+    urls = ["https://github.com/lz4/lz4/archive/v%s.tar.gz" % LZ4_VERSION],
 )
 
 # ini.h, a tiny ini parser library
+INIH_VERSION = "r53"
+
 http_archive(
     name = "inih",
-    build_file = "@//third_party/inih:inih.bzl",
-    sha256 = "01b0366fdfdf6363efc070c2f856f1afa33e7a6546548bada5456ad94a516241",
-    strip_prefix = "inih-r53",
-    urls = ["https://github.com/benhoyt/inih/archive/r53.tar.gz"],
+    build_file = "//third_party/inih:inih.bzl",
+    integrity = "sha256-AbA2b9/fY2PvwHDC+Fbxr6M+emVGVIutpUVq2UpRYkE=",
+    strip_prefix = "inih-" + INIH_VERSION,
+    urls = ["https://github.com/benhoyt/inih/archive/%s.tar.gz" % INIH_VERSION],
 )
 
 # qboot bootloader for MicroVMs
+QBOOT_VERSION = "a5300c4949b8d4de2d34bedfaed66793f48ec948"
+
 http_archive(
     name = "com_github_bonzini_qboot",
     build_file = "//third_party/qboot:qboot.bzl",
-    sha256 = "a643b2486fbee57b969659d408984094ca9afa1a048317dd3f5d3022e47213e8",
-    strip_prefix = "qboot-a5300c4949b8d4de2d34bedfaed66793f48ec948",
-    urls = ["https://github.com/bonzini/qboot/archive/a5300c4949b8d4de2d34bedfaed66793f48ec948.tar.gz"],
+    integrity = "sha256-pkOySG++5XuWllnUCJhAlMqa+hoEgxfdP10wIuRyE+g=",
+    strip_prefix = "qboot-" + QBOOT_VERSION,
+    urls = ["https://github.com/bonzini/qboot/archive/%s.tar.gz" % QBOOT_VERSION],
 )
 
 git_repository(
@@ -100,4 +103,294 @@ git_repository(
     commit = "de9373c2d48a3edf29862eb8be44764a7f7d24c6",
     remote = "https://github.com/monogon-dev/gperf.git",
     shallow_since = "1615306886 +0100",
+)
+
+LINUX_VERSION = "6.6.42"
+
+http_archive(
+    name = "linux",
+    build_file = "//third_party/linux/external:BUILD.repo",
+    integrity = "sha256-iAHIwpfXdOdgRJd+w9BoQ5ncTnzONH1zCHTseLd05oM=",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/linux/external:0001-block-partition-expose-PARTUUID-through-uevent.patch",
+        "//third_party/linux/external:disable-static-ifs.patch",
+        "//third_party/linux/external:enable-pmsg.patch",
+        "//third_party/linux/external:lacp_fix.patch",
+    ],
+    strip_prefix = "linux-" + LINUX_VERSION,
+    urls = ["https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-%s.tar.xz" % LINUX_VERSION],
+)
+
+LINUX_FIRMWARE_VERSION = "20240513"
+
+http_archive(
+    name = "linux-firmware",
+    build_file = "//third_party/linux-firmware:BUILD.repo",
+    integrity = "sha256-tyJDZOH9fua4A/hhdH+czefCAwr5Of3B7uoIPqhc5Rw=",
+    strip_prefix = "linux-firmware-" + LINUX_FIRMWARE_VERSION,
+    urls = ["https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/snapshot/linux-firmware-%s.tar.gz" % LINUX_FIRMWARE_VERSION],
+)
+
+INTEL_UCODE_VERSION = "20231114"
+
+http_archive(
+    name = "intel_ucode",
+    build_file = "//third_party/intel_ucode:BUILD.repo",
+    integrity = "sha256-zuJvMR9+LAOd1IzTD5lRg73puY+0wwOYAOLdr1wJDlU=",
+    strip_prefix = "Intel-Linux-Processor-Microcode-Data-Files-microcode-" + INTEL_UCODE_VERSION,
+    urls = ["https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files/archive/refs/tags/microcode-%s.tar.gz" % INTEL_UCODE_VERSION],
+)
+
+git_repository(
+    name = "edk2",
+    build_file = "//third_party/edk2/external:BUILD.repo",
+    commit = "b24306f15daa2ff8510b06702114724b33895d3c",  # stable202202
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/edk2/patches:disable-werror.patch",
+        "//third_party/edk2/patches:remove-brotli-build.patch",
+    ],
+    recursive_init_submodules = True,
+    remote = "https://github.com/tianocore/edk2",
+    shallow_since = "1645456780 +0000",
+)
+
+MUSL_VERSION = "1.1.24"
+
+http_archive(
+    name = "musl",
+    build_file = "//third_party/musl:BUILD.repo",
+    integrity = "sha256-E3DJqBKyzyp9koAlEMygBYzDfmanvt1wBR8KNAFQIqM=",
+    strip_prefix = "musl-" + MUSL_VERSION,
+    urls = ["https://www.musl-libc.org/releases/musl-%s.tar.gz" % MUSL_VERSION],
+)
+
+UTIL_LINUX_VERSION = "2.36.2"
+
+http_archive(
+    name = "util_linux",
+    build_file = "//third_party/util-linux:util-linux.bzl",
+    integrity = "sha256-CEvG+b1Hm/146JJOY/hbsXlTaBvx2tJA5NhgGiEpTQs=",
+    patch_args = ["-p1"],
+    patches = ["//third_party/util-linux/patches:bazel_cc_fix.patch"],
+    strip_prefix = "util-linux-" + UTIL_LINUX_VERSION,
+    urls = ["https://git.kernel.org/pub/scm/utils/util-linux/util-linux.git/snapshot/util-linux-%s.tar.gz" % UTIL_LINUX_VERSION],
+)
+
+URCU_VERSION = "0.14.0"
+
+http_archive(
+    name = "urcu",
+    build_file = "//third_party/urcu:urcu.bzl",
+    integrity = "sha256-QvtRKaP//lpLeQ3+HqOnNMae4JX++/ZJMmJpu6lMJi0=",
+    patch_args = ["-p1"],
+    patches = ["//third_party/urcu/patches:generated-files.patch"],
+    strip_prefix = "userspace-rcu-" + URCU_VERSION,
+    urls = ["https://github.com/urcu/userspace-rcu/archive/refs/tags/v%s.tar.gz" % URCU_VERSION],
+)
+
+XFSPROGS_VERSION = "6.9.0"
+
+http_archive(
+    name = "xfsprogs",
+    build_file = "//third_party/xfsprogs:xfsprogs.bzl",
+    integrity = "sha256-/nIGlou9gXd1S6cy9jn4Ubacj3CsX5a7DhgtiGZBQL8=",
+    patch_args = ["-p1"],
+    patches = ["//third_party/xfsprogs/patches:bazel_cc_fix.patch"],
+    strip_prefix = "xfsprogs-dev-" + XFSPROGS_VERSION,
+    urls = ["https://git.kernel.org/pub/scm/fs/xfs/xfsprogs-dev.git/snapshot/xfsprogs-dev-%s.tar.gz" % XFSPROGS_VERSION],
+)
+
+PIXMAN_VERSION = "0.40.0"
+
+http_archive(
+    name = "pixman",
+    build_file = "//third_party/pixman:pixman.bzl",
+    integrity = "sha256-bSAN7DdA2exOyNEYDiV3nAC8dJ+UJ4yLkCH1U02yI/w=",
+    strip_prefix = "pixman-" + PIXMAN_VERSION + "/pixman",
+    urls = ["https://www.cairographics.org/releases/pixman-%s.tar.gz" % PIXMAN_VERSION],
+)
+
+URING_VERSION = "2.0"
+
+http_archive(
+    name = "uring",
+    build_file = "//third_party/uring:uring.bzl",
+    integrity = "sha256-ygaezEqhuvEDG9dy5Ol/fibftrtzPXn3AVlYmyKrTcA=",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/uring/patches:bazel_cc_fix.patch",
+        "//third_party/uring/patches:include-compat-h.patch",
+    ],
+    strip_prefix = "liburing-liburing-" + URING_VERSION,
+    urls = ["https://github.com/axboe/liburing/archive/liburing-%s.tar.gz" % URING_VERSION],
+)
+
+# NOTE: Remember to update seccomp.bzl's seccomp.h template rule
+# with the correct version.
+SECCOMP_VERSION = "2.5.1"
+
+http_archive(
+    name = "seccomp",
+    build_file = "//third_party/seccomp:seccomp.bzl",
+    integrity = "sha256-dq1U4x0UOzmpkINWQEUhKpZeAmoQEKdC7deT0m1pmCk=",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/seccomp/patches:bazel_cc_fix.patch",
+        "//third_party/seccomp/patches:fix_generated_includes.patch",
+    ],
+    strip_prefix = "libseccomp-" + SECCOMP_VERSION,
+    # We cannot use the actual release tarball as it contains files generated incorrectly for our environment
+    urls = ["https://github.com/seccomp/libseccomp/archive/v%s.tar.gz" % SECCOMP_VERSION],
+)
+
+GLIB_VERSION = "2.67.5"
+
+http_archive(
+    name = "glib",
+    integrity = "sha256-QQlm23EmONx0kFTAo8MIdUXVEGZDE5wlgGOZpRqNSrE=",
+    patch_args = [
+        "-p1",
+        "-u",
+    ],
+    patches = [
+        "//third_party/glib/patches:bazel_cc_fix.patch",
+        "//third_party/glib/patches:bazel_support.patch",
+    ],
+    strip_prefix = "glib-" + GLIB_VERSION,
+    # We cannot use the actual release tarball as it contains files generated incorrectly for our environment
+    urls = ["https://gitlab.gnome.org/GNOME/glib/-/archive/%s/glib-%s.tar.gz" % (GLIB_VERSION, GLIB_VERSION)],
+)
+
+QEMU_VERSION = "5.2.0"
+
+http_archive(
+    name = "qemu",
+    integrity = "sha256-yxjYibYo++Y3ZysDJnidmw47gCfgRFuTZTfHhUnfF7w=",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/qemu/patches:fix_code_issues.patch",
+        "//third_party/qemu/patches:bazel_support.patch",
+        "//third_party/qemu/patches:pregenerated_config_files.patch",
+        "//third_party/qemu/patches:headers_fix.patch",
+        "//third_party/qemu/patches:linux-headers-update.patch",
+        "//third_party/qemu/patches:standard-headers-removal.patch",
+    ],
+    strip_prefix = "qemu-" + QEMU_VERSION,
+    urls = ["https://download.qemu.org/qemu-%s.tar.xz" % QEMU_VERSION],
+)
+
+# ONCHANGE(//third_party/chrony:chrony.bzl): version needs to be kept in sync
+CHRONY_VERSION = "4.1"
+
+http_archive(
+    name = "chrony",
+    build_file = "//third_party/chrony:chrony.bzl",
+    integrity = "sha256-7Xby0/k0esYiGpGtS9VT3QVlrBiM10kNCAHQj3FxFkw=",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/chrony/patches:disable_defaults.patch",
+        "//third_party/chrony/patches:support_fixed_uids.patch",
+    ],
+    strip_prefix = "chrony-" + CHRONY_VERSION,
+    urls = ["https://download.tuxfamily.org/chrony/chrony-%s.tar.gz" % CHRONY_VERSION],
+)
+
+CAP_VERSION = "1.2.55"
+
+http_archive(
+    name = "cap",
+    build_file = "//third_party/cap:cap.bzl",
+    integrity = "sha256-4pMiAy6pTpBpauLRdTDtyRTHF2UjLuj9T944umOcslY=",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/cap/patches:add_go_codegen.patch",
+    ],
+    strip_prefix = "libcap-cap/v%s/libcap" % CAP_VERSION,
+    urls = ["https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-cap/v%s.tar.gz" % CAP_VERSION],
+)
+
+GNUEFI_VERSION = "3.0.14"
+
+http_archive(
+    name = "gnuefi",
+    build_file = "//third_party/gnuefi:gnuefi.bzl",
+    integrity = "sha256-V4XneCX+xeZm5MINeqqa9M2VI1GywJWTlydE/oQ2+Vc=",
+    strip_prefix = "gnu-efi-%s" % GNUEFI_VERSION,
+    urls = ["https://github.com/ncroxon/gnu-efi/archive/refs/tags/%s.tar.gz" % GNUEFI_VERSION],
+)
+
+# Developed in the systemd monorepo, pinned to master as there have been a bunch of critical fixes for the
+# EFI stub since 249.
+EFISTUB_VERSION = "3542da2442d8b29661b47c42ad7e5fa9bc8562ec"
+
+http_archive(
+    name = "efistub",
+    build_file = "//third_party/efistub:efistub.bzl",
+    integrity = "sha256-AhwTW+45ynNG0fCZI758BEo9NYZv9BGnyWJnAv9MlSM=",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/efistub/patches:use-sysv-for-kernel.patch",
+        "//third_party/efistub/patches:remove-wrong-cmdline-assertion.patch",
+        "//third_party/efistub/patches:ab-slot-handling.patch",
+    ],
+    strip_prefix = "systemd-%s" % EFISTUB_VERSION,
+    urls = ["https://github.com/systemd/systemd/archive/%s.zip" % EFISTUB_VERSION],
+)
+
+LIBPG_QUERY_VERSION = "15-4.2.3"
+
+http_archive(
+    name = "libpg_query",
+    build_file = "//third_party/libpg_query/external:BUILD.repo",
+    integrity = "sha256-i4INY0QrFnfOTw3yqVs/r9vFIKgpAd74EhdVnsTfnms=",
+    strip_prefix = "libpg_query-" + LIBPG_QUERY_VERSION,
+    urls = ["https://github.com/pganalyze/libpg_query/archive/refs/tags/%s.tar.gz" % LIBPG_QUERY_VERSION],
+)
+
+DOSFSTOOLS_VERSION = "c888797b1d84ffbb949f147e3116e8bfb2e145a7"
+
+http_archive(
+    name = "com_github_dosfstools_dosfstools",
+    build_file = "//third_party/dosfstools:dosfstools.bzl",
+    integrity = "sha256-SkC0iMDCWcEftUeD/G8B5e6RJYK7SdM9DRGxH4WkLo0=",
+    strip_prefix = "dosfstools-" + DOSFSTOOLS_VERSION,
+    urls = ["https://github.com/dosfstools/dosfstools/archive/%s.zip" % DOSFSTOOLS_VERSION],
+)
+
+# master at 2024/01/09 (0.10.0 prerelease).
+LIBTPMS_VERSION = "93a827aeccd3ab2178281571b1545dcfffa2991b"
+
+http_archive(
+    name = "libtpms",
+    integrity = "sha256-5QnguhCfd9pRe15YqfCTvrBAUl5r5R3gbRFTyCeMcNE=",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/libtpms/patches:0001-boringssl-compat-new-SHA-types.patch",
+        "//third_party/libtpms/patches:0002-boringssl-compat-removed-const_DES_cblock.patch",
+        "//third_party/libtpms/patches:0003-boringssl-compat-removed-EC_POINTs_mul.patch",
+        "//third_party/libtpms/patches:0004-boringssl-compat-removed-camellia-support.patch",
+        "//third_party/libtpms/patches:0005-boringssl-compat-remove-constant-time-flags-UNSAFE.patch",
+        "//third_party/libtpms/patches:0006-bazel-support-implement.patch",
+    ],
+    strip_prefix = "libtpms-" + LIBTPMS_VERSION,
+    urls = ["https://github.com/stefanberger/libtpms/archive/%s.tar.gz" % LIBTPMS_VERSION],
+)
+
+# master at 2024/06/04
+SWTPM_VERSION = "0c9a6c4a12a63b86ab472e69e95bd75853d4fa96"
+
+http_archive(
+    name = "swtpm",
+    integrity = "sha256-Fp3bE5WX+oCOES1FJFdEXHntUhuzT5mQZtIN6SFAVs4=",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/swtpm/patches:0001-bazel-compat-glib.h-glib-glib.h.patch",
+        "//third_party/swtpm/patches:0002-swtpm_localca-replace-gmp-mpz-dependency-with-boring.patch",
+        "//third_party/swtpm/patches:0003-swtpm_setup-replace-dep-on-JSON-GLib-with-sheredom-j.patch",
+        "//third_party/swtpm/patches:0004-bazel-support-implement.patch",
+    ],
+    strip_prefix = "swtpm-" + SWTPM_VERSION,
+    urls = ["https://github.com/stefanberger/swtpm/archive/%s.tar.gz" % SWTPM_VERSION],
 )

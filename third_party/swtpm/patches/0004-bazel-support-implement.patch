@@ -47,8 +47,8 @@ index 0000000..acddc0e
 +cc_binary(
 +    name = "swtpm",
 +    deps = [
-+        "@libtpms//:libtpms_tpm2",
-+        "@glib//glib",
++        "@@//third_party/libtpms:libtpms_tpm2",
++        "@@//third_party/glib",
 +    ],
 +    srcs = glob([
 +        "src/swtpm/*.h",
@@ -64,9 +64,9 @@ index 0000000..acddc0e
 +        "src/utils/swtpm_utils.c",
 +    ]),
 +    copts = [
-+        "-Iexternal/swtpm/include",
-+        "-Iexternal/swtpm/include/swtpm",
-+        "-Iexternal/swtpm/src/utils",
++        "-Iexternal/_main~_repo_rules~swtpm/include",
++        "-Iexternal/_main~_repo_rules~swtpm/include/swtpm",
++        "-Iexternal/_main~_repo_rules~swtpm/src/utils",
 +    ],
 +    visibility = [
 +        "//visibility:public",
@@ -76,8 +76,8 @@ index 0000000..acddc0e
 +cc_binary(
 +    name = "swtpm_localca",
 +    deps = [
-+        "@libtpms//:libtpms_tpm2",
-+        "@glib//glib",
++        "@@//third_party/libtpms:libtpms_tpm2",
++        "@@//third_party/glib",
 +    ],
 +    srcs = glob([
 +        "src/swtpm_localca/*.h",
@@ -88,9 +88,9 @@ index 0000000..acddc0e
 +        "src/utils/*.c",
 +    ], []),
 +    copts = [
-+        "-Iexternal/swtpm/include",
-+        "-Iexternal/swtpm/include/swtpm",
-+        "-Iexternal/swtpm/src/utils",
++        "-Iexternal/_main~_repo_rules~swtpm/include",
++        "-Iexternal/_main~_repo_rules~swtpm/include/swtpm",
++        "-Iexternal/_main~_repo_rules~swtpm/src/utils",
 +    ],
 +    visibility = [
 +        "//visibility:public",
@@ -100,8 +100,8 @@ index 0000000..acddc0e
 +cc_binary(
 +    name = "swtpm_setup",
 +    deps = [
-+        "@libtpms//:libtpms_tpm2",
-+        "@glib//glib",
++        "@@//third_party/libtpms:libtpms_tpm2",
++        "@@//third_party/glib",
 +    ],
 +    srcs = glob([
 +        "src/swtpm_setup/*.h",
@@ -112,9 +112,9 @@ index 0000000..acddc0e
 +        "src/utils/*.c",
 +    ], []),
 +    copts = [
-+        "-Iexternal/swtpm/include",
-+        "-Iexternal/swtpm/include/swtpm",
-+        "-Iexternal/swtpm/src/utils",
++        "-Iexternal/_main~_repo_rules~swtpm/include",
++        "-Iexternal/_main~_repo_rules~swtpm/include/swtpm",
++        "-Iexternal/_main~_repo_rules~swtpm/src/utils",
 +    ],
 +    visibility = [
 +        "//visibility:public",
@@ -132,7 +132,7 @@ index 0000000..acddc0e
 +        "include/*.h",
 +    ], []),
 +    copts = [
-+        "-Iexternal/swtpm/include",
++        "-Iexternal/_main~_repo_rules~swtpm/include",
 +    ],
 +    visibility = [
 +        "//visibility:public",

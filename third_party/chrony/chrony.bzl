@@ -5,7 +5,7 @@ template_file(
     name = "config.h",
     src = "@@//third_party/chrony:config.h.in",
     substitutions = {
-        # ONCHANGE(//third_party/chrony:external.bzl): version needs to be kept in sync
+        # ONCHANGE(//build/bazel:third_party.MODULE.bazel): version needs to be kept in sync
         "%CHRONY_VERSION%": "4.1-monogon",
     },
 )

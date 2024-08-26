@@ -26,11 +26,11 @@ index 0000000..591942d
 +        "include",
 +    ],
 +    copts = [
-+        "-Iexternal/libtpms/include/libtpms",
-+        "-Iexternal/libtpms/src",
-+        "-Iexternal/libtpms/src/tpm2",
-+        "-Iexternal/libtpms/src/tpm2/crypto",
-+        "-Iexternal/libtpms/src/tpm2/crypto/openssl",
++        "-Iexternal/_main~_repo_rules~libtpms/include/libtpms",
++        "-Iexternal/_main~_repo_rules~libtpms/src",
++        "-Iexternal/_main~_repo_rules~libtpms/src/tpm2",
++        "-Iexternal/_main~_repo_rules~libtpms/src/tpm2/crypto",
++        "-Iexternal/_main~_repo_rules~libtpms/src/tpm2/crypto/openssl",
 +    ],
 +    defines = [
 +        "TPM_LIBTPMS_CALLBACKS",

@@ -35,7 +35,7 @@ template_file(
     name = "version.h",
     src = "src/version.h.in",
     substitutions = {
-        # ONCHANGE(//third_party/dosfstools:external.bzl): version needs to be kept in sync
+        # ONCHANGE(//build/bazel:third_party.MODULE.bazel): version needs to be kept in sync
         "@PACKAGE_VERSION@": "unstable-2022-07-25",
         "@RELEASE_DATE@": "2022-07-25",
     },

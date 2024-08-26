@@ -78,6 +78,14 @@ bazel_dep(name = "rules_proto", version = "6.0.2")
 bazel_dep(name = "toolchains_protoc", version = "0.3.1")
 bazel_dep(name = "protobuf", version = "27.2")
 
+# Load musl toolchain Metropolis sysroot tarball into external repository.
+musl_sysroot_rule = use_repo_rule("//build/toolchain/musl-host-gcc:sysroot_repository.bzl", "musl_sysroot_rule")
+
+musl_sysroot_rule(
+    name = "musl_sysroot",
+    snapshot = "//build/toolchain/musl-host-gcc:sysroot.tar.xz",
+)
+
 # Register our custom CC toolchains. Order matters - more specific toolchains must be registered first.
 # (host_cc_toolchain won't care about //build/platforms/linkmode, but musl_host_toolchain won't
 # match anything unless its linkmode is set).
