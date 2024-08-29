@@ -4,8 +4,8 @@
 package node
 
 import (
-	_ "github.com/containerd/containerd/cmd/containerd"
-	_ "github.com/containerd/containerd/cmd/containerd-shim-runc-v2"
+	_ "github.com/containerd/containerd/v2/cmd/containerd"
+	_ "github.com/containerd/containerd/v2/cmd/containerd-shim-runc-v2"
 	_ "github.com/containernetworking/plugins/plugins/ipam/host-local"
 	_ "github.com/containernetworking/plugins/plugins/main/loopback"
 	_ "github.com/containernetworking/plugins/plugins/main/ptp"

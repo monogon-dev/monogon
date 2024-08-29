@@ -192,7 +192,8 @@ type TmpDirectory struct {
 
 type RunDirectory struct {
 	declarative.Directory
-	// Hardcoded in @com_github_containerd_containerd//pkg/process:utils.go and
-	// @com_github_containerd_containerd//runtime/v2/shim:util_unix.go
+	// Hardcoded in @com_github_containerd_containerd_v2//
+	// cmd/containerd-shim-runc-v2/process/utils.go and
+	// @com_github_containerd_containerd_v2//defaults:defaults_unix.go
 	Containerd declarative.Directory `dir:"containerd"`
 }

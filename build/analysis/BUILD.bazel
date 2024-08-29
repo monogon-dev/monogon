@@ -138,7 +138,7 @@ NOGO_CONFIG = {
             "external/io_etcd_go_etcd_client_v3": "third_party",
             "external/com_github_coredns_coredns": "third_party",
             "external/io_etcd_go_etcd_server_v3": "third_party",
-            "external/com_github_containerd_containerd": "third_party",
+            "external/com_github_containerd_containerd_v2": "third_party",
             "external/io_k8s_client_go": "third_party",
             "external/io_k8s_apiserver": "third_party",
             "external/io_k8s_kubectl": "third_party",

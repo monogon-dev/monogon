@@ -26,8 +26,8 @@ import (
 	"strings"
 	"time"
 
-	ctr "github.com/containerd/containerd"
-	"github.com/containerd/containerd/namespaces"
+	ctr "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/pkg/namespaces"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/osbase/supervisor"

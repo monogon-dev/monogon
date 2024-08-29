@@ -38,8 +38,8 @@ normal length                 foo
 	golden = strings.TrimSpace(golden)
 	got := strings.TrimSpace(buf.String())
 	if got != golden {
-		t.Logf("wanted: \n" + golden)
-		t.Logf("got: \n" + got)
+		t.Logf("wanted: \n%s", golden)
+		t.Logf("got: \n%s", got)
 		t.Errorf("mismatch")
 	}
 }

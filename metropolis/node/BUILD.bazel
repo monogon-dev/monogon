@@ -58,10 +58,10 @@ erofs_image(
         "@dev_gvisor_gvisor//shim": "/containerd/bin/containerd-shim-runsc-v1",
 
         # runc (runtime in files_cc because of cgo)
-        "@com_github_containerd_containerd//cmd/containerd-shim-runc-v2": "/containerd/bin/containerd-shim-runc-v2",
+        "@com_github_containerd_containerd_v2//cmd/containerd-shim-runc-v2": "/containerd/bin/containerd-shim-runc-v2",
 
         # Containerd
-        "@com_github_containerd_containerd//cmd/containerd": "/containerd/bin/containerd",
+        "@com_github_containerd_containerd_v2//cmd/containerd": "/containerd/bin/containerd",
 
         # Containerd config files
         "//metropolis/node/kubernetes/containerd:runsc.toml": "/containerd/conf/runsc.toml",

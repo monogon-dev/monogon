@@ -16,7 +16,7 @@ use_repo(
     "com_github_cenkalti_backoff_v4",
     "com_github_cockroachdb_cockroach_go_v2",
     "com_github_container_storage_interface_spec",
-    "com_github_containerd_containerd",
+    "com_github_containerd_containerd_v2",
     "com_github_containernetworking_plugins",
     "com_github_coreos_go_semver",
     "com_github_corverroos_commentwrap",
@@ -113,14 +113,10 @@ OVERRIDES = {
             "gazelle:proto disable",
         ],
     },
-    "github.com/containerd/containerd": {
+    "github.com/containerd/containerd/v2": {
         "directives": [
             "gazelle:proto disable",
             "gazelle:build_tags no_btrfs,no_zfs",
-        ],
-        "pre_patches": [
-            # We build with newer CRI API definitions.
-            "//third_party/go/patches:containerd-grpc-inherit-unimplemented.patch",
         ],
     },
     "github.com/containerd/cgroups/v3": {
@@ -364,16 +360,9 @@ OVERRIDES = {
     "gvisor.dev/gvisor": {
         "patches": [
             "//third_party/go/patches:gvisor-fix-syslog.patch",
-            # Gazelle doesn't understand conditional build files.
-            # https://github.com/bazelbuild/bazel-gazelle/issues/1262
-            "//third_party/go/patches:gvisor-fix-gazelle-debug-builds.patch",
         ],
         "pre_patches": [
             "//third_party/go/patches:gvisor-containerd-compat.patch",
-            # Modified patch for the go branch.
-            # Upstream issue https://github.com/google/gvisor/issues/9039
-            # Upstream patch https://github.com/google/gvisor/commit/62afa160fe8ad17302d43f7c6016061de57c7f4d
-            "//third_party/go/patches:gvisor-fix-debug-builds.patch",
         ],
     },
     "go.etcd.io/etcd/tests/v3": {

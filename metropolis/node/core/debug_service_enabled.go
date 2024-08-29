@@ -25,8 +25,8 @@ import (
 	"regexp"
 	"strings"
 
-	ctr "github.com/containerd/containerd"
-	"github.com/containerd/containerd/namespaces"
+	ctr "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

@@ -1,14 +1,17 @@
-version = 2
+version = 3
 root = "/data/containerd"
 state = "/ephemeral/containerd"
+temp = ""
 plugin_dir = ""
-disabled_plugins = []
+disabled_plugins = ["io.containerd.internal.v1.opt", "io.containerd.snapshotter.v1.blockfile", "io.containerd.snapshotter.v1.devmapper", "io.containerd.image-verifier.v1"]
 required_plugins = ["io.containerd.grpc.v1.cri"]
 oom_score = 0
+imports = []
 
 [grpc]
   address = "/ephemeral/containerd/client.sock"
   tcp_address = ""
+  tcp_tls_ca = ""
   tcp_tls_cert = ""
   tcp_tls_key = ""
   uid = 0
@@ -26,6 +29,7 @@ oom_score = 0
   uid = 0
   gid = 0
   level = ""
+  format = ""
 
 [metrics]
   address = "127.0.0.1:7846"
@@ -41,91 +45,180 @@ oom_score = 0
   "io.containerd.timeout.task.state" = "2s"
 
 [plugins]
+  [plugins."io.containerd.cri.v1.images"]
+    snapshotter = "overlayfs"
+    disable_snapshot_annotations = true
+    discard_unpacked_layers = false
+    max_concurrent_downloads = 3
+    image_pull_progress_timeout = "5m0s"
+    image_pull_with_sync_fs = false
+    stats_collect_period = 10
+
+    [plugins."io.containerd.cri.v1.images".pinned_images]
+      sandbox = "preseed.metropolis.internal/node/kubernetes/pause:latest"
+
+    [plugins."io.containerd.cri.v1.images".registry]
+      config_path = ""
+
+      [plugins."io.containerd.cri.v1.images".registry.mirrors]
+        [plugins."io.containerd.cri.v1.images".registry.mirrors."docker.io"]
+          endpoint = ["https://registry-1.docker.io"]
+
+        [plugins."io.containerd.cri.v1.images".registry.mirrors."test.monogon.internal"]
+          endpoint = ["http://10.42.0.82:5000"]
+
+      [plugins."io.containerd.cri.v1.images".registry.configs]
+        [plugins."io.containerd.cri.v1.images".registry.configs."10.42.0.82:5000"]
+
+    [plugins."io.containerd.cri.v1.images".image_decryption]
+      key_model = "node"
+
+  [plugins."io.containerd.cri.v1.runtime"]
+    enable_selinux = false
+    selinux_category_range = 1024
+    max_container_log_line_size = 16384
+    disable_apparmor = true
+    restrict_oom_score_adj = false
+    disable_proc_mount = false
+    unset_seccomp_profile = ""
+    tolerate_missing_hugetlb_controller = true
+    disable_hugetlb_controller = true
+    device_ownership_from_security_context = true
+    ignore_image_defined_volumes = true
+    netns_mounts_under_state_dir = true
+    enable_unprivileged_ports = true
+    enable_unprivileged_icmp = true
+    enable_cdi = true
+    cdi_spec_dirs = ["/etc/cdi", "/var/run/cdi"]
+    drain_exec_sync_io_timeout = "0s"
+    ignore_deprecation_warnings = []
+
+    [plugins."io.containerd.cri.v1.runtime".containerd]
+      default_runtime_name = "runc"
+      ignore_blockio_not_enabled_errors = false
+      ignore_rdt_not_enabled_errors = false
+
+      [plugins."io.containerd.cri.v1.runtime".containerd.runtimes]
+        [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.runc]
+          runtime_type = "io.containerd.runc.v2"
+          runtime_path = ""
+          pod_annotations = []
+          container_annotations = []
+          privileged_without_host_devices = false
+          privileged_without_host_devices_all_devices_allowed = false
+          base_runtime_spec = ""
+          cni_conf_dir = ""
+          cni_max_conf_num = 0
+          snapshotter = ""
+          sandboxer = "podsandbox"
+          io_type = ""
+
+          [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.runc.options]
+            BinaryName = ""
+            CriuImagePath = ""
+            CriuWorkPath = ""
+            IoGid = 0
+            IoUid = 0
+            NoNewKeyring = false
+            Root = ""
+            ShimCgroup = ""
+
+        [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.runsc]
+          runtime_type = "io.containerd.runsc.v1"
+          runtime_path = ""
+          pod_annotations = []
+          container_annotations = []
+          privileged_without_host_devices = false
+          privileged_without_host_devices_all_devices_allowed = false
+          base_runtime_spec = ""
+          cni_conf_dir = ""
+          cni_max_conf_num = 0
+          snapshotter = ""
+          sandboxer = ""
+          io_type = ""
+
+          [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.runsc.options]
+            ConfigPath = "/containerd/conf/runsc.toml"
+            TypeUrl = "io.containerd.runsc.v1.options"
+
+    [plugins."io.containerd.cri.v1.runtime".cni]
+      bin_dir = "/containerd/bin/cni"
+      conf_dir = "/ephemeral/containerd/cni"
+      max_conf_num = 0
+      setup_serially = false
+      conf_template = "/containerd/conf/cnispec.gojson"
+      ip_pref = ""
+      use_internal_loopback = false
+
   [plugins."io.containerd.gc.v1.scheduler"]
     pause_threshold = 0.02
     deletion_threshold = 0
     mutation_threshold = 100
     schedule_delay = "0s"
     startup_delay = "100ms"
+
   [plugins."io.containerd.grpc.v1.cri"]
     disable_tcp_service = true
     stream_server_address = "127.0.0.1"
     stream_server_port = "0"
     stream_idle_timeout = "4h0m0s"
-    enable_selinux = false
-    sandbox_image = "preseed.metropolis.internal/node/kubernetes/pause:latest"
-    stats_collect_period = 10
-    systemd_cgroup = false
     enable_tls_streaming = false
-    ignore_image_defined_volumes = true
-    netns_mounts_under_state_dir = true
-    max_container_log_line_size = 16384
-    disable_cgroup = false
-    disable_apparmor = true
-    restrict_oom_score_adj = false
-    max_concurrent_downloads = 3
-    disable_proc_mount = false
-    device_ownership_from_security_context = true
-    [plugins."io.containerd.grpc.v1.cri".containerd]
-      snapshotter = "overlayfs"
-      default_runtime_name = "runc"
-      no_pivot = false
-      [plugins."io.containerd.grpc.v1.cri".containerd.default_runtime]
-        runtime_type = ""
-        runtime_engine = ""
-        runtime_root = ""
-        privileged_without_host_devices = false
-      [plugins."io.containerd.grpc.v1.cri".containerd.untrusted_workload_runtime]
-        runtime_type = ""
-        runtime_engine = ""
-        runtime_root = ""
-        privileged_without_host_devices = false
-      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
-        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc]
-          runtime_type = "io.containerd.runsc.v1"
-          runtime_engine = ""
-          runtime_root = ""
-          privileged_without_host_devices = false
-          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runsc.options]
-            TypeUrl = "io.containerd.runsc.v1.options"
-            ConfigPath = "/containerd/conf/runsc.toml"
-        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-          runtime_type = "io.containerd.runc.v2"
-          runtime_engine = ""
-          runtime_root = ""
-          privileged_without_host_devices = false
-          base_runtime_spec = ""
-    [plugins."io.containerd.grpc.v1.cri".cni]
-      bin_dir = "/containerd/bin/cni"
-      conf_dir = "/ephemeral/containerd/cni"
-      max_conf_num = 0
-      conf_template = "/containerd/conf/cnispec.gojson"
-    [plugins."io.containerd.grpc.v1.cri".registry]
-      [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
-          endpoint = ["https://registry-1.docker.io"]
-      [plugins."io.containerd.grpc.v1.cri".registry.configs."10.42.0.82:5000".tls]
-        insecure_skip_verify = true
-      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."test.monogon.internal"]
-        endpoint = ["http://10.42.0.82:5000"]
+
     [plugins."io.containerd.grpc.v1.cri".x509_key_pair_streaming]
       tls_cert_file = ""
       tls_key_file = ""
-  [plugins."io.containerd.internal.v1.opt"]
-    path = "/containerd/bin"
-  [plugins."io.containerd.internal.v1.restart"]
+
+  [plugins."io.containerd.monitor.container.v1.restart"]
     interval = "10s"
+
+  [plugins."io.containerd.internal.v1.tracing"]
+
   [plugins."io.containerd.metadata.v1.bolt"]
     content_sharing_policy = "shared"
-  [plugins."io.containerd.monitor.v1.cgroups"]
+
+  [plugins."io.containerd.monitor.task.v1.cgroups"]
     no_prometheus = false
+
+  [plugins."io.containerd.nri.v1.nri"]
+    disable = true
+    socket_path = "/var/run/nri/nri.sock"
+    plugin_path = "/opt/nri/plugins"
+    plugin_config_path = "/etc/nri/conf.d"
+    plugin_registration_timeout = "5s"
+    plugin_request_timeout = "2s"
+    disable_connections = true
+
   [plugins."io.containerd.runtime.v1.linux"]
-    shim = "containerd-shim"
+    no_shim = false
     runtime = "noop"
     runtime_root = ""
-    no_shim = false
+    shim = "containerd-shim"
     shim_debug = false
+
   [plugins."io.containerd.runtime.v2.task"]
     platforms = ["linux/amd64"]
+
   [plugins."io.containerd.service.v1.diff-service"]
     default = ["walking"]
+    sync_fs = false
+
+  [plugins."io.containerd.service.v1.tasks-service"]
+    blockio_config_file = ""
+    rdt_config_file = ""
+
+  [plugins."io.containerd.shim.v1.manager"]
+    env = []
+
+  [plugins."io.containerd.snapshotter.v1.overlayfs"]
+    root_path = ""
+    upperdir_label = false
+    sync_remove = false
+    slow_chown = false
+    mount_options = []
+
+  [plugins."io.containerd.tracing.processor.v1.otlp"]
+
+  [plugins."io.containerd.transfer.v1.local"]
+    max_concurrent_downloads = 3
+    max_concurrent_uploaded_layers = 3
+    config_path = ""
