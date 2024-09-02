@@ -245,10 +245,13 @@ func (gpt *Table) AddPartition(p *Partition, size int64, options ...AddOption) e
 	// Number of blocks the partition should occupy, rounded up.
 	blocks := (size + blockSize - 1) / blockSize
 	if size == -1 {
-		if largestFreeSpace == 0 {
+		// When size is -1, use the largest free space. Align the size to ensure
+		// that the partition does not overlap the hardware blocks containing the
+		// alternate GPT.
+		blocks = largestFreeSpace / alignBlocks * alignBlocks
+		if blocks == 0 {
 			return errors.New("no free space")
 		}
-		blocks = largestFreeSpace
 	} else if size <= 0 {
 		return fmt.Errorf("partition size (%d bytes) must be positive or the special value -1", size)
 	}

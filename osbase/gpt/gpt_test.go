@@ -98,7 +98,7 @@ func TestAddPartition(t *testing.T) {
 		{
 			name:        "empty-fill",
 			addSize:     -1,
-			expectParts: []*Partition{{Name: "added", FirstBlock: 2048, LastBlock: 5*2048 - 16384/512 - 2}},
+			expectParts: []*Partition{{Name: "added", FirstBlock: 2048, LastBlock: 5*2048 - 2048 - 1}},
 		},
 		{
 			name:        "empty-end",
