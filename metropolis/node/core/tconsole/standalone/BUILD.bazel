@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "standalone_lib",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/metropolis/node/core/tconsole/standalone",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//metropolis/node/core/network",
+        "//metropolis/node/core/roleserve",
+        "//metropolis/node/core/tconsole",
+        "//metropolis/proto/common",
+        "//osbase/event/memory",
+        "//osbase/supervisor",
+    ],
+)
+
+go_binary(
+    name = "standalone",
+    embed = [":standalone_lib"],
+    visibility = ["//visibility:public"],
+)

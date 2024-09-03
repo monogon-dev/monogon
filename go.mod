@@ -82,6 +82,7 @@ require (
 	github.com/corverroos/commentwrap v0.0.0-20191204065359-2926638be44c
 	github.com/diskfs/go-diskfs v1.2.0
 	github.com/docker/distribution v2.8.2+incompatible
+	github.com/gdamore/tcell/v2 v2.7.4
 	github.com/go-delve/delve v1.8.2
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/cel-go v0.20.1
@@ -160,6 +161,11 @@ require (
 	k8s.io/kubernetes v1.20.1
 	k8s.io/pod-security-admission v0.0.0
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
+)
+
+require (
+	github.com/gdamore/encoding v1.0.0 // indirect
+	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 )
 
 require (
@@ -312,7 +318,7 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	github.com/mattn/go-xmlrpc v0.0.3 // indirect
 	github.com/mdlayher/socket v0.5.0 // indirect
@@ -364,7 +370,7 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/pseudomuto/protokit v0.2.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rivo/uniseg v0.4.3
 	github.com/riza-io/grpc-go v0.2.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rs/cors v1.8.0 // indirect

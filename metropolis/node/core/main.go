@@ -33,6 +33,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
+	"source.monogon.dev/metropolis/node/core/tconsole"
 	timesvc "source.monogon.dev/metropolis/node/core/time"
 	"source.monogon.dev/metropolis/node/core/update"
 	mversion "source.monogon.dev/metropolis/version"
@@ -52,13 +53,8 @@ func main() {
 	// Root system logtree.
 	lt := logtree.New()
 
-	// Set up logger for Metropolis. Currently logs everything to /dev/tty0 and
-	// /dev/ttyS{0,1}.
-	consoles := []*console{
-		{
-			path:     "/dev/tty0",
-			maxWidth: 80,
-		},
+	// Set up logger for Metropolis. Currently logs everything to /dev/ttyS{0,1}.
+	serialConsoles := []*console{
 		{
 			path:     "/dev/ttyS0",
 			maxWidth: 120,
@@ -73,7 +69,7 @@ func main() {
 	crash := make(chan string)
 
 	// Open up consoles and set up logging from logtree and crash channel.
-	for _, c := range consoles {
+	for _, c := range serialConsoles {
 		f, err := os.OpenFile(c.path, os.O_WRONLY, 0)
 		if err != nil {
 			continue
@@ -99,7 +95,7 @@ func main() {
 	}
 
 	// Initialize persistent panic handler early
-	initPanicHandler(lt, consoles)
+	initPanicHandler(lt, serialConsoles)
 
 	// Initial logger. Used until we get to a supervisor.
 	logger := lt.MustLeveledFor("init")
@@ -215,6 +211,19 @@ func main() {
 			return fmt.Errorf("when starting debug service: %w", err)
 		}
 
+		// Initialize interactive consoles.
+		interactiveConsoles := []string{"/dev/tty0"}
+		for _, c := range interactiveConsoles {
+			console, err := tconsole.New(tconsole.TerminalLinux, c, &networkSvc.Status, &rs.LocalRoles, &rs.CuratorConnection)
+			if err != nil {
+				logger.Info("Failed to initialize interactive console at %s: %v", c, err)
+				// TODO: fall back to logger
+			} else {
+				logger.Info("Started interactive console at %s", c)
+				supervisor.Run(ctx, "console-"+c, console.Run)
+			}
+		}
+
 		// Start cluster manager. This kicks off cluster membership machinery,
 		// which will either start a new cluster, enroll into one or join one.
 		m := cluster.NewManager(root, networkSvc, rs, updateSvc, nodeParams, haveTPM)
@@ -249,7 +258,7 @@ func main() {
 	ctxC()
 	time.Sleep(time.Second)
 	// After a bit, kill all console log readers.
-	for _, c := range consoles {
+	for _, c := range serialConsoles {
 		if c.reader == nil {
 			continue
 		}

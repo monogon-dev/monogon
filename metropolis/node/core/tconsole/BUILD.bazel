@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "tconsole",
+    srcs = [
+        "colors.go",
+        "draw.go",
+        "page_status.go",
+        "tconsole.go",
+    ],
+    importpath = "source.monogon.dev/metropolis/node/core/tconsole",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/node/core/network",
+        "//metropolis/node/core/roleserve",
+        "//metropolis/proto/common",
+        "//metropolis/version",
+        "//osbase/event",
+        "//osbase/supervisor",
+        "//version",
+        "@com_github_gdamore_tcell_v2//:tcell",
+        "@com_github_rivo_uniseg//:uniseg",
+    ],
+)
