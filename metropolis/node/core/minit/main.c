@@ -29,17 +29,16 @@
 
 void handle_signal(pid_t child_pid, int signum);
 
-#define NUM_CONSOLES 4
+#define NUM_CONSOLES 3
 FILE *consoles[NUM_CONSOLES] = {};
 
 // open_consoles populates the consoles array with FILE pointers to opened
 // character devices that should receive log messages. Some of these pointers
 // are likely to be null, meaning that particular console is not available.
 void open_consoles() {
-    consoles[0] = fopen("/dev/console", "w");
-    consoles[1] = fopen("/dev/tty0", "w");
-    consoles[2] = fopen("/dev/ttyS0", "w");
-    consoles[3] = fopen("/dev/ttyS1", "w");
+    consoles[0] = fopen("/dev/tty0", "w");
+    consoles[1] = fopen("/dev/ttyS0", "w");
+    consoles[2] = fopen("/dev/ttyS1", "w");
 
     // Set all open consoles to be line-buffered.
     for (int i = 0; i < NUM_CONSOLES; i++) {
@@ -82,7 +81,7 @@ int main() {
     cprintf(
         "\n"
         "  Metropolis Cluster Operating System\n"
-        "  Copyright 2020-2023 The Monogon Project Authors\n"
+        "  Copyright 2020-2024 The Monogon Project Authors\n"
         "\n"
     );
 
