@@ -11,7 +11,7 @@ go_library(
         "swtpm.go",
     ],
     data = [
-        "//metropolis/cli/metroctl",
+        "//metropolis/cli/metroctl:metroctl_lite",
         "//metropolis/node:image",
         "//metropolis/test/nanoswitch:initramfs",
         "//metropolis/test/swtpm/certtool",
@@ -31,7 +31,7 @@ go_library(
         "xSwtpmLocalCAPath": "$(rlocationpath @swtpm//:swtpm_localca )",
         "xSwtpmCertPath": "$(rlocationpath //metropolis/test/swtpm/swtpm_cert )",
         "xCerttoolPath": "$(rlocationpath //metropolis/test/swtpm/certtool )",
-        "xMetroctlPath": "$(rlocationpath //metropolis/cli/metroctl )",
+        "xMetroctlPath": "$(rlocationpath //metropolis/cli/metroctl:metroctl_lite )",
         "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
         "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
         "xKernelPath": "$(rlocationpath //osbase/test/ktest:linux-testing )",
