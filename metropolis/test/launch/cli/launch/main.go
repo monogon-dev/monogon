@@ -59,6 +59,7 @@ func main() {
 		Name:       "test-node",
 		Ports:      launch.IdentityPortMap(ports),
 		SerialPort: os.Stdout,
+		RunVNC:     true,
 		NodeParameters: &apb.NodeParameters{
 			Cluster: &apb.NodeParameters_ClusterBootstrap_{
 				ClusterBootstrap: mlaunch.InsecureClusterBootstrap,

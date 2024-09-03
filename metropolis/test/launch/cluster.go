@@ -107,6 +107,11 @@ type NodeOptions struct {
 
 	// Runtime keeps the node's QEMU runtime state.
 	Runtime *NodeRuntime
+
+	// RunVNC starts a VNC socket for troubleshooting/testing console code. Note:
+	// this will not work in tests, as those use a built-in qemu which does not
+	// implement a VGA device.
+	RunVNC bool
 }
 
 // NodeRuntime keeps the node's QEMU runtime options.
@@ -284,7 +289,7 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 	qemuArgs := []string{
 		"-machine", "q35",
 		"-accel", "kvm",
-		"-nographic",
+		"-display", "none",
 		"-nodefaults",
 		"-cpu", "host",
 		"-m", fmt.Sprintf("%dM", options.MemoryMiB),
@@ -299,6 +304,13 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 		"-device", "tpm-tis,tpmdev=tpm0",
 		"-device", "virtio-rng-pci",
 		"-serial", "stdio",
+	}
+	if options.RunVNC {
+		vncSocketPath := filepath.Join(r.sd, "vnc-socket")
+		qemuArgs = append(qemuArgs,
+			"-vnc", "unix:"+vncSocketPath,
+			"-device", "virtio-vga",
+		)
 	}
 
 	if !options.AllowReboot {
@@ -673,7 +685,7 @@ func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certif
 			}
 		}
 		return backoff.Permanent(err)
-	}, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
+	}, backoff.WithContext(backoff.NewExponentialBackOff(backoff.WithMaxElapsedTime(time.Minute)), ctx))
 	if err != nil {
 		return nil, nil, fmt.Errorf("couldn't retrieve owner certificate: %w", err)
 	}
