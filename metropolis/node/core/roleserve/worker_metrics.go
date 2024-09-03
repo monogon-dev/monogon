@@ -17,7 +17,7 @@ import (
 // sub-processes), and a forwarding service that lets external users access them
 // over HTTPS using the Cluster CA.
 type workerMetrics struct {
-	curatorConnection *memory.Value[*curatorConnection]
+	curatorConnection *memory.Value[*CuratorConnection]
 	localRoles        *memory.Value[*cpb.NodeRoles]
 	localControlplane *memory.Value[*localControlPlane]
 }
@@ -34,7 +34,7 @@ func (s *workerMetrics) run(ctx context.Context) error {
 	supervisor.Logger(ctx).Infof("Got curator connection, starting...")
 
 	svc := metrics.Service{
-		Credentials: cc.credentials,
+		Credentials: cc.Credentials,
 		Discovery: metrics.Discovery{
 			Curator: ipb.NewCuratorClient(cc.conn),
 		},

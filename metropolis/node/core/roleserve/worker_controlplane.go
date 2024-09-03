@@ -49,7 +49,7 @@ type workerControlPlane struct {
 	// localControlPlane will be written.
 	localControlPlane *memory.Value[*localControlPlane]
 	// curatorConnection will be written.
-	curatorConnection *memory.Value[*curatorConnection]
+	curatorConnection *memory.Value[*CuratorConnection]
 }
 
 // controlPlaneStartup is used internally to provide a reduced (as in MapReduce)
@@ -62,7 +62,7 @@ type controlPlaneStartup struct {
 	// bootstrap is set if this node should bootstrap consensus. It contains all
 	// data required to perform this bootstrap step.
 	bootstrap *BootstrapData
-	existing  *curatorConnection
+	existing  *CuratorConnection
 }
 
 // changed informs the Control Plane launcher whether two different
@@ -95,21 +95,21 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 	// which is okay as long as the entire tree restarts simultaneously (which we
 	// ensure via RunGroup).
 	bootstrapDataC := make(chan *BootstrapData)
-	curatorConnectionC := make(chan *curatorConnection)
+	curatorConnectionC := make(chan *CuratorConnection)
 	rolesC := make(chan *cpb.NodeRoles)
 
 	supervisor.RunGroup(ctx, map[string]supervisor.Runnable{
 		// Plain conversion from Event Value to channel.
 		"map-bootstrap-data": event.Pipe[*BootstrapData](s.bootstrapData, bootstrapDataC),
 		// Plain conversion from Event Value to channel.
-		"map-curator-connection": event.Pipe[*curatorConnection](s.curatorConnection, curatorConnectionC),
+		"map-curator-connection": event.Pipe[*CuratorConnection](s.curatorConnection, curatorConnectionC),
 		// Plain conversion from Event Value to channel.
 		"map-roles": event.Pipe[*cpb.NodeRoles](s.localRoles, rolesC),
 		// Provide config from above.
 		"reduce-config": func(ctx context.Context) error {
 			supervisor.Signal(ctx, supervisor.SignalHealthy)
 			var lr *cpb.NodeRoles
-			var cc *curatorConnection
+			var cc *CuratorConnection
 			var bd *BootstrapData
 			for {
 				select {
@@ -197,7 +197,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 						consensusConfig: &consensus.Config{
 							Data:           &s.storageRoot.Data.Etcd,
 							Ephemeral:      &s.storageRoot.Ephemeral.Consensus,
-							NodePrivateKey: cc.credentials.TLSCredentials().PrivateKey.(ed25519.PrivateKey),
+							NodePrivateKey: cc.Credentials.TLSCredentials().PrivateKey.(ed25519.PrivateKey),
 							JoinCluster: &consensus.JoinCluster{
 								CACertificate:   caCert,
 								NodeCertificate: peerCert,
@@ -320,14 +320,14 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				if startup.existing == nil {
 					panic("no existing curator connection but not bootstrapping either")
 				}
-				if startup.existing.credentials == nil {
+				if startup.existing.Credentials == nil {
 					panic("no existing.credentials but not bootstrapping either")
 				}
 
 				// Use already existing credentials, and pass over already known curators (as
 				// we're not the only node, and we'd like downstream consumers to be able to
 				// keep connecting to existing curators in case the local one fails).
-				creds = startup.existing.credentials
+				creds = startup.existing.Credentials
 			}
 
 			// Start curator.

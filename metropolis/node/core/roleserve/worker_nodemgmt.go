@@ -11,7 +11,7 @@ import (
 )
 
 type workerNodeMgmt struct {
-	curatorConnection *memory.Value[*curatorConnection]
+	curatorConnection *memory.Value[*CuratorConnection]
 	logTree           *logtree.LogTree
 	updateService     *update.Service
 }
@@ -27,7 +27,7 @@ func (s *workerNodeMgmt) run(ctx context.Context) error {
 
 	supervisor.Logger(ctx).Infof("Got cluster membership, starting...")
 	srv := mgmt.Service{
-		NodeCredentials: cc.credentials,
+		NodeCredentials: cc.Credentials,
 		LogTree:         s.logTree,
 		UpdateService:   s.updateService,
 	}

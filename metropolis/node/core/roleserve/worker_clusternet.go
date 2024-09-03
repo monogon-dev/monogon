@@ -17,7 +17,7 @@ type workerClusternet struct {
 	storageRoot *localstorage.Root
 
 	// curatorConnection will be read
-	curatorConnection *memory.Value[*curatorConnection]
+	curatorConnection *memory.Value[*CuratorConnection]
 	// podNetwork will be read.
 	podNetwork *memory.Value[*clusternet.Prefixes]
 	network    *network.Service

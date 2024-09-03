@@ -19,7 +19,7 @@ type workerHeartbeat struct {
 	network *network.Service
 
 	// curatorConnection will be read.
-	curatorConnection *memory.Value[*curatorConnection]
+	curatorConnection *memory.Value[*CuratorConnection]
 }
 
 func (s *workerHeartbeat) run(ctx context.Context) error {

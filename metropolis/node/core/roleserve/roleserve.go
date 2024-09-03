@@ -82,11 +82,11 @@ type Service struct {
 
 	KubernetesStatus      memory.Value[*KubernetesStatus]
 	bootstrapData         memory.Value[*BootstrapData]
-	localRoles            memory.Value[*cpb.NodeRoles]
+	LocalRoles            memory.Value[*cpb.NodeRoles]
 	podNetwork            memory.Value[*clusternet.Prefixes]
 	clusterDirectorySaved memory.Value[bool]
 	localControlPlane     memory.Value[*localControlPlane]
-	CuratorConnection     memory.Value[*curatorConnection]
+	CuratorConnection     memory.Value[*CuratorConnection]
 
 	controlPlane *workerControlPlane
 	statusPush   *workerStatusPush
@@ -108,7 +108,7 @@ func New(c Config) *Service {
 		storageRoot: s.StorageRoot,
 
 		bootstrapData: &s.bootstrapData,
-		localRoles:    &s.localRoles,
+		localRoles:    &s.LocalRoles,
 		resolver:      s.Resolver,
 
 		localControlPlane: &s.localControlPlane,
@@ -133,7 +133,7 @@ func New(c Config) *Service {
 		network:     s.Network,
 		storageRoot: s.StorageRoot,
 
-		localRoles:        &s.localRoles,
+		localRoles:        &s.LocalRoles,
 		localControlPlane: &s.localControlPlane,
 		curatorConnection: &s.CuratorConnection,
 
@@ -145,7 +145,7 @@ func New(c Config) *Service {
 		storageRoot:       s.StorageRoot,
 		curatorConnection: &s.CuratorConnection,
 
-		localRoles: &s.localRoles,
+		localRoles: &s.LocalRoles,
 	}
 
 	s.nodeMgmt = &workerNodeMgmt{
@@ -171,7 +171,7 @@ func New(c Config) *Service {
 
 	s.metrics = &workerMetrics{
 		curatorConnection: &s.CuratorConnection,
-		localRoles:        &s.localRoles,
+		localRoles:        &s.LocalRoles,
 		localControlplane: &s.localControlPlane,
 	}
 

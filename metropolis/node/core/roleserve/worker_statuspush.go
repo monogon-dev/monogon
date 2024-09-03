@@ -25,7 +25,7 @@ type workerStatusPush struct {
 	// localControlPlane will be read
 	localControlPlane *memory.Value[*localControlPlane]
 	// curatorConnection will be read.
-	curatorConnection *memory.Value[*curatorConnection]
+	curatorConnection *memory.Value[*CuratorConnection]
 	// clusterDirectorySaved will be read.
 	clusterDirectorySaved *memory.Value[bool]
 }
@@ -36,7 +36,7 @@ type workerStatusPushChannels struct {
 	// address of the node, or empty if none. Retrieved from network service.
 	address           chan string
 	localControlPlane chan *localControlPlane
-	curatorConnection chan *curatorConnection
+	curatorConnection chan *CuratorConnection
 }
 
 // workerStatusPushLoop runs the main loop acting on data received from
@@ -107,7 +107,7 @@ func workerStatusPushLoop(ctx context.Context, chans *workerStatusPushChannels) 
 func (s *workerStatusPush) run(ctx context.Context) error {
 	chans := workerStatusPushChannels{
 		address:           make(chan string),
-		curatorConnection: make(chan *curatorConnection),
+		curatorConnection: make(chan *CuratorConnection),
 		localControlPlane: make(chan *localControlPlane),
 	}
 
@@ -137,7 +137,7 @@ func (s *workerStatusPush) run(ctx context.Context) error {
 		}
 	})
 	supervisor.Run(ctx, "pipe-local-control-plane", event.Pipe[*localControlPlane](s.localControlPlane, chans.localControlPlane))
-	supervisor.Run(ctx, "pipe-curator-connection", event.Pipe[*curatorConnection](s.curatorConnection, chans.curatorConnection))
+	supervisor.Run(ctx, "pipe-curator-connection", event.Pipe[*CuratorConnection](s.curatorConnection, chans.curatorConnection))
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	return workerStatusPushLoop(ctx, &chans)

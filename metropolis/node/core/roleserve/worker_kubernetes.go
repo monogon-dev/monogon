@@ -33,7 +33,7 @@ type workerKubernetes struct {
 
 	localRoles        *memory.Value[*cpb.NodeRoles]
 	localControlPlane *memory.Value[*localControlPlane]
-	curatorConnection *memory.Value[*curatorConnection]
+	curatorConnection *memory.Value[*CuratorConnection]
 	kubernetesStatus  *memory.Value[*KubernetesStatus]
 	podNetwork        *memory.Value[*clusternet.Prefixes]
 }
@@ -69,14 +69,14 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 	var startupV memory.Value[*kubernetesStartup]
 
 	localControlPlaneC := make(chan *localControlPlane)
-	curatorConnectionC := make(chan *curatorConnection)
+	curatorConnectionC := make(chan *CuratorConnection)
 	rolesC := make(chan *cpb.NodeRoles)
 
 	supervisor.RunGroup(ctx, map[string]supervisor.Runnable{
 		// Plain conversion from Event Value to channel.
 		"map-local-control-plane": event.Pipe[*localControlPlane](s.localControlPlane, localControlPlaneC),
 		// Plain conversion from Event Value to channel.
-		"map-curator-connection": event.Pipe[*curatorConnection](s.curatorConnection, curatorConnectionC),
+		"map-curator-connection": event.Pipe[*CuratorConnection](s.curatorConnection, curatorConnectionC),
 		// Plain conversion from Event Value to channel.
 		"map-roles": event.Pipe[*cpb.NodeRoles](s.localRoles, rolesC),
 		// Provide config from the above.
@@ -84,7 +84,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			supervisor.Signal(ctx, supervisor.SignalHealthy)
 			var lr *cpb.NodeRoles
 			var lcp *localControlPlane
-			var cc *curatorConnection
+			var cc *CuratorConnection
 			for {
 				select {
 				case <-ctx.Done():
@@ -97,7 +97,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 					startupV.Set(&kubernetesStartup{
 						roles:   lr,
 						lcp:     lcp,
-						node:    cc.credentials,
+						node:    cc.Credentials,
 						curator: ipb.NewCuratorClient(cc.conn),
 					})
 				}

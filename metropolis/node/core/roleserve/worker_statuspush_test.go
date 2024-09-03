@@ -69,7 +69,7 @@ func TestWorkerStatusPush(t *testing.T) {
 	chans := workerStatusPushChannels{
 		address:           make(chan string),
 		localControlPlane: make(chan *localControlPlane),
-		curatorConnection: make(chan *curatorConnection),
+		curatorConnection: make(chan *CuratorConnection),
 	}
 
 	go supervisor.TestHarness(t, func(ctx context.Context) error {
@@ -104,8 +104,8 @@ func TestWorkerStatusPush(t *testing.T) {
 	nodeID := eph.Nodes[0].ID()
 
 	// Actual test code starts here.
-	chans.curatorConnection <- &curatorConnection{
-		credentials: eph.Nodes[0],
+	chans.curatorConnection <- &CuratorConnection{
+		Credentials: eph.Nodes[0],
 		conn:        cl,
 	}
 	cur.expectReports(t, nil)

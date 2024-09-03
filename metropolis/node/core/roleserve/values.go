@@ -42,28 +42,28 @@ func (l *localControlPlane) exists() bool {
 //
 // This structure should also be used by roleserver runnables that simply wish to
 // access the node's credentials.
-type curatorConnection struct {
-	credentials *identity.NodeCredentials
+type CuratorConnection struct {
+	Credentials *identity.NodeCredentials
 	resolver    *resolver.Resolver
 	conn        *grpc.ClientConn
 }
 
-func newCuratorConnection(creds *identity.NodeCredentials, res *resolver.Resolver) *curatorConnection {
+func newCuratorConnection(creds *identity.NodeCredentials, res *resolver.Resolver) *CuratorConnection {
 	c := rpc.NewAuthenticatedCredentials(creds.TLSCredentials(), rpc.WantRemoteCluster(creds.ClusterCA()))
 	conn, err := grpc.Dial(resolver.MetropolisControlAddress, grpc.WithTransportCredentials(c), grpc.WithResolvers(res))
 	if err != nil {
 		// TOOD(q3k): triple check that Dial will not fail
 		panic(err)
 	}
-	return &curatorConnection{
-		credentials: creds,
+	return &CuratorConnection{
+		Credentials: creds,
 		resolver:    res,
 		conn:        conn,
 	}
 }
 
-func (c *curatorConnection) nodeID() string {
-	return identity.NodeID(c.credentials.PublicKey())
+func (c *CuratorConnection) nodeID() string {
+	return identity.NodeID(c.Credentials.PublicKey())
 }
 
 // KubernetesStatus is an Event Value structure populated by a running

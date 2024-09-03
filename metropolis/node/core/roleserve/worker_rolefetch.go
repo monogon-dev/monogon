@@ -19,7 +19,7 @@ import (
 // the node is HOME and cluster credentials / curator access is available.
 type workerRoleFetch struct {
 	storageRoot       *localstorage.Root
-	curatorConnection *memory.Value[*curatorConnection]
+	curatorConnection *memory.Value[*CuratorConnection]
 
 	// localRoles will be written.
 	localRoles *memory.Value[*cpb.NodeRoles]

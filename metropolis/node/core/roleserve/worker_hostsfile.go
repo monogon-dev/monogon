@@ -21,7 +21,7 @@ type workerHostsfile struct {
 
 	// network will be read. It provides data about the local node's address.
 	network           *network.Service
-	curatorConnection *memory.Value[*curatorConnection]
+	curatorConnection *memory.Value[*CuratorConnection]
 
 	// clusterDirectorySaved will be written. A value of true indicates that the
 	// cluster directory has been successfully written at least once to the ESP.
