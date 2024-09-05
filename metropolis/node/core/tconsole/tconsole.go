@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -29,6 +30,9 @@ type Console struct {
 	height  int
 	// palette chosen for the given terminal.
 	palette palette
+	// activePage expressed within [0...num pages). The number/layout of pages is
+	// constructed dynamically in Run.
+	activePage int
 
 	network     event.Value[*network.Status]
 	roles       event.Value[*cpb.NodeRoles]
@@ -65,15 +69,17 @@ func New(terminal Terminal, ttyPath string, network event.Value[*network.Status]
 	}
 
 	width, height := screen.Size()
+
 	return &Console{
-		ttyPath: ttyPath,
-		tty:     tty,
-		screen:  screen,
-		width:   width,
-		height:  height,
-		network: network,
-		palette: pal,
-		Quit:    make(chan struct{}),
+		ttyPath:    ttyPath,
+		tty:        tty,
+		screen:     screen,
+		width:      width,
+		height:     height,
+		network:    network,
+		palette:    pal,
+		Quit:       make(chan struct{}),
+		activePage: 0,
 
 		roles:       roles,
 		curatorConn: curatorConn,
@@ -91,6 +97,9 @@ func (c *Console) processEvent(ev tcell.Event) {
 	case *tcell.EventKey:
 		if ev.Key() == tcell.KeyCtrlC {
 			close(c.Quit)
+		}
+		if ev.Key() == tcell.KeyTab {
+			c.activePage += 1
 		}
 	case *tcell.EventResize:
 		c.width, c.height = ev.Size()
@@ -120,6 +129,7 @@ func (c *Console) Run(ctx context.Context) error {
 	}
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 
+	// Per-page data.
 	pageStatus := pageStatusData{
 		netAddr:     "Waiting...",
 		roles:       "Waiting...",
@@ -127,10 +137,32 @@ func (c *Console) Run(ctx context.Context) error {
 		fingerprint: "Waiting...",
 	}
 
+	// Page references and names.
+	pages := []func(){
+		func() { c.pageStatus(&pageStatus) },
+	}
+	pageNames := []string{
+		"Status",
+	}
+
+	// Ticker used to maintain redraws at minimum 10Hz, to eg. update the clock in
+	// the status bar.
+	ticker := time.NewTicker(time.Second / 10)
+	defer ticker.Stop()
+
 	for {
-		c.pageStatus(&pageStatus)
+		// Draw active page.
+		c.activePage %= len(pages)
+		pages[c.activePage]()
+
+		// Draw status bar.
+		c.statusBar(c.activePage, pageNames...)
+
+		// Sync to screen.
+		c.screen.Show()
 
 		select {
+		case <-ticker.C:
 		case <-ctx.Done():
 			return ctx.Err()
 		case ev := <-evC:

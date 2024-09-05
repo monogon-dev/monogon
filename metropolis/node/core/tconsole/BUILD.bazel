@@ -6,6 +6,7 @@ go_library(
         "colors.go",
         "draw.go",
         "page_status.go",
+        "statusbar.go",
         "tconsole.go",
     ],
     importpath = "source.monogon.dev/metropolis/node/core/tconsole",

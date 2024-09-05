@@ -73,6 +73,4 @@ func (c *Console) pageStatus(d *pageStatusData) {
 	if drawLogo {
 		c.drawLogo(splitH-logoWidth, splitV+center(c.height-splitV, logoHeight), sty2)
 	}
-
-	c.screen.Show()
 }

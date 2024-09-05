@@ -8,13 +8,15 @@ import (
 )
 
 // drawText draws a single line of text from left to right, starting at x and y.
-func (c *Console) drawText(x, y int, text string, style tcell.Style) {
+func (c *Console) drawText(x, y int, text string, style tcell.Style) int {
 	g := uniseg.NewGraphemes(text)
+	xi := 0
 	for g.Next() {
 		runes := g.Runes()
-		c.screen.SetContent(x, y, runes[0], runes[1:], style)
-		x += 1
+		c.screen.SetContent(x+xi, y, runes[0], runes[1:], style)
+		xi += 1
 	}
+	return xi
 }
 
 // drawTextCentered draw a single line of text from left to right, starting at a
