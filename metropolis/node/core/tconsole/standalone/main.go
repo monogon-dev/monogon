@@ -20,6 +20,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/tconsole"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	"source.monogon.dev/osbase/event/memory"
+	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/supervisor"
 )
 
@@ -28,7 +29,9 @@ func main() {
 	var rolesV memory.Value[*cpb.NodeRoles]
 	var curV memory.Value[*roleserve.CuratorConnection]
 
-	tc, err := tconsole.New(tconsole.TerminalGeneric, "/proc/self/fd/0", &netV, &rolesV, &curV)
+	lt := logtree.New()
+
+	tc, err := tconsole.New(tconsole.TerminalGeneric, "/proc/self/fd/0", lt, &netV, &rolesV, &curV)
 	if err != nil {
 		log.Fatalf("tconsole.New: %v", err)
 	}
@@ -51,6 +54,14 @@ func main() {
 	signal.Ignore(os.Interrupt)
 	supervisor.New(ctx, func(ctx context.Context) error {
 		supervisor.Run(ctx, "tconsole", tc.Run)
+		supervisor.Run(ctx, "log-dawdle", func(ctx context.Context) error {
+			for {
+				supervisor.Logger(ctx).Infof("It is currently: %s", time.Now().Format(time.DateTime))
+				if err := delay(ctx, time.Second); err != nil {
+					return err
+				}
+			}
+		})
 		supervisor.Run(ctx, "net-dawdle", func(ctx context.Context) error {
 			supervisor.Signal(ctx, supervisor.SignalHealthy)
 			for {
@@ -84,7 +95,7 @@ func main() {
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
 		<-ctx.Done()
 		return ctx.Err()
-	})
+	}, supervisor.WithExistingLogtree(lt))
 	<-ctx.Done()
 	tc.Cleanup()
 }

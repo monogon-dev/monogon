@@ -214,7 +214,7 @@ func main() {
 		// Initialize interactive consoles.
 		interactiveConsoles := []string{"/dev/tty0"}
 		for _, c := range interactiveConsoles {
-			console, err := tconsole.New(tconsole.TerminalLinux, c, &networkSvc.Status, &rs.LocalRoles, &rs.CuratorConnection)
+			console, err := tconsole.New(tconsole.TerminalLinux, c, lt, &networkSvc.Status, &rs.LocalRoles, &rs.CuratorConnection)
 			if err != nil {
 				logger.Info("Failed to initialize interactive console at %s: %v", c, err)
 				// TODO: fall back to logger

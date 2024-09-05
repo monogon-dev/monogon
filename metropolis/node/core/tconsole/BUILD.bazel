@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "colors.go",
         "draw.go",
+        "page_logs.go",
         "page_status.go",
         "statusbar.go",
         "tconsole.go",
@@ -17,6 +18,7 @@ go_library(
         "//metropolis/proto/common",
         "//metropolis/version",
         "//osbase/event",
+        "//osbase/logtree",
         "//osbase/supervisor",
         "//version",
         "@com_github_gdamore_tcell_v2//:tcell",

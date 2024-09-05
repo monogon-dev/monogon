@@ -11,6 +11,7 @@ go_library(
         "//metropolis/node/core/tconsole",
         "//metropolis/proto/common",
         "//osbase/event/memory",
+        "//osbase/logtree",
         "//osbase/supervisor",
     ],
 )

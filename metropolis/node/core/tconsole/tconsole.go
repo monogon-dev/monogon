@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/roleserve"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	"source.monogon.dev/osbase/event"
+	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/supervisor"
 )
 
@@ -34,6 +36,7 @@ type Console struct {
 	// constructed dynamically in Run.
 	activePage int
 
+	reader      *logtree.LogReader
 	network     event.Value[*network.Status]
 	roles       event.Value[*cpb.NodeRoles]
 	curatorConn event.Value[*roleserve.CuratorConnection]
@@ -45,7 +48,12 @@ type Console struct {
 //
 // network, roles, curatorConn point to various Metropolis subsystems that are
 // used to populate the console data.
-func New(terminal Terminal, ttyPath string, network event.Value[*network.Status], roles event.Value[*cpb.NodeRoles], curatorConn event.Value[*roleserve.CuratorConnection]) (*Console, error) {
+func New(terminal Terminal, ttyPath string, lt *logtree.LogTree, network event.Value[*network.Status], roles event.Value[*cpb.NodeRoles], curatorConn event.Value[*roleserve.CuratorConnection]) (*Console, error) {
+	reader, err := lt.Read("", logtree.WithChildren(), logtree.WithStream())
+	if err != nil {
+		return nil, fmt.Errorf("lt.Read: %v", err)
+	}
+
 	tty, err := tcell.NewDevTtyFromDev(ttyPath)
 	if err != nil {
 		return nil, err
@@ -80,6 +88,7 @@ func New(terminal Terminal, ttyPath string, network event.Value[*network.Status]
 		palette:    pal,
 		Quit:       make(chan struct{}),
 		activePage: 0,
+		reader:     reader,
 
 		roles:       roles,
 		curatorConn: curatorConn,
@@ -90,6 +99,7 @@ func New(terminal Terminal, ttyPath string, network event.Value[*network.Status]
 // the Metropolis console always runs.
 func (c *Console) Cleanup() {
 	c.screen.Fini()
+	c.reader.Close()
 }
 
 func (c *Console) processEvent(ev tcell.Event) {
@@ -136,13 +146,15 @@ func (c *Console) Run(ctx context.Context) error {
 		id:          "Waiting...",
 		fingerprint: "Waiting...",
 	}
+	pageLogs := pageLogsData{}
 
 	// Page references and names.
 	pages := []func(){
 		func() { c.pageStatus(&pageStatus) },
+		func() { c.pageLogs(&pageLogs) },
 	}
 	pageNames := []string{
-		"Status",
+		"Status", "Logs",
 	}
 
 	// Ticker used to maintain redraws at minimum 10Hz, to eg. update the clock in
@@ -190,6 +202,8 @@ func (c *Console) Run(ctx context.Context) error {
 			sum := sha256.New()
 			sum.Write(cert.Raw)
 			pageStatus.fingerprint = hex.EncodeToString(sum.Sum(nil))
+		case le := <-c.reader.Stream:
+			pageLogs.appendLine(le.String())
 		}
 	}
 }
