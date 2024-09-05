@@ -79,8 +79,9 @@ func doAdd(cmd *cobra.Command, args []string) {
 		_, err := mgmt.UpdateNodeRoles(ctx, req)
 		if err != nil {
 			log.Printf("Couldn't update node \"%s\": %v", node, err)
+		} else {
+			log.Printf("Updated node %s.", node)
 		}
-		log.Printf("Updated node %s.", node)
 	}
 }
 
@@ -118,7 +119,8 @@ func doRemove(cmd *cobra.Command, args []string) {
 		_, err := mgmt.UpdateNodeRoles(ctx, req)
 		if err != nil {
 			log.Printf("Couldn't update node \"%s\": %v", node, err)
+		} else {
+			log.Printf("Updated node %s.", node)
 		}
-		log.Printf("Updated node %s.", node)
 	}
 }
