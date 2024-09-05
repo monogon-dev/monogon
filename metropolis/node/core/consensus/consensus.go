@@ -97,6 +97,7 @@ import (
 	"net/url"
 	"time"
 
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/server/v3/embed"
 
@@ -141,6 +142,26 @@ func pkiPeerCertificate(pubkey ed25519.PublicKey, extraNames []string) x509.Cert
 		},
 		DNSNames: append(extraNames, identity.NodeID(pubkey)),
 	}
+}
+
+// GetEtcdMemberNodeId returns the node ID of an etcd member. It works even for
+// members which have not started, where member.Name is empty.
+func GetEtcdMemberNodeId(member *etcdserverpb.Member) string {
+	if member.Name != "" {
+		return member.Name
+	}
+	if len(member.PeerURLs) == 0 {
+		return ""
+	}
+	u, err := url.Parse(member.PeerURLs[0])
+	if err != nil {
+		return ""
+	}
+	nodeId, _, err := net.SplitHostPort(u.Host)
+	if err != nil {
+		return ""
+	}
+	return nodeId
 }
 
 // Service is the etcd cluster member service. See package-level documentation
@@ -495,6 +516,10 @@ func (s *Service) autopromoter(ctx context.Context) error {
 		}
 		for _, member := range members.Members {
 			if !member.IsLearner {
+				continue
+			}
+			if member.Name == "" {
+				// If the name is empty, the member has not started.
 				continue
 			}
 			// Always call PromoteMember since the metadata necessary to decide if we should

@@ -146,7 +146,7 @@ func (s *Status) AddNode(ctx context.Context, pk ed25519.PublicKey, opts ...*Add
 	var existingNodes []ExistingNode
 	var newExists bool
 	for _, m := range members.Members {
-		if m.Name == nodeID {
+		if GetEtcdMemberNodeId(m) == nodeID {
 			newExists = true
 		}
 		if m.IsLearner {

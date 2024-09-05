@@ -16,6 +16,7 @@ import (
 	tpb "google.golang.org/protobuf/types/known/timestamppb"
 
 	common "source.monogon.dev/metropolis/node"
+	"source.monogon.dev/metropolis/node/core/consensus"
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
@@ -616,7 +617,7 @@ func (l *leaderCurator) GetConsensusStatus(ctx context.Context, _ *ipb.GetConsen
 	}
 	for _, member := range members.Members {
 		st := ipb.GetConsensusStatusResponse_EtcdMember{
-			Id:     member.Name,
+			Id:     consensus.GetEtcdMemberNodeId(member),
 			Status: ipb.GetConsensusStatusResponse_EtcdMember_STATUS_FULL,
 		}
 		if member.IsLearner {
