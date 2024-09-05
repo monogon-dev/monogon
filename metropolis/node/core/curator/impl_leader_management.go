@@ -13,7 +13,6 @@ import (
 	dpb "google.golang.org/protobuf/types/known/durationpb"
 
 	common "source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -344,15 +343,7 @@ func (l *leaderManagement) UpdateNodeRoles(ctx context.Context, req *apb.UpdateN
 	if req.ConsensusMember != nil {
 		if *req.ConsensusMember {
 			// Add a new etcd learner node.
-			w := l.consensus.Watch()
-			defer w.Close()
-
-			st, err := w.Get(ctx, consensus.FilterRunning)
-			if err != nil {
-				return nil, status.Errorf(codes.Unavailable, "could not get running consensus: %v", err)
-			}
-
-			join, err := st.AddNode(ctx, node.pubkey)
+			join, err := l.consensusStatus.AddNode(ctx, node.pubkey)
 			if err != nil {
 				return nil, status.Errorf(codes.Unavailable, "could not add node: %v", err)
 			}

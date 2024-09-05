@@ -609,7 +609,7 @@ func (l *leaderCurator) GetCurrentLeader(_ *ipb.GetCurrentLeaderRequest, srv ipb
 
 func (l *leaderCurator) GetConsensusStatus(ctx context.Context, _ *ipb.GetConsensusStatusRequest) (*ipb.GetConsensusStatusResponse, error) {
 	var res ipb.GetConsensusStatusResponse
-	members, err := l.etcdCluster.MemberList(ctx)
+	members, err := l.consensusStatus.ClusterClient().MemberList(ctx)
 	if err != nil {
 		rpc.Trace(ctx).Printf("Could not get etcd members: %v", err)
 		return nil, status.Errorf(codes.Internal, "could not get etcd members")

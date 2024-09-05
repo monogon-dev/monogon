@@ -172,14 +172,23 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 		NodeCredentials: nodeCredentials,
 	}
 
+	consensusService := consensus.TestServiceHandle(t, cluster.Client(0))
+	watcher := consensusService.Watch()
+	defer watcher.Close()
+	consensusStatus, err := watcher.Get(ctx, consensus.FilterRunning)
+	if err != nil {
+		t.Fatalf("could not get consensus status: %v", err)
+	}
+
 	// Build a curator leader object. This implements methods that will be
 	// exercised by tests.
 	leadership := &leadership{
-		lockKey:   lockKey,
-		lockRev:   lockRev,
-		leaderID:  identity.NodeID(nodePub),
-		etcd:      curEtcd,
-		consensus: consensus.TestServiceHandle(t, cluster.Client(0)),
+		lockKey:         lockKey,
+		lockRev:         lockRev,
+		leaderID:        identity.NodeID(nodePub),
+		etcd:            curEtcd,
+		consensus:       consensusService,
+		consensusStatus: consensusStatus,
 	}
 	leader := newCuratorLeader(leadership, &nodeCredentials.Node)
 
