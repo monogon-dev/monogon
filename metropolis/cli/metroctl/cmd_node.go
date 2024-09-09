@@ -286,6 +286,126 @@ var nodeDeleteCmd = &cobra.Command{
 	Args: cobra.ExactArgs(1),
 }
 
+func dialNode(ctx context.Context, node string) (apb.NodeManagementClient, error) {
+	// First connect to the main management service and figure out the node's IP
+	// address.
+	cc := dialAuthenticated(ctx)
+	mgmt := apb.NewManagementClient(cc)
+	nodes, err := core.GetNodes(ctx, mgmt, fmt.Sprintf("node.id == %q", node))
+	if err != nil {
+		return nil, fmt.Errorf("when getting node info: %w", err)
+	}
+
+	if len(nodes) == 0 {
+		return nil, fmt.Errorf("no such node")
+	}
+	if len(nodes) > 1 {
+		return nil, fmt.Errorf("expression matched more than one node")
+	}
+	n := nodes[0]
+	if n.Status == nil || n.Status.ExternalAddress == "" {
+		return nil, fmt.Errorf("node has no external address")
+	}
+
+	cacert, err := core.GetClusterCAWithTOFU(ctx, connectOptions())
+	if err != nil {
+		return nil, fmt.Errorf("could not get CA certificate: %w", err)
+	}
+
+	// Dial the actual node at its management port.
+	cl := dialAuthenticatedNode(ctx, n.Id, n.Status.ExternalAddress, cacert)
+	nmgmt := apb.NewNodeManagementClient(cl)
+	return nmgmt, nil
+}
+
+var nodeRebootCmd = &cobra.Command{
+	Short: "Reboot a node",
+	Long: `Reboot a node.
+
+This command can be used quite flexibly. Without any options it performs a
+normal, firmware-assisted reboot. It can roll back the last update by also
+passing the --rollback option. To reboot quicker the --kexec option can be used
+to skip firmware during reboot and boot straigt into the kernel.
+
+It can also be used to reboot into the firmware (BIOS) setup UI by passing the
+--firmware flag. This flag cannot be combined with any others.
+	`,
+	Use:          "reboot [node-id]",
+	Args:         cobra.ExactArgs(1),
+	SilenceUsage: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		kexecFlag, err := cmd.Flags().GetBool("kexec")
+		if err != nil {
+			return err
+		}
+		rollbackFlag, err := cmd.Flags().GetBool("rollback")
+		if err != nil {
+			return err
+		}
+		firmwareFlag, err := cmd.Flags().GetBool("firmware")
+		if err != nil {
+			return err
+		}
+
+		if kexecFlag && firmwareFlag {
+			return errors.New("--kexec cannot be used with --firmware as firmware is not involved when using kexec")
+		}
+		if firmwareFlag && rollbackFlag {
+			return errors.New("--firmware cannot be used with --rollback as the next boot won't be into the OS")
+		}
+		var req apb.RebootRequest
+		if kexecFlag {
+			req.Type = apb.RebootRequest_KEXEC
+		} else {
+			req.Type = apb.RebootRequest_FIRMWARE
+		}
+		if firmwareFlag {
+			req.NextBoot = apb.RebootRequest_START_FIRMWARE_UI
+		}
+		if rollbackFlag {
+			req.NextBoot = apb.RebootRequest_START_ROLLBACK
+		}
+
+		nmgmt, err := dialNode(ctx, args[0])
+		if err != nil {
+			return fmt.Errorf("failed to dial node: %w", err)
+		}
+
+		if _, err := nmgmt.Reboot(ctx, &req); err != nil {
+			return fmt.Errorf("reboot RPC failed: %w", err)
+		}
+		fmt.Printf("Node %v is being rebooted", args[0])
+
+		return nil
+	},
+}
+
+var nodePoweroffCmd = &cobra.Command{
+	Short:        "Power off a node",
+	Use:          "poweroff [node-id]",
+	Args:         cobra.ExactArgs(1),
+	SilenceUsage: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		nmgmt, err := dialNode(ctx, args[0])
+		if err != nil {
+			return err
+		}
+
+		if _, err := nmgmt.Reboot(ctx, &apb.RebootRequest{
+			Type: apb.RebootRequest_POWER_OFF,
+		}); err != nil {
+			return fmt.Errorf("reboot RPC failed: %w", err)
+		}
+		fmt.Printf("Node %v is being powered off", args[0])
+
+		return nil
+	},
+}
+
 func init() {
 	nodeUpdateCmd.Flags().String("bundle-url", "", "The URL to the new version")
 	nodeUpdateCmd.Flags().String("activation-mode", "reboot", "How the update should be activated (kexec, reboot, none)")
@@ -295,10 +415,16 @@ func init() {
 	nodeDeleteCmd.Flags().Bool("bypass-has-roles", false, "Allows to bypass the HasRoles check")
 	nodeDeleteCmd.Flags().Bool("bypass-not-decommissioned", false, "Allows to bypass the NotDecommissioned check")
 
+	nodeRebootCmd.Flags().Bool("rollback", false, "Reboot into the last OS version in the other slot")
+	nodeRebootCmd.Flags().Bool("firmware", false, "Reboot into the firmware (BIOS) setup UI")
+	nodeRebootCmd.Flags().Bool("kexec", false, "Use kexec to reboot much quicker without going through firmware")
+
 	nodeCmd.AddCommand(nodeDescribeCmd)
 	nodeCmd.AddCommand(nodeListCmd)
 	nodeCmd.AddCommand(nodeUpdateCmd)
 	nodeCmd.AddCommand(nodeDeleteCmd)
+	nodeCmd.AddCommand(nodeRebootCmd)
+	nodeCmd.AddCommand(nodePoweroffCmd)
 	rootCmd.AddCommand(nodeCmd)
 }
 
