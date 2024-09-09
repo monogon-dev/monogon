@@ -6,6 +6,7 @@ go_library(
         "boot.go",
         "devicepath.go",
         "efivarfs.go",
+        "osindications.go",
         "variables.go",
     ],
     importpath = "source.monogon.dev/osbase/efivarfs",
