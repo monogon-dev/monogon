@@ -163,6 +163,32 @@ func (s *Service) MarkBootSuccessful() error {
 	return nil
 }
 
+// Rollback sets the currently-inactive slot as the next boot slot. This is
+// intended to recover from scenarios where roll-forward fixing is difficult.
+// Only the next boot slot is set to make sure that the node is not
+// made unbootable accidentally. On successful bootup that code can switch the
+// active slot to itself.
+func (s *Service) Rollback() error {
+	if s.ESPPath == "" {
+		return errors.New("no ESP information provided to update service, cannot continue")
+	}
+	activeSlot := s.CurrentlyRunningSlot()
+	abState, err := s.getABState()
+	if err != nil {
+		return fmt.Errorf("no valid A/B loader state, cannot rollback: %w", err)
+	}
+	nextSlot := activeSlot.Other()
+	err = s.setABState(&abloaderpb.ABLoaderData{
+		ActiveSlot: abState.ActiveSlot,
+		NextSlot:   abloaderpb.Slot(nextSlot),
+	})
+	if err != nil {
+		return fmt.Errorf("while setting next A/B slot: %w", err)
+	}
+	s.Logger.Warningf("Rollback requested, NextSlot set to %v", nextSlot)
+	return nil
+}
+
 func openSystemSlot(slot Slot) (*blockdev.Device, error) {
 	switch slot {
 	case SlotA:
