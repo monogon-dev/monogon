@@ -189,6 +189,35 @@ func (s *Service) Rollback() error {
 	return nil
 }
 
+// KexecLoadNext loads the slot to be booted next into the kexec staging area.
+// The next slot can then be launched by executing kexec via the reboot
+// syscall. Calling this function counts as a next boot for the purposes of
+// A/B state tracking, so it should not be called without kexecing afterwards.
+func (s *Service) KexecLoadNext() error {
+	state, err := s.getABState()
+	if err != nil {
+		return fmt.Errorf("bad A/B state: %w", err)
+	}
+	slotToLoad := Slot(state.ActiveSlot)
+	if state.NextSlot != abloaderpb.Slot_NONE {
+		slotToLoad = Slot(state.NextSlot)
+		state.NextSlot = abloaderpb.Slot_NONE
+		err = s.setABState(state)
+		if err != nil {
+			return fmt.Errorf("while updating A/B state: %w", err)
+		}
+	}
+	boot, err := os.Open(filepath.Join(s.ESPPath, slotToLoad.EFIBootPath()))
+	if err != nil {
+		return fmt.Errorf("failed to open boot file for slot %v: %w", slotToLoad, err)
+	}
+	defer boot.Close()
+	if err := s.stageKexec(boot, slotToLoad); err != nil {
+		return fmt.Errorf("failed to stage next slot for kexec: %w", err)
+	}
+	return nil
+}
+
 func openSystemSlot(slot Slot) (*blockdev.Device, error) {
 	switch slot {
 	case SlotA:
