@@ -167,6 +167,10 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	bd.Cluster.Configuration = cc
 	m.roleServer.ProvideBootstrapData(&bd)
 
+	if err := m.updateService.MarkBootSuccessful(); err != nil {
+		supervisor.Logger(ctx).Errorf("Failed to mark boot as successful: %v", err)
+	}
+
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 	supervisor.Signal(ctx, supervisor.SignalDone)
 	return nil

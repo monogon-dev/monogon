@@ -186,6 +186,9 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	if err = m.storageRoot.ESP.Metropolis.SealedConfiguration.SealSecureBoot(&sc, res.TpmUsage); err != nil {
 		return err
 	}
+	if err := m.updateService.MarkBootSuccessful(); err != nil {
+		supervisor.Logger(ctx).Errorf("Failed to mark boot as successful: %v", err)
+	}
 	unix.Sync()
 
 	// All synced up, we can now let downstream know about the creds, which in turn
