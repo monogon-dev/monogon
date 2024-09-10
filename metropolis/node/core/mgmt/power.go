@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -57,12 +58,38 @@ func (s *Service) Reboot(ctx context.Context, req *apb.RebootRequest) (*apb.Rebo
 		// Best-effort, if it fails this will still be a firmware reboot.
 		os.WriteFile("/sys/kernel/reboot/mode", []byte("cold"), 0644)
 	}
+	s.initiateReboot(method)
+	return &apb.RebootResponse{}, nil
+}
+
+func (s *Service) initiateReboot(method int) {
 	s.LogTree.MustLeveledFor("root.mgmt").Warning("Reboot requested, rebooting in 2s")
+	// TODO(#253): Tell Supervisor to shut down gracefully and reboot
 	go func() {
 		time.Sleep(2 * time.Second)
 		unix.Unmount(s.UpdateService.ESPPath, 0)
 		unix.Sync()
+		s.disableNetworkInterfaces()
 		unix.Reboot(method)
 	}()
-	return &apb.RebootResponse{}, nil
+}
+
+// For kexec it's recommended to disable all physical network interfaces
+// before doing it. This function doesn't return any errors as it's best-
+// effort anyways as we cannot reliably log the error anymore.
+func (s *Service) disableNetworkInterfaces() {
+	links, err := netlink.LinkList()
+	if err != nil {
+		return
+	}
+	for _, link := range links {
+		d, ok := link.(*netlink.Device)
+		if !ok {
+			continue
+		}
+		if err := netlink.LinkSetDown(d); err != nil {
+			s.LogTree.MustLeveledFor("root.mgmt").Errorf("Error taking link %q down: %v", link.Attrs().Name, err)
+			continue
+		}
+	}
 }
