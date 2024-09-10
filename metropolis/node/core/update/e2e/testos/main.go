@@ -11,77 +11,16 @@ import (
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/update"
 	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/bringup"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/gpt"
-	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/supervisor"
 )
 
 var Variant = "U"
 
-func mkdirAndMount(dir, fs string, flags uintptr) error {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("could not make %s: %w", dir, err)
-	}
-	if err := unix.Mount(fs, dir, fs, flags, ""); err != nil {
-		return fmt.Errorf("could not mount %s on %s: %w", fs, dir, err)
-	}
-	return nil
-}
-
-// setupMounts sets up basic mounts like sysfs, procfs, devtmpfs and cgroups.
-// This should be called early during init as a lot of processes depend on this
-// being available.
-func setupMounts() error {
-	// Set up target filesystems.
-	for _, el := range []struct {
-		dir   string
-		fs    string
-		flags uintptr
-	}{
-		{"/sys", "sysfs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
-		{"/sys/kernel/tracing", "tracefs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
-		{"/sys/fs/pstore", "pstore", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
-		{"/sys/firmware/efi/efivars", "efivarfs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
-		{"/proc", "proc", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
-		{"/dev", "devtmpfs", unix.MS_NOEXEC | unix.MS_NOSUID},
-		{"/dev/pts", "devpts", unix.MS_NOEXEC | unix.MS_NOSUID},
-		{"/tmp", "tmpfs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
-	} {
-		if err := mkdirAndMount(el.dir, el.fs, el.flags); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func main() {
-	if err := setupMounts(); err != nil {
-		fmt.Printf("early init error, stopping: %v\n", err)
-		unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
-		return
-	}
-	lt := logtree.New()
-	f, err := os.OpenFile("/dev/ttyS0", os.O_WRONLY, 0)
-	if err != nil {
-		fmt.Printf("early init error, stopping: %v\n", err)
-		unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
-		return
-	}
-	reader, err := lt.Read("", logtree.WithChildren(), logtree.WithStream())
-	if err != nil {
-		fmt.Printf("early init error, stopping: %v\n", err)
-		unix.Reboot(unix.LINUX_REBOOT_CMD_POWER_OFF)
-		return
-	}
-
-	sCtx := context.Background()
-	supervisor.New(sCtx, testosRunnable, supervisor.WithExistingLogtree(lt))
-
-	for {
-		p := <-reader.Stream
-		fmt.Fprintf(f, "%s\n", p.String())
-	}
+	bringup.Runnable(testosRunnable).Run()
 }
 
 func testosRunnable(ctx context.Context) error {
