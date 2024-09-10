@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/cenkalti/backoff/v4"
@@ -41,17 +42,18 @@ func (f FileSizedReader) Size() int64 {
 
 // install dispatches OSInstallationRequests to the appropriate installer
 // method
-func install(req *bpb.OSInstallationRequest, netConfig *npb.Net, l logtree.LeveledLogger, isEFIBoot bool) error {
+func install(req *bpb.OSInstallationRequest, netConfig *npb.Net, l logtree.LeveledLogger) error {
 	switch reqT := req.Type.(type) {
 	case *bpb.OSInstallationRequest_Metropolis:
-		return installMetropolis(reqT.Metropolis, netConfig, l, isEFIBoot)
+		return installMetropolis(reqT.Metropolis, netConfig, l)
 	default:
 		return errors.New("unknown installation request type")
 	}
 }
 
-func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Net, l logtree.LeveledLogger, isEFIBoot bool) error {
-	if !isEFIBoot {
+func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Net, l logtree.LeveledLogger) error {
+	// Validate we are running via EFI.
+	if _, err := os.Stat("/sys/firmware/efi"); os.IsNotExist(err) {
 		//nolint:ST1005
 		return errors.New("Monogon OS can only be installed on EFI-booted machines, this one is not")
 	}

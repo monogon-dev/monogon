@@ -20,11 +20,17 @@ import (
 
 	apb "source.monogon.dev/cloud/agent/api"
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
+
 	"source.monogon.dev/metropolis/node/core/devmgr"
 	"source.monogon.dev/metropolis/node/core/network"
+	"source.monogon.dev/osbase/bringup"
 	"source.monogon.dev/osbase/pki"
 	"source.monogon.dev/osbase/supervisor"
 )
+
+func main() {
+	bringup.Runnable(agentRunnable).Run()
+}
 
 // This is similar to rpc.NewEphemeralCredentials, but that only deals with
 // Metropolis-style certificate verification.
@@ -51,11 +57,6 @@ func newEphemeralCert(private ed25519.PrivateKey) (*tls.Certificate, error) {
 // Main runnable for the agent.
 func agentRunnable(ctx context.Context) error {
 	l := supervisor.Logger(ctx)
-	// Mount this late so we don't just crash when not booted with EFI.
-	isEFIBoot := false
-	if err := mkdirAndMount("/sys/firmware/efi/efivars", "efivarfs", unix.MS_NOEXEC|unix.MS_NOSUID|unix.MS_NODEV); err == nil {
-		isEFIBoot = true
-	}
 	agentInitRaw, err := os.ReadFile("/init.pb")
 	if err != nil {
 		return fmt.Errorf("unable to read spec file from takeover: %w", err)
@@ -166,7 +167,7 @@ func agentRunnable(ctx context.Context) error {
 			installationReport = &bpb.OSInstallationReport{
 				Generation: res.InstallationRequest.Generation,
 			}
-			if err := install(res.InstallationRequest, agentInit.NetworkConfig, l, isEFIBoot); err != nil {
+			if err := install(res.InstallationRequest, agentInit.NetworkConfig, l); err != nil {
 				l.Errorf("Installation failed: %v", err)
 				installationReport.Result = &bpb.OSInstallationReport_Error_{
 					Error: &bpb.OSInstallationReport_Error{

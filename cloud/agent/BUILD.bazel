@@ -6,7 +6,6 @@ go_library(
         "agent.go",
         "hwreport.go",
         "install.go",
-        "main.go",
     ],
     embedsrcs = [
         "//metropolis/node/core/abloader",  #keep
@@ -19,7 +18,7 @@ go_library(
         "//metropolis/node/core/devmgr",
         "//metropolis/node/core/network",
         "//osbase/blockdev",
-        "//osbase/bootparam",
+        "//osbase/bringup",
         "//osbase/build/mkimage/osimage",
         "//osbase/efivarfs",
         "//osbase/logtree",
