@@ -213,7 +213,7 @@ func TestNoBlockDevices(t *testing.T) {
 	// No block devices are passed to QEMU aside from the install medium. Expect
 	// the installer to fail at the device probe stage rather than attempting to
 	// use the medium as the target device.
-	expectedOutput := "Couldn't find a suitable block device"
+	expectedOutput := "couldn't find a suitable block device"
 	result, err := runQemuWithInstaller(ctx, nil, expectedOutput)
 	if err != nil {
 		t.Error(err.Error())
@@ -236,7 +236,7 @@ func TestBlockDeviceTooSmall(t *testing.T) {
 	}
 
 	// Run QEMU. Expect the installer to fail with a predefined error string.
-	expectedOutput := "Couldn't find a suitable block device"
+	expectedOutput := "couldn't find a suitable block device"
 	result, err := runQemuWithInstaller(ctx, qemuDriveParam(imagePath), expectedOutput)
 	if err != nil {
 		t.Error(err.Error())

@@ -22,6 +22,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -29,14 +30,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 
 	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/bringup"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
+	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/osbase/sysfs"
 )
 
@@ -44,28 +46,6 @@ import (
 var abloader []byte
 
 const mib = 1024 * 1024
-
-// mountPseudoFS mounts efivarfs, devtmpfs and sysfs, used by the installer in
-// the block device discovery stage.
-func mountPseudoFS() error {
-	for _, m := range []struct {
-		dir   string
-		fs    string
-		flags uintptr
-	}{
-		{"/sys", "sysfs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
-		{efivarfs.Path, "efivarfs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
-		{"/dev", "devtmpfs", unix.MS_NOEXEC | unix.MS_NOSUID},
-	} {
-		if err := unix.Mkdir(m.dir, 0700); err != nil && !os.IsExist(err) {
-			return fmt.Errorf("couldn't create the mountpoint at %q: %w", m.dir, err)
-		}
-		if err := unix.Mount(m.fs, m.dir, m.fs, m.flags, ""); err != nil {
-			return fmt.Errorf("couldn't mount %q at %q: %w", m.fs, m.dir, err)
-		}
-	}
-	return nil
-}
 
 // mountInstallerESP mounts the filesystem the installer was loaded from based
 // on espPath, which must point to the appropriate partition block device. The
@@ -153,30 +133,26 @@ func (f FileSizedReader) Size() int64 {
 }
 
 func main() {
-	// Reboot on panic after a delay. The error string will have been printed
-	// before recover is called.
-	defer func() {
-		if r := recover(); r != nil {
-			logf("Fatal error: %v", r)
-			logf("The installation could not be finalized. Please reboot to continue.")
-			syscall.Pause()
-		}
-	}()
+	bringup.Runnable(installerRunnable).Run()
+}
 
-	// Mount sysfs, devtmpfs and efivarfs.
-	if err := mountPseudoFS(); err != nil {
-		panicf("While mounting pseudo-filesystems: %v", err)
+func installerRunnable(ctx context.Context) error {
+	l := supervisor.Logger(ctx)
+
+	l.Info("Metropolis Installer")
+	l.Info("Copyright (c) 2024 The Monogon Project Authors")
+	l.Info("")
+
+	// Validate we are running via EFI.
+	if _, err := os.Stat("/sys/firmware/efi"); os.IsNotExist(err) {
+		//nolint:ST1005
+		return errors.New("Monogon OS can only be installed on EFI-booted machines, this one is not")
 	}
-
-	go logPiper()
-	logf("Metropolis Installer")
-	logf("Copyright (c) 2023 The Monogon Project Authors")
-	logf("")
 
 	// Read the installer ESP UUID from efivarfs.
 	espUuid, err := efivarfs.ReadLoaderDevicePartUUID()
 	if err != nil {
-		panicf("While reading the installer ESP UUID: %v", err)
+		return fmt.Errorf("while reading the installer ESP UUID: %w", err)
 	}
 	// Wait for up to 30 tries @ 1s (30s) for the ESP to show up
 	var espDev string
@@ -190,34 +166,34 @@ func main() {
 			time.Sleep(1 * time.Second)
 			retries--
 		} else {
-			panicf("While resolving the installer device handle: %v", err)
+			return fmt.Errorf("while resolving the installer device handle: %w", err)
 		}
 	}
 	espPath := filepath.Join("/dev", espDev)
 	// Mount the installer partition. The installer bundle will be read from it.
 	if err := mountInstallerESP(espPath); err != nil {
-		panicf("While mounting the installer ESP: %v", err)
+		return fmt.Errorf("while mounting the installer ESP: %w", err)
 	}
 
 	nodeParameters, err := os.Open("/installer/metropolis-installer/nodeparams.pb")
 	if err != nil {
-		panicf("Failed to open node parameters from ESP: %v", err)
+		return fmt.Errorf("failed to open node parameters from ESP: %w", err)
 	}
 
 	// TODO(lorenz): Replace with proper bundles
 	bundle, err := zip.OpenReader("/installer/metropolis-installer/bundle.bin")
 	if err != nil {
-		panicf("Failed to open node bundle from ESP: %v", err)
+		return fmt.Errorf("failed to open node bundle from ESP: %w", err)
 	}
 	defer bundle.Close()
 	efiPayload, err := bundle.Open("kernel_efi.efi")
 	if err != nil {
-		panicf("Cannot open EFI payload in bundle: %v", err)
+		return fmt.Errorf("cannot open EFI payload in bundle: %w", err)
 	}
 	defer efiPayload.Close()
 	systemImage, err := bundle.Open("verity_rootfs.img")
 	if err != nil {
-		panicf("Cannot open system image in bundle: %v", err)
+		return fmt.Errorf("cannot open system image in bundle: %w", err)
 	}
 	defer systemImage.Close()
 
@@ -247,10 +223,10 @@ func main() {
 	// Look for suitable block devices, given the minimum size.
 	blkDevs, err := findInstallableBlockDevices(espDev, minSize)
 	if err != nil {
-		panicf(err.Error())
+		return fmt.Errorf(err.Error())
 	}
 	if len(blkDevs) == 0 {
-		panicf("Couldn't find a suitable block device.")
+		return fmt.Errorf("couldn't find a suitable block device")
 	}
 	// Set the first suitable block device found as the installation target.
 	tgtBlkdevName := blkDevs[0]
@@ -259,31 +235,32 @@ func main() {
 
 	tgtBlockDev, err := blockdev.Open(tgtBlkdevPath)
 	if err != nil {
-		panicf("error opening target device: %v", err)
+		return fmt.Errorf("error opening target device: %w", err)
 	}
 	installParams.Output = tgtBlockDev
 
 	// Use osimage to partition the target block device and set up its ESP.
 	// Write will return an EFI boot entry on success.
-	logf("Installing to %s...", tgtBlkdevPath)
+	l.Infof("Installing to %s...", tgtBlkdevPath)
 	be, err := osimage.Write(&installParams)
 	if err != nil {
-		panicf("While installing: %v", err)
+		return fmt.Errorf("while installing: %w", err)
 	}
 
 	// Create an EFI boot entry for Metropolis.
 	en, err := efivarfs.AddBootEntry(be)
 	if err != nil {
-		panicf("While creating a boot entry: %v", err)
+		return fmt.Errorf("while creating a boot entry: %w", err)
 	}
 	// Erase the preexisting boot order, leaving Metropolis as the only option.
 	if err := efivarfs.SetBootOrder(efivarfs.BootOrder{uint16(en)}); err != nil {
-		panicf("While adjusting the boot order: %v", err)
+		return fmt.Errorf("while adjusting the boot order: %w", err)
 	}
 
 	// Reboot.
 	tgtBlockDev.Close()
 	unix.Sync()
-	logf("Installation completed. Rebooting.")
+	l.Info("Installation completed. Rebooting.")
 	unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART)
+	return nil
 }
