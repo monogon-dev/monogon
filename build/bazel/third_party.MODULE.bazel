@@ -122,12 +122,12 @@ http_archive(
     urls = ["https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-%s.tar.xz" % LINUX_VERSION],
 )
 
-LINUX_FIRMWARE_VERSION = "20240513"
+LINUX_FIRMWARE_VERSION = "20240909"
 
 http_archive(
     name = "linux-firmware",
     build_file = "//third_party/linux-firmware:BUILD.repo",
-    integrity = "sha256-tyJDZOH9fua4A/hhdH+czefCAwr5Of3B7uoIPqhc5Rw=",
+    integrity = "sha256-k+m2riJAZhY5yHT1/Dj2d9GK/jZbF6E/7mtPxPukLBA=",
     strip_prefix = "linux-firmware-" + LINUX_FIRMWARE_VERSION,
     urls = ["https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/snapshot/linux-firmware-%s.tar.gz" % LINUX_FIRMWARE_VERSION],
 )
