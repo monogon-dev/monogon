@@ -132,12 +132,12 @@ http_archive(
     urls = ["https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/snapshot/linux-firmware-%s.tar.gz" % LINUX_FIRMWARE_VERSION],
 )
 
-INTEL_UCODE_VERSION = "20231114"
+INTEL_UCODE_VERSION = "20240910"
 
 http_archive(
     name = "intel_ucode",
     build_file = "//third_party/intel_ucode:BUILD.repo",
-    integrity = "sha256-zuJvMR9+LAOd1IzTD5lRg73puY+0wwOYAOLdr1wJDlU=",
+    integrity = "sha256-i3WC6sfpppE1bhizvcvHstsJSU4EDsmApKX7bQ2iYb8=",
     strip_prefix = "Intel-Linux-Processor-Microcode-Data-Files-microcode-" + INTEL_UCODE_VERSION,
     urls = ["https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files/archive/refs/tags/microcode-%s.tar.gz" % INTEL_UCODE_VERSION],
 )
