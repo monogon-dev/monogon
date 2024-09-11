@@ -159,8 +159,13 @@ func (c *Console) Run(ctx context.Context) error {
 
 	// Ticker used to maintain redraws at minimum 10Hz, to eg. update the clock in
 	// the status bar.
-	ticker := time.NewTicker(time.Second / 10)
-	defer ticker.Stop()
+	tickerDraw := time.NewTicker(time.Second / 10)
+	defer tickerDraw.Stop()
+
+	// Ticker used to fully resync the screen every 10 seconds, in case something
+	// scribbled over the TTY.
+	tickerSync := time.NewTicker(time.Second * 10)
+	defer tickerSync.Stop()
 
 	for {
 		// Draw active page.
@@ -174,7 +179,9 @@ func (c *Console) Run(ctx context.Context) error {
 		c.screen.Show()
 
 		select {
-		case <-ticker.C:
+		case <-tickerDraw.C:
+		case <-tickerSync.C:
+			c.screen.Sync()
 		case <-ctx.Done():
 			return ctx.Err()
 		case ev := <-evC:

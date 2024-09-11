@@ -40,6 +40,7 @@ import (
 	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/net/dns"
 	"source.monogon.dev/osbase/supervisor"
+	"source.monogon.dev/osbase/sysctl"
 	"source.monogon.dev/osbase/tpm"
 	"source.monogon.dev/version"
 )
@@ -222,6 +223,16 @@ func main() {
 				logger.Info("Started interactive console at %s", c)
 				supervisor.Run(ctx, "console-"+c, console.Run)
 			}
+		}
+
+		// Now that we have consoles, set console logging level to 1 (KERNEL_EMERG,
+		// minimum possible). This prevents the TUI console from being polluted by
+		// random printks.
+		opts := sysctl.Options{
+			"kernel.printk": "1",
+		}
+		if err := opts.Apply(); err != nil {
+			logger.Errorf("Failed to configure printk logging: %v", err)
 		}
 
 		// Start cluster manager. This kicks off cluster membership machinery,
