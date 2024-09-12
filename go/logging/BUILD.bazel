@@ -2,7 +2,10 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "logging",
-    srcs = ["leveled.go"],
+    srcs = [
+        "backend.go",
+        "leveled.go",
+    ],
     importpath = "source.monogon.dev/go/logging",
     visibility = ["//visibility:public"],
 )
