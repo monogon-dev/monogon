@@ -21,6 +21,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	"source.monogon.dev/go/logging"
 )
 
 // DN is the Distinguished Name, a dot-delimited path used to address loggers
@@ -166,7 +168,7 @@ func filterSubtree(root DN) filter {
 // filterSeverity returns a filter that accepts log entries at a given severity
 // level or above. See the Severity type for more information about severity
 // levels.
-func filterSeverity(atLeast Severity) filter {
+func filterSeverity(atLeast logging.Severity) filter {
 	return func(e *entry) bool {
 		return e.leveled != nil && e.leveled.severity.AtLeast(atLeast)
 	}

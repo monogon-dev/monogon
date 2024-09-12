@@ -41,7 +41,7 @@ import (
 
 	tpmpb "source.monogon.dev/osbase/tpm/proto"
 
-	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/osbase/sysfs"
 )
 
@@ -126,7 +126,7 @@ var lock sync.Mutex
 
 // TPM represents a high-level interface to a connected TPM 2.0
 type TPM struct {
-	logger logtree.LeveledLogger
+	logger logging.Leveled
 	device io.ReadWriteCloser
 
 	// We keep the AK loaded since it's used fairly often and deriving it is
@@ -137,7 +137,7 @@ type TPM struct {
 
 // Initialize finds and opens the TPM (if any). If there is no TPM available it
 // returns ErrNotExists
-func Initialize(logger logtree.LeveledLogger) error {
+func Initialize(logger logging.Leveled) error {
 	lock.Lock()
 	defer lock.Unlock()
 	tpmDir, err := os.Open("/sys/class/tpm")

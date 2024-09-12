@@ -39,8 +39,8 @@ import (
 	deviceplugin "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 	pluginregistration "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/metropolis/node/core/localstorage"
-	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/supervisor"
 )
 
@@ -51,7 +51,7 @@ type Plugin struct {
 	*deviceplugin.UnimplementedDevicePluginServer
 	KubeletDirectory *localstorage.DataKubernetesKubeletDirectory
 
-	logger logtree.LeveledLogger
+	logger logging.Leveled
 }
 
 func (k *Plugin) GetInfo(context.Context, *pluginregistration.InfoRequest) (*pluginregistration.PluginInfo, error) {

@@ -15,6 +15,7 @@ go_library(
     # TODO(#189): move supervisor to //go
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logging",
         "//osbase/logtree",
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_prometheus_client_golang//prometheus",

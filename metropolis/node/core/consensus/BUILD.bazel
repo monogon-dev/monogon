@@ -12,6 +12,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/consensus",
     visibility = ["//:__subpackages__"],
     deps = [
+        "//go/logging",
         "//metropolis/node",
         "//metropolis/node/core/consensus/client",
         "//metropolis/node/core/identity",
@@ -44,6 +45,7 @@ go_test(
         "block-network",
     ],
     deps = [
+        "//go/logging",
         "//metropolis/node/core/localstorage",
         "//metropolis/node/core/localstorage/declarative",
         "//metropolis/test/util",

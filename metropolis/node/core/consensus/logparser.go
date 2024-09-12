@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/osbase/logbuffer"
 	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/logtree/unraw"
@@ -80,13 +81,13 @@ func parseEtcdLogEntry(l *logbuffer.Line, write unraw.LeveledWriter) {
 	// Convert zap level into logtree severity.
 	switch e.Level {
 	case "info":
-		out.Severity = logtree.INFO
+		out.Severity = logging.INFO
 	case "warn":
-		out.Severity = logtree.WARNING
+		out.Severity = logging.WARNING
 	case "error":
-		out.Severity = logtree.ERROR
+		out.Severity = logging.ERROR
 	case "fatal", "panic", "dpanic":
-		out.Severity = logtree.FATAL
+		out.Severity = logging.FATAL
 	}
 
 	// Sort extra keys alphabetically.

@@ -23,6 +23,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core",
     visibility = ["//visibility:private"],
     deps = [
+        "//go/logging",
         "//metropolis/node",
         "//metropolis/node/core/cluster",
         "//metropolis/node/core/devmgr",

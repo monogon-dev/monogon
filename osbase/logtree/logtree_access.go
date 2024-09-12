@@ -19,6 +19,8 @@ package logtree
 import (
 	"errors"
 	"sync/atomic"
+
+	"source.monogon.dev/go/logging"
 )
 
 // LogReadOption describes options for the LogTree.Read call.
@@ -28,7 +30,7 @@ type LogReadOption struct {
 	withBacklog                int
 	onlyLeveled                bool
 	onlyRaw                    bool
-	leveledWithMinimumSeverity Severity
+	leveledWithMinimumSeverity logging.Severity
 }
 
 // WithChildren makes Read return/stream data for both a given DN and all its
@@ -54,7 +56,7 @@ func OnlyLeveled() LogReadOption { return LogReadOption{onlyLeveled: true} }
 // LeveledWithMinimumSeverity makes Read return only log entries that are at least
 // at a given Severity. If only leveled entries are needed, OnlyLeveled must be
 // used. This is a no-op when OnlyRaw is used.
-func LeveledWithMinimumSeverity(s Severity) LogReadOption {
+func LeveledWithMinimumSeverity(s logging.Severity) LogReadOption {
 	return LogReadOption{leveledWithMinimumSeverity: s}
 }
 
@@ -111,7 +113,7 @@ func (l *LogTree) Read(dn DN, opts ...LogReadOption) (*LogReader, error) {
 	var backlog int
 	var stream bool
 	var recursive bool
-	var leveledSeverity Severity
+	var leveledSeverity logging.Severity
 	var onlyRaw, onlyLeveled bool
 
 	for _, opt := range opts {

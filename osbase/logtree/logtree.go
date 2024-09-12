@@ -21,6 +21,7 @@ import (
 	"strings"
 	"sync"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/osbase/logbuffer"
 )
 
@@ -52,7 +53,7 @@ type node struct {
 	tree *LogTree
 	// verbosity is the current verbosity level of this DN/node, affecting .V(n)
 	// LeveledLogger calls
-	verbosity     VerbosityLevel
+	verbosity     logging.VerbosityLevel
 	rawLineBuffer *logbuffer.LineBuffer
 
 	// mu guards children.

@@ -1,9 +1,13 @@
 package logtree
 
-import "google.golang.org/grpc/grpclog"
+import (
+	"google.golang.org/grpc/grpclog"
+
+	"source.monogon.dev/go/logging"
+)
 
 // GRPCify turns a LeveledLogger into a go-grpc compatible logger.
-func GRPCify(logger LeveledLogger) grpclog.LoggerV2 {
+func GRPCify(logger logging.Leveled) grpclog.LoggerV2 {
 	lp, ok := logger.(*leveledPublisher)
 	if !ok {
 		// Fail fast, as this is a programming error.
@@ -71,5 +75,5 @@ func (g *leveledGRPCV2) Fatalf(format string, args ...interface{}) {
 }
 
 func (g *leveledGRPCV2) V(l int) bool {
-	return g.lp.V(VerbosityLevel(l)).Enabled()
+	return g.lp.V(logging.VerbosityLevel(l)).Enabled()
 }

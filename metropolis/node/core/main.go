@@ -25,6 +25,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/metropolis/node/core/cluster"
 	"source.monogon.dev/metropolis/node/core/devmgr"
 	"source.monogon.dev/metropolis/node/core/localstorage"
@@ -302,23 +303,23 @@ func consoleFilter(p *logtree.LogEntry) bool {
 	}
 	s := string(p.DN)
 	if strings.HasPrefix(s, "root.role.controlplane.launcher.consensus.etcd") {
-		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+		return p.Leveled.Severity().AtLeast(logging.WARNING)
 	}
 	// TODO(q3k): turn off RPC traces instead
 	if strings.HasPrefix(s, "root.role.controlplane.launcher.curator.listener.rpc") {
 		return false
 	}
 	if strings.HasPrefix(s, "root.role.kubernetes.run.kubernetes.networked.kubelet") {
-		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+		return p.Leveled.Severity().AtLeast(logging.WARNING)
 	}
 	if strings.HasPrefix(s, "root.role.kubernetes.run.kubernetes.networked.apiserver") {
-		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+		return p.Leveled.Severity().AtLeast(logging.WARNING)
 	}
 	if strings.HasPrefix(s, "root.role.kubernetes.run.kubernetes.controller-manager") {
-		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+		return p.Leveled.Severity().AtLeast(logging.WARNING)
 	}
 	if strings.HasPrefix(s, "root.role.kubernetes.run.kubernetes.scheduler") {
-		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+		return p.Leveled.Severity().AtLeast(logging.WARNING)
 	}
 	if strings.HasPrefix(s, "root.kernel") {
 		// Linux writes high-severity logs directly to the console anyways and
@@ -326,7 +327,7 @@ func consoleFilter(p *logtree.LogEntry) bool {
 		return false
 	}
 	if strings.HasPrefix(s, "supervisor") {
-		return p.Leveled.Severity().AtLeast(logtree.WARNING)
+		return p.Leveled.Severity().AtLeast(logging.WARNING)
 	}
 	return true
 }

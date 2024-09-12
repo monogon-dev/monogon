@@ -12,8 +12,8 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/metropolis/node/core/identity"
-	"source.monogon.dev/osbase/logtree"
 )
 
 // ServerSecurity are the security options of a RPC server that will run
@@ -37,7 +37,7 @@ type ServerSecurity struct {
 // metropolis.proto.ext.authorization options and authenticate/authorize
 // incoming connections. It also runs the gRPC server with the correct TLS
 // settings for authenticating itself to callers.
-func (s *ServerSecurity) GRPCOptions(logger logtree.LeveledLogger) []grpc.ServerOption {
+func (s *ServerSecurity) GRPCOptions(logger logging.Leveled) []grpc.ServerOption {
 	externalCreds := credentials.NewTLS(&tls.Config{
 		Certificates: []tls.Certificate{s.NodeCredentials.TLSCredentials()},
 		ClientAuth:   tls.RequestClientCert,
@@ -53,7 +53,7 @@ func (s *ServerSecurity) GRPCOptions(logger logtree.LeveledLogger) []grpc.Server
 // streamInterceptor returns a gRPC StreamInterceptor interface for use with
 // grpc.NewServer. It's applied to gRPC servers started within Metropolis,
 // notably to the Curator.
-func (s *ServerSecurity) streamInterceptor(logger logtree.LeveledLogger) grpc.StreamServerInterceptor {
+func (s *ServerSecurity) streamInterceptor(logger logging.Leveled) grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		var span *logtreeSpan
 		// HACK: Do not log any log retrieval methods into the log, otherwise logs blow up
@@ -87,7 +87,7 @@ func (s *ServerSecurity) streamInterceptor(logger logtree.LeveledLogger) grpc.St
 // unaryInterceptor returns a gRPC UnaryInterceptor interface for use with
 // grpc.NewServer. It's applied to gRPC servers started within Metropolis,
 // notably to the Curator.
-func (s *ServerSecurity) unaryInterceptor(logger logtree.LeveledLogger) grpc.UnaryServerInterceptor {
+func (s *ServerSecurity) unaryInterceptor(logger logging.Leveled) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		// Inject span if we have a logger.
 		if logger != nil {

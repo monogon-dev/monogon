@@ -24,6 +24,7 @@ import (
 	"syscall"
 	"time"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/osbase/logbuffer"
 	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/supervisor"
@@ -51,7 +52,7 @@ type Converter struct {
 	MaximumLineLength int
 	// LeveledLogger is the logtree leveled logger into which events from the
 	// Parser will be sent.
-	LeveledLogger logtree.LeveledLogger
+	LeveledLogger logging.Leveled
 
 	// mu guards lb.
 	mu sync.Mutex

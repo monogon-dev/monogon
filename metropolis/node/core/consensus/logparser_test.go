@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/osbase/logbuffer"
 	"source.monogon.dev/osbase/logtree"
 )
@@ -35,7 +36,7 @@ func TestParsing(t *testing.T) {
 			&logtree.ExternalLeveledPayload{
 				Message:   `configuring peer listeners, listen-peer-urls: ["https://[::]:7834"]`,
 				Timestamp: timeParse("2021-07-06T17:18:24.368Z"),
-				Severity:  logtree.INFO,
+				Severity:  logging.INFO,
 				File:      "etcd.go",
 				Line:      117,
 			},
@@ -46,7 +47,7 @@ func TestParsing(t *testing.T) {
 			&logtree.ExternalLeveledPayload{
 				Message:   `added member, added-peer-id: "9642132f5d0d99e2", added-peer-peer-urls: ["https://metropolis-eb8d68cfb52711ad04c339abdeea74ed:7834"], cluster-id: "137c8e19524788c1", local-member-id: "9642132f5d0d99e2"`,
 				Timestamp: timeParse("2021-07-06T17:21:49.462Z"),
-				Severity:  logtree.INFO,
+				Severity:  logging.INFO,
 				File:      "cluster.go",
 				Line:      392,
 			},

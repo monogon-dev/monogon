@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"golang.org/x/sys/unix"
+
+	"source.monogon.dev/go/logging"
 )
 
 const (
@@ -29,7 +31,7 @@ const (
 
 // KmsgPipe pipes logs from the kernel kmsg interface at /dev/kmsg into the
 // given logger.
-func KmsgPipe(ctx context.Context, lt LeveledLogger) error {
+func KmsgPipe(ctx context.Context, lt logging.Leveled) error {
 	publisher, ok := lt.(*leveledPublisher)
 	if !ok {
 		// Fail fast, as this is a programming error.
@@ -119,18 +121,18 @@ func parseKmsg(now time.Time, monotonicSinceBoot time.Duration, data []byte) *Le
 
 	monotonicFromNow := monotonic - monotonicSinceBoot
 
-	var severity Severity
+	var severity logging.Severity
 	switch loglevel {
 	case loglevelEmergency, loglevelAlert:
-		severity = FATAL
+		severity = logging.FATAL
 	case loglevelCritical, loglevelError:
-		severity = ERROR
+		severity = logging.ERROR
 	case loglevelWarning:
-		severity = WARNING
+		severity = logging.WARNING
 	case loglevelNotice, loglevelInfo, loglevelDebug:
-		severity = INFO
+		severity = logging.INFO
 	default:
-		severity = INFO
+		severity = logging.INFO
 	}
 
 	return &LeveledPayload{

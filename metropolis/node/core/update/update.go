@@ -23,13 +23,13 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"source.monogon.dev/go/logging"
 	abloaderpb "source.monogon.dev/metropolis/node/core/abloader/spec"
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
 	"source.monogon.dev/osbase/gpt"
 	"source.monogon.dev/osbase/kexec"
-	"source.monogon.dev/osbase/logtree"
 )
 
 // Service contains data and functionality to perform A/B updates on a
@@ -43,7 +43,7 @@ type Service struct {
 	ESPPartNumber uint32
 
 	// Logger service for the update service.
-	Logger logtree.LeveledLogger
+	Logger logging.Leveled
 }
 
 type Slot int

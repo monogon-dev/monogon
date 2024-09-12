@@ -6,8 +6,8 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/kubernetes/plugins/kvmdevice",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logging",
         "//metropolis/node/core/localstorage",
-        "//osbase/logtree",
         "//osbase/supervisor",
         "@io_k8s_api//core/v1:core",
         "@io_k8s_kubelet//pkg/apis/deviceplugin/v1beta1",

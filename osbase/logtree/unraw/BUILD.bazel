@@ -6,6 +6,7 @@ go_library(
     importpath = "source.monogon.dev/osbase/logtree/unraw",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logging",
         "//osbase/logbuffer",
         "//osbase/logtree",
         "//osbase/supervisor",

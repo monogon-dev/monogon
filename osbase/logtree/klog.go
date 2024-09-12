@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/osbase/logbuffer"
 )
 
@@ -47,7 +48,7 @@ import (
 // lines do not necessarily have their year aleays equal to the current year, as
 // the code handles the edge case of parsing a line from the end of a previous
 // year at the beginning of the next).
-func KLogParser(logger LeveledLogger) io.WriteCloser {
+func KLogParser(logger logging.Leveled) io.WriteCloser {
 	p, ok := logger.(*leveledPublisher)
 	if !ok {
 		// Fail fast, as this is a programming error.
@@ -121,16 +122,16 @@ func parse(now time.Time, s string) *LeveledPayload {
 	lineS := parts[7]
 	message := parts[8]
 
-	var severity Severity
+	var severity logging.Severity
 	switch severityS {
 	case "I":
-		severity = INFO
+		severity = logging.INFO
 	case "W":
-		severity = WARNING
+		severity = logging.WARNING
 	case "E":
-		severity = ERROR
+		severity = logging.ERROR
 	case "F":
-		severity = FATAL
+		severity = logging.FATAL
 	default:
 		return nil
 	}

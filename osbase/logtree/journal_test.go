@@ -21,13 +21,15 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"source.monogon.dev/go/logging"
 )
 
 func testPayload(msg string) *LeveledPayload {
 	return &LeveledPayload{
 		messages:  []string{msg},
 		timestamp: time.Now(),
-		severity:  INFO,
+		severity:  logging.INFO,
 		file:      "main.go",
 		line:      1337,
 	}

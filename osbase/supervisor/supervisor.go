@@ -27,6 +27,7 @@ import (
 	"io"
 	"sync"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/osbase/logtree"
 )
 
@@ -94,7 +95,7 @@ type supervisor struct {
 	// logtree is the main logtree exposed to runnables and used internally.
 	logtree *logtree.LogTree
 	// ilogger is the internal logger logging to "supervisor" in the logtree.
-	ilogger logtree.LeveledLogger
+	ilogger logging.Leveled
 
 	// pReq is an interface channel to the lifecycle processor of the
 	// supervisor.
@@ -160,7 +161,7 @@ func New(ctx context.Context, rootRunnable Runnable, opts ...SupervisorOpt) *sup
 	return sup
 }
 
-func Logger(ctx context.Context) logtree.LeveledLogger {
+func Logger(ctx context.Context) logging.Leveled {
 	node, unlock := fromContext(ctx)
 	defer unlock()
 	return node.sup.logtree.MustLeveledFor(logtree.DN(node.dn()))
@@ -182,7 +183,7 @@ func RawLogger(ctx context.Context) io.Writer {
 // sub-logger with a given name, that name also becomes unavailable for use as
 // a child runnable (no runnable and sub-logger may ever log into the same
 // logtree DN).
-func SubLogger(ctx context.Context, name string) (logtree.LeveledLogger, error) {
+func SubLogger(ctx context.Context, name string) (logging.Leveled, error) {
 	node, unlock := fromContext(ctx)
 	defer unlock()
 
@@ -201,7 +202,7 @@ func SubLogger(ctx context.Context, name string) (logtree.LeveledLogger, error) 
 // MustSubLogger is a wrapper around SubLogger which panics on error. Errors
 // should only happen due to invalid names, so as long as the given name is
 // compile-time constant and valid, this function is safe to use.
-func MustSubLogger(ctx context.Context, name string) logtree.LeveledLogger {
+func MustSubLogger(ctx context.Context, name string) logging.Leveled {
 	l, err := SubLogger(ctx, name)
 	if err != nil {
 		panic(err)

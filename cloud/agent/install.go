@@ -15,10 +15,10 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
-	"source.monogon.dev/osbase/logtree"
 	npb "source.monogon.dev/osbase/net/proto"
 )
 
@@ -42,7 +42,7 @@ func (f FileSizedReader) Size() int64 {
 
 // install dispatches OSInstallationRequests to the appropriate installer
 // method
-func install(req *bpb.OSInstallationRequest, netConfig *npb.Net, l logtree.LeveledLogger) error {
+func install(req *bpb.OSInstallationRequest, netConfig *npb.Net, l logging.Leveled) error {
 	switch reqT := req.Type.(type) {
 	case *bpb.OSInstallationRequest_Metropolis:
 		return installMetropolis(reqT.Metropolis, netConfig, l)
@@ -51,7 +51,7 @@ func install(req *bpb.OSInstallationRequest, netConfig *npb.Net, l logtree.Level
 	}
 }
 
-func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Net, l logtree.LeveledLogger) error {
+func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Net, l logging.Leveled) error {
 	// Validate we are running via EFI.
 	if _, err := os.Stat("/sys/firmware/efi"); os.IsNotExist(err) {
 		//nolint:ST1005

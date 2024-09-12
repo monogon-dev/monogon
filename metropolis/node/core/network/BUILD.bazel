@@ -12,10 +12,10 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//go/algorithm/toposort",
+        "//go/logging",
         "//metropolis/node/core/network/dhcp4c",
         "//metropolis/node/core/network/dhcp4c/callback",
         "//osbase/event/memory",
-        "//osbase/logtree",
         "//osbase/net/dns",
         "//osbase/net/dns/forward",
         "//osbase/net/proto",

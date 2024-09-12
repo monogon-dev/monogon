@@ -9,12 +9,12 @@ import (
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 
-	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/go/logging"
 )
 
 // applyQuirks applies settings to drivers and/or hardware to make it work
 // better (i.e. with less crashes or faster).
-func applyQuirks(l logtree.LeveledLogger) error {
+func applyQuirks(l logging.Leveled) error {
 	ethtoolFd, err := unix.Socket(unix.AF_INET, unix.SOCK_DGRAM, unix.IPPROTO_IP)
 	if err != nil {
 		return fmt.Errorf("while creating IP socket for ethtool: %w", err)

@@ -41,9 +41,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 
+	"source.monogon.dev/go/logging"
 	oclusternet "source.monogon.dev/metropolis/node/core/clusternet"
 	"source.monogon.dev/osbase/event"
-	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/supervisor"
 )
 
@@ -52,7 +52,7 @@ type Service struct {
 	Kubernetes kubernetes.Interface
 	Prefixes   event.Value[*oclusternet.Prefixes]
 
-	logger logtree.LeveledLogger
+	logger logging.Leveled
 }
 
 // ensureNode is called any time the node that this Service is running on gets

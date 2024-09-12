@@ -21,6 +21,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"source.monogon.dev/go/logging"
 )
 
 func expect(tree *LogTree, t *testing.T, dn DN, entries ...string) string {
@@ -227,13 +229,13 @@ func TestMetadata(t *testing.T) {
 
 	for _, te := range []struct {
 		ix       int
-		severity Severity
+		severity logging.Severity
 		message  string
 	}{
-		{0, ERROR, "i am an error"},
-		{1, WARNING, "i am a warning"},
-		{2, INFO, "i am informative"},
-		{3, INFO, "i am a zero-level debug"},
+		{0, logging.ERROR, "i am an error"},
+		{1, logging.WARNING, "i am a warning"},
+		{2, logging.INFO, "i am informative"},
+		{3, logging.INFO, "i am a zero-level debug"},
 	} {
 		p := reader.Backlog[te.ix]
 		if want, got := te.severity, p.Leveled.Severity(); want != got {
@@ -255,7 +257,7 @@ func TestSeverity(t *testing.T) {
 	tree.MustLeveledFor("main").Info("i am informative")
 	tree.MustLeveledFor("main").V(0).Info("i am a zero-level debug")
 
-	reader, err := tree.Read("main", WithBacklog(BacklogAllAvailable), LeveledWithMinimumSeverity(WARNING))
+	reader, err := tree.Read("main", WithBacklog(BacklogAllAvailable), LeveledWithMinimumSeverity(logging.WARNING))
 	if err != nil {
 		t.Fatalf("Read: %v", err)
 	}
@@ -311,7 +313,7 @@ func TestLogEntry_ConciseString(t *testing.T) {
 			&LogEntry{
 				Leveled: &LeveledPayload{
 					messages: []string{"Hello there!"},
-					severity: WARNING,
+					severity: logging.WARNING,
 				},
 				DN: "root.role.kubernetes.run.kubernetes.apiserver",
 			},
@@ -322,7 +324,7 @@ func TestLogEntry_ConciseString(t *testing.T) {
 			&LogEntry{
 				Leveled: &LeveledPayload{
 					messages: []string{"Hello there!", "I am multiline."},
-					severity: WARNING,
+					severity: logging.WARNING,
 				},
 				DN: "root.role.kubernetes.run.kubernetes.apiserver",
 			},
@@ -336,7 +338,7 @@ func TestLogEntry_ConciseString(t *testing.T) {
 			&LogEntry{
 				Leveled: &LeveledPayload{
 					messages: []string{"Hello there! I am a very long string, and I will get wrapped to 120 columns because that's just how life is for long strings."},
-					severity: WARNING,
+					severity: logging.WARNING,
 				},
 				DN: "root.role.kubernetes.run.kubernetes.apiserver",
 			},
@@ -350,7 +352,7 @@ func TestLogEntry_ConciseString(t *testing.T) {
 			&LogEntry{
 				Leveled: &LeveledPayload{
 					messages: []string{"Hello there!"},
-					severity: WARNING,
+					severity: logging.WARNING,
 				},
 				DN: "root.role.kubernetes.run.kubernetes.apiserver",
 			},
@@ -363,7 +365,7 @@ func TestLogEntry_ConciseString(t *testing.T) {
 			&LogEntry{
 				Leveled: &LeveledPayload{
 					messages: []string{"Hello there!"},
-					severity: WARNING,
+					severity: logging.WARNING,
 				},
 				DN: "root.role.kubernetes.run.kubernetes.apiserver",
 			},

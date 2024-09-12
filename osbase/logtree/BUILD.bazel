@@ -23,6 +23,7 @@ go_library(
     importpath = "source.monogon.dev/osbase/logtree",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logging",
         "//osbase/logbuffer",
         "//osbase/logtree/proto",
         "@com_github_mitchellh_go_wordwrap//:go-wordwrap",
@@ -52,6 +53,7 @@ go_test(
     ],
     embed = [":logtree"],
     deps = [
+        "//go/logging",
         "@com_github_google_go_cmp//cmp",
         "@org_uber_go_zap//:zap",
     ],

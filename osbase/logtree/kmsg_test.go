@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+
+	"source.monogon.dev/go/logging"
 )
 
 func TestParseKmsg(t *testing.T) {
@@ -26,13 +28,13 @@ func TestParseKmsg(t *testing.T) {
 		{"6,30962,1501094342185,-;test\n", &LeveledPayload{
 			messages:  []string{"test"},
 			timestamp: time.Date(2023, 8, 9, 14, 57, 23, 35675222, time.UTC),
-			severity:  INFO,
+			severity:  logging.INFO,
 		}},
 		// With metadata and different severity
 		{"4,30951,1486884175312,-;nvme nvme2: starting error recovery\n SUBSYSTEM=nvme\n DEVICE=c239:2\n", &LeveledPayload{
 			messages:  []string{"nvme nvme2: starting error recovery"},
 			timestamp: time.Date(2023, 8, 9, 11, 00, 32, 868802222, time.UTC),
-			severity:  WARNING,
+			severity:  logging.WARNING,
 		}},
 	} {
 		got := parseKmsg(now, nowMonotonic, []byte(te.line))

@@ -24,6 +24,7 @@ import (
 
 	tpb "google.golang.org/protobuf/types/known/timestamppb"
 
+	"source.monogon.dev/go/logging"
 	lpb "source.monogon.dev/osbase/logtree/proto"
 )
 
@@ -38,7 +39,7 @@ type LeveledPayload struct {
 	// timestamp is the time at which this message was emitted.
 	timestamp time.Time
 	// severity is the leveled Severity at which this message was emitted.
-	severity Severity
+	severity logging.Severity
 	// file is the filename of the caller that emitted this message.
 	file string
 	// line is the line number within the file of the caller that emitted this message.
@@ -111,14 +112,14 @@ func (p *LeveledPayload) Timestamp() time.Time { return p.timestamp }
 func (p *LeveledPayload) Location() string { return fmt.Sprintf("%s:%d", p.file, p.line) }
 
 // Severity returns the Severity with which this entry was logged.
-func (p *LeveledPayload) Severity() Severity { return p.severity }
+func (p *LeveledPayload) Severity() logging.Severity { return p.severity }
 
 // Proto converts a LeveledPayload to protobuf format.
 func (p *LeveledPayload) Proto() *lpb.LogEntry_Leveled {
 	return &lpb.LogEntry_Leveled{
 		Lines:     p.Messages(),
 		Timestamp: tpb.New(p.Timestamp()),
-		Severity:  p.Severity().ToProto(),
+		Severity:  SeverityToProto(p.Severity()),
 		Location:  p.Location(),
 	}
 }
@@ -167,7 +168,7 @@ type ExternalLeveledPayload struct {
 	// given, will default to the time of conversion to LeveledPayload.
 	Timestamp time.Time
 	// Log severity. If invalid or unset will default to INFO.
-	Severity Severity
+	Severity logging.Severity
 	// File name of originating code. Defaults to "unknown" if not set.
 	File string
 	// Line in File. Zero indicates the line is not known.
@@ -188,7 +189,7 @@ func (e *ExternalLeveledPayload) sanitize() *LeveledPayload {
 		l.timestamp = time.Now()
 	}
 	if !l.severity.Valid() {
-		l.severity = INFO
+		l.severity = logging.INFO
 	}
 	if l.file == "" {
 		l.file = "unknown"

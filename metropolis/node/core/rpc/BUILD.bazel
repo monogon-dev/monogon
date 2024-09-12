@@ -13,10 +13,10 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/rpc",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logging",
         "//metropolis/node/core/identity",
         "//metropolis/proto/api",
         "//metropolis/proto/ext",
-        "//osbase/logtree",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//credentials",

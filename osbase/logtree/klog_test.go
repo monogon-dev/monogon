@@ -21,6 +21,8 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+
+	"source.monogon.dev/go/logging"
 )
 
 func TestParse(t *testing.T) {
@@ -40,7 +42,7 @@ func TestParse(t *testing.T) {
 		{now, "E0312 14:20:04.240540    204 shared_informer.go:247] Caches are synced for attach detach", &LeveledPayload{
 			messages:  []string{"Caches are synced for attach detach"},
 			timestamp: time.Date(2021, 03, 12, 14, 20, 4, 240540000, time.UTC),
-			severity:  ERROR,
+			severity:  logging.ERROR,
 			file:      "shared_informer.go",
 			line:      247,
 		}},
@@ -56,7 +58,7 @@ func TestParse(t *testing.T) {
 		{nowNewYear, "I1231 23:59:43.123456    123 fry.go:123] Here's to another lousy millenium!", &LeveledPayload{
 			messages:  []string{"Here's to another lousy millenium!"},
 			timestamp: time.Date(1999, 12, 31, 23, 59, 43, 123456000, time.UTC),
-			severity:  INFO,
+			severity:  logging.INFO,
 			file:      "fry.go",
 			line:      123,
 		}},
@@ -68,7 +70,7 @@ func TestParse(t *testing.T) {
 		{now, "E0312 14:20:04 204 shared_informer.go:247] Caches are synced for attach detach", &LeveledPayload{
 			messages:  []string{"Caches are synced for attach detach"},
 			timestamp: time.Date(2021, 03, 12, 14, 20, 4, 0, time.UTC),
-			severity:  ERROR,
+			severity:  logging.ERROR,
 			file:      "shared_informer.go",
 			line:      247,
 		}},

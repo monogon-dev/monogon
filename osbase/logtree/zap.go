@@ -10,13 +10,14 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/osbase/logbuffer"
 )
 
 // Zapify turns a LeveledLogger into a zap.Logger which pipes its output into the
 // LeveledLogger. The message, severity and caller are carried over. Extra fields
 // are appended as JSON to the end of the log line.
-func Zapify(logger LeveledLogger, minimumLevel zapcore.Level) *zap.Logger {
+func Zapify(logger logging.Leveled, minimumLevel zapcore.Level) *zap.Logger {
 	p, ok := logger.(*leveledPublisher)
 	if !ok {
 		// Fail fast, as this is a programming error.
@@ -71,7 +72,7 @@ func (z *zapSink) consumeLine(l *logbuffer.Line) {
 
 type zapEntry struct {
 	message  string
-	severity Severity
+	severity logging.Severity
 	time     time.Time
 	file     string
 	line     int
@@ -109,14 +110,14 @@ func parseZapJSON(s string) (*zapEntry, error) {
 	callerLineS := callerParts[1]
 	callerLine, _ := strconv.Atoi(callerLineS)
 
-	var severity Severity
+	var severity logging.Severity
 	switch level {
 	case "warn":
-		severity = WARNING
+		severity = logging.WARNING
 	case "error", "dpanic", "panic", "fatal":
-		severity = ERROR
+		severity = logging.ERROR
 	default:
-		severity = INFO
+		severity = logging.INFO
 	}
 
 	secs := int64(t)

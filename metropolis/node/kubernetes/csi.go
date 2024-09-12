@@ -33,9 +33,9 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	pluginregistration "k8s.io/kubelet/pkg/apis/pluginregistration/v1"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/osbase/fsquota"
-	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/loop"
 	"source.monogon.dev/osbase/supervisor"
 )
@@ -51,7 +51,7 @@ type csiPluginServer struct {
 	KubeletDirectory *localstorage.DataKubernetesKubeletDirectory
 	VolumesDirectory *localstorage.DataVolumesDirectory
 
-	logger logtree.LeveledLogger
+	logger logging.Leveled
 }
 
 func (s *csiPluginServer) Run(ctx context.Context) error {

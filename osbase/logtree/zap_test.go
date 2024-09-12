@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"go.uber.org/zap"
+
+	"source.monogon.dev/go/logging"
 )
 
 func TestZapify(t *testing.T) {
@@ -25,11 +27,11 @@ func TestZapify(t *testing.T) {
 	} else {
 		for i, te := range []struct {
 			msg string
-			sev Severity
+			sev logging.Severity
 		}{
-			{`foo {"intp":42,"strp":"strv"}`, INFO},
-			{`foo! {"intp":1337,"strp":"strv"}`, WARNING},
-			{`foo!!`, ERROR},
+			{`foo {"intp":42,"strp":"strv"}`, logging.INFO},
+			{`foo! {"intp":1337,"strp":"strv"}`, logging.WARNING},
+			{`foo!!`, logging.ERROR},
 		} {
 			if want, got := te.msg, res.Backlog[i].Leveled.messages[0]; want != got {
 				t.Errorf("Line %d: wanted message %q, got %q", i, want, got)

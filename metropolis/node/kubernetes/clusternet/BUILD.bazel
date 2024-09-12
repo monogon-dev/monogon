@@ -6,9 +6,9 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/kubernetes/clusternet",
     visibility = ["//metropolis/node/kubernetes:__subpackages__"],
     deps = [
+        "//go/logging",
         "//metropolis/node/core/clusternet",
         "//osbase/event",
-        "//osbase/logtree",
         "//osbase/supervisor",
         "@io_k8s_api//core/v1:core",
         "@io_k8s_apimachinery//pkg/fields",

@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 
-	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/go/logging"
 )
 
 // Span implements a compatible subset of
@@ -64,14 +64,14 @@ type logtreeSpan struct {
 	// logger is the logtree LeveledLogger backing this span. All Events added into
 	// the Span will go straight into that logger. If the logger is nil, all events
 	// will be dropped instead.
-	logger logtree.LeveledLogger
+	logger logging.Leveled
 	// uid is the span ID of this logtreeSpan. Currently this is a monotonic counter
 	// based on the current nanosecond epoch, but this might change in the future.
 	// This field is ignored if logger is nil.
 	uid uint64
 }
 
-func newLogtreeSpan(l logtree.LeveledLogger) *logtreeSpan {
+func newLogtreeSpan(l logging.Leveled) *logtreeSpan {
 	uid := uint64(time.Now().UnixNano())
 	return &logtreeSpan{
 		logger: l,

@@ -39,9 +39,9 @@ import (
 	ref "k8s.io/client-go/tools/reference"
 	"k8s.io/client-go/util/workqueue"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/osbase/fsquota"
-	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/supervisor"
 )
 
@@ -72,7 +72,7 @@ type csiProvisionerServer struct {
 	pvcInformer          coreinformers.PersistentVolumeClaimInformer
 	pvInformer           coreinformers.PersistentVolumeInformer
 	storageClassInformer storageinformers.StorageClassInformer
-	logger               logtree.LeveledLogger
+	logger               logging.Leveled
 }
 
 // runCSIProvisioner runs the main provisioning machinery. It consists of a

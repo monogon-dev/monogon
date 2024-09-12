@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/osbase/logbuffer"
 )
 
@@ -33,7 +34,7 @@ type leveledPublisher struct {
 
 // LeveledFor returns a LeveledLogger publishing interface for a given DN. An error
 // may be returned if the DN is malformed.
-func (l *LogTree) LeveledFor(dn DN) (LeveledLogger, error) {
+func (l *LogTree) LeveledFor(dn DN) (logging.Leveled, error) {
 	node, err := l.nodeByDN(dn)
 	if err != nil {
 		return nil, err
@@ -54,7 +55,7 @@ func (l *LogTree) RawFor(dn DN) (io.Writer, error) {
 
 // MustLeveledFor returns a LeveledLogger publishing interface for a given DN, or
 // panics if the given DN is invalid.
-func (l *LogTree) MustLeveledFor(dn DN) LeveledLogger {
+func (l *LogTree) MustLeveledFor(dn DN) logging.Leveled {
 	leveled, err := l.LeveledFor(dn)
 	if err != nil {
 		panic(fmt.Errorf("LeveledFor returned: %w", err))
@@ -72,7 +73,7 @@ func (l *LogTree) MustRawFor(dn DN) io.Writer {
 
 // SetVerbosity sets the verbosity for a given DN (non-recursively, ie. for that DN
 // only, not its children).
-func (l *LogTree) SetVerbosity(dn DN, level VerbosityLevel) error {
+func (l *LogTree) SetVerbosity(dn DN, level logging.VerbosityLevel) error {
 	node, err := l.nodeByDN(dn)
 	if err != nil {
 		return err
@@ -97,7 +98,7 @@ func (n *node) logRaw(line *logbuffer.Line) {
 // LeveledLogger. This should only be used by systems which translate external
 // data sources into leveled logging - see ExternelLeveledPayload for more
 // information.
-func LogExternalLeveled(l LeveledLogger, e *ExternalLeveledPayload) error {
+func LogExternalLeveled(l logging.Leveled, e *ExternalLeveledPayload) error {
 	publisher, ok := l.(*leveledPublisher)
 	if !ok {
 		return fmt.Errorf("the given LeveledLogger is not a *leveledPublisher")
@@ -115,7 +116,7 @@ func LogExternalLeveled(l LeveledLogger, e *ExternalLeveledPayload) error {
 // log builds a LeveledPayload and entry for a given message, including all related
 // metadata. It will create a new entry append it to the journal, and notify all
 // pertinent subscribers.
-func (l *leveledPublisher) logLeveled(depth int, severity Severity, msg string) {
+func (l *leveledPublisher) logLeveled(depth int, severity logging.Severity, msg string) {
 	_, file, line, ok := runtime.Caller(2 + depth)
 	if !ok {
 		file = "???"
@@ -147,53 +148,53 @@ func (l *leveledPublisher) logLeveled(depth int, severity Severity, msg string) 
 
 // Info implements the LeveledLogger interface.
 func (l *leveledPublisher) Info(args ...interface{}) {
-	l.logLeveled(l.depth, INFO, fmt.Sprint(args...))
+	l.logLeveled(l.depth, logging.INFO, fmt.Sprint(args...))
 }
 
 // Infof implements the LeveledLogger interface.
 func (l *leveledPublisher) Infof(format string, args ...interface{}) {
-	l.logLeveled(l.depth, INFO, fmt.Sprintf(format, args...))
+	l.logLeveled(l.depth, logging.INFO, fmt.Sprintf(format, args...))
 }
 
 // Warning implements the LeveledLogger interface.
 func (l *leveledPublisher) Warning(args ...interface{}) {
-	l.logLeveled(l.depth, WARNING, fmt.Sprint(args...))
+	l.logLeveled(l.depth, logging.WARNING, fmt.Sprint(args...))
 }
 
 // Warningf implements the LeveledLogger interface.
 func (l *leveledPublisher) Warningf(format string, args ...interface{}) {
-	l.logLeveled(l.depth, WARNING, fmt.Sprintf(format, args...))
+	l.logLeveled(l.depth, logging.WARNING, fmt.Sprintf(format, args...))
 }
 
 // Error implements the LeveledLogger interface.
 func (l *leveledPublisher) Error(args ...interface{}) {
-	l.logLeveled(l.depth, ERROR, fmt.Sprint(args...))
+	l.logLeveled(l.depth, logging.ERROR, fmt.Sprint(args...))
 }
 
 // Errorf implements the LeveledLogger interface.
 func (l *leveledPublisher) Errorf(format string, args ...interface{}) {
-	l.logLeveled(l.depth, ERROR, fmt.Sprintf(format, args...))
+	l.logLeveled(l.depth, logging.ERROR, fmt.Sprintf(format, args...))
 }
 
 // Fatal implements the LeveledLogger interface.
 func (l *leveledPublisher) Fatal(args ...interface{}) {
-	l.logLeveled(l.depth, FATAL, fmt.Sprint(args...))
+	l.logLeveled(l.depth, logging.FATAL, fmt.Sprint(args...))
 }
 
 // Fatalf implements the LeveledLogger interface.
 func (l *leveledPublisher) Fatalf(format string, args ...interface{}) {
-	l.logLeveled(l.depth, FATAL, fmt.Sprintf(format, args...))
+	l.logLeveled(l.depth, logging.FATAL, fmt.Sprintf(format, args...))
 }
 
 // WithAddedStackDepth impleemnts the LeveledLogger interface.
-func (l *leveledPublisher) WithAddedStackDepth(depth int) LeveledLogger {
+func (l *leveledPublisher) WithAddedStackDepth(depth int) logging.Leveled {
 	l2 := *l
 	l2.depth += depth
 	return &l2
 }
 
 // V implements the LeveledLogger interface.
-func (l *leveledPublisher) V(v VerbosityLevel) VerboseLeveledLogger {
+func (l *leveledPublisher) V(v logging.VerbosityLevel) logging.VerboseLeveled {
 	return &verbose{
 		publisher: l,
 		enabled:   l.node.verbosity >= v,
@@ -218,12 +219,12 @@ func (v *verbose) Info(args ...interface{}) {
 	if !v.enabled {
 		return
 	}
-	v.publisher.logLeveled(v.publisher.depth, INFO, fmt.Sprint(args...))
+	v.publisher.logLeveled(v.publisher.depth, logging.INFO, fmt.Sprint(args...))
 }
 
 func (v *verbose) Infof(format string, args ...interface{}) {
 	if !v.enabled {
 		return
 	}
-	v.publisher.logLeveled(v.publisher.depth, INFO, fmt.Sprintf(format, args...))
+	v.publisher.logLeveled(v.publisher.depth, logging.INFO, fmt.Sprintf(format, args...))
 }

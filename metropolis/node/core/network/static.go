@@ -16,9 +16,9 @@ import (
 	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/go/algorithm/toposort"
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
-	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/osbase/sysctl"
 
@@ -272,7 +272,7 @@ func listHostDeviceIfaces() ([]deviceIfData, error) {
 	return hostDevices, nil
 }
 
-func deviceIfaceFromSpec(it *netpb.Interface_Device, hostDevices []deviceIfData, l logtree.LeveledLogger) (*netlink.Device, error) {
+func deviceIfaceFromSpec(it *netpb.Interface_Device, hostDevices []deviceIfData, l logging.Leveled) (*netlink.Device, error) {
 	var matchedDevices []*netlink.Device
 	var err error
 	var parsedHWAddr net.HardwareAddr
