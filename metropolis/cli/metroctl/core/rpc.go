@@ -18,8 +18,6 @@ import (
 	"source.monogon.dev/metropolis/proto/api"
 )
 
-type ResolverLogger func(format string, args ...interface{})
-
 func DialOpts(ctx context.Context, c *ConnectOptions) ([]grpc.DialOption, error) {
 	var opts []grpc.DialOption
 	if c.ProxyServer != "" {

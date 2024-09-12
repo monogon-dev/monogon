@@ -39,6 +39,7 @@ go_library(
         "xNodeImagePath": "$(rlocationpath //metropolis/node:image )",
     },
     deps = [
+        "//go/logging",
         "//go/qcow2",
         "//metropolis/cli/metroctl/core",
         "//metropolis/node",

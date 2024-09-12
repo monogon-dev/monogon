@@ -42,9 +42,7 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 	// long-term resolver.
 	rctx, rctxC := context.WithCancel(ctx)
 	defer rctxC()
-	r := resolver.New(rctx, resolver.WithoutCuratorUpdater(), resolver.WithLogger(func(f string, args ...interface{}) {
-		supervisor.Logger(ctx).WithAddedStackDepth(1).Infof(f, args...)
-	}))
+	r := resolver.New(rctx, resolver.WithoutCuratorUpdater(), resolver.WithLogger(supervisor.Logger(ctx)))
 	addedNodes := 0
 	for _, node := range cd.Nodes {
 		if len(node.Addresses) == 0 {

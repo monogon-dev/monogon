@@ -13,9 +13,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 
+	"source.monogon.dev/go/logging"
 	common "source.monogon.dev/metropolis/node"
-	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/curator/watcher"
+
+	apb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -82,7 +84,7 @@ type Resolver struct {
 	// logger, if set, will be called with fmt.Sprintf-like arguments containing
 	// debug logs from the running ClusterResolver, subordinate watchers and
 	// updaters.
-	logger func(f string, args ...interface{})
+	logger logging.Leveled
 
 	// noCuratorUpdater makes the resolver not run a curator updater. This is used
 	// in one-shot resolvers which are given an ahead-of-time list of curators to
@@ -97,7 +99,7 @@ func New(ctx context.Context, opts ...ResolverOption) *Resolver {
 	r := &Resolver{
 		reqC:   make(chan *request),
 		ctx:    ctx,
-		logger: func(string, ...interface{}) {},
+		logger: logging.NewFunctionBackend(func(severity logging.Severity, msg string) {}),
 	}
 	for _, opt := range opts {
 		opt(r)
@@ -109,9 +111,9 @@ func New(ctx context.Context, opts ...ResolverOption) *Resolver {
 // ResolverOption are passed to a Resolver being created.
 type ResolverOption func(r *Resolver)
 
-// WithLogger configures a given function as the logger of the resolver. The
-// function should take a printf-style format string and arguments.
-func WithLogger(logger func(f string, args ...interface{})) ResolverOption {
+// WithLogger sets the logger that the resolver will use. If not configured, the
+// resolver will silently block on errors!
+func WithLogger(logger logging.Leveled) ResolverOption {
 	return func(r *Resolver) {
 		r.logger = logger
 	}
@@ -288,8 +290,8 @@ func (r *Resolver) runCuratorUpdater(ctx context.Context, opts []grpc.DialOption
 			msg = append(msg, fmt.Sprintf("leader: %s/%s", dbg.leader.nodeID, dbg.leader.endpoint.endpoint))
 		}
 
-		r.logger("CURUPDATE: error in loop: %v, retrying in %s...", err, t.String())
-		r.logger("CURUPDATE: processor state: %s", strings.Join(msg, ", "))
+		r.logger.Errorf("CURUPDATE: error in loop: %v, retrying in %s...", err, t.String())
+		r.logger.Infof("CURUPDATE: processor state: %s", strings.Join(msg, ", "))
 	})
 }
 
@@ -304,7 +306,7 @@ func (r *Resolver) runLeaderUpdater(ctx context.Context, opts []grpc.DialOption)
 	err := backoff.RetryNotify(func() error {
 		curMap := r.curatorMap()
 		for _, endpoint := range curMap.candidates() {
-			r.logger("FINDLEADER: trying via %s...", endpoint)
+			r.logger.Infof("FINDLEADER: trying via %s...", endpoint)
 			ok := r.watchLeaderVia(ctx, endpoint, opts)
 			if ok {
 				bo.Reset()
@@ -312,9 +314,9 @@ func (r *Resolver) runLeaderUpdater(ctx context.Context, opts []grpc.DialOption)
 		}
 		return fmt.Errorf("out of endpoints")
 	}, backoff.WithContext(bo, ctx), func(err error, t time.Duration) {
-		r.logger("FINDLEADER: error in loop: %v, retrying in %s...", err, t.String())
+		r.logger.Errorf("FINDLEADER: error in loop: %v, retrying in %s...", err, t.String())
 	})
-	r.logger("FINDLEADER: exiting: %v", err)
+	r.logger.Infof("FINDLEADER: exiting: %v", err)
 	return err
 }
 
@@ -339,7 +341,7 @@ func (r *Resolver) watchLeaderVia(ctx context.Context, via string, opts []grpc.D
 	}))
 	cl, err := grpc.Dial(via, opts...)
 	if err != nil {
-		r.logger("WATCHLEADER: dialing %s failed: %v", via, err)
+		r.logger.Infof("WATCHLEADER: dialing %s failed: %v", via, err)
 		return false
 	}
 	defer cl.Close()
@@ -347,22 +349,22 @@ func (r *Resolver) watchLeaderVia(ctx context.Context, via string, opts []grpc.D
 
 	cur, err := cpl.GetCurrentLeader(ctx, &apb.GetCurrentLeaderRequest{})
 	if err != nil {
-		r.logger("WATCHLEADER: failed to retrieve current leader from %s: %v", via, err)
+		r.logger.Warningf("WATCHLEADER: failed to retrieve current leader from %s: %v", via, err)
 		return false
 	}
 	ok := false
 	for {
-		r.logger("WATCHLEADER: receiving...")
+		r.logger.Infof("WATCHLEADER: receiving...")
 		leaderInfo, err := cur.Recv()
 		if err == io.EOF {
-			r.logger("WATCHLEADER: connection with %s closed", via)
+			r.logger.Infof("WATCHLEADER: connection with %s closed", via)
 			return ok
 		}
 		if err != nil {
-			r.logger("WATCHLEADER: connection with %s failed: %v", via, err)
+			r.logger.Infof("WATCHLEADER: connection with %s failed: %v", via, err)
 			return ok
 		}
-		r.logger("WATCHLEADER: received: %+v", leaderInfo)
+		r.logger.Infof("WATCHLEADER: received: %+v", leaderInfo)
 
 		curMap := r.curatorMap()
 
@@ -373,7 +375,7 @@ func (r *Resolver) watchLeaderVia(ctx context.Context, via string, opts []grpc.D
 		}
 
 		if leaderInfo.LeaderNodeId == "" {
-			r.logger("WATCHLEADER: %s does not know the leader, trying next", viaID)
+			r.logger.Warningf("WATCHLEADER: %s does not know the leader, trying next", viaID)
 			return false
 		}
 		endpoint := ""
@@ -385,13 +387,13 @@ func (r *Resolver) watchLeaderVia(ctx context.Context, via string, opts []grpc.D
 			}
 		} else {
 			if leaderInfo.LeaderPort == 0 {
-				r.logger("WATCHLEADER: %s knows the leader's host (%s), but not its' port", viaID, leaderInfo.LeaderHost)
+				r.logger.Warningf("WATCHLEADER: %s knows the leader's host (%s), but not its' port", viaID, leaderInfo.LeaderHost)
 				return false
 			}
 			endpoint = net.JoinHostPort(leaderInfo.LeaderHost, fmt.Sprintf("%d", leaderInfo.LeaderPort))
 		}
 
-		r.logger("WATCHLEADER: got new leader: %s (%s) via %s", leaderInfo.LeaderNodeId, endpoint, viaID)
+		r.logger.Infof("WATCHLEADER: got new leader: %s (%s) via %s", leaderInfo.LeaderNodeId, endpoint, viaID)
 
 		select {
 		case <-ctx.Done():

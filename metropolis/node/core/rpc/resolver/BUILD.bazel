@@ -10,6 +10,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/rpc/resolver",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logging",
         "//metropolis/node",
         "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/curator/watcher",
@@ -26,6 +27,7 @@ go_test(
     srcs = ["resolver_test.go"],
     embed = [":resolver"],
     deps = [
+        "//go/logging",
         "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/rpc",
         "//metropolis/proto/api",

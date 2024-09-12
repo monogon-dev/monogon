@@ -69,9 +69,7 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	// long-term resolver.
 	rctx, rctxC := context.WithCancel(ctx)
 	defer rctxC()
-	r := resolver.New(rctx, resolver.WithoutCuratorUpdater(), resolver.WithLogger(func(f string, args ...interface{}) {
-		supervisor.Logger(ctx).WithAddedStackDepth(1).Infof(f, args...)
-	}))
+	r := resolver.New(rctx, resolver.WithoutCuratorUpdater(), resolver.WithLogger(supervisor.Logger(ctx)))
 	addedNodes := 0
 	for _, node := range register.ClusterDirectory.Nodes {
 		if len(node.Addresses) == 0 {

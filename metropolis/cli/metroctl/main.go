@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"crypto/x509"
-	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/adrg/xdg"
 	"github.com/spf13/cobra"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 )
 
@@ -61,14 +62,6 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&flags.acceptAnyCA, "insecure-accept-and-persist-first-encountered-ca", false, "Accept the first encountered CA while connecting as the trusted CA for future metroctl connections with this config path. This is very insecure and should only be used for testing.")
 }
 
-// rpcLogger passes through the cluster resolver logs, if "--verbose" flag was
-// used.
-func rpcLogger(f string, args ...interface{}) {
-	if flags.verbose {
-		log.Printf("resolver: "+f, args...)
-	}
-}
-
 func main() {
 	cobra.CheckErr(rootCmd.Execute())
 }
@@ -86,11 +79,15 @@ func connectOptions() *core.ConnectOptions {
 	if flags.acceptAnyCA {
 		tofu = &acceptall{}
 	}
+	logger := logging.NewWriterBackend(os.Stderr)
+	if !flags.verbose {
+		logger.MinimumSeverity = logging.WARNING
+	}
 	return &core.ConnectOptions{
 		ConfigPath:     flags.configPath,
 		ProxyServer:    flags.proxyAddr,
 		Endpoints:      flags.clusterEndpoints,
-		ResolverLogger: rpcLogger,
+		ResolverLogger: logger,
 		TOFU:           tofu,
 	}
 }

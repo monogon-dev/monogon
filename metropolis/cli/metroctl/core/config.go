@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientapi "k8s.io/client-go/tools/clientcmd/api"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/metropolis/node"
 )
 
@@ -339,7 +340,7 @@ type ConnectOptions struct {
 	Endpoints []string
 	// ResolverLogger can be set to enable verbose logging of the Metropolis RPC
 	// resolver layer.
-	ResolverLogger ResolverLogger
+	ResolverLogger logging.Leveled
 	// TOFU overrides the trust-on-first-use behaviour for CA certificates for the
 	// connection. If not set, TerminalTOFU is used which will interactively ask the
 	// user to accept a CA certificate using os.Stdin/Stdout.

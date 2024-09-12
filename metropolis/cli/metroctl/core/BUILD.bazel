@@ -12,6 +12,7 @@ go_library(
     importpath = "source.monogon.dev/metropolis/cli/metroctl/core",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logging",
         "//metropolis/node",
         "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/rpc",

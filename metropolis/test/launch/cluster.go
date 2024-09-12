@@ -41,6 +41,7 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/go/qcow2"
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/metropolis/node"
@@ -199,9 +200,9 @@ func setupRuntime(ld, sd string, diskBytes uint64) (*NodeRuntime, error) {
 func (c *Cluster) CuratorClient() (*grpc.ClientConn, error) {
 	if c.authClient == nil {
 		authCreds := rpc.NewAuthenticatedCredentials(c.Owner, rpc.WantInsecure())
-		r := resolver.New(c.ctxT, resolver.WithLogger(func(f string, args ...interface{}) {
-			launch.Log("Cluster: client resolver: %s", fmt.Sprintf(f, args...))
-		}))
+		r := resolver.New(c.ctxT, resolver.WithLogger(logging.NewFunctionBackend(func(severity logging.Severity, msg string) {
+			launch.Log("Cluster: client resolver: %s: %s", severity, msg)
+		})))
 		for _, n := range c.NodeIDs {
 			ep, err := resolver.NodeWithDefaultPort(n)
 			if err != nil {

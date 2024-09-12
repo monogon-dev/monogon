@@ -141,9 +141,7 @@ func main() {
 	ctxS, ctxC := context.WithCancel(context.Background())
 
 	// Make node-wide cluster resolver.
-	res := resolver.New(ctxS, resolver.WithLogger(func(f string, args ...interface{}) {
-		lt.MustLeveledFor("resolver").WithAddedStackDepth(1).Infof(f, args...)
-	}))
+	res := resolver.New(ctxS, resolver.WithLogger(lt.MustLeveledFor("resolver")))
 
 	// Function which performs core, one-way initialization of the node. This means
 	// waiting for the network, starting the cluster manager, and then starting all

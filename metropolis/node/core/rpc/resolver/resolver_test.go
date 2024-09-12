@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"sync"
 	"testing"
@@ -15,11 +16,13 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	"source.monogon.dev/go/logging"
 	"source.monogon.dev/metropolis/node/core/rpc"
+	"source.monogon.dev/metropolis/test/util"
+
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
-	"source.monogon.dev/metropolis/test/util"
 )
 
 // fakeCuratorClusterAware is a fake curator implementation that has a vague
@@ -164,9 +167,7 @@ func TestResolverSimple(t *testing.T) {
 
 	// Create our DUT resolver.
 	r := New(ctx)
-	r.logger = func(f string, args ...interface{}) {
-		log.Printf(f, args...)
-	}
+	r.logger = logging.NewWriterBackend(os.Stdout)
 
 	creds := credentials.NewTLS(&tls.Config{
 		Certificates:       []tls.Certificate{eph.Manager},
