@@ -117,6 +117,7 @@ http_archive(
         "//third_party/linux/external:disable-static-ifs.patch",
         "//third_party/linux/external:enable-pmsg.patch",
         "//third_party/linux/external:lacp_fix.patch",
+        "//third_party/linux/external:fb-devs-knob.patch",
     ],
     strip_prefix = "linux-" + LINUX_VERSION,
     urls = ["https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-%s.tar.xz" % LINUX_VERSION],

@@ -1,0 +1,79 @@
+From 884ecf096ba58528cca2a4c4be4b30089036a55a Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Thu, 12 Sep 2024 17:22:04 +0200
+Subject: [PATCH] net: add config option for tunnel fallback devs
+
+This adds a Kconfig option to set the default behavior regarding tunnel
+fallback devices.
+For setups where the initial namespace should also not have these, the
+only preexisting option is to use a kernel command line option which
+needs to be passed to every kernel invocation, which can be inconvenient
+in certain setups.
+If a kernel is built for a specific environment this knob allows
+disabling the compatibility behavior outright, without requiring any
+additional actions.
+---
+ net/Kconfig                | 33 +++++++++++++++++++++++++++++++++
+ net/core/sysctl_net_core.c |  2 +-
+ 2 files changed, 34 insertions(+), 1 deletion(-)
+
+diff --git a/net/Kconfig b/net/Kconfig
+index d27d0deac0bf..bc3f70f81b5e 100644
+--- a/net/Kconfig
++++ b/net/Kconfig
+@@ -447,6 +447,39 @@ config LWTUNNEL_BPF
+ 	  Allows to run BPF programs as a nexthop action following a route
+ 	  lookup for incoming and outgoing packets.
+ 
++choice
++	prompt "Create fallback tunnel devices"
++	default FB_TUNNELS_DEFAULT_ALL
++	help
++	  Fallback tunnel devices predate the Netlink API for managing network
++	  devices in Linux and get created when the respective tunnel kernel module
++	  is loaded. With a modern userspace these are no longer used but for
++	  compatibility reasons the default is to keep them around as the kernel
++	  cannot know if a given userspace needs them.
++	  There is a sysctl (net.core.fb_tunnels_only_for_init_net) for changing
++	  this, but it cannot retroactively remove fallback tunnel devices created
++	  before it was changed.
++
++	  This knob provides the possibility to set this behavior in the kernel,
++	  making it work in all cases. Note that changing this value to anything
++	  other than the default will break compatibility with old userspace.
++
++	config FB_TUNNELS_DEFAULT_ALL
++		bool "In every namespace"
++	
++	config FB_TUNNELS_DEFAULT_INITNS
++		bool "Only in the initial namespace"
++	
++	config FB_TUNNELS_DEFAULT_NONE
++		bool "Never"
++endchoice
++
++config FB_TUNNELS_DEFAULT
++	int
++	default 0 if FB_TUNNELS_DEFAULT_ALL
++	default 1 if FB_TUNNELS_DEFAULT_INITNS
++	default 2 if FB_TUNNELS_DEFAULT_NONE
++
+ config DST_CACHE
+ 	bool
+ 	default n
+diff --git a/net/core/sysctl_net_core.c b/net/core/sysctl_net_core.c
+index 86a2476678c4..d9a0b13ceb4a 100644
+--- a/net/core/sysctl_net_core.c
++++ b/net/core/sysctl_net_core.c
+@@ -37,7 +37,7 @@ static int min_mem_pcpu_rsv = SK_MEMORY_PCPU_RESERVE;
+ 
+ static int net_msg_warn;	/* Unused, but still a sysctl */
+ 
+-int sysctl_fb_tunnels_only_for_init_net __read_mostly = 0;
++int sysctl_fb_tunnels_only_for_init_net __read_mostly = CONFIG_FB_TUNNELS_DEFAULT;
+ EXPORT_SYMBOL(sysctl_fb_tunnels_only_for_init_net);
+ 
+ /* 0 - Keep current behavior:
+-- 
+2.44.1
+
