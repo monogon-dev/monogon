@@ -106,7 +106,12 @@ func (s *csiPluginServer) NodePublishVolume(ctx context.Context, req *csi.NodePu
 	}
 	switch req.VolumeCapability.AccessType.(type) {
 	case *csi.VolumeCapability_Mount:
-		err := unix.Mount(volumePath, req.TargetPath, "", unix.MS_BIND, "")
+		var mountFlags uintptr = unix.MS_BIND
+		if req.Readonly {
+			mountFlags |= unix.MS_RDONLY
+		}
+
+		err := unix.Mount(volumePath, req.TargetPath, "", mountFlags, "")
 		switch {
 		case errors.Is(err, unix.ENOENT):
 			return nil, status.Error(codes.NotFound, "volume not found")
@@ -114,12 +119,48 @@ func (s *csiPluginServer) NodePublishVolume(ctx context.Context, req *csi.NodePu
 			return nil, status.Errorf(codes.Unavailable, "failed to bind-mount volume: %v", err)
 		}
 
-		if req.Readonly {
-			err := unix.Mount(volumePath, req.TargetPath, "", unix.MS_BIND|unix.MS_REMOUNT|unix.MS_RDONLY, "")
-			if err != nil {
-				_ = unix.Unmount(req.TargetPath, 0) // Best-effort
-				return nil, status.Errorf(codes.Unavailable, "failed to remount volume: %v", err)
+		flagSet := make(map[string]bool)
+		for _, flag := range req.VolumeCapability.GetMount().GetMountFlags() {
+			flagSet[flag] = true
+		}
+
+		flagPairs := map[string]string{
+			"exec": "noexec",
+			"dev":  "nodev",
+			"suid": "nosuid",
+		}
+		for pFlag, nFlag := range flagPairs {
+			if flagSet[pFlag] && flagSet[nFlag] {
+				return nil, status.Errorf(codes.InvalidArgument, "contradictory flag pair found. can't have both %q and %q set", pFlag, nFlag)
+			} else if !flagSet[pFlag] && !flagSet[nFlag] {
+				// If neither of a flag pair is found, add the negative flag as default.
+				flagSet[nFlag] = true
 			}
+		}
+
+		var mountAttr unix.MountAttr
+		for flag := range flagSet {
+			switch flag {
+			case "exec":
+				mountAttr.Attr_clr = unix.MOUNT_ATTR_NOEXEC
+			case "noexec":
+				mountAttr.Attr_set = unix.MOUNT_ATTR_NOEXEC
+			case "dev":
+				mountAttr.Attr_clr = unix.MOUNT_ATTR_NODEV
+			case "nodev":
+				mountAttr.Attr_set = unix.MOUNT_ATTR_NODEV
+			case "suid":
+				mountAttr.Attr_clr = unix.MOUNT_ATTR_NOSUID
+			case "nosuid":
+				mountAttr.Attr_set = unix.MOUNT_ATTR_NOSUID
+			default:
+				return nil, status.Errorf(codes.InvalidArgument, "unknown mount flag: %s", flag)
+			}
+		}
+
+		if err := unix.MountSetattr(-1, req.TargetPath, 0, &mountAttr); err != nil {
+			_ = unix.Unmount(req.TargetPath, 0) // Best-effort
+			return nil, status.Errorf(codes.Internal, "unable to set mount attributes: %v", err)
 		}
 	case *csi.VolumeCapability_Block:
 		f, err := os.OpenFile(volumePath, os.O_RDWR, 0)

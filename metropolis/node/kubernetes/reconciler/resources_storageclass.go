@@ -66,12 +66,41 @@ func (r resourceStorageClasses) Expected() []meta.Object {
 				Labels: builtinLabels(nil),
 				Annotations: map[string]string{
 					"storageclass.kubernetes.io/is-default-class": "true",
+					"kubernetes.io/description": "local is the default storage class on Metropolis. " +
+						"It stores data on the node root disk and supports space limits, resizing and oversubscription but no snapshots. " +
+						"It is backed by XFS and uses permissive mounting options (exec,dev,suid). " +
+						"If you want more strict mounting options, chose the `local-strict` storage class.",
 				},
 			},
 			AllowVolumeExpansion: True(),
 			Provisioner:          csiProvisionerName,
 			ReclaimPolicy:        &reclaimPolicyDelete,
 			VolumeBindingMode:    &waitForConsumerBinding,
+			MountOptions: []string{
+				"exec",
+				"dev",
+				"suid",
+			},
+		},
+		&storage.StorageClass{
+			ObjectMeta: meta.ObjectMeta{
+				Name:   "local-strict",
+				Labels: builtinLabels(nil),
+				Annotations: map[string]string{
+					"storageclass.kubernetes.io/is-default-class": "false",
+					"kubernetes.io/description": "local-strict is the same as local (see its description) but uses strict mount options (noexec, nodev, nosuid). " +
+						"It is best used together with readOnlyRoot to restrict exploitation vectors.",
+				},
+			},
+			AllowVolumeExpansion: True(),
+			Provisioner:          csiProvisionerName,
+			ReclaimPolicy:        &reclaimPolicyDelete,
+			VolumeBindingMode:    &waitForConsumerBinding,
+			MountOptions: []string{
+				"noexec",
+				"nodev",
+				"nosuid",
+			},
 		},
 	}
 }
