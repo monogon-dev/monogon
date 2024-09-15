@@ -65,6 +65,7 @@ oom_score = 0
     restrict_oom_score_adj = false
     max_concurrent_downloads = 3
     disable_proc_mount = false
+    device_ownership_from_security_context = true
     [plugins."io.containerd.grpc.v1.cri".containerd]
       snapshotter = "overlayfs"
       default_runtime_name = "runc"
