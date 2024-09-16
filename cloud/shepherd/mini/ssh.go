@@ -48,7 +48,7 @@ func (sc *sshConfig) NewClient() (*ssh.DirectClient, error) {
 
 	switch {
 	case sc.Pass != "":
-		c.AuthMethod = xssh.Password(sc.Pass)
+		c.AuthMethods = []xssh.AuthMethod{xssh.Password(sc.Pass)}
 	case sc.SSHKey.KeyPersistPath != "":
 		signer, err := sc.SSHKey.Signer()
 		if err != nil {
@@ -62,7 +62,7 @@ func (sc *sshConfig) NewClient() (*ssh.DirectClient, error) {
 
 		klog.Infof("Using ssh key auth with public key: %s", pubKey)
 
-		c.AuthMethod = xssh.PublicKeys(signer)
+		c.AuthMethods = []xssh.AuthMethod{xssh.PublicKeys(signer)}
 	}
 	return &c, nil
 }

@@ -36,8 +36,8 @@ type Connection interface {
 // DirectClient implements Client (and Connection) using
 // golang.org/x/crypto/ssh.
 type DirectClient struct {
-	AuthMethod ssh.AuthMethod
-	Username   string
+	AuthMethods []ssh.AuthMethod
+	Username    string
 }
 
 type directConn struct {
@@ -54,9 +54,7 @@ func (p *DirectClient) Dial(ctx context.Context, address string, connectTimeout 
 	}
 	conf := &ssh.ClientConfig{
 		User: p.Username,
-		Auth: []ssh.AuthMethod{
-			p.AuthMethod,
-		},
+		Auth: p.AuthMethods,
 		// Ignore the host key, since it's likely the first time anything logs into
 		// this device, and also because there's no way of knowing its fingerprint.
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),

@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/signal"
 
-	"golang.org/x/crypto/ssh"
+	xssh "golang.org/x/crypto/ssh"
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
@@ -16,7 +16,7 @@ import (
 	"source.monogon.dev/cloud/equinix/wrapngo"
 	"source.monogon.dev/cloud/lib/component"
 	"source.monogon.dev/cloud/shepherd/manager"
-	ssh2 "source.monogon.dev/go/net/ssh"
+	"source.monogon.dev/go/net/ssh"
 )
 
 type Config struct {
@@ -91,8 +91,8 @@ func main() {
 		klog.Exitf("%v", err)
 	}
 
-	sshClient := &ssh2.DirectClient{
-		AuthMethod: ssh.PublicKeys(sshSigner),
+	sshClient := &ssh.DirectClient{
+		AuthMethods: []xssh.AuthMethod{xssh.PublicKeys(sshSigner)},
 		// Equinix OS installations always use root.
 		Username: "root",
 	}
