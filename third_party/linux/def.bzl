@@ -60,6 +60,22 @@ ignore_unused_configuration = transition(
     outputs = list(_new_settings.keys()),
 )
 
+def _linux_image_impl_resources(_os, _ninputs):
+    """
+    Configures linux build resources.
+
+    See `resource_set` documentation in builtins.actions Bazel docs.
+    """
+    # 16 threads seems about right - this fits well in both our build machines and
+    # development machines.
+    cpu = 16
+    # In MB. Picked based on observing build in htop.
+    mb_per_cpu = 256
+    return {
+        'cpu': cpu,
+        'memory': cpu * mb_per_cpu,
+        'local_test': 0,
+    }
 
 def _linux_image_impl(ctx):
     kernel_config = ctx.file.kernel_config
@@ -86,6 +102,7 @@ def _linux_image_impl(ctx):
     ctx.actions.run_shell(
         outputs = [ image, modinfo, modules ],
         inputs = [ kernel_config ] + kernel_src,
+        resource_set = _linux_image_impl_resources,
         command = '''
             kconfig=$1
             target=$2
@@ -99,7 +116,7 @@ def _linux_image_impl(ctx):
 
             mkdir ${root}/.bin
             cp ${kconfig} ${builddir}/.config
-            (cd ${root} && KBUILD_OUTPUT="${builddir}" make -j $(nproc) ${target} >/dev/null)
+            (cd ${root} && KBUILD_OUTPUT="${builddir}" make -j 16 ${target} >/dev/null)
             cp "${builddir}"/${image_source} ${image}
             cp "${builddir}"/modules.builtin.modinfo ${modinfo}
             # Not using modules_install as it tries to run depmod and friends

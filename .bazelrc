@@ -29,6 +29,9 @@ import %workspace%/.bazelrc.sandbox
 build --experimental_output_directory_naming_scheme=diff_against_dynamic_baseline
 build --experimental_exec_configuration_distinguisher=off
 
+# Enable resource set configuration via starlark for actions
+build --experimental_action_resource_set
+
 # Hardwire all action envs to just use /usr/bin from the above sandbox. This is
 # necessary on NixOS Bazel builds, as they really like to inject /nix/store/*
 # paths otherwise. We also explicitly set it to /usr/bin only (no /bin) as
