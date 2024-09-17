@@ -102,7 +102,7 @@ func (p *directConn) Execute(ctx context.Context, command string, stdin []byte) 
 }
 
 func (p *directConn) Upload(ctx context.Context, targetPath string, src io.Reader) error {
-	sc, err := sftp.NewClient(p.cl)
+	sc, err := sftp.NewClient(p.cl, sftp.UseConcurrentWrites(true), sftp.MaxConcurrentRequestsPerFile(1024))
 	if err != nil {
 		return fmt.Errorf("while building sftp client: %w", err)
 	}
@@ -116,7 +116,7 @@ func (p *directConn) Upload(ctx context.Context, targetPath string, src io.Reade
 	doneC := make(chan error, 1)
 
 	go func() {
-		_, err := io.Copy(df, src)
+		_, err := df.ReadFromWithConcurrency(src, 0)
 		df.Close()
 		doneC <- err
 	}()
