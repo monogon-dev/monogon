@@ -224,6 +224,7 @@ OVERRIDES = {
         ],
         "patches": [
             "//third_party/go/patches:etcd-fix-embed-close.patch",
+            "//third_party/go/patches:etcd-fix-islearner-panic.patch",
         ],
     },
     "github.com/grpc-ecosystem/grpc-gateway": {

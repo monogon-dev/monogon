@@ -1,0 +1,19 @@
+    Fix panic in IsLocalMemberLearner after removing membership
+
+diff --git a/etcdserver/api/membership/cluster.go b/etcdserver/api/membership/cluster.go
+index 6becdfd62..cbdd38c2d 100644
+--- a/etcdserver/api/membership/cluster.go
++++ b/etcdserver/api/membership/cluster.go
+@@ -783,11 +783,7 @@ func (c *RaftCluster) IsLocalMemberLearner() bool {
+ 	defer c.Unlock()
+ 	localMember, ok := c.members[c.localID]
+ 	if !ok {
+-		c.lg.Panic(
+-			"failed to find local ID in cluster members",
+-			zap.String("cluster-id", c.cid.String()),
+-			zap.String("local-member-id", c.localID.String()),
+-		)
++		return false
+ 	}
+ 	return localMember.IsLearner
+ }
