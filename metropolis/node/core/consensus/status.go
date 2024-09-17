@@ -189,3 +189,21 @@ type AddNodeOption struct {
 	externalAddress string
 	externalPort    int
 }
+
+// RemoveNode removes the etcd member with the given node ID, if it is currently
+// a member. Etcd fails this operation if it is not safe to perform.
+func (s *Status) RemoveNode(ctx context.Context, nodeID string) error {
+	members, err := s.cl.MemberList(ctx)
+	if err != nil {
+		return fmt.Errorf("could not retrieve existing members: %w", err)
+	}
+	for _, m := range members.Members {
+		if GetEtcdMemberNodeId(m) == nodeID {
+			_, err := s.cl.MemberRemove(ctx, m.ID)
+			if err != nil {
+				return fmt.Errorf("could not remove member: %w", err)
+			}
+		}
+	}
+	return nil
+}

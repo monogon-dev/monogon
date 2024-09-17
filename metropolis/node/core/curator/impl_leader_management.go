@@ -354,6 +354,14 @@ func (l *leaderManagement) UpdateNodeRoles(ctx context.Context, req *apb.UpdateN
 			if node.kubernetesController != nil {
 				return nil, status.Errorf(codes.FailedPrecondition, "could not remove consensus member role while node is a kubernetes controller")
 			}
+			// First, remove the etcd membership. This performs safety checks and
+			// fails if the remaining, currently up nodes would not form a quorum.
+			err := l.consensusStatus.RemoveNode(ctx, id)
+			if err != nil {
+				return nil, status.Errorf(codes.Unavailable, "could not remove node: %v", err)
+			}
+			// After successfully removing membership, it is safe to remove the role,
+			// which will stop etcd running on the node.
 			node.DisableConsensusMember()
 		}
 	}

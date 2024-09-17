@@ -13,6 +13,9 @@ import (
 	"source.monogon.dev/metropolis/test/localregistry"
 	"source.monogon.dev/metropolis/test/util"
 	"source.monogon.dev/osbase/test/launch"
+
+	cpb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 var (
@@ -104,5 +107,48 @@ func TestE2ECoreHA(t *testing.T) {
 			}
 			return nil
 		})
+	}
+
+	// Test node role removal.
+	curC, err := cluster.CuratorClient()
+	if err != nil {
+		t.Fatalf("Could not get CuratorClient: %v", err)
+	}
+	mgmt := apb.NewManagementClient(curC)
+	cur := cpb.NewCuratorClient(curC)
+
+	util.MustTestEventual(t, "Remove KubernetesController role", ctx, 10*time.Second, func(ctx context.Context) error {
+		fa := false
+		_, err := mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
+			Node: &apb.UpdateNodeRolesRequest_Id{
+				Id: cluster.NodeIDs[0],
+			},
+			KubernetesController: &fa,
+		})
+		return err
+	})
+	util.MustTestEventual(t, "Remove ConsensusMember role", ctx, time.Minute, func(ctx context.Context) error {
+		fa := false
+		_, err := mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
+			Node: &apb.UpdateNodeRolesRequest_Id{
+				Id: cluster.NodeIDs[0],
+			},
+			ConsensusMember: &fa,
+		})
+		return err
+	})
+
+	// Test that removing the ConsensusMember role from a node removed the
+	// corresponding etcd member from the cluster.
+	var st *cpb.GetConsensusStatusResponse
+	util.MustTestEventual(t, "Get ConsensusStatus", ctx, time.Minute, func(ctx context.Context) error {
+		st, err = cur.GetConsensusStatus(ctx, &cpb.GetConsensusStatusRequest{})
+		return err
+	})
+
+	for _, member := range st.EtcdMember {
+		if member.Id == cluster.NodeIDs[0] {
+			t.Errorf("member still present in etcd")
+		}
 	}
 }
