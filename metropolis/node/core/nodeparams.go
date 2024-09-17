@@ -79,39 +79,7 @@ func isGCPInstance(boardName string) bool {
 	return boardName == "Google Compute Engine"
 }
 
-func getNodeParams(ctx context.Context, storage *localstorage.Root) (*apb.NodeParameters, error) {
-	boardName, err := getDMIBoardName()
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			supervisor.Logger(ctx).Infof("Board name: UNKNOWN")
-		} else {
-			supervisor.Logger(ctx).Warningf("Could not get board name, cannot detect platform: %v", err)
-		}
-	} else {
-		supervisor.Logger(ctx).Infof("Board name: %q", boardName)
-	}
-
-	// When running on GCP, attempt to retrieve the node parameters from the
-	// metadata server first. Retry until we get a response, since we need to
-	// wait for the network service to assign an IP address first.
-	if isGCPInstance(boardName) {
-		var params *apb.NodeParameters
-		op := func() error {
-			supervisor.Logger(ctx).Info("Running on GCP, attempting to retrieve node parameters from metadata server")
-			params, err = nodeParamsGCPMetadata(ctx)
-			return err
-		}
-		err := backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
-		if err != nil {
-			supervisor.Logger(ctx).Errorf("Failed to retrieve node parameters: %v", err)
-		}
-		if params != nil {
-			supervisor.Logger(ctx).Info("Retrieved parameters from GCP metadata server")
-			return params, nil
-		}
-		supervisor.Logger(ctx).Infof("\"metropolis-node-params\" metadata not found")
-	}
-
+func getLocalNodeParams(ctx context.Context, storage *localstorage.Root) (*apb.NodeParameters, error) {
 	// Retrieve node parameters from qemu's fwcfg interface or ESP.
 	// TODO(q3k): probably abstract this away and implement per platform/build/...
 	paramsFWCFG, err := nodeParamsFWCFG(ctx)
@@ -147,4 +115,40 @@ func getNodeParams(ctx context.Context, storage *localstorage.Root) (*apb.NodePa
 	} else {
 		return paramsESP, nil
 	}
+}
+
+func getNodeParams(ctx context.Context, storage *localstorage.Root) (*apb.NodeParameters, error) {
+	boardName, err := getDMIBoardName()
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			supervisor.Logger(ctx).Infof("Board name: UNKNOWN")
+		} else {
+			supervisor.Logger(ctx).Warningf("Could not get board name, cannot detect platform: %v", err)
+		}
+	} else {
+		supervisor.Logger(ctx).Infof("Board name: %q", boardName)
+	}
+
+	// When running on GCP, attempt to retrieve the node parameters from the
+	// metadata server first. Retry until we get a response, since we need to
+	// wait for the network service to assign an IP address first.
+	if isGCPInstance(boardName) {
+		var params *apb.NodeParameters
+		op := func() error {
+			supervisor.Logger(ctx).Info("Running on GCP, attempting to retrieve node parameters from metadata server")
+			params, err = nodeParamsGCPMetadata(ctx)
+			return err
+		}
+		err := backoff.Retry(op, backoff.WithContext(backoff.NewExponentialBackOff(), ctx))
+		if err != nil {
+			supervisor.Logger(ctx).Errorf("Failed to retrieve node parameters: %v", err)
+		}
+		if params != nil {
+			supervisor.Logger(ctx).Info("Retrieved parameters from GCP metadata server")
+			return params, nil
+		}
+		supervisor.Logger(ctx).Infof("\"metropolis-node-params\" metadata not found")
+	}
+
+	return getLocalNodeParams(ctx, storage)
 }

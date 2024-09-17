@@ -151,13 +151,13 @@ func main() {
 		if err := root.Start(ctx, updateSvc); err != nil {
 			return fmt.Errorf("cannot start root FS: %w", err)
 		}
-		nodeParams, err := getNodeParams(ctx, root)
+		localNodeParams, err := getLocalNodeParams(ctx, root)
 		if err != nil {
-			return fmt.Errorf("cannot get node parameters: %w", err)
+			return fmt.Errorf("cannot get local node parameters: %w", err)
 		}
-		if nodeParams.NetworkConfig != nil {
-			networkSvc.StaticConfig = nodeParams.NetworkConfig
-			if err := root.ESP.Metropolis.NetworkConfiguration.Marshal(nodeParams.NetworkConfig); err != nil {
+		if localNodeParams.NetworkConfig != nil {
+			networkSvc.StaticConfig = localNodeParams.NetworkConfig
+			if err := root.ESP.Metropolis.NetworkConfiguration.Marshal(localNodeParams.NetworkConfig); err != nil {
 				logger.Errorf("Error writing back network_config from NodeParameters: %v", err)
 			}
 		}
@@ -232,6 +232,11 @@ func main() {
 		}
 		if err := opts.Apply(); err != nil {
 			logger.Errorf("Failed to configure printk logging: %v", err)
+		}
+
+		nodeParams, err := getNodeParams(ctx, root)
+		if err != nil {
+			return fmt.Errorf("cannot get node parameters: %w", err)
 		}
 
 		// Start cluster manager. This kicks off cluster membership machinery,
