@@ -10,12 +10,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/tests/v3/integration"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -35,6 +37,7 @@ import (
 	cpb "source.monogon.dev/metropolis/proto/common"
 	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/pki"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 // fakeLeader creates a curatorLeader without any underlying leader election, in
@@ -107,6 +110,7 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 	if err != nil {
 		t.Fatalf("could not generate node keypair: %v", err)
 	}
+	nodeID := identity.NodeID(nodePub)
 	cNode := NewNodeForBootstrap(&NewNodeData{
 		CUK:      nil,
 		Pubkey:   nodePub,
@@ -172,7 +176,19 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 		NodeCredentials: nodeCredentials,
 	}
 
-	consensusService := consensus.TestServiceHandle(t, cluster.Client(0))
+	// NewClusterV3 assigns generated names to etcd members, which are not
+	// configurable, but we need the name to match the node ID. To make this work,
+	// we patch the MemberList call to replace the cluster name.
+	cli := clientv3.NewCtxClient(ctx)
+	memberNameMap := map[string]string{cluster.Members[0].Name: nodeID}
+	cli.Cluster = etcdClusterWrap{cluster.Client(0).Cluster, memberNameMap}
+	cli.KV = cluster.Client(0).KV
+	cli.Lease = cluster.Client(0).Lease
+	cli.Watcher = cluster.Client(0).Watcher
+	cli.Auth = cluster.Client(0).Auth
+	cli.Maintenance = cluster.Client(0).Maintenance
+
+	consensusService := consensus.TestServiceHandle(t, cli)
 	watcher := consensusService.Watch()
 	defer watcher.Close()
 	consensusStatus, err := watcher.Get(ctx, consensus.FilterRunning)
@@ -185,7 +201,7 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 	leadership := &leadership{
 		lockKey:         lockKey,
 		lockRev:         lockRev,
-		leaderID:        identity.NodeID(nodePub),
+		leaderID:        nodeID,
 		etcd:            curEtcd,
 		consensus:       consensusService,
 		consensusStatus: consensusStatus,
@@ -303,6 +319,25 @@ type fakeLeaderData struct {
 	// etcd contains a low-level connection to the curator K/V store, which can be
 	// used to perform low-level changes to the store in tests.
 	etcd client.Namespaced
+}
+
+// etcdClusterWrap replaces the cluster member names which clients see.
+type etcdClusterWrap struct {
+	clientv3.Cluster
+	nameMap map[string]string
+}
+
+func (c etcdClusterWrap) MemberList(ctx context.Context) (*clientv3.MemberListResponse, error) {
+	list, err := c.Cluster.MemberList(ctx)
+	if list == nil {
+		return list, err
+	}
+	for _, member := range list.Members {
+		if name, ok := c.nameMap[member.Name]; ok {
+			member.Name = name
+		}
+	}
+	return list, err
 }
 
 // putNode is a helper function that creates a new node within the cluster. The
@@ -1888,4 +1923,122 @@ func TestNodeLabels(t *testing.T) {
 			checkLabels(t, nodes[0], map[string]string{"test2": "d", "test3": "c"})
 		})
 	}
+}
+
+// TestBackgroundSyncEtcd tests that backgroundSyncEtcd behaves as expected.
+func TestBackgroundSyncEtcd(t *testing.T) {
+	// Obtain a supervisor context.
+	ctxChannel := make(chan context.Context)
+	supervisor.TestHarness(t, func(ctx context.Context) error {
+		ctxChannel <- ctx
+		supervisor.Signal(ctx, supervisor.SignalHealthy)
+		supervisor.Signal(ctx, supervisor.SignalDone)
+		return nil
+	})
+	ctx := <-ctxChannel
+
+	cl := fakeLeader(t)
+	mgmt := apb.NewManagementClient(cl.mgmtConn)
+	background := leaderBackground{leadership: cl.l}
+
+	assertState := func(expected map[string]ConsensusNodeState) {
+		t.Helper()
+		actual := map[string]ConsensusNodeState{}
+		for _, node := range getNodes(t, ctx, mgmt, "") {
+			if _, ok := actual[node.Id]; ok {
+				t.Fatalf("duplicate node ID")
+			}
+			actual[node.Id] = ConsensusNodeState{
+				node:                 true,
+				consensusMember:      node.Roles.ConsensusMember != nil,
+				kubernetesController: node.Roles.KubernetesController != nil,
+			}
+		}
+		members, err := cl.l.consensusStatus.ClusterClient().MemberList(ctx)
+		if err != nil {
+			t.Fatalf("failed to get etcd members: %v", err)
+		}
+		for _, member := range members.Members {
+			nodeID := consensus.GetEtcdMemberNodeId(member)
+			nodeState := actual[nodeID]
+			if nodeState.etcdMember {
+				t.Fatalf("duplicate etcd member")
+			}
+			nodeState.etcdMember = true
+			actual[nodeID] = nodeState
+		}
+
+		if !maps.Equal(expected, actual) {
+			t.Fatalf("Expected node state %v, got %v", expected, actual)
+		}
+	}
+
+	assertState(map[string]ConsensusNodeState{
+		cl.l.leaderID: {node: true, etcdMember: true},
+	})
+
+	// This should add the missing ConsensusMember role.
+	err := background.doSyncEtcd(ctx)
+	if err != nil {
+		t.Fatalf("doSyncEtcd: %v", err)
+	}
+	assertState(map[string]ConsensusNodeState{
+		cl.l.leaderID: {node: true, consensusMember: true, etcdMember: true},
+	})
+
+	// Add a cluster node with ConsensusMember role, and an etcd member with a
+	// different name.
+	newNode := putNode(t, ctx, cl.l, func(n *Node) {
+		join, err := cl.l.consensusStatus.AddNode(ctx, n.pubkey)
+		if err != nil {
+			t.Fatalf("failed to obtain consensus join parameters: %v", err)
+		}
+		n.EnableConsensusMember(join)
+		n.EnableKubernetesController()
+	})
+	if _, err := cl.l.consensusStatus.ClusterClient().MemberAddAsLearner(ctx, []string{"https://foo:1234"}); err != nil {
+		t.Fatalf("could not add new member as learner: %v", err)
+	}
+	assertState(map[string]ConsensusNodeState{
+		cl.l.leaderID: {node: true, consensusMember: true, etcdMember: true},
+		newNode.ID():  {node: true, consensusMember: true, kubernetesController: true},
+		"foo":         {etcdMember: true},
+	})
+
+	// This should remove the extra etcd member, but not change roles yet.
+	err = background.doSyncEtcd(ctx)
+	if err != nil {
+		t.Fatalf("doSyncEtcd: %v", err)
+	}
+	assertState(map[string]ConsensusNodeState{
+		cl.l.leaderID: {node: true, consensusMember: true, etcdMember: true},
+		newNode.ID():  {node: true, consensusMember: true, kubernetesController: true},
+	})
+
+	// This should remove the extra roles.
+	err = background.doSyncEtcd(ctx)
+	if err != nil {
+		t.Fatalf("doSyncEtcd: %v", err)
+	}
+	assertState(map[string]ConsensusNodeState{
+		cl.l.leaderID: {node: true, consensusMember: true, etcdMember: true},
+		newNode.ID():  {node: true},
+	})
+
+	// This should change nothing.
+	err = background.doSyncEtcd(ctx)
+	if err != nil {
+		t.Fatalf("doSyncEtcd: %v", err)
+	}
+	assertState(map[string]ConsensusNodeState{
+		cl.l.leaderID: {node: true, consensusMember: true, etcdMember: true},
+		newNode.ID():  {node: true},
+	})
+}
+
+type ConsensusNodeState struct {
+	node                 bool
+	consensusMember      bool
+	kubernetesController bool
+	etcdMember           bool
 }

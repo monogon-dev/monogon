@@ -150,6 +150,7 @@ type curatorLeader struct {
 	leaderCurator
 	leaderAAA
 	leaderManagement
+	leaderBackground
 }
 
 func newCuratorLeader(l *leadership, node *identity.Node) *curatorLeader {
@@ -160,5 +161,6 @@ func newCuratorLeader(l *leadership, node *identity.Node) *curatorLeader {
 		leaderCurator{leadership: l},
 		leaderAAA{leadership: l},
 		leaderManagement{leadership: l, node: node},
+		leaderBackground{leadership: l},
 	}
 }

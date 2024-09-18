@@ -112,6 +112,10 @@ func (l *listener) run(ctx context.Context) error {
 		cpb.RegisterCuratorLocalServer(srv, leader)
 		apb.RegisterAAAServer(srv, leader)
 		apb.RegisterManagementServer(srv, leader)
+
+		if err := supervisor.Run(ctx, "background", leader.background); err != nil {
+			return fmt.Errorf("could not run leader background processor: %w", err)
+		}
 	case st.follower != nil:
 		supervisor.Logger(ctx).Infof("This curator is a follower (leader is %q), starting minimal implementation.", st.follower.lock.NodeId)
 

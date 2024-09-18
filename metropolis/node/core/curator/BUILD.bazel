@@ -9,6 +9,7 @@ go_library(
         "impl_follower.go",
         "impl_leader.go",
         "impl_leader_aaa.go",
+        "impl_leader_background.go",
         "impl_leader_certificates.go",
         "impl_leader_cluster_networking.go",
         "impl_leader_curator.go",
