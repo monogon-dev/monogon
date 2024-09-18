@@ -15,8 +15,10 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "metroctl",
-	Short: "metroctl controls Metropolis nodes and clusters.",
+	Use:           "metroctl",
+	Short:         "metroctl controls Metropolis nodes and clusters.",
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
 
 type metroctlFlags struct {
@@ -60,6 +62,20 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&flags.columns, "columns", "", "Comma-separated list of column names to show. If not set, all columns will be shown")
 	rootCmd.PersistentFlags().StringVarP(&flags.output, "output", "o", "", "Redirects output to the specified file")
 	rootCmd.PersistentFlags().BoolVar(&flags.acceptAnyCA, "insecure-accept-and-persist-first-encountered-ca", false, "Accept the first encountered CA while connecting as the trusted CA for future metroctl connections with this config path. This is very insecure and should only be used for testing.")
+	rootCmd.SetFlagErrorFunc(func(cmd *cobra.Command, err error) error {
+		cmd.PrintErr(cmd.UsageString())
+		return err
+	})
+}
+
+func PrintUsageOnWrongArgs(pArgs cobra.PositionalArgs) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		err := pArgs(cmd, args)
+		if err != nil {
+			cmd.PrintErr(cmd.UsageString())
+		}
+		return err
+	}
 }
 
 func main() {

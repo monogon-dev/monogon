@@ -48,5 +48,5 @@ var certExportCmd = &cobra.Command{
 		}
 		log.Println("Wrote files to current dir: cert.pem, key.pem")
 	},
-	Args: cobra.NoArgs,
+	Args: PrintUsageOnWrongArgs(cobra.NoArgs),
 }

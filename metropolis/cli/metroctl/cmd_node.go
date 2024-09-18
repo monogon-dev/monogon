@@ -53,7 +53,7 @@ var nodeDescribeCmd = &cobra.Command{
 		}
 		printNodes(nodes, args, columns)
 	},
-	Args: cobra.ArbitraryArgs,
+	Args: PrintUsageOnWrongArgs(cobra.ArbitraryArgs),
 }
 
 var nodeListCmd = &cobra.Command{
@@ -72,7 +72,7 @@ var nodeListCmd = &cobra.Command{
 
 		printNodes(nodes, args, map[string]bool{"node id": true})
 	},
-	Args: cobra.ArbitraryArgs,
+	Args: PrintUsageOnWrongArgs(cobra.ArbitraryArgs),
 }
 
 var nodeUpdateCmd = &cobra.Command{
@@ -225,7 +225,7 @@ var nodeUpdateCmd = &cobra.Command{
 
 		return nil
 	},
-	Args: cobra.MinimumNArgs(1),
+	Args: PrintUsageOnWrongArgs(cobra.MinimumNArgs(1)),
 }
 
 var nodeDeleteCmd = &cobra.Command{
@@ -283,7 +283,7 @@ var nodeDeleteCmd = &cobra.Command{
 		_, err = mgmt.DeleteNode(ctx, req)
 		return err
 	},
-	Args: cobra.ExactArgs(1),
+	Args: PrintUsageOnWrongArgs(cobra.ExactArgs(1)),
 }
 
 func dialNode(ctx context.Context, node string) (apb.NodeManagementClient, error) {
@@ -331,7 +331,7 @@ It can also be used to reboot into the firmware (BIOS) setup UI by passing the
 --firmware flag. This flag cannot be combined with any others.
 	`,
 	Use:          "reboot [node-id]",
-	Args:         cobra.ExactArgs(1),
+	Args:         PrintUsageOnWrongArgs(cobra.ExactArgs(1)),
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
@@ -385,7 +385,7 @@ It can also be used to reboot into the firmware (BIOS) setup UI by passing the
 var nodePoweroffCmd = &cobra.Command{
 	Short:        "Power off a node",
 	Use:          "poweroff [node-id]",
-	Args:         cobra.ExactArgs(1),
+	Args:         PrintUsageOnWrongArgs(cobra.ExactArgs(1)),
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()

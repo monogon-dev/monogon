@@ -23,7 +23,7 @@ var k8sConfigureCommand = &cobra.Command{
 	Long: `Configures a local kubectl instance (or any other Kubernetes application)
 to connect to a Metropolis cluster. A cluster endpoint must be provided with the
 --endpoints parameter.`,
-	Args: cobra.ExactArgs(0),
+	Args: PrintUsageOnWrongArgs(cobra.ExactArgs(0)),
 	Run:  doK8sConfigure,
 }
 

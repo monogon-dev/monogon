@@ -13,7 +13,7 @@ var genusbCmd = &cobra.Command{
 	Use:     "genusb target",
 	Short:   "Generates a Metropolis installer disk or image.",
 	Example: "metroctl install --bundle=metropolis-v0.1.zip genusb /dev/sdx",
-	Args:    cobra.ExactArgs(1), // One positional argument: the target
+	Args:    PrintUsageOnWrongArgs(cobra.ExactArgs(1)), // One positional argument: the target
 	Run:     doGenUSB,
 }
 

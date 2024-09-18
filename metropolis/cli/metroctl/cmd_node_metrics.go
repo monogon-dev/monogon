@@ -39,7 +39,7 @@ A node ID and exporter must be provided. Currently available exporters are:
 
 `,
 	Use:  "metrics [node-id] [exporter]",
-	Args: cobra.MinimumNArgs(2),
+	Args: PrintUsageOnWrongArgs(cobra.MinimumNArgs(2)),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 

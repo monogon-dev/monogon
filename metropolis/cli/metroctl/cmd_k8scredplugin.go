@@ -21,7 +21,7 @@ var k8scredpluginCmd = &cobra.Command{
 	Long: `This implements a Kubernetes client-go credential plugin to
 authenticate client-go based callers including kubectl against a Metropolis
 cluster. This should never be directly called by end users.`,
-	Args:   cobra.ExactArgs(0),
+	Args:   PrintUsageOnWrongArgs(cobra.ExactArgs(0)),
 	Hidden: true,
 	Run:    doK8sCredPlugin,
 }

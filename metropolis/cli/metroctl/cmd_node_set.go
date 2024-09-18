@@ -26,7 +26,7 @@ var addRoleCmd = &cobra.Command{
 	Short:   "Updates node roles.",
 	Use:     "role <KubernetesController|KubernetesWorker|ConsensusMember> [NodeID, ...]",
 	Example: "metroctl node add role KubernetesWorker metropolis-25fa5f5e9349381d4a5e9e59de0215e3",
-	Args:    cobra.ArbitraryArgs,
+	Args:    PrintUsageOnWrongArgs(cobra.ArbitraryArgs),
 	Run:     doAdd,
 }
 
@@ -34,7 +34,7 @@ var removeRoleCmd = &cobra.Command{
 	Short:   "Updates node roles.",
 	Use:     "role <KubernetesController|KubernetesWorker|ConsensusMember> [NodeID, ...]",
 	Example: "metroctl node remove role KubernetesWorker metropolis-25fa5f5e9349381d4a5e9e59de0215e3",
-	Args:    cobra.ArbitraryArgs,
+	Args:    PrintUsageOnWrongArgs(cobra.ArbitraryArgs),
 	Run:     doRemove,
 }
 

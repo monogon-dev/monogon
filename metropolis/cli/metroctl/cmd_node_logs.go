@@ -54,7 +54,7 @@ all lines and then piping the result through 'tail' - but more efficient, as no
 unnecessary lines are fetched.
 `,
 	Use:  "logs [node-id]",
-	Args: cobra.MinimumNArgs(1),
+	Args: PrintUsageOnWrongArgs(cobra.MinimumNArgs(1)),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 

@@ -17,7 +17,7 @@ import (
 var approveCmd = &cobra.Command{
 	Short: "Approves a candidate node, if specified; lists nodes pending approval otherwise.",
 	Use:   "approve [node-id]",
-	Args:  cobra.MaximumNArgs(1), // One positional argument: node ID
+	Args:  PrintUsageOnWrongArgs(cobra.MaximumNArgs(1)), // One positional argument: node ID
 	Run:   doApprove,
 }
 
