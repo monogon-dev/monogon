@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -14,31 +15,39 @@ var genusbCmd = &cobra.Command{
 	Short:   "Generates a Metropolis installer disk or image.",
 	Example: "metroctl install --bundle=metropolis-v0.1.zip genusb /dev/sdx",
 	Args:    PrintUsageOnWrongArgs(cobra.ExactArgs(1)), // One positional argument: the target
-	Run:     doGenUSB,
-}
+	RunE: func(cmd *cobra.Command, args []string) error {
+		params, err := makeNodeParams()
+		if err != nil {
+			return err
+		}
 
-func doGenUSB(cmd *cobra.Command, args []string) {
-	params := makeNodeParams()
+		installerPath, err := cmd.Flags().GetString("installer")
+		if err != nil {
+			return err
+		}
 
-	installerPath, err := cmd.Flags().GetString("installer")
-	if err != nil {
-		log.Fatal(err)
-	}
+		installer, err := external("installer", "_main/metropolis/installer/kernel.efi", &installerPath)
+		if err != nil {
+			return err
+		}
+		bundle, err := external("bundle", "_main/metropolis/node/bundle.zip", bundlePath)
+		if err != nil {
+			return err
+		}
 
-	installer := external("installer", "_main/metropolis/installer/kernel.efi", &installerPath)
-	bundle := external("bundle", "_main/metropolis/node/bundle.zip", bundlePath)
+		installerImageArgs := core.MakeInstallerImageArgs{
+			TargetPath: args[0],
+			Installer:  installer,
+			NodeParams: params,
+			Bundle:     bundle,
+		}
 
-	installerImageArgs := core.MakeInstallerImageArgs{
-		TargetPath: args[0],
-		Installer:  installer,
-		NodeParams: params,
-		Bundle:     bundle,
-	}
-
-	log.Printf("Generating installer image (this can take a while, see issues/92).")
-	if err := core.MakeInstallerImage(installerImageArgs); err != nil {
-		log.Fatalf("Failed to create installer: %v", err)
-	}
+		log.Printf("Generating installer image (this can take a while, see issues/92).")
+		if err := core.MakeInstallerImage(installerImageArgs); err != nil {
+			return fmt.Errorf("failed to create installer: %w", err)
+		}
+		return nil
+	},
 }
 
 func init() {

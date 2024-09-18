@@ -45,7 +45,10 @@ A node ID and exporter must be provided. Currently available exporters are:
 
 		// First connect to the main management service and figure out the node's IP
 		// address.
-		cc := dialAuthenticated(ctx)
+		cc, err := dialAuthenticated(ctx)
+		if err != nil {
+			return fmt.Errorf("while dialing node: %w", err)
+		}
 		mgmt := api.NewManagementClient(cc)
 		nodes, err := core.GetNodes(ctx, mgmt, fmt.Sprintf("node.id == %q", args[0]))
 		if err != nil {
@@ -63,8 +66,12 @@ A node ID and exporter must be provided. Currently available exporters are:
 			return fmt.Errorf("node has no external address")
 		}
 
+		transport, err := newAuthenticatedNodeHTTPTransport(ctx, n.Id)
+		if err != nil {
+			return err
+		}
 		client := http.Client{
-			Transport: newAuthenticatedNodeHTTPTransport(ctx, n.Id),
+			Transport: transport,
 		}
 		res, err := client.Get(fmt.Sprintf("https://%s/metrics/%s", net.JoinHostPort(n.Status.ExternalAddress, common.MetricsPort.PortString()), args[1]))
 		if err != nil {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -31,14 +30,17 @@ var nodeDescribeCmd = &cobra.Command{
 	Short:   "Describes cluster nodes.",
 	Use:     "describe [node-id] [--filter] [--output] [--format] [--columns]",
 	Example: "metroctl node describe metropolis-c556e31c3fa2bf0a36e9ccb9fd5d6056",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		cc := dialAuthenticated(ctx)
+		cc, err := dialAuthenticated(ctx)
+		if err != nil {
+			return fmt.Errorf("while dialing node: %w", err)
+		}
 		mgmt := apb.NewManagementClient(cc)
 
 		nodes, err := core.GetNodes(ctx, mgmt, flags.filter)
 		if err != nil {
-			log.Fatalf("While calling Management.GetNodes: %v", err)
+			return fmt.Errorf("while calling Management.GetNodes: %w", err)
 		}
 
 		var columns map[string]bool
@@ -50,7 +52,8 @@ var nodeDescribeCmd = &cobra.Command{
 				columns[p] = true
 			}
 		}
-		printNodes(nodes, args, columns)
+
+		return printNodes(nodes, args, columns)
 	},
 	Args: PrintUsageOnWrongArgs(cobra.ArbitraryArgs),
 }
@@ -59,17 +62,20 @@ var nodeListCmd = &cobra.Command{
 	Short:   "Lists cluster nodes.",
 	Use:     "list [node-id] [--filter] [--output] [--format]",
 	Example: "metroctl node list --filter node.status.external_address==\"10.8.0.2\"",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		cc := dialAuthenticated(ctx)
+		cc, err := dialAuthenticated(ctx)
+		if err != nil {
+			return fmt.Errorf("while dialing node: %w", err)
+		}
 		mgmt := apb.NewManagementClient(cc)
 
 		nodes, err := core.GetNodes(ctx, mgmt, flags.filter)
 		if err != nil {
-			log.Fatalf("While calling Management.GetNodes: %v", err)
+			return fmt.Errorf("while calling Management.GetNodes: %w", err)
 		}
 
-		printNodes(nodes, args, map[string]bool{"node id": true})
+		return printNodes(nodes, args, map[string]bool{"node id": true})
 	},
 	Args: PrintUsageOnWrongArgs(cobra.ArbitraryArgs),
 }
@@ -110,7 +116,7 @@ var nodeUpdateCmd = &cobra.Command{
 			return err
 		}
 		if maxUnavailable == 0 {
-			return errors.New("unable to update notes with max-unavailable set to zero")
+			return fmt.Errorf("unable to update notes with max-unavailable set to zero")
 		}
 		unavailableSemaphore := semaphore.NewWeighted(int64(maxUnavailable))
 
@@ -121,7 +127,11 @@ var nodeUpdateCmd = &cobra.Command{
 			return fmt.Errorf("could not get CA certificate: %w", err)
 		}
 
-		mgmt := apb.NewManagementClient(dialAuthenticated(ctx))
+		conn, err := dialAuthenticated(ctx)
+		if err != nil {
+			return err
+		}
+		mgmt := apb.NewManagementClient(conn)
 
 		nodes, err := core.GetNodes(ctx, mgmt, "")
 		if err != nil {
@@ -169,11 +179,14 @@ var nodeUpdateCmd = &cobra.Command{
 
 			go func(n *apb.Node) {
 				defer wg.Done()
-				cc := dialAuthenticatedNode(ctx, n.Id, n.Status.ExternalAddress, cacert)
+				cc, err := dialAuthenticatedNode(ctx, n.Id, n.Status.ExternalAddress, cacert)
+				if err != nil {
+					log.Fatalf("failed to dial node: %v", err)
+				}
 				nodeMgmt := apb.NewNodeManagementClient(cc)
 				log.Printf("sending update request to: %s (%s)", n.Id, n.Status.ExternalAddress)
 				start := time.Now()
-				_, err := nodeMgmt.UpdateNode(ctx, updateReq)
+				_, err = nodeMgmt.UpdateNode(ctx, updateReq)
 				if err != nil {
 					log.Printf("update request to node %s failed: %v", n.Id, err)
 					// A failed UpdateNode does not mean that the node is now unavailable as it
@@ -242,7 +255,11 @@ var nodeDeleteCmd = &cobra.Command{
 		}
 
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		mgmt := apb.NewManagementClient(dialAuthenticated(ctx))
+		conn, err := dialAuthenticated(ctx)
+		if err != nil {
+			return err
+		}
+		mgmt := apb.NewManagementClient(conn)
 
 		nodes, err := core.GetNodes(ctx, mgmt, fmt.Sprintf("node.id==%q", args[0]))
 		if err != nil {
@@ -287,7 +304,10 @@ var nodeDeleteCmd = &cobra.Command{
 func dialNode(ctx context.Context, node string) (apb.NodeManagementClient, error) {
 	// First connect to the main management service and figure out the node's IP
 	// address.
-	cc := dialAuthenticated(ctx)
+	cc, err := dialAuthenticated(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("while dialing node: %w", err)
+	}
 	mgmt := apb.NewManagementClient(cc)
 	nodes, err := core.GetNodes(ctx, mgmt, fmt.Sprintf("node.id == %q", node))
 	if err != nil {
@@ -311,7 +331,10 @@ func dialNode(ctx context.Context, node string) (apb.NodeManagementClient, error
 	}
 
 	// Dial the actual node at its management port.
-	cl := dialAuthenticatedNode(ctx, n.Id, n.Status.ExternalAddress, cacert)
+	cl, err := dialAuthenticatedNode(ctx, n.Id, n.Status.ExternalAddress, cacert)
+	if err != nil {
+		return nil, fmt.Errorf("while dialing node: %w", err)
+	}
 	nmgmt := apb.NewNodeManagementClient(cl)
 	return nmgmt, nil
 }
@@ -348,10 +371,10 @@ It can also be used to reboot into the firmware (BIOS) setup UI by passing the
 		}
 
 		if kexecFlag && firmwareFlag {
-			return errors.New("--kexec cannot be used with --firmware as firmware is not involved when using kexec")
+			return fmt.Errorf("--kexec cannot be used with --firmware as firmware is not involved when using kexec")
 		}
 		if firmwareFlag && rollbackFlag {
-			return errors.New("--firmware cannot be used with --rollback as the next boot won't be into the OS")
+			return fmt.Errorf("--firmware cannot be used with --rollback as the next boot won't be into the OS")
 		}
 		var req apb.RebootRequest
 		if kexecFlag {
@@ -374,7 +397,7 @@ It can also be used to reboot into the firmware (BIOS) setup UI by passing the
 		if _, err := nmgmt.Reboot(ctx, &req); err != nil {
 			return fmt.Errorf("reboot RPC failed: %w", err)
 		}
-		fmt.Printf("Node %v is being rebooted", args[0])
+		log.Printf("Node %v is being rebooted", args[0])
 
 		return nil
 	},
@@ -398,7 +421,7 @@ var nodePoweroffCmd = &cobra.Command{
 		}); err != nil {
 			return fmt.Errorf("reboot RPC failed: %w", err)
 		}
-		fmt.Printf("Node %v is being powered off", args[0])
+		log.Printf("Node %v is being powered off", args[0])
 
 		return nil
 	},
@@ -426,12 +449,12 @@ func init() {
 	rootCmd.AddCommand(nodeCmd)
 }
 
-func printNodes(nodes []*apb.Node, args []string, onlyColumns map[string]bool) {
+func printNodes(nodes []*apb.Node, args []string, onlyColumns map[string]bool) error {
 	o := io.WriteCloser(os.Stdout)
 	if flags.output != "" {
 		of, err := os.Create(flags.output)
 		if err != nil {
-			log.Fatalf("Couldn't create the output file at %s: %v", flags.output, err)
+			return fmt.Errorf("couldn't create the output file at %s: %w", flags.output, err)
 		}
 		o = of
 	}
@@ -456,4 +479,5 @@ func printNodes(nodes []*apb.Node, args []string, onlyColumns map[string]bool) {
 	}
 
 	t.Print(o, onlyColumns)
+	return nil
 }

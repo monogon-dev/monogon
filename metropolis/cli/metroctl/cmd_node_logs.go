@@ -60,7 +60,10 @@ unnecessary lines are fetched.
 
 		// First connect to the main management service and figure out the node's IP
 		// address.
-		cc := dialAuthenticated(ctx)
+		cc, err := dialAuthenticated(ctx)
+		if err != nil {
+			return fmt.Errorf("while dialing node: %w", err)
+		}
 		mgmt := api.NewManagementClient(cc)
 		nodes, err := core.GetNodes(ctx, mgmt, fmt.Sprintf("node.id == %q", args[0]))
 		if err != nil {
@@ -85,7 +88,10 @@ unnecessary lines are fetched.
 
 		fmt.Printf("=== Logs from %s (%s):\n", n.Id, n.Status.ExternalAddress)
 		// Dial the actual node at its management port.
-		cl := dialAuthenticatedNode(ctx, n.Id, n.Status.ExternalAddress, cacert)
+		cl, err := dialAuthenticatedNode(ctx, n.Id, n.Status.ExternalAddress, cacert)
+		if err != nil {
+			return fmt.Errorf("while dialing node: %w", err)
+		}
 		nmgmt := api.NewNodeManagementClient(cl)
 
 		streamMode := api.GetLogsRequest_STREAM_DISABLE

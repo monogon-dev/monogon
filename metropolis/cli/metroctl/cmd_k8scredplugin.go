@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -23,37 +23,36 @@ authenticate client-go based callers including kubectl against a Metropolis
 cluster. This should never be directly called by end users.`,
 	Args:   PrintUsageOnWrongArgs(cobra.ExactArgs(0)),
 	Hidden: true,
-	Run:    doK8sCredPlugin,
-}
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cert, key, err := core.GetOwnerCredentials(flags.configPath)
+		if errors.Is(err, core.ErrNoCredentials) {
+			return fmt.Errorf("no credentials found on your machine")
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get Metropolis credentials: %w", err)
+		}
 
-func doK8sCredPlugin(cmd *cobra.Command, args []string) {
-	cert, key, err := core.GetOwnerCredentials(flags.configPath)
-	if errors.Is(err, core.ErrNoCredentials) {
-		log.Fatal("No credentials found on your machine")
-	}
-	if err != nil {
-		log.Fatalf("failed to get Metropolis credentials: %v", err)
-	}
+		pkcs8Key, err := x509.MarshalPKCS8PrivateKey(key)
+		if err != nil {
+			// We explicitly pass an Ed25519 private key in, so this can't happen
+			panic(err)
+		}
 
-	pkcs8Key, err := x509.MarshalPKCS8PrivateKey(key)
-	if err != nil {
-		// We explicitly pass an Ed25519 private key in, so this can't happen
-		panic(err)
-	}
-
-	cred := clientauthentication.ExecCredential{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: clientauthentication.SchemeGroupVersion.String(),
-			Kind:       "ExecCredential",
-		},
-		Status: &clientauthentication.ExecCredentialStatus{
-			ClientCertificateData: string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})),
-			ClientKeyData:         string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: pkcs8Key})),
-		},
-	}
-	if err := json.NewEncoder(os.Stdout).Encode(cred); err != nil {
-		log.Fatalf("failed to encode ExecCredential: %v", err)
-	}
+		cred := clientauthentication.ExecCredential{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: clientauthentication.SchemeGroupVersion.String(),
+				Kind:       "ExecCredential",
+			},
+			Status: &clientauthentication.ExecCredentialStatus{
+				ClientCertificateData: string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})),
+				ClientKeyData:         string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: pkcs8Key})),
+			},
+		}
+		if err := json.NewEncoder(os.Stdout).Encode(cred); err != nil {
+			return fmt.Errorf("failed to encode ExecCredential: %w", err)
+		}
+		return nil
+	},
 }
 
 func init() {

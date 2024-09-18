@@ -5,7 +5,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	_ "embed"
-	"log"
+	"fmt"
 	"os"
 	"os/signal"
 
@@ -35,11 +35,11 @@ var bootstrapTPMMode = flagdefs.TPMModePflag(installCmd.PersistentFlags(), "boot
 var bootstrapStorageSecurityPolicy = flagdefs.StorageSecurityPolicyPflag(installCmd.PersistentFlags(), "bootstrap-storage-security", cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION, "Storage security policy to set on cluster")
 var bundlePath = installCmd.PersistentFlags().StringP("bundle", "b", "", "Path to the Metropolis bundle to be installed")
 
-func makeNodeParams() *api.NodeParameters {
+func makeNodeParams() (*api.NodeParameters, error) {
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 
 	if err := os.MkdirAll(flags.configPath, 0700); err != nil && !os.IsExist(err) {
-		log.Fatalf("Failed to create config directory: %v", err)
+		return nil, fmt.Errorf("failed to create config directory: %w", err)
 	}
 
 	var params *api.NodeParameters
@@ -47,7 +47,7 @@ func makeNodeParams() *api.NodeParameters {
 		// TODO(lorenz): Have a key management story for this
 		priv, err := core.GetOrMakeOwnerKey(flags.configPath)
 		if err != nil {
-			log.Fatalf("Failed to generate or get owner key: %v", err)
+			return nil, fmt.Errorf("failed to generate or get owner key: %w", err)
 		}
 		pub := priv.Public().(ed25519.PublicKey)
 		params = &api.NodeParameters{
@@ -62,15 +62,18 @@ func makeNodeParams() *api.NodeParameters {
 			},
 		}
 	} else {
-		cc := dialAuthenticated(ctx)
+		cc, err := dialAuthenticated(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("while dialing node: %w", err)
+		}
 		mgmt := api.NewManagementClient(cc)
 		resT, err := mgmt.GetRegisterTicket(ctx, &api.GetRegisterTicketRequest{})
 		if err != nil {
-			log.Fatalf("While receiving register ticket: %v", err)
+			return nil, fmt.Errorf("while receiving register ticket: %w", err)
 		}
 		resI, err := mgmt.GetClusterInfo(ctx, &api.GetClusterInfoRequest{})
 		if err != nil {
-			log.Fatalf("While receiving cluster directory: %v", err)
+			return nil, fmt.Errorf("while receiving cluster directory: %w", err)
 		}
 
 		params = &api.NodeParameters{
@@ -83,28 +86,28 @@ func makeNodeParams() *api.NodeParameters {
 			},
 		}
 	}
-	return params
+	return params, nil
 }
 
-func external(name, datafilePath string, flag *string) fat32.SizedReader {
+func external(name, datafilePath string, flag *string) (fat32.SizedReader, error) {
 	if flag == nil || *flag == "" {
 		rPath, err := runfiles.Rlocation(datafilePath)
 		if err != nil {
-			log.Fatalf("No %s specified", name)
+			return nil, fmt.Errorf("no %s specified", name)
 		}
 		df, err := os.ReadFile(rPath)
 		if err != nil {
-			log.Fatalf("Cant read file: %v", err)
+			return nil, fmt.Errorf("can't read file: %w", err)
 		}
-		return bytes.NewReader(df)
+		return bytes.NewReader(df), nil
 	}
 
 	f, err := blkio.NewFileReader(*flag)
 	if err != nil {
-		log.Fatalf("Failed to open specified %s: %v", name, err)
+		return nil, fmt.Errorf("failed to open specified %s: %w", name, err)
 	}
 
-	return f
+	return f, nil
 }
 
 func init() {
