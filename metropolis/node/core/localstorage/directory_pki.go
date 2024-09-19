@@ -41,7 +41,7 @@ func (p *PKIDirectory) AllExist() (bool, error) {
 	for _, d := range []*declarative.File{&p.CACertificate, &p.Certificate, &p.Key} {
 		exists, err := d.Exists()
 		if err != nil {
-			return false, fmt.Errorf("failed to check %q: %v", d.FullPath(), err)
+			return false, fmt.Errorf("failed to check %q: %w", d.FullPath(), err)
 		}
 		if !exists {
 			return false, nil
@@ -56,7 +56,7 @@ func (p *PKIDirectory) AllAbsent() (bool, error) {
 	for _, d := range []*declarative.File{&p.CACertificate, &p.Certificate, &p.Key} {
 		exists, err := d.Exists()
 		if err != nil {
-			return false, fmt.Errorf("failed to check %q: %v", d.FullPath(), err)
+			return false, fmt.Errorf("failed to check %q: %w", d.FullPath(), err)
 		}
 		if exists {
 			return false, nil

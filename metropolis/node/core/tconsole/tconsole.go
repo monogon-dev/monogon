@@ -51,7 +51,7 @@ type Console struct {
 func New(terminal Terminal, ttyPath string, lt *logtree.LogTree, network event.Value[*network.Status], roles event.Value[*cpb.NodeRoles], curatorConn event.Value[*roleserve.CuratorConnection]) (*Console, error) {
 	reader, err := lt.Read("", logtree.WithChildren(), logtree.WithStream())
 	if err != nil {
-		return nil, fmt.Errorf("lt.Read: %v", err)
+		return nil, fmt.Errorf("lt.Read: %w", err)
 	}
 
 	tty, err := tcell.NewDevTtyFromDev(ttyPath)

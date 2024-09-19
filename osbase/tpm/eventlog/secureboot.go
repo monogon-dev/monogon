@@ -95,7 +95,7 @@ func ParseSecurebootState(events []Event) (*SecurebootState, error) {
 
 		et, err := internal.UntrustedParseEventType(uint32(e.Type))
 		if err != nil {
-			return nil, fmt.Errorf("unrecognised event type: %v", err)
+			return nil, fmt.Errorf("unrecognised event type: %w", err)
 		}
 
 		digestVerify := e.digestEquals(e.Data)
@@ -109,7 +109,7 @@ func ParseSecurebootState(events []Event) (*SecurebootState, error) {
 				return nil, fmt.Errorf("invalid separator data at event %d: %v", e.sequence, e.Data)
 			}
 			if digestVerify != nil {
-				return nil, fmt.Errorf("invalid separator digest at event %d: %v", e.sequence, digestVerify)
+				return nil, fmt.Errorf("invalid separator digest at event %d: %w", e.sequence, digestVerify)
 			}
 
 		case internal.EFIAction:
@@ -121,7 +121,7 @@ func ParseSecurebootState(events []Event) (*SecurebootState, error) {
 		case internal.EFIVariableDriverConfig:
 			v, err := internal.ParseUEFIVariableData(bytes.NewReader(e.Data))
 			if err != nil {
-				return nil, fmt.Errorf("failed parsing EFI variable at event %d: %v", e.sequence, err)
+				return nil, fmt.Errorf("failed parsing EFI variable at event %d: %w", e.sequence, err)
 			}
 			if _, seenBefore := seenVars[v.VarName()]; seenBefore {
 				return nil, fmt.Errorf("duplicate EFI variable %q at event %d", v.VarName(), e.sequence)
@@ -132,7 +132,7 @@ func ParseSecurebootState(events []Event) (*SecurebootState, error) {
 			}
 
 			if digestVerify != nil {
-				return nil, fmt.Errorf("invalid digest for variable %q on event %d: %v", v.VarName(), e.sequence, digestVerify)
+				return nil, fmt.Errorf("invalid digest for variable %q on event %d: %w", v.VarName(), e.sequence, digestVerify)
 			}
 
 			switch v.VarName() {
@@ -143,19 +143,19 @@ func ParseSecurebootState(events []Event) (*SecurebootState, error) {
 				out.Enabled = v.VariableData[0] == 1
 			case "PK":
 				if out.PlatformKeys, out.PlatformKeyHashes, err = v.SignatureData(); err != nil {
-					return nil, fmt.Errorf("event %d: failed parsing platform keys: %v", e.sequence, err)
+					return nil, fmt.Errorf("event %d: failed parsing platform keys: %w", e.sequence, err)
 				}
 			case "KEK":
 				if out.ExchangeKeys, out.ExchangeKeyHashes, err = v.SignatureData(); err != nil {
-					return nil, fmt.Errorf("event %d: failed parsing key exchange keys: %v", e.sequence, err)
+					return nil, fmt.Errorf("event %d: failed parsing key exchange keys: %w", e.sequence, err)
 				}
 			case "db":
 				if out.PermittedKeys, out.PermittedHashes, err = v.SignatureData(); err != nil {
-					return nil, fmt.Errorf("event %d: failed parsing signature database: %v", e.sequence, err)
+					return nil, fmt.Errorf("event %d: failed parsing signature database: %w", e.sequence, err)
 				}
 			case "dbx":
 				if out.ForbiddenKeys, out.ForbiddenHashes, err = v.SignatureData(); err != nil {
-					return nil, fmt.Errorf("event %d: failed parsing forbidden signature database: %v", e.sequence, err)
+					return nil, fmt.Errorf("event %d: failed parsing forbidden signature database: %w", e.sequence, err)
 				}
 			}
 
@@ -172,12 +172,12 @@ func ParseSecurebootState(events []Event) (*SecurebootState, error) {
 						digestVerify = e.digestEquals(e.Data[:len(e.Data)-1])
 					}
 				} else {
-					return nil, fmt.Errorf("failed parsing EFI variable authority at event %d: %v", e.sequence, err)
+					return nil, fmt.Errorf("failed parsing EFI variable authority at event %d: %w", e.sequence, err)
 				}
 			}
 			seenAuthority = true
 			if digestVerify != nil {
-				return nil, fmt.Errorf("invalid digest for authority on event %d: %v", e.sequence, digestVerify)
+				return nil, fmt.Errorf("invalid digest for authority on event %d: %w", e.sequence, digestVerify)
 			}
 			if !seenSeparator {
 				out.PreSeparatorAuthority = append(out.PreSeparatorAuthority, a.Certs...)

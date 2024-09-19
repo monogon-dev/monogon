@@ -51,7 +51,7 @@ func (r *Root) Start(ctx context.Context, updateSvc *update.Service) error {
 	}
 
 	if err := unix.Mount("tmpfs", r.Ephemeral.FullPath(), "tmpfs", unix.MS_NODEV, ""); err != nil {
-		return fmt.Errorf("mounting /ephemeral: %v", err)
+		return fmt.Errorf("mounting /ephemeral: %w", err)
 	}
 
 	if err := unix.Mount("tmpfs", r.Run.FullPath(), "tmpfs", unix.MS_NOEXEC|unix.MS_NODEV, ""); err != nil {

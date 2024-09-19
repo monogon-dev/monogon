@@ -28,7 +28,7 @@ func nodeParamsFWCFG(ctx context.Context) (*apb.NodeParameters, error) {
 	var config apb.NodeParameters
 	err = proto.Unmarshal(bytes, &config)
 	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal: %v", err)
+		return nil, fmt.Errorf("could not unmarshal: %w", err)
 	}
 
 	return &config, nil

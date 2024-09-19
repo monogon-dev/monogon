@@ -259,7 +259,7 @@ func (e *EventLog) Verify(pcrs []PCR) ([]Event, error) {
 		}
 		el := e.clone()
 		if err := wkrd.apply(el); err != nil {
-			return nil, fmt.Errorf("failed applying workaround %q: %v", wkrd.id, err)
+			return nil, fmt.Errorf("failed applying workaround %q: %w", wkrd.id, err)
 		}
 		if events, err := replayEvents(el.rawEvents, pcrs); err == nil {
 			return events, nil
@@ -394,12 +394,12 @@ func ParseEventLog(measurementLog []byte) (*EventLog, error) {
 	var el EventLog
 	e, err := parseFn(r, specID)
 	if err != nil {
-		return nil, fmt.Errorf("parse first event: %v", err)
+		return nil, fmt.Errorf("parse first event: %w", err)
 	}
 	if e.typ == eventTypeNoAction {
 		specID, err = parseSpecIDEvent(e.data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse spec ID event: %v", err)
+			return nil, fmt.Errorf("failed to parse spec ID event: %w", err)
 		}
 		for _, alg := range specID.algs {
 			switch tpm2.Algorithm(alg.ID) {
@@ -472,7 +472,7 @@ func parseSpecIDEvent(b []byte) (*specIDEvent, error) {
 		NumAlgs       uint32
 	}
 	if err := binary.Read(r, binary.LittleEndian, &header); err != nil {
-		return nil, fmt.Errorf("reading event header: %v", err)
+		return nil, fmt.Errorf("reading event header: %w", err)
 	}
 	if header.Signature != wantSignature {
 		return nil, fmt.Errorf("invalid spec id signature: %x", header.Signature)
@@ -493,14 +493,14 @@ func parseSpecIDEvent(b []byte) (*specIDEvent, error) {
 	var e specIDEvent
 	for i := 0; i < int(header.NumAlgs); i++ {
 		if err := binary.Read(r, binary.LittleEndian, &specAlg); err != nil {
-			return nil, fmt.Errorf("reading algorithm: %v", err)
+			return nil, fmt.Errorf("reading algorithm: %w", err)
 		}
 		e.algs = append(e.algs, specAlg)
 	}
 
 	var vendorInfoSize uint8
 	if err := binary.Read(r, binary.LittleEndian, &vendorInfoSize); err != nil {
-		return nil, fmt.Errorf("reading vender info size: %v", err)
+		return nil, fmt.Errorf("reading vender info size: %w", err)
 	}
 	if r.Len() != int(vendorInfoSize) {
 		return nil, fmt.Errorf("reading vendor info, expected %d remaining bytes, got %d", vendorInfoSize, r.Len())
@@ -600,7 +600,7 @@ func parseRawEvent2(r *bytes.Buffer, specID *specIDEvent) (event rawEvent, err e
 				continue
 			}
 			if uint16(r.Len()) < alg.Size {
-				return event, fmt.Errorf("reading digest: %v", io.ErrUnexpectedEOF)
+				return event, fmt.Errorf("reading digest: %w", io.ErrUnexpectedEOF)
 			}
 			digest.data = make([]byte, alg.Size)
 			digest.hash = HashAlg(alg.ID).cryptoHash()

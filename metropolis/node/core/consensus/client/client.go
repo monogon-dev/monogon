@@ -133,5 +133,5 @@ func (l *local) Close() error {
 	if errL != nil && errW == nil {
 		return fmt.Errorf("closing lease: %w", errL)
 	}
-	return fmt.Errorf("closing watcher: %v, closing lease: %v", errW, errL)
+	return fmt.Errorf("closing watcher: %w, closing lease: %w", errW, errL)
 }

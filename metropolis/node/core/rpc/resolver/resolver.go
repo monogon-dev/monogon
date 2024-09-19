@@ -222,7 +222,7 @@ func (r *Resolver) runCuratorUpdater(ctx context.Context, opts []grpc.DialOption
 	cl, err := grpc.Dial(MetropolisControlAddress, opts...)
 	if err != nil {
 		// This generally shouldn't happen.
-		return fmt.Errorf("could not dial gRPC: %v", err)
+		return fmt.Errorf("could not dial gRPC: %w", err)
 	}
 	defer cl.Close()
 

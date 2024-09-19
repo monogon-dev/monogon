@@ -83,7 +83,7 @@ func (s *Service) logPump(fifo *os.File) supervisor.Runnable {
 				// is not an issue for us.
 				time.Sleep(10 * time.Millisecond)
 			} else if err != nil {
-				return fmt.Errorf("log pump failed: %v", err)
+				return fmt.Errorf("log pump failed: %w", err)
 			}
 		}
 	}

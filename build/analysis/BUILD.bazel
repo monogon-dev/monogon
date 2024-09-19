@@ -63,8 +63,7 @@ NOGO_PASSES += [
 # Append some passes provided by CockroachDB.
 NOGO_PASSES += [
     "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/errcmp",
-    # TODO(tim): Enable when fixed
-    # "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/errwrap",
+    "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/errwrap",
     "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/hash",
     "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/nilness",
     "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/nocopy",

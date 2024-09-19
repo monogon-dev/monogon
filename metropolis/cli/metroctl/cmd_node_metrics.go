@@ -68,7 +68,7 @@ A node ID and exporter must be provided. Currently available exporters are:
 		}
 		res, err := client.Get(fmt.Sprintf("https://%s/metrics/%s", net.JoinHostPort(n.Status.ExternalAddress, common.MetricsPort.PortString()), args[1]))
 		if err != nil {
-			return fmt.Errorf("metrics HTTP request failed: %v", err)
+			return fmt.Errorf("metrics HTTP request failed: %w", err)
 		}
 		defer res.Body.Close()
 		_, err = io.Copy(os.Stdout, res.Body)

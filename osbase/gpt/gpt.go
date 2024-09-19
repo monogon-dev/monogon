@@ -227,7 +227,7 @@ func (gpt *Table) AddPartition(p *Partition, size int64, options ...AddOption) e
 
 	fs, _, err := gpt.GetFreeSpaces()
 	if err != nil {
-		return fmt.Errorf("unable to determine free space: %v", err)
+		return fmt.Errorf("unable to determine free space: %w", err)
 	}
 	if opts.preferEnd {
 		// Reverse fs slice to start iteration at the end
@@ -530,7 +530,7 @@ func (gpt *Table) Write() error {
 		hdrRaw.WriteByte(0x00)
 	}
 	if _, err := gpt.b.WriteAt(hdrRaw.Bytes(), (blockCount-1)*blockSize); err != nil {
-		return fmt.Errorf("failed to write alternate header: %v", err)
+		return fmt.Errorf("failed to write alternate header: %w", err)
 	}
 
 	// Sync device after writing each GPT, to ensure there is at least one valid
@@ -640,7 +640,7 @@ func Read(r blockdev.BlockDev) (*Table, error) {
 	if err != nil {
 		alternateGPT, err2 := readSingleGPT(r, r.BlockCount()-1)
 		if err2 != nil {
-			return nil, fmt.Errorf("failed to read both GPTs: primary GPT (%v), secondary GPT (%v)", err, err2)
+			return nil, fmt.Errorf("failed to read both GPTs: primary GPT (%w), secondary GPT (%w)", err, err2)
 		}
 		alternateGPT.BootCode = bootCode
 		return alternateGPT, nil

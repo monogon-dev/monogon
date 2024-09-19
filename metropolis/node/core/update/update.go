@@ -271,7 +271,7 @@ func (s *Service) InstallBundle(ctx context.Context, bundleURL string, withKexec
 		return s.tryDownloadBundle(ctx, bundleURL, &bundleRaw)
 	}, backoff.WithContext(b, ctx))
 	if err != nil {
-		return fmt.Errorf("error downloading Metropolis bundle: %v", err)
+		return fmt.Errorf("error downloading Metropolis bundle: %w", err)
 	}
 	bundle, err := zip.NewReader(bytes.NewReader(bundleRaw.Bytes()), int64(bundleRaw.Len()))
 	if err != nil {
@@ -541,12 +541,12 @@ func (s *Service) fixupEFI() error {
 		if err == nil {
 			s.Logger.Infof("Restored missing EFI boot entry for Metropolis")
 		} else {
-			return fmt.Errorf("while restoring missing EFI boot entry for Metropolis: %v", err)
+			return fmt.Errorf("while restoring missing EFI boot entry for Metropolis: %w", err)
 		}
 	}
 	bootOrder, err := efivarfs.GetBootOrder()
 	if err != nil {
-		return fmt.Errorf("failed to get EFI boot order: %v", err)
+		return fmt.Errorf("failed to get EFI boot order: %w", err)
 	}
 	for _, bentry := range bootOrder {
 		if bentry == uint16(validBootEntryIdx) {

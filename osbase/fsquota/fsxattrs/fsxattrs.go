@@ -67,7 +67,7 @@ func Get(file *os.File) (*FSXAttrs, error) {
 	var attrs FSXAttrs
 	_, _, errno := unix.Syscall(unix.SYS_IOCTL, file.Fd(), FS_IOC_FSGETXATTR, uintptr(unsafe.Pointer(&attrs)))
 	if errno != 0 {
-		return nil, fmt.Errorf("failed to execute getFSXAttrs: %v", errno)
+		return nil, fmt.Errorf("failed to execute getFSXAttrs: %w", errno)
 	}
 	return &attrs, nil
 }
@@ -75,7 +75,7 @@ func Get(file *os.File) (*FSXAttrs, error) {
 func Set(file *os.File, attrs *FSXAttrs) error {
 	_, _, errno := unix.Syscall(unix.SYS_IOCTL, file.Fd(), FS_IOC_FSSETXATTR, uintptr(unsafe.Pointer(attrs)))
 	if errno != 0 {
-		return fmt.Errorf("failed to execute setFSXAttrs: %v", errno)
+		return fmt.Errorf("failed to execute setFSXAttrs: %w", errno)
 	}
 	return nil
 }

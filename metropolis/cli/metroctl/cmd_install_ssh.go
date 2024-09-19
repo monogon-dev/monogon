@@ -147,13 +147,13 @@ func doSSH(cmd *cobra.Command, args []string) error {
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
 	conn, err := cl.Dial(ctx, address, 5*time.Second)
 	if err != nil {
-		return fmt.Errorf("error while establishing ssh connection: %v", err)
+		return fmt.Errorf("error while establishing ssh connection: %w", err)
 	}
 
 	params := makeNodeParams()
 	rawParams, err := proto.Marshal(params)
 	if err != nil {
-		return fmt.Errorf("error while marshaling node params: %v", err)
+		return fmt.Errorf("error while marshaling node params: %w", err)
 	}
 
 	const takeoverTargetPath = "/root/takeover"
@@ -188,7 +188,7 @@ func doSSH(cmd *cobra.Command, args []string) error {
 		log.Printf("Agent stderr: %q", stderrStr)
 	}
 	if err != nil {
-		return fmt.Errorf("while starting the takeover executable: %v", err)
+		return fmt.Errorf("while starting the takeover executable: %w", err)
 	}
 
 	return nil

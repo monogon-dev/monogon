@@ -43,7 +43,7 @@ func (s *workerHeartbeat) run(ctx context.Context) error {
 
 	for {
 		if err := stream.Send(&ipb.HeartbeatUpdateRequest{}); err != nil {
-			return fmt.Errorf("while sending a heartbeat: %v", err)
+			return fmt.Errorf("while sending a heartbeat: %w", err)
 		}
 		next := time.Now().Add(curator.HeartbeatTimeout)
 
@@ -52,7 +52,7 @@ func (s *workerHeartbeat) run(ctx context.Context) error {
 			return fmt.Errorf("stream closed by the server, restarting worker... ")
 		}
 		if err != nil {
-			return fmt.Errorf("while receiving a heartbeat reply: %v", err)
+			return fmt.Errorf("while receiving a heartbeat reply: %w", err)
 		}
 
 		time.Sleep(time.Until(next))

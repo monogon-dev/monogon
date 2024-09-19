@@ -61,7 +61,7 @@ func (r Runnable) Run() {
 		}
 		reader, err := lt.Read("", logtree.WithChildren(), logtree.WithStream())
 		if err != nil {
-			panic(fmt.Errorf("could not set up root log reader: %v", err))
+			panic(fmt.Errorf("could not set up root log reader: %w", err))
 		}
 		go func() {
 			for {

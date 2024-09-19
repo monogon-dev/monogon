@@ -138,7 +138,7 @@ func (k *Plugin) Run(ctx context.Context) error {
 
 	l1tfStatus, err := os.ReadFile("/sys/devices/system/cpu/vulnerabilities/l1tf")
 	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to query for CPU vulnerabilities: %v", err)
+		return fmt.Errorf("failed to query for CPU vulnerabilities: %w", err)
 	}
 
 	if bytes.Contains(l1tfStatus, []byte("vulnerable")) {
@@ -164,7 +164,7 @@ func (k *Plugin) Run(ctx context.Context) error {
 
 	err = unix.Mknod("/dev/kvm", 0660, int(kvmDevNode))
 	if err != nil && !errors.Is(err, unix.EEXIST) {
-		return fmt.Errorf("failed to create KVM device node: %v", err)
+		return fmt.Errorf("failed to create KVM device node: %w", err)
 	}
 
 	// Try to remove socket if an unclean shutdown happened

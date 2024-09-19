@@ -67,7 +67,7 @@ func FileLoad(kernel, initramfs *os.File, cmdline string) error {
 	}
 
 	if err := unix.KexecFileLoad(int(kernel.Fd()), initramfsfd, passedCmdline, flags); err != nil {
-		return fmt.Errorf("SYS_kexec_file_load(%d, %d, %s, %x) = %v", kernel.Fd(), initramfsfd, cmdline, flags, err)
+		return fmt.Errorf("SYS_kexec_file_load(%d, %d, %s, %x) = %w", kernel.Fd(), initramfsfd, cmdline, flags, err)
 	}
 	runtime.KeepAlive(kernel)
 	runtime.KeepAlive(initramfs)

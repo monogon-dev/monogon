@@ -198,7 +198,7 @@ func TestBasicReconciliation(t *testing.T) {
 		}
 
 		if err := reconcile(ctx, r, rname); err != nil {
-			return fmt.Errorf("reconcile: %v", err)
+			return fmt.Errorf("reconcile: %w", err)
 		}
 		// everything requested should have been created
 		if diff := r.currentDiff(makeTestObject("foo", 0), makeTestObject("bar", 0), makeTestObject("baz", 0)); diff != "" {
@@ -207,7 +207,7 @@ func TestBasicReconciliation(t *testing.T) {
 
 		delete(r.expected, "foo")
 		if err := reconcile(ctx, r, rname); err != nil {
-			return fmt.Errorf("reconcile: %v", err)
+			return fmt.Errorf("reconcile: %w", err)
 		}
 		// foo should now be missing
 		if diff := r.currentDiff(makeTestObject("bar", 0), makeTestObject("baz", 0)); diff != "" {
@@ -216,7 +216,7 @@ func TestBasicReconciliation(t *testing.T) {
 
 		r.expected["bar"] = makeTestObject("bar", 1)
 		if err := reconcile(ctx, r, rname); err != nil {
-			return fmt.Errorf("reconcile: %v", err)
+			return fmt.Errorf("reconcile: %w", err)
 		}
 		// bar should be updated
 		if diff := r.currentDiff(makeTestObject("bar", 1), makeTestObject("baz", 0)); diff != "" {

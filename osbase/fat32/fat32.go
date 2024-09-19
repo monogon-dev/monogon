@@ -397,7 +397,7 @@ func WriteFS(w io.Writer, rootInode Inode, opts Options) error {
 
 	for _, i := range p.orderedInodes {
 		if err := i.writeData(wb, bs.Label); err != nil {
-			return fmt.Errorf("failed to write inode %q: %v", i.Name, err)
+			return fmt.Errorf("failed to write inode %q: %w", i.Name, err)
 		}
 		if err := wb.FinishBlock(int64(opts.BlockSize)*int64(bs.BlocksPerCluster), false); err != nil {
 			return err
@@ -423,7 +423,7 @@ func prepareFS(opts *Options, rootInode Inode) (*bootSector, *fsinfo, *planningS
 	if opts.ID == 0 {
 		var buf [4]byte
 		if _, err := rand.Read(buf[:]); err != nil {
-			return nil, nil, nil, fmt.Errorf("failed to assign random FAT ID: %v", err)
+			return nil, nil, nil, fmt.Errorf("failed to assign random FAT ID: %w", err)
 		}
 		opts.ID = binary.BigEndian.Uint32(buf[:])
 	}

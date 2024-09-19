@@ -223,7 +223,7 @@ func installerRunnable(ctx context.Context) error {
 	// Look for suitable block devices, given the minimum size.
 	blkDevs, err := findInstallableBlockDevices(espDev, minSize)
 	if err != nil {
-		return fmt.Errorf(err.Error())
+		return err
 	}
 	if len(blkDevs) == 0 {
 		return fmt.Errorf("couldn't find a suitable block device")

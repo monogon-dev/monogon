@@ -182,7 +182,7 @@ func TestE2EKubernetes(t *testing.T) {
 				errorMsg.WriteString(" | ")
 				errorMsg.WriteString(msg.Message)
 			}
-			return fmt.Errorf("pod is not ready: %v", errorMsg.String())
+			return fmt.Errorf("pod is not ready: %s", errorMsg.String())
 		}
 	})
 	util.TestEventual(t, "Simple StatefulSet with PVC", ctx, largeTestTimeout, func(ctx context.Context) error {

@@ -230,11 +230,11 @@ func configureKubeNetwork(oldPrefixes *Prefixes, newPrefixes *Prefixes) error {
 
 		if shouldAdd {
 			if err := netlink.AddrAdd(loInterface, addr); err != nil {
-				return fmt.Errorf("assigning extra loopback IP: %v", err)
+				return fmt.Errorf("assigning extra loopback IP: %w", err)
 			}
 		} else {
 			if err := netlink.AddrDel(loInterface, addr); err != nil {
-				return fmt.Errorf("removing extra loopback IP: %v", err)
+				return fmt.Errorf("removing extra loopback IP: %w", err)
 			}
 		}
 	}

@@ -82,7 +82,7 @@ type zapEntry struct {
 func parseZapJSON(s string) (*zapEntry, error) {
 	entry := make(map[string]any)
 	if err := json.Unmarshal([]byte(s), &entry); err != nil {
-		return nil, fmt.Errorf("invalid JSON: %v", err)
+		return nil, fmt.Errorf("invalid JSON: %w", err)
 	}
 	message, ok := entry["message"].(string)
 	if !ok {

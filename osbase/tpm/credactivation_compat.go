@@ -57,7 +57,7 @@ func generateRSA(aik *tpm2.HashValue, pub *rsa.PublicKey, symBlockSize int, secr
 	// Spec: TCG 2.0 EK Credential Profile revision 14, section 2.1.5.1.
 	seed := make([]byte, symBlockSize)
 	if _, err := io.ReadFull(rnd, seed); err != nil {
-		return nil, nil, fmt.Errorf("generating seed: %v", err)
+		return nil, nil, fmt.Errorf("generating seed: %w", err)
 	}
 
 	// Encrypt the seed value using the provided public key.
@@ -65,7 +65,7 @@ func generateRSA(aik *tpm2.HashValue, pub *rsa.PublicKey, symBlockSize int, secr
 	label := append([]byte(labelIdentity), 0)
 	encSecret, err := rsa.EncryptOAEP(aikHash.New(), rnd, pub, seed, label)
 	if err != nil {
-		return nil, nil, fmt.Errorf("generating encrypted seed: %v", err)
+		return nil, nil, fmt.Errorf("generating encrypted seed: %w", err)
 	}
 
 	// Generate the encrypted credential by convolving the seed with the digest
@@ -73,19 +73,19 @@ func generateRSA(aik *tpm2.HashValue, pub *rsa.PublicKey, symBlockSize int, secr
 	// See section 24.4 of TPM 2.0 specification, part 1.
 	aikNameEncoded, err := aik.Encode()
 	if err != nil {
-		return nil, nil, fmt.Errorf("encoding aikName: %v", err)
+		return nil, nil, fmt.Errorf("encoding aikName: %w", err)
 	}
 	symmetricKey, err := tpm2.KDFa(aik.Alg, seed, labelStorage, aikNameEncoded, nil, len(seed)*8)
 	if err != nil {
-		return nil, nil, fmt.Errorf("generating symmetric key: %v", err)
+		return nil, nil, fmt.Errorf("generating symmetric key: %w", err)
 	}
 	c, err := aes.NewCipher(symmetricKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf("symmetric cipher setup: %v", err)
+		return nil, nil, fmt.Errorf("symmetric cipher setup: %w", err)
 	}
 	cv, err := tpmutil.Pack(tpmutil.U16Bytes(secret))
 	if err != nil {
-		return nil, nil, fmt.Errorf("generating cv (TPM2B_Digest): %v", err)
+		return nil, nil, fmt.Errorf("generating cv (TPM2B_Digest): %w", err)
 	}
 
 	// IV is all null bytes. encIdentity represents the encrypted credential.
@@ -97,7 +97,7 @@ func generateRSA(aik *tpm2.HashValue, pub *rsa.PublicKey, symBlockSize int, secr
 	// See section 24.5 of the TPM specification revision 2 part 1.
 	macKey, err := tpm2.KDFa(aik.Alg, seed, labelIntegrity, nil, nil, aikHash.Size()*8)
 	if err != nil {
-		return nil, nil, fmt.Errorf("generating HMAC key: %v", err)
+		return nil, nil, fmt.Errorf("generating HMAC key: %w", err)
 	}
 
 	mac := hmac.New(aikHash.New, macKey)
@@ -111,16 +111,16 @@ func generateRSA(aik *tpm2.HashValue, pub *rsa.PublicKey, symBlockSize int, secr
 	}
 	id, err := tpmutil.Pack(idObject)
 	if err != nil {
-		return nil, nil, fmt.Errorf("encoding IDObject: %v", err)
+		return nil, nil, fmt.Errorf("encoding IDObject: %w", err)
 	}
 
 	packedID, err := tpmutil.Pack(id)
 	if err != nil {
-		return nil, nil, fmt.Errorf("packing id: %v", err)
+		return nil, nil, fmt.Errorf("packing id: %w", err)
 	}
 	packedEncSecret, err := tpmutil.Pack(encSecret)
 	if err != nil {
-		return nil, nil, fmt.Errorf("packing encSecret: %v", err)
+		return nil, nil, fmt.Errorf("packing encSecret: %w", err)
 	}
 
 	return packedID, packedEncSecret, nil

@@ -21,7 +21,7 @@ func KeyFunc(obj interface{}) (string, error) {
 	}
 	objMeta, err := meta.Accessor(obj)
 	if err != nil {
-		return "", fmt.Errorf("object has no meta: %v", err)
+		return "", fmt.Errorf("object has no meta: %w", err)
 	}
 	if len(objMeta.GetNamespace()) == 0 {
 		return objMeta.GetName(), nil
