@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "haslicense",
+    srcs = ["haslicense.go"],
+    importpath = "source.monogon.dev/build/analysis/haslicense",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/analysis/lib",
+        "@org_golang_x_tools//go/analysis",
+    ],
+)
