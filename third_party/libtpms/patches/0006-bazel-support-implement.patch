@@ -19,18 +19,24 @@ new file mode 100644
 index 0000000..591942d
 --- /dev/null
 +++ b/BUILD.bazel
-@@ -0,0 +1,45 @@
+@@ -0,0 +1,51 @@
++filegroup(
++    name = "all",
++    srcs = glob(["**"]),
++    visibility = ["//visibility:public"],
++)
++
 +cc_library(
 +    name = "libtpms_tpm2",
 +    includes = [
 +        "include",
 +    ],
 +    copts = [
-+        "-Iexternal/_main~_repo_rules~libtpms/include/libtpms",
-+        "-Iexternal/_main~_repo_rules~libtpms/src",
-+        "-Iexternal/_main~_repo_rules~libtpms/src/tpm2",
-+        "-Iexternal/_main~_repo_rules~libtpms/src/tpm2/crypto",
-+        "-Iexternal/_main~_repo_rules~libtpms/src/tpm2/crypto/openssl",
++        "-I{path}/include/libtpms".format(path = package_relative_label(":all").workspace_root),
++        "-I{path}/src".format(path = package_relative_label(":all").workspace_root),
++        "-I{path}/src/tpm2".format(path = package_relative_label(":all").workspace_root),
++        "-I{path}/src/tpm2/crypto".format(path = package_relative_label(":all").workspace_root),
++        "-I{path}/src/tpm2/crypto/openssl".format(path = package_relative_label(":all").workspace_root),
 +    ],
 +    defines = [
 +        "TPM_LIBTPMS_CALLBACKS",

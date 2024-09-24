@@ -198,7 +198,7 @@ index 0000000000..843e9c8116
 +
 +#define CONFIG_QEMU_DESKTOPDIR "/nonexistent"
 +
-+#define CONFIG_QEMU_FIRMWAREPATH "external/_main~_repo_rules~qemu/pc-bios"
++#define CONFIG_QEMU_FIRMWAREPATH "/nonexistent"
 +
 +#define CONFIG_QEMU_HELPERDIR "/nonexistent"
 +

@@ -43,7 +43,13 @@ new file mode 100644
 index 0000000..acddc0e
 --- /dev/null
 +++ b/BUILD.bazel
-@@ -0,0 +1,94 @@
+@@ -0,0 +1,100 @@
++filegroup(
++    name = "all",
++    srcs = glob(["**"]),
++    visibility = ["//visibility:public"],
++)
++
 +cc_binary(
 +    name = "swtpm",
 +    deps = [
@@ -64,9 +70,9 @@ index 0000000..acddc0e
 +        "src/utils/swtpm_utils.c",
 +    ]),
 +    copts = [
-+        "-Iexternal/_main~_repo_rules~swtpm/include",
-+        "-Iexternal/_main~_repo_rules~swtpm/include/swtpm",
-+        "-Iexternal/_main~_repo_rules~swtpm/src/utils",
++        "-I{path}/include".format(path = package_relative_label(":all").workspace_root),
++        "-I{path}/include/swtpm".format(path = package_relative_label(":all").workspace_root),
++        "-I{path}/src/utils".format(path = package_relative_label(":all").workspace_root),
 +    ],
 +    visibility = [
 +        "//visibility:public",
@@ -88,9 +94,9 @@ index 0000000..acddc0e
 +        "src/utils/*.c",
 +    ], []),
 +    copts = [
-+        "-Iexternal/_main~_repo_rules~swtpm/include",
-+        "-Iexternal/_main~_repo_rules~swtpm/include/swtpm",
-+        "-Iexternal/_main~_repo_rules~swtpm/src/utils",
++        "-I{path}/include".format(path = package_relative_label(":all").workspace_root),
++        "-I{path}/include/swtpm".format(path = package_relative_label(":all").workspace_root),
++        "-I{path}/src/utils".format(path = package_relative_label(":all").workspace_root),
 +    ],
 +    visibility = [
 +        "//visibility:public",
@@ -112,9 +118,9 @@ index 0000000..acddc0e
 +        "src/utils/*.c",
 +    ], []),
 +    copts = [
-+        "-Iexternal/_main~_repo_rules~swtpm/include",
-+        "-Iexternal/_main~_repo_rules~swtpm/include/swtpm",
-+        "-Iexternal/_main~_repo_rules~swtpm/src/utils",
++        "-I{path}/include".format(path = package_relative_label(":all").workspace_root),
++        "-I{path}/include/swtpm".format(path = package_relative_label(":all").workspace_root),
++        "-I{path}/src/utils".format(path = package_relative_label(":all").workspace_root),
 +    ],
 +    visibility = [
 +        "//visibility:public",
@@ -132,7 +138,7 @@ index 0000000..acddc0e
 +        "include/*.h",
 +    ], []),
 +    copts = [
-+        "-Iexternal/_main~_repo_rules~swtpm/include",
++        "-I{path}/include".format(path = package_relative_label(":all").workspace_root),
 +    ],
 +    visibility = [
 +        "//visibility:public",

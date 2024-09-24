@@ -29,7 +29,7 @@ host_cc_toolchain_config(
     has_cpp = False,
     host_includes = [],
     is_glibc = False,
-    sysroot = "external/_main~_repo_rules~musl_sysroot",
+    sysroot = package_relative_label("@musl_sysroot//:all").workspace_root,
 )
 
 filegroup(

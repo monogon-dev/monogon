@@ -27,10 +27,10 @@ genrule(
     cmd = """
     OUT=$$PWD/$(RULEDIR)
     (
-        cd external/_main~_repo_rules~musl
+        cd {path}
         ./configure --prefix=$$OUT --syslibdir=$$OUT --libdir=$$OUT
         make -j $$(nproc) install-libs
     ) > /dev/null
-    """,
+    """.format(path = package_relative_label("@musl//:all").workspace_root),
     visibility = ["//visibility:public"],
 )

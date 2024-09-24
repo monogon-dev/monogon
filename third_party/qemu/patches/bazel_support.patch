@@ -1684,7 +1684,7 @@ index 0000000000..70ce080a62
 +def _impl_cc_qemu_trace(ctx):
 +    outs = []
 +    for src in ctx.files.srcs:
-+        name = src.path.replace("external/_main~_repo_rules~qemu/", "").replace("/trace-events", "").replace("/", "_")
++        name = src.path.replace(ctx.label.workspace_root + "/", "").replace("/trace-events", "").replace("/", "_")
 +        if name == "trace-events":
 +            name = "root"
 +        trace_h = ctx.actions.declare_file("trace-{}.h".format(name))
