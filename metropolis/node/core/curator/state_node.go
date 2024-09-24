@@ -397,10 +397,10 @@ func nodeUnmarshal(kv *mvccpb.KeyValue) (*Node, error) {
 		for _, pair := range l.Pairs {
 			// Skip invalid keys/values that were somehow persisted into etcd. They will be
 			// removed on next marshal/save.
-			if err := common.ValidateLabel(pair.Key); err != nil {
+			if err := common.ValidateLabelKey(pair.Key); err != nil {
 				continue
 			}
-			if err := common.ValidateLabel(pair.Value); err != nil {
+			if err := common.ValidateLabelValue(pair.Value); err != nil {
 				continue
 			}
 			n.labels[pair.Key] = pair.Value

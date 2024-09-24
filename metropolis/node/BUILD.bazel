@@ -21,6 +21,7 @@ go_library(
     deps = [
         "//metropolis/proto/common",
         "@com_github_vishvananda_netlink//:netlink",
+        "@io_k8s_apimachinery//pkg/util/validation",
     ],
 )
 
@@ -145,4 +146,5 @@ go_test(
     name = "node_test",
     srcs = ["labels_test.go"],
     embed = [":node"],
+    deps = ["@io_k8s_apimachinery//pkg/util/validation"],
 )

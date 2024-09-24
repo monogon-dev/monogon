@@ -378,11 +378,11 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 			k := pair.Key
 			v := pair.Value
 
-			if err := common.ValidateLabel(k); err != nil {
+			if err := common.ValidateLabelKey(k); err != nil {
 				rpc.Trace(ctx).Printf("Label key %q is invalid: %v, skipping", k, err)
 				continue
 			}
-			if err := common.ValidateLabel(v); err != nil {
+			if err := common.ValidateLabelValue(v); err != nil {
 				rpc.Trace(ctx).Printf("Label value %q (key %q) is invalid: %v, skipping", v, k, err)
 				continue
 			}

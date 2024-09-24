@@ -142,11 +142,11 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 			l.Pairs = l.Pairs[:common.MaxLabelsPerNode]
 		}
 		for _, pair := range l.Pairs {
-			if err := common.ValidateLabel(pair.Key); err != nil {
+			if err := common.ValidateLabelKey(pair.Key); err != nil {
 				supervisor.Logger(ctx).Warningf("Skipping label %q/%q: key invalid: %v", pair.Key, pair.Value, err)
 				continue
 			}
-			if err := common.ValidateLabel(pair.Value); err != nil {
+			if err := common.ValidateLabelValue(pair.Value); err != nil {
 				supervisor.Logger(ctx).Warningf("Skipping label %q/%q: value invalid: %v", pair.Key, pair.Value, err)
 				continue
 			}

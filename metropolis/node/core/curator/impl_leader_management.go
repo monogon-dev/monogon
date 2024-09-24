@@ -496,10 +496,10 @@ func (l *leaderManagement) UpdateNodeLabels(ctx context.Context, req *apb.Update
 	for _, pair := range req.Upsert {
 		k := pair.Key
 		v := pair.Value
-		if err := common.ValidateLabel(k); err != nil {
+		if err := common.ValidateLabelKey(k); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid upsert key %q: %v", k, err)
 		}
-		if err := common.ValidateLabel(v); err != nil {
+		if err := common.ValidateLabelValue(v); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid upsert value %q (key %q): %v", v, k, err)
 		}
 		if _, ok := keysToUpsert[k]; ok {
@@ -508,7 +508,7 @@ func (l *leaderManagement) UpdateNodeLabels(ctx context.Context, req *apb.Update
 		keysToUpsert[k] = v
 	}
 	for _, k := range req.Delete {
-		if err := common.ValidateLabel(k); err != nil {
+		if err := common.ValidateLabelKey(k); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid delete key %q: %v", k, err)
 		}
 		if _, ok := keysToUpsert[k]; ok {
