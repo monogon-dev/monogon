@@ -84,6 +84,7 @@ func TestEtcdMetrics(t *testing.T) {
 	etcd := New(Config{
 		Data:           &b.root.Data.Etcd,
 		Ephemeral:      &b.root.Ephemeral.Consensus,
+		NodeID:         "node1",
 		NodePrivateKey: b.privkey,
 		testOverrides: testOverrides{
 			externalPort:    2345,
@@ -132,6 +133,7 @@ func TestBootstrap(t *testing.T) {
 	etcd := New(Config{
 		Data:           &b.root.Data.Etcd,
 		Ephemeral:      &b.root.Ephemeral.Consensus,
+		NodeID:         "node1",
 		NodePrivateKey: b.privkey,
 		testOverrides: testOverrides{
 			externalPort: 1234,
@@ -168,6 +170,7 @@ func TestRestartFromDisk(t *testing.T) {
 	etcd := New(Config{
 		Data:           &b.root.Data.Etcd,
 		Ephemeral:      &b.root.Ephemeral.Consensus,
+		NodeID:         "node1",
 		NodePrivateKey: b.privkey,
 		testOverrides: testOverrides{
 			externalPort: 1235,
@@ -216,6 +219,7 @@ func TestRestartFromDisk(t *testing.T) {
 	etcd = New(Config{
 		Data:           &b.root.Data.Etcd,
 		Ephemeral:      &b.root.Ephemeral.Consensus,
+		NodeID:         "node1",
 		NodePrivateKey: b.privkey,
 		testOverrides: testOverrides{
 			externalPort: 1235,
@@ -262,6 +266,7 @@ func TestJoin(t *testing.T) {
 	etcd := New(Config{
 		Data:           &b.root.Data.Etcd,
 		Ephemeral:      &b.root.Ephemeral.Consensus,
+		NodeID:         "node1",
 		NodePrivateKey: b.privkey,
 		testOverrides: testOverrides{
 			externalPort:    3000,
@@ -290,7 +295,7 @@ func TestJoin(t *testing.T) {
 	b2 := prep(t)
 	defer b2.close()
 
-	join, err := st.AddNode(b.ctx, b2.privkey.Public().(ed25519.PublicKey), &AddNodeOption{
+	join, err := st.AddNode(b.ctx, "node2", b2.privkey.Public().(ed25519.PublicKey), &AddNodeOption{
 		externalAddress: "localhost",
 		externalPort:    3001,
 	})
@@ -301,6 +306,7 @@ func TestJoin(t *testing.T) {
 	etcd2 := New(Config{
 		Data:           &b2.root.Data.Etcd,
 		Ephemeral:      &b2.root.Ephemeral.Consensus,
+		NodeID:         "node2",
 		NodePrivateKey: b2.privkey,
 		JoinCluster:    join,
 		testOverrides: testOverrides{

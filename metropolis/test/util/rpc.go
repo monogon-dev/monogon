@@ -66,7 +66,7 @@ func NewEphemeralClusterCredentials(t *testing.T, nodes int) *EphemeralClusterCr
 		nodeCert := pki.Certificate{
 			Namespace: &ns,
 			Issuer:    &caCert,
-			Template:  identity.NodeCertificate(npk),
+			Template:  identity.NodeCertificate(identity.NodeID(npk)),
 			Mode:      pki.CertificateEphemeral,
 			PublicKey: npk,
 			Name:      "",

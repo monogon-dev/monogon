@@ -45,7 +45,6 @@ import (
 	"source.monogon.dev/go/qcow2"
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/test/localregistry"
@@ -525,11 +524,9 @@ func getNode(ctx context.Context, mgmt apb.ManagementClient, id string) (*apb.No
 		return nil, fmt.Errorf("could not get nodes: %w", err)
 	}
 	for _, n := range nodes {
-		eid := identity.NodeID(n.Pubkey)
-		if eid != id {
-			continue
+		if n.Id == id {
+			return n, nil
 		}
-		return n, nil
 	}
 	return nil, fmt.Errorf("no such node")
 }
@@ -725,7 +722,7 @@ func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certif
 			return fmt.Errorf("node has no status and/or address")
 		}
 		node = &NodeInCluster{
-			ID:                identity.NodeID(n.Pubkey),
+			ID:                n.Id,
 			ManagementAddress: n.Status.ExternalAddress,
 		}
 		return nil

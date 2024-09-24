@@ -52,7 +52,7 @@ func BootstrapNodeFinish(ctx context.Context, etcd client.Namespaced, node *Node
 	nodeCert := &pki.Certificate{
 		Namespace: &pkiNamespace,
 		Issuer:    pkiCA,
-		Template:  identity.NodeCertificate(node.pubkey),
+		Template:  identity.NodeCertificate(node.ID()),
 		Mode:      pki.CertificateExternal,
 		PublicKey: node.pubkey,
 		Name:      fmt.Sprintf("node-%s", node.ID()),

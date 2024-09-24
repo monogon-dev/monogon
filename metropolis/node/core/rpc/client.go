@@ -39,15 +39,12 @@ func verifyClusterCertificateAndNodeID(ca *x509.Certificate, nodeID string) veri
 		if err != nil {
 			return fmt.Errorf("server presented unparseable certificate: %w", err)
 		}
-		pkey, err := identity.VerifyNodeInCluster(serverCert, ca)
+		id, err := identity.VerifyNodeInCluster(serverCert, ca)
 		if err != nil {
 			return fmt.Errorf("node certificate verification failed: %w", err)
 		}
-		if nodeID != "" {
-			id := identity.NodeID(pkey)
-			if id != nodeID {
-				return fmt.Errorf("wanted to reach node %q, got %q", nodeID, id)
-			}
+		if nodeID != "" && id != nodeID {
+			return fmt.Errorf("wanted to reach node %q, got %q", nodeID, id)
 		}
 
 		return nil

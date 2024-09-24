@@ -87,7 +87,6 @@ package consensus
 
 import (
 	"context"
-	"crypto/ed25519"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"errors"
@@ -102,7 +101,6 @@ import (
 	"go.etcd.io/etcd/server/v3/embed"
 
 	"source.monogon.dev/metropolis/node/core/consensus/client"
-	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/osbase/event"
 	"source.monogon.dev/osbase/event/memory"
 	"source.monogon.dev/osbase/logtree/unraw"
@@ -131,16 +129,16 @@ func pkiCA() *pki.Certificate {
 	}
 }
 
-func pkiPeerCertificate(pubkey ed25519.PublicKey, extraNames []string) x509.Certificate {
+func pkiPeerCertificate(nodeID string, extraNames []string) x509.Certificate {
 	return x509.Certificate{
 		Subject: pkix.Name{
-			CommonName: identity.NodeID(pubkey),
+			CommonName: nodeID,
 		},
 		KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		ExtKeyUsage: []x509.ExtKeyUsage{
 			x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth,
 		},
-		DNSNames: append(extraNames, identity.NodeID(pubkey)),
+		DNSNames: append(extraNames, nodeID),
 	}
 }
 
@@ -451,10 +449,10 @@ func (s *Service) bootstrap(ctx context.Context) error {
 		extraNames = []string{external}
 	}
 	memberTemplate := pki.Certificate{
-		Name:      identity.NodeID(s.config.nodePublicKey()),
+		Name:      s.config.NodeID,
 		Namespace: &pkiNamespace,
 		Issuer:    s.ca,
-		Template:  pkiPeerCertificate(s.config.nodePublicKey(), extraNames),
+		Template:  pkiPeerCertificate(s.config.NodeID, extraNames),
 		Mode:      pki.CertificateExternal,
 		PublicKey: s.config.nodePublicKey(),
 	}

@@ -113,6 +113,7 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 	nodeID := identity.NodeID(nodePub)
 	cNode := NewNodeForBootstrap(&NewNodeData{
 		CUK:      nil,
+		ID:       nodeID,
 		Pubkey:   nodePub,
 		JPub:     nodeJoinPub,
 		TPMUsage: cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED,
@@ -357,6 +358,7 @@ func putNode(t *testing.T, ctx context.Context, l *leadership, mut func(*Node)) 
 	cuk := []byte("fakefakefakefakefakefakefakefake")
 	node := &Node{
 		clusterUnlockKey: cuk,
+		id:               identity.NodeID(npub),
 		pubkey:           npub,
 		jkey:             jpub,
 	}
@@ -768,7 +770,7 @@ func TestRegistration(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Recv failed: %v", err)
 			}
-			if identity.NodeID(node.Pubkey) != cl.otherNodeID {
+			if node.Id != cl.otherNodeID {
 				continue
 			}
 			if node.State != state {
@@ -833,6 +835,7 @@ func TestJoin(t *testing.T) {
 	cuk := []byte("fakefakefakefakefakefakefakefake")
 	node := Node{
 		clusterUnlockKey: cuk,
+		id:               identity.NodeID(npub),
 		pubkey:           npub,
 		jkey:             jpub,
 		state:            cpb.NodeState_NODE_STATE_UP,
@@ -965,7 +968,7 @@ func TestClusterHeartbeat(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Recv failed: %v", err)
 			}
-			if id != identity.NodeID(node.Pubkey) {
+			if id != node.Id {
 				continue
 			}
 			if node.Health != health {
@@ -1027,8 +1030,10 @@ func TestClusterHeartbeat(t *testing.T) {
 		t.Fatalf("could not generate join keypair: %v", err)
 	}
 	cuk := []byte("fakefakefakefakefakefakefakefake")
+	nodeID := identity.NodeID(npub)
 	node := Node{
 		clusterUnlockKey: cuk,
+		id:               nodeID,
 		pubkey:           npub,
 		jkey:             jpub,
 		state:            cpb.NodeState_NODE_STATE_NEW,
@@ -1036,7 +1041,7 @@ func TestClusterHeartbeat(t *testing.T) {
 	if err := nodeSave(ctx, cl.l, &node); err != nil {
 		t.Fatalf("nodeSave failed: %v", err)
 	}
-	expectNode(identity.NodeID(npub), apb.Node_UNKNOWN)
+	expectNode(nodeID, apb.Node_UNKNOWN)
 }
 
 // TestManagementClusterInfo exercises GetClusterInfo after setting a status.
@@ -1159,9 +1164,8 @@ func TestGetNodes(t *testing.T) {
 	// Exercise duration-based filtering. Start with setting up node and
 	// leadership timestamps much like in TestClusterHeartbeat.
 	tsn := putNode(t, ctx, cl.l, func(n *Node) { n.state = cpb.NodeState_NODE_STATE_UP })
-	nid := identity.NodeID(tsn.pubkey)
 	// Last of node's tsn heartbeats were received 5 seconds ago,
-	cl.l.ls.heartbeatTimestamps.Store(nid, time.Now().Add(-5*time.Second))
+	cl.l.ls.heartbeatTimestamps.Store(tsn.id, time.Now().Add(-5*time.Second))
 	// ...while the current leader's tenure started 15 seconds ago.
 	cl.l.ls.startTs = time.Now().Add(-15 * time.Second)
 
@@ -1989,7 +1993,7 @@ func TestBackgroundSyncEtcd(t *testing.T) {
 	// Add a cluster node with ConsensusMember role, and an etcd member with a
 	// different name.
 	newNode := putNode(t, ctx, cl.l, func(n *Node) {
-		join, err := cl.l.consensusStatus.AddNode(ctx, n.pubkey)
+		join, err := cl.l.consensusStatus.AddNode(ctx, "foo", n.pubkey)
 		if err != nil {
 			t.Fatalf("failed to obtain consensus join parameters: %v", err)
 		}

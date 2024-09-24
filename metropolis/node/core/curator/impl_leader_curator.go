@@ -227,7 +227,7 @@ func (l *leaderCurator) UpdateNodeStatus(ctx context.Context, req *ipb.UpdateNod
 	if pi == nil || pi.Node == nil {
 		return nil, status.Error(codes.PermissionDenied, "only nodes can update node status")
 	}
-	id := identity.NodeID(pi.Node.PublicKey)
+	id := pi.Node.ID
 	if id != req.NodeId {
 		return nil, status.Errorf(codes.PermissionDenied, "node %q cannot update the status of node %q", id, req.NodeId)
 	}
@@ -273,7 +273,7 @@ func (l *leaderCurator) Heartbeat(stream ipb.Curator_HeartbeatServer) error {
 	if pi == nil || pi.Node == nil {
 		return status.Error(codes.PermissionDenied, "only nodes can send heartbeats")
 	}
-	id := identity.NodeID(pi.Node.PublicKey)
+	id := pi.Node.ID
 
 	for {
 		_, err := stream.Recv()
@@ -395,6 +395,7 @@ func (l *leaderCurator) RegisterNode(ctx context.Context, req *ipb.RegisterNodeR
 
 	// No node exists, create one.
 	node = &Node{
+		id:       id,
 		pubkey:   pubkey,
 		jkey:     req.JoinKey,
 		state:    cpb.NodeState_NODE_STATE_NEW,
@@ -495,10 +496,10 @@ func (l *leaderCurator) CommitNode(ctx context.Context, req *ipb.CommitNodeReque
 	nodeCert := &pki.Certificate{
 		Namespace: &pkiNamespace,
 		Issuer:    pkiCA,
-		Template:  identity.NodeCertificate(node.pubkey),
+		Template:  identity.NodeCertificate(node.ID()),
 		Mode:      pki.CertificateExternal,
 		PublicKey: node.pubkey,
-		Name:      fmt.Sprintf("node-%s", identity.NodeID(pubkey)),
+		Name:      fmt.Sprintf("node-%s", node.ID()),
 	}
 	nodeCertBytes, err := nodeCert.Ensure(ctx, l.etcd)
 	if err != nil {

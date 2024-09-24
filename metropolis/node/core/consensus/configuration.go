@@ -13,7 +13,6 @@ import (
 	"go.etcd.io/etcd/server/v3/embed"
 
 	"source.monogon.dev/metropolis/node"
-	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/osbase/pki"
 )
@@ -31,8 +30,11 @@ type Config struct {
 	// If that data is not present, a new cluster will be bootstrapped.
 	JoinCluster *JoinCluster
 
+	// NodeID is the node ID, which is also used to identify consensus nodes.
+	NodeID string
+
 	// NodePrivateKey is the node's main private key which is also used for
-	// Metropolis PKI. The same key will be used to identify consensus nodes, but
+	// Metropolis PKI. The same key will be used for consensus nodes, but
 	// different certificates will be used.
 	NodePrivateKey ed25519.PrivateKey
 
@@ -85,12 +87,11 @@ type testOverrides struct {
 // over TLS. This requires TLS credentials to be present on disk, and will be
 // disabled for bootstrapping the instance.
 func (c *Config) build(enablePeers bool) *embed.Config {
-	nodeID := identity.NodeID(c.nodePublicKey())
 	port := int(node.ConsensusPort)
 	if p := c.testOverrides.externalPort; p != 0 {
 		port = p
 	}
-	host := nodeID
+	host := c.NodeID
 	if c.testOverrides.externalAddress != "" {
 		host = c.testOverrides.externalAddress
 	}
@@ -101,7 +102,7 @@ func (c *Config) build(enablePeers bool) *embed.Config {
 
 	cfg := embed.NewConfig()
 
-	cfg.Name = nodeID
+	cfg.Name = c.NodeID
 	cfg.ClusterState = "existing"
 	cfg.InitialClusterToken = "METROPOLIS"
 	cfg.Logger = "zap"
@@ -147,7 +148,7 @@ func (c *Config) build(enablePeers bool) *embed.Config {
 		}}
 	}
 
-	cfg.InitialCluster = cfg.InitialClusterFromName(nodeID)
+	cfg.InitialCluster = cfg.InitialClusterFromName(c.NodeID)
 	if c.JoinCluster != nil {
 		for _, n := range c.JoinCluster.ExistingNodes {
 			cfg.InitialCluster += "," + n.connectionString()

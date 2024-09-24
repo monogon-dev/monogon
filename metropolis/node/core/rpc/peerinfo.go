@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"source.monogon.dev/metropolis/node/core/identity"
 	epb "source.monogon.dev/metropolis/proto/ext"
 )
 
@@ -51,8 +50,8 @@ type PeerInfo struct {
 // PeerInfoNode contains information about a Node on the other side of a gRPC
 // connection.
 type PeerInfoNode struct {
-	// PublicKey is the ED25519 public key bytes of the node.
-	PublicKey []byte
+	// ID is the node identifier.
+	ID string
 
 	// Permissions are the set of permissions this node has.
 	Permissions Permissions
@@ -121,7 +120,7 @@ func (p *PeerInfo) String() string {
 	}
 	switch {
 	case p.Node != nil:
-		return fmt.Sprintf("node: %s, %s", identity.NodeID(p.Node.PublicKey), p.Node.Permissions)
+		return fmt.Sprintf("node: %s, %s", p.Node.ID, p.Node.Permissions)
 	case p.User != nil:
 		return fmt.Sprintf("user: %s", p.User.Identity)
 	case p.Unauthenticated != nil:

@@ -133,7 +133,7 @@ func (l *leaderBackground) doSyncEtcd(ctx context.Context) error {
 			supervisor.Logger(ctx).Infof("Adding ConsensusMember role to node which is etcd member: %s...", nodeID)
 			// The node is already etcd member. We only call AddNode to obtain the
 			// join parameters.
-			join, err := l.consensusStatus.AddNode(ctx, node.pubkey)
+			join, err := l.consensusStatus.AddNode(ctx, nodeID, node.pubkey)
 			if err != nil {
 				return fmt.Errorf("failed to obtain consensus join parameters: %w", err)
 			}

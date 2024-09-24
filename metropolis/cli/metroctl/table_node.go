@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"source.monogon.dev/go/clitable"
-	"source.monogon.dev/metropolis/node/core/identity"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	"source.monogon.dev/version"
@@ -15,7 +14,7 @@ import (
 func nodeEntry(n *apb.Node) clitable.Entry {
 	res := clitable.Entry{}
 
-	res.Add("node id", identity.NodeID(n.Pubkey))
+	res.Add("node id", n.Id)
 	state := n.State.String()
 	state = strings.ReplaceAll(state, "NODE_STATE_", "")
 	res.Add("state", state)

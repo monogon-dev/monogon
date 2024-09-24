@@ -63,7 +63,7 @@ func newCuratorConnection(creds *identity.NodeCredentials, res *resolver.Resolve
 }
 
 func (c *CuratorConnection) nodeID() string {
-	return identity.NodeID(c.Credentials.PublicKey())
+	return c.Credentials.ID()
 }
 
 // KubernetesStatus is an Event Value structure populated by a running

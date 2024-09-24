@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
-	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/osbase/event"
 	"source.monogon.dev/osbase/event/etcd"
@@ -69,7 +68,7 @@ func (l *leaderCurator) UpdateNodeClusterNetworking(ctx context.Context, req *ip
 	if pi == nil || pi.Node == nil {
 		return nil, status.Error(codes.PermissionDenied, "only nodes can update node cluster networking")
 	}
-	id := identity.NodeID(pi.Node.PublicKey)
+	id := pi.Node.ID
 
 	if req.Clusternet == nil {
 		return nil, status.Error(codes.InvalidArgument, "clusternet must be set")

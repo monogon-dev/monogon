@@ -60,6 +60,9 @@ type Node struct {
 	// node's ESP partition.
 	clusterUnlockKey []byte
 
+	// id is the Node's ID.
+	id string
+
 	// pubkey is the ED25519 public key corresponding to the node's private key
 	// which it stores on its local data partition. The private part of the key
 	// never leaves the node.
@@ -108,6 +111,7 @@ type Node struct {
 
 type NewNodeData struct {
 	CUK      []byte
+	ID       string
 	Pubkey   []byte
 	JPub     []byte
 	TPMUsage cpb.NodeTPMUsage
@@ -121,6 +125,7 @@ type NewNodeData struct {
 func NewNodeForBootstrap(n *NewNodeData) Node {
 	return Node{
 		clusterUnlockKey: n.CUK,
+		id:               n.ID,
 		pubkey:           n.Pubkey,
 		jkey:             n.JPub,
 		state:            cpb.NodeState_NODE_STATE_UP,
@@ -170,13 +175,13 @@ type NodeRoleConsensusMemberPeer struct {
 	URL string
 }
 
-// ID returns the name of this node. See NodeID for more information.
+// ID returns the name of this node.
 func (n *Node) ID() string {
-	return identity.NodeID(n.pubkey)
+	return n.id
 }
 
 func (n *Node) String() string {
-	return n.ID()
+	return n.id
 }
 
 // KubernetesWorker returns a copy of the NodeRoleKubernetesWorker struct if
@@ -315,6 +320,7 @@ func nodeUnmarshal(data []byte) (*Node, error) {
 	}
 	n := &Node{
 		clusterUnlockKey: msg.ClusterUnlockKey,
+		id:               identity.NodeID(msg.PublicKey),
 		pubkey:           msg.PublicKey,
 		jkey:             msg.JoinKey,
 		state:            msg.FsmState,

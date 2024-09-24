@@ -93,6 +93,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	if err != nil {
 		return fmt.Errorf("could not generate node keypair: %w", err)
 	}
+	id := identity.NodeID(pub)
 	supervisor.Logger(ctx).Infof("Bootstrapping: node public key: %s", hex.EncodeToString(pub))
 
 	jpub, jpriv, err := ed25519.GenerateKey(rand.Reader)
@@ -104,7 +105,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	directory := &cpb.ClusterDirectory{
 		Nodes: []*cpb.ClusterDirectory_Node{
 			{
-				Id: identity.NodeID(pub),
+				Id: id,
 				Addresses: []*cpb.ClusterDirectory_Node_Address{
 					{
 						Host: "127.0.0.1",
@@ -157,6 +158,7 @@ func (m *Manager) bootstrap(ctx context.Context, bootstrap *apb.NodeParameters_C
 	}
 
 	bd := roleserve.BootstrapData{}
+	bd.Node.ID = id
 	bd.Node.PrivateKey = priv
 	bd.Node.ClusterUnlockKey = cuk
 	bd.Node.NodeUnlockKey = nuk

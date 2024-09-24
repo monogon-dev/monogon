@@ -22,10 +22,10 @@ func UserCertificate(identity string) x509.Certificate {
 }
 
 // NodeCertificate makes a Metropolis-compatible node certificate template.
-func NodeCertificate(pubkey ed25519.PublicKey) x509.Certificate {
+func NodeCertificate(nodeID string) x509.Certificate {
 	return x509.Certificate{
 		Subject: pkix.Name{
-			CommonName: NodeID(pubkey),
+			CommonName: nodeID,
 		},
 		KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
 		ExtKeyUsage: []x509.ExtKeyUsage{
@@ -39,7 +39,7 @@ func NodeCertificate(pubkey ed25519.PublicKey) x509.Certificate {
 		// certificate for ease of use within Metropolis, where the local DNS setup
 		// allows each node's IP address to be resolvable through the Node's ID.
 		DNSNames: []string{
-			NodeID(pubkey),
+			nodeID,
 		},
 	}
 }
@@ -123,12 +123,12 @@ func VerifyInCluster(cert, ca *x509.Certificate) (ed25519.PublicKey, error) {
 // VerifyNodeInCluster ensures that a given certificate is a Metropolis node
 // certificate emitted by a given Metropolis CA.
 //
-// The node's public key is returned if verification is successful, and error is
+// The node's ID is returned if verification is successful, and error is
 // returned otherwise.
-func VerifyNodeInCluster(node, ca *x509.Certificate) (ed25519.PublicKey, error) {
+func VerifyNodeInCluster(node, ca *x509.Certificate) (string, error) {
 	pk, err := VerifyInCluster(node, ca)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	// Ensure certificate has ServerAuth bit, thereby marking it as a node certificate.
@@ -140,14 +140,14 @@ func VerifyNodeInCluster(node, ca *x509.Certificate) (ed25519.PublicKey, error) 
 		}
 	}
 	if !found {
-		return nil, fmt.Errorf("not a node certificate (missing ServerAuth key usage)")
+		return "", fmt.Errorf("not a node certificate (missing ServerAuth key usage)")
 	}
 
 	id := NodeID(pk)
 
 	// Ensure node ID is present in Subject.CommonName and at least one DNS name.
 	if node.Subject.CommonName != id {
-		return nil, fmt.Errorf("node ID not found in CommonName")
+		return "", fmt.Errorf("node ID not found in CommonName")
 	}
 
 	found = false
@@ -158,10 +158,10 @@ func VerifyNodeInCluster(node, ca *x509.Certificate) (ed25519.PublicKey, error) 
 		}
 	}
 	if !found {
-		return nil, fmt.Errorf("node ID not found in DNSNames")
+		return "", fmt.Errorf("node ID not found in DNSNames")
 	}
 
-	return pk, nil
+	return id, nil
 }
 
 // VerifyUserInCluster ensures that a given certificate is a Metropolis user

@@ -161,7 +161,7 @@ func (s *ServerSecurity) getPeerInfo(ctx context.Context) (*PeerInfo, error) {
 		return nil, status.Errorf(codes.Unauthenticated, "certificate not signed by cluster CA: %v", err)
 	}
 
-	nodepk, errNode := identity.VerifyNodeInCluster(cert, s.NodeCredentials.ClusterCA())
+	id, errNode := identity.VerifyNodeInCluster(cert, s.NodeCredentials.ClusterCA())
 	if errNode == nil {
 		// This is a Metropolis node.
 		np := s.nodePermissions
@@ -170,7 +170,7 @@ func (s *ServerSecurity) getPeerInfo(ctx context.Context) (*PeerInfo, error) {
 		}
 		return &PeerInfo{
 			Node: &PeerInfoNode{
-				PublicKey:   nodepk,
+				ID:          id,
 				Permissions: np,
 			},
 		}, nil

@@ -183,6 +183,7 @@ func New(c Config) *Service {
 type BootstrapData struct {
 	// Data about the bootstrapping node.
 	Node struct {
+		ID         string
 		PrivateKey ed25519.PrivateKey
 
 		// CUK/NUK for storage, if storage encryption is enabled.
@@ -209,12 +210,9 @@ type BootstrapData struct {
 }
 
 func (s *Service) ProvideBootstrapData(data *BootstrapData) {
-	pubkey := data.Node.PrivateKey.Public().(ed25519.PublicKey)
-	nid := identity.NodeID(pubkey)
-
 	// This is the first time we have the node ID, tell the resolver that it's
 	// available on the loopback interface.
-	s.Resolver.AddOverride(nid, resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
+	s.Resolver.AddOverride(data.Node.ID, resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 	s.Resolver.AddEndpoint(resolver.NodeByHostPort("127.0.0.1", uint16(common.CuratorServicePort)))
 
 	s.bootstrapData.Set(data)

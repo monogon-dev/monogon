@@ -15,7 +15,6 @@ go_library(
         "//go/logging",
         "//metropolis/node",
         "//metropolis/node/core/consensus/client",
-        "//metropolis/node/core/identity",
         "//metropolis/node/core/localstorage",
         "//osbase/event",
         "//osbase/event/memory",

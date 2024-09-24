@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
-	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/proto/api"
 )
 
@@ -28,7 +27,7 @@ func init() {
 // nodeById returns the node matching id, if it exists within nodes.
 func nodeById(nodes []*api.Node, id string) *api.Node {
 	for _, n := range nodes {
-		if identity.NodeID(n.Pubkey) == id {
+		if n.Id == id {
 			return n
 		}
 	}
@@ -52,7 +51,7 @@ func doApprove(cmd *cobra.Command, args []string) {
 		// If no id was given, just list the nodes pending approval.
 		if len(nodes) != 0 {
 			for _, n := range nodes {
-				fmt.Println(identity.NodeID(n.Pubkey))
+				fmt.Println(n.Id)
 			}
 		} else {
 			log.Print("There are no nodes pending approval at this time.")

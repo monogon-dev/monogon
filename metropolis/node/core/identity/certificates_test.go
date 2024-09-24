@@ -59,7 +59,7 @@ func createPKI(t *testing.T, fca, fnode, fuser alterCert) (caCertBytes, nodeCert
 		t.Fatalf("ParseCertificate (CA): %v", err)
 	}
 
-	nodeTemplate := NodeCertificate(nodePub)
+	nodeTemplate := NodeCertificate(NodeID(nodePub))
 	basic(&nodeTemplate)
 	fnode(&nodeTemplate)
 	nodeCertBytes, err = x509.CreateCertificate(rand.Reader, &nodeTemplate, caCert, nodePub, caPriv)

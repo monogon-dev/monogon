@@ -12,7 +12,6 @@ import (
 
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus/client"
-	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/osbase/event"
 	"source.monogon.dev/osbase/pki"
 )
@@ -87,19 +86,18 @@ func (s *Status) ClusterClient() clientv3.Cluster {
 	return s.cl
 }
 
-// AddNode creates a new consensus member corresponding to a given Ed25519 node
-// public key if one does not yet exist. The member will at first be marked as a
+// AddNode creates a new consensus member corresponding to a given node ID
+// if one does not yet exist. The member will at first be marked as a
 // Learner, ensuring it does not take part in quorum until it has finished
 // catching up to the state of the etcd store. As it does, the autopromoter will
 // turn it into a 'full' node and it will start taking part in the quorum and be
 // able to perform all etcd operations.
-func (s *Status) AddNode(ctx context.Context, pk ed25519.PublicKey, opts ...*AddNodeOption) (*JoinCluster, error) {
+func (s *Status) AddNode(ctx context.Context, nodeID string, pk ed25519.PublicKey, opts ...*AddNodeOption) (*JoinCluster, error) {
 	clPKI, err := s.pkiClient()
 	if err != nil {
 		return nil, err
 	}
 
-	nodeID := identity.NodeID(pk)
 	var extraNames []string
 	name := nodeID
 	port := int(node.ConsensusPort)
@@ -117,7 +115,7 @@ func (s *Status) AddNode(ctx context.Context, pk ed25519.PublicKey, opts ...*Add
 		Name:      nodeID,
 		Namespace: &pkiNamespace,
 		Issuer:    s.ca,
-		Template:  pkiPeerCertificate(pk, extraNames),
+		Template:  pkiPeerCertificate(nodeID, extraNames),
 		Mode:      pki.CertificateExternal,
 		PublicKey: pk,
 	}

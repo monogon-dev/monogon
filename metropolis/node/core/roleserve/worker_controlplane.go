@@ -145,6 +145,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 						consensusConfig: &consensus.Config{
 							Data:           &s.storageRoot.Data.Etcd,
 							Ephemeral:      &s.storageRoot.Ephemeral.Consensus,
+							NodeID:         bd.Node.ID,
 							NodePrivateKey: bd.Node.PrivateKey,
 						},
 						bootstrap: bd,
@@ -197,6 +198,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 						consensusConfig: &consensus.Config{
 							Data:           &s.storageRoot.Data.Etcd,
 							Ephemeral:      &s.storageRoot.Ephemeral.Consensus,
+							NodeID:         cc.nodeID(),
 							NodePrivateKey: cc.Credentials.TLSCredentials().PrivateKey.(ed25519.PrivateKey),
 							JoinCluster: &consensus.JoinCluster{
 								CACertificate:   caCert,
@@ -274,6 +276,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 
 				n := curator.NewNodeForBootstrap(&curator.NewNodeData{
 					CUK:      b.Node.ClusterUnlockKey,
+					ID:       b.Node.ID,
 					Pubkey:   npub,
 					JPub:     jpub,
 					TPMUsage: b.Node.TPMUsage,
@@ -281,7 +284,7 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 				})
 
 				// The first node always runs consensus.
-				join, err := st.AddNode(ctx, npub)
+				join, err := st.AddNode(ctx, b.Node.ID, npub)
 				if err != nil {
 					return fmt.Errorf("when retrieving node join data from consensus: %w", err)
 				}

@@ -145,7 +145,7 @@ func (l *leaderManagement) nodeHeartbeatTimestamp(nid string) time.Time {
 // heartbeat was received, given a current timestamp.
 func (l *leaderManagement) nodeHealth(node *Node, now time.Time) (apb.Node_Health, time.Duration) {
 	// Get the last received node heartbeat's timestamp.
-	nid := identity.NodeID(node.pubkey)
+	nid := node.ID()
 	nts := l.nodeHeartbeatTimestamp(nid)
 	// lhb is the duration since the last heartbeat was received.
 	lhb := now.Sub(nts)
@@ -225,7 +225,7 @@ func (l *leaderManagement) GetNodes(req *apb.GetNodesRequest, srv apb.Management
 
 		entry := apb.Node{
 			Pubkey:             node.pubkey,
-			Id:                 identity.NodeID(node.pubkey),
+			Id:                 node.ID(),
 			State:              node.state,
 			Status:             node.status,
 			Roles:              roles,
@@ -343,7 +343,7 @@ func (l *leaderManagement) UpdateNodeRoles(ctx context.Context, req *apb.UpdateN
 	if req.ConsensusMember != nil {
 		if *req.ConsensusMember {
 			// Add a new etcd learner node.
-			join, err := l.consensusStatus.AddNode(ctx, node.pubkey)
+			join, err := l.consensusStatus.AddNode(ctx, id, node.pubkey)
 			if err != nil {
 				return nil, status.Errorf(codes.Unavailable, "could not add node: %v", err)
 			}

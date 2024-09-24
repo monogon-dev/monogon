@@ -8,7 +8,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
-	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	kpki "source.monogon.dev/metropolis/node/kubernetes/pki"
 )
@@ -82,7 +81,7 @@ func (l *leaderCurator) IssueCertificate(ctx context.Context, req *ipb.IssueCert
 	if pi == nil || pi.Node == nil {
 		return nil, status.Error(codes.PermissionDenied, "only nodes can request certificates")
 	}
-	id := identity.NodeID(pi.Node.PublicKey)
+	id := pi.Node.ID
 	node, err := nodeLoad(ctx, l.leadership, id)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "could not load node info: %v", err)

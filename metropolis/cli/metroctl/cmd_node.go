@@ -17,7 +17,6 @@ import (
 
 	"source.monogon.dev/go/clitable"
 	"source.monogon.dev/metropolis/cli/metroctl/core"
-	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/version"
 
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -154,13 +153,12 @@ var nodeUpdateCmd = &cobra.Command{
 
 		for _, n := range nodes {
 			// Filter the information we want client-side.
-			nid := identity.NodeID(n.Pubkey)
 			if len(qids) != 0 {
-				if _, e := qids[nid]; !e {
+				if _, e := qids[n.Id]; !e {
 					continue
 				}
 			}
-			if excludedNodes[nid] {
+			if excludedNodes[n.Id] {
 				continue
 			}
 
@@ -450,8 +448,7 @@ func printNodes(nodes []*apb.Node, args []string, onlyColumns map[string]bool) {
 	for _, n := range nodes {
 		// Filter the information we want client-side.
 		if len(qids) != 0 {
-			nid := identity.NodeID(n.Pubkey)
-			if _, e := qids[nid]; !e {
+			if _, e := qids[n.Id]; !e {
 				continue
 			}
 		}
