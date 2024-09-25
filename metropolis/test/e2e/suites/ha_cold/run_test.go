@@ -10,6 +10,8 @@ import (
 	"source.monogon.dev/metropolis/test/util"
 	"source.monogon.dev/osbase/test/launch"
 
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -77,6 +79,76 @@ func TestE2EColdStartHA(t *testing.T) {
 	}
 	// Start every node back up.
 	for i := 0; i < clusterOptions.NumNodes; i++ {
+		if err := cluster.StartNode(i); err != nil {
+			t.Fatalf("Could not shutdown node %d", i)
+		}
+	}
+	// Check if the cluster comes back up.
+	util.TestEventual(t, "Heartbeat test successful", ctx, 60*time.Second, cluster.AllNodesHealthy)
+
+	// Test node role removal.
+	curC, err := cluster.CuratorClient()
+	if err != nil {
+		t.Fatalf("Could not get CuratorClient: %v", err)
+	}
+	mgmt := apb.NewManagementClient(curC)
+	cur := ipb.NewCuratorClient(curC)
+
+	util.MustTestEventual(t, "Remove KubernetesController role", ctx, 10*time.Second, func(ctx context.Context) error {
+		fa := false
+		_, err := mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
+			Node: &apb.UpdateNodeRolesRequest_Id{
+				Id: cluster.NodeIDs[0],
+			},
+			KubernetesController: &fa,
+		})
+		return err
+	})
+	util.MustTestEventual(t, "Remove ConsensusMember role", ctx, time.Minute, func(ctx context.Context) error {
+		fa := false
+		_, err := mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
+			Node: &apb.UpdateNodeRolesRequest_Id{
+				Id: cluster.NodeIDs[0],
+			},
+			ConsensusMember: &fa,
+		})
+		return err
+	})
+
+	// Test that removing the ConsensusMember role from a node removed the
+	// corresponding etcd member from the cluster.
+	var st *ipb.GetConsensusStatusResponse
+	util.MustTestEventual(t, "Get ConsensusStatus", ctx, time.Minute, func(ctx context.Context) error {
+		st, err = cur.GetConsensusStatus(ctx, &ipb.GetConsensusStatusRequest{})
+		return err
+	})
+
+	for _, member := range st.EtcdMember {
+		if member.Id == cluster.NodeIDs[0] {
+			t.Errorf("member still present in etcd")
+		}
+	}
+
+	// Test that that the cluster still works after deleting the first node and
+	// restarting the remaining nodes.
+	util.MustTestEventual(t, "Delete first node", ctx, 10*time.Second, func(ctx context.Context) error {
+		_, err := mgmt.DeleteNode(ctx, &apb.DeleteNodeRequest{
+			Node: &apb.DeleteNodeRequest_Id{
+				Id: cluster.NodeIDs[0],
+			},
+			SafetyBypassNotDecommissioned: &apb.DeleteNodeRequest_SafetyBypassNotDecommissioned{},
+		})
+		return err
+	})
+
+	// Shut every remaining node down.
+	for i := 1; i < clusterOptions.NumNodes; i++ {
+		if err := cluster.ShutdownNode(i); err != nil {
+			t.Fatalf("Could not shutdown node %d", i)
+		}
+	}
+	// Start every remaining node back up.
+	for i := 1; i < clusterOptions.NumNodes; i++ {
 		if err := cluster.StartNode(i); err != nil {
 			t.Fatalf("Could not shutdown node %d", i)
 		}

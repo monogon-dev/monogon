@@ -258,43 +258,6 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 	}
 
-	// If we're joining a cluster, make sure that our peers are actually DNS
-	// resolvable. This prevents us from immediately failing due to transient DNS
-	// issues.
-	if jc := s.config.JoinCluster; jc != nil {
-		supervisor.Logger(ctx).Infof("Waiting for initial peers to be DNS resolvable...")
-		startLogging := time.Now().Add(5 * time.Second)
-		for {
-			allOkay := true
-			shouldLog := time.Now().After(startLogging)
-			for _, node := range jc.ExistingNodes {
-				u, err := url.Parse(node.URL)
-				if err != nil {
-					// Just pretend this node is up. If the URL is really bad, etcd will complain
-					// more clearly than us. This shouldn't happen, anyway.
-					continue
-				}
-				host := u.Hostname()
-				if _, err := net.LookupIP(host); err == nil {
-					continue
-				}
-				if shouldLog {
-					supervisor.Logger(ctx).Errorf("Still can't resolve peer %s (%s): %v", node.Name, host, err)
-				}
-				allOkay = false
-			}
-			if allOkay {
-				supervisor.Logger(ctx).Infof("All peers resolvable, continuing startup.")
-				break
-			}
-
-			time.Sleep(100 * time.Millisecond)
-			if shouldLog {
-				startLogging = time.Now().Add(5 * time.Second)
-			}
-		}
-	}
-
 	// Start etcd ...
 	supervisor.Logger(ctx).Infof("Starting etcd...")
 	cfg := s.config.build(true)
