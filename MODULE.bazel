@@ -25,7 +25,7 @@ single_version_override(
     patches = [
         "//third_party/go/patches:rules_go_absolute_embedsrc.patch",
     ],
-    version = "0.49.0",
+    version = "0.50.1",
 )
 
 bazel_dep(name = "gazelle", repo_name = "bazel_gazelle")
@@ -35,7 +35,7 @@ single_version_override(
     patches = [
         "//third_party/gazelle:add-prepatching.patch",
     ],
-    version = "0.37.0",
+    version = "0.39.0",
 )
 
 bazel_dep(name = "rules_rust")
@@ -47,7 +47,7 @@ single_version_override(
         "//third_party:rust-prost-nostd.patch",
         "//third_party:rust-reproducibility.patch",
     ],
-    version = "0.48.0",
+    version = "0.51.0",
 )
 
 bazel_dep(name = "zlib")
@@ -63,20 +63,20 @@ single_version_override(
 # │   │   └───grpc-java@1.64.0
 single_version_override(
     module_name = "grpc-java",
-    version = "1.64.0",
+    version = "1.66.0",
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_oci", version = "2.0.0")
-bazel_dep(name = "aspect_bazel_lib", version = "2.7.8")
+bazel_dep(name = "aspect_bazel_lib", version = "2.9.0")
 bazel_dep(name = "rules_multirun", version = "0.9.0")
-bazel_dep(name = "rules_python", version = "0.34.0")
-bazel_dep(name = "rules_cc", version = "0.0.9")
-bazel_dep(name = "grpc", version = "1.65.0")
+bazel_dep(name = "rules_python", version = "0.36.0")
+bazel_dep(name = "rules_cc", version = "0.0.10")
+bazel_dep(name = "grpc", version = "1.66.0")
 bazel_dep(name = "rules_proto", version = "6.0.2")
-bazel_dep(name = "toolchains_protoc", version = "0.3.1")
-bazel_dep(name = "protobuf", version = "27.2")
+bazel_dep(name = "toolchains_protoc", version = "0.3.3")
+bazel_dep(name = "protobuf", version = "28.2")
 
 # Load musl toolchain Metropolis sysroot tarball into external repository.
 musl_sysroot_rule = use_repo_rule("//build/toolchain/musl-host-gcc:sysroot_repository.bzl", "musl_sysroot_rule")

@@ -1,6 +1,6 @@
-From 01a53a95a8fa20f2bf5ec6357baa457e7b2bc9f2 Mon Sep 17 00:00:00 2001
-From: Tim Windelschmidt <tim@monogon.tech>
-Date: Fri, 12 Jan 2024 15:44:41 +0100
+From 544ee8b571a006a8e03eb4401f6644bb8bf6628f Mon Sep 17 00:00:00 2001
+From: Serge Bazanski <serge@monogon.tech>
+Date: Wed, 25 Sep 2024 02:38:50 +0200
 Subject: [PATCH] Improve reproducibility
 
 Fixes a few issues with rules_rust/rustc reproducibility when the same code is
@@ -24,19 +24,19 @@ We fix this by doing two changes:
  2. We add a remap path option to rustc that replaces bazel-out/<dir>/bin/ with
     bin/.
 ---
- proto/prost/private/prost.bzl | 4 +++-
+ proto/prost/private/prost.bzl | 3 ++-
  proto/protobuf/proto.bzl      | 2 +-
  rust/private/clippy.bzl       | 2 +-
  rust/private/rust.bzl         | 6 +++---
  rust/private/rustc.bzl        | 4 ++++
  rust/private/utils.bzl        | 7 +++++--
- 6 files changed, 17 insertions(+), 8 deletions(-)
+ 6 files changed, 16 insertions(+), 8 deletions(-)
 
 diff --git a/proto/prost/private/prost.bzl b/proto/prost/private/prost.bzl
-index 38bd7b4f..645a520f 100644
+index 20814500..45b283d9 100644
 --- a/proto/prost/private/prost.bzl
 +++ b/proto/prost/private/prost.bzl
-@@ -131,7 +131,8 @@ def _compile_rust(ctx, attr, crate_name, src, deps, edition):
+@@ -132,7 +132,8 @@ def _compile_rust(ctx, attr, crate_name, src, deps, edition):
        A DepVariantInfo provider.
      """
      toolchain = ctx.toolchains["@rules_rust//rust:toolchain_type"]
@@ -60,10 +60,10 @@ index 959d0c1c..00dff5d0 100644
          output_dir,
          crate_name,
 diff --git a/rust/private/clippy.bzl b/rust/private/clippy.bzl
-index ef3ec2f8..cab2e6bf 100644
+index 748f33a0..772b39ad 100644
 --- a/rust/private/clippy.bzl
 +++ b/rust/private/clippy.bzl
-@@ -132,7 +132,7 @@ def _clippy_aspect_impl(target, ctx):
+@@ -131,7 +131,7 @@ def _clippy_aspect_impl(target, ctx):
          dep_info = dep_info,
          linkstamp_outs = linkstamp_outs,
          ambiguous_libs = ambiguous_libs,
@@ -73,7 +73,7 @@ index ef3ec2f8..cab2e6bf 100644
          out_dir = out_dir,
          build_env_files = build_env_files,
 diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
-index afe1f129..ee73ee44 100644
+index 21881729..24792e99 100644
 --- a/rust/private/rust.bzl
 +++ b/rust/private/rust.bzl
 @@ -159,7 +159,7 @@ def _rust_library_common(ctx, crate_type):
@@ -85,29 +85,29 @@ index afe1f129..ee73ee44 100644
 
      rust_lib_name = determine_lib_name(
          crate_name,
-@@ -309,7 +309,7 @@ def _rust_test_impl(ctx):
-         # Target is building the crate in `test` config
-         crate = ctx.attr.crate[rust_common.crate_info] if rust_common.crate_info in ctx.attr.crate else ctx.attr.crate[rust_common.test_crate_info].crate
-
--        output_hash = determine_output_hash(crate.root, ctx.label)
-+        output_hash = determine_output_hash(ctx.bin_dir, crate.root, ctx.label)
-         output = ctx.actions.declare_file(
-             "test-%s/%s%s" % (
-                 output_hash,
-@@ -368,7 +368,7 @@ def _rust_test_impl(ctx):
-             crate_root = crate_root_src(ctx.attr.name, ctx.files.srcs, crate_root_type)
-         srcs, crate_root = transform_sources(ctx, ctx.files.srcs, crate_root)
-
--        output_hash = determine_output_hash(crate_root, ctx.label)
-+        output_hash = determine_output_hash(ctx.bin_dir, crate_root, ctx.label)
-         output = ctx.actions.declare_file(
-             "test-%s/%s%s" % (
-                 output_hash,
+@@ -316,7 +316,7 @@ def _rust_test_impl(ctx):
+             )
+         else:
+             crate_name = crate.name
+-            output_hash = determine_output_hash(crate.root, ctx.label)
++            output_hash = determine_output_hash(ctx.bin_dir, crate.root, ctx.label)
+             output = ctx.actions.declare_file(
+                 "test-%s/%s%s" % (
+                     output_hash,
+@@ -380,7 +380,7 @@ def _rust_test_impl(ctx):
+                 ctx.label.name + toolchain.binary_ext,
+             )
+         else:
+-            output_hash = determine_output_hash(crate_root, ctx.label)
++            output_hash = determine_output_hash(ctx.bin_dir, crate_root, ctx.label)
+             output = ctx.actions.declare_file(
+                 "test-%s/%s%s" % (
+                     output_hash,
 diff --git a/rust/private/rustc.bzl b/rust/private/rustc.bzl
-index 6dbb258b..bb5e0b05 100644
+index c82c236b..576de4e3 100644
 --- a/rust/private/rustc.bzl
 +++ b/rust/private/rustc.bzl
-@@ -965,6 +965,10 @@ def construct_arguments(
+@@ -973,6 +973,10 @@ def construct_arguments(
      if remap_path_prefix != None:
          rustc_flags.add("--remap-path-prefix=${{pwd}}={}".format(remap_path_prefix))
 
@@ -119,10 +119,10 @@ index 6dbb258b..bb5e0b05 100644
      for kind in emit:
          if kind == "link" and crate_info.type == "bin" and crate_info.output != None:
 diff --git a/rust/private/utils.bzl b/rust/private/utils.bzl
-index 57a3fe7a..315f45b6 100644
+index a0fda352..ff45a149 100644
 --- a/rust/private/utils.bzl
 +++ b/rust/private/utils.bzl
-@@ -186,7 +186,7 @@ def abs(value):
+@@ -188,7 +188,7 @@ def abs(value):
          return -value
      return value
 
@@ -131,7 +131,7 @@ index 57a3fe7a..315f45b6 100644
      """Generates a hash of the crate root file's path.
 
      Args:
-@@ -197,8 +197,11 @@ def determine_output_hash(crate_root, label):
+@@ -199,8 +199,11 @@ def determine_output_hash(crate_root, label):
          str: A string representation of the hash.
      """
 

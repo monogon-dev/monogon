@@ -1,4 +1,4 @@
-From 914eedf51a7d636caa14c09554d1cf26fd87cb05 Mon Sep 17 00:00:00 2001
+From 6d876e488124d7f0f6d660164c112a1a5d375218 Mon Sep 17 00:00:00 2001
 From: Tim Windelschmidt <tim@monogon.tech>
 Date: Wed, 17 Jul 2024 18:27:41 +0200
 Subject: [PATCH] Add support for prepatching
@@ -9,10 +9,10 @@ Subject: [PATCH] Add support for prepatching
  2 files changed, 22 insertions(+), 1 deletion(-)
 
 diff --git a/internal/bzlmod/go_deps.bzl b/internal/bzlmod/go_deps.bzl
-index e304ec5..778f3c3 100644
+index dcd0db3..7170506 100644
 --- a/internal/bzlmod/go_deps.bzl
 +++ b/internal/bzlmod/go_deps.bzl
-@@ -156,6 +156,9 @@ def _get_build_extra_args(path, gazelle_overrides, gazelle_default_attributes):
+@@ -159,6 +159,9 @@ def _get_build_extra_args(path, gazelle_overrides, gazelle_default_attributes):
  def _get_patches(path, module_overrides):
      return _get_override_or_default(module_overrides, struct(), {}, path, [], "patches")
 
@@ -22,7 +22,7 @@ index e304ec5..778f3c3 100644
  def _get_patch_args(path, module_overrides):
      override = _get_override_or_default(module_overrides, struct(), {}, path, None, "patch_strip")
      return ["-p{}".format(override)] if override else []
-@@ -232,6 +235,7 @@ def _process_gazelle_override(gazelle_override_tag):
+@@ -235,6 +238,7 @@ def _process_gazelle_override(gazelle_override_tag):
  def _process_module_override(module_override_tag):
      return struct(
          patches = module_override_tag.patches,
@@ -30,7 +30,7 @@ index e304ec5..778f3c3 100644
          patch_strip = module_override_tag.patch_strip,
      )
 
-@@ -240,6 +244,7 @@ def _process_archive_override(archive_override_tag):
+@@ -243,6 +247,7 @@ def _process_archive_override(archive_override_tag):
          urls = archive_override_tag.urls,
          sha256 = archive_override_tag.sha256,
          strip_prefix = archive_override_tag.strip_prefix,
@@ -38,7 +38,7 @@ index e304ec5..778f3c3 100644
          patches = archive_override_tag.patches,
          patch_strip = archive_override_tag.patch_strip,
      )
-@@ -605,6 +610,7 @@ def _go_deps_impl(module_ctx):
+@@ -611,6 +616,7 @@ def _go_deps_impl(module_ctx):
              "build_directives": _get_directives(path, gazelle_overrides, gazelle_default_attributes),
              "build_file_generation": _get_build_file_generation(path, gazelle_overrides, gazelle_default_attributes),
              "build_extra_args": _get_build_extra_args(path, gazelle_overrides, gazelle_default_attributes),
@@ -46,7 +46,7 @@ index e304ec5..778f3c3 100644
              "patches": _get_patches(path, module_overrides),
              "patch_args": _get_patch_args(path, module_overrides),
              "debug_mode": debug_mode,
-@@ -616,6 +622,7 @@ def _go_deps_impl(module_ctx):
+@@ -622,6 +628,7 @@ def _go_deps_impl(module_ctx):
                  "urls": archive_override.urls,
                  "strip_prefix": archive_override.strip_prefix,
                  "sha256": archive_override.sha256,
@@ -54,7 +54,7 @@ index e304ec5..778f3c3 100644
                  "patches": _get_patches(path, archive_overrides),
                  "patch_args": _get_patch_args(path, archive_overrides),
              })
-@@ -761,6 +768,9 @@ _archive_override_tag = tag_class(
+@@ -775,6 +782,9 @@ _archive_override_tag = tag_class(
              SHA-256 sum of the downloaded archive. When set, Bazel will verify the archive
              against this sum before extracting it.""",
          ),
@@ -64,7 +64,7 @@ index e304ec5..778f3c3 100644
          "patches": attr.label_list(
              doc = "A list of patches to apply to the repository *after* gazelle runs.",
          ),
-@@ -799,6 +809,9 @@ _module_override_tag = tag_class(
+@@ -813,6 +823,9 @@ _module_override_tag = tag_class(
              extension within this Bazel module.""",
              mandatory = True,
          ),
@@ -75,12 +75,12 @@ index e304ec5..778f3c3 100644
              doc = "A list of patches to apply to the repository *after* gazelle runs.",
          ),
 diff --git a/internal/go_repository.bzl b/internal/go_repository.bzl
-index 627a1f9..b12adf4 100644
+index 48a9d14..e3efa5b 100644
 --- a/internal/go_repository.bzl
 +++ b/internal/go_repository.bzl
-@@ -296,6 +296,11 @@ def _go_repository_impl(ctx):
-         if result.return_code:
-             fail("%s: %s" % (ctx.name, result.stderr))
+@@ -286,6 +286,11 @@ def _go_repository_impl(ctx):
+     if result.return_code:
+         fail("%s: %s" % (ctx.name, result.stderr))
 
 +    # TODO(lorenz): Replace this with patch() once the patches argument no longer gets merged with
 +    # the attribute pulled from ctx.
@@ -90,7 +90,7 @@ index 627a1f9..b12adf4 100644
      # Repositories are fetched. Determine if build file generation is needed.
      build_file_names = ctx.attr.build_file_name.split(",")
      existing_build_file = ""
-@@ -582,7 +587,10 @@ go_repository = repository_rule(
+@@ -623,7 +628,10 @@ go_repository = repository_rule(
              prefixed with `#` automatically. A common use case is to pass a list of
              Gazelle directives.""",
          ),

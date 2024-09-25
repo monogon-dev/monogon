@@ -1,8 +1,12 @@
 # Speed up all builds by not checking if external repository files have been modified.
 # Docs: https://github.com/bazelbuild/bazel/blob/1af61b21df99edc2fc66939cdf14449c2661f873/src/main/java/com/google/devtools/build/lib/bazel/repository/RepositoryOptions.java#L244
-build --noexperimental_check_external_repository_files
-fetch --noexperimental_check_external_repository_files
-query --noexperimental_check_external_repository_files
+common --noexperimental_check_external_repository_files
+
+# Don't report when the root module's lower bound for a dependency happens to be less than the resolved version.
+# This is expected and should NOT prompt an engineer to update our lower bound to match.
+# WARNING: For repository 'aspect_bazel_lib', the root module requires module version aspect_bazel_lib@1.30.2,
+# but got aspect_bazel_lib@1.31.2 in the resolved dependency graph.
+common --check_direct_dependencies=off
 
 # Directories used by sandboxed non-worker execution may be reused to avoid unnecessary setup costs.
 # Save time on Sandbox creation and deletion when many of the same kind of action run during the
