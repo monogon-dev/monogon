@@ -232,7 +232,7 @@ func TestBlockDeviceTooSmall(t *testing.T) {
 	imagePath, err := getStorage(64)
 	defer os.Remove(imagePath)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 	}
 
 	// Run QEMU. Expect the installer to fail with a predefined error string.
@@ -257,7 +257,7 @@ func TestInstall(t *testing.T) {
 	storagePath, err := getStorage(4096*2 + 384 + 128 + 2)
 	defer os.Remove(storagePath)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Error(err.Error())
 	}
 
 	// Run QEMU. Expect the installer to succeed.

@@ -1,5 +1,5 @@
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
-go_sdk.download(version = "1.22.5")
+go_sdk.download(version = "1.23.1")
 go_sdk.nogo(nogo = "//build/analysis:nogo")
 
 go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")

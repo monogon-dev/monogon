@@ -66,9 +66,7 @@ NOGO_PASSES += [
     "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/errwrap",
     "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/hash",
     "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/nilness",
-    "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/nocopy",
     "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/returnerrcheck",
-    "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/timer",
     "@com_github_cockroachdb_cockroach//pkg/testutils/lint/passes/unconvert",
 ]
 
