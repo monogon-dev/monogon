@@ -148,6 +148,7 @@ func main() {
 	flag.IntVar(&opts.Node.ThreadsPerCPU, "threads-per-cpu", 1, "Number of threads per CPU")
 	memoryMiBFlag(&opts.Node.MemoryMiB, "ram", "RAM size of each node, with suffix M for MiB or G for GiB")
 	diskBytesFlag(&opts.Node.DiskBytes, "disk", "Disk size of each node, with suffix M for MiB, G for GiB or T for TiB")
+	flag.BoolVar(&opts.Node.AllowReboot, "allow-reboot", false, "Allow nodes to reboot. This is off by default, to make it more noticeable when a node has crashed.")
 	nodeSetFlag(&consensusMemberList, "consensus-member", "List of nodes which get the Consensus Member role. Example: 0,3-5")
 	nodeSetFlag(&kubernetesControllerList, "kubernetes-controller", "List of nodes which get the Kubernetes Controller role. Example: 0,3-5")
 	nodeSetFlag(&kubernetesWorkerList, "kubernetes-worker", "List of nodes which get the Kubernetes Worker role. Example: 0,3-5")
