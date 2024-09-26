@@ -24,6 +24,7 @@ import (
 	"net/netip"
 	"sort"
 
+	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -259,6 +260,7 @@ func (n *Node) etcdJoinKeyPath() (string, error) {
 // etcd.
 func (n *Node) proto() *ppb.Node {
 	msg := &ppb.Node{
+		Id:               n.id,
 		ClusterUnlockKey: n.clusterUnlockKey,
 		PublicKey:        n.pubkey,
 		JoinKey:          n.jkey,
@@ -313,14 +315,26 @@ func (n *Node) proto() *ppb.Node {
 	return msg
 }
 
-func nodeUnmarshal(data []byte) (*Node, error) {
+func nodeUnmarshal(kv *mvccpb.KeyValue) (*Node, error) {
+	id := NodeEtcdPrefix.ExtractID(string(kv.Key))
+	if id == "" {
+		return nil, fmt.Errorf("invalid node key %q", kv.Key)
+	}
 	var msg ppb.Node
-	if err := proto.Unmarshal(data, &msg); err != nil {
-		return nil, fmt.Errorf("could not unmarshal proto: %w", err)
+	if err := proto.Unmarshal(kv.Value, &msg); err != nil {
+		return nil, fmt.Errorf("could not unmarshal proto of node %s: %w", id, err)
+	}
+	valueID := msg.Id
+	if valueID == "" {
+		// Backward compatibility
+		valueID = identity.NodeID(msg.PublicKey)
+	}
+	if id != valueID {
+		return nil, fmt.Errorf("node ID mismatch (etcd key: %q, value: %q)", id, valueID)
 	}
 	n := &Node{
 		clusterUnlockKey: msg.ClusterUnlockKey,
-		id:               identity.NodeID(msg.PublicKey),
+		id:               id,
 		pubkey:           msg.PublicKey,
 		jkey:             msg.JoinKey,
 		state:            msg.FsmState,
@@ -423,7 +437,7 @@ func nodeLoad(ctx context.Context, l *leadership, id string) (*Node, error) {
 	if len(kvs) != 1 {
 		return nil, errNodeNotFound
 	}
-	node, err := nodeUnmarshal(kvs[0].Value)
+	node, err := nodeUnmarshal(kvs[0])
 	if err != nil {
 		rpc.Trace(ctx).Printf("could not unmarshal node: %v", err)
 		return nil, status.Errorf(codes.Unavailable, "could not unmarshal node")

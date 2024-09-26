@@ -56,7 +56,7 @@ func (f *curatorFollower) GetCurrentLeader(_ *cpb.GetCurrentLeaderRequest, srv c
 			rpc.Trace(ctx).Printf("could not get current leader's data: 0 kvs")
 			return status.Errorf(codes.Internal, "could not get current leader's data")
 		}
-		node, err := nodeUnmarshal(res.Kvs[0].Value)
+		node, err := nodeUnmarshal(res.Kvs[0])
 		if err != nil {
 			rpc.Trace(ctx).Printf("could not unmarshal leader node %s: %v", lock.NodeId, err)
 			return status.Errorf(codes.Unavailable, "could not unmarshal leader node")

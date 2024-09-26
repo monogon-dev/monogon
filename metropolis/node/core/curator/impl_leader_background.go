@@ -82,7 +82,7 @@ func (l *leaderBackground) doSyncEtcd(ctx context.Context) error {
 	isClusterNode := make(map[string]bool)
 	var clusterNodes []*Node
 	for _, kv := range res.Responses[0].GetResponseRange().Kvs {
-		node, err := nodeUnmarshal(kv.Value)
+		node, err := nodeUnmarshal(kv)
 		if err != nil {
 			return fmt.Errorf("could not unmarshal node %q: %w", kv.Key, err)
 		}

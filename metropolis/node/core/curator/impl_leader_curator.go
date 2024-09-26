@@ -10,6 +10,7 @@ import (
 	"net"
 	"time"
 
+	"go.etcd.io/etcd/api/v3/mvccpb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -174,7 +175,7 @@ func nodeValueConverter(key, value []byte) (*nodeAtID, error) {
 		id: NodeEtcdPrefix.ExtractID(string(key)),
 	}
 	if len(value) > 0 {
-		node, err := nodeUnmarshal(value)
+		node, err := nodeUnmarshal(&mvccpb.KeyValue{Key: key, Value: value})
 		if err != nil {
 			return nil, err
 		}

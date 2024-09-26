@@ -8,9 +8,13 @@ import "version/spec/spec.proto";
 // Node describes a single node's state in etcd. This is only ever visible to
 // the curator, and fully managed by the curator.
 //
-// Serialized nodes are stored in /nodes/$id, where $id is the node's ID as
-// calculated from its public key.
+// Serialized nodes are stored in /nodes/$id, where $id is the node's ID.
 message Node {
+    // ID of the node. Unique across all nodes. Opaque but human-readable.
+    // The ID is stored redundantly in etcd in both the key and the value,
+    // which allows to detect corruption where a node is stored under the
+    // wrong key.
+    string id = 10;
     // The node's public key.
     bytes public_key = 1;
     // Node's individual cluster part of the data partition encryption key. It

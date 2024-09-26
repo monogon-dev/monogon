@@ -84,7 +84,7 @@ func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClust
 	kvs := res.Responses[0].GetResponseRange().Kvs
 	var nodes []*Node
 	for _, kv := range kvs {
-		node, err := nodeUnmarshal(kv.Value)
+		node, err := nodeUnmarshal(kv)
 		if err != nil {
 			rpc.Trace(ctx).Printf("Unmarshalling node %q failed: %v", kv.Value, err)
 			continue
@@ -205,7 +205,7 @@ func (l *leaderManagement) GetNodes(req *apb.GetNodesRequest, srv apb.Management
 	// node.
 	kvs := res.Responses[0].GetResponseRange().Kvs
 	for _, kv := range kvs {
-		node, err := nodeUnmarshal(kv.Value)
+		node, err := nodeUnmarshal(kv)
 		if err != nil {
 			rpc.Trace(ctx).Printf("Unmarshalling node %q failed: %v", kv.Value, err)
 			continue
