@@ -82,7 +82,6 @@ use_repo(
     "io_k8s_apiserver",
     "io_k8s_cli_runtime",
     "io_k8s_client_go",
-    "io_k8s_code_generator",
     "io_k8s_component_base",
     "io_k8s_klog_v2",
     "io_k8s_kubectl",

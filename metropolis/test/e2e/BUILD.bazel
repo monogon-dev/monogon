@@ -5,7 +5,6 @@ localregistry_manifest(
     images = [
         "//metropolis/test/e2e/selftest:selftest_image",
         "//metropolis/test/e2e/httpserver:httpserver_image",
-        "//metropolis/vm/smoketest:smoketest_image",
     ],
     visibility = [
         "//metropolis/test/e2e/suites:__subpackages__",
