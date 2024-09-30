@@ -17,6 +17,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/rpc"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 type leaderManagement struct {
@@ -125,6 +126,8 @@ func (l *leaderManagement) GetClusterInfo(ctx context.Context, req *apb.GetClust
 	cl, err := clusterLoad(ctx, l.leadership)
 	if err == nil {
 		resp.ClusterConfiguration, _ = cl.proto()
+	} else {
+		supervisor.Logger(ctx).Errorf("Could not load cluster configuration: %v", err)
 	}
 
 	return resp, nil
