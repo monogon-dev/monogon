@@ -52,9 +52,9 @@ import (
 )
 
 const (
-	// nodeNumberKey is the key of the node label used to carry a node's numerical
+	// NodeNumberKey is the key of the node label used to carry a node's numerical
 	// index in the test system.
-	nodeNumberKey string = "test-node-number"
+	NodeNumberKey string = "test-node-number"
 )
 
 // NodeOptions contains all options that can be passed to Launch()
@@ -770,7 +770,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 				InitialClusterConfiguration: opts.InitialClusterConfiguration,
 				Labels: &cpb.NodeLabels{
 					Pairs: []*cpb.NodeLabels_Pair{
-						{Key: nodeNumberKey, Value: "0"},
+						{Key: NodeNumberKey, Value: "0"},
 					},
 				},
 			},
@@ -997,7 +997,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 					CaCertificate:    resI.CaCertificate,
 					Labels: &cpb.NodeLabels{
 						Pairs: []*cpb.NodeLabels_Pair{
-							{Key: nodeNumberKey, Value: fmt.Sprintf("%d", i)},
+							{Key: NodeNumberKey, Value: fmt.Sprintf("%d", i)},
 						},
 					},
 				},
@@ -1039,7 +1039,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 					Pubkey: n.Pubkey,
 				}
 
-				num, err := strconv.Atoi(node.GetNodeLabel(n.Labels, nodeNumberKey))
+				num, err := strconv.Atoi(node.GetNodeLabel(n.Labels, NodeNumberKey))
 				if err != nil {
 					return nil, fmt.Errorf("node %s has undecodable number label: %w", n.Id, err)
 				}

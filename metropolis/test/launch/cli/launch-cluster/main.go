@@ -134,7 +134,13 @@ func diskBytesFlag(p *uint64, name string, usage string) {
 }
 
 func main() {
-	clusterConfig := cpb.ClusterConfiguration{}
+	clusterConfig := cpb.ClusterConfiguration{
+		KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{
+			NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize{
+				{Regexp: "^" + mlaunch.NodeNumberKey + "$"},
+			},
+		},
+	}
 	opts := mlaunch.ClusterOptions{
 		NodeLogsToFiles:             true,
 		InitialClusterConfiguration: &clusterConfig,
