@@ -73,6 +73,11 @@ func TestE2EKubernetesLabels(t *testing.T) {
 		InitialClusterConfiguration: &cpb.ClusterConfiguration{
 			TpmMode:               cpb.ClusterConfiguration_TPM_MODE_DISABLED,
 			StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE,
+			KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{
+				NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize{
+					{Regexp: `^test\.monogon\.dev/`},
+				},
+			},
 		},
 	}
 	cluster, err := mlaunch.LaunchCluster(ctx, clusterOptions)
@@ -106,7 +111,13 @@ func TestE2EKubernetesLabels(t *testing.T) {
 			return nil
 		}
 		return common.Labels(node.Labels).Filter(func(k, v string) bool {
-			return strings.HasPrefix(k, "node-role.kubernetes.io/")
+			if strings.HasPrefix(k, "node-role.kubernetes.io/") {
+				return true
+			}
+			if strings.HasPrefix(k, "test.monogon.dev/") {
+				return true
+			}
+			return false
 		})
 	}
 
@@ -172,6 +183,30 @@ func TestE2EKubernetesLabels(t *testing.T) {
 			if labels := getLabelsForNode(nid); !want.Equals(labels) {
 				return fmt.Errorf("node %s should have labels %s, has %s", nid, want, labels)
 			}
+		}
+		return nil
+	})
+
+	// Add Metropolis node label, ensure it gets reflected on the Kubernetes node.
+	_, err = mgmt.UpdateNodeLabels(ctx, &apb.UpdateNodeLabelsRequest{
+		Node: &apb.UpdateNodeLabelsRequest_Id{
+			Id: cluster.NodeIDs[1],
+		},
+		Upsert: []*apb.UpdateNodeLabelsRequest_Pair{
+			{Key: "test.monogon.dev/foo", Value: "bar"},
+		},
+	})
+
+	util.MustTestEventual(t, "Metropolis labels added", ctx, time.Second*5, func(ctx context.Context) error {
+		if err != nil {
+			t.Fatalf("Could not add label to node: %v", err)
+		}
+		want := common.Labels{
+			"node-role.kubernetes.io/KubernetesWorker": "",
+			"test.monogon.dev/foo":                     "bar",
+		}
+		if labels := getLabelsForNode(cluster.NodeIDs[1]); !want.Equals(labels) {
+			return fmt.Errorf("Node %s should have labels %s, has %s", cluster.NodeIDs[1], want, labels)
 		}
 		return nil
 	})

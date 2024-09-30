@@ -44,12 +44,13 @@ type ConfigController struct {
 	ServiceIPRange net.IPNet
 	ClusterNet     net.IPNet
 
-	KPKI      *pki.PKI
-	Root      *localstorage.Root
-	Consensus consensus.ServiceHandle
-	Network   *network.Service
-	Node      *identity.NodeCredentials
-	Curator   ipb.CuratorClient
+	KPKI       *pki.PKI
+	Root       *localstorage.Root
+	Consensus  consensus.ServiceHandle
+	Network    *network.Service
+	Node       *identity.NodeCredentials
+	Curator    ipb.CuratorClient
+	Management apb.ManagementClient
 }
 
 type Controller struct {
@@ -163,6 +164,7 @@ func (s *Controller) Run(ctx context.Context) error {
 	lm := labelmaker{
 		clientSet: clientSet,
 		curator:   s.c.Curator,
+		mgmt:      s.c.Management,
 	}
 	if err := supervisor.Run(ctx, "labelmaker", lm.run); err != nil {
 		return err

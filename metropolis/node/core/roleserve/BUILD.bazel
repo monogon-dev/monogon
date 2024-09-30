@@ -36,6 +36,7 @@ go_library(
         "//metropolis/node/kubernetes",
         "//metropolis/node/kubernetes/containerd",
         "//metropolis/node/kubernetes/pki",
+        "//metropolis/proto/api",
         "//metropolis/proto/common",
         "//metropolis/version",
         "//osbase/event",

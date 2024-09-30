@@ -6,18 +6,20 @@ import (
 	"net"
 
 	"source.monogon.dev/metropolis/node/core/clusternet"
-	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	"source.monogon.dev/metropolis/node/core/identity"
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/kubernetes"
 	"source.monogon.dev/metropolis/node/kubernetes/containerd"
 	kpki "source.monogon.dev/metropolis/node/kubernetes/pki"
-	cpb "source.monogon.dev/metropolis/proto/common"
 	"source.monogon.dev/osbase/event"
 	"source.monogon.dev/osbase/event/memory"
 	"source.monogon.dev/osbase/net/dns"
 	"source.monogon.dev/osbase/supervisor"
+
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 // workerKubernetes is the Kubernetes Worker, responsible for launching
@@ -42,10 +44,11 @@ type workerKubernetes struct {
 // reduced) datum for the main Kubernetes launcher responsible for starting the
 // service, if at all.
 type kubernetesStartup struct {
-	roles   *cpb.NodeRoles
-	lcp     *localControlPlane
-	curator ipb.CuratorClient
-	node    *identity.NodeCredentials
+	roles      *cpb.NodeRoles
+	lcp        *localControlPlane
+	curator    ipb.CuratorClient
+	management apb.ManagementClient
+	node       *identity.NodeCredentials
 }
 
 // changed informs the Kubernetes launcher whether two different
@@ -95,10 +98,11 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 				}
 				if lr != nil && cc != nil {
 					startupV.Set(&kubernetesStartup{
-						roles:   lr,
-						lcp:     lcp,
-						node:    cc.Credentials,
-						curator: ipb.NewCuratorClient(cc.conn),
+						roles:      lr,
+						lcp:        lcp,
+						node:       cc.Credentials,
+						curator:    ipb.NewCuratorClient(cc.conn),
+						management: apb.NewManagementClient(cc.conn),
 					})
 				}
 			}
@@ -163,6 +167,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			Consensus:      d.lcp.consensus,
 			Network:        s.network,
 			Curator:        d.curator,
+			Management:     d.management,
 		})
 		// Start Kubernetes.
 		if err := supervisor.Run(ctx, "run", controller.Run); err != nil {
