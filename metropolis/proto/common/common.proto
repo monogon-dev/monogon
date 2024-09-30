@@ -319,6 +319,38 @@ message ClusterConfiguration {
         STORAGE_SECURITY_POLICY_NEEDS_INSECURE = 4;
     }
     StorageSecurityPolicy storage_security_policy = 2;
+
+    message KubernetesConfig {
+        message NodeLabelsToSynchronize {
+            // Node labels matching this regexp will be synchronized.
+            //
+            // For example, the following regex: `^[^/]*foo$` would match:
+            //  - foo: bar
+            //  - bar-foo: baz
+            // But wouldn't match:
+            //  - example.com/foo: bar
+            //
+            // Regexes are compiled using Go's regexp library, and must be anchored (with ^
+            // and $) by the user. An invalid regexp matches no label.
+            string regexp = 1;
+        }
+
+        // Rules to match Node labels that should be synchronized into Kubernetes
+        // node labels. A label matching any rule will be synchronized and managed by
+        // Metropolis. If a label stops matching a rule (ie., the rules gets modified
+        // so it doesn't match some label, or the label gets removed from the Node
+        // in Metropolis), the label will also be removed from the Kubernetes node.
+        //
+        // Users should be careful about not synchronizing labels that will collide
+        // with other Kubernetes node labels, as then that node's labels will not be
+        // synchronized at all as a safety precaution.
+        //
+        // Note: there are certain labels that Metropolis will always add to
+        // Kubernetes nodes, such as node-role.kubernetes.io/...  . These are not
+        // influenced by these rules.
+        repeated NodeLabelsToSynchronize node_labels_to_synchronize = 3;
+    }
+    KubernetesConfig kubernetes_config = 3;
 }
 
 // NodeTPMUsage describes whether a node has a TPM2.0 and if it is/should be
