@@ -24,6 +24,7 @@ import (
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 
 	common "source.monogon.dev/metropolis/node"
+	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
 	mlaunch "source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/localregistry"
@@ -60,6 +61,121 @@ const (
 	smallTestTimeout = 60 * time.Second
 	largeTestTimeout = 120 * time.Second
 )
+
+// TestE2EKubernetesLabels verifies that Kubernetes node labels are being updated
+// when the cluster state changes.
+func TestE2EKubernetesLabels(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), globalTestTimeout)
+	defer cancel()
+
+	clusterOptions := mlaunch.ClusterOptions{
+		NumNodes: 2,
+		InitialClusterConfiguration: &cpb.ClusterConfiguration{
+			TpmMode:               cpb.ClusterConfiguration_TPM_MODE_DISABLED,
+			StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE,
+		},
+	}
+	cluster, err := mlaunch.LaunchCluster(ctx, clusterOptions)
+	if err != nil {
+		t.Fatalf("LaunchCluster failed: %v", err)
+	}
+	defer func() {
+		err := cluster.Close()
+		if err != nil {
+			t.Fatalf("cluster Close failed: %v", err)
+		}
+	}()
+
+	con, err := cluster.CuratorClient()
+	if err != nil {
+		t.Fatalf("Could not get curator client: %v", err)
+	}
+	mgmt := apb.NewManagementClient(con)
+	clientSet, err := cluster.GetKubeClientSet()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	getLabelsForNode := func(nid string) common.Labels {
+		node, err := clientSet.CoreV1().Nodes().Get(ctx, nid, metav1.GetOptions{})
+		if kerrors.IsNotFound(err) {
+			return nil
+		}
+		if err != nil {
+			t.Fatalf("Could not get node %s: %v", nid, err)
+			return nil
+		}
+		return common.Labels(node.Labels).Filter(func(k, v string) bool {
+			return strings.HasPrefix(k, "node-role.kubernetes.io/")
+		})
+	}
+
+	// Nodes should have no labels at first.
+	for _, nid := range cluster.NodeIDs {
+		if labels := getLabelsForNode(nid); !labels.Equals(nil) {
+			t.Errorf("Node %s should have no labels, has %s", nid, labels)
+		}
+	}
+	// Nominate both nodes to be Kubernetes workers.
+	for _, nid := range cluster.NodeIDs {
+		yes := true
+		_, err := mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
+			Node: &apb.UpdateNodeRolesRequest_Id{
+				Id: nid,
+			},
+			KubernetesWorker: &yes,
+		})
+		if err != nil {
+			t.Fatalf("Could not make %s a KubernetesWorker: %v", nid, err)
+		}
+	}
+
+	util.MustTestEventual(t, "Labels added", ctx, time.Second*5, func(ctx context.Context) error {
+		// Nodes should have role labels now.
+		for _, nid := range cluster.NodeIDs {
+			want := common.Labels{
+				"node-role.kubernetes.io/KubernetesWorker": "",
+			}
+			if nid == cluster.NodeIDs[0] {
+				want["node-role.kubernetes.io/KubernetesController"] = ""
+				want["node-role.kubernetes.io/ConsensusMember"] = ""
+			}
+			if labels := getLabelsForNode(nid); !want.Equals(labels) {
+				return fmt.Errorf("node %s should have labels %s, has %s", nid, want, labels)
+			}
+		}
+		return nil
+	})
+
+	// Remove KubernetesWorker from first node again. It will stay in k8s (arguably,
+	// this is a bug) but its role label should be removed.
+	no := false
+	_, err = mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
+		Node: &apb.UpdateNodeRolesRequest_Id{
+			Id: cluster.NodeIDs[0],
+		},
+		KubernetesWorker: &no,
+	})
+	if err != nil {
+		t.Fatalf("Could not remove KubernetesWorker from %s: %v", cluster.NodeIDs[0], err)
+	}
+
+	util.MustTestEventual(t, "Labels removed", ctx, time.Second*5, func(ctx context.Context) error {
+		for _, nid := range cluster.NodeIDs {
+			want := make(common.Labels)
+			if nid == cluster.NodeIDs[0] {
+				want["node-role.kubernetes.io/KubernetesController"] = ""
+				want["node-role.kubernetes.io/ConsensusMember"] = ""
+			} else {
+				want["node-role.kubernetes.io/KubernetesWorker"] = ""
+			}
+			if labels := getLabelsForNode(nid); !want.Equals(labels) {
+				return fmt.Errorf("node %s should have labels %s, has %s", nid, want, labels)
+			}
+		}
+		return nil
+	})
+}
 
 // TestE2EKubernetes exercises the Kubernetes functionality of Metropolis.
 //

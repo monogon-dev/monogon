@@ -162,6 +162,7 @@ func (s *workerKubernetes) run(ctx context.Context) error {
 			Root:           s.storageRoot,
 			Consensus:      d.lcp.consensus,
 			Network:        s.network,
+			Curator:        d.curator,
 		})
 		// Start Kubernetes.
 		if err := supervisor.Run(ctx, "run", controller.Run); err != nil {

@@ -75,3 +75,33 @@ func GetNodeLabel(labels *cpb.NodeLabels, key string) string {
 	}
 	return ""
 }
+
+// Labels on a node, a map from label key to value.
+type Labels map[string]string
+
+// Equals returns true if these Labels are equal to some others. Equality is
+// defined by having the same set of keys and corresponding values.
+func (l Labels) Equals(others Labels) bool {
+	for k, v := range l {
+		if v2, ok := others[k]; !ok || v != v2 {
+			return false
+		}
+	}
+	for k, v := range others {
+		if v2, ok := l[k]; !ok || v != v2 {
+			return false
+		}
+	}
+	return true
+}
+
+// Filter returns a subset of labels for which pred returns true.
+func (l Labels) Filter(pred func(k, v string) bool) Labels {
+	res := make(Labels)
+	for k, v := range l {
+		if pred(k, v) {
+			res[k] = v
+		}
+	}
+	return res
+}

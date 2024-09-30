@@ -34,8 +34,10 @@ import (
 	"source.monogon.dev/metropolis/node/kubernetes/metricsproxy"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
-	apb "source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/osbase/supervisor"
+
+	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 type ConfigController struct {
@@ -47,6 +49,7 @@ type ConfigController struct {
 	Consensus consensus.ServiceHandle
 	Network   *network.Service
 	Node      *identity.NodeCredentials
+	Curator   ipb.CuratorClient
 }
 
 type Controller struct {
@@ -155,6 +158,14 @@ func (s *Controller) Run(ctx context.Context) error {
 	err = supervisor.Run(ctx, "reconciler", reconcilerService.Run)
 	if err != nil {
 		return fmt.Errorf("could not run sub-service reconciler: %w", err)
+	}
+
+	lm := labelmaker{
+		clientSet: clientSet,
+		curator:   s.c.Curator,
+	}
+	if err := supervisor.Run(ctx, "labelmaker", lm.run); err != nil {
+		return err
 	}
 
 	// Before we start anything else, make sure reconciliation passes at least once.
