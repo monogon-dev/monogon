@@ -45,6 +45,7 @@ go_library(
         "//osbase/net/dns",
         "//osbase/pki",
         "//osbase/supervisor",
+        "@com_github_google_uuid//:uuid",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_protobuf//encoding/prototext",
         "@org_golang_google_protobuf//proto",

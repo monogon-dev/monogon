@@ -182,6 +182,9 @@ message NodeStatus {
     google.protobuf.Timestamp timestamp = 2;
     // version is the Metropolis version that this node is running.
     version.spec.Version version = 4;
+    // boot_id is a random value chosen for each kernel start.
+    // If this value changes, a new kernel instance is running on the node.
+    bytes boot_id = 5;
 }
 
 // The Cluster Directory is information about the network addressing of nodes

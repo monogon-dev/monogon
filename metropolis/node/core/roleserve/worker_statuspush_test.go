@@ -63,9 +63,26 @@ func (f *statusRecordingCurator) expectReports(t *testing.T, want []*ipb.UpdateN
 	}
 }
 
+func TestGetBootID(t *testing.T) {
+	bootID := getBootID(context.Background())
+	if len(bootID) != 16 {
+		t.Errorf("Bad boot ID: %x", bootID)
+	}
+	for _, b := range bootID {
+		if b != 0 {
+			return
+		}
+	}
+	t.Error("Boot ID is all-zeroes")
+}
+
 // TestWorkerStatusPush ensures that the status push worker main loop behaves as
 // expected. It does not exercise the 'map' runnables.
 func TestWorkerStatusPush(t *testing.T) {
+	// Override getBootID to make it deterministic
+	getBootID = func(ctx context.Context) []byte {
+		return []byte{1, 2, 3}
+	}
 	chans := workerStatusPushChannels{
 		address:           make(chan string),
 		localControlPlane: make(chan *localControlPlane),
@@ -116,6 +133,7 @@ func TestWorkerStatusPush(t *testing.T) {
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
 			Version:         mversion.Version,
+			BootId:          []byte{1, 2, 3},
 		}},
 	})
 
@@ -126,10 +144,12 @@ func TestWorkerStatusPush(t *testing.T) {
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
 			Version:         mversion.Version,
+			BootId:          []byte{1, 2, 3},
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
 			Version:         mversion.Version,
+			BootId:          []byte{1, 2, 3},
 		}},
 	})
 
@@ -146,10 +166,12 @@ func TestWorkerStatusPush(t *testing.T) {
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
 			Version:         mversion.Version,
+			BootId:          []byte{1, 2, 3},
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
 			Version:         mversion.Version,
+			BootId:          []byte{1, 2, 3},
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
@@ -157,10 +179,12 @@ func TestWorkerStatusPush(t *testing.T) {
 				Port: int32(common.CuratorServicePort),
 			},
 			Version: mversion.Version,
+			BootId:  []byte{1, 2, 3},
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
 			Version:         mversion.Version,
+			BootId:          []byte{1, 2, 3},
 		}},
 	})
 }

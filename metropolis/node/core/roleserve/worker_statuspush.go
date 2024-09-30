@@ -1,9 +1,12 @@
 package roleserve
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os"
 
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/encoding/prototext"
 
 	common "source.monogon.dev/metropolis/node"
@@ -39,12 +42,29 @@ type workerStatusPushChannels struct {
 	curatorConnection chan *CuratorConnection
 }
 
+// getBootID is defined as var to make it overridable from tests
+var getBootID = func(ctx context.Context) []byte {
+	bootIDRaw, err := os.ReadFile("/proc/sys/kernel/random/boot_id")
+	if err != nil {
+		supervisor.Logger(ctx).Errorf("Reading boot_id failed, not available: %v", err)
+		return nil
+	}
+	bootID, err := uuid.ParseBytes(bytes.TrimSpace(bootIDRaw))
+	if err != nil {
+		supervisor.Logger(ctx).Errorf("Parsing boot_id value %v failed, not available: %v", bootIDRaw, err)
+		return nil
+	}
+	return bootID[:]
+}
+
 // workerStatusPushLoop runs the main loop acting on data received from
 // workerStatusPushChannels.
 func workerStatusPushLoop(ctx context.Context, chans *workerStatusPushChannels) error {
 	status := cpb.NodeStatus{
 		Version: version.Version,
+		BootId:  getBootID(ctx),
 	}
+
 	var cur ipb.CuratorClient
 	var nodeID string
 
