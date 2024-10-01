@@ -22,7 +22,7 @@ import (
 	npb "source.monogon.dev/osbase/net/proto"
 )
 
-//go:embed metropolis/node/core/abloader/abloader_bin.efi
+//go:embed metropolis/node/core/abloader/abloader.efi
 var abloader []byte
 
 // FileSizedReader is a small adapter from fs.File to fs.SizedReader
@@ -54,7 +54,7 @@ func install(req *bpb.OSInstallationRequest, netConfig *npb.Net, l logging.Level
 func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Net, l logging.Leveled) error {
 	// Validate we are running via EFI.
 	if _, err := os.Stat("/sys/firmware/efi"); os.IsNotExist(err) {
-		//nolint:ST1005
+		// nolint:ST1005
 		return errors.New("Monogon OS can only be installed on EFI-booted machines, this one is not")
 	}
 

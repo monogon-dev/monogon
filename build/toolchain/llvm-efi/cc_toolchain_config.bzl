@@ -120,8 +120,7 @@ def _efi_k8_cc_toolchain_impl(ctx):
                 flag_groups = ([
                     flag_group(
                         flags = [
-                            "-target",
-                            "x86_64-unknown-windows",
+                            "--target=x86_64-unknown-windows",
                             "-fuse-ld=lld",
                             "-Wl,-entry:efi_main",
                             "-Wl,-subsystem:efi_application",

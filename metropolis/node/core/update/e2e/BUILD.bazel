@@ -22,8 +22,7 @@ go_test(
         "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
         "xBootPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:kernel_efi_x )",
         "xSystemXPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:verity_rootfs_x )",
-        # TODO(tim): Hardcoded because of https://github.com/monogon-dev/monogon/issues/316
-        "xAbloaderPath": "_main/metropolis/node/core/abloader/abloader_bin.efi",
+        "xAbloaderPath": "$(rlocationpath //metropolis/node/core/abloader )",
     },
     deps = [
         "//osbase/blkio",

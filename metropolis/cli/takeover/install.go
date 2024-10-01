@@ -15,7 +15,7 @@ import (
 	"source.monogon.dev/osbase/efivarfs"
 )
 
-//go:embed metropolis/node/core/abloader/abloader_bin.efi
+//go:embed metropolis/node/core/abloader/abloader.efi
 var abloader []byte
 
 // FileSizedReader is a small adapter from fs.File to fs.SizedReader
@@ -40,7 +40,7 @@ const EnvInstallTarget = "TAKEOVER_INSTALL_TARGET"
 func installMetropolis(l logging.Leveled) error {
 	// Validate we are running via EFI.
 	if _, err := os.Stat("/sys/firmware/efi"); os.IsNotExist(err) {
-		//nolint:ST1005
+		// nolint:ST1005
 		return fmt.Errorf("Monogon OS can only be installed on EFI-booted machines, this one is not")
 	}
 

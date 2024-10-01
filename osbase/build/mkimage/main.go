@@ -38,7 +38,7 @@ import (
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 )
 
-//go:embed metropolis/node/core/abloader/abloader_bin.efi
+//go:embed metropolis/node/core/abloader/abloader.efi
 var abloader []byte
 
 func main() {

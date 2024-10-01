@@ -43,11 +43,11 @@ single_version_override(
     module_name = "rules_rust",
     patch_strip = 1,
     patches = [
-        "//third_party:rust-uefi-platform.patch",
-        "//third_party:rust-prost-nostd.patch",
-        "//third_party:rust-reproducibility.patch",
+        "//third_party/rules_rust:rust-uefi-platform.patch",
+        "//third_party/rules_rust:rust-prost-nostd.patch",
+        "//third_party/rules_rust:rust-reproducibility.patch",
     ],
-    version = "0.51.0",
+    version = "0.53.0",
 )
 
 bazel_dep(name = "zlib")
