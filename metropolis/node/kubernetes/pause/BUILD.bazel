@@ -25,7 +25,7 @@ pkg_tar(
     visibility = ["//visibility:private"],
 )
 
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 
 oci_image(
     name = "pause_image",
@@ -37,9 +37,16 @@ oci_image(
     workdir = "/",
 )
 
-oci_tarball(
-    name = "pause_tarball",
+oci_load(
+    name = "pause_load",
     image = ":pause_image",
     repo_tags = ["preseed.metropolis.internal/node/kubernetes/pause:latest"],
+    visibility = ["//visibility:private"],
+)
+
+filegroup(
+    name = "pause_tarball",
+    srcs = [":pause_load"],
+    output_group = "tarball",
     visibility = ["//metropolis/node:__pkg__"],
 )

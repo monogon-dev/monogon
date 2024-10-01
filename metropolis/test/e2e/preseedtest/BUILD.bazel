@@ -31,7 +31,7 @@ pkg_tar(
     visibility = ["//visibility:private"],
 )
 
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 
 oci_image(
     name = "preseedtest_image",
@@ -42,9 +42,16 @@ oci_image(
     workdir = "/app",
 )
 
-oci_tarball(
-    name = "preseedtest_tarball",
+oci_load(
+    name = "preseedtest_load",
     image = ":preseedtest_image",
     repo_tags = ["bazel/metropolis/test/e2e/preseedtest:preseedtest_image"],
+    visibility = ["//visibility:private"],
+)
+
+filegroup(
+    name = "preseedtest_tarball",
+    srcs = [":preseedtest_load"],
+    output_group = "tarball",
     visibility = ["//metropolis/node:__pkg__"],
 )

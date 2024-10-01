@@ -30,7 +30,7 @@ pkg_tar(
     visibility = ["//visibility:private"],
 )
 
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_oci//oci:defs.bzl", "oci_image")
 
 oci_image(
     name = "httpserver_image",
@@ -39,11 +39,4 @@ oci_image(
     tars = [":httpserver_layer"],
     visibility = ["//metropolis/test/e2e:__pkg__"],
     workdir = "/app",
-)
-
-oci_tarball(
-    name = "httpserver_tarball",
-    image = ":httpserver_image",
-    repo_tags = ["bazel/metropolis/test/e2e/httpserver:httpserver_image"],
-    visibility = ["//metropolis/test/e2e:__pkg__"],
 )

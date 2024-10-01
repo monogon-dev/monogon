@@ -1,11 +1,22 @@
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
     name = "distroless_base",
-    digest = "sha256:6c1e34e2f084fe6df17b8bceb1416f1e11af0fcdb1cef11ee4ac8ae127cb507c",
+    digest = "sha256:6ae5fe659f28c6afe9cc2903aebc78a5c6ad3aaa3d9d0369760ac6aaea2529c8",
     image = "gcr.io/distroless/base",
     platforms = [
         "linux/amd64",
+        "linux/arm/v7",
         "linux/arm64/v8",
+        "linux/ppc64le",
+        "linux/s390x",
     ],
 )
-use_repo(oci, "distroless_base")
+use_repo(
+    oci,
+    "distroless_base",
+    "distroless_base_linux_amd64",
+    "distroless_base_linux_arm64_v8",
+    "distroless_base_linux_arm_v7",
+    "distroless_base_linux_ppc64le",
+    "distroless_base_linux_s390x",
+)
