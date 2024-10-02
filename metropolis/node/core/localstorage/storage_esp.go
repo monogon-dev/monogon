@@ -37,7 +37,7 @@ import (
 type ESPDirectory struct {
 	declarative.Directory
 	Metropolis ESPMetropolisDirectory `dir:"metropolis"`
-	EFI        ESPEFIDirectory        `dir:"ESP"`
+	EFI        ESPEFIDirectory        `dir:"EFI"`
 }
 
 type ESPEFIDirectory struct {
