@@ -48,7 +48,6 @@ var (
 	// with the rules_go runfiles package to the real path.
 	xOvmfCodePath  string
 	xOvmfVarsPath  string
-	xQemuPath      string
 	xInstallerPath string
 	xBundlePath    string
 )
@@ -56,7 +55,7 @@ var (
 func init() {
 	var err error
 	for _, path := range []*string{
-		&xOvmfCodePath, &xOvmfVarsPath, &xQemuPath,
+		&xOvmfCodePath, &xOvmfVarsPath,
 		&xInstallerPath, &xBundlePath,
 	} {
 		*path, err = runfiles.Rlocation(*path)
@@ -93,7 +92,7 @@ func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, e
 	}
 	qemuArgs := append(defaultArgs, args...)
 	pf := cmd.TerminateIfFound(expectedOutput, nil)
-	return cmd.RunCommand(ctx, xQemuPath, qemuArgs, pf)
+	return cmd.RunCommand(ctx, "qemu-system-x86_64", qemuArgs, pf)
 }
 
 // runQemuWithInstaller runs the Metropolis Installer in a qemu, performing the

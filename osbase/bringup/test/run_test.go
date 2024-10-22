@@ -16,7 +16,6 @@ var (
 	// with the rules_go runfiles package to the real path.
 	xOvmfCodePath      string
 	xOvmfVarsPath      string
-	xQemuPath          string
 	xSucceedKernelPath string
 	xFailedKernelPath  string
 )
@@ -24,7 +23,7 @@ var (
 func init() {
 	var err error
 	for _, path := range []*string{
-		&xOvmfCodePath, &xOvmfVarsPath, &xQemuPath,
+		&xOvmfCodePath, &xOvmfVarsPath,
 		&xSucceedKernelPath, &xFailedKernelPath,
 	} {
 		*path, err = runfiles.Rlocation(*path)
@@ -53,7 +52,7 @@ func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, e
 	}
 	qemuArgs := append(defaultArgs, args...)
 	pf := cmd.TerminateIfFound(expectedOutput, nil)
-	return cmd.RunCommand(ctx, xQemuPath, qemuArgs, pf)
+	return cmd.RunCommand(ctx, "qemu-system-x86_64", qemuArgs, pf)
 }
 
 func TestBringupSuccess(t *testing.T) {

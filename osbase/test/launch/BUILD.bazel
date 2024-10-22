@@ -6,9 +6,6 @@ go_library(
         "launch.go",
         "log.go",
     ],
-    data = [
-        "@com_github_bonzini_qboot//:qboot-bin",
-    ],
     importpath = "source.monogon.dev/osbase/test/launch",
     visibility = [
         "//metropolis:__subpackages__",
@@ -16,7 +13,6 @@ go_library(
     ],
     deps = [
         "//osbase/freeport",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@org_golang_x_sys//unix",
     ],
 )

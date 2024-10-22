@@ -25,6 +25,7 @@ http_archive(
     ],
 )
 
+# Used in swtpm
 git_repository(
     name = "boringssl",
     commit = "d7278cebad5b8eda0901246f2215344cffece4f4",
@@ -65,17 +66,6 @@ http_file(
     urls = ["https://curl.se/ca/cacert-2024-07-02.pem"],
 )
 
-# lz4, the library and the tool.
-LZ4_VERSION = "1.9.2"
-
-http_archive(
-    name = "com_github_lz4_lz4",
-    patch_args = ["-p1"],
-    patches = ["//third_party/lz4:build.patch"],
-    strip_prefix = "lz4-" + LZ4_VERSION,
-    urls = ["https://github.com/lz4/lz4/archive/v%s.tar.gz" % LZ4_VERSION],
-)
-
 # ini.h, a tiny ini parser library
 INIH_VERSION = "r53"
 
@@ -85,17 +75,6 @@ http_archive(
     integrity = "sha256-AbA2b9/fY2PvwHDC+Fbxr6M+emVGVIutpUVq2UpRYkE=",
     strip_prefix = "inih-" + INIH_VERSION,
     urls = ["https://github.com/benhoyt/inih/archive/%s.tar.gz" % INIH_VERSION],
-)
-
-# qboot bootloader for MicroVMs
-QBOOT_VERSION = "a5300c4949b8d4de2d34bedfaed66793f48ec948"
-
-http_archive(
-    name = "com_github_bonzini_qboot",
-    build_file = "//third_party/qboot:qboot.bzl",
-    integrity = "sha256-pkOySG++5XuWllnUCJhAlMqa+hoEgxfdP10wIuRyE+g=",
-    strip_prefix = "qboot-" + QBOOT_VERSION,
-    urls = ["https://github.com/bonzini/qboot/archive/%s.tar.gz" % QBOOT_VERSION],
 )
 
 git_repository(
@@ -203,31 +182,6 @@ http_archive(
     urls = ["https://git.kernel.org/pub/scm/fs/xfs/xfsprogs-dev.git/snapshot/xfsprogs-dev-%s.tar.gz" % XFSPROGS_VERSION],
 )
 
-PIXMAN_VERSION = "0.40.0"
-
-http_archive(
-    name = "pixman",
-    build_file = "//third_party/pixman:pixman.bzl",
-    integrity = "sha256-bSAN7DdA2exOyNEYDiV3nAC8dJ+UJ4yLkCH1U02yI/w=",
-    strip_prefix = "pixman-" + PIXMAN_VERSION + "/pixman",
-    urls = ["https://www.cairographics.org/releases/pixman-%s.tar.gz" % PIXMAN_VERSION],
-)
-
-URING_VERSION = "2.0"
-
-http_archive(
-    name = "uring",
-    build_file = "//third_party/uring:uring.bzl",
-    integrity = "sha256-ygaezEqhuvEDG9dy5Ol/fibftrtzPXn3AVlYmyKrTcA=",
-    patch_args = ["-p1"],
-    patches = [
-        "//third_party/uring/patches:bazel_cc_fix.patch",
-        "//third_party/uring/patches:include-compat-h.patch",
-    ],
-    strip_prefix = "liburing-liburing-" + URING_VERSION,
-    urls = ["https://github.com/axboe/liburing/archive/liburing-%s.tar.gz" % URING_VERSION],
-)
-
 # NOTE: Remember to update seccomp.bzl's seccomp.h template rule
 # with the correct version.
 SECCOMP_VERSION = "2.5.1"
@@ -262,24 +216,6 @@ http_archive(
     strip_prefix = "glib-" + GLIB_VERSION,
     # We cannot use the actual release tarball as it contains files generated incorrectly for our environment
     urls = ["https://gitlab.gnome.org/GNOME/glib/-/archive/%s/glib-%s.tar.gz" % (GLIB_VERSION, GLIB_VERSION)],
-)
-
-QEMU_VERSION = "5.2.0"
-
-http_archive(
-    name = "qemu",
-    integrity = "sha256-yxjYibYo++Y3ZysDJnidmw47gCfgRFuTZTfHhUnfF7w=",
-    patch_args = ["-p1"],
-    patches = [
-        "//third_party/qemu/patches:fix_code_issues.patch",
-        "//third_party/qemu/patches:bazel_support.patch",
-        "//third_party/qemu/patches:pregenerated_config_files.patch",
-        "//third_party/qemu/patches:headers_fix.patch",
-        "//third_party/qemu/patches:linux-headers-update.patch",
-        "//third_party/qemu/patches:standard-headers-removal.patch",
-    ],
-    strip_prefix = "qemu-" + QEMU_VERSION,
-    urls = ["https://download.qemu.org/qemu-%s.tar.xz" % QEMU_VERSION],
 )
 
 # ONCHANGE(//third_party/chrony:chrony.bzl): version needs to be kept in sync

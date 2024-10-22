@@ -46,6 +46,7 @@ PKGS=(
 
   # ktest
   "qemu-system-x86-core"
+  "qemu-img"
 
   # musl-host-gcc
   "rsync"

@@ -1,6 +1,0 @@
-# TODO: Workaround for https://github.com/bazelbuild/bazel/issues/19301
-alias(
-    name = "pixman",
-    actual = "@pixman",
-    visibility = ["//visibility:public"],
-)
