@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -206,10 +207,41 @@ func TestE2EKubernetesLabels(t *testing.T) {
 			"test.monogon.dev/foo":                     "bar",
 		}
 		if labels := getLabelsForNode(cluster.NodeIDs[1]); !want.Equals(labels) {
-			return fmt.Errorf("Node %s should have labels %s, has %s", cluster.NodeIDs[1], want, labels)
+			return fmt.Errorf("node %s should have labels %s, has %s", cluster.NodeIDs[1], want, labels)
 		}
 		return nil
 	})
+
+	// Reconfigure node label rules.
+	_, err = mgmt.ConfigureCluster(ctx, &apb.ConfigureClusterRequest{
+		BaseConfig: &cpb.ClusterConfiguration{
+			KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{
+				NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize{
+					{Regexp: `^test\.monogon\.dev/`},
+				},
+			},
+		},
+		NewConfig: &cpb.ClusterConfiguration{
+			KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{},
+		},
+		UpdateMask: &fieldmaskpb.FieldMask{
+			Paths: []string{"kubernetes_config.node_labels_to_synchronize"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Could not update cluster configuration: %v", err)
+	}
+
+	ci, err := mgmt.GetClusterInfo(ctx, &apb.GetClusterInfoRequest{})
+	if err != nil {
+		t.Fatalf("Could not get cluster info")
+	}
+	// See if the config changed.
+	if rules := ci.ClusterConfiguration.KubernetesConfig.NodeLabelsToSynchronize; len(rules) != 0 {
+		t.Fatalf("Wanted 0 label rules in config after reconfiguration, have %d: %v", len(rules), rules)
+	}
+	// TODO: ensure new rules get applied, but that will require watching the cluster
+	// config for changes in the labelmaker.
 }
 
 // TestE2EKubernetes exercises the Kubernetes functionality of Metropolis.

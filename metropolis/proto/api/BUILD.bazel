@@ -17,6 +17,7 @@ proto_library(
         "//osbase/logtree/proto:proto_proto",
         "//osbase/net/proto:net_proto_proto",
         "@protobuf//:duration_proto",
+        "@protobuf//:field_mask_proto",
     ],
 )
 

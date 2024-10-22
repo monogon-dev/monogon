@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/prototext"
 	dpb "google.golang.org/protobuf/types/known/durationpb"
 
 	common "source.monogon.dev/metropolis/node"
@@ -552,4 +553,53 @@ func (l *leaderManagement) UpdateNodeLabels(ctx context.Context, req *apb.Update
 	}
 
 	return &apb.UpdateNodeLabelsResponse{}, nil
+}
+
+func (l *leaderManagement) ConfigureCluster(ctx context.Context, req *apb.ConfigureClusterRequest) (*apb.ConfigureClusterResponse, error) {
+	l.muCluster.Lock()
+	defer l.muCluster.Unlock()
+
+	// Get existing config.
+	cl, err := clusterLoad(ctx, l.leadership)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not load cluster: %v", err)
+	}
+	existing, err := cl.proto()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not serialize cluster config: %v", err)
+	}
+
+	nct, _ := prototext.Marshal(req.NewConfig)
+	rpc.Trace(ctx).Printf("New config: %s", nct)
+	bct := []byte("not provided")
+	if req.BaseConfig != nil {
+		bct, _ = prototext.Marshal(req.BaseConfig)
+	}
+	rpc.Trace(ctx).Printf("Base config: %s", bct)
+	rpc.Trace(ctx).Printf("Fields: %v", req.UpdateMask.Paths)
+	ect, _ := prototext.Marshal(req.NewConfig)
+	rpc.Trace(ctx).Printf("Existing config: %s", ect)
+
+	// Mutate.
+	merged, err := reconfigureCluster(req.BaseConfig, req.NewConfig, existing, req.UpdateMask)
+	if err != nil {
+		return nil, err
+	}
+
+	mct, _ := prototext.Marshal(merged)
+	rpc.Trace(ctx).Printf("Merged config: %s", mct)
+
+	// Save new config.
+	cl, err = clusterFromProto(merged)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to rebuild cluster config: %v", err)
+	}
+	err = clusterSave(ctx, l.leadership, cl)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to save cluster config: %v", err)
+	}
+
+	return &apb.ConfigureClusterResponse{
+		ResultingConfig: merged,
+	}, nil
 }

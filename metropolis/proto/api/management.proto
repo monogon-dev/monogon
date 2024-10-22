@@ -3,6 +3,7 @@ package metropolis.proto.api;
 option go_package = "source.monogon.dev/metropolis/proto/api";
 
 import "google/protobuf/duration.proto";
+import "google/protobuf/field_mask.proto";
 
 import "osbase/logtree/proto/logtree.proto";
 import "metropolis/proto/common/common.proto";
@@ -115,6 +116,12 @@ service Management {
     rpc UpdateNodeLabels(UpdateNodeLabelsRequest) returns (UpdateNodeLabelsResponse) {
         option (metropolis.proto.ext.authorization) = {
             need: PERMISSION_UPDATE_NODE_LABELS
+        };
+    }
+
+    rpc ConfigureCluster(ConfigureClusterRequest) returns (ConfigureClusterResponse) {
+        option (metropolis.proto.ext.authorization) = {
+            need: PERMISSION_CONFIGURE_CLUSTER
         };
     }
 }
@@ -506,3 +513,29 @@ message UpdateNodeLabelsRequest {
 message UpdateNodeLabelsResponse {
 }
 
+message ConfigureClusterRequest {
+  // Base configuration to apply the change on. If set, the server will verify
+  // that the fields in this message (referenced by update_mask) have the same
+  // value as the current configuration. If there is a difference, an error will
+  // be returned and the configuration change will be aborted.
+  //
+  // This field _should_ be set to prevent race conditions with other clients
+  // attempting to mutate the configuration.
+  common.ClusterConfiguration base_config = 1;
+
+  // New configuration to set. Only fields referenced to by update_mask will be
+  // updated.
+  common.ClusterConfiguration new_config = 2;
+
+  // Fields that should be changed from the current state (and base config state,
+  // if set) into the new config state.
+  //
+  // Currently, only the following fields can be mutated:
+  //   1. kubernetes_config.node_labels_to_synchronize
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message ConfigureClusterResponse {
+    // Resulting config as set on the server, merged from the users new_config.
+    common.ClusterConfiguration resulting_config = 1;
+}

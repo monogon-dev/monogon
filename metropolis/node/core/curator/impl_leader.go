@@ -61,6 +61,10 @@ type leadership struct {
 	// additionally guarded using etcd transactions.
 	muNodes sync.Mutex
 
+	// muCluster is like muNodes, but for cluster configuration accessed via
+	// clusterLoad/clusterSave.
+	muCluster sync.Mutex
+
 	consensusStatus *consensus.Status
 	consensus       consensus.ServiceHandle
 
