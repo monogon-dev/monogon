@@ -4,7 +4,8 @@ rust.toolchain(
     extra_target_triples = [
         "x86_64-unknown-uefi",
     ],
-    versions = ["1.71.0"],
+    versions = ["1.82.0"],
+    extra_rustc_flags = ["-Clinker=rust-lld"],
 )
 use_repo(rust, "rust_toolchains")
 

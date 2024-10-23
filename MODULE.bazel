@@ -46,6 +46,7 @@ single_version_override(
         "//third_party/rules_rust:rust-uefi-platform.patch",
         "//third_party/rules_rust:rust-prost-nostd.patch",
         "//third_party/rules_rust:rust-reproducibility.patch",
+        "//third_party/rules_rust:Add-extra_rustc_flags-to-module-extension.patch",
     ],
     version = "0.53.0",
 )
