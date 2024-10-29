@@ -9,7 +9,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/rpc"
+
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -20,6 +22,7 @@ var (
 // Cluster is the cluster's configuration, as (un)marshaled to/from
 // common.ClusterConfiguration.
 type Cluster struct {
+	ClusterDomain                       string
 	TPMMode                             cpb.ClusterConfiguration_TPMMode
 	StorageSecurityPolicy               cpb.ClusterConfiguration_StorageSecurityPolicy
 	NodeLabelsToSynchronizeToKubernetes []*cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize
@@ -30,6 +33,7 @@ type Cluster struct {
 // user.
 func DefaultClusterConfiguration() *Cluster {
 	return &Cluster{
+		ClusterDomain:                       "cluster.internal",
 		TPMMode:                             cpb.ClusterConfiguration_TPM_MODE_REQUIRED,
 		StorageSecurityPolicy:               cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION,
 		NodeLabelsToSynchronizeToKubernetes: nil,
@@ -139,10 +143,19 @@ func clusterUnmarshal(data []byte) (*Cluster, error) {
 	if err := proto.Unmarshal(data, &msg); err != nil {
 		return nil, fmt.Errorf("could not unmarshal proto: %w", err)
 	}
+	if msg.ClusterDomain == "" {
+		// Backward compatibility for clusters which did not have this field
+		// initially.
+		msg.ClusterDomain = "cluster.internal"
+	}
 	return clusterFromProto(&msg)
 }
 
 func clusterFromProto(cc *cpb.ClusterConfiguration) (*Cluster, error) {
+	if err := common.ValidateClusterDomain(cc.ClusterDomain); err != nil {
+		return nil, fmt.Errorf("invalid ClusterDomain: %w", err)
+	}
+
 	switch cc.TpmMode {
 	case cpb.ClusterConfiguration_TPM_MODE_REQUIRED:
 	case cpb.ClusterConfiguration_TPM_MODE_BEST_EFFORT:
@@ -161,6 +174,7 @@ func clusterFromProto(cc *cpb.ClusterConfiguration) (*Cluster, error) {
 	}
 
 	c := &Cluster{
+		ClusterDomain:         cc.ClusterDomain,
 		TPMMode:               cc.TpmMode,
 		StorageSecurityPolicy: cc.StorageSecurityPolicy,
 	}
@@ -190,6 +204,7 @@ func (c *Cluster) proto() (*cpb.ClusterConfiguration, error) {
 	}
 
 	return &cpb.ClusterConfiguration{
+		ClusterDomain:         c.ClusterDomain,
 		TpmMode:               c.TPMMode,
 		StorageSecurityPolicy: c.StorageSecurityPolicy,
 		KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{

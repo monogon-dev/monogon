@@ -12,6 +12,7 @@ go_library(
         "net_ips.go",
         "net_protocols.go",
         "ports.go",
+        "validation.go",
     ],
     importpath = "source.monogon.dev/metropolis/node",
     visibility = [
@@ -144,7 +145,10 @@ os_release(
 
 go_test(
     name = "node_test",
-    srcs = ["labels_test.go"],
+    srcs = [
+        "labels_test.go",
+        "validation_test.go",
+    ],
     embed = [":node"],
     deps = ["@io_k8s_apimachinery//pkg/util/validation"],
 )

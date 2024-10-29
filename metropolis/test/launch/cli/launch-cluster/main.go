@@ -148,6 +148,7 @@ func main() {
 	var consensusMemberList, kubernetesControllerList, kubernetesWorkerList []int
 
 	flag.IntVar(&opts.NumNodes, "num-nodes", 3, "Number of cluster nodes")
+	flag.StringVar(&clusterConfig.ClusterDomain, "cluster-domain", "cluster.internal", "Cluster domain")
 	flagdefs.TPMModeVar(flag.CommandLine, &clusterConfig.TpmMode, "tpm-mode", cpb.ClusterConfiguration_TPM_MODE_REQUIRED, "TPM mode to set on cluster")
 	flagdefs.StorageSecurityPolicyVar(flag.CommandLine, &clusterConfig.StorageSecurityPolicy, "storage-security", cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE, "Storage security policy to set on cluster")
 	flag.IntVar(&opts.Node.CPUs, "cpu", 1, "Number of virtual CPUs of each node")

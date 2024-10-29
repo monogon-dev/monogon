@@ -36,11 +36,11 @@ curl -L -o bundle.zip https://github.com/monogon-dev/monogon/releases/download/m
 
 Let's generate the installer image that we'll use to install the first node of the upcoming cluster. To do that, use the *metroctl* tool in the following way:
 ```shell
-metroctl install genusb bootstrap-node-installer.img --bootstrap --bundle=<installation-bundle-path>
+metroctl install genusb bootstrap-node-installer.img --bootstrap --cluster=cluster.internal --bundle=<installation-bundle-path>
 ```
 If you're going to install from a USB stick or other types of removable storage, supply metroctl with a device path:
 ```shell
-metroctl install genusb /dev/sdx --bootstrap --bundle=<installation-bundle-path>
+metroctl install genusb /dev/sdx --bootstrap --cluster=cluster.internal --bundle=<installation-bundle-path>
 ```
 Since a new GPT will need to be generated for the target device, the image file cannot simply be copied into it.
 **Caution:** make sure you'll be using the correct path. *metroctl* will overwrite data on the target device.

@@ -81,6 +81,7 @@ func TestE2ECore(t *testing.T) {
 		NumNodes:      2,
 		LocalRegistry: lr,
 		InitialClusterConfiguration: &cpb.ClusterConfiguration{
+			ClusterDomain:         "cluster.test",
 			TpmMode:               cpb.ClusterConfiguration_TPM_MODE_DISABLED,
 			StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE,
 		},

@@ -270,6 +270,18 @@ message LogFilter {
 // NodeParamaters.ClusterBootstrap), and then can be partially managed by
 // management calls to the curator.
 message ClusterConfiguration {
+    // cluster_domain is the domain name which identifies the cluster.
+    // It should be unique, and ideally a public DNS name, but one under
+    // .internal works too. The cluster domain is used for different purposes:
+    //
+    //   - To identify the cluster in clients like metroctl.
+    //   - To resolve control plane endpoints with DNS in clients.
+    //   - As the SPIFFE trust domain name of the cluster. Every identity
+    //     issued by the cluster is rooted under `spiffe://cluster_domain/`.
+    //   - As the issuer of OpenID Connect identity tokens. The discovery
+    //     document is thus hosted at https://cluster_domain/.well-known/openid-configuration
+    string cluster_domain = 4;
+
     // tpm_mode defines the TPM usage policy for cluster nodes. When nodes
     // register into the cluster (and then join into it) they will report their
     // TPM availability, and in return the cluster will respond whether they

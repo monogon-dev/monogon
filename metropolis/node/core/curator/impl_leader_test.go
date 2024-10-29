@@ -1735,6 +1735,7 @@ func TestClusterTPMModeSetting(t *testing.T) {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			cl := fakeLeader(t, &fakeLeaderOption{
 				icc: &cpb.ClusterConfiguration{
+					ClusterDomain:         "cluster.test",
 					TpmMode:               te.mode,
 					StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION,
 				},

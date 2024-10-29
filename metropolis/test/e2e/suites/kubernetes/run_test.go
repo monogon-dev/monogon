@@ -72,6 +72,7 @@ func TestE2EKubernetesLabels(t *testing.T) {
 	clusterOptions := mlaunch.ClusterOptions{
 		NumNodes: 2,
 		InitialClusterConfiguration: &cpb.ClusterConfiguration{
+			ClusterDomain:         "cluster.test",
 			TpmMode:               cpb.ClusterConfiguration_TPM_MODE_DISABLED,
 			StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE,
 			KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{
@@ -266,6 +267,7 @@ func TestE2EKubernetes(t *testing.T) {
 		NumNodes:      2,
 		LocalRegistry: lr,
 		InitialClusterConfiguration: &cpb.ClusterConfiguration{
+			ClusterDomain:         "cluster.test",
 			TpmMode:               cpb.ClusterConfiguration_TPM_MODE_DISABLED,
 			StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE,
 		},

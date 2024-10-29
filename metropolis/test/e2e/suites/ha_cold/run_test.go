@@ -42,6 +42,7 @@ func TestE2EColdStartHA(t *testing.T) {
 		NumNodes:        3,
 		NodeLogsToFiles: true,
 		InitialClusterConfiguration: &cpb.ClusterConfiguration{
+			ClusterDomain:         "cluster.test",
 			TpmMode:               cpb.ClusterConfiguration_TPM_MODE_DISABLED,
 			StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE,
 		},

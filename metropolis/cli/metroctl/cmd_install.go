@@ -17,6 +17,7 @@ import (
 
 	"source.monogon.dev/metropolis/cli/flagdefs"
 	"source.monogon.dev/metropolis/cli/metroctl/core"
+	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/osbase/blkio"
 	"source.monogon.dev/osbase/fat32"
 )
@@ -44,6 +45,13 @@ func makeNodeParams() (*api.NodeParameters, error) {
 
 	var params *api.NodeParameters
 	if *bootstrap {
+		if flags.cluster == "" {
+			return nil, fmt.Errorf("when bootstrapping a cluster, the --cluster parameter is required")
+		}
+		if err := common.ValidateClusterDomain(flags.cluster); err != nil {
+			return nil, fmt.Errorf("invalid cluster domain: %w", err)
+		}
+
 		// TODO(lorenz): Have a key management story for this
 		priv, err := core.GetOrMakeOwnerKey(flags.configPath)
 		if err != nil {
@@ -55,6 +63,7 @@ func makeNodeParams() (*api.NodeParameters, error) {
 				ClusterBootstrap: &api.NodeParameters_ClusterBootstrap{
 					OwnerPublicKey: pub,
 					InitialClusterConfiguration: &cpb.ClusterConfiguration{
+						ClusterDomain:         flags.cluster,
 						StorageSecurityPolicy: *bootstrapStorageSecurityPolicy,
 						TpmMode:               *bootstrapTPMMode,
 					},

@@ -22,6 +22,8 @@ var rootCmd = &cobra.Command{
 }
 
 type metroctlFlags struct {
+	// cluster is the domain name identifying the target cluster.
+	cluster string
 	// clusterEndpoints is a list of the targeted cluster's endpoints, used by
 	// commands that perform RPC on it.
 	clusterEndpoints []string
@@ -53,6 +55,7 @@ type metroctlFlags struct {
 var flags metroctlFlags
 
 func init() {
+	rootCmd.PersistentFlags().StringVar(&flags.cluster, "cluster", "", "Cluster domain")
 	rootCmd.PersistentFlags().StringSliceVar(&flags.clusterEndpoints, "endpoints", nil, "A list of the target cluster's endpoints.")
 	rootCmd.PersistentFlags().StringVar(&flags.proxyAddr, "proxy", "", "SOCKS5 proxy address")
 	rootCmd.PersistentFlags().StringVar(&flags.configPath, "config", filepath.Join(xdg.ConfigHome, "metroctl"), "An alternative cluster config path")
