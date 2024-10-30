@@ -72,7 +72,7 @@ func main() {
 		fmt.Printf("Failed to encode os-release file: %v\n", err)
 		os.Exit(1)
 	}
-	if err := os.WriteFile(*flagOutFile, []byte(osReleaseContent), 0644); err != nil {
+	if err := os.WriteFile(*flagOutFile, []byte(osReleaseContent+"\n"), 0644); err != nil {
 		fmt.Printf("Failed to write os-release file: %v\n", err)
 		os.Exit(1)
 	}
