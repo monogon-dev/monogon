@@ -345,4 +345,31 @@ func TestMetroctl(t *testing.T) {
 			return nil
 		})
 	})
+	t.Run("configure", func(t *testing.T) {
+		util.TestEventual(t, "metroctl configure set kubernetes.node_labels_to_synchronize foo bar", ctx, 10*time.Second, func(ctx context.Context) error {
+			var args []string
+			args = append(args, commonOpts...)
+			args = append(args, endpointOpts...)
+			args = append(args, "cluster", "configure", "set", "kubernetes.node_labels_to_synchronize")
+			args = append(args, "foo", "bar")
+
+			if err := mctlFailIfMissing(t, ctx, args, "New value: \"foo\", \"bar\""); err != nil {
+				return err
+			}
+
+			return nil
+		})
+		util.TestEventual(t, "metroctl configure get kubernetes.node_labels_to_synchronize", ctx, 10*time.Second, func(ctx context.Context) error {
+			var args []string
+			args = append(args, commonOpts...)
+			args = append(args, endpointOpts...)
+			args = append(args, "cluster", "configure", "get", "kubernetes.node_labels_to_synchronize")
+
+			if err := mctlFailIfMissing(t, ctx, args, "Value: \"foo\", \"bar\""); err != nil {
+				return err
+			}
+
+			return nil
+		})
+	})
 }
