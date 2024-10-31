@@ -42,7 +42,7 @@ func reconfigureCluster(base, new, existing *cpb.ClusterConfiguration, mask *fie
 	merged := proto.Clone(existing).(*cpb.ClusterConfiguration)
 
 	for _, path := range mask.Paths {
-		handled, err := reconfigureKubernetesConfig(base, new, existing, merged, path)
+		handled, err := reconfigureKubernetes(base, new, existing, merged, path)
 		if err != nil {
 			return nil, err
 		}
@@ -54,42 +54,42 @@ func reconfigureCluster(base, new, existing *cpb.ClusterConfiguration, mask *fie
 	return merged, nil
 }
 
-// reconfigureKubernetesConfig does a three-way merge of Kubernetes configuration
+// reconfigureKubernetes does a three-way merge of Kubernetes configuration
 // (new, existing and optional base) of a given protobuf field path into merged.
 //
 // An error is returned if there is an issue applying the given change.
 // Otherwise, a boolean value is returned, indicating whether this given filed
 // path was handled.
-func reconfigureKubernetesConfig(base, new, existing, merged *cpb.ClusterConfiguration, path string) (bool, error) {
-	if path == "kubernetes_config" {
-		return false, status.Error(codes.InvalidArgument, "cannot mutate kubernetes_config directly, only subfields")
+func reconfigureKubernetes(base, new, existing, merged *cpb.ClusterConfiguration, path string) (bool, error) {
+	if path == "kubernetes" {
+		return false, status.Error(codes.InvalidArgument, "cannot mutate kubernetes directly, only subfields")
 	}
-	if !strings.HasPrefix(path, "kubernetes_config.") {
+	if !strings.HasPrefix(path, "kubernetes.") {
 		return false, nil
 	}
 
-	// KubernetesConfig should always exist in stored configs.
-	if merged.KubernetesConfig == nil {
-		merged.KubernetesConfig = &cpb.ClusterConfiguration_KubernetesConfig{}
+	// Kubernetes should always exist in stored configs.
+	if merged.Kubernetes == nil {
+		merged.Kubernetes = &cpb.ClusterConfiguration_Kubernetes{}
 	}
-	if existing.KubernetesConfig == nil {
-		existing.KubernetesConfig = &cpb.ClusterConfiguration_KubernetesConfig{}
+	if existing.Kubernetes == nil {
+		existing.Kubernetes = &cpb.ClusterConfiguration_Kubernetes{}
 	}
 
-	// Check KubernetesConfig in user structs.
-	if new.KubernetesConfig == nil {
+	// Check Kubernetes in user structs.
+	if new.Kubernetes == nil {
 		return false, status.Errorf(codes.InvalidArgument, "cannot reference field %s in new_config", path)
 	}
-	if base != nil && base.KubernetesConfig == nil {
+	if base != nil && base.Kubernetes == nil {
 		return false, status.Errorf(codes.InvalidArgument, "cannot reference field %s in old_config", path)
 	}
 
 	switch path {
-	case "kubernetes_config.node_labels_to_synchronize":
-		if base != nil && cmp.Diff(base.KubernetesConfig.NodeLabelsToSynchronize, existing.KubernetesConfig.NodeLabelsToSynchronize, protocmp.Transform()) != "" {
-			return false, status.Error(codes.FailedPrecondition, "base_config.kubernetes_config.node_labels_to_synchronize different from current value")
+	case "kubernetes.node_labels_to_synchronize":
+		if base != nil && cmp.Diff(base.Kubernetes.NodeLabelsToSynchronize, existing.Kubernetes.NodeLabelsToSynchronize, protocmp.Transform()) != "" {
+			return false, status.Error(codes.FailedPrecondition, "base_config.kubernetes.node_labels_to_synchronize different from current value")
 		}
-		merged.KubernetesConfig.NodeLabelsToSynchronize = new.KubernetesConfig.NodeLabelsToSynchronize
+		merged.Kubernetes.NodeLabelsToSynchronize = new.Kubernetes.NodeLabelsToSynchronize
 	default:
 		return false, status.Errorf(codes.InvalidArgument, "cannot mutate %s", path)
 	}

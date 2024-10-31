@@ -75,8 +75,8 @@ func TestE2EKubernetesLabels(t *testing.T) {
 			ClusterDomain:         "cluster.test",
 			TpmMode:               cpb.ClusterConfiguration_TPM_MODE_DISABLED,
 			StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_INSECURE,
-			KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{
-				NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize{
+			Kubernetes: &cpb.ClusterConfiguration_Kubernetes{
+				NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_Kubernetes_NodeLabelsToSynchronize{
 					{Regexp: `^test\.monogon\.dev/`},
 				},
 			},
@@ -216,17 +216,17 @@ func TestE2EKubernetesLabels(t *testing.T) {
 	// Reconfigure node label rules.
 	_, err = mgmt.ConfigureCluster(ctx, &apb.ConfigureClusterRequest{
 		BaseConfig: &cpb.ClusterConfiguration{
-			KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{
-				NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize{
+			Kubernetes: &cpb.ClusterConfiguration_Kubernetes{
+				NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_Kubernetes_NodeLabelsToSynchronize{
 					{Regexp: `^test\.monogon\.dev/`},
 				},
 			},
 		},
 		NewConfig: &cpb.ClusterConfiguration{
-			KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{},
+			Kubernetes: &cpb.ClusterConfiguration_Kubernetes{},
 		},
 		UpdateMask: &fieldmaskpb.FieldMask{
-			Paths: []string{"kubernetes_config.node_labels_to_synchronize"},
+			Paths: []string{"kubernetes.node_labels_to_synchronize"},
 		},
 	})
 	if err != nil {
@@ -238,7 +238,7 @@ func TestE2EKubernetesLabels(t *testing.T) {
 		t.Fatalf("Could not get cluster info")
 	}
 	// See if the config changed.
-	if rules := ci.ClusterConfiguration.KubernetesConfig.NodeLabelsToSynchronize; len(rules) != 0 {
+	if rules := ci.ClusterConfiguration.Kubernetes.NodeLabelsToSynchronize; len(rules) != 0 {
 		t.Fatalf("Wanted 0 label rules in config after reconfiguration, have %d: %v", len(rules), rules)
 	}
 	// TODO: ensure new rules get applied, but that will require watching the cluster

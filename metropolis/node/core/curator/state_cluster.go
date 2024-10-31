@@ -25,7 +25,7 @@ type Cluster struct {
 	ClusterDomain                       string
 	TPMMode                             cpb.ClusterConfiguration_TPMMode
 	StorageSecurityPolicy               cpb.ClusterConfiguration_StorageSecurityPolicy
-	NodeLabelsToSynchronizeToKubernetes []*cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize
+	NodeLabelsToSynchronizeToKubernetes []*cpb.ClusterConfiguration_Kubernetes_NodeLabelsToSynchronize
 }
 
 // DefaultClusterConfiguration is the default cluster configuration for a newly
@@ -178,7 +178,7 @@ func clusterFromProto(cc *cpb.ClusterConfiguration) (*Cluster, error) {
 		TPMMode:               cc.TpmMode,
 		StorageSecurityPolicy: cc.StorageSecurityPolicy,
 	}
-	if kc := cc.KubernetesConfig; kc != nil {
+	if kc := cc.Kubernetes; kc != nil {
 		c.NodeLabelsToSynchronizeToKubernetes = kc.NodeLabelsToSynchronize
 	}
 
@@ -207,7 +207,7 @@ func (c *Cluster) proto() (*cpb.ClusterConfiguration, error) {
 		ClusterDomain:         c.ClusterDomain,
 		TpmMode:               c.TPMMode,
 		StorageSecurityPolicy: c.StorageSecurityPolicy,
-		KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{
+		Kubernetes: &cpb.ClusterConfiguration_Kubernetes{
 			NodeLabelsToSynchronize: c.NodeLabelsToSynchronizeToKubernetes,
 		},
 	}, nil

@@ -332,7 +332,7 @@ message ClusterConfiguration {
     }
     StorageSecurityPolicy storage_security_policy = 2;
 
-    message KubernetesConfig {
+    message Kubernetes {
         message NodeLabelsToSynchronize {
             // Node labels matching this regexp will be synchronized.
             //
@@ -362,7 +362,7 @@ message ClusterConfiguration {
         // influenced by these rules.
         repeated NodeLabelsToSynchronize node_labels_to_synchronize = 3;
     }
-    KubernetesConfig kubernetes_config = 3;
+    Kubernetes kubernetes = 3;
 }
 
 // NodeTPMUsage describes whether a node has a TPM2.0 and if it is/should be

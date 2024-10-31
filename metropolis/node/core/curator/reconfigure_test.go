@@ -15,10 +15,10 @@ func TestReconfigureCluster(t *testing.T) {
 		res := &cpb.ClusterConfiguration{
 			TpmMode:               cpb.ClusterConfiguration_TPM_MODE_BEST_EFFORT,
 			StorageSecurityPolicy: cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_PERMISSIVE,
-			KubernetesConfig:      &cpb.ClusterConfiguration_KubernetesConfig{},
+			Kubernetes:            &cpb.ClusterConfiguration_Kubernetes{},
 		}
 		for _, regex := range regexes {
-			res.KubernetesConfig.NodeLabelsToSynchronize = append(res.KubernetesConfig.NodeLabelsToSynchronize, &cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize{
+			res.Kubernetes.NodeLabelsToSynchronize = append(res.Kubernetes.NodeLabelsToSynchronize, &cpb.ClusterConfiguration_Kubernetes_NodeLabelsToSynchronize{
 				Regexp: regex,
 			})
 		}
@@ -59,34 +59,34 @@ func TestReconfigureCluster(t *testing.T) {
 		// Case 3: reconfigure kubernetes node labels.
 		{
 			base: &cpb.ClusterConfiguration{
-				KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{
-					NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize{
+				Kubernetes: &cpb.ClusterConfiguration_Kubernetes{
+					NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_Kubernetes_NodeLabelsToSynchronize{
 						{Regexp: "^foo$"},
 					},
 				},
 			},
 			new: &cpb.ClusterConfiguration{
-				KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{
-					NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize{
+				Kubernetes: &cpb.ClusterConfiguration_Kubernetes{
+					NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_Kubernetes_NodeLabelsToSynchronize{
 						{Regexp: "^bar$"},
 					},
 				},
 			},
 			existing: mkCfg("^foo$"),
-			mask:     &fieldmaskpb.FieldMask{Paths: []string{"kubernetes_config.node_labels_to_synchronize"}},
+			mask:     &fieldmaskpb.FieldMask{Paths: []string{"kubernetes.node_labels_to_synchronize"}},
 			result:   mkCfg("^bar$"),
 		},
 		// Case 4: reconfigure kubernetes node labels without base.
 		{
 			new: &cpb.ClusterConfiguration{
-				KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{
-					NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize{
+				Kubernetes: &cpb.ClusterConfiguration_Kubernetes{
+					NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_Kubernetes_NodeLabelsToSynchronize{
 						{Regexp: "^bar$"},
 					},
 				},
 			},
 			existing: mkCfg("^foo$"),
-			mask:     &fieldmaskpb.FieldMask{Paths: []string{"kubernetes_config.node_labels_to_synchronize"}},
+			mask:     &fieldmaskpb.FieldMask{Paths: []string{"kubernetes.node_labels_to_synchronize"}},
 			result:   mkCfg("^bar$"),
 		},
 		// Case 5: no-op with an empty base.
@@ -124,7 +124,7 @@ func TestReconfigureCluster(t *testing.T) {
 		{
 			new:        &cpb.ClusterConfiguration{},
 			existing:   &cpb.ClusterConfiguration{},
-			mask:       &fieldmaskpb.FieldMask{Paths: []string{"kubernetes_config.node_labels_to_synchronize"}},
+			mask:       &fieldmaskpb.FieldMask{Paths: []string{"kubernetes.node_labels_to_synchronize"}},
 			result:     &cpb.ClusterConfiguration{},
 			shouldFail: true,
 		},
@@ -132,12 +132,12 @@ func TestReconfigureCluster(t *testing.T) {
 		{
 			base: &cpb.ClusterConfiguration{},
 			new: &cpb.ClusterConfiguration{
-				KubernetesConfig: &cpb.ClusterConfiguration_KubernetesConfig{
-					NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_KubernetesConfig_NodeLabelsToSynchronize{},
+				Kubernetes: &cpb.ClusterConfiguration_Kubernetes{
+					NodeLabelsToSynchronize: []*cpb.ClusterConfiguration_Kubernetes_NodeLabelsToSynchronize{},
 				},
 			},
 			existing:   &cpb.ClusterConfiguration{},
-			mask:       &fieldmaskpb.FieldMask{Paths: []string{"kubernetes_config.node_labels_to_synchronize"}},
+			mask:       &fieldmaskpb.FieldMask{Paths: []string{"kubernetes.node_labels_to_synchronize"}},
 			result:     &cpb.ClusterConfiguration{},
 			shouldFail: true,
 		},

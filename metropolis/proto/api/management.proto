@@ -531,7 +531,7 @@ message ConfigureClusterRequest {
   // if set) into the new config state.
   //
   // Currently, only the following fields can be mutated:
-  //   1. kubernetes_config.node_labels_to_synchronize
+  //   1. kubernetes.node_labels_to_synchronize
   google.protobuf.FieldMask update_mask = 3;
 }
 

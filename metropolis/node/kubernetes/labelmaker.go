@@ -127,8 +127,8 @@ func (l *labelmaker) runInner(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("could not get cluster info: %w", err)
 	}
-	if info.ClusterConfiguration != nil && info.ClusterConfiguration.KubernetesConfig != nil {
-		for _, rule := range info.ClusterConfiguration.KubernetesConfig.NodeLabelsToSynchronize {
+	if info.ClusterConfiguration != nil && info.ClusterConfiguration.Kubernetes != nil {
+		for _, rule := range info.ClusterConfiguration.Kubernetes.NodeLabelsToSynchronize {
 			if rule.Regexp != "" {
 				re, err := regexp.Compile(rule.Regexp)
 				if err != nil {
