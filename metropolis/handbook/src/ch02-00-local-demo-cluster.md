@@ -71,7 +71,7 @@ Afterwards, it will restart, and the installation media will need to be removed.
 
 After the first node is set up and running, you can take ownership of the upcoming cluster:
 ```shell
-metroctl takeownership <bootstrap-node-address>
+metroctl cluster takeownership <bootstrap-node-address>
 ```
 This should result in the following output being displayed:
 ```

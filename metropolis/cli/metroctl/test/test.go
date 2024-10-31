@@ -144,11 +144,12 @@ func TestMetroctl(t *testing.T) {
 
 	log.Printf("metroctl: Cluster's running, starting tests...")
 	st := t.Run("Init", func(t *testing.T) {
-		util.TestEventual(t, "metroctl takeownership", ctx, 30*time.Second, func(ctx context.Context) error {
+		util.TestEventual(t, "metroctl cluster takeownership", ctx, 30*time.Second, func(ctx context.Context) error {
 			// takeownership needs just a single endpoint pointing at the initial node.
 			var args []string
 			args = append(args, commonOpts...)
 			args = append(args, endpointOpts[0])
+			args = append(args, "cluster")
 			args = append(args, "takeownership")
 			return mctlFailIfMissing(t, ctx, args, "Successfully retrieved owner credentials")
 		})

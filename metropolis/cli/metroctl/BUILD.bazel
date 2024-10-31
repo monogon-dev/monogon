@@ -18,6 +18,8 @@ go_library(
     name = "metroctl_lib",
     srcs = [
         "cmd_certs.go",
+        "cmd_cluster.go",
+        "cmd_cluster_takeownership.go",
         "cmd_install.go",
         "cmd_install_ssh.go",
         "cmd_install_usb.go",
@@ -28,7 +30,6 @@ go_library(
         "cmd_node_logs.go",
         "cmd_node_metrics.go",
         "cmd_node_set.go",
-        "cmd_takeownership.go",
         "main.go",
         "rpc.go",
         "table_node.go",

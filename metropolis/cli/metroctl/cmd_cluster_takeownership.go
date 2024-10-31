@@ -101,5 +101,5 @@ endpoint must be provided with the --endpoints parameter.`,
 
 func init() {
 	takeownershipCommand.Flags().String("context", "metroctl", "The name for the kubernetes context to configure")
-	rootCmd.AddCommand(takeownershipCommand)
+	clusterCmd.AddCommand(takeownershipCommand)
 }
