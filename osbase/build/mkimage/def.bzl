@@ -8,12 +8,15 @@ def _node_image_impl(ctx):
             ctx.file.kernel.path,
             "-system",
             ctx.file.system.path,
+            "-abloader",
+            ctx.file.abloader.path,
             "-out",
             img_file.path,
         ],
         inputs = [
             ctx.file.kernel,
             ctx.file.system,
+            ctx.file.abloader,
         ],
         outputs = [img_file],
     )
@@ -23,7 +26,7 @@ def _node_image_impl(ctx):
 node_image = rule(
     implementation = _node_image_impl,
     doc = """
-        Build a disk image from an EFI kernel payload and system partition
+        Build a disk image from an EFI kernel payload, ABLoader and system partition
         contents. See //osbase/build/mkimage for more information.
     """,
     attrs = {
@@ -34,6 +37,11 @@ node_image = rule(
         ),
         "system": attr.label(
             doc = "Contents of the system partition.",
+            mandatory = True,
+            allow_single_file = True,
+        ),
+        "abloader": attr.label(
+            doc = "ABLoader binary",
             mandatory = True,
             allow_single_file = True,
         ),

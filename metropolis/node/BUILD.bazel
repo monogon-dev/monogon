@@ -125,6 +125,7 @@ pkg_zip(
 
 node_image(
     name = "image",
+    abloader = "//metropolis/node/core/abloader",
     kernel = ":kernel_efi",
     system = ":verity_rootfs",
     visibility = [

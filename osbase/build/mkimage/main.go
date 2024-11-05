@@ -18,16 +18,15 @@
 // It can be used both to initialize block devices and to create image
 // files.
 //
-// The tool takes a path to an EFI payload (--efi), and a path to a
-// system image (--system) as its only required inputs. In
-// addition, an output path must be supplied (--out).
+// The tool takes a path to an EFI payload (--efi), a path to a abloader
+// payload (--abloader) and a path to a system image (--system) as its only
+// required inputs. In addition, an output path must be supplied (--out).
 // Node parameters file path (--node_parameters) may also be supplied, in
 // which case the file will be copied to the EFI system partition.
 // Partition sizes are fixed and may be overridden by command line flags.
 package main
 
 import (
-	"bytes"
 	_ "embed"
 	"flag"
 	"log"
@@ -38,21 +37,20 @@ import (
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 )
 
-//go:embed metropolis/node/core/abloader/abloader.efi
-var abloader []byte
-
 func main() {
 	// Fill in the image parameters based on flags.
 	var (
-		efiPayload  string
-		systemImage string
-		nodeParams  string
-		outputPath  string
-		diskUUID    string
-		cfg         osimage.Params
+		efiPayload      string
+		systemImage     string
+		abLoaderPayload string
+		nodeParams      string
+		outputPath      string
+		diskUUID        string
+		cfg             osimage.Params
 	)
 	flag.StringVar(&efiPayload, "efi", "", "Path to the UEFI payload used")
 	flag.StringVar(&systemImage, "system", "", "Path to the system partition image used")
+	flag.StringVar(&abLoaderPayload, "abloader", "", "Path to the abloader payload used")
 	flag.StringVar(&nodeParams, "node_parameters", "", "Path to Node Parameters to be written to the ESP (default: don't write Node Parameters)")
 	flag.StringVar(&outputPath, "out", "", "Path to the resulting disk image or block device")
 	flag.Int64Var(&cfg.PartitionSize.Data, "data_partition_size", 2048, "Override the data partition size (default 2048 MiB). Used only when generating image files.")
@@ -69,6 +67,12 @@ func main() {
 		log.Fatalf("while opening the EFI payload at %q: %v", efiPayload, err)
 	}
 	cfg.EFIPayload = p
+
+	ab, err := blkio.NewFileReader(abLoaderPayload)
+	if err != nil {
+		log.Fatalf("while opening the abloader payload at %q: %v", abLoaderPayload, err)
+	}
+	cfg.ABLoader = ab
 
 	// Attempt to open the system image if its path is set. In case the path
 	// isn't set, the system partition will still be created, but no
@@ -96,8 +100,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	cfg.ABLoader = bytes.NewReader(abloader)
 
 	// Write the parametrized OS image.
 	if _, err := osimage.Write(&cfg); err != nil {
