@@ -12,7 +12,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/mod/semver"
 	"golang.org/x/sys/unix"
 )
 
@@ -21,14 +20,6 @@ func TestKernelInterop(t *testing.T) {
 		t.Skip("Not in ktest")
 	}
 
-	// ONCHANGE(//third_party/linux): Drop this once we move to a Kernel version
-	// newer than 5.19 which will have FAT btime support.
-	kernelVersion, err := os.ReadFile("/proc/sys/kernel/osrelease")
-	if err != nil {
-		t.Fatalf("unable to determine kernel version: %v", err)
-	}
-	haveBtime := semver.Compare("v"+string(kernelVersion), "v5.19.0") >= 0
-
 	type testCase struct {
 		name     string
 		setup    func(root *Inode) error
@@ -36,11 +27,11 @@ func TestKernelInterop(t *testing.T) {
 	}
 
 	// Random timestamp in UTC, divisible by 10ms
-	testTimestamp1 := time.Date(2022, 03, 04, 5, 6, 7, 10, time.UTC)
+	testTimestamp1 := time.Date(2022, 03, 04, 5, 6, 7, 10_000_000, time.UTC)
 	// Random timestamp in UTC, divisible by 2s
 	testTimestamp2 := time.Date(2022, 03, 04, 5, 6, 8, 0, time.UTC)
 	// Random timestamp in UTC, divisible by 10ms
-	testTimestamp3 := time.Date(2052, 03, 02, 5, 6, 7, 10, time.UTC)
+	testTimestamp3 := time.Date(2052, 03, 02, 5, 6, 7, 10_000_000, time.UTC)
 	// Random timestamp in UTC, divisible by 2s
 	testTimestamp4 := time.Date(2052, 10, 04, 5, 3, 4, 0, time.UTC)
 
@@ -75,7 +66,7 @@ func TestKernelInterop(t *testing.T) {
 					t.Errorf("testdir is expected to be a directory, but has mode %v", stat.Mode)
 				}
 				btime := time.Unix(stat.Btime.Sec, int64(stat.Btime.Nsec))
-				if !btime.Equal(testTimestamp1) && haveBtime {
+				if !btime.Equal(testTimestamp1) {
 					t.Errorf("testdir btime expected %v, got %v", testTimestamp1, btime)
 				}
 				mtime := time.Unix(stat.Mtime.Sec, int64(stat.Mtime.Nsec))
@@ -105,7 +96,7 @@ func TestKernelInterop(t *testing.T) {
 					t.Errorf("testfile is expected to be a file, but has mode %v", stat.Mode)
 				}
 				btime := time.Unix(stat.Btime.Sec, int64(stat.Btime.Nsec))
-				if !btime.Equal(testTimestamp3) && haveBtime {
+				if !btime.Equal(testTimestamp3) {
 					t.Errorf("testfile ctime expected %v, got %v", testTimestamp3, btime)
 				}
 				mtime := time.Unix(stat.Mtime.Sec, int64(stat.Mtime.Nsec))

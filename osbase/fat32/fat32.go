@@ -161,9 +161,13 @@ func (i Inode) writeMeta(w io.Writer) error {
 		selfSize = 0 // Directories don't have an explicit size
 	}
 	date, t, _ := timeToMsDosTime(i.ModTime)
+	cdate, ctime, ctens := timeToMsDosTime(i.CreateTime)
 	if err := binary.Write(w, binary.LittleEndian, &dirEntry{
 		DOSName:           i.dosName,
 		Attributes:        uint8(i.Attrs),
+		CreationTenMilli:  ctens,
+		CreationTime:      ctime,
+		CreationDate:      cdate,
 		FirstClusterHigh:  uint16(i.startCluster >> 16),
 		LastWrittenToTime: t,
 		LastWrittenToDate: date,
@@ -212,6 +216,9 @@ func (i Inode) writeData(w io.Writer, volumeLabel [11]byte) error {
 			// Time is intentionally taken from this directory, not the parent
 			if err := binary.Write(w, binary.LittleEndian, &dirEntry{
 				DOSName:           [11]byte{'.', '.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+				CreationDate:      cdate,
+				CreationTime:      ctime,
+				CreationTenMilli:  ctens,
 				LastWrittenToTime: t,
 				LastWrittenToDate: date,
 				Attributes:        uint8(AttrDirectory),
