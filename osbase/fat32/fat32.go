@@ -399,7 +399,7 @@ func WriteFS(w io.Writer, rootInode Inode, opts Options) error {
 		if err := i.writeData(wb, bs.Label); err != nil {
 			return fmt.Errorf("failed to write inode %q: %w", i.Name, err)
 		}
-		if err := wb.FinishBlock(int64(opts.BlockSize)*int64(bs.BlocksPerCluster), false); err != nil {
+		if err := wb.FinishBlock(int64(opts.BlockSize)*int64(bs.BlocksPerCluster), true); err != nil {
 			return err
 		}
 	}

@@ -2,6 +2,8 @@ package fat32
 
 import (
 	"fmt"
+	"io"
+	"math/rand"
 	"os"
 	"os/exec"
 	"strings"
@@ -41,6 +43,22 @@ func testWithFsck(t *testing.T, rootInode Inode, opts Options) {
 		t.Fatal(err)
 	}
 	defer os.Remove(testFile.Name())
+	sizeBlocks, err := SizeFS(rootInode, opts)
+	if err != nil {
+		t.Fatalf("failed to calculate size: %v", err)
+	}
+	sizeBytes := sizeBlocks * int64(opts.BlockSize)
+
+	// Fill the file with random bytes before writing the FS.
+	_, err = io.CopyN(testFile, rand.New(rand.NewSource(sizeBytes)), sizeBytes)
+	if err != nil {
+		t.Fatalf("write failed: %v", err)
+	}
+	_, err = testFile.Seek(0, io.SeekStart)
+	if err != nil {
+		t.Fatalf("seek failed: %v", err)
+	}
+
 	if err := WriteFS(testFile, rootInode, opts); err != nil {
 		t.Fatalf("failed to write test FS: %v", err)
 	}
