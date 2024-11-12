@@ -1,8 +1,9 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("//osbase/build:def.bzl", "erofs_image", "verity_image")
 load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
+load("//osbase/build/genosrelease:defs.bzl", "os_release")
 load("//osbase/build/mkimage:def.bzl", "node_image")
-load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
 go_library(
     name = "node",
@@ -127,6 +128,7 @@ pkg_zip(
 node_image(
     name = "image",
     abloader = "//metropolis/node/core/abloader",
+    bios_bootcode = "//metropolis/node/core/bios_bootcode",
     kernel = ":kernel_efi",
     system = ":verity_rootfs",
     visibility = [
@@ -135,8 +137,6 @@ node_image(
         "//metropolis/test/launch:__subpackages__",
     ],
 )
-
-load("//osbase/build/genosrelease:defs.bzl", "os_release")
 
 os_release(
     name = "os-release-info",

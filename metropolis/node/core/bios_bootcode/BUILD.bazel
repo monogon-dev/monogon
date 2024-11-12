@@ -1,0 +1,17 @@
+load("//metropolis/node/core/bios_bootcode/genlogo:def.bzl", "gen_logo")
+
+gen_logo(
+    name = "logo.asm",
+    logo = ":logo.png",
+)
+
+genrule(
+    name = "bios_bootcode",
+    srcs = [
+        ":boot.asm",
+        ":logo.asm",
+    ],
+    outs = ["boot.bin"],
+    cmd = "nasm -d LOGO=$(location :logo.asm) $(location :boot.asm) -f bin -o $@",
+    visibility = ["//visibility:public"],
+)

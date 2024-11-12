@@ -92,6 +92,9 @@ type Params struct {
 	// PartitionSize specifies a size for the ESP, Metropolis System and
 	// Metropolis data partition.
 	PartitionSize PartitionSizeInfo
+	// BIOSBootCode provides the optional contents for the protective MBR
+	// block which gets executed by legacy BIOS boot.
+	BIOSBootCode []byte
 }
 
 type plan struct {
@@ -155,6 +158,7 @@ func Plan(p *Params) (*plan, error) {
 	}
 
 	params.tbl.ID = params.DiskGUID
+	params.tbl.BootCode = p.BIOSBootCode
 	params.efiPartition = &gpt.Partition{
 		Type: gpt.PartitionTypeEFISystem,
 		Name: ESPLabel,

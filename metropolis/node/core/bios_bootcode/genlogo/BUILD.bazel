@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "genlogo_lib",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/metropolis/node/core/bios_bootcode/genlogo",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "genlogo",
+    embed = [":genlogo_lib"],
+    visibility = ["//visibility:public"],
+)
