@@ -11884,7 +11884,7 @@
     "@@rules_rust~//rust:extensions.bzl%rust": {
       "general": {
         "bzlTransitiveDigest": "MCIZIVafPwJx1oqD86yaqQ96fZHrnK4aqh6eJw8FKPI=",
-        "usagesDigest": "33pmeooYDAbqrHh9dAyocEIWrirAoxT9swN2BtwaizQ=",
+        "usagesDigest": "C/o4C+XNsJ1ZxAt90kj9xVmvOBJ7Iz6Jio1LFfplAP8=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},

@@ -47,28 +47,29 @@ pipeline {
                         gerritCheck checks: ['jenkins:gazelle': 'RUNNING'], message: "Running on ${env.NODE_NAME}"
                         echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci mod deps --lockfile_mode=update"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci mod tidy --lockfile_mode=update"
                         sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci run //:go -- mod tidy"
                         sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci run //:gazelle -- update"
-
-                        script {
-                            def diff = sh script: "git status --porcelain", returnStdout: true
-                            if (diff.trim() != "") {
-                                sh "git diff HEAD"
-                                error """
-                                    Unclean working directory after running gazelle.
-                                    Please run:
-
-                                       \$ bazel mod deps --lockfile_mode=update
-                                       \$ bazel run //:go -- mod tidy
-                                       \$ bazel run //:gazelle -- update
-
-                                    In your git checkout and amend the resulting diff to this changelist.
-                                """
-                            }
-                        }
                     }
                     post {
+                        always {
+                            script {
+                                def diff = sh script: "git status --porcelain", returnStdout: true
+                                if (diff.trim() != "") {
+                                    sh "git diff HEAD"
+                                    error """
+                                        Unclean working directory after running gazelle.
+                                        Please run:
+
+                                        \$ bazel mod tidy --lockfile_mode=update
+                                        \$ bazel run //:go -- mod tidy
+                                        \$ bazel run //:gazelle -- update
+
+                                        In your git checkout and amend the resulting diff to this changelist.
+                                    """
+                                }
+                            }
+                        }
                         success {
                             gerritCheck checks: ['jenkins:gazelle': 'SUCCESSFUL']
                         }
