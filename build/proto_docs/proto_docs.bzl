@@ -29,11 +29,13 @@ def _proto_docs(ctx):
             continue
         args.append(src.path)
 
+    protoc = ctx.toolchains["@rules_proto//proto:toolchain_type"].proto.proto_compiler.executable
+
     ctx.actions.run(
         tools = [ctx.executable._protoc_gen_doc],
         inputs = transitive_sources,
         outputs = [out],
-        executable = ctx.executable._protoc,
+        executable = protoc,
         arguments = args,
     )
     return [DefaultInfo(files = depset([out]))]
@@ -50,12 +52,6 @@ proto_docs = rule(
             providers = [ProtoInfo],
             default = [],
         ),
-        "_protoc": attr.label(
-            default = Label("@protobuf//:protoc"),
-            cfg = "exec",
-            executable = True,
-            allow_files = True,
-        ),
         "_protoc_gen_doc": attr.label(
             default = Label("@com_github_pseudomuto_protoc_gen_doc//cmd/protoc-gen-doc"),
             cfg = "exec",
@@ -63,4 +59,5 @@ proto_docs = rule(
             allow_files = True,
         ),
     },
+    toolchains = ["@rules_proto//proto:toolchain_type"]
 )
