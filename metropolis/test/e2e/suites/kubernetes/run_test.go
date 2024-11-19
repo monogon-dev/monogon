@@ -143,7 +143,7 @@ func TestE2EKubernetesLabels(t *testing.T) {
 		}
 	}
 
-	util.MustTestEventual(t, "Labels added", ctx, time.Second*5, func(ctx context.Context) error {
+	util.MustTestEventual(t, "Labels added", ctx, smallTestTimeout, func(ctx context.Context) error {
 		// Nodes should have role labels now.
 		for _, nid := range cluster.NodeIDs {
 			want := common.Labels{
@@ -173,7 +173,7 @@ func TestE2EKubernetesLabels(t *testing.T) {
 		t.Fatalf("Could not remove KubernetesWorker from %s: %v", cluster.NodeIDs[0], err)
 	}
 
-	util.MustTestEventual(t, "Labels removed", ctx, time.Second*5, func(ctx context.Context) error {
+	util.MustTestEventual(t, "Labels removed", ctx, smallTestTimeout, func(ctx context.Context) error {
 		for _, nid := range cluster.NodeIDs {
 			want := make(common.Labels)
 			if nid == cluster.NodeIDs[0] {
@@ -199,7 +199,7 @@ func TestE2EKubernetesLabels(t *testing.T) {
 		},
 	})
 
-	util.MustTestEventual(t, "Metropolis labels added", ctx, time.Second*5, func(ctx context.Context) error {
+	util.MustTestEventual(t, "Metropolis labels added", ctx, smallTestTimeout, func(ctx context.Context) error {
 		if err != nil {
 			t.Fatalf("Could not add label to node: %v", err)
 		}
