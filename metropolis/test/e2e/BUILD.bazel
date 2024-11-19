@@ -4,6 +4,7 @@ localregistry_manifest(
     name = "testimages_manifest",
     images = [
         "//metropolis/test/e2e/selftest:selftest_image",
+        "//metropolis/test/e2e/persistentvolume:persistentvolume_image",
         "//metropolis/test/e2e/httpserver:httpserver_image",
     ],
     visibility = [

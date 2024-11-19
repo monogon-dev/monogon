@@ -370,11 +370,11 @@ func TestE2EKubernetes(t *testing.T) {
 			return fmt.Errorf("pod is not ready: %s", errorMsg.String())
 		}
 	})
-	util.TestEventual(t, "Simple StatefulSet with PVC", ctx, largeTestTimeout, func(ctx context.Context) error {
-		_, err := clientSet.AppsV1().StatefulSets("default").Create(ctx, makeTestStatefulSet("test-statefulset-1", corev1.PersistentVolumeFilesystem), metav1.CreateOptions{})
+	util.TestEventual(t, "StatefulSet with PersistentVolume tests", ctx, smallTestTimeout, func(ctx context.Context) error {
+		_, err := clientSet.AppsV1().StatefulSets("default").Create(ctx, makeTestStatefulSet("test-statefulset-1"), metav1.CreateOptions{})
 		return err
 	})
-	util.TestEventual(t, "Simple StatefulSet with PVC is running", ctx, largeTestTimeout, func(ctx context.Context) error {
+	util.TestEventual(t, "StatefulSet with PersistentVolume tests successful", ctx, smallTestTimeout, func(ctx context.Context) error {
 		res, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{LabelSelector: "name=test-statefulset-1"})
 		if err != nil {
 			return err
@@ -383,38 +383,19 @@ func TestE2EKubernetes(t *testing.T) {
 			return errors.New("pod didn't get created")
 		}
 		pod := res.Items[0]
-		if podv1.IsPodAvailable(&pod, 1, metav1.NewTime(time.Now())) {
-			return nil
-		}
-		events, err := clientSet.CoreV1().Events("default").List(ctx, metav1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=default", pod.Name)})
-		if err != nil || len(events.Items) == 0 {
-			return fmt.Errorf("pod is not ready: %v", pod.Status.Phase)
-		} else {
-			return fmt.Errorf("pod is not ready: %v", events.Items[0].Message)
-		}
-	})
-	util.TestEventual(t, "Simple StatefulSet with Block PVC", ctx, largeTestTimeout, func(ctx context.Context) error {
-		_, err := clientSet.AppsV1().StatefulSets("default").Create(ctx, makeTestStatefulSet("test-statefulset-2", corev1.PersistentVolumeBlock), metav1.CreateOptions{})
-		return err
-	})
-	util.TestEventual(t, "Simple StatefulSet with Block PVC is running", ctx, largeTestTimeout, func(ctx context.Context) error {
-		res, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{LabelSelector: "name=test-statefulset-2"})
+		lines, err := getPodLogLines(ctx, clientSet, pod.Name, 50)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not get logs: %w", err)
 		}
-		if len(res.Items) == 0 {
-			return errors.New("pod didn't get created")
+		if len(lines) > 0 {
+			switch lines[len(lines)-1] {
+			case "[TESTS-PASSED]":
+				return nil
+			case "[TESTS-FAILED]":
+				return util.Permanent(fmt.Errorf("tests failed, log:\n  %s", strings.Join(lines, "\n  ")))
+			}
 		}
-		pod := res.Items[0]
-		if podv1.IsPodAvailable(&pod, 1, metav1.NewTime(time.Now())) {
-			return nil
-		}
-		events, err := clientSet.CoreV1().Events("default").List(ctx, metav1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=default", pod.Name)})
-		if err != nil || len(events.Items) == 0 {
-			return fmt.Errorf("pod is not ready: %v", pod.Status.Phase)
-		} else {
-			return fmt.Errorf("pod is not ready: %v", events.Items[0].Message)
-		}
+		return fmt.Errorf("pod is not ready: %v, log:\n  %s", pod.Status.Phase, strings.Join(lines, "\n  "))
 	})
 	util.TestEventual(t, "In-cluster self-test job", ctx, smallTestTimeout, func(ctx context.Context) error {
 		_, err := clientSet.BatchV1().Jobs("default").Create(ctx, makeSelftestSpec("selftest"), metav1.CreateOptions{})

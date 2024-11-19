@@ -30,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/utils/ptr"
 )
 
 // makeTestDeploymentSpec generates a Deployment spec for a single pod running
@@ -155,7 +156,7 @@ func makeSelftestSpec(name string) *batchv1.Job {
 }
 
 // makeTestStatefulSet generates a StatefulSet spec
-func makeTestStatefulSet(name string, volumeMode corev1.PersistentVolumeMode) *appsv1.StatefulSet {
+func makeTestStatefulSet(name string) *appsv1.StatefulSet {
 	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 		Spec: appsv1.StatefulSetSpec{
@@ -164,13 +165,34 @@ func makeTestStatefulSet(name string, volumeMode corev1.PersistentVolumeMode) *a
 			}},
 			VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
 				{
-					ObjectMeta: metav1.ObjectMeta{Name: "www"},
+					ObjectMeta: metav1.ObjectMeta{Name: "vol-default"},
 					Spec: corev1.PersistentVolumeClaimSpec{
 						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 						Resources: corev1.VolumeResourceRequirements{
-							Requests: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: resource.MustParse("50Mi")},
+							Requests: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: resource.MustParse("1Mi")},
 						},
-						VolumeMode: &volumeMode,
+						VolumeMode: ptr.To(corev1.PersistentVolumeFilesystem),
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "vol-local-strict"},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						Resources: corev1.VolumeResourceRequirements{
+							Requests: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: resource.MustParse("5Mi")},
+						},
+						StorageClassName: ptr.To("local-strict"),
+						VolumeMode:       ptr.To(corev1.PersistentVolumeFilesystem),
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "vol-readonly"},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						Resources: corev1.VolumeResourceRequirements{
+							Requests: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: resource.MustParse("1Mi")},
+						},
+						VolumeMode: ptr.To(corev1.PersistentVolumeFilesystem),
 					},
 				},
 			},
@@ -184,11 +206,21 @@ func makeTestStatefulSet(name string, volumeMode corev1.PersistentVolumeMode) *a
 					Containers: []corev1.Container{
 						{
 							Name:            "test",
-							ImagePullPolicy: corev1.PullNever,
-							Image:           "bazel/metropolis/test/e2e/preseedtest:preseedtest_image",
-							ReadinessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									HTTPGet: &corev1.HTTPGetAction{Port: intstr.FromInt(80)},
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							Image:           "test.monogon.internal/metropolis/test/e2e/persistentvolume/persistentvolume_image",
+							VolumeMounts: []corev1.VolumeMount{
+								corev1.VolumeMount{
+									Name:      "vol-default",
+									MountPath: "/vol/default",
+								},
+								corev1.VolumeMount{
+									Name:      "vol-local-strict",
+									MountPath: "/vol/local-strict",
+								},
+								corev1.VolumeMount{
+									Name:      "vol-readonly",
+									ReadOnly:  true,
+									MountPath: "/vol/readonly",
 								},
 							},
 						},
@@ -214,6 +246,8 @@ func getPodLogLines(ctx context.Context, cs kubernetes.Interface, podName string
 	}
 	lineStr := strings.Trim(buf.String(), "\n")
 	lines := strings.Split(lineStr, "\n")
-	lines = lines[len(lines)-int(nlines):]
+	if len(lines) > int(nlines) {
+		lines = lines[len(lines)-int(nlines):]
+	}
 	return lines, nil
 }

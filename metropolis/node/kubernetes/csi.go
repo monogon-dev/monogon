@@ -142,17 +142,17 @@ func (s *csiPluginServer) NodePublishVolume(ctx context.Context, req *csi.NodePu
 		for flag := range flagSet {
 			switch flag {
 			case "exec":
-				mountAttr.Attr_clr = unix.MOUNT_ATTR_NOEXEC
+				mountAttr.Attr_clr |= unix.MOUNT_ATTR_NOEXEC
 			case "noexec":
-				mountAttr.Attr_set = unix.MOUNT_ATTR_NOEXEC
+				mountAttr.Attr_set |= unix.MOUNT_ATTR_NOEXEC
 			case "dev":
-				mountAttr.Attr_clr = unix.MOUNT_ATTR_NODEV
+				mountAttr.Attr_clr |= unix.MOUNT_ATTR_NODEV
 			case "nodev":
-				mountAttr.Attr_set = unix.MOUNT_ATTR_NODEV
+				mountAttr.Attr_set |= unix.MOUNT_ATTR_NODEV
 			case "suid":
-				mountAttr.Attr_clr = unix.MOUNT_ATTR_NOSUID
+				mountAttr.Attr_clr |= unix.MOUNT_ATTR_NOSUID
 			case "nosuid":
-				mountAttr.Attr_set = unix.MOUNT_ATTR_NOSUID
+				mountAttr.Attr_set |= unix.MOUNT_ATTR_NOSUID
 			default:
 				return nil, status.Errorf(codes.InvalidArgument, "unknown mount flag: %s", flag)
 			}

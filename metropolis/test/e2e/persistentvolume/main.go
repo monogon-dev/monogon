@@ -1,0 +1,98 @@
+// This is a test for PersistentVolumes provided by our provisioner. It tests
+// that volumes have the right mount flags, and the expected quotas.
+//
+// The package here is a binary which will run in a Pod in our Kubernetes
+// end-to-end test. See the function makeTestStatefulSet in
+// metropolis/test/e2e/suites/kubernetes/kubernetes_helpers.go for how the Pod
+// is created.
+package main
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"syscall"
+	"time"
+
+	"golang.org/x/sys/unix"
+)
+
+// This is a copy of the constant in metropolis/node/kubernetes/provisioner.go.
+const inodeCapacityRatio = 4 * 512
+
+// checkFilesystemVolume checks that the filesystem containing path has the
+// given mount flags and capacity.
+func checkFilesystemVolume(path string, expectedFlags int64, expectedBytes uint64) error {
+	var statfs unix.Statfs_t
+	err := unix.Statfs(path, &statfs)
+	if err != nil {
+		return fmt.Errorf("failed to statfs volume %q: %w", path, err)
+	}
+
+	if statfs.Flags&unix.ST_RDONLY != expectedFlags&unix.ST_RDONLY {
+		return fmt.Errorf("volume %q has readonly flag %v, expected the opposite", path, statfs.Flags&unix.ST_RDONLY != 0)
+	}
+	if statfs.Flags&unix.ST_NOSUID != expectedFlags&unix.ST_NOSUID {
+		return fmt.Errorf("volume %q has nosuid flag %v, expected the opposite", path, statfs.Flags&unix.ST_NOSUID != 0)
+	}
+	if statfs.Flags&unix.ST_NODEV != expectedFlags&unix.ST_NODEV {
+		return fmt.Errorf("volume %q has nodev flag %v, expected the opposite", path, statfs.Flags&unix.ST_NODEV != 0)
+	}
+	if statfs.Flags&unix.ST_NOEXEC != expectedFlags&unix.ST_NOEXEC {
+		return fmt.Errorf("volume %q has noexec flag %v, expected the opposite", path, statfs.Flags&unix.ST_NOEXEC != 0)
+	}
+
+	sizeBytes := statfs.Blocks * uint64(statfs.Bsize)
+	if sizeBytes != expectedBytes {
+		return fmt.Errorf("volume %q has capacity %v bytes, expected %v bytes", path, sizeBytes, expectedBytes)
+	}
+	expectedFiles := expectedBytes / inodeCapacityRatio
+	if statfs.Files != expectedFiles {
+		return fmt.Errorf("volume %q has capacity for %v files, expected %v files", path, statfs.Files, expectedFiles)
+	}
+
+	// Try writing a file. This should only work if the volume is not read-only.
+	err = os.WriteFile(filepath.Join(path, "test.txt"), []byte("hello"), 0o644)
+	if expectedFlags&unix.ST_RDONLY != 0 {
+		if err == nil {
+			return fmt.Errorf("write did not fail in read-only volume %q", path)
+		} else if !errors.Is(err, syscall.EROFS) {
+			return fmt.Errorf("write failed with unexpected error in read-only volume %q: %w", path, err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("failed to write file in volume %q: %w", path, err)
+	}
+
+	return nil
+}
+
+func testPersistentVolume() error {
+	if err := checkFilesystemVolume("/vol/default", 0, 1*1024*1024); err != nil {
+		return err
+	}
+	if err := checkFilesystemVolume("/vol/local-strict", unix.ST_NOSUID|unix.ST_NODEV|unix.ST_NOEXEC, 5*1024*1024); err != nil {
+		return err
+	}
+	if err := checkFilesystemVolume("/vol/readonly", unix.ST_RDONLY, 1*1024*1024); err != nil {
+		return err
+	}
+	return nil
+}
+
+func main() {
+	fmt.Println("PersistentVolume tests starting...")
+
+	if err := testPersistentVolume(); err != nil {
+		fmt.Println(err.Error())
+		// The final log line communicates the test outcome to the e2e test.
+		fmt.Println("[TESTS-FAILED]")
+	} else {
+		fmt.Println("[TESTS-PASSED]")
+	}
+
+	// Sleep forever, because if the process exits, Kubernetes will restart it.
+	for {
+		time.Sleep(time.Hour)
+	}
+}

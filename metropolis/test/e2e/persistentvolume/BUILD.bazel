@@ -1,0 +1,44 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "persistentvolume_lib",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/metropolis/test/e2e/persistentvolume",
+    visibility = ["//visibility:private"],
+    deps = ["@org_golang_x_sys//unix"],
+)
+
+go_binary(
+    name = "persistentvolume",
+    embed = [":persistentvolume_lib"],
+    pure = "on",
+    visibility = ["//visibility:private"],
+)
+
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_binary")
+
+platform_transition_binary(
+    name = "persistentvolume_transitioned",
+    binary = ":persistentvolume",
+    target_platform = "//build/platforms:linux_amd64_static",
+    visibility = ["//visibility:private"],
+)
+
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+pkg_tar(
+    name = "persistentvolume_layer",
+    srcs = [":persistentvolume_transitioned"],
+    visibility = ["//visibility:private"],
+)
+
+load("@rules_oci//oci:defs.bzl", "oci_image")
+
+oci_image(
+    name = "persistentvolume_image",
+    base = "@distroless_base",
+    entrypoint = ["/persistentvolume"],
+    tars = [":persistentvolume_layer"],
+    visibility = ["//metropolis/test/e2e:__pkg__"],
+    workdir = "/app",
+)
