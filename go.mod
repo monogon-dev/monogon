@@ -51,10 +51,6 @@ replace github.com/bazelbuild/buildtools => github.com/bazelbuild/buildtools v0.
 // Our privflags implementation, going upstream with https://github.com/mdlayher/ethtool/pull/22
 replace github.com/mdlayher/ethtool => github.com/monogon-dev/ethtool v0.0.0-20231122193313-e9c21a3a83cb
 
-// Upgrade to fix missing constant in x/sys v0.14.0
-// https://github.com/cilium/ebpf/releases/tag/v0.12.3
-replace github.com/cilium/ebpf => github.com/cilium/ebpf v0.12.3
-
 // Update to the latest version to prevent additional imports
 // to appear in our dependency graph: https://github.com/golang/go/issues/37175
 replace golang.org/x/exp => golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
@@ -111,7 +107,7 @@ require (
 	github.com/miekg/dns v1.1.58
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/runc v1.1.14
+	github.com/opencontainers/runc v1.2.2
 	github.com/packethost/packngo v0.29.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.1
@@ -195,9 +191,9 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/checkpoint-restore/checkpointctl v1.3.0 // indirect
-	github.com/checkpoint-restore/go-criu/v5 v5.3.0 // indirect
+	github.com/checkpoint-restore/go-criu/v6 v6.3.0 // indirect
 	github.com/checkpoint-restore/go-criu/v7 v7.2.0 // indirect
-	github.com/cilium/ebpf v0.12.3 // indirect
+	github.com/cilium/ebpf v0.16.0 // indirect
 	github.com/containerd/btrfs/v2 v2.0.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/containerd/cgroups/v3 v3.0.3 // indirect
@@ -229,7 +225,7 @@ require (
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/crillab/gophersat v1.3.1 // indirect
 	github.com/cubicdaiya/gonp v1.0.4 // indirect
-	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
+	github.com/cyphar/filepath-securejoin v0.3.4 // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/daviddengcn/go-colortext v1.0.0 // indirect
