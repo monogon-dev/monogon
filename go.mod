@@ -4,35 +4,35 @@ go 1.23.1
 
 // Kubernetes is not fully consumable as a module, fix that
 replace (
-	k8s.io/api => k8s.io/api v0.31.0
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.31.0
-	k8s.io/apimachinery => k8s.io/apimachinery v0.31.0
-	k8s.io/apiserver => k8s.io/apiserver v0.31.0
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.31.0
-	k8s.io/client-go => k8s.io/client-go v0.31.0
-	k8s.io/cloud-provider => k8s.io/cloud-provider v0.31.0
-	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.31.0
-	k8s.io/code-generator => k8s.io/code-generator v0.31.0
-	k8s.io/component-base => k8s.io/component-base v0.31.0
-	k8s.io/component-helpers => k8s.io/component-helpers v0.31.0
-	k8s.io/controller-manager => k8s.io/controller-manager v0.31.0
-	k8s.io/cri-api => k8s.io/cri-api v0.31.0
-	k8s.io/cri-client => k8s.io/cri-client v0.31.0
-	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.31.0
-	k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.31.0
-	k8s.io/endpointslice => k8s.io/endpointslice v0.31.0
-	k8s.io/kms => k8s.io/kms v0.31.0
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.31.0
-	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.31.0
-	k8s.io/kube-proxy => k8s.io/kube-proxy v0.31.0
-	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.31.0
-	k8s.io/kubectl => k8s.io/kubectl v0.31.0
-	k8s.io/kubelet => k8s.io/kubelet v0.31.0
-	k8s.io/kubernetes => k8s.io/kubernetes v1.31.0
-	k8s.io/metrics => k8s.io/metrics v0.31.0
-	k8s.io/mount-utils => k8s.io/mount-utils v0.31.0
-	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.31.0
-	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.31.0
+	k8s.io/api => k8s.io/api v0.31.3
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.31.3
+	k8s.io/apimachinery => k8s.io/apimachinery v0.31.3
+	k8s.io/apiserver => k8s.io/apiserver v0.31.3
+	k8s.io/cli-runtime => k8s.io/cli-runtime v0.31.3
+	k8s.io/client-go => k8s.io/client-go v0.31.3
+	k8s.io/cloud-provider => k8s.io/cloud-provider v0.31.3
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.31.3
+	k8s.io/code-generator => k8s.io/code-generator v0.31.3
+	k8s.io/component-base => k8s.io/component-base v0.31.3
+	k8s.io/component-helpers => k8s.io/component-helpers v0.31.3
+	k8s.io/controller-manager => k8s.io/controller-manager v0.31.3
+	k8s.io/cri-api => k8s.io/cri-api v0.31.3
+	k8s.io/cri-client => k8s.io/cri-client v0.31.3
+	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.31.3
+	k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.31.3
+	k8s.io/endpointslice => k8s.io/endpointslice v0.31.3
+	k8s.io/kms => k8s.io/kms v0.31.3
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.31.3
+	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.31.3
+	k8s.io/kube-proxy => k8s.io/kube-proxy v0.31.3
+	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.31.3
+	k8s.io/kubectl => k8s.io/kubectl v0.31.3
+	k8s.io/kubelet => k8s.io/kubelet v0.31.3
+	k8s.io/kubernetes => k8s.io/kubernetes v1.31.3
+	k8s.io/metrics => k8s.io/metrics v0.31.3
+	k8s.io/mount-utils => k8s.io/mount-utils v0.31.3
+	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.31.3
+	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.31.3
 )
 
 // Override version for Bazel support
@@ -144,15 +144,15 @@ require (
 	google.golang.org/protobuf v1.35.1
 	gvisor.dev/gvisor v0.0.0-20241119070250-e4f9220466df
 	honnef.co/go/tools v0.5.1
-	k8s.io/api v0.31.2
-	k8s.io/apimachinery v0.31.2
-	k8s.io/apiserver v0.31.2
-	k8s.io/cli-runtime v0.31.0
-	k8s.io/client-go v0.31.2
-	k8s.io/component-base v0.31.2
+	k8s.io/api v0.31.3
+	k8s.io/apimachinery v0.31.3
+	k8s.io/apiserver v0.31.3
+	k8s.io/cli-runtime v0.31.3
+	k8s.io/client-go v0.31.3
+	k8s.io/component-base v0.31.3
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubectl v0.0.0
-	k8s.io/kubelet v0.31.2
+	k8s.io/kubelet v0.31.3
 	k8s.io/kubernetes v1.20.1
 	k8s.io/pod-security-admission v0.0.0
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
@@ -438,22 +438,22 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	howett.net/plist v1.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.0.0 // indirect
-	k8s.io/cloud-provider v0.31.0 // indirect
+	k8s.io/cloud-provider v0.31.3 // indirect
 	k8s.io/cluster-bootstrap v0.0.0 // indirect
-	k8s.io/component-helpers v0.31.0 // indirect
-	k8s.io/controller-manager v0.31.0 // indirect
+	k8s.io/component-helpers v0.31.3 // indirect
+	k8s.io/controller-manager v0.31.3 // indirect
 	k8s.io/cri-api v0.32.0-alpha.0 // indirect
 	k8s.io/cri-client v0.0.0 // indirect
 	k8s.io/csi-translation-lib v0.0.0 // indirect
 	k8s.io/dynamic-resource-allocation v0.0.0 // indirect
 	k8s.io/endpointslice v0.0.0 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/kms v0.31.0 // indirect
+	k8s.io/kms v0.31.3 // indirect
 	k8s.io/kube-aggregator v0.0.0 // indirect
 	k8s.io/kube-controller-manager v0.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/kube-scheduler v0.0.0 // indirect
-	k8s.io/metrics v0.31.0 // indirect
+	k8s.io/metrics v0.31.3 // indirect
 	k8s.io/mount-utils v0.0.0 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.30.3 // indirect
