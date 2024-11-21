@@ -5,8 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/util/validation"
-
 	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
@@ -43,8 +41,8 @@ func validatePrefix(prefix string) error {
 	if prefix == "" {
 		return ErrLabelEmptyPrefix
 	}
-	if errs := validation.IsDNS1123Subdomain(prefix); len(errs) > 0 {
-		return ErrLabelInvalidPrefix
+	if err := validateDomainName(prefix); err != nil {
+		return fmt.Errorf("invalid prefix: %w", err)
 	}
 	return nil
 }

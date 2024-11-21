@@ -22,14 +22,20 @@ func TestValidateLabelKey(t *testing.T) {
 		{"accordingtoallknownlawsofaviationthereisnowaythatabeeshouldbeabletofly", ErrLabelTooLong},
 		{"example.com/annotation", nil},
 		{"/annotation", ErrLabelEmptyPrefix},
-		{"_internal.example.com/annotation", ErrLabelInvalidPrefix},
-		{"./annotation", ErrLabelInvalidPrefix},
-		{"../annotation", ErrLabelInvalidPrefix},
-		{"tcp:80.example.com/annotation", ErrLabelInvalidPrefix},
+		{"_internal.example.com/annotation", errDomainNameInvalid},
+		{"./annotation", errDomainNameInvalid},
+		{"../annotation", errDomainNameInvalid},
+		{"tcp:80.example.com/annotation", errDomainNameInvalid},
+		{"80/annotation", errDomainNameEndsInNumber},
 		{"github.com/monogon-dev/monogon/annotation", ErrLabelInvalidPrefix},
 	} {
 		if got := ValidateLabelKey(te.in); !errors.Is(got, te.want) {
 			t.Errorf("%d (%q): wanted %v, got %v", i, te.in, te.want, got)
+		}
+		if ValidateLabelKey(te.in) == nil {
+			if errs := validation.IsQualifiedName(te.in); len(errs) != 0 {
+				t.Errorf("%d (%q): is not a valid Kubernetes qualified name: %v", i, te.in, errs)
+			}
 		}
 	}
 }
