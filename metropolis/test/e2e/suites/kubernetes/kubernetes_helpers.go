@@ -195,6 +195,16 @@ func makeTestStatefulSet(name string) *appsv1.StatefulSet {
 						VolumeMode: ptr.To(corev1.PersistentVolumeFilesystem),
 					},
 				},
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "vol-block"},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						Resources: corev1.VolumeResourceRequirements{
+							Requests: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: resource.MustParse("1Mi")},
+						},
+						VolumeMode: ptr.To(corev1.PersistentVolumeBlock),
+					},
+				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
@@ -209,18 +219,24 @@ func makeTestStatefulSet(name string) *appsv1.StatefulSet {
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Image:           "test.monogon.internal/metropolis/test/e2e/persistentvolume/persistentvolume_image",
 							VolumeMounts: []corev1.VolumeMount{
-								corev1.VolumeMount{
+								{
 									Name:      "vol-default",
 									MountPath: "/vol/default",
 								},
-								corev1.VolumeMount{
+								{
 									Name:      "vol-local-strict",
 									MountPath: "/vol/local-strict",
 								},
-								corev1.VolumeMount{
+								{
 									Name:      "vol-readonly",
 									ReadOnly:  true,
 									MountPath: "/vol/readonly",
+								},
+							},
+							VolumeDevices: []corev1.VolumeDevice{
+								{
+									Name:       "vol-block",
+									DevicePath: "/vol/block",
 								},
 							},
 						},

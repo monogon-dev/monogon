@@ -5,7 +5,10 @@ go_library(
     srcs = ["main.go"],
     importpath = "source.monogon.dev/metropolis/test/e2e/persistentvolume",
     visibility = ["//visibility:private"],
-    deps = ["@org_golang_x_sys//unix"],
+    deps = [
+        "//osbase/blockdev",
+        "@org_golang_x_sys//unix",
+    ],
 )
 
 go_binary(

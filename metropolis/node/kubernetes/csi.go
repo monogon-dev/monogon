@@ -101,11 +101,12 @@ func (s *csiPluginServer) NodePublishVolume(ctx context.Context, req *csi.NodePu
 	default:
 		return nil, status.Error(codes.InvalidArgument, "unsupported access mode")
 	}
-	if err := os.MkdirAll(req.TargetPath, 0700); err != nil {
-		return nil, status.Errorf(codes.Internal, "unable to create requested target path: %v", err)
-	}
 	switch req.VolumeCapability.AccessType.(type) {
 	case *csi.VolumeCapability_Mount:
+		if err := os.MkdirAll(req.TargetPath, 0700); err != nil {
+			return nil, status.Errorf(codes.Internal, "unable to create requested target path: %v", err)
+		}
+
 		var mountFlags uintptr = unix.MS_BIND
 		if req.Readonly {
 			mountFlags |= unix.MS_RDONLY

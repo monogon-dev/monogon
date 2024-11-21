@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"golang.org/x/sys/unix"
+
+	"source.monogon.dev/osbase/blockdev"
 )
 
 // This is a copy of the constant in metropolis/node/kubernetes/provisioner.go.
@@ -67,6 +69,19 @@ func checkFilesystemVolume(path string, expectedFlags int64, expectedBytes uint6
 	return nil
 }
 
+func checkBlockVolume(path string, expectedBytes uint64) error {
+	blk, err := blockdev.Open(path)
+	if err != nil {
+		return fmt.Errorf("failed to open block device %q: %w", path, err)
+	}
+	defer blk.Close()
+	sizeBytes := blk.BlockCount() * blk.BlockSize()
+	if sizeBytes != int64(expectedBytes) {
+		return fmt.Errorf("block device %q has size %v bytes, expected %v bytes", path, sizeBytes, expectedBytes)
+	}
+	return nil
+}
+
 func testPersistentVolume() error {
 	if err := checkFilesystemVolume("/vol/default", 0, 1*1024*1024); err != nil {
 		return err
@@ -75,6 +90,9 @@ func testPersistentVolume() error {
 		return err
 	}
 	if err := checkFilesystemVolume("/vol/readonly", unix.ST_RDONLY, 1*1024*1024); err != nil {
+		return err
+	}
+	if err := checkBlockVolume("/vol/block", 1*1024*1024); err != nil {
 		return err
 	}
 	return nil
