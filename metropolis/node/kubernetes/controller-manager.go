@@ -91,6 +91,7 @@ func runControllerManager(config controllerManagerConfig) supervisor.Runnable {
 			// This is intentionally empty, but if unset it tries to mkdir it
 			// in the usual place, generating an error.
 			"--flex-volume-plugin-dir=/kubernetes/conf/flexvolume-plugins",
+			extraFeatureGates.AsFlag(),
 		)
 
 		if args.Error() != nil {

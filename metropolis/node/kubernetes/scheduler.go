@@ -67,6 +67,7 @@ func runScheduler(config schedulerConfig) supervisor.Runnable {
 				pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: config.serverKey})),
 			args.FileOpt("--client-ca-file", "root-ca.pem",
 				pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: config.rootCA})),
+			extraFeatureGates.AsFlag(),
 		)
 		if args.Error() != nil {
 			return fmt.Errorf("failed to use fileargs: %w", err)

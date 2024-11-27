@@ -186,6 +186,7 @@ func (s *apiserverService) Run(ctx context.Context) error {
 			pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: s.serverKey})),
 		args.FileOpt("--admission-control-config-file", "admission-control.json", admissionConfigRaw),
 		"--allow-privileged=true",
+		extraFeatureGates.AsFlag(),
 	)
 	if args.Error() != nil {
 		return err
