@@ -33,6 +33,10 @@ config_setting(
     },
 )
 
+exports_files([
+    "passwd",
+])
+
 erofs_image(
     name = "rootfs",
     files = {
@@ -42,6 +46,7 @@ erofs_image(
         # These should not be explicitly used by Metropolis code and are only here for compatibility with
         # paths hardcoded by standard libraries (like Go's).
         "@cacerts//file": "/etc/ssl/cert.pem",
+        "//metropolis/node:passwd": "/etc/passwd",
         "//osbase/net/dns:resolv.conf": "/etc/resolv.conf",
         "//osbase/net/dns:hosts": "/etc/hosts",
         ":os-release-info": "/etc/os-release",

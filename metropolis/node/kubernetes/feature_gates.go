@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"k8s.io/component-base/featuregate"
+	"k8s.io/kubernetes/pkg/features"
 )
 
 type featureGates map[featuregate.Feature]bool
@@ -32,4 +33,7 @@ func (fgs featureGates) AsMap() map[string]bool {
 	return out
 }
 
-var extraFeatureGates = featureGates{}
+var extraFeatureGates = featureGates{
+	features.UserNamespacesSupport:              true,
+	features.UserNamespacesPodSecurityStandards: true,
+}

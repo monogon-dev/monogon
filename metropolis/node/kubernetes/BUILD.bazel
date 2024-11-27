@@ -66,6 +66,7 @@ go_library(
         "@io_k8s_component_base//featuregate",
         "@io_k8s_kubelet//config/v1beta1",
         "@io_k8s_kubelet//pkg/apis/pluginregistration/v1:pluginregistration",
+        "@io_k8s_kubernetes//pkg/features",
         "@io_k8s_kubernetes//plugin/pkg/admission/security/podsecurity",
         "@io_k8s_pod_security_admission//admission/api/v1:api",
         "@org_golang_google_grpc//:grpc",

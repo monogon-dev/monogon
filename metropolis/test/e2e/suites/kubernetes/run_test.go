@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
+	"k8s.io/utils/ptr"
 
 	common "source.monogon.dev/metropolis/node"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -400,6 +401,32 @@ func TestE2EKubernetes(t *testing.T) {
 			return fmt.Errorf("pod is not ready: %v, log:\n  %s", pod.Status.Phase, strings.Join(lines, "\n  "))
 		})
 	}
+	util.TestEventual(t, "Deployment in user namespace", ctx, largeTestTimeout, func(ctx context.Context) error {
+		deployment := makeTestDeploymentSpec("test-userns-1")
+		deployment.Spec.Template.Spec.HostUsers = ptr.To(false)
+		deployment.Spec.Template.Spec.Containers[0].ReadinessProbe.HTTPGet.Path = "/ready_userns"
+		_, err := clientSet.AppsV1().Deployments("default").Create(ctx, deployment, metav1.CreateOptions{})
+		return err
+	})
+	util.TestEventual(t, "Deployment in user namespace is running", ctx, largeTestTimeout, func(ctx context.Context) error {
+		res, err := clientSet.CoreV1().Pods("default").List(ctx, metav1.ListOptions{LabelSelector: "name=test-userns-1"})
+		if err != nil {
+			return err
+		}
+		if len(res.Items) == 0 {
+			return errors.New("pod didn't get created")
+		}
+		pod := res.Items[0]
+		if podv1.IsPodAvailable(&pod, 1, metav1.NewTime(time.Now())) {
+			return nil
+		}
+		events, err := clientSet.CoreV1().Events("default").List(ctx, metav1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%s,involvedObject.namespace=default", pod.Name)})
+		if err != nil || len(events.Items) == 0 {
+			return fmt.Errorf("pod is not ready: %v", pod.Status.Phase)
+		} else {
+			return fmt.Errorf("pod is not ready: %v", events.Items[0].Message)
+		}
+	})
 	util.TestEventual(t, "In-cluster self-test job", ctx, smallTestTimeout, func(ctx context.Context) error {
 		_, err := clientSet.BatchV1().Jobs("default").Create(ctx, makeSelftestSpec("selftest"), metav1.CreateOptions{})
 		return err
