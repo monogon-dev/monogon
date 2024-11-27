@@ -156,7 +156,7 @@ func makeSelftestSpec(name string) *batchv1.Job {
 }
 
 // makeTestStatefulSet generates a StatefulSet spec
-func makeTestStatefulSet(name string) *appsv1.StatefulSet {
+func makeTestStatefulSet(name string, runtimeClass string) *appsv1.StatefulSet {
 	return &appsv1.StatefulSet{
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 		Spec: appsv1.StatefulSetSpec{
@@ -172,17 +172,6 @@ func makeTestStatefulSet(name string) *appsv1.StatefulSet {
 							Requests: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: resource.MustParse("1Mi")},
 						},
 						VolumeMode: ptr.To(corev1.PersistentVolumeFilesystem),
-					},
-				},
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "vol-local-strict"},
-					Spec: corev1.PersistentVolumeClaimSpec{
-						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-						Resources: corev1.VolumeResourceRequirements{
-							Requests: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: resource.MustParse("5Mi")},
-						},
-						StorageClassName: ptr.To("local-strict"),
-						VolumeMode:       ptr.To(corev1.PersistentVolumeFilesystem),
 					},
 				},
 				{
@@ -218,14 +207,11 @@ func makeTestStatefulSet(name string) *appsv1.StatefulSet {
 							Name:            "test",
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Image:           "test.monogon.internal/metropolis/test/e2e/persistentvolume/persistentvolume_image",
+							Args:            []string{"-runtimeclass", runtimeClass},
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "vol-default",
 									MountPath: "/vol/default",
-								},
-								{
-									Name:      "vol-local-strict",
-									MountPath: "/vol/local-strict",
 								},
 								{
 									Name:      "vol-readonly",
@@ -241,6 +227,7 @@ func makeTestStatefulSet(name string) *appsv1.StatefulSet {
 							},
 						},
 					},
+					RuntimeClassName: ptr.To(runtimeClass),
 				},
 			},
 		},

@@ -283,7 +283,6 @@ func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, stora
 
 	volumeID := "pvc-" + string(pvc.ObjectMeta.UID)
 	volumePath := p.volumePath(volumeID)
-	var mountOptions []string
 
 	p.logger.Infof("Creating local PV %s", volumeID)
 
@@ -302,7 +301,6 @@ func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, stora
 		if err := fsquota.SetQuota(volumePath, uint64(capacity), uint64(capacity)/inodeCapacityRatio); err != nil {
 			return fmt.Errorf("failed to update quota: %w", err)
 		}
-		mountOptions = storageClass.MountOptions
 	case v1.PersistentVolumeBlock:
 		imageFile, err := os.OpenFile(volumePath, os.O_CREATE|os.O_RDWR, 0644)
 		if err != nil {
@@ -351,7 +349,6 @@ func (p *csiProvisionerServer) provisionPVC(pvc *v1.PersistentVolumeClaim, stora
 				},
 			},
 			StorageClassName:              *pvc.Spec.StorageClassName,
-			MountOptions:                  mountOptions,
 			PersistentVolumeReclaimPolicy: *storageClass.ReclaimPolicy,
 		},
 	}

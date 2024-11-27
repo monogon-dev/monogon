@@ -9,6 +9,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -22,6 +23,8 @@ import (
 
 // This is a copy of the constant in metropolis/node/kubernetes/provisioner.go.
 const inodeCapacityRatio = 4 * 512
+
+var runtimeClass = flag.String("runtimeclass", "", "Name of the runtime class")
 
 // checkFilesystemVolume checks that the filesystem containing path has the
 // given mount flags and capacity.
@@ -86,20 +89,21 @@ func testPersistentVolume() error {
 	if err := checkFilesystemVolume("/vol/default", 0, 1*1024*1024); err != nil {
 		return err
 	}
-	if err := checkFilesystemVolume("/vol/local-strict", unix.ST_NOSUID|unix.ST_NODEV|unix.ST_NOEXEC, 5*1024*1024); err != nil {
-		return err
-	}
 	if err := checkFilesystemVolume("/vol/readonly", unix.ST_RDONLY, 1*1024*1024); err != nil {
 		return err
 	}
-	if err := checkBlockVolume("/vol/block", 1*1024*1024); err != nil {
-		return err
+	// Block volumes are not supported on gVisor.
+	if *runtimeClass != "gvisor" {
+		if err := checkBlockVolume("/vol/block", 1*1024*1024); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func main() {
-	fmt.Println("PersistentVolume tests starting...")
+	flag.Parse()
+	fmt.Printf("PersistentVolume tests starting on %s...\n", *runtimeClass)
 
 	if err := testPersistentVolume(); err != nil {
 		fmt.Println(err.Error())
