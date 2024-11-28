@@ -72,7 +72,6 @@ build --extra_execution_platforms=//build/platforms:linux_amd64
 
 # Build resources
 startup --batch_cpu_scheduling --io_nice_level 7
-test --test_output=errors
 
 # selinux:
 #     build with SELinux (containerd, kubelet)
