@@ -115,7 +115,7 @@ func (s *csiPluginServer) NodePublishVolume(ctx context.Context, req *csi.NodePu
 			return nil, status.Errorf(codes.Unavailable, "failed to bind-mount volume: %v", err)
 		}
 
-		var flags uintptr = unix.MS_REMOUNT | unix.MS_BIND
+		var flags uintptr = unix.MS_REMOUNT | unix.MS_BIND | unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV
 		if req.Readonly {
 			flags |= unix.MS_RDONLY
 		}
