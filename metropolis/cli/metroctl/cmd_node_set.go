@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"k8s.io/utils/ptr"
 
 	"source.monogon.dev/metropolis/proto/api"
 )
@@ -39,7 +40,6 @@ var addRoleCmd = &cobra.Command{
 		role := strings.ToLower(args[0])
 		nodes := args[1:]
 
-		opt := func(v bool) *bool { return &v }
 		for _, node := range nodes {
 			req := &api.UpdateNodeRolesRequest{
 				Node: &api.UpdateNodeRolesRequest_Id{
@@ -48,11 +48,11 @@ var addRoleCmd = &cobra.Command{
 			}
 			switch role {
 			case "kubernetescontroller", "kc":
-				req.KubernetesController = opt(true)
+				req.KubernetesController = ptr.To(true)
 			case "kubernetesworker", "kw":
-				req.KubernetesWorker = opt(true)
+				req.KubernetesWorker = ptr.To(true)
 			case "consensusmember", "cm":
-				req.ConsensusMember = opt(true)
+				req.ConsensusMember = ptr.To(true)
 			default:
 				return fmt.Errorf("unknown role: %s", role)
 			}
@@ -84,7 +84,6 @@ var removeRoleCmd = &cobra.Command{
 		role := strings.ToLower(args[0])
 		nodes := args[1:]
 
-		opt := func(v bool) *bool { return &v }
 		for _, node := range nodes {
 			req := &api.UpdateNodeRolesRequest{
 				Node: &api.UpdateNodeRolesRequest_Id{
@@ -94,11 +93,11 @@ var removeRoleCmd = &cobra.Command{
 
 			switch role {
 			case "kubernetescontroller", "kc":
-				req.KubernetesController = opt(false)
+				req.KubernetesController = ptr.To(false)
 			case "kubernetesworker", "kw":
-				req.KubernetesWorker = opt(false)
+				req.KubernetesWorker = ptr.To(false)
 			case "consensusmember", "cm":
-				req.ConsensusMember = opt(false)
+				req.ConsensusMember = ptr.To(false)
 			default:
 				return fmt.Errorf("unknown role: %s. Must be one of: KubernetesController, KubernetesWorker, ConsensusMember", role)
 			}

@@ -69,6 +69,7 @@ go_library(
         "@io_k8s_kubernetes//pkg/features",
         "@io_k8s_kubernetes//plugin/pkg/admission/security/podsecurity",
         "@io_k8s_pod_security_admission//admission/api/v1:api",
+        "@io_k8s_utils//ptr",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//status",

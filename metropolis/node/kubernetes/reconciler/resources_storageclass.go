@@ -23,6 +23,7 @@ import (
 	storage "k8s.io/api/storage/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/utils/ptr"
 )
 
 var reclaimPolicyDelete = core.PersistentVolumeReclaimDelete
@@ -71,7 +72,7 @@ func (r resourceStorageClasses) Expected() []meta.Object {
 						"It is backed by XFS.",
 				},
 			},
-			AllowVolumeExpansion: True(),
+			AllowVolumeExpansion: ptr.To(true),
 			Provisioner:          csiProvisionerName,
 			ReclaimPolicy:        &reclaimPolicyDelete,
 			VolumeBindingMode:    &waitForConsumerBinding,

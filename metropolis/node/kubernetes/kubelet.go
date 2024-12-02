@@ -27,12 +27,12 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
+	"k8s.io/utils/ptr"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 
 	"source.monogon.dev/metropolis/node/core/localstorage"
 	"source.monogon.dev/metropolis/node/kubernetes/pki"
-	"source.monogon.dev/metropolis/node/kubernetes/reconciler"
 	"source.monogon.dev/osbase/fileargs"
 	"source.monogon.dev/osbase/supervisor"
 )
@@ -99,10 +99,10 @@ func (s *kubeletService) configure(fargs *fileargs.FileArgs) *kubeletconfig.Kube
 		},
 		// TODO(q3k): move reconciler.False to a generic package, fix the following references.
 		ClusterDomain:                s.ClusterDomain,
-		EnableControllerAttachDetach: reconciler.False(),
+		EnableControllerAttachDetach: ptr.To(false),
 		HairpinMode:                  "none",
-		MakeIPTablesUtilChains:       reconciler.False(), // We don't have iptables
-		FailSwapOn:                   reconciler.False(),
+		MakeIPTablesUtilChains:       ptr.To(false), // We don't have iptables
+		FailSwapOn:                   ptr.To(false),
 		MemorySwap: kubeletconfig.MemorySwapConfiguration{
 			// Only allow burstable pods to use swap
 			SwapBehavior: "LimitedSwap",

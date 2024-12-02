@@ -22,6 +22,7 @@ import (
 	storage "k8s.io/api/storage/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/utils/ptr"
 )
 
 // TODO(q3k): this is duplicated with
@@ -70,13 +71,13 @@ func (r resourceCSIDrivers) Expected() []meta.Object {
 				Labels: builtinLabels(nil),
 			},
 			Spec: storage.CSIDriverSpec{
-				AttachRequired:       False(),
-				PodInfoOnMount:       False(),
+				AttachRequired:       ptr.To(false),
+				PodInfoOnMount:       ptr.To(false),
 				VolumeLifecycleModes: []storage.VolumeLifecycleMode{storage.VolumeLifecyclePersistent},
-				StorageCapacity:      False(),
+				StorageCapacity:      ptr.To(false),
 				FSGroupPolicy:        &fsGroupPolicy,
-				RequiresRepublish:    False(),
-				SELinuxMount:         False(),
+				RequiresRepublish:    ptr.To(false),
+				SELinuxMount:         ptr.To(false),
 			},
 		},
 	}

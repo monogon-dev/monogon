@@ -41,16 +41,6 @@ import (
 	"source.monogon.dev/osbase/supervisor"
 )
 
-// True is a sad workaround for all the pointer booleans in K8s specs
-func True() *bool {
-	val := true
-	return &val
-}
-func False() *bool {
-	val := false
-	return &val
-}
-
 const (
 	// BuiltinLabelKey is used as a k8s label to mark built-in objects (ie.,
 	// managed by the reconciler)

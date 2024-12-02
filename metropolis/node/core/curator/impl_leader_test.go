@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"k8s.io/utils/ptr"
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
@@ -285,7 +286,7 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 
 type fakeLeaderOption struct {
 	// icc is the initial cluster configuration to be set when bootstrapping the
-	//fake cluster. If not set, uses system defaults.
+	// fake cluster. If not set, uses system defaults.
 	icc    *cpb.ClusterConfiguration
 	labels map[string]string
 }
@@ -1199,28 +1200,27 @@ func TestUpdateNodeRoles(t *testing.T) {
 
 	// Define the test payloads. Each role is optional, and will be updated
 	// only if it's not nil, and its value differs from the current state.
-	opt := func(v bool) *bool { return &v }
 	ue := []*apb.UpdateNodeRolesRequest{
 		&apb.UpdateNodeRolesRequest{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[0].pubkey,
 			},
-			KubernetesWorker: opt(false),
-			ConsensusMember:  opt(false),
+			KubernetesWorker: ptr.To(false),
+			ConsensusMember:  ptr.To(false),
 		},
 		&apb.UpdateNodeRolesRequest{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[1].pubkey,
 			},
-			KubernetesWorker: opt(false),
-			ConsensusMember:  opt(true),
+			KubernetesWorker: ptr.To(false),
+			ConsensusMember:  ptr.To(true),
 		},
 		&apb.UpdateNodeRolesRequest{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[2].pubkey,
 			},
-			KubernetesWorker: opt(true),
-			ConsensusMember:  opt(true),
+			KubernetesWorker: ptr.To(true),
+			ConsensusMember:  ptr.To(true),
 		},
 		&apb.UpdateNodeRolesRequest{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
@@ -1274,14 +1274,14 @@ func TestUpdateNodeRoles(t *testing.T) {
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[0].pubkey,
 			},
-			KubernetesController: opt(true),
-			ConsensusMember:      opt(false),
+			KubernetesController: ptr.To(true),
+			ConsensusMember:      ptr.To(false),
 		},
 		&apb.UpdateNodeRolesRequest{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[0].pubkey,
 			},
-			KubernetesController: opt(true),
+			KubernetesController: ptr.To(true),
 			ConsensusMember:      nil,
 		},
 	}
