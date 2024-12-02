@@ -18,6 +18,12 @@ test --notest_verbose_timeout_warnings
 # Set compilation mode (-c) to debug when running with --config dbg.
 build:dbg --compilation_mode=dbg
 
+# Run race config with race detector
+build:race --@io_bazel_rules_go//go/config:race
+
+# Force netgo and osusergo
+build --@io_bazel_rules_go//go/config:tags=osusergo,netgo
+
 # Run all spawns in our own hermetic sandbox sysroot.
 build --experimental_use_hermetic_linux_sandbox
 build --sandbox_fake_hostname
@@ -70,26 +76,6 @@ build --extra_execution_platforms=//build/platforms:linux_amd64
 
 # Build resources
 startup --batch_cpu_scheduling --io_nice_level 7
-
-# selinux:
-#     build with SELinux (containerd, kubelet)
-# no_zfs,no_aufs,no_devicemapper:
-#     disable containerd features we don't need
-# providerless,dockerless:
-#     build k8s without cloud provider and docker support
-# nowasm:
-#     disable wasm plugin support in sqlc
-# nobtrfs,nozfs,notapestats,norapl:
-#     disable node_exporter features we don't need
-build --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo,nobtrfs,nozfs,notapestats,norapl
-
-# kvm_debug:
-#     prevent stackoverflows for gvisor
-build:dbg --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo,nobtrfs,nozfs,notapestats,norapl,kvm_debug
-
-# Run race config with race detector
-build:race --@io_bazel_rules_go//go/config:race
-build:race --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo,nobtrfs,nozfs,notapestats,norapl,race
 
 # Build with C++17.
 build --cxxopt=-std=c++17

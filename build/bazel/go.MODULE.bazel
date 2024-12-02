@@ -110,7 +110,7 @@ OVERRIDES = {
     "github.com/containerd/containerd/v2": {
         "directives": [
             "gazelle:proto disable",
-            "gazelle:build_tags no_btrfs,no_zfs",
+            "gazelle:build_tags no_aufs,no_btrfs,no_devmapper,no_zfs",
         ],
     },
     "github.com/containerd/cgroups/v3": {
@@ -160,11 +160,6 @@ OVERRIDES = {
             "//third_party/go/patches:runc-add-cdeps.patch",
         ],
     },
-    "github.com/prometheus/node_exporter": {
-        "directives": [
-            "gazelle:build_tags nobtrfs,nozfs,notapestats,norapl",
-        ],
-    },
     "github.com/google/cadvisor": {
         "directives": [
             "gazelle:proto disable_global",
@@ -174,11 +169,9 @@ OVERRIDES = {
         ],
     },
     "github.com/sqlc-dev/sqlc": {
-        "build_extra_args": [
-            "-exclude=internal/ext/wasm/wasm.go",
-        ],
         "directives": [
             "gazelle:proto disable",
+            "gazelle:build_tags nowasm",
         ],
     },
     "github.com/containerd/ttrpc": {
@@ -252,7 +245,6 @@ OVERRIDES = {
     "k8s.io/kubernetes": {
         "directives": [
             "gazelle:proto disable",
-            "gazelle:build_tags providerless,dockerless",
         ],
         "patches": [
             "//third_party/go/patches:k8s-native-metrics.patch",

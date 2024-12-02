@@ -1,5 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
+load("//build/go:def.bzl", "go_binary_with_tag")
 load("//osbase/build:def.bzl", "erofs_image", "verity_image")
 load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
 load("//osbase/build/genosrelease:defs.bzl", "os_release")
@@ -34,6 +35,12 @@ config_setting(
 exports_files([
     "passwd",
 ])
+
+go_binary_with_tag(
+    name = "runc",
+    binary = "@com_github_opencontainers_runc//:runc",
+    gotags = ["seccomp"],
+)
 
 erofs_image(
     name = "rootfs",
@@ -85,7 +92,7 @@ erofs_image(
     files_cc = {
         "//metropolis/node/core/minit": "/init",
         # runc runtime, with cgo
-        "@com_github_opencontainers_runc//:runc": "/containerd/bin/runc",
+        ":runc": "/containerd/bin/runc",
         "@xfsprogs//:mkfs": "/bin/mkfs.xfs",
         "@chrony//:chrony": "/time/chrony",
     },
