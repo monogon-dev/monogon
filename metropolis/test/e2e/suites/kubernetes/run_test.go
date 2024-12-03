@@ -132,12 +132,11 @@ func TestE2EKubernetesLabels(t *testing.T) {
 	}
 	// Nominate both nodes to be Kubernetes workers.
 	for _, nid := range cluster.NodeIDs {
-		yes := true
 		_, err := mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
 			Node: &apb.UpdateNodeRolesRequest_Id{
 				Id: nid,
 			},
-			KubernetesWorker: &yes,
+			KubernetesWorker: ptr.To(true),
 		})
 		if err != nil {
 			t.Fatalf("Could not make %s a KubernetesWorker: %v", nid, err)
@@ -163,12 +162,11 @@ func TestE2EKubernetesLabels(t *testing.T) {
 
 	// Remove KubernetesWorker from first node again. It will stay in k8s (arguably,
 	// this is a bug) but its role label should be removed.
-	no := false
 	_, err = mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
 		Node: &apb.UpdateNodeRolesRequest_Id{
 			Id: cluster.NodeIDs[0],
 		},
-		KubernetesWorker: &no,
+		KubernetesWorker: ptr.To(false),
 	})
 	if err != nil {
 		t.Fatalf("Could not remove KubernetesWorker from %s: %v", cluster.NodeIDs[0], err)

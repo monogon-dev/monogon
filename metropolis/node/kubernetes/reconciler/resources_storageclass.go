@@ -26,9 +26,6 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-var reclaimPolicyDelete = core.PersistentVolumeReclaimDelete
-var waitForConsumerBinding = storage.VolumeBindingWaitForFirstConsumer
-
 type resourceStorageClasses struct {
 	kubernetes.Interface
 }
@@ -74,8 +71,8 @@ func (r resourceStorageClasses) Expected() []meta.Object {
 			},
 			AllowVolumeExpansion: ptr.To(true),
 			Provisioner:          csiProvisionerName,
-			ReclaimPolicy:        &reclaimPolicyDelete,
-			VolumeBindingMode:    &waitForConsumerBinding,
+			ReclaimPolicy:        ptr.To(core.PersistentVolumeReclaimDelete),
+			VolumeBindingMode:    ptr.To(storage.VolumeBindingWaitForFirstConsumer),
 			MountOptions: []string{
 				"exec",
 				"dev",

@@ -1331,12 +1331,11 @@ func TestDeleteNode(t *testing.T) {
 	}
 
 	// Give second node some roles.
-	yes := true
 	_, err = mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
 		Node: &apb.UpdateNodeRolesRequest_Id{
 			Id: tn[1].ID(),
 		},
-		KubernetesWorker: &yes,
+		KubernetesWorker: ptr.To(true),
 	})
 	if err != nil {
 		t.Fatalf("Adding node 1 a role failed: %v", err)
@@ -1427,12 +1426,11 @@ func TestIssueKubernetesWorkerCertificate(t *testing.T) {
 	defer ctxC()
 
 	mgmt := apb.NewManagementClient(cl.mgmtConn)
-	true_ := true
 	_, err := mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
 		Node: &apb.UpdateNodeRolesRequest_Id{
 			Id: cl.localNodeID,
 		},
-		KubernetesWorker: &true_,
+		KubernetesWorker: ptr.To(true),
 	})
 	if err != nil {
 		t.Fatalf("Could not make node into Kubernetes worker: %v", err)

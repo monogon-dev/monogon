@@ -73,14 +73,13 @@ func makeTestDeploymentSpec(name string) *appsv1.Deployment {
 // makeHTTPServerDeploymentSpec generates the deployment spec for the test HTTP
 // server.
 func makeHTTPServerDeploymentSpec(name string) *appsv1.Deployment {
-	oneVal := int32(1)
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{MatchLabels: map[string]string{
 				"name": name,
 			}},
-			Replicas: &oneVal,
+			Replicas: ptr.To(int32(1)),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
@@ -129,11 +128,10 @@ func makeHTTPServerNodePortService(name string) *corev1.Service {
 
 // makeSelftestSpec generates a Job spec for the E2E self-test image.
 func makeSelftestSpec(name string) *batchv1.Job {
-	one := int32(1)
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 		Spec: batchv1.JobSpec{
-			BackoffLimit: &one,
+			BackoffLimit: ptr.To(int32(1)),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{

@@ -63,7 +63,6 @@ func (r resourceCSIDrivers) Delete(ctx context.Context, name string, opts meta.D
 }
 
 func (r resourceCSIDrivers) Expected() []meta.Object {
-	fsGroupPolicy := storage.FileFSGroupPolicy
 	return []meta.Object{
 		&storage.CSIDriver{
 			ObjectMeta: meta.ObjectMeta{
@@ -75,7 +74,7 @@ func (r resourceCSIDrivers) Expected() []meta.Object {
 				PodInfoOnMount:       ptr.To(false),
 				VolumeLifecycleModes: []storage.VolumeLifecycleMode{storage.VolumeLifecyclePersistent},
 				StorageCapacity:      ptr.To(false),
-				FSGroupPolicy:        &fsGroupPolicy,
+				FSGroupPolicy:        ptr.To(storage.FileFSGroupPolicy),
 				RequiresRepublish:    ptr.To(false),
 				SELinuxMount:         ptr.To(false),
 			},

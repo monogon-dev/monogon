@@ -56,6 +56,7 @@ go_library(
         "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@io_k8s_client_go//kubernetes",
         "@io_k8s_client_go//rest",
+        "@io_k8s_utils//ptr",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//status",

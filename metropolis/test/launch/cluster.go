@@ -36,6 +36,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/ptr"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -1415,13 +1416,12 @@ func (c *Cluster) MakeKubernetesWorker(ctx context.Context, id string) error {
 	}
 	mgmt := apb.NewManagementClient(curC)
 
-	tr := true
 	launch.Log("Cluster: %s: adding KubernetesWorker", id)
 	_, err = mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
 		Node: &apb.UpdateNodeRolesRequest_Id{
 			Id: id,
 		},
-		KubernetesWorker: &tr,
+		KubernetesWorker: ptr.To(true),
 	})
 	return err
 }
@@ -1434,13 +1434,12 @@ func (c *Cluster) MakeKubernetesController(ctx context.Context, id string) error
 	}
 	mgmt := apb.NewManagementClient(curC)
 
-	tr := true
 	launch.Log("Cluster: %s: adding KubernetesController", id)
 	_, err = mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
 		Node: &apb.UpdateNodeRolesRequest_Id{
 			Id: id,
 		},
-		KubernetesController: &tr,
+		KubernetesController: ptr.To(true),
 	})
 	return err
 }
@@ -1454,7 +1453,6 @@ func (c *Cluster) MakeConsensusMember(ctx context.Context, id string) error {
 	mgmt := apb.NewManagementClient(curC)
 	cur := ipb.NewCuratorClient(curC)
 
-	tr := true
 	launch.Log("Cluster: %s: adding ConsensusMember", id)
 	bo := backoff.NewExponentialBackOff()
 	bo.MaxElapsedTime = 10 * time.Second
@@ -1464,7 +1462,7 @@ func (c *Cluster) MakeConsensusMember(ctx context.Context, id string) error {
 			Node: &apb.UpdateNodeRolesRequest_Id{
 				Id: id,
 			},
-			ConsensusMember: &tr,
+			ConsensusMember: ptr.To(true),
 		})
 		if err != nil {
 			launch.Log("Cluster: %s: UpdateNodeRoles failed: %v", id, err)

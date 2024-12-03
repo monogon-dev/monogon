@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/utils/ptr"
+
 	mlaunch "source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/util"
 	"source.monogon.dev/osbase/test/launch"
@@ -96,22 +98,20 @@ func TestE2EColdStartHA(t *testing.T) {
 	cur := ipb.NewCuratorClient(curC)
 
 	util.MustTestEventual(t, "Remove KubernetesController role", ctx, 10*time.Second, func(ctx context.Context) error {
-		fa := false
 		_, err := mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
 			Node: &apb.UpdateNodeRolesRequest_Id{
 				Id: cluster.NodeIDs[0],
 			},
-			KubernetesController: &fa,
+			KubernetesController: ptr.To(false),
 		})
 		return err
 	})
 	util.MustTestEventual(t, "Remove ConsensusMember role", ctx, time.Minute, func(ctx context.Context) error {
-		fa := false
 		_, err := mgmt.UpdateNodeRoles(ctx, &apb.UpdateNodeRolesRequest{
 			Node: &apb.UpdateNodeRolesRequest_Id{
 				Id: cluster.NodeIDs[0],
 			},
-			ConsensusMember: &fa,
+			ConsensusMember: ptr.To(false),
 		})
 		return err
 	})
