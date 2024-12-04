@@ -75,6 +75,7 @@ require (
 	github.com/container-storage-interface/spec v1.9.0
 	github.com/containerd/containerd/v2 v2.0.0
 	github.com/containernetworking/plugins v1.5.1
+	github.com/coreos/go-semver v0.3.1
 	github.com/corverroos/commentwrap v0.0.0-20191204065359-2926638be44c
 	github.com/diskfs/go-diskfs v1.2.0
 	github.com/docker/distribution v2.8.2+incompatible
@@ -114,6 +115,7 @@ require (
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/node_exporter v1.8.2
 	github.com/pseudomuto/protoc-gen-doc v1.5.0
+	github.com/rivo/uniseg v0.4.7
 	github.com/rmohr/bazeldnf v0.5.4
 	github.com/sbezverk/nfproxy v0.0.0-20210112155058-0d98b4a69f0c
 	github.com/schollz/progressbar/v3 v3.14.6
@@ -135,6 +137,7 @@ require (
 	golang.org/x/net v0.30.0
 	golang.org/x/sync v0.8.0
 	golang.org/x/sys v0.26.0
+	golang.org/x/term v0.25.0
 	golang.org/x/text v0.19.0
 	golang.org/x/time v0.7.0
 	golang.org/x/tools v0.26.0
@@ -218,7 +221,6 @@ require (
 	github.com/containers/ocicrypt v1.2.0 // indirect
 	github.com/coreos/go-iptables v0.7.0 // indirect
 	github.com/coreos/go-oidc v2.2.1+incompatible // indirect
-	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cosiner/argv v0.1.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
@@ -373,7 +375,6 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/pseudomuto/protokit v0.2.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	github.com/rivo/uniseg v0.4.7
 	github.com/riza-io/grpc-go v0.2.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rs/cors v1.8.0 // indirect
@@ -424,7 +425,6 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20231108232855-2478ac86f678 // indirect
 	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
-	golang.org/x/term v0.25.0
 	golang.zx2c4.com/wireguard v0.0.0-20220202223031-3b95c81cc178 // indirect
 	google.golang.org/api v0.169.0 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
