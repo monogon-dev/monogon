@@ -48,9 +48,6 @@ replace github.com/vishvananda/netlink => github.com/monogon-dev/netlink v0.0.0-
 // is outdated and gazelle needs it.
 replace github.com/bazelbuild/buildtools => github.com/bazelbuild/buildtools v0.0.0-20231103205921-433ea8554e82
 
-// Our privflags implementation, going upstream with https://github.com/mdlayher/ethtool/pull/22
-replace github.com/mdlayher/ethtool => github.com/monogon-dev/ethtool v0.0.0-20231122193313-e9c21a3a83cb
-
 // Update to the latest version to prevent additional imports
 // to appear in our dependency graph: https://github.com/golang/go/issues/37175
 replace golang.org/x/exp => golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
@@ -100,7 +97,7 @@ require (
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
-	github.com/mdlayher/ethtool v0.1.0
+	github.com/mdlayher/ethtool v0.2.0
 	github.com/mdlayher/genetlink v1.3.2
 	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
 	github.com/mdlayher/netlink v1.7.2
