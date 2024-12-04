@@ -97,7 +97,3 @@ bazel ${BAZEL_ARGS} run //:bazeldnf -- verify \
   --from-macro third_party/sandboxroot/repositories.bzl%sandbox_dependencies
 
 mv ${DIR}/BUILD.bazel.in ${DIR}/BUILD.bazel
-
-# Mirror everything
-bazel ${BAZEL_ARGS} \
-  run //third_party/sandboxroot/mirror sync

@@ -3,19 +3,11 @@ repositories:
   metalink: https://mirrors.fedoraproject.org/metalink?repo=fedora-40&arch=x86_64
   name: 40-x86_64-primary-repo
   mirrors:
-    - https://ftp.fau.de/fedora/linux/releases/40/Everything/x86_64/os
-    - https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/40/Everything/x86_64/os
-    - https://mirror.23m.com/fedora/linux/releases/40/Everything/x86_64/os
-    - https://ftp.plusline.net/fedora/linux/releases/40/Everything/x86_64/os
-    - https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/releases/40/Everything/x86_64/os
+    - https://dl.fedoraproject.org/pub/fedora/linux/releases/40/Everything/x86_64/os
   gpgkey: https://storage.googleapis.com/monogon-infra-public/RPM-GPG-KEY-fedora-40-primary
 - arch: x86_64
   metalink: https://mirrors.fedoraproject.org/metalink?repo=updates-released-f40&arch=x86_64
   name: 40-x86_64-update-repo
   gpgkey: https://storage.googleapis.com/monogon-infra-public/RPM-GPG-KEY-fedora-40-primary
   mirrors:
-    - https://ftp.fau.de/fedora/linux/updates/40/Everything/x86_64
-    - https://ftp.halifax.rwth-aachen.de/fedora/linux/updates/40/Everything/x86_64
-    - https://mirror.23m.com/fedora/linux/updates/40/Everything/x86_64
-    - https://ftp.plusline.net/fedora/linux/updates/40/Everything/x86_64
-    - https://storage.googleapis.com/monogon-infra-public/mirror/fedora/linux/updates/40/Everything/x86_64
+    - https://dl.fedoraproject.org/pub/fedora/linux/updates/40/Everything/x86_64

@@ -1,0 +1,45 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "mirror_proxy_lib",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/build/mirror_proxy",
+    visibility = ["//visibility:private"],
+    deps = [
+        "@com_google_cloud_go_storage//:storage",
+        "@org_golang_google_api//option",
+    ],
+)
+
+go_binary(
+    name = "mirror_proxy",
+    embed = [":mirror_proxy_lib"],
+    visibility = ["//visibility:public"],
+)
+
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+pkg_tar(
+    name = "mirror_proxy_layer",
+    srcs = [":mirror_proxy"],
+)
+
+load("@rules_oci//oci:defs.bzl", "oci_image")
+
+oci_image(
+    name = "mirror_proxy_image",
+    base = "@distroless_base",
+    entrypoint = ["/mirror_proxy"],
+    tars = [":mirror_proxy_layer"],
+    visibility = ["//visibility:public"],
+    workdir = "/app",
+)
+
+load("@rules_oci//oci:defs.bzl", "oci_push")
+
+oci_push(
+    name = "mirror_proxy_push",
+    image = ":mirror_proxy_image",
+    remote_tags = ["latest"],
+    repository = "gcr.io/monogon-infra/build/mirror_proxy",
+)
