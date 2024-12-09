@@ -16,7 +16,6 @@ go_library(
 go_binary(
     name = "persistentvolume",
     embed = [":persistentvolume_lib"],
-    pure = "on",
     visibility = ["//visibility:private"],
 )
 

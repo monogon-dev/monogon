@@ -22,7 +22,6 @@ go_test(
     name = "callback_test",
     srcs = ["callback_test.go"],
     embed = [":callback"],
-    pure = "on",
     deps = [
         "//metropolis/node/core/network/dhcp4c",
         "@com_github_google_go_cmp//cmp",

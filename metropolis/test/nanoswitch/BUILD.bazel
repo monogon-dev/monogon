@@ -29,7 +29,6 @@ go_library(
 go_binary(
     name = "nanoswitch",
     embed = [":nanoswitch_lib"],
-    pure = "on",
     visibility = ["//visibility:private"],
 )
 

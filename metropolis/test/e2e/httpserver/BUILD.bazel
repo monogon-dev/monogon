@@ -12,7 +12,6 @@ go_library(
 go_binary(
     name = "httpserver",
     embed = [":httpserver_lib"],
-    pure = "on",
     visibility = ["//visibility:private"],
 )
 

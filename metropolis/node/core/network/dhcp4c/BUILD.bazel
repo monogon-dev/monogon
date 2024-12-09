@@ -29,7 +29,6 @@ go_test(
         "lease_test.go",
     ],
     embed = [":dhcp4c"],
-    pure = "on",
     deps = [
         "//metropolis/node/core/network/dhcp4c/transport",
         "@com_github_cenkalti_backoff_v4//:backoff",

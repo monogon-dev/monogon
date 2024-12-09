@@ -19,12 +19,13 @@ def _build_pure_transition_impl(settings, attr):
     """
     Transition that enables pure, static build of Go binaries.
     """
-    race = settings['@io_bazel_rules_go//go/config:race']
+    race = settings["@io_bazel_rules_go//go/config:race"]
     pure = not race
 
     return {
         "@io_bazel_rules_go//go/config:pure": pure,
         "@io_bazel_rules_go//go/config:static": True,
+        "//command_line_option:platforms": "//build/platforms:linux_amd64_static",
     }
 
 build_pure_transition = transition(
@@ -35,6 +36,7 @@ build_pure_transition = transition(
     outputs = [
         "@io_bazel_rules_go//go/config:pure",
         "@io_bazel_rules_go//go/config:static",
+        "//command_line_option:platforms",
     ],
 )
 

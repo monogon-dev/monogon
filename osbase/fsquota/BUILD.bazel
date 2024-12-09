@@ -17,7 +17,6 @@ go_test(
     name = "fsquota_test",
     srcs = ["fsquota_test.go"],
     embed = [":fsquota"],
-    pure = "on",
     deps = [
         "@com_github_stretchr_testify//require",
         "@org_golang_x_sys//unix",

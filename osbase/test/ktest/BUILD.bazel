@@ -13,7 +13,6 @@ go_library(
 go_binary(
     name = "ktest",
     embed = [":ktest_lib"],
-    pure = "on",
     visibility = [
         "//go/net/psample:__pkg__",
         "//metropolis:__subpackages__",

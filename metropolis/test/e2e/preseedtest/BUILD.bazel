@@ -12,7 +12,6 @@ go_library(
 go_binary(
     name = "preseedtest",
     embed = [":preseedtest_lib"],
-    pure = "on",
     visibility = ["//visibility:private"],
 )
 

@@ -23,7 +23,6 @@ go_test(
         "erofs_test.go",
     ],
     embed = [":erofs"],
-    pure = "on",  # keep
     deps = [
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

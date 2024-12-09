@@ -87,6 +87,10 @@ build --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_dev
 #     prevent stackoverflows for gvisor
 build:dbg --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo,nobtrfs,nozfs,notapestats,norapl,kvm_debug
 
+# Run race config with race detector
+build:race --@io_bazel_rules_go//go/config:race
+build:race --@io_bazel_rules_go//go/config:tags=selinux,seccomp,no_zfs,no_aufs,no_devicemapper,providerless,dockerless,nowasm,netgo,osusergo,nobtrfs,nozfs,notapestats,norapl,race
+
 # Build with C++17.
 build --cxxopt=-std=c++17
 

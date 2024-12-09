@@ -12,7 +12,6 @@ go_library(
 go_binary(
     name = "selftest",
     embed = [":selftest_lib"],
-    pure = "on",
     visibility = ["//visibility:private"],
 )
 

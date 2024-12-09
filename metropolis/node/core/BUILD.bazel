@@ -61,6 +61,5 @@ go_library(
 go_binary(
     name = "core",
     embed = [":core_lib"],
-    pure = "on",  # keep
     visibility = ["//metropolis/node:__pkg__"],
 )
