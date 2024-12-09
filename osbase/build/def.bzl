@@ -278,7 +278,7 @@ def _verity_image_impl(ctx):
     table = ctx.actions.declare_file(ctx.attr.name + ".dmt")
     ctx.actions.run(
         mnemonic = "GenVerityImage",
-        progress_message = "Generating a dm-verity image",
+        progress_message = "Generating a dm-verity image: {}".format(image.short_path),
         inputs = [ctx.file.source],
         outputs = [
             image,

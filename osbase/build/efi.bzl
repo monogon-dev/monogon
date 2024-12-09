@@ -55,7 +55,7 @@ def _efi_unified_kernel_image_impl(ctx):
     # Run mkpayload.
     ctx.actions.run(
         mnemonic = "GenEFIKernelImage",
-        progress_message = "Generating EFI unified kernel image",
+        progress_message = "Generating EFI unified kernel image: {}".format(image.short_path),
         inputs = inputs,
         outputs = [image],
         executable = ctx.file._mkpayload,
