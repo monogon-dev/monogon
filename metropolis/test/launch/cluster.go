@@ -875,13 +875,14 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 
 	go func() {
 		var serialPort io.ReadWriter
+		var err error
 		if opts.NodeLogsToFiles {
-			path := path.Join(ld, "nanoswitch.txt")
-			serialPort, err = NewSerialFileLogger(path)
+			loggerPath := path.Join(ld, "nanoswitch.txt")
+			serialPort, err = NewSerialFileLogger(loggerPath)
 			if err != nil {
-				launch.Log("Could not open log file for nanoswitch: %v", err)
+				launch.Fatal("Could not open log file for nanoswitch: %v", err)
 			}
-			launch.Log("Nanoswitch logs at %s", path)
+			launch.Log("Nanoswitch logs at %s", loggerPath)
 		} else {
 			serialPort = newPrefixedStdio(99)
 		}
