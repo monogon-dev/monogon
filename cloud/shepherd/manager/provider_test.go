@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -70,7 +71,9 @@ func (dsc *dummySSHClient) Dial(ctx context.Context, address string, timeout tim
 		return nil, err
 	}
 
+	dsc.dp.muMachines.RLock()
 	m := dsc.dp.machines[shepherd.ProviderID(uid.String())]
+	dsc.dp.muMachines.RUnlock()
 	if m == nil {
 		return nil, fmt.Errorf("failed finding machine in map")
 	}
@@ -95,12 +98,16 @@ func newDummyProvider(cap int) *dummyProvider {
 type dummyProvider struct {
 	capacity int
 	machines map[shepherd.ProviderID]*dummyMachine
+	muMachines sync.RWMutex
 }
 
 func (dp *dummyProvider) createDummyMachines(ctx context.Context, session *bmdb.Session, count int) ([]shepherd.Machine, error) {
+	dp.muMachines.RLock()
 	if len(dp.machines)+count > dp.capacity {
+		dp.muMachines.RUnlock()
 		return nil, fmt.Errorf("no capacity left")
 	}
+	dp.muMachines.RUnlock()
 
 	var machines []shepherd.Machine
 	for i := 0; i < count; i++ {
@@ -123,9 +130,11 @@ func (dp *dummyProvider) createDummyMachines(ctx context.Context, session *bmdb.
 
 func (dp *dummyProvider) ListMachines(ctx context.Context) ([]shepherd.Machine, error) {
 	var machines []shepherd.Machine
+	dp.muMachines.RLock()
 	for _, m := range dp.machines {
 		machines = append(machines, m)
 	}
+	dp.muMachines.RUnlock()
 
 	unusedMachineCount := dp.capacity - len(machines)
 	for i := 0; i < unusedMachineCount; i++ {
@@ -141,6 +150,8 @@ func (dp *dummyProvider) ListMachines(ctx context.Context) ([]shepherd.Machine, 
 }
 
 func (dp *dummyProvider) GetMachine(ctx context.Context, id shepherd.ProviderID) (shepherd.Machine, error) {
+	dp.muMachines.RLock()
+	defer dp.muMachines.RUnlock()
 	for _, m := range dp.machines {
 		if m.ID() == id {
 			return m, nil
@@ -177,7 +188,9 @@ func (dp *dummyProvider) CreateMachine(ctx context.Context, session *bmdb.Sessio
 	}
 
 	dm.availability = shepherd.AvailabilityKnownUsed
+	dp.muMachines.Lock()
 	dp.machines[dm.id] = dm
+	dp.muMachines.Unlock()
 
 	return dm, nil
 }

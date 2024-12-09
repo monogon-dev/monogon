@@ -83,6 +83,8 @@ func TestInitializerSmokes(t *testing.T) {
 		}
 	}
 
+	provider.muMachines.RLock()
+	defer provider.muMachines.RUnlock()
 	for _, m := range provider.machines {
 		if !m.agentStarted {
 			t.Fatalf("Initializer didn't start agent on machine %q", m.id)

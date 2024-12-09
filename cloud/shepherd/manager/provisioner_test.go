@@ -64,19 +64,21 @@ func TestProvisionerSmokes(t *testing.T) {
 			return err
 		})
 		if err != nil {
-			t.Errorf("Transact failed: %v", err)
+			t.Fatalf("Transact failed: %v", err)
 		}
 		if len(provided) < 10 {
 			continue
 		}
 		if len(provided) > 10 {
-			t.Errorf("%d machines provided (limit: 10)", len(provided))
+			t.Fatalf("%d machines provided (limit: 10)", len(provided))
 		}
 
 		for _, mp := range provided {
+			provider.muMachines.RLock()
 			if provider.machines[shepherd.ProviderID(mp.ProviderID)] == nil {
-				t.Errorf("BMDB machine %q has unknown provider ID %q", mp.MachineID, mp.ProviderID)
+				t.Fatalf("BMDB machine %q has unknown provider ID %q", mp.MachineID, mp.ProviderID)
 			}
+			provider.muMachines.RUnlock()
 		}
 
 		return
@@ -131,7 +133,7 @@ func TestProvisioner_resolvePossiblyUsed(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &Provisioner{}
 			if got := p.resolvePossiblyUsed(&dummyMachine{id: tt.machineID, availability: tt.machineAvailability}, providedMachines); got != tt.wantedAvailability {
-				t.Errorf("resolvePossiblyUsed() = %v, want %v", got, tt.wantedAvailability)
+				t.Fatalf("resolvePossiblyUsed() = %v, want %v", got, tt.wantedAvailability)
 			}
 		})
 	}
