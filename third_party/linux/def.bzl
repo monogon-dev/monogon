@@ -33,8 +33,8 @@ _new_settings = {
     # Force-setting them to a stable value forces the build configuration
     # to a stable hash.
     # See the transition's comment block for more information.
-    "@io_bazel_rules_go//go/config:pure": True,
-    "@io_bazel_rules_go//go/config:static": True,
+    "@io_bazel_rules_go//go/config:pure": False,
+    "@io_bazel_rules_go//go/config:static": False,
 
     # Note: this toolchain is not actually used to perform the build.
     "//command_line_option:platforms": "//build/platforms:linux_amd64_static",
