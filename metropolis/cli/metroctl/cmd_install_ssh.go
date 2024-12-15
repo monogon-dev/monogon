@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/cobra"
 	xssh "golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
-	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/term"
 	"google.golang.org/protobuf/proto"
 
@@ -55,11 +54,14 @@ var sshCmd = &cobra.Command{
 			log.Println("ssh agent authentication will not be available.")
 		}
 
-		if term.IsTerminal(int(os.Stdin.Fd())) {
+		// On Windows syscall.Stdin is a handle and needs to be cast to an
+		// int for term.
+		stdin := int(syscall.Stdin) // nolint:unconvert
+		if term.IsTerminal(stdin) {
 			authMethods = append(authMethods,
 				xssh.PasswordCallback(func() (string, error) {
 					fmt.Printf("%s@%s's password: ", user, address)
-					b, err := terminal.ReadPassword(syscall.Stdin)
+					b, err := term.ReadPassword(stdin)
 					if err != nil {
 						return "", err
 					}
@@ -75,7 +77,7 @@ var sshCmd = &cobra.Command{
 								return nil, err
 							}
 						} else {
-							b, err := terminal.ReadPassword(syscall.Stdin)
+							b, err := term.ReadPassword(stdin)
 							if err != nil {
 								return nil, err
 							}
