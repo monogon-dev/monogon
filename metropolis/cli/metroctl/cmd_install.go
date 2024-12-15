@@ -11,6 +11,7 @@ import (
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/prototext"
 
 	"source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
@@ -35,6 +36,7 @@ var bootstrap = installCmd.PersistentFlags().Bool("bootstrap", false, "Create a 
 var bootstrapTPMMode = flagdefs.TPMModePflag(installCmd.PersistentFlags(), "bootstrap-tpm-mode", cpb.ClusterConfiguration_TPM_MODE_REQUIRED, "TPM mode to set on cluster")
 var bootstrapStorageSecurityPolicy = flagdefs.StorageSecurityPolicyPflag(installCmd.PersistentFlags(), "bootstrap-storage-security", cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION, "Storage security policy to set on cluster")
 var bundlePath = installCmd.PersistentFlags().StringP("bundle", "b", "", "Path to the Metropolis bundle to be installed")
+var nodeParamPath = installCmd.PersistentFlags().String("node-params", "", "Path to the metropolis.proto.api.NodeParameters prototext file (advanced usage only)")
 
 func makeNodeParams() (*api.NodeParameters, error) {
 	ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -44,6 +46,18 @@ func makeNodeParams() (*api.NodeParameters, error) {
 	}
 
 	var params *api.NodeParameters
+	if *nodeParamPath != "" {
+		nodeParamsRaw, err := os.ReadFile(*nodeParamPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read node-params file: %w", err)
+		}
+		if err := prototext.Unmarshal(nodeParamsRaw, params); err != nil {
+			return nil, fmt.Errorf("failed to parse node-params: %w", err)
+		}
+	} else {
+		params = &api.NodeParameters{}
+	}
+
 	if *bootstrap {
 		if flags.cluster == "" {
 			return nil, fmt.Errorf("when bootstrapping a cluster, the --cluster parameter is required")
@@ -58,15 +72,13 @@ func makeNodeParams() (*api.NodeParameters, error) {
 			return nil, fmt.Errorf("failed to generate or get owner key: %w", err)
 		}
 		pub := priv.Public().(ed25519.PublicKey)
-		params = &api.NodeParameters{
-			Cluster: &api.NodeParameters_ClusterBootstrap_{
-				ClusterBootstrap: &api.NodeParameters_ClusterBootstrap{
-					OwnerPublicKey: pub,
-					InitialClusterConfiguration: &cpb.ClusterConfiguration{
-						ClusterDomain:         flags.cluster,
-						StorageSecurityPolicy: *bootstrapStorageSecurityPolicy,
-						TpmMode:               *bootstrapTPMMode,
-					},
+		params.Cluster = &api.NodeParameters_ClusterBootstrap_{
+			ClusterBootstrap: &api.NodeParameters_ClusterBootstrap{
+				OwnerPublicKey: pub,
+				InitialClusterConfiguration: &cpb.ClusterConfiguration{
+					ClusterDomain:         flags.cluster,
+					StorageSecurityPolicy: *bootstrapStorageSecurityPolicy,
+					TpmMode:               *bootstrapTPMMode,
 				},
 			},
 		}
@@ -85,13 +97,11 @@ func makeNodeParams() (*api.NodeParameters, error) {
 			return nil, fmt.Errorf("while receiving cluster directory: %w", err)
 		}
 
-		params = &api.NodeParameters{
-			Cluster: &api.NodeParameters_ClusterRegister_{
-				ClusterRegister: &api.NodeParameters_ClusterRegister{
-					RegisterTicket:   resT.Ticket,
-					ClusterDirectory: resI.ClusterDirectory,
-					CaCertificate:    resI.CaCertificate,
-				},
+		params.Cluster = &api.NodeParameters_ClusterRegister_{
+			ClusterRegister: &api.NodeParameters_ClusterRegister{
+				RegisterTicket:   resT.Ticket,
+				ClusterDirectory: resI.ClusterDirectory,
+				CaCertificate:    resI.CaCertificate,
 			},
 		}
 	}
