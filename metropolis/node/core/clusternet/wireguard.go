@@ -108,7 +108,7 @@ func (s *localWireguard) setup(clusterNet *net.IPNet) error {
 	if err := netlink.RouteAdd(&netlink.Route{
 		Dst:       clusterNet,
 		LinkIndex: wgInterface.Index,
-		Protocol:  common.ProtocolClusternet,
+		Protocol:  netlink.RouteProtocol(common.ProtocolClusternet),
 	}); err != nil && !os.IsExist(err) {
 		return fmt.Errorf("when creating cluster route: %w", err)
 	}
