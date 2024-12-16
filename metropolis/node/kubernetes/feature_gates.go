@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"k8s.io/component-base/featuregate"
@@ -14,10 +15,15 @@ type featureGates map[featuregate.Feature]bool
 func (fgs featureGates) AsFlag() string {
 	var strb strings.Builder
 	strb.WriteString("--feature-gates=")
-	i := 0
-	for f, en := range fgs {
-		fmt.Fprintf(&strb, "%s=%v", string(f), en)
-		if i++; i != len(fgs) {
+	features := make([]string, 0, len(fgs))
+	for f := range fgs {
+		features = append(features, string(f))
+	}
+	// Ensure deterministic output by sorting the map keys
+	sort.Strings(features)
+	for i, f := range features {
+		fmt.Fprintf(&strb, "%s=%v", f, fgs[featuregate.Feature(f)])
+		if i+1 != len(features) {
 			strb.WriteByte(',')
 		}
 	}
