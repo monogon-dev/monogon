@@ -209,3 +209,11 @@ func MustSubLogger(ctx context.Context, name string) logging.Leveled {
 	}
 	return l
 }
+
+// LogTree returns the LogTree used by this supervisor instance. This should
+// only be used for reading logs. For writing logs use SubLogger instead.
+func LogTree(ctx context.Context) *logtree.LogTree {
+	node, unlock := fromContext(ctx)
+	defer unlock()
+	return node.sup.logtree
+}
