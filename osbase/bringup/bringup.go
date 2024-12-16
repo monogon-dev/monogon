@@ -69,14 +69,14 @@ func (r Runnable) RunWith(cfg Config) {
 		panic(err)
 	}
 
+	// Initialize persistent panic handler
+	initPanicHandler(lt, serialConsoles)
+
 	// Rewire os.Stdout and os.Stderr to logtree which then is printed
 	// to serial consoles.
 	if err := rewireStdIO(lt); err != nil {
 		panic(err)
 	}
-
-	// Initialize persistent panic handler
-	initPanicHandler(lt, serialConsoles)
 
 	// Initial logger. Used until we get to a supervisor.
 	logger := lt.MustLeveledFor("init")

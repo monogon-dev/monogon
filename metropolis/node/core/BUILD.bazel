@@ -7,8 +7,6 @@ go_library(
         "main.go",
         "mounts.go",
         "nodeparams.go",
-        "panichandler.go",
-        "pstore.go",
         "sysctl.go",
     ] + select({
         "//metropolis/node:debug_build": [
@@ -39,9 +37,9 @@ go_library(
         "//metropolis/node/core/update",
         "//metropolis/proto/api",
         "//metropolis/version",
+        "//osbase/bringup",
         "//osbase/logtree",
         "//osbase/net/dns",
-        "//osbase/pstore",
         "//osbase/supervisor",
         "//osbase/sysctl",
         "//osbase/tpm",
