@@ -245,12 +245,6 @@ func main() {
 		return m.Run(ctx)
 	}
 
-	pm, err := supervisor.NewMetricsPrometheus(metrics.CoreRegistry)
-	if err != nil {
-		// Fatal, because this generally shouldn't happen.
-		logger.Fatalf("Failed to register supervisor metrics: %v", err)
-	}
-
 	// Start the init function in a one-shot runnable. Smuggle out any errors from
 	// the init function and stuff them into the fatal channel. This is where the
 	// system supervisor takes over as the main process management system.
@@ -262,11 +256,11 @@ func main() {
 			select {}
 		}
 		return nil
-	}, supervisor.WithExistingLogtree(lt), supervisor.WithMetrics(pm))
+	}, supervisor.WithExistingLogtree(lt), supervisor.WithMetrics(supervisor.NewMetricsPrometheus(metrics.CoreRegistry)))
 
 	// Meanwhile, wait for any fatal error from the init process, and handle it
 	// accordingly.
-	err = <-fatal
+	err := <-fatal
 	// Log error with primary logging mechanism still active.
 	logger.Infof("Node startup failed: %v", err)
 	// Start shutting down the supervision tree...

@@ -19,6 +19,7 @@ go_library(
         "//osbase/logtree",
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_prometheus_client_golang//prometheus/promauto",
         "@org_golang_google_grpc//:grpc",
     ],
 )

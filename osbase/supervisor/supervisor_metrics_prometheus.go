@@ -1,9 +1,8 @@
 package supervisor
 
 import (
-	"fmt"
-
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // MetricsPrometheus is a Metrics implementation which exports the supervisor
@@ -24,15 +23,16 @@ type MetricsPrometheus struct {
 // and return a Metrics instance to be used with WithMetrics.
 //
 // This should only be called once for a given registry.
-func NewMetricsPrometheus(registry *prometheus.Registry) (*MetricsPrometheus, error) {
+func NewMetricsPrometheus(registry *prometheus.Registry) *MetricsPrometheus {
+	factory := promauto.With(registry)
 	res := &MetricsPrometheus{
-		exportedState: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		exportedState: factory.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "monogon",
 			Subsystem: "supervisor",
 			Name:      "dn_state_total",
 			Help:      "Total count of supervisor runnables, broken up by DN and state",
 		}, []string{"dn", "state"}),
-		exportedEdge: prometheus.NewCounterVec(prometheus.CounterOpts{
+		exportedEdge: factory.NewCounterVec(prometheus.CounterOpts{
 			Namespace:   "monogon",
 			Subsystem:   "supervisor",
 			Name:        "dn_state_transition_count",
@@ -41,13 +41,7 @@ func NewMetricsPrometheus(registry *prometheus.Registry) (*MetricsPrometheus, er
 		}, []string{"dn", "old_state", "new_state"}),
 		cachedState: make(map[string]*NodeState),
 	}
-	if err := registry.Register(res.exportedState); err != nil {
-		return nil, fmt.Errorf("when registering dn_state_total: %w", err)
-	}
-	if err := registry.Register(res.exportedEdge); err != nil {
-		return nil, fmt.Errorf("when registering dn_state_transition_count: %w", err)
-	}
-	return res, nil
+	return res
 }
 
 func (m *MetricsPrometheus) exportState(dn string, state NodeState, value float64) {
