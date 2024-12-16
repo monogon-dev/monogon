@@ -2,14 +2,21 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "bringup",
-    srcs = ["bringup.go"],
+    srcs = [
+        "bringup.go",
+        "panichandler.go",
+        "pstore.go",
+    ],
     importpath = "source.monogon.dev/osbase/bringup",
     visibility = ["//visibility:public"],
     deps = [
+        "//go/logging",
         "//osbase/bootparam",
         "//osbase/efivarfs",
         "//osbase/logtree",
+        "//osbase/pstore",
         "//osbase/supervisor",
+        "@com_github_opencontainers_runc//libcontainer/cgroups",
         "@org_golang_x_sys//unix",
         "@org_uber_go_multierr//:multierr",
     ],

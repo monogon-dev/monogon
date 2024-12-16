@@ -7,7 +7,8 @@ go_test(
     size = "medium",
     srcs = ["run_test.go"],
     data = [
-        ":kernel_failed",
+        ":kernel_error",
+        ":kernel_panic",
         ":kernel_succeeded",
         "//third_party/edk2:OVMF_CODE.fd",
         "//third_party/edk2:OVMF_VARS.fd",
@@ -18,7 +19,8 @@ go_test(
         "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
         "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
         "xSucceedKernelPath": "$(rlocationpath :kernel_succeeded )",
-        "xFailedKernelPath": "$(rlocationpath :kernel_failed )",
+        "xPanicKernelPath": "$(rlocationpath :kernel_panic )",
+        "xErrorKernelPath": "$(rlocationpath :kernel_error )",
     },
     deps = [
         "//osbase/cmd",
@@ -68,8 +70,8 @@ efi_unified_kernel_image(
 )
 
 go_library(
-    name = "failed_lib",
-    srcs = ["main_failed.go"],
+    name = "panic_lib",
+    srcs = ["main_panic.go"],
     importpath = "source.monogon.dev/osbase/bringup/test",
     visibility = ["//visibility:private"],
     deps = [
@@ -84,15 +86,15 @@ go_library(
 )
 
 go_binary(
-    name = "failed",
-    embed = [":failed_lib"],
+    name = "panic",
+    embed = [":panic_lib"],
     visibility = ["//visibility:private"],
 )
 
 node_initramfs(
-    name = "initramfs_failed",
+    name = "initramfs_panic",
     files = {
-        ":failed": "/init",
+        ":panic": "/init",
     },
     fsspecs = [
         "//osbase/build:earlydev.fsspec",
@@ -101,9 +103,50 @@ node_initramfs(
 )
 
 efi_unified_kernel_image(
-    name = "kernel_failed",
+    name = "kernel_panic",
     cmdline = "quiet console=ttyS0 init=/init",
-    initrd = [":initramfs_failed"],
+    initrd = [":initramfs_panic"],
+    kernel = "//third_party/linux",
+    visibility = ["//visibility:private"],
+)
+
+go_library(
+    name = "error_lib",
+    srcs = ["main_error.go"],
+    importpath = "source.monogon.dev/osbase/bringup/test",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//osbase/bootparam",
+        "//osbase/bringup",
+        "//osbase/efivarfs",
+        "//osbase/logtree",
+        "//osbase/supervisor",
+        "@org_golang_x_sys//unix",
+        "@org_uber_go_multierr//:multierr",
+    ],
+)
+
+go_binary(
+    name = "error",
+    embed = [":error_lib"],
+    visibility = ["//visibility:private"],
+)
+
+node_initramfs(
+    name = "initramfs_error",
+    files = {
+        ":error": "/init",
+    },
+    fsspecs = [
+        "//osbase/build:earlydev.fsspec",
+    ],
+    visibility = ["//visibility:private"],
+)
+
+efi_unified_kernel_image(
+    name = "kernel_error",
+    cmdline = "quiet console=ttyS0 init=/init",
+    initrd = [":initramfs_error"],
     kernel = "//third_party/linux",
     visibility = ["//visibility:private"],
 )

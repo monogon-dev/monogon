@@ -17,14 +17,15 @@ var (
 	xOvmfCodePath      string
 	xOvmfVarsPath      string
 	xSucceedKernelPath string
-	xFailedKernelPath  string
+	xPanicKernelPath   string
+	xErrorKernelPath   string
 )
 
 func init() {
 	var err error
 	for _, path := range []*string{
 		&xOvmfCodePath, &xOvmfVarsPath,
-		&xSucceedKernelPath, &xFailedKernelPath,
+		&xSucceedKernelPath, &xPanicKernelPath, &xErrorKernelPath,
 	} {
 		*path, err = runfiles.Rlocation(*path)
 		if err != nil {
@@ -71,14 +72,31 @@ func TestBringupSuccess(t *testing.T) {
 		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
 	}
 }
-func TestBringupFailed(t *testing.T) {
+func TestBringupPanic(t *testing.T) {
 	ctx, ctxC := context.WithTimeout(context.Background(), time.Second*30)
 	defer ctxC()
 
-	extraArgs := append([]string(nil), "-kernel", xFailedKernelPath)
+	extraArgs := append([]string(nil), "-kernel", xPanicKernelPath)
 
 	// Run QEMU. Expect the installer to fail with a predefined error string.
 	expectedOutput := "root runnable paniced"
+	result, err := runQemu(ctx, extraArgs, expectedOutput)
+	if err != nil {
+		t.Error(err.Error())
+	}
+	if !result {
+		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
+	}
+}
+
+func TestBringupError(t *testing.T) {
+	ctx, ctxC := context.WithTimeout(context.Background(), time.Second*30)
+	defer ctxC()
+
+	extraArgs := append([]string(nil), "-kernel", xErrorKernelPath)
+
+	// Run QEMU. Expect the installer to fail with a predefined error string.
+	expectedOutput := "this is an error"
 	result, err := runQemu(ctx, extraArgs, expectedOutput)
 	if err != nil {
 		t.Error(err.Error())
