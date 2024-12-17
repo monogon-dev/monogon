@@ -231,7 +231,7 @@ http_archive(
         "//third_party/chrony/patches:support_fixed_uids.patch",
     ],
     strip_prefix = "chrony-" + CHRONY_VERSION,
-    urls = ["https://download.tuxfamily.org/chrony/chrony-%s.tar.gz" % CHRONY_VERSION],
+    urls = ["https://chrony-project.org/releases/chrony-%s.tar.gz" % CHRONY_VERSION],
 )
 
 CAP_VERSION = "1.2.55"
