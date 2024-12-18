@@ -26,7 +26,7 @@ import (
 )
 
 // The processor maintains runnable goroutines - ie., when requested will start
-// one, and then once it exists it will record the result and act accordingly.
+// one, and then once it exits, it will record the result and act accordingly.
 // It is also responsible for detecting and acting upon supervision subtrees
 // that need to be restarted after death (via a 'GC' process)
 
@@ -151,14 +151,15 @@ func (s *supervisor) liquidator() {
 	}
 }
 
-// liveRunnables returns a list of runnable DNs that aren't DONE/DEAD. This is
-// used by the liquidator to figure out when its job is done, and by the
+// liveRunnables returns a list of runnable DNs that aren't DONE/DEAD/CANCELED.
+// This is used by the liquidator to figure out when its job is done, and by the
 // TestHarness to know when to unblock the test cleanup function.
 func (s *supervisor) liveRunnables() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// DFS through supervision tree, making not of live (non-DONE/DEAD runnables).
+	// DFS through supervision tree, making note of live (non-DONE/DEAD/CANCELED
+	// runnables).
 	var live []string
 	seen := make(map[string]bool)
 	q := []*node{s.root}
@@ -179,7 +180,7 @@ func (s *supervisor) liveRunnables() []string {
 		}
 		seen[eldn] = true
 
-		if el.state != NodeStateDead && el.state != NodeStateDone {
+		if el.state != NodeStateDead && el.state != NodeStateDone && el.state != NodeStateCanceled {
 			live = append(live, eldn)
 		}
 
