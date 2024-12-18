@@ -1,0 +1,26 @@
+{
+    "go.goroot": "${workspaceFolder}/bazel-${workspaceFolderBasename}/external/rules_go~~go_sdk~main___download_0/",
+    "go.toolsEnvVars": {
+        "GOPACKAGESDRIVER": "${workspaceFolder}/tools/gopackagesdriver"
+    },
+    "gopls": {
+        "formatting.local": "source.monogon.dev",
+        "build.directoryFilters": [
+            "-bazel-bin",
+            "-bazel-${workspaceFolderBasename}",
+            "-bazel-out",
+            "-bazel-testlogs",
+            "-.bazeldnf"
+        ],
+        "ui.semanticTokens": true,
+    },
+    "go.enableCodeLens": {
+        "runtest": false
+    },
+    "files.watcherExclude": {
+        "bazel-bin/**": true,
+        "bazel-${workspaceFolderBasename}/**": true,
+        "bazel-testlogs/**": true,
+        ".bazeldnf/**": true,
+    }
+}
