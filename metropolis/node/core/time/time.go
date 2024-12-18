@@ -47,7 +47,7 @@ func (s *Service) Run(ctx context.Context) error {
 		return fmt.Errorf("cannot create fileargs: %w", err)
 	}
 	defer args.Close()
-	cmd := exec.Command(
+	cmd := exec.CommandContext(ctx,
 		"/time/chrony",
 		"-d",
 		"-i", strconv.Itoa(node.TimeUid),

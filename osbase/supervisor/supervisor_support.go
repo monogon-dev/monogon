@@ -63,6 +63,8 @@ func GRPCServer(srv *grpc.Server, lis net.Listener, graceful bool) Runnable {
 
 // RunCommand will create a Runnable that starts a long-running command, whose
 // exit is determined to be a failure.
+// cmd should be created with [exec.CommandContext] so that it will be killed
+// when the context is canceled.
 func RunCommand(ctx context.Context, cmd *exec.Cmd, opts ...RunCommandOption) error {
 	Signal(ctx, SignalHealthy)
 
