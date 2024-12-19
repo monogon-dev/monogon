@@ -468,8 +468,10 @@ func (s *supervisor) processGC() {
 		cur := queue[0]
 		queue = queue[1:]
 
-		// If this node is DEAD or CANCELED it should be restarted.
-		if cur.state == NodeStateDead || cur.state == NodeStateCanceled {
+		// If this node's context is canceled and it has exited, it should be
+		// restarted.
+		exited := cur.state == NodeStateDead || cur.state == NodeStateCanceled || cur.state == NodeStateDone
+		if cur.ctx.Err() != nil && exited {
 			want[cur.dn()] = true
 		}
 

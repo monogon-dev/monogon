@@ -497,6 +497,52 @@ func TestDoneDelay(t *testing.T) {
 	time.Sleep(20 * time.Millisecond)
 }
 
+// TestCancelDoneSibling tests that a node in state DONE is restarted if it is
+// canceled because a sibling has died.
+func TestCancelDoneSibling(t *testing.T) {
+	innerRunning := make(chan struct{})
+	innerExit := make(chan struct{})
+	failSibling := make(chan struct{})
+
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	New(ctx, func(ctx context.Context) error {
+		err := RunGroup(ctx, map[string]Runnable{
+			"done": func(ctx context.Context) error {
+				err := Run(ctx, "inner", func(ctx context.Context) error {
+					<-innerRunning
+					<-ctx.Done()
+					<-innerExit
+					return ctx.Err()
+				})
+				if err != nil {
+					return err
+				}
+				Signal(ctx, SignalHealthy)
+				Signal(ctx, SignalDone)
+				return nil
+			},
+			"sibling": func(ctx context.Context) error {
+				<-failSibling
+				return fmt.Errorf("failed")
+			},
+		})
+		if err != nil {
+			return err
+		}
+		Signal(ctx, SignalHealthy)
+		Signal(ctx, SignalDone)
+		return nil
+	}, WithPropagatePanic)
+
+	innerRunning <- struct{}{}
+	failSibling <- struct{}{}
+	// The inner node should exit and start running again.
+	innerExit <- struct{}{}
+	innerRunning <- struct{}{}
+}
+
 // TestResilience throws some curveballs at the supervisor - either programming
 // errors or high load. It then ensures that another runnable is running, and
 // that it restarts on its sibling failure.
