@@ -507,9 +507,18 @@ func (s *supervisor) processGC() {
 
 		// Reschedule node runnable to run after backoff.
 		go func(n *node, bo time.Duration) {
-			time.Sleep(bo)
-			s.pReq <- &processorRequest{
-				schedule: &processorRequestSchedule{dn: n.dn()},
+			select {
+			case <-time.After(bo):
+				s.pReq <- &processorRequest{
+					schedule: &processorRequestSchedule{dn: n.dn()},
+				}
+			case <-n.ctx.Done():
+				s.pReq <- &processorRequest{
+					died: &processorRequestDied{
+						dn:  n.dn(),
+						err: n.ctx.Err(),
+					},
+				}
 			}
 		}(n, bo)
 	}

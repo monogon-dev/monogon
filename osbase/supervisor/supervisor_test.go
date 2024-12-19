@@ -426,6 +426,46 @@ func TestBackoff(t *testing.T) {
 	}
 }
 
+// TestCancelRestart fails a runnable, but before its restart timeout expires,
+// also fails its parent. This should cause cancelation of the restart timeout.
+func TestCancelRestart(t *testing.T) {
+	startedOuter := make(chan struct{})
+	failInner := make(chan struct{})
+	failOuter := make(chan struct{})
+
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	New(ctx, func(ctx context.Context) error {
+		<-startedOuter
+		err := Run(ctx, "inner", func(ctx context.Context) error {
+			<-failInner
+			return fmt.Errorf("failed")
+		})
+		if err != nil {
+			return err
+		}
+		<-failOuter
+		return fmt.Errorf("failed")
+	}, WithPropagatePanic)
+
+	startedOuter <- struct{}{}
+	failInner <- struct{}{}
+	time.Sleep(10 * time.Millisecond)
+	// Before the inner runnable has restarted, fail the outer runnable.
+	failOuter <- struct{}{}
+
+	start := time.Now()
+	startedOuter <- struct{}{}
+	taken := time.Since(start)
+	// With the default backoff parameters, the initial backoff time is
+	// 0.5s +- 0.25s because of randomization. If the inner restart timer is not
+	// canceled, then it takes twice as long.
+	if taken > 1*time.Second {
+		t.Errorf("Runnable took %v to restart, wanted at most 1s", taken)
+	}
+}
+
 // TestResilience throws some curveballs at the supervisor - either programming
 // errors or high load. It then ensures that another runnable is running, and
 // that it restarts on its sibling failure.
