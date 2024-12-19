@@ -20,8 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -60,119 +58,6 @@ func TestAsync(t *testing.T) {
 	if want, got := 100, val; want != got {
 		t.Fatalf("Value: got %d, wanted %d", got, want)
 	}
-}
-
-// TestSyncBlocks exercises the Value's 'Sync' field, which makes all
-// Set() calls block until all respective watchers .Get() the updated data.
-// This particular test ensures that .Set() calls to a Watcher result in a
-// prefect log of updates being transmitted to a watcher.
-func TestSync(t *testing.T) {
-	p := Value[int]{
-		Sync: true,
-	}
-	values := make(chan int, 100)
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		ctx := context.Background()
-		watcher := p.Watch()
-		wg.Done()
-		for {
-			value, err := watcher.Get(ctx)
-			if err != nil {
-				panic(err)
-			}
-			values <- value
-		}
-	}()
-
-	p.Set(0)
-	wg.Wait()
-
-	want := []int{1, 2, 3, 4}
-	for _, w := range want {
-		p.Set(w)
-	}
-
-	timeout := time.After(time.Second)
-	for i, w := range append([]int{0}, want...) {
-		select {
-		case <-timeout:
-			t.Fatalf("timed out on value %d (%d)", i, w)
-		case val := <-values:
-			if w != val {
-				t.Errorf("value %d was %d, wanted %d", i, val, w)
-			}
-		}
-	}
-}
-
-// TestSyncBlocks exercises the Value's 'Sync' field, which makes all
-// Set() calls block until all respective watchers .Get() the updated data.
-// This particular test ensures that .Set() calls actually block when a watcher
-// is unattended.
-func TestSyncBlocks(t *testing.T) {
-	p := Value[int]{
-		Sync: true,
-	}
-	ctx := context.Background()
-
-	// Shouldn't block, as there's no declared watchers.
-	p.Set(0)
-
-	watcher := p.Watch()
-
-	// Should retrieve the zero, more requests will pend.
-	value, err := watcher.Get(ctx)
-	if err != nil {
-		t.Fatalf("Get: %v", err)
-	}
-	if want, got := 0, value; want != got {
-		t.Fatalf("Got initial value %d, wanted %d", got, want)
-	}
-
-	// .Set() Should block, as watcher is unattended.
-	//
-	// Whether something blocks in Go is untestable in a robust way (see: halting
-	// problem). We work around this this by introducing a 'stage' int64, which is
-	// put on the 'c' channel after the needs-to-block function returns. We then
-	// perform an action that should unblock this function right after updating
-	// 'stage' to a different value.
-	// Then, we observe what was put on the channel: If it's the initial value, it
-	// means the function didn't block when expected. Otherwise, it means the
-	// function unblocked when expected.
-	stage := int64(0)
-	c := make(chan int64, 1)
-	go func() {
-		p.Set(1)
-		c <- atomic.LoadInt64(&stage)
-	}()
-
-	// Getting should unblock the provider. Mark via 'stage' variable that
-	// unblocking now is expected.
-	atomic.StoreInt64(&stage, int64(1))
-	// Potential race: .Set() unblocks here due to some bug, before .Get() is
-	// called, and we record a false positive.
-	value, err = watcher.Get(ctx)
-	if err != nil {
-		t.Fatalf("Get: %v", err)
-	}
-
-	res := <-c
-	if res != int64(1) {
-		t.Fatalf("Set() returned before Get()")
-	}
-
-	if want, got := 1, value; want != got {
-		t.Fatalf("Wanted value %d, got %d", want, got)
-	}
-
-	// Closing the watcher and setting should not block anymore.
-	if err := watcher.Close(); err != nil {
-		t.Fatalf("Close: %v", err)
-	}
-	// Last step, if this blocks we will get a deadlock error and the test will panic.
-	p.Set(2)
 }
 
 // TestMultipleGets verifies that calling .Get() on a single watcher from two
@@ -277,9 +162,7 @@ func TestConcurrency(t *testing.T) {
 // aborts that particular Get call, but also allows subsequent use of the same
 // watcher.
 func TestCanceling(t *testing.T) {
-	p := Value[int]{
-		Sync: true,
-	}
+	p := Value[int]{}
 
 	ctx, ctxC := context.WithCancel(context.Background())
 
