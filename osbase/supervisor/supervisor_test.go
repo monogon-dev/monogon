@@ -466,6 +466,37 @@ func TestCancelRestart(t *testing.T) {
 	}
 }
 
+// TestDoneDelay test that a node is only considered restartable once it has
+// returned, not already when it has signaled Done. Otherwise, we can get into
+// an inconsistent state and for example panic because the node no longer
+// exists once the runnable returns.
+func TestDoneDelay(t *testing.T) {
+	startedInner := make(chan struct{})
+	failOuter := make(chan struct{})
+
+	ctx, ctxC := context.WithCancel(context.Background())
+	defer ctxC()
+
+	New(ctx, func(ctx context.Context) error {
+		err := Run(ctx, "inner", func(ctx context.Context) error {
+			Signal(ctx, SignalHealthy)
+			Signal(ctx, SignalDone)
+			<-startedInner
+			time.Sleep(10 * time.Millisecond)
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		<-failOuter
+		return fmt.Errorf("failed")
+	}, WithPropagatePanic)
+
+	startedInner <- struct{}{}
+	failOuter <- struct{}{}
+	time.Sleep(20 * time.Millisecond)
+}
+
 // TestResilience throws some curveballs at the supervisor - either programming
 // errors or high load. It then ensures that another runnable is running, and
 // that it restarts on its sibling failure.

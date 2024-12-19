@@ -56,6 +56,10 @@ type node struct {
 	// The current state of the runnable in this node.
 	state NodeState
 
+	// signaledDone is set when the runnable has signaled Done. The transition to
+	// DONE state only happens after the runnable returns.
+	signaledDone bool
+
 	// Backoff used to keep runnables from being restarted too fast.
 	bo *backoff.ExponentialBackOff
 
@@ -211,6 +215,7 @@ func (n *node) reset() {
 
 	// Clear children and state
 	n.state = NodeStateNew
+	n.signaledDone = false
 	n.children = make(map[string]*node)
 	n.reserved = make(map[string]bool)
 	n.groups = nil
@@ -307,8 +312,10 @@ func (n *node) signal(signal SignalType) {
 		if n.state != NodeStateHealthy {
 			panic(fmt.Errorf("node %s signaled done", n))
 		}
-		n.state = NodeStateDone
-		n.sup.metrics.NotifyNodeState(n.dn(), n.state)
+		if n.signaledDone {
+			panic(fmt.Errorf("node %s signaled done twice", n))
+		}
+		n.signaledDone = true
 		n.bo.Reset()
 	}
 }

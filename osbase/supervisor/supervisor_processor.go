@@ -271,10 +271,11 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 	n := s.nodeByDN(r.dn)
 	ctx := n.ctx
 
-	// Simple case: it was marked as Done and quit with no error.
-	if n.state == NodeStateDone && r.err == nil {
+	// Simple case: it has signaled Done and quit with no error.
+	if n.signaledDone && r.err == nil {
+		// Mark the node as DONE.
+		n.state = NodeStateDone
 		s.metrics.NotifyNodeState(r.dn, n.state)
-		// Do nothing. This was supposed to happen. Keep the process as DONE.
 		return
 	}
 
