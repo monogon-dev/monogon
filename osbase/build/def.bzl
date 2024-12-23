@@ -49,9 +49,9 @@ FSSpecInfo = provider(
     },
 )
 
-def _fsspec_core_impl(ctx, tool, output_file):
+def fsspec_core_impl(ctx, tool, output_file, extra_files = [], extra_fsspecs = []):
     """
-    _fsspec_core_impl implements the core of an fsspec-based rule. It takes
+    fsspec_core_impl implements the core of an fsspec-based rule. It takes
     input from the `files`,`files_cc`, `symlinks` and `fsspecs` attributes
     and calls `tool` with the `-out` parameter pointing to `output_file`
     and paths to all fsspecs as positional arguments.
@@ -61,7 +61,7 @@ def _fsspec_core_impl(ctx, tool, output_file):
 
     fs_files = []
     inputs = []
-    for label, p in ctx.attr.files.items() + ctx.attr.files_cc.items():
+    for label, p in ctx.attr.files.items() + ctx.attr.files_cc.items() + extra_files:
         if not p.startswith("/"):
             fail("file {} invalid: must begin with /".format(p))
 
@@ -97,7 +97,7 @@ def _fsspec_core_impl(ctx, tool, output_file):
 
     extra_specs = []
 
-    for fsspec in ctx.attr.fsspecs:
+    for fsspec in ctx.attr.fsspecs + extra_fsspecs:
         if FSSpecInfo in fsspec:
             fsspec_info = fsspec[FSSpecInfo]
             extra_specs.append(fsspec_info.spec)
@@ -121,7 +121,7 @@ def _node_initramfs_impl(ctx):
     initramfs_name = ctx.label.name + ".cpio.zst"
     initramfs = ctx.actions.declare_file(initramfs_name)
 
-    _fsspec_core_impl(ctx, ctx.executable._mkcpio, initramfs)
+    fsspec_core_impl(ctx, ctx.executable._mkcpio, initramfs)
 
     # TODO(q3k): Document why this is needed
     return [DefaultInfo(runfiles = ctx.runfiles(files = [initramfs]), files = depset([initramfs]))]
@@ -184,7 +184,7 @@ def _erofs_image_impl(ctx):
     fs_name = ctx.label.name + ".img"
     fs_out = ctx.actions.declare_file(fs_name)
 
-    _fsspec_core_impl(ctx, ctx.executable._mkerofs, fs_out)
+    fsspec_core_impl(ctx, ctx.executable._mkerofs, fs_out)
 
     return [DefaultInfo(files = depset([fs_out]))]
 

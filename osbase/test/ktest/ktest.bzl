@@ -18,41 +18,118 @@
 Ktest provides a macro to run tests under a normal Metropolis node kernel
 """
 
-load("//osbase/build:def.bzl", "node_initramfs")
+load("//osbase/build:def.bzl", "FSSpecInfo", "build_pure_transition", "build_static_transition", "fsspec_core_impl")
 
-def _dict_union(x, y):
-    z = {}
-    z.update(x)
-    z.update(y)
-    return z
+_KTEST_SCRIPT = """
+#!/usr/bin/env bash
 
-def ktest(tester, cmdline = "", files = {}, fsspecs = [], files_cc = {}):
-    node_initramfs(
-        name = "test_initramfs",
-        fsspecs = [
-            "//osbase/build:earlydev.fsspec",
-        ] + fsspecs,
-        files = _dict_union({
-            "//osbase/test/ktest/init": "/init",
-            tester: "/tester",
-        }, files),
-        files_cc = files_cc,
-        testonly = True,
+exec "{ktest}" -initrd-path "{initrd}" -kernel-path "{kernel}" -cmdline "{cmdline}"
+"""
+
+def _ktest_impl(ctx):
+    initramfs_name = ctx.label.name + ".cpio.zst"
+    initramfs = ctx.actions.declare_file(initramfs_name)
+
+    fsspec_core_impl(ctx, ctx.executable._mkcpio, initramfs, [(ctx.attr._ktest_init[0], "/init"), (ctx.attr.tester[0], "/tester")], [ctx.attr._earlydev])
+
+    script_file = ctx.actions.declare_file(ctx.label.name + ".sh")
+
+    ctx.actions.write(
+        output = script_file,
+        content = _KTEST_SCRIPT.format(
+            ktest = ctx.executable._ktest.short_path,
+            initrd = initramfs.short_path,
+            kernel = ctx.file.kernel.short_path,
+            cmdline = ctx.attr.cmdline,
+        ),
+        is_executable = True,
     )
 
-    native.sh_test(
-        name = "ktest",
-        args = [
-            "$(location //osbase/test/ktest)",
-            "$(location :test_initramfs)",
-            "$(location //osbase/test/ktest:linux-testing)",
-            cmdline,
-        ],
-        size = "small",
-        srcs = ["//osbase/test/ktest:test-script"],
-        data = [
-            "//osbase/test/ktest",
-            ":test_initramfs",
-            "//osbase/test/ktest:linux-testing",
-        ],
-    )
+    return [DefaultInfo(
+        executable = script_file,
+        runfiles = ctx.runfiles(
+            files = [ctx.files._ktest[0], initramfs, ctx.file.kernel, ctx.file.tester],
+        ),
+    )]
+
+k_test = rule(
+    implementation = _ktest_impl,
+    doc = """
+        Run a given test program under the Monogon kernel. 
+    """,
+    attrs = {
+        "tester": attr.label(
+            mandatory = True,
+            executable = True,
+            allow_single_file = True,
+            # Runs inside the given kernel, needs to be build for Linux/static
+            cfg = build_static_transition,
+        ),
+        "files": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = """
+                Dictionary of Labels to String, placing a given Label's output file in the initramfs at the location
+                specified by the String value. The specified labels must only have a single output.
+            """,
+            # Attach pure transition to ensure all binaries added to the initramfs are pure/static binaries.
+            cfg = build_pure_transition,
+        ),
+        "files_cc": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = """
+                 Special case of 'files' for compilation targets that need to be built with the musl toolchain like
+                 go_binary targets which need cgo or cc_binary targets.
+            """,
+            # Attach static transition to all files_cc inputs to ensure they are built with musl and static.
+            cfg = build_static_transition,
+        ),
+        "symlinks": attr.string_dict(
+            default = {},
+            doc = """
+                Symbolic links to create. Similar format as in files and files_cc, so the target of the symlink is the
+                key and the value of it is the location of the symlink itself. Only raw strings are allowed as targets,
+                labels are not permitted. Include the file using files or files_cc, then symlink to its location.
+            """,
+        ),
+        "fsspecs": attr.label_list(
+            default = [],
+            doc = """
+                List of file system specs (osbase.build.fsspec.FSSpec) to also include in the resulting image.
+                These will be merged with all other given attributes.
+            """,
+            providers = [FSSpecInfo],
+            allow_files = True,
+        ),
+        "kernel": attr.label(
+            default = Label("//osbase/test/ktest:linux-testing"),
+            cfg = "exec",
+            allow_single_file = True,
+        ),
+        "cmdline": attr.string(
+            default = "",
+        ),
+        # Tool
+        "_ktest": attr.label(
+            default = Label("//osbase/test/ktest"),
+            cfg = "exec",
+            executable = True,
+            allow_files = True,
+        ),
+        "_ktest_init": attr.label(
+            default = Label("//osbase/test/ktest/init"),
+            cfg = build_pure_transition,
+            executable = True,
+            allow_single_file = True,
+        ),
+        "_mkcpio": attr.label(
+            default = Label("//osbase/build/mkcpio"),
+            executable = True,
+            cfg = "exec",
+        ),
+        "_earlydev": attr.label(
+            default = Label("//osbase/build:earlydev.fsspec"),
+            allow_files = True,
+        ),
+    },
+    test = True,
+)

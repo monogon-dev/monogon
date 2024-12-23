@@ -294,7 +294,7 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 	}
 
 	var stdErrBuf bytes.Buffer
-	cmd := exec.CommandContext(ctx, "qemu-system-x86_64", append(baseArgs, extraArgs...)...)
+	cmd := exec.CommandContext(ctx, "/usr/bin/qemu-system-x86_64", append(baseArgs, extraArgs...)...)
 	cmd.Stdout = opts.SerialPort
 	cmd.Stderr = &stdErrBuf
 
