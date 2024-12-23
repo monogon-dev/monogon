@@ -1,4 +1,4 @@
-From 4d98a0637eee66923b854ef75653f74aeb37240b Mon Sep 17 00:00:00 2001
+From 7844c9ec1cdef485731a4858a48b854986387591 Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
 Date: Wed, 16 Mar 2022 18:10:09 +0100
 Subject: [PATCH] Drop legacy log path
@@ -7,15 +7,14 @@ Subject: [PATCH] Drop legacy log path
  pkg/kubelet/kubelet.go                        |  7 ---
  .../kuberuntime/kuberuntime_container.go      | 36 ---------------
  pkg/kubelet/kuberuntime/kuberuntime_gc.go     | 46 -------------------
- pkg/kubelet/runonce.go                        |  8 ----
  test/e2e_node/log_path_test.go                | 18 --------
- 5 files changed, 115 deletions(-)
+ 4 files changed, 107 deletions(-)
 
 diff --git a/pkg/kubelet/kubelet.go b/pkg/kubelet/kubelet.go
-index 5d848de88fb..0495eaed7d1 100644
+index b8bbfece860..e6aa5e8359b 100644
 --- a/pkg/kubelet/kubelet.go
 +++ b/pkg/kubelet/kubelet.go
-@@ -1506,13 +1506,6 @@ func (kl *Kubelet) initializeModules() error {
+@@ -1589,13 +1589,6 @@ func (kl *Kubelet) initializeModules() error {
  		return err
  	}
  
@@ -26,16 +25,16 @@ index 5d848de88fb..0495eaed7d1 100644
 -		}
 -	}
 -
- 	if sysruntime.GOOS == "windows" {
+ 	if goos == "windows" {
  		// On Windows we should not allow other users to read the logs directory
  		// to avoid allowing non-root containers from reading the logs of other containers.
 diff --git a/pkg/kubelet/kuberuntime/kuberuntime_container.go b/pkg/kubelet/kuberuntime/kuberuntime_container.go
-index b049540d0d3..7b1baa29c14 100644
+index a154754d285..df87ff82f7d 100644
 --- a/pkg/kubelet/kuberuntime/kuberuntime_container.go
 +++ b/pkg/kubelet/kuberuntime/kuberuntime_container.go
-@@ -285,25 +285,6 @@ func (m *kubeGenericRuntimeManager) startContainer(ctx context.Context, podSandb
+@@ -286,25 +286,6 @@ func (m *kubeGenericRuntimeManager) startContainer(ctx context.Context, podSandb
  	}
- 	m.recordContainerEvent(pod, container, containerID, v1.EventTypeNormal, events.StartedContainer, fmt.Sprintf("Started container %s", container.Name))
+ 	m.recordContainerEvent(pod, container, containerID, v1.EventTypeNormal, events.StartedContainer, "Started container %v", container.Name)
  
 -	// Symlink container logs to the legacy container log location for cluster logging
 -	// support.
@@ -59,7 +58,7 @@ index b049540d0d3..7b1baa29c14 100644
  	// Step 4: execute the post start hook.
  	if container.Lifecycle != nil && container.Lifecycle.PostStart != nil {
  		kubeContainerID := kubecontainer.ContainerID{
-@@ -1317,23 +1298,6 @@ func (m *kubeGenericRuntimeManager) removeContainerLog(ctx context.Context, cont
+@@ -1335,23 +1316,6 @@ func (m *kubeGenericRuntimeManager) removeContainerLog(ctx context.Context, cont
  		return err
  	}
  
@@ -147,32 +146,6 @@ index 6189b1f07ca..3cd3daa5a6c 100644
  	return nil
  }
  
-diff --git a/pkg/kubelet/runonce.go b/pkg/kubelet/runonce.go
-index 448df444869..d5ecd47337f 100644
---- a/pkg/kubelet/runonce.go
-+++ b/pkg/kubelet/runonce.go
-@@ -19,7 +19,6 @@ package kubelet
- import (
- 	"context"
- 	"fmt"
--	"os"
- 	"time"
- 
- 	v1 "k8s.io/api/core/v1"
-@@ -50,13 +49,6 @@ func (kl *Kubelet) RunOnce(updates <-chan kubetypes.PodUpdate) ([]RunPodResult,
- 		return nil, err
- 	}
- 
--	// If the container logs directory does not exist, create it.
--	if _, err := os.Stat(ContainerLogsDir); err != nil {
--		if err := kl.os.MkdirAll(ContainerLogsDir, 0755); err != nil {
--			klog.ErrorS(err, "Failed to create directory", "path", ContainerLogsDir)
--		}
--	}
--
- 	select {
- 	case u := <-updates:
- 		klog.InfoS("Processing manifest with pods", "numPods", len(u.Pods))
 diff --git a/test/e2e_node/log_path_test.go b/test/e2e_node/log_path_test.go
 index a1589e6d91e..179206eb1dd 100644
 --- a/test/e2e_node/log_path_test.go
@@ -210,5 +183,5 @@ index a1589e6d91e..179206eb1dd 100644
  			ginkgo.It("should print log to correct cri log path", func(ctx context.Context) {
  
 -- 
-2.44.1
+2.47.0
 

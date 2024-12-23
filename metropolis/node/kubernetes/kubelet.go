@@ -121,6 +121,10 @@ func (s *kubeletService) configure(fargs *fileargs.FileArgs) *kubeletconfig.Kube
 		MaxPods:      253,
 		PodLogsDir:   "/data/kubelet/logs",
 		FeatureGates: extraFeatureGates.AsMap(),
+		// Only kill a single process on OOM instead of the whole container.
+		// This is generally the more sane behavior and was default under
+		// cgroups v1.
+		SingleProcessOOMKill: ptr.To(true),
 	}
 }
 

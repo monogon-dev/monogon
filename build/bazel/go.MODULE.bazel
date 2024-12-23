@@ -108,11 +108,6 @@ use_repo(
 # Instead of defining a gazelle/module override for every dependency, we have a
 # big dict containing all of them.
 OVERRIDES = {
-    "github.com/containerd/cgroups": {
-        "directives": [
-            "gazelle:proto disable",
-        ],
-    },
     "github.com/containerd/containerd/v2": {
         "directives": [
             "gazelle:proto disable",
@@ -187,6 +182,9 @@ OVERRIDES = {
     "github.com/google/cadvisor": {
         "directives": [
             "gazelle:proto disable_global",
+        ],
+        "pre_patches": [
+            "//third_party/go/patches:cadvisor-errdefs1.patch",
         ],
     },
     "github.com/sqlc-dev/sqlc": {
