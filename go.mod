@@ -49,10 +49,6 @@ replace github.com/vishvananda/netlink => github.com/monogon-dev/netlink v0.0.0-
 // is outdated and gazelle needs it.
 replace github.com/bazelbuild/buildtools => github.com/bazelbuild/buildtools v0.0.0-20231103205921-433ea8554e82
 
-// Update to the latest version to prevent additional imports
-// to appear in our dependency graph: https://github.com/golang/go/issues/37175
-replace golang.org/x/exp => golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
-
 // Replace with our patched library to support hardware listings for a whole
 // organization at once.
 replace github.com/packethost/packngo => github.com/monogon-dev/packngo v0.0.0-20240122175436-ecbd9eb00ddb
