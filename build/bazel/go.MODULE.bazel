@@ -58,7 +58,6 @@ use_repo(
     "com_github_pkg_sftp",
     "com_github_prometheus_client_golang",
     "com_github_prometheus_node_exporter",
-    "com_github_pseudomuto_protoc_gen_doc",
     "com_github_rivo_uniseg",
     "com_github_rmohr_bazeldnf",
     "com_github_sbezverk_nfproxy",
@@ -164,19 +163,6 @@ OVERRIDES = {
     "github.com/prometheus/node_exporter": {
         "directives": [
             "gazelle:build_tags nobtrfs,nozfs,notapestats,norapl",
-        ],
-    },
-    "github.com/pseudomuto/protoc-gen-doc": {
-        "directives": [
-            "gazelle:resolve go github.com/mwitkow/go-proto-validators @com_github_mwitkow_go_proto_validators//:validators_golang",
-        ],
-        "pre_patches": [
-            "//third_party/go/patches:protoc-gen-doc-no-gogo.patch",
-        ],
-    },
-    "github.com/pseudomuto/protokit": {
-        "directives": [
-            "gazelle:proto disable",
         ],
     },
     "github.com/google/cadvisor": {

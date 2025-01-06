@@ -1,6 +1,6 @@
-load("//build/proto_docs:proto_docs.bzl", "proto_docs")
+load("@rules_proto_grpc_doc//:defs.bzl", "doc_html_compile")
 
-proto_docs(
+doc_html_compile(
     name = "docs",
     protos = [
         "//metropolis/proto/api:api_proto",
