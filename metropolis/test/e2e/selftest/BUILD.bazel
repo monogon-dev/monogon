@@ -19,7 +19,7 @@ load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 platform_transition_binary(
     name = "selftest_transitioned",
     binary = ":selftest",
-    target_platform = "//build/platforms:linux_amd64_static",
+    target_platform = "//build/platforms:linux_arm64_static",
     visibility = ["//visibility:private"],
 )
 

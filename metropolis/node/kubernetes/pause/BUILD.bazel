@@ -13,7 +13,7 @@ load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 platform_transition_binary(
     name = "pause_transitioned",
     binary = ":pause",
-    target_platform = "//build/platforms:linux_amd64_static",
+    target_platform = "//build/platforms:linux_arm64_static",
     visibility = ["//visibility:private"],
 )
 
@@ -29,7 +29,7 @@ load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 
 oci_image(
     name = "pause_image",
-    architecture = "amd64",
+    architecture = "arm64",
     entrypoint = ["/pause"],
     os = "linux",
     tars = [":pause_layer"],

@@ -34,11 +34,11 @@ efi_k8_cc_toolchain_config(name = "efi_k8_cc_toolchain_config")
 toolchain(
     name = "efi_k8_toolchain",
     exec_compatible_with = [
-        "@platforms//cpu:x86_64",
+        "@platforms//cpu:arm64",
         "@platforms//os:linux",
     ],
     target_compatible_with = [
-        "@platforms//cpu:x86_64",
+        "@platforms//cpu:arm64",
         "@platforms//os:uefi",
     ],
     toolchain = ":efi_k8_cc_toolchain",

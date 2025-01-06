@@ -26,7 +26,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff"
 	"go.uber.org/multierr"
 	"golang.org/x/net/proxy"
 	"golang.org/x/sys/unix"
@@ -295,11 +295,11 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 	}
 
 	tpmSocketPath := filepath.Join(r.sd, "tpm-socket")
-	fwVarPath := filepath.Join(r.ld, "OVMF_VARS.fd")
+	fwVarPath := filepath.Join(r.ld, "QEMU_VARS.fd")
 	storagePath := filepath.Join(r.ld, "image.qcow2")
 	qemuArgs := []string{
 		"-machine", "q35",
-		"-accel", "kvm",
+
 		"-display", "none",
 		"-nodefaults",
 		"-cpu", "host",
@@ -395,7 +395,7 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 	}
 
 	// Start the main qemu binary
-	systemCmd := exec.CommandContext(options.Runtime.ctxT, "qemu-system-x86_64", qemuArgs...)
+	systemCmd := exec.CommandContext(options.Runtime.ctxT, "qemu-system-aarch64", qemuArgs...)
 	if options.ConnectToSocket != nil {
 		systemCmd.ExtraFiles = []*os.File{options.ConnectToSocket}
 	}

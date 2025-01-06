@@ -18,7 +18,7 @@ go_binary(
 platform_transition_binary(
     name = "httpserver_transitioned",
     binary = ":httpserver",
-    target_platform = "//build/platforms:linux_amd64_static",
+    target_platform = "//build/platforms:linux_arm64_static",
     visibility = ["//visibility:private"],
 )
 

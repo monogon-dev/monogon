@@ -3,7 +3,7 @@ rust.toolchain(
     edition = "2021",
     extra_rustc_flags = ["-Clinker=rust-lld"],
     extra_target_triples = [
-        "x86_64-unknown-uefi",
+        "aarch64-unknown-uefi",
     ],
     versions = ["1.82.0"],
 )
@@ -22,8 +22,8 @@ crate.from_cargo(
     generate_binaries = True,
     manifests = ["//third_party/rust_efi:Cargo.toml"],
     supported_platform_triples = [
-        "x86_64-unknown-linux-gnu",
-        "x86_64-unknown-uefi",
+        "aarch64-unknown-linux-gnu",
+        "aarch64-unknown-uefi",
     ],
 )
 use_repo(crate, "crate_index")

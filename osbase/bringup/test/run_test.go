@@ -41,7 +41,7 @@ func init() {
 // cancelled.
 func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, error) {
 	defaultArgs := []string{
-		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults",
+		"-machine", "q35", "-nographic", "-nodefaults",
 		"-m", "512",
 		"-smp", "2",
 		"-cpu", "host",
@@ -52,7 +52,7 @@ func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, e
 	}
 	qemuArgs := append(defaultArgs, args...)
 	pf := cmd.TerminateIfFound(expectedOutput, nil)
-	return cmd.RunCommand(ctx, "qemu-system-x86_64", qemuArgs, pf)
+	return cmd.RunCommand(ctx, "qemu-system-aarch64", qemuArgs, pf)
 }
 
 func TestBringupSuccess(t *testing.T) {

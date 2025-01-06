@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
-	"github.com/diskfs/go-diskfs"
 	"github.com/diskfs/go-diskfs/disk"
 	"github.com/diskfs/go-diskfs/partition/gpt"
 
@@ -81,7 +80,7 @@ var (
 // cancelled.
 func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, error) {
 	defaultArgs := []string{
-		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults",
+		"-machine", "q35", "-nographic", "-nodefaults",
 		"-m", "512",
 		"-smp", "2",
 		"-cpu", "host",
@@ -92,7 +91,7 @@ func runQemu(ctx context.Context, args []string, expectedOutput string) (bool, e
 	}
 	qemuArgs := append(defaultArgs, args...)
 	pf := cmd.TerminateIfFound(expectedOutput, nil)
-	return cmd.RunCommand(ctx, "qemu-system-x86_64", qemuArgs, pf)
+	return cmd.RunCommand(ctx, "qemu-system-aarch64", qemuArgs, pf)
 }
 
 // runQemuWithInstaller runs the Metropolis Installer in a qemu, performing the

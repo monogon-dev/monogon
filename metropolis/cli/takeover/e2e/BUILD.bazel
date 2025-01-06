@@ -6,14 +6,14 @@ go_test(
     data = [
         "//metropolis/cli/takeover",
         "//metropolis/installer/test/testos:testos_bundle",
-        "//third_party/edk2:OVMF_CODE.fd",
-        "//third_party/edk2:OVMF_VARS.fd",
+        "//third_party/edk2:QEMU_EFI.fd",
+        "//third_party/edk2:QEMU_VARS.fd",
         "@debian_11_cloudimage//file",
     ],
     x_defs = {
         "xBundleFilePath": "$(rlocationpath //metropolis/installer/test/testos:testos_bundle )",
-        "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
-        "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
+        "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:QEMU_VARS.fd )",
+        "xOvmfCodePath": "$(rlocationpath //third_party/edk2:QEMU_EFI.fd )",
         "xCloudImagePath": "$(rlocationpath @debian_11_cloudimage//file )",
         # TODO(tim): Hardcoded because of https://github.com/monogon-dev/monogon/issues/316
         "xTakeoverPath": "_main/metropolis/cli/takeover/takeover/takeover_bin",

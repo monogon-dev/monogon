@@ -65,7 +65,7 @@ def _efi_k8_cc_toolchain_impl(ctx):
                 actions = all_compile_actions,
                 flag_groups = ([
                     flag_group(
-                        flags = ["-target", "x86_64-unknown-windows"],
+                        flags = ["-target", "aarch64-unknown-windows"],
                     ),
                 ]),
             ),
@@ -120,7 +120,7 @@ def _efi_k8_cc_toolchain_impl(ctx):
                 flag_groups = ([
                     flag_group(
                         flags = [
-                            "--target=x86_64-unknown-windows",
+                            "--target=aarch64-unknown-windows",
                             "-fuse-ld=lld",
                             "-Wl,-entry:efi_main",
                             "-Wl,-subsystem:efi_application",
@@ -197,11 +197,11 @@ def _efi_k8_cc_toolchain_impl(ctx):
         features = [default_link_flags_feature, default_compile_flags_feature, hybrid_gnu_msvc_feature, lto_feature],
         # Needed for various compiler built-in headers and auxiliary data. No system libraries are being used.
         cxx_builtin_include_directories = [
-            "/usr/lib/clang/18/include/"
+            "/usr/lib/clang/18/include/",
         ],
         toolchain_identifier = "k8-toolchain",
         host_system_name = "local",
-        target_system_name = "x86_64-efi",
+        target_system_name = "aarch64-efi",
         target_cpu = "k8",
         target_libc = "none",
         compiler = "clang",

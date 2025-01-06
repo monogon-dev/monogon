@@ -249,8 +249,8 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	}
 
 	qemuArgs := []string{
-		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "1024",
-		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
+		"-machine", "virt", "-nographic", "-nodefaults", "-m", "1024",
+		"-cpu", "max", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
 		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + ovmfVars.Name(),
 		"-drive", "if=virtio,format=raw,cache=unsafe,file=" + rootDisk.Name(),
@@ -264,11 +264,11 @@ func TestMetropolisInstallE2E(t *testing.T) {
 		"-kernel", xKernelPath,
 		"-initrd", initramfsFile.Name(),
 		"-append", "console=ttyS0 quiet")
-	qemuCmdAgent := exec.Command("qemu-system-x86_64", stage1Args...)
+	qemuCmdAgent := exec.Command("qemu-system-aarch64", stage1Args...)
 	qemuCmdAgent.Stdout = os.Stdout
 	qemuCmdAgent.Stderr = os.Stderr
 	qemuCmdAgent.Run()
-	qemuCmdLaunch := exec.Command("qemu-system-x86_64", qemuArgs...)
+	qemuCmdLaunch := exec.Command("qemu-system-aarch64", qemuArgs...)
 	stdoutPipe, err := qemuCmdLaunch.StdoutPipe()
 	if err != nil {
 		t.Fatal(err)

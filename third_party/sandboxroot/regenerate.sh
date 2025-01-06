@@ -46,6 +46,7 @@ PKGS=(
 
   # ktest
   "qemu-system-x86-core"
+  "qemu-system-aarch64-core"
   "qemu-img"
 
   # musl-host-gcc
@@ -84,6 +85,7 @@ EOF
 # Create new sandbox root
 bazel ${BAZEL_ARGS} \
   run //:bazeldnf -- rpmtree \
+  --arch aarch64 \
   --repofile third_party/sandboxroot/repo.yaml \
   --name sandbox \
   --nobest \

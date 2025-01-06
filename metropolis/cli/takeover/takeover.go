@@ -23,7 +23,7 @@ import (
 	netdump "source.monogon.dev/osbase/net/dump"
 )
 
-//go:embed third_party/linux/bzImage
+//go:embed third_party/linux/Image
 var kernel []byte
 
 //go:embed third_party/ucode.cpio

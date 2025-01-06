@@ -1,9 +1,9 @@
 # Generic platform for Linux x86_64 targets.
 platform(
-    name = "linux_amd64",
+    name = "linux_arm64",
     constraint_values = [
         "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
+        "@platforms//cpu:arm64",
     ],
     visibility = ["//visibility:public"],
 )
@@ -13,7 +13,7 @@ platform(
     name = "efi_amd64",
     constraint_values = [
         "@platforms//os:uefi",
-        "@platforms//cpu:x86_64",
+        "@platforms//cpu:arm64",
     ],
     visibility = ["//visibility:public"],
 )
@@ -21,10 +21,10 @@ platform(
 # Linux x86_64 platform with static linking
 # (i.e. Metropolis node, scratch containers...).
 platform(
-    name = "linux_amd64_static",
+    name = "linux_arm64_static",
     constraint_values = [
         "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
+        "@platforms//cpu:arm64",
         "//build/platforms/linkmode:musl-static",
     ],
     visibility = ["//visibility:public"],

@@ -98,7 +98,7 @@ func getFedoraMirrorPath(u *url.URL) (string, error) {
 		return "", fmt.Errorf("unexpected category %q", parts[3])
 	}
 	switch parts[5] {
-	case "x86_64":
+	case "aarch64":
 	default:
 		return "", fmt.Errorf("unexpected architecture %q", parts[5])
 	}

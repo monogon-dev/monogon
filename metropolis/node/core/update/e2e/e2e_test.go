@@ -100,7 +100,7 @@ func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string)
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	qemuCmdLaunch := exec.CommandContext(ctx, "qemu-system-x86_64", qemuArgs...)
+	qemuCmdLaunch := exec.CommandContext(ctx, "qemu-system-aarch64", qemuArgs...)
 	testosStarted := make(chan string, 1)
 	stdoutHandler(t, qemuCmdLaunch, cancel, testosStarted)
 	stderrHandler(t, qemuCmdLaunch)
@@ -242,7 +242,7 @@ func setup(t *testing.T) (*bundleServing, []string) {
 	}
 
 	qemuArgs := []string{
-		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "1024",
+		"-machine", "q35", "-nographic", "-nodefaults", "-m", "1024",
 		"-cpu", "max", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
 		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + ovmfVars.Name(),
@@ -277,7 +277,7 @@ func TestABUpdateSequenceKexec(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	qemuCmdLaunch := exec.CommandContext(ctx, "qemu-system-x86_64", qemuArgs...)
+	qemuCmdLaunch := exec.CommandContext(ctx, "qemu-system-aarch64", qemuArgs...)
 	testosStarted := make(chan string, 1)
 	stdoutHandler(t, qemuCmdLaunch, cancel, testosStarted)
 	stderrHandler(t, qemuCmdLaunch)

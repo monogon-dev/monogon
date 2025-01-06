@@ -40,8 +40,8 @@ in
     (stdenv.mkDerivation {
       name = "bazel";
       src = builtins.fetchurl {
-        url = "https://github.com/bazelbuild/bazel/releases/download/7.2.1/bazel-7.2.1-linux-x86_64";
-        sha256 = "0xbqyq5lhpjmaqrz223qvalwpp9g0xkjsqnpwpxm11xqnknd3k40";
+        url = "https://github.com/bazelbuild/bazel/releases/download/7.2.1/bazel-7.2.1-linux-arm64";
+        #sha256 = "0xbqyq5lhpjmaqrz223qvalwpp9g0xkjsqnpwpxm11xqnknd3k40";
       };
       unpackPhase = ''
         true

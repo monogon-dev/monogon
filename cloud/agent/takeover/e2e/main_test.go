@@ -104,7 +104,7 @@ func TestE2E(t *testing.T) {
 	}
 
 	qemuArgs := []string{
-		"-machine", "q35", "-accel", "kvm", "-nographic", "-nodefaults", "-m", "1024",
+		"-machine", "q35", "-nographic", "-nodefaults", "-m", "1024",
 		"-cpu", "host", "-smp", "sockets=1,cpus=1,cores=2,threads=2,maxcpus=4",
 		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfCodePath,
 		"-drive", "if=pflash,format=raw,snapshot=on,file=" + xOvmfVarsPath,
@@ -116,7 +116,7 @@ func TestE2E(t *testing.T) {
 		"-serial", "stdio",
 		"-no-reboot",
 	}
-	qemuCmd := exec.Command("qemu-system-x86_64", qemuArgs...)
+	qemuCmd := exec.Command("qemu-system-aarch64", qemuArgs...)
 	stdoutPipe, err := qemuCmd.StdoutPipe()
 	if err != nil {
 		t.Fatal(err)

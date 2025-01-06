@@ -5,8 +5,8 @@ go_test(
     srcs = ["e2e_test.go"],
     data = [
         # For emulation
-        "//third_party/edk2:OVMF_CODE.fd",
-        "//third_party/edk2:OVMF_VARS.fd",
+        "//third_party/edk2:QEMU_EFI.fd",
+        "//third_party/edk2:QEMU_VARS.fd",
         # For the initial image creation
         "//metropolis/node/core/update/e2e/testos:verity_rootfs_x",
         "//metropolis/node/core/update/e2e/testos:kernel_efi_x",
@@ -18,8 +18,8 @@ go_test(
     x_defs = {
         "xBundleYPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:testos_bundle_y )",
         "xBundleZPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:testos_bundle_z )",
-        "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
-        "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
+        "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:QEMU_VARS.fd )",
+        "xOvmfCodePath": "$(rlocationpath //third_party/edk2:QEMU_EFI.fd )",
         "xBootPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:kernel_efi_x )",
         "xSystemXPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:verity_rootfs_x )",
         "xAbloaderPath": "$(rlocationpath //metropolis/node/core/abloader )",

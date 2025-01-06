@@ -12,7 +12,7 @@ Usage
 
 To use this toolchain explicitly while building a `cc_binary`, do:
 
-    bazel build --platforms=//build/platforms:linux_amd64_static //foo/bar
+    bazel build --platforms=//build/platforms:linux_arm64_static //foo/bar
 
 During an actual build however, the right toolchain should be selected using transitions
 or other configuration mechanisms.

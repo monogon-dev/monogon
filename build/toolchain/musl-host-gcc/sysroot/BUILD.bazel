@@ -5,14 +5,14 @@ load(":tarball.bzl", "musl_gcc_tarball")
 linux_headers(
     name = "linux_headers",
     src = "@linux//:all",
-    arch = "x86_64",
+    arch = "arm64",
     visibility = ["//visibility:public"],
 )
 
 musl_headers(
     name = "musl_headers",
     src = "@musl//:all",
-    arch = "x86_64",
+    arch = "aarch64",
     visibility = ["//visibility:public"],
 )
 

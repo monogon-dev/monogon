@@ -8,14 +8,14 @@ go_test(
     data = [
         ":kernel",
         "//metropolis/installer/test/testos:testos_bundle",
-        "//third_party/edk2:OVMF_CODE.fd",
-        "//third_party/edk2:OVMF_VARS.fd",
+        "//third_party/edk2:QEMU_EFI.fd",
+        "//third_party/edk2:QEMU_VARS.fd",
     ],
     importpath = "source.monogon.dev/metropolis/installer/test",
     visibility = ["//visibility:private"],
     x_defs = {
-        "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
-        "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
+        "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:QEMU_VARS.fd )",
+        "xOvmfCodePath": "$(rlocationpath //third_party/edk2:QEMU_EFI.fd )",
         "xInstallerPath": "$(rlocationpath :kernel )",
         "xBundlePath": "$(rlocationpath //metropolis/installer/test/testos:testos_bundle )",
     },

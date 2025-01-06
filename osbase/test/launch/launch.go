@@ -247,12 +247,10 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 	// takes <100ms.
 	baseArgs := []string{
 		"-nodefaults", "-no-user-config", "-nographic", "-no-reboot",
-		"-accel", "kvm", "-cpu", "host",
 		"-m", "1G",
 		// Needed because QEMU does not boot without specifying the qboot bios
 		// even tho the documentation clearly states that this is the default.
-		"-bios", "/usr/share/qemu/qboot.rom",
-		"-M", "microvm,x-option-roms=off,pic=off,pit=off,rtc=off,isa-serial=off",
+		"-M", "virt,secure=on,virtualization=on",
 		"-kernel", opts.KernelPath,
 		// We force using a triple-fault reboot strategy since otherwise the kernel first
 		// tries others (like ACPI) which are not available in this very restricted
@@ -294,7 +292,7 @@ func RunMicroVM(ctx context.Context, opts *MicroVMOptions) error {
 	}
 
 	var stdErrBuf bytes.Buffer
-	cmd := exec.CommandContext(ctx, "qemu-system-x86_64", append(baseArgs, extraArgs...)...)
+	cmd := exec.CommandContext(ctx, "qemu-system-aarch64", append(baseArgs, extraArgs...)...)
 	cmd.Stdout = opts.SerialPort
 	cmd.Stderr = &stdErrBuf
 

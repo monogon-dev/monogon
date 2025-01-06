@@ -23,5 +23,5 @@ building things for toolchains isn't a thing anyways, this file is prebuilt. If 
 will probably never happen since there is only one static symbol in there) this can be done with the following clang
 invocation:
 
-    clang -target x86_64-unknown-windows -fno-ms-compatibility -fno-ms-extensions -ffreestanding -o fltused.o .o -c fltused.c
+    clang -target aarch64-unknown-windows -fno-ms-compatibility -fno-ms-extensions -ffreestanding -o fltused.o .o -c fltused.c
    
