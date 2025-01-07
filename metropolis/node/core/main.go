@@ -216,10 +216,10 @@ func main() {
 		for _, c := range interactiveConsoles {
 			console, err := tconsole.New(tconsole.TerminalLinux, c, lt, &networkSvc.Status, &rs.LocalRoles, &rs.CuratorConnection)
 			if err != nil {
-				logger.Info("Failed to initialize interactive console at %s: %v", c, err)
+				logger.Infof("Failed to initialize interactive console at %s: %v", c, err)
 				// TODO: fall back to logger
 			} else {
-				logger.Info("Started interactive console at %s", c)
+				logger.Infof("Started interactive console at %s", c)
 				supervisor.Run(ctx, "console-"+c, console.Run)
 			}
 		}
