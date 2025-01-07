@@ -337,8 +337,7 @@ OVERRIDES = {
     },
     "github.com/vishvananda/netlink": {
         "patches": [
-            "//third_party/go/patches:netlink-permhwaddr.patch",
-            "//third_party/go/patches:netlink-use-rtm_setlink.patch",
+            "//third_party/go/patches:netlink-psample.patch",
         ],
     },
     "gvisor.dev/gvisor": {

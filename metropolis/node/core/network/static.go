@@ -289,9 +289,9 @@ func deviceIfaceFromSpec(it *netpb.Interface_Device, hostDevices []deviceIfData,
 		if len(parsedHWAddr) != 0 {
 			// If device has a permanent hardware address, it must match,
 			// otherwise the standard hardware address must match
-			if len(d.dev.PermHardwareAddr) > 0 {
-				if !bytes.Equal(d.dev.PermHardwareAddr, parsedHWAddr) {
-					l.V(1).Infof("mismatched perm hw addr %q: %s %s\n", d.dev.Name, d.dev.PermHardwareAddr, parsedHWAddr)
+			if len(d.dev.PermHWAddr) > 0 {
+				if !bytes.Equal(d.dev.PermHWAddr, parsedHWAddr) {
+					l.V(1).Infof("mismatched perm hw addr %q: %s %s\n", d.dev.Name, d.dev.PermHWAddr, parsedHWAddr)
 					continue
 				}
 			} else if !bytes.Equal(d.dev.HardwareAddr, parsedHWAddr) {

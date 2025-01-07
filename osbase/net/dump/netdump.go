@@ -61,7 +61,7 @@ func Dump() (*netapi.Net, []error, error) {
 		var iface netapi.Interface
 		switch l := link.(type) {
 		case *netlink.Device:
-			mac := link.Attrs().PermHardwareAddr
+			mac := link.Attrs().PermHWAddr
 			if len(mac) == 0 {
 				// Try legacy method for old kernels
 				mac, err = getPermanentHWAddrLegacy(l.Name)

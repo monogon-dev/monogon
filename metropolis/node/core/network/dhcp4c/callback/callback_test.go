@@ -24,8 +24,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/stretchr/testify/require"
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 
@@ -133,7 +133,9 @@ func TestAssignedIPCallback(t *testing.T) {
 			if err != nil {
 				t.Fatalf("test cannot read back addrs from interface: %v", err)
 			}
-			require.Equal(t, test.expectedAddrs, addrs, "Wrong IPs on interface")
+			if diff := cmp.Diff(test.expectedAddrs, addrs); diff != "" {
+				t.Errorf("Wrong IPs on interface (-want +got):\n%s", diff)
+			}
 		})
 	}
 }
@@ -184,10 +186,8 @@ func TestDefaultRouteCallback(t *testing.T) {
 			initialRoutes: []netlink.Route{},
 			newLease:      leaseAddRouter(trivialLeaseFromNet(testNet1), testNet1Router),
 			expectedRoutes: []netlink.Route{{
-				Protocol: unix.RTPROT_DHCP,
-				// Linux weirdly returns no RTA_DST for default routes, but one
-				// for everything else.
-				Dst:       nil,
+				Protocol:  unix.RTPROT_DHCP,
+				Dst:       mustParseCIDR("0.0.0.0/0"),
 				Family:    unix.AF_INET,
 				Gw:        testNet1Router,
 				Src:       testNet1.IP,
@@ -260,7 +260,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 			newLease: leaseAddRouter(trivialLeaseFromNet(testNet2), testNet2Router),
 			expectedRoutes: []netlink.Route{{
 				Protocol:  unix.RTPROT_DHCP,
-				Dst:       nil,
+				Dst:       mustParseCIDR("0.0.0.0/0"),
 				Family:    unix.AF_INET,
 				Gw:        testNet2Router,
 				Src:       testNet2.IP,
@@ -282,7 +282,7 @@ func TestDefaultRouteCallback(t *testing.T) {
 			),
 			expectedRoutes: []netlink.Route{{
 				Protocol:  unix.RTPROT_DHCP,
-				Dst:       nil,
+				Dst:       mustParseCIDR("0.0.0.0/0"),
 				Family:    unix.AF_INET,
 				Gw:        net.IPv4(192, 168, 42, 1).To4(), // Equal() doesn't know about canonicalization
 				Src:       testNet1.IP,
@@ -360,7 +360,9 @@ func TestDefaultRouteCallback(t *testing.T) {
 					notKernelRoutes = append(notKernelRoutes, route)
 				}
 			}
-			require.Equal(t, test.expectedRoutes, notKernelRoutes, "Wrong Routes")
+			if diff := cmp.Diff(test.expectedRoutes, notKernelRoutes); diff != "" {
+				t.Errorf("Expected route mismatch (-want +got):\n%s", diff)
+			}
 		})
 	}
 }

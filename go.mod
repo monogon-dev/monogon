@@ -42,9 +42,6 @@ replace github.com/mwitkow/go-proto-validators => github.com/mwitkow/go-proto-va
 // bazeldnf currently comes with a go-rpmutils patch
 replace github.com/sassoftware/go-rpmutils v0.1.1 => github.com/rmohr/go-rpmutils v0.1.2-0.20201215123907-5acf7436c00d
 
-// Our psample patches
-replace github.com/vishvananda/netlink => github.com/monogon-dev/netlink v0.0.0-20230125113930-88977c3ff4b3
-
 // Pin buildtools version to an up to date version, as the bazeldnf version
 // is outdated and gazelle needs it.
 replace github.com/bazelbuild/buildtools => github.com/bazelbuild/buildtools v0.0.0-20231103205921-433ea8554e82
