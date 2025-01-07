@@ -134,6 +134,8 @@
     "https://bcr.bazel.build/modules/rules_proto/7.1.0/source.json": "39f89066c12c24097854e8f57ab8558929f9c8d474d34b2c00ac04630ad8940e",
     "https://bcr.bazel.build/modules/rules_proto_grpc/5.0.1/MODULE.bazel": "af7a76546e6fb5cfb37d30ece061bad276ceb785eb4ea43d6f74fc35cff71dfc",
     "https://bcr.bazel.build/modules/rules_proto_grpc/5.0.1/source.json": "eb2a5cd4344970803514e64bce3bb16840fe9476a4e9695d95c6e0475d821606",
+    "https://bcr.bazel.build/modules/rules_proto_grpc_buf/5.0.1/MODULE.bazel": "9c4191770ed1f3ca9eb780e8d50eaccff4f64335d8464321236a2e798165ccfb",
+    "https://bcr.bazel.build/modules/rules_proto_grpc_buf/5.0.1/source.json": "a80fd644b0249c95beccb78ac24f541af46dac511e20c858bfbe913ac29adb51",
     "https://bcr.bazel.build/modules/rules_proto_grpc_doc/5.0.1/MODULE.bazel": "2b0a43ecf9dc2a847498bf9cd36b3c270f7254b0a771cb7dcb3e2e5cff8c5d32",
     "https://bcr.bazel.build/modules/rules_proto_grpc_doc/5.0.1/source.json": "3b6f8b72e81196756859c7486595df297d7721d62ff37f71804ca9e4ed84ef8f",
     "https://bcr.bazel.build/modules/rules_python/0.10.2/MODULE.bazel": "cc82bc96f2997baa545ab3ce73f196d040ffb8756fd2d66125a530031cd90e5f",
@@ -1644,6 +1646,136 @@
             "rules_oci~",
             "bazel_skylib",
             "bazel_skylib~"
+          ]
+        ]
+      }
+    },
+    "@@rules_proto_grpc_buf~//:module_extensions.bzl%download_plugins": {
+      "general": {
+        "bzlTransitiveDigest": "4Dbzp21JPls910QFYOOAw335SKlbrWNH86DoU7GtoyM=",
+        "usagesDigest": "TOAAucELsVvCXROTyq9qDqsfsexVeATllPss2PI2vvQ=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "buf_lint_plugin_darwin_arm64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "dea822195a4b092b84cfd531ba6b95923a131f2c4537b7ed29f9905619153060",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-lint-darwin-arm64"
+            }
+          },
+          "buf_breaking_plugin_linux_x86_64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "a1b754fb589f4362bc57b605645c29f7a3b8aca442c7ddca4c15c98f71fecbf6",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-breaking-Linux-X86_64"
+            }
+          },
+          "buf_breaking_plugin_windows_x86_64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "9d8845eb234515f62efb362e6d7d9d77e6eb12f6a97679754709de3f31968130",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-breaking-Windows-X86_64.exe"
+            }
+          },
+          "buf_lint_plugin_windows_x86_64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "c23ba1f7450abb64dc91652e9f67a75fe6189dc63b2e02d56eb4f9b44ddf6bc2",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-lint-windows-x86_64.exe"
+            }
+          },
+          "buf_breaking_plugin_darwin_arm64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "f244140c3459782b65bd2bd29a12972f116ddd2ed0c1d2a189cdd1b2c0aab1ba",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-breaking-Darwin-Arm64"
+            }
+          },
+          "buf_lint_plugin_windows_arm64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "1681e7ab55fbf1b6b1ef54e1def9904e30dd63d405a803a9a1debdb118b66e75",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-lint-windows-arm64.exe"
+            }
+          },
+          "buf_breaking_plugin_darwin_x86_64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "03ccd305ebd1f9bd8af67084628797bbaf3aa6ac33048b4e4d329efc8d7bae7e",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-breaking-Darwin-X86_64"
+            }
+          },
+          "buf_breaking_plugin_linux_arm64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "e317d99943f5f363c82fb31b33b845d8a01ffcbebe0e94e072fb3b8c0699f3f9",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-breaking-Linux-Arm64"
+            }
+          },
+          "buf_breaking_plugin_windows_arm64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "5f6ad60fb8cf86e944ee524d66ab5370459fd95e0f3c01e312d80a123be98ae0",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-breaking-Windows-Arm64.exe"
+            }
+          },
+          "buf_lint_plugin_linux_x86_64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "af3140ab9872dc7cb0fc14f7b5577d5433d17c1c07a8ed990be1d24222877d32",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-lint-linux-x86_64"
+            }
+          },
+          "buf_lint_plugin_darwin_x86_64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "45b3faeb82948a4876ec9ffa1f44a1ffe67845ce5d2959210c4e7d74a24b9e14",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-lint-darwin-x86_64"
+            }
+          },
+          "buf_lint_plugin_linux_arm64": {
+            "bzlFile": "@@bazel_tools//tools/build_defs/repo:http.bzl",
+            "ruleClassName": "http_file",
+            "attributes": {
+              "executable": true,
+              "sha256": "8a7a6fc1b95780f61c92136748fb95a2ccebce56e57ed4a0ca22acb96638c9aa",
+              "url": "https://github.com/bufbuild/buf/releases/download/v1.34.0/protoc-gen-buf-lint-linux-arm64"
+            }
+          }
+        },
+        "moduleExtensionMetadata": {
+          "useAllRepos": "REGULAR",
+          "reproducible": false
+        },
+        "recordedRepoMappingEntries": [
+          [
+            "rules_proto_grpc_buf~",
+            "bazel_tools",
+            "bazel_tools"
           ]
         ]
       }

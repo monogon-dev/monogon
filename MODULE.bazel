@@ -66,6 +66,7 @@ bazel_dep(name = "rules_python", version = "0.36.0")
 bazel_dep(name = "rules_cc", version = "0.0.10")
 bazel_dep(name = "rules_proto", version = "7.1.0")
 bazel_dep(name = "rules_proto_grpc_doc", version = "5.0.1")
+bazel_dep(name = "rules_proto_grpc_buf", version = "5.0.1")
 
 # Currently supported version are listed here:
 # https://protobuf.dev/support/version-support/
