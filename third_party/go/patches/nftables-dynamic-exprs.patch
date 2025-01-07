@@ -1,0 +1,39 @@
+From 8e349ae2eadbeb031ba01e7d1a98d6c5130ba7e3 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@brun.one>
+Date: Sat, 30 Nov 2024 01:05:11 +0100
+Subject: [PATCH 2/2] expr: add Dynamic for family-dependent evaluation
+
+This is used with a wrapper to implement easy dual-stack programming.
+---
+ expr/dynamic.go | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+ create mode 100644 expr/dynamic.go
+
+diff --git a/expr/dynamic.go b/expr/dynamic.go
+new file mode 100644
+index 0000000..c7ee5e1
+--- /dev/null
++++ b/expr/dynamic.go
+@@ -0,0 +1,19 @@
++package expr
++
++// Dynamic can be used to return an expression based on the address family
++// the expression is used in.
++type Dynamic struct {
++	Expr func(fam uint8) Any
++}
++
++func (d *Dynamic) marshal(fam byte) ([]byte, error) {
++	return d.Expr(fam).marshal(fam)
++}
++
++func (d *Dynamic) marshalData(fam byte) ([]byte, error) {
++	return d.Expr(fam).marshalData(fam)
++}
++
++func (d *Dynamic) unmarshal(fam byte, data []byte) error {
++	return d.Expr(fam).unmarshal(fam, data)
++}
+-- 
+2.47.0
+

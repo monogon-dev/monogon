@@ -323,6 +323,13 @@ OVERRIDES = {
     "github.com/sbezverk/nfproxy": {
         "pre_patches": [
             "//third_party/go/patches:nfproxy-adapt-to-k8s-1.28.patch",
+            "//third_party/go/patches:nfproxy-adapt-to-nftables-0.2.patch",
+        ],
+    },
+    "github.com/google/nftables": {
+        "pre_patches": [
+            "//third_party/go/patches:nftables-bigger-buffers.patch",
+            "//third_party/go/patches:nftables-dynamic-exprs.patch",
         ],
     },
     "k8s.io/kubectl": {

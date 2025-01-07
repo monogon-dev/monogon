@@ -79,7 +79,7 @@ require (
 	github.com/google/go-tpm v0.3.3
 	github.com/google/go-tpm-tools v0.3.5
 	github.com/google/gopacket v1.1.19
-	github.com/google/nftables v0.0.0-20220221214239-211824995dcb
+	github.com/google/nftables v0.2.1-0.20241213063025-eb340357409e
 	github.com/google/uuid v1.6.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/improbable-eng/grpc-web v0.15.0
@@ -361,7 +361,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/safchain/ethtool v0.4.0 // indirect
 	github.com/sassoftware/go-rpmutils v0.1.1 // indirect
-	github.com/sbezverk/nftableslib v0.0.0-20210111145735-b08b2d804e1f // indirect
+	github.com/sbezverk/nftableslib v0.0.0-20221012061059-e05e022cec75 // indirect
 	github.com/seccomp/libseccomp-golang v0.10.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/soheilhy/cmux v0.1.5 // indirect

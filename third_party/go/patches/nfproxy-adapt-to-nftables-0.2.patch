@@ -1,0 +1,70 @@
+From 36088b000a5407fb2de907a890213b960192cd55 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Thu, 2 Jan 2025 15:56:59 +0100
+Subject: [PATCH] Adapt to nftables 0.2+
+
+---
+ pkg/nftables/common.go | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/pkg/nftables/common.go b/pkg/nftables/common.go
+index ee046b7..3393582 100644
+--- a/pkg/nftables/common.go
++++ b/pkg/nftables/common.go
+@@ -88,7 +88,7 @@ func setupNFProxyChains(ci nftableslib.ChainsInterface) error {
+ 			name: FilterInput,
+ 			attrs: &nftableslib.ChainAttributes{
+ 				Type:     nftables.ChainTypeFilter,
+-				Priority: 0,
++				Priority: nftables.ChainPriorityFilter,
+ 				Hook:     nftables.ChainHookInput,
+ 				Policy:   &accept,
+ 			},
+@@ -97,7 +97,7 @@ func setupNFProxyChains(ci nftableslib.ChainsInterface) error {
+ 			name: FilterOutput,
+ 			attrs: &nftableslib.ChainAttributes{
+ 				Type:     nftables.ChainTypeFilter,
+-				Priority: 0,
++				Priority: nftables.ChainPriorityFilter,
+ 				Hook:     nftables.ChainHookOutput,
+ 				Policy:   &accept,
+ 			},
+@@ -106,7 +106,7 @@ func setupNFProxyChains(ci nftableslib.ChainsInterface) error {
+ 			name: FilterForward,
+ 			attrs: &nftableslib.ChainAttributes{
+ 				Type:     nftables.ChainTypeFilter,
+-				Priority: 0,
++				Priority: nftables.ChainPriorityFilter,
+ 				Hook:     nftables.ChainHookForward,
+ 				Policy:   &accept,
+ 			},
+@@ -131,7 +131,7 @@ func setupNFProxyChains(ci nftableslib.ChainsInterface) error {
+ 			name: NatPrerouting,
+ 			attrs: &nftableslib.ChainAttributes{
+ 				Type:     nftables.ChainTypeNAT,
+-				Priority: 0,
++				Priority: nftables.ChainPriorityFilter,
+ 				Hook:     nftables.ChainHookPrerouting,
+ 				Policy:   &accept,
+ 			},
+@@ -140,7 +140,7 @@ func setupNFProxyChains(ci nftableslib.ChainsInterface) error {
+ 			name: NatOutput,
+ 			attrs: &nftableslib.ChainAttributes{
+ 				Type:     nftables.ChainTypeNAT,
+-				Priority: 0,
++				Priority: nftables.ChainPriorityFilter,
+ 				Hook:     nftables.ChainHookOutput,
+ 				Policy:   &accept,
+ 			},
+@@ -149,7 +149,7 @@ func setupNFProxyChains(ci nftableslib.ChainsInterface) error {
+ 			name: NatPostrouting,
+ 			attrs: &nftableslib.ChainAttributes{
+ 				Type:     nftables.ChainTypeNAT,
+-				Priority: 0,
++				Priority: nftables.ChainPriorityFilter,
+ 				Hook:     nftables.ChainHookPostrouting,
+ 				Policy:   &accept,
+ 			},
+-- 
+2.47.0
+
