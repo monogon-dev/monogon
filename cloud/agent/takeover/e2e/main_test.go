@@ -174,6 +174,7 @@ func TestE2E(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer takeoverSrcFile.Close()
+
 	if _, err := io.Copy(takeoverFile, takeoverSrcFile); err != nil {
 		t.Fatal(err)
 	}

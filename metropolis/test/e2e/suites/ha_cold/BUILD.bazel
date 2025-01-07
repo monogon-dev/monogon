@@ -3,11 +3,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_test")
 go_test(
     name = "ha_cold_test",
     srcs = ["run_test.go"],
-    data = [
-        "//metropolis/node:image",
-        "//metropolis/test/e2e:testimages_manifest",
-        "//third_party/edk2:firmware",
-    ],
     tags = [
         "resources:iops:5000",
         "resources:cpu:3",

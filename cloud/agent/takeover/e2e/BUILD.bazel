@@ -4,6 +4,7 @@ go_test(
     name = "e2e_test",
     srcs = ["main_test.go"],
     data = [
+        # We use the layer instead of the binary to not add a transition target
         "//cloud/agent/takeover",
         "//third_party/edk2:OVMF_CODE.fd",
         "//third_party/edk2:OVMF_VARS.fd",
@@ -13,7 +14,8 @@ go_test(
         "xCloudImagePath": "$(rlocationpath @debian_11_cloudimage//file )",
         "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
         "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
-        "xTakeoverPath": "$(rlocationpath //cloud/agent/takeover )",
+        # TODO(tim): Hardcoded because of https://github.com/monogon-dev/monogon/issues/316
+        "xTakeoverPath": "_main/cloud/agent/takeover/takeover_bin_/takeover_bin",
     },
     deps = [
         "//cloud/agent/api",

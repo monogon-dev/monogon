@@ -1,5 +1,5 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 go_library(
     name = "launch_lib",
@@ -15,10 +15,6 @@ go_library(
 
 go_binary(
     name = "launch",
-    data = [
-        "//metropolis/node:image",
-        "//third_party/edk2:firmware",
-    ],
     embed = [":launch_lib"],
     visibility = ["//visibility:public"],
 )
