@@ -37,6 +37,7 @@ go_test(
         "//metropolis/node",
         "//metropolis/proto/api",
         "//metropolis/proto/common",
+        "//metropolis/test/e2e/connectivity",
         "//metropolis/test/launch",
         "//metropolis/test/localregistry",
         "//metropolis/test/util",

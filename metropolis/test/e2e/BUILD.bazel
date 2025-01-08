@@ -6,6 +6,7 @@ localregistry_manifest(
         "//metropolis/test/e2e/selftest:selftest_image",
         "//metropolis/test/e2e/persistentvolume:persistentvolume_image",
         "//metropolis/test/e2e/httpserver:httpserver_image",
+        "//metropolis/test/e2e/connectivity/agent:agent_image",
     ],
     visibility = [
         "//metropolis/test/e2e/suites:__subpackages__",

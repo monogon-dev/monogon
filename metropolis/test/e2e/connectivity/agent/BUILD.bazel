@@ -1,0 +1,43 @@
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_binary")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+go_library(
+    name = "agent_lib",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/metropolis/test/e2e/connectivity/agent",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//metropolis/test/e2e/connectivity/spec",
+        "@org_golang_google_protobuf//encoding/protodelim",
+    ],
+)
+
+go_binary(
+    name = "agent",
+    embed = [":agent_lib"],
+    visibility = ["//visibility:private"],
+)
+
+platform_transition_binary(
+    name = "agent_transitioned",
+    binary = ":agent",
+    target_platform = "//build/platforms:linux_amd64_static",
+    visibility = ["//visibility:private"],
+)
+
+pkg_tar(
+    name = "agent_layer",
+    srcs = [":agent_transitioned"],
+    visibility = ["//visibility:private"],
+)
+
+oci_image(
+    name = "agent_image",
+    base = "@distroless_base",
+    entrypoint = ["/agent"],
+    tars = [":agent_layer"],
+    visibility = ["//metropolis/test/e2e:__pkg__"],
+    workdir = "/app",
+)

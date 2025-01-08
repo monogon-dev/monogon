@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "metropolis_test_e2e_connectivty_tester_proto",
+    srcs = ["spec.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["@protobuf//:duration_proto"],
+)
+
+go_proto_library(
+    name = "metropolis_test_e2e_connectivty_tester_go_proto",
+    importpath = "source.monogon.dev/metropolis/test/e2e/connectivity/spec",
+    proto = ":metropolis_test_e2e_connectivty_tester_proto",
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "spec",
+    embed = [":metropolis_test_e2e_connectivty_tester_go_proto"],
+    importpath = "source.monogon.dev/metropolis/test/e2e/connectivity/spec",
+    visibility = ["//visibility:public"],
+)

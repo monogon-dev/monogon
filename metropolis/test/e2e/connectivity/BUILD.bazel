@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "connectivity",
+    srcs = ["connectivity.go"],
+    importpath = "source.monogon.dev/metropolis/test/e2e/connectivity",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metropolis/test/e2e/connectivity/spec",
+        "@com_github_cenkalti_backoff_v4//:backoff",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/api/errors",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_apimachinery//pkg/watch",
+        "@io_k8s_client_go//kubernetes",
+        "@io_k8s_client_go//kubernetes/scheme",
+        "@io_k8s_client_go//rest",
+        "@io_k8s_client_go//tools/remotecommand",
+        "@io_k8s_utils//ptr",
+        "@org_golang_google_protobuf//encoding/protodelim",
+        "@org_golang_google_protobuf//types/known/durationpb",
+    ],
+)

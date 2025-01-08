@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+import "google/protobuf/duration.proto";
+
+package metropolis.test.e2e.connectivty_tester;
+
+message Request {
+    oneof req {
+        TestRequest test = 1;
+        StartServerRequest start_server = 2;
+        StopServerRequest stop_server = 3;
+    }
+}
+
+message Response {
+    oneof res {
+        TestResponse test = 1;
+        StartServerResponse start_server = 2;
+        StopServerResponse stop_server = 3;
+    }
+}
+
+message TestRequest {
+    string address = 1;
+    uint64 token = 2;
+    google.protobuf.Duration timeout = 3;
+}
+
+message TestResponse {
+    enum Result {
+        UNKNOWN = 0;
+        CONNECTION_REJECTED = 1;
+        CONNECTION_TIMEOUT = 2;
+        WRONG_TOKEN = 3;
+        SUCCESS = 4;
+    }
+    Result result = 1;
+    string error_description = 2;
+}
+
+message StartServerRequest {
+    string address = 1;
+    uint64 token = 2;
+}
+
+message StartServerResponse {
+    bool ok = 1;
+    string error_description = 2;
+}
+
+message StopServerRequest {
+    uint64 token = 1;
+}
+
+message StopServerResponse {
+    bool ok = 1;
+    string error_description = 2;
+}
+

@@ -30,6 +30,7 @@ import (
 	common "source.monogon.dev/metropolis/node"
 	apb "source.monogon.dev/metropolis/proto/api"
 	cpb "source.monogon.dev/metropolis/proto/common"
+	"source.monogon.dev/metropolis/test/e2e/connectivity"
 	mlaunch "source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/localregistry"
 	"source.monogon.dev/metropolis/test/util"
@@ -284,7 +285,7 @@ func TestE2EKubernetes(t *testing.T) {
 		}
 	}()
 
-	clientSet, _, err := cluster.GetKubeClientSet()
+	clientSet, restConfig, err := cluster.GetKubeClientSet()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -370,6 +371,26 @@ func TestE2EKubernetes(t *testing.T) {
 			}
 			return fmt.Errorf("pod is not ready: %s", errorMsg.String())
 		}
+	})
+	t.Run("Connectivity Smoke Tests", func(t *testing.T) {
+		ct := connectivity.SetupTest(t, &connectivity.TestSpec{
+			Name:       "connectivity-smoke",
+			ClientSet:  clientSet,
+			RESTConfig: restConfig,
+			NumPods:    2,
+			ExtraPodConfig: func(i int, pod *corev1.Pod) {
+				// Spread pods out over nodes to test inter-node network
+				pod.Labels = make(map[string]string)
+				pod.Labels["name"] = "connectivity-smoketest"
+				pod.Spec.TopologySpreadConstraints = []corev1.TopologySpreadConstraint{{
+					MaxSkew:           1,
+					TopologyKey:       "kubernetes.io/hostname",
+					WhenUnsatisfiable: corev1.DoNotSchedule,
+					LabelSelector:     metav1.SetAsLabelSelector(pod.Labels),
+				}}
+			},
+		})
+		ct.TestPodConnectivity(t, 0, 1, 1234, connectivity.ExpectedSuccess)
 	})
 	for _, runtimeClass := range []string{"runc", "gvisor"} {
 		statefulSetName := fmt.Sprintf("test-statefulset-%s", runtimeClass)
