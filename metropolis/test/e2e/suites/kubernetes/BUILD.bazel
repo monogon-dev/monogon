@@ -43,7 +43,6 @@ go_test(
         "@io_bazel_rules_go//go/runfiles:go_default_library",
         "@io_k8s_api//core/v1:core",
         "@io_k8s_apimachinery//pkg/api/errors",
-        "@io_k8s_apimachinery//pkg/api/resource",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
         "@io_k8s_kubernetes//pkg/api/v1/pod",
         "@io_k8s_utils//ptr",
