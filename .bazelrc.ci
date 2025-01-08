@@ -8,3 +8,8 @@ build --color=no
 # cache for builds, we will only populate it from a builder that runs against
 # all merged main commits.
 build --noremote_upload_local_results
+
+# Setup a disk cache with a maximum size of 150Gi. We currently have our PVs
+# set to 200Gi, which is more than enough.
+build --disk_cache=~/.cache/bazel-monogon/
+build --experimental_disk_cache_gc_max_size=150G
