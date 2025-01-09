@@ -1,7 +1,7 @@
-From 544ee8b571a006a8e03eb4401f6644bb8bf6628f Mon Sep 17 00:00:00 2001
+From b05e8fb3ae3a385d5615a8e9753f4510c4ca8d79 Mon Sep 17 00:00:00 2001
 From: Serge Bazanski <serge@monogon.tech>
 Date: Wed, 25 Sep 2024 02:38:50 +0200
-Subject: [PATCH] Improve reproducibility
+Subject: [PATCH 3/4] Improve reproducibility
 
 Fixes a few issues with rules_rust/rustc reproducibility when the same code is
 being built in slightly different BuildConfigurations.
@@ -24,35 +24,35 @@ We fix this by doing two changes:
  2. We add a remap path option to rustc that replaces bazel-out/<dir>/bin/ with
     bin/.
 ---
- proto/prost/private/prost.bzl | 3 ++-
- proto/protobuf/proto.bzl      | 2 +-
- rust/private/clippy.bzl       | 2 +-
- rust/private/rust.bzl         | 6 +++---
- rust/private/rustc.bzl        | 4 ++++
- rust/private/utils.bzl        | 7 +++++--
- 6 files changed, 16 insertions(+), 8 deletions(-)
+ extensions/prost/private/prost.bzl | 3 ++-
+ extensions/protobuf/proto.bzl      | 2 +-
+ rust/private/clippy.bzl            | 2 +-
+ rust/private/rust.bzl              | 6 +++---
+ rust/private/rustc.bzl             | 4 ++++
+ rust/private/utils.bzl             | 8 ++++++--
+ 6 files changed, 17 insertions(+), 8 deletions(-)
 
-diff --git a/proto/prost/private/prost.bzl b/proto/prost/private/prost.bzl
-index 20814500..45b283d9 100644
---- a/proto/prost/private/prost.bzl
-+++ b/proto/prost/private/prost.bzl
-@@ -132,7 +132,8 @@ def _compile_rust(ctx, attr, crate_name, src, deps, edition):
+diff --git a/extensions/prost/private/prost.bzl b/extensions/prost/private/prost.bzl
+index 6d9d4969..8dad0961 100644
+--- a/extensions/prost/private/prost.bzl
++++ b/extensions/prost/private/prost.bzl
+@@ -164,7 +164,8 @@ def _compile_rust(
        A DepVariantInfo provider.
      """
      toolchain = ctx.toolchains["@rules_rust//rust:toolchain_type"]
 -    output_hash = repr(hash(src.path + ".prost"))
 +    src_path = src.path.replace(ctx.bin_dir.path, 'bin')
 +    output_hash = repr(hash(src_path + ".prost"))
-
+ 
      lib_name = "{prefix}{name}-{lib_hash}{extension}".format(
          prefix = "lib",
-diff --git a/proto/protobuf/proto.bzl b/proto/protobuf/proto.bzl
-index 959d0c1c..00dff5d0 100644
---- a/proto/protobuf/proto.bzl
-+++ b/proto/protobuf/proto.bzl
+diff --git a/extensions/protobuf/proto.bzl b/extensions/protobuf/proto.bzl
+index 56025417..7c025b11 100644
+--- a/extensions/protobuf/proto.bzl
++++ b/extensions/protobuf/proto.bzl
 @@ -187,7 +187,7 @@ def _rust_proto_compile(protos, descriptor_sets, imports, crate_name, ctx, is_gr
      srcs.append(lib_rs)
-
+ 
      # And simulate rust_library behavior
 -    output_hash = determine_output_hash(lib_rs, ctx.label)
 +    output_hash = determine_output_hash(ctx.bin_dir, lib_rs, ctx.label)
@@ -60,10 +60,10 @@ index 959d0c1c..00dff5d0 100644
          output_dir,
          crate_name,
 diff --git a/rust/private/clippy.bzl b/rust/private/clippy.bzl
-index 748f33a0..772b39ad 100644
+index 8c172ae0..efdba8fc 100644
 --- a/rust/private/clippy.bzl
 +++ b/rust/private/clippy.bzl
-@@ -131,7 +131,7 @@ def _clippy_aspect_impl(target, ctx):
+@@ -138,7 +138,7 @@ def _clippy_aspect_impl(target, ctx):
          dep_info = dep_info,
          linkstamp_outs = linkstamp_outs,
          ambiguous_libs = ambiguous_libs,
@@ -73,7 +73,7 @@ index 748f33a0..772b39ad 100644
          out_dir = out_dir,
          build_env_files = build_env_files,
 diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
-index 21881729..24792e99 100644
+index 2717d3f5..be277010 100644
 --- a/rust/private/rust.bzl
 +++ b/rust/private/rust.bzl
 @@ -159,7 +159,7 @@ def _rust_library_common(ctx, crate_type):
@@ -82,10 +82,10 @@ index 21881729..24792e99 100644
      else:
 -        output_hash = determine_output_hash(crate_root, ctx.label)
 +        output_hash = determine_output_hash(ctx.bin_dir, crate_root, ctx.label)
-
+ 
      rust_lib_name = determine_lib_name(
          crate_name,
-@@ -316,7 +316,7 @@ def _rust_test_impl(ctx):
+@@ -321,7 +321,7 @@ def _rust_test_impl(ctx):
              )
          else:
              crate_name = crate.name
@@ -94,7 +94,7 @@ index 21881729..24792e99 100644
              output = ctx.actions.declare_file(
                  "test-%s/%s%s" % (
                      output_hash,
-@@ -380,7 +380,7 @@ def _rust_test_impl(ctx):
+@@ -388,7 +388,7 @@ def _rust_test_impl(ctx):
                  ctx.label.name + toolchain.binary_ext,
              )
          else:
@@ -104,13 +104,13 @@ index 21881729..24792e99 100644
                  "test-%s/%s%s" % (
                      output_hash,
 diff --git a/rust/private/rustc.bzl b/rust/private/rustc.bzl
-index c82c236b..576de4e3 100644
+index 2bc6ce19..73e472f5 100644
 --- a/rust/private/rustc.bzl
 +++ b/rust/private/rustc.bzl
-@@ -973,6 +973,10 @@ def construct_arguments(
+@@ -972,6 +972,10 @@ def construct_arguments(
      if remap_path_prefix != None:
          rustc_flags.add("--remap-path-prefix=${{pwd}}={}".format(remap_path_prefix))
-
+ 
 +    # Replace unstable bindir path (based on ST-hash which is in turn based on
 +    # build configuration) with a stable bin/ path.
 +    rustc_flags.add("--remap-path-prefix={}=bin".format(ctx.bin_dir.path))
@@ -119,31 +119,32 @@ index c82c236b..576de4e3 100644
      for kind in emit:
          if kind == "link" and crate_info.type == "bin" and crate_info.output != None:
 diff --git a/rust/private/utils.bzl b/rust/private/utils.bzl
-index a0fda352..ff45a149 100644
+index 7b11c10d..41f7d2db 100644
 --- a/rust/private/utils.bzl
 +++ b/rust/private/utils.bzl
-@@ -188,7 +188,7 @@ def abs(value):
-         return -value
-     return value
-
+@@ -176,7 +176,7 @@ def get_lib_name_for_windows(lib):
+ 
+     return libname
+ 
 -def determine_output_hash(crate_root, label):
 +def determine_output_hash(bin_dir, crate_root, label):
      """Generates a hash of the crate root file's path.
-
+ 
      Args:
-@@ -199,8 +199,11 @@ def determine_output_hash(crate_root, label):
+@@ -187,8 +187,12 @@ def determine_output_hash(crate_root, label):
          str: A string representation of the hash.
      """
-
+ 
 +    # Remove any unstable BuildConfiguration derived dir fragments to unify
 +    # hashes between different configs.
-+    crate_root_path = crate_root.path.replace(bin_dir.path, 'bin')
++    crate_root_path = crate_root.path.replace(bin_dir.path, "bin")
++
      # Take the absolute value of hash() since it could be negative.
 -    h = abs(hash(crate_root.path) + hash(repr(label)))
 +    h = abs(hash(crate_root_path) + hash(repr(label)))
      return repr(h)
-
+ 
  def get_preferred_artifact(library_to_link, use_pic):
---
-2.44.1
+-- 
+2.47.0
 

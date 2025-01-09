@@ -1,36 +1,36 @@
-From a3a14a5fe78a5f3d366fe2d0f3fcfb9ededc587b Mon Sep 17 00:00:00 2001
+From f9f2bdfd156f62c67af78ed7c0a46ae67ec148e2 Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
 Date: Wed, 25 Sep 2024 02:37:42 +0200
 Subject: [PATCH 2/4] Support no_std in Prost toolchain
 
 ---
- proto/prost/private/prost.bzl         |  8 ++++++++
- proto/prost/private/protoc_wrapper.rs | 19 +++++++++++++++++--
- 2 files changed, 25 insertions(+), 2 deletions(-)
+ extensions/prost/private/prost.bzl         |  8 ++++++++
+ extensions/prost/private/protoc_wrapper.rs | 18 +++++++++++++++++-
+ 2 files changed, 25 insertions(+), 1 deletion(-)
 
-diff --git a/proto/prost/private/prost.bzl b/proto/prost/private/prost.bzl
-index cf5e11c9..61d0bc63 100644
---- a/proto/prost/private/prost.bzl
-+++ b/proto/prost/private/prost.bzl
-@@ -67,6 +67,9 @@ def _compile_proto(ctx, crate_name, proto_info, deps, prost_toolchain, rustfmt_t
-     additional_args.add("--descriptor_set={}".format(proto_info.direct_descriptor_set.path))
-     additional_args.add_all(prost_toolchain.prost_opts, format_each = "--prost_opt=%s")
-
+diff --git a/extensions/prost/private/prost.bzl b/extensions/prost/private/prost.bzl
+index f06719db..6d9d4969 100644
+--- a/extensions/prost/private/prost.bzl
++++ b/extensions/prost/private/prost.bzl
+@@ -86,6 +86,9 @@ def _compile_proto(
+     additional_args.add("--additional_srcs={}".format(",".join([f.path for f in all_additional_srcs.to_list()])))
+     additional_args.add_all(prost_toolchain.prost_opts + prost_opts, format_each = "--prost_opt=%s")
+ 
 +    if prost_toolchain.is_nostd:
 +        additional_args.add("--is_nostd")
 +
      if prost_toolchain.tonic_plugin:
          tonic_plugin = prost_toolchain.tonic_plugin[DefaultInfo].files_to_run
          additional_args.add(prost_toolchain.tonic_plugin_flag % tonic_plugin.executable.path)
-@@ -387,6 +390,7 @@ def _rust_prost_toolchain_impl(ctx):
+@@ -442,6 +445,7 @@ def _rust_prost_toolchain_impl(ctx):
          tonic_plugin_flag = ctx.attr.tonic_plugin_flag,
          tonic_runtime = ctx.attr.tonic_runtime,
          include_transitive_deps = ctx.attr.include_transitive_deps,
 +        is_nostd = ctx.attr.is_nostd,
      )]
-
+ 
  rust_prost_toolchain = rule(
-@@ -442,6 +446,10 @@ rust_prost_toolchain = rule(
+@@ -497,6 +501,10 @@ rust_prost_toolchain = rule(
              doc = "The Tonic runtime crates to use.",
              providers = [[rust_common.crate_info], [rust_common.crate_group_info]],
          ),
@@ -40,45 +40,49 @@ index cf5e11c9..61d0bc63 100644
 +        ),
      }, **proto_toolchains.if_legacy_toolchain({
          "_legacy_proto_toolchain": attr.label(
-             default = "//proto/protobuf:legacy_proto_toolchain",
-diff --git a/proto/prost/private/protoc_wrapper.rs b/proto/prost/private/protoc_wrapper.rs
-index ff4decd4..2c32ea35 100644
---- a/proto/prost/private/protoc_wrapper.rs
-+++ b/proto/prost/private/protoc_wrapper.rs
-@@ -152,8 +152,13 @@ fn generate_lib_rs(
-     prost_outputs: &BTreeSet<PathBuf>,
+             default = Label("//private:legacy_proto_toolchain"),
+diff --git a/extensions/prost/private/protoc_wrapper.rs b/extensions/prost/private/protoc_wrapper.rs
+index a0403f82..1dded7aa 100644
+--- a/extensions/prost/private/protoc_wrapper.rs
++++ b/extensions/prost/private/protoc_wrapper.rs
+@@ -156,8 +156,17 @@ fn generate_lib_rs(
      is_tonic: bool,
      direct_dep_crate_names: Vec<String>,
+     additional_content: String,
 +    is_nostd: bool,
  ) -> String {
 -    let mut contents = vec!["// @generated".to_string(), "".to_string()];
 +    let mut contents = vec![
-+        if is_nostd { "#![no_std]".to_string() } else { "".to_string() },
++        if is_nostd {
++            "#![no_std]".to_string()
++        } else {
++            "".to_string()
++        },
 +        "// @generated".to_string(),
 +        "".to_string(),
 +    ];
      for crate_name in direct_dep_crate_names {
          contents.push(format!("pub use {crate_name};"));
      }
-@@ -442,6 +447,9 @@ struct Args {
+@@ -457,6 +462,9 @@ struct Args {
      /// Whether to generate tonic code.
      is_tonic: bool,
-
+ 
 +    // Whether to put a no_std tag into the generated code.
 +    is_nostd: bool,
 +
      /// Extra arguments to pass to protoc.
      extra_args: Vec<String>,
  }
-@@ -463,6 +471,7 @@ impl Args {
+@@ -479,6 +487,7 @@ impl Args {
          let mut tonic_or_prost_opts = Vec::new();
          let mut direct_dep_crate_names = Vec::new();
          let mut is_tonic = false;
 +        let mut is_nostd = false;
-
+ 
          let mut extra_args = Vec::new();
-
-@@ -485,6 +494,10 @@ impl Args {
+ 
+@@ -501,6 +510,10 @@ impl Args {
                  is_tonic = true;
                  return;
              }
@@ -86,10 +90,10 @@ index ff4decd4..2c32ea35 100644
 +                is_nostd = true;
 +                return;
 +            }
-
+ 
              if !arg.contains('=') {
                  extra_args.push(arg);
-@@ -621,6 +634,7 @@ impl Args {
+@@ -644,6 +657,7 @@ impl Args {
              proto_paths,
              direct_dep_crate_names,
              is_tonic,
@@ -97,23 +101,22 @@ index ff4decd4..2c32ea35 100644
              label: label.unwrap(),
              extra_args,
          })
-@@ -727,6 +741,7 @@ fn main() {
+@@ -748,6 +762,7 @@ fn main() {
          proto_paths,
          direct_dep_crate_names,
          is_tonic,
 +        is_nostd,
          extra_args,
      } = Args::parse().expect("Failed to parse args");
-
-@@ -841,7 +856,7 @@ fn main() {
-     // Write outputs
-     fs::write(
-         &out_librs,
--        generate_lib_rs(&rust_files, is_tonic, direct_dep_crate_names),
-+        generate_lib_rs(&rust_files, is_tonic, direct_dep_crate_names, is_nostd),
+ 
+@@ -917,6 +932,7 @@ fn main() {
+             is_tonic,
+             direct_dep_crate_names,
+             additional_content,
++            is_nostd,
+         ),
      )
      .expect("Failed to write file.");
-     fs::write(
---
-2.44.1
+-- 
+2.47.0
 

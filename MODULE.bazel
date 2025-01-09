@@ -38,6 +38,8 @@ single_version_override(
     version = "0.41.0",
 )
 
+# rules_rust was split into multiple dependencies. Sadly, this means we have to
+# patch each include separately.
 bazel_dep(name = "rules_rust")
 single_version_override(
     module_name = "rules_rust",
@@ -46,11 +48,21 @@ single_version_override(
         "//third_party/rules_rust:rust-uefi-platform.patch",
         "//third_party/rules_rust:rust-prost-nostd.patch",
         "//third_party/rules_rust:rust-reproducibility.patch",
-        "//third_party/rules_rust:Add-extra_rustc_flags-to-module-extension.patch",
     ],
-    version = "0.53.0",
+    version = "0.56.0",
 )
 
+bazel_dep(name = "rules_rust_prost")
+single_version_override(
+    module_name = "rules_rust_prost",
+    patch_strip = 3,
+    patches = [
+        "//third_party/rules_rust:rust-prost-nostd.patch",
+    ],
+    version = "0.56.0",
+)
+
+bazel_dep(name = "rules_rust_protobuf", version = "0.56.0")
 bazel_dep(name = "zlib")
 single_version_override(
     module_name = "zlib",
@@ -94,7 +106,7 @@ register_toolchains("//build/toolchain:host_cc_toolchain")
 register_toolchains("@rust_toolchains//:all")
 
 # Protobuf Toolchains
-register_toolchains("@rules_rust//proto/protobuf:default-proto-toolchain")
+register_toolchains("@rules_rust_protobuf//:default_proto_toolchain")
 
 register_toolchains("//build/rust:prost_efi_toolchain")
 

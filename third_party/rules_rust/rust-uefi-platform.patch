@@ -1,4 +1,4 @@
-From b2d165d9b2c811293f92bf083289c97c9d87d13c Mon Sep 17 00:00:00 2001
+From e361ea153a5ba02bfb56a5894a88418270cd05a4 Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
 Date: Wed, 25 Sep 2024 02:37:09 +0200
 Subject: [PATCH 1/4] Add support for UEFI targets and OS
@@ -8,34 +8,34 @@ Subject: [PATCH 1/4] Add support for UEFI targets and OS
  1 file changed, 7 insertions(+)
 
 diff --git a/rust/platform/triple_mappings.bzl b/rust/platform/triple_mappings.bzl
-index 139015da..efa9f167 100644
+index b436af3a..15fca0b2 100644
 --- a/rust/platform/triple_mappings.bzl
 +++ b/rust/platform/triple_mappings.bzl
 @@ -47,6 +47,7 @@ SUPPORTED_T2_PLATFORM_TRIPLES = {
-     "aarch64-fuchsia": _support(std = True, host_tools = False),
      "aarch64-linux-android": _support(std = True, host_tools = False),
      "aarch64-pc-windows-msvc": _support(std = True, host_tools = True),
+     "aarch64-unknown-fuchsia": _support(std = True, host_tools = False),
 +    "aarch64-unknown-uefi": _support(std = True, host_tools = False),
      "arm-unknown-linux-gnueabi": _support(std = True, host_tools = True),
      "armv7-linux-androideabi": _support(std = True, host_tools = False),
      "armv7-unknown-linux-gnueabi": _support(std = True, host_tools = True),
 @@ -65,6 +66,7 @@ SUPPORTED_T2_PLATFORM_TRIPLES = {
-     "x86_64-linux-android": _support(std = True, host_tools = False),
      "x86_64-unknown-freebsd": _support(std = True, host_tools = True),
+     "x86_64-unknown-fuchsia": _support(std = True, host_tools = False),
      "x86_64-unknown-none": _support(std = True, host_tools = False),
 +    "x86_64-unknown-uefi": _support(std = True, host_tools = False),
  }
-
+ 
  _T3_PLATFORM_TRIPLES = {
-@@ -142,6 +144,7 @@ _SYSTEM_TO_BUILTIN_SYS_SUFFIX = {
+@@ -148,6 +150,7 @@ _SYSTEM_TO_BUILTIN_SYS_SUFFIX = {
      "nto": "qnx",
      "openbsd": "openbsd",
      "solaris": None,
 +    "uefi": "uefi",
      "unknown": None,
      "wasi": None,
-     "windows": "windows",
-@@ -160,6 +163,7 @@ _SYSTEM_TO_BINARY_EXT = {
+     "wasip1": None,
+@@ -167,6 +170,7 @@ _SYSTEM_TO_BINARY_EXT = {
      "nixos": "",
      "none": "",
      "nto": "",
@@ -43,23 +43,23 @@ index 139015da..efa9f167 100644
      # This is currently a hack allowing us to have the proper
      # generated extension for the wasm target, similarly to the
      # windows target
-@@ -181,6 +185,7 @@ _SYSTEM_TO_STATICLIB_EXT = {
+@@ -189,6 +193,7 @@ _SYSTEM_TO_STATICLIB_EXT = {
      "nixos": ".a",
      "none": ".a",
      "nto": ".a",
 +    "uefi": ".lib",
      "unknown": "",
      "wasi": "",
-     "windows": ".lib",
-@@ -199,6 +204,7 @@ _SYSTEM_TO_DYLIB_EXT = {
+     "wasip1": "",
+@@ -208,6 +213,7 @@ _SYSTEM_TO_DYLIB_EXT = {
      "nixos": ".so",
      "none": ".so",
      "nto": ".a",
 +    "uefi": "", # UEFI doesn't have dynamic linking
      "unknown": ".wasm",
      "wasi": ".wasm",
-     "windows": ".dll",
-@@ -244,6 +250,7 @@ _SYSTEM_TO_STDLIB_LINKFLAGS = {
+     "wasip1": ".wasm",
+@@ -254,6 +260,7 @@ _SYSTEM_TO_STDLIB_LINKFLAGS = {
      "nto": [],
      "openbsd": ["-lpthread"],
      "solaris": ["-lsocket", "-lposix4", "-lpthread", "-lresolv"],
@@ -67,6 +67,6 @@ index 139015da..efa9f167 100644
      "unknown": [],
      "uwp": ["ws2_32.lib"],
      "wasi": [],
---
-2.44.1
+-- 
+2.47.0
 
