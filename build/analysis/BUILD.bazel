@@ -1,6 +1,5 @@
-load("@com_github_sluongng_nogo_analyzer//staticcheck:def.bzl", ALL_STATICCHECK_ANALYZERS = "ANALYZERS", format_staticcheck_analyzers = "staticcheck_analyzers")
-load("@com_github_sluongng_nogo_analyzer//:def.bzl", gen_nogo_config = "nogo_config")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@com_github_sluongng_nogo_analyzer//staticcheck:def.bzl", ALL_STATICCHECK_ANALYZERS = "ANALYZERS", format_staticcheck_analyzers = "staticcheck_analyzers")
 load("@io_bazel_rules_go//go:def.bzl", "nogo")
 
 # NOGO_PASSES contains all enabled analyzers that nogo should execute.
@@ -94,9 +93,9 @@ NOGO_PASSES += [
     "//build/analysis/importsort",
 ]
 
-# NOGO_CONFIG contains the overrides for nogo to exempt specific files
+# NOGO_CONFIG_OVERRIDES contains the overrides for nogo to exempt specific files
 # from being analyzed.
-NOGO_CONFIG = {
+NOGO_CONFIG_OVERRIDES = {
     "shift": {
         "exclude_files": {
             "external/dev_gvisor_gvisor": "third_party",
@@ -218,7 +217,7 @@ DISABLED_FOR_EXTERNAL_CODE = [
 # We override the variable with itself unioned with the other
 # config part, as the Intellij integration doesn't understand
 # the |= expression which makes editing this file kinda annoying.
-NOGO_CONFIG = NOGO_CONFIG | {
+NOGO_CONFIG_EXTERNAL = {
     analyzer: {
         "exclude_files": {
             # Don't run linters on external dependencies
@@ -229,6 +228,8 @@ NOGO_CONFIG = NOGO_CONFIG | {
     }
     for analyzer in DISABLED_FOR_EXTERNAL_CODE
 }
+
+NOGO_CONFIG = NOGO_CONFIG_OVERRIDES | NOGO_CONFIG_EXTERNAL
 
 write_file(
     name = "nogo_config",

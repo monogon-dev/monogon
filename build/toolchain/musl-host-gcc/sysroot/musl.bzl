@@ -33,7 +33,7 @@ def _musl_headers(ctx):
         use_default_shell_env = True,
         command = "make -C \"$1\" install-headers ARCH=\"$2\" includedir=\"$(pwd)/$3\" > /dev/null",
     )
-    return [DefaultInfo(files=depset([hdrs_dir]))]
+    return [DefaultInfo(files = depset([hdrs_dir]))]
 
 musl_headers = rule(
     implementation = _musl_headers,

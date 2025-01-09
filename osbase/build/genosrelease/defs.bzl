@@ -43,7 +43,7 @@ os_release = rule(
         "stamp_var": attr.string(mandatory = True),
         "_genosrelease": attr.label(
             default = Label("//osbase/build/genosrelease"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),

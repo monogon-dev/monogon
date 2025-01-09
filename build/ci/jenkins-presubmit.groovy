@@ -51,8 +51,7 @@ pipeline {
                         echo "Gerrit change: ${GERRIT_CHANGE_URL}"
                         sh "git clean -fdx -e '/bazel-*'"
                         sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci mod tidy --lockfile_mode=update"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci run //:go -- mod tidy"
-                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci run //:gazelle -- update"
+                        sh "JENKINS_NODE_COOKIE=dontKillMe tools/bazel --bazelrc=.bazelrc.ci run //:tidy"
                     }
                     post {
                         always {
@@ -65,8 +64,7 @@ pipeline {
                                         Please run:
 
                                         \$ bazel mod tidy --lockfile_mode=update
-                                        \$ bazel run //:go -- mod tidy
-                                        \$ bazel run //:gazelle -- update
+                                        \$ bazel run //:tidy
 
                                         In your git checkout and amend the resulting diff to this changelist.
                                     """

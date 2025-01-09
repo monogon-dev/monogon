@@ -1,5 +1,4 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 
 go_library(
     name = "launch-cluster_lib",
@@ -18,7 +17,7 @@ go_library(
         "//metropolis/node",
         "//metropolis/proto/common",
         "//metropolis/test/launch",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@io_bazel_rules_go//go/runfiles",
     ],
 )
 

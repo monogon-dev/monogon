@@ -15,7 +15,6 @@
 #  limitations under the License.
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
-load("@@//build/utils:template_file.bzl", "template_file")
 
 defs = [
     "NDEBUG",  # Doesn't compile without it because their assertions reference non-existent fields

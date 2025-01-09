@@ -1,12 +1,15 @@
-BuildKindProvider = provider(fields = ['type'])
+BuildKindInfo = provider(
+    "Build kind for userspace tools",
+    fields = ["type"],
+)
 
 def _impl(ctx):
-    values = ['full', 'lite'] 
+    values = ["full", "lite"]
     value = ctx.build_setting_value
     if value not in values:
         fail(str(ctx.label) + " build setting allowed to take values {full, lite} but was set to " + value)
 
-    return BuildKindProvider(type = value)
+    return BuildKindInfo(type = value)
 
 buildkind = rule(
     implementation = _impl,

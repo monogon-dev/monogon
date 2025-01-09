@@ -10,8 +10,6 @@ load("@io_bazel_rules_go//go:def.bzl", "GoSource", "go_context")
 def _toolchain_library_impl(ctx):
     go = go_context(ctx)
 
-    importpath = ctx.attr.importpath
-
     out = go.declare_file(go, ext = ".go")
     ctx.actions.expand_template(
         template = ctx.file._template,

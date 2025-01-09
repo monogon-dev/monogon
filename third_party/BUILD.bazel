@@ -1,4 +1,5 @@
 load("//osbase/build/fwprune:def.bzl", "fsspec_linux_firmware")
+load("//osbase/build/mkucode:def.bzl", "cpio_ucode")
 
 fsspec_linux_firmware(
     name = "firmware",
@@ -7,8 +8,6 @@ fsspec_linux_firmware(
     metadata = "@linux-firmware//:metadata",
     visibility = ["//visibility:public"],
 )
-
-load("//osbase/build/mkucode:def.bzl", "cpio_ucode")
 
 cpio_ucode(
     name = "ucode",

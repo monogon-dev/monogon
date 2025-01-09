@@ -14,8 +14,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
     name = "cap",

@@ -38,6 +38,6 @@ go_test(
         "//osbase/freeport",
         "//osbase/supervisor",
         "@com_zx2c4_golang_wireguard_wgctrl//wgtypes",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@io_bazel_rules_go//go/runfiles",
     ],
 )

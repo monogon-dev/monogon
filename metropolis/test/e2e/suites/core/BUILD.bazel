@@ -24,7 +24,7 @@ go_test(
         "//metropolis/test/localregistry",
         "//metropolis/test/util",
         "//osbase/test/launch",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@io_bazel_rules_go//go/runfiles",
         "@org_golang_google_grpc//:grpc",
     ],
 )

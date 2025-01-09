@@ -16,6 +16,6 @@ go_test(
         "//metropolis/version",
         "//osbase/cmd",
         "//version",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@io_bazel_rules_go//go/runfiles",
     ],
 )

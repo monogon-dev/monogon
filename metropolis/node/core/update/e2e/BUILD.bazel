@@ -28,6 +28,6 @@ go_test(
         "//osbase/blkio",
         "//osbase/blockdev",
         "//osbase/build/mkimage/osimage",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@io_bazel_rules_go//go/runfiles",
     ],
 )

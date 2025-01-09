@@ -33,7 +33,7 @@ def _linux_headers(ctx):
         use_default_shell_env = True,
         command = "make -C \"$1\" headers_install ARCH=\"$2\" INSTALL_HDR_PATH=\"$(pwd)/$3\" > /dev/null && mv \"$3/include/\"* \"$3/\" && rmdir \"$3/include\"",
     )
-    return [DefaultInfo(files=depset([hdrs_dir]))]
+    return [DefaultInfo(files = depset([hdrs_dir]))]
 
 linux_headers = rule(
     implementation = _linux_headers,

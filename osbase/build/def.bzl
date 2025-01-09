@@ -1,21 +1,4 @@
-#  Copyright 2020 The Monogon Project Authors.
-#
-#  SPDX-License-Identifier: Apache-2.0
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-load("@bazel_skylib//lib:paths.bzl", "paths")
-
-def _build_pure_transition_impl(settings, attr):
+def _build_pure_transition_impl(settings, _attr):
     """
     Transition that enables pure, static build of Go binaries.
     """
@@ -40,7 +23,7 @@ build_pure_transition = transition(
     ],
 )
 
-def _build_static_transition_impl(settings, attr):
+def _build_static_transition_impl(_settings, _attr):
     """
     Transition that enables static builds with CGo and musl for Go binaries.
     """
@@ -116,9 +99,9 @@ def _fsspec_core_impl(ctx, tool, output_file):
 
     for fsspec in ctx.attr.fsspecs:
         if FSSpecInfo in fsspec:
-            fsspecInfo = fsspec[FSSpecInfo]
-            extra_specs.append(fsspecInfo.spec)
-            for f in fsspecInfo.referenced:
+            fsspec_info = fsspec[FSSpecInfo]
+            extra_specs.append(fsspec_info.spec)
+            for f in fsspec_info.referenced:
                 inputs.append(f)
         else:
             # Raw .fsspec prototext. No referenced data allowed.
@@ -254,15 +237,15 @@ erofs_image = rule(
         "_mkerofs": attr.label(
             default = Label("//osbase/build/mkerofs"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
     },
 )
 
-# VerityConfig is emitted by verity_image, and contains a file enclosing a
+# VerityInfo is emitted by verity_image, and contains a file enclosing a
 # singular dm-verity target table.
-VerityConfig = provider(
-    "Configuration necessary to mount a single dm-verity target.",
+VerityInfo = provider(
+    "Information necessary to mount a single dm-verity target.",
     fields = {
         "table": "A file containing the dm-verity target table. See: https://www.kernel.org/doc/html/latest/admin-guide/device-mapper/verity.html",
     },
@@ -272,7 +255,7 @@ def _verity_image_impl(ctx):
     """
     Create a new file containing the source image data together with the Verity
     metadata appended to it, and provide an associated DeviceMapper Verity target
-    table in a separate file, through VerityConfig provider.
+    table in a separate file, through VerityInfo provider.
     """
 
     # Run mkverity.
@@ -301,7 +284,7 @@ def _verity_image_impl(ctx):
             files = depset([image]),
             runfiles = ctx.runfiles(files = [image]),
         ),
-        VerityConfig(
+        VerityInfo(
             table = table,
         ),
     ]
@@ -311,7 +294,7 @@ verity_image = rule(
     doc = """
       Build a dm-verity target image by appending Verity metadata to the source
       image. A corresponding dm-verity target table will be made available
-      through VerityConfig provider.
+      through VerityInfo provider.
   """,
     attrs = {
         "source": attr.label(
@@ -327,7 +310,7 @@ verity_image = rule(
             default = "//osbase/build/mkverity",
             allow_single_file = True,
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
     },
 )

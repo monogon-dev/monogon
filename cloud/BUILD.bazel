@@ -1,5 +1,7 @@
+load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_multirun//:defs.bzl", "multirun")
+load("@rules_oci//oci:defs.bzl", "oci_push")
 
 write_file(
     name = "tags_tmpl",
@@ -8,8 +10,6 @@ write_file(
         "BUILD_VERSION",
     ],
 )
-
-load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
 
 # Use the value of --embed_label under --stamp, otherwise use a deterministic constant
 # value to ensure cache hits for actions that depend on this.
@@ -20,8 +20,6 @@ expand_template(
     substitutions = {"BUILD_VERSION": "0.0.0"},
     template = "tags_tmpl",
 )
-
-load("@rules_oci//oci:defs.bzl", "oci_push")
 
 oci_push(
     name = "apigw_image",

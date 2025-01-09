@@ -1,5 +1,5 @@
-load("@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl", "feature", "flag_group", "flag_set", "tool", "tool_path", "with_feature_set")
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
+load("@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl", "feature", "flag_group", "flag_set", "tool_path", "with_feature_set")
 
 all_compile_actions = [
     ACTION_NAMES.c_compile,
@@ -197,7 +197,7 @@ def _efi_k8_cc_toolchain_impl(ctx):
         features = [default_link_flags_feature, default_compile_flags_feature, hybrid_gnu_msvc_feature, lto_feature],
         # Needed for various compiler built-in headers and auxiliary data. No system libraries are being used.
         cxx_builtin_include_directories = [
-            "/usr/lib/clang/18/include/"
+            "/usr/lib/clang/18/include/",
         ],
         toolchain_identifier = "k8-toolchain",
         host_system_name = "local",

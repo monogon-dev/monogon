@@ -21,7 +21,7 @@ def _mdbook_html_impl(ctx):
     # SUMMARY.md and the parent directory of that is the root.
     summary = None
     for f in ctx.files.srcs:
-        if not f.path.endswith('/SUMMARY.md'):
+        if not f.path.endswith("/SUMMARY.md"):
             continue
         if summary != None:
             fail("More then one SUMMARY.md provided.")
@@ -41,8 +41,8 @@ def _mdbook_html_impl(ctx):
     # Then we will need to prepend:
     #   ../../../../../../../
     # To get back to execroot/.
-    prepend = len(out_book_toml.path.split('/')) - 1
-    src_dir_path = ('../' * prepend) + summary.dirname
+    prepend = len(out_book_toml.path.split("/")) - 1
+    src_dir_path = ("../" * prepend) + summary.dirname
 
     # Generate book.toml.
     # Bazel does not have a toml library. We abuse JSON encoding to get
@@ -58,27 +58,29 @@ def _mdbook_html_impl(ctx):
     ]
     ctx.actions.write(
         output = out_book_toml,
-        content = "\n".join(book_toml_contents)
+        content = "\n".join(book_toml_contents),
     )
 
     out_dir = ctx.actions.declare_directory(ctx.attr.name)
+
     # We also have to prepend the out dir path, for the same reasons for which
     # we prepend src_dir_path above.
-    out_dir_path = ('../' * prepend) + out_dir.path
+    out_dir_path = ("../" * prepend) + out_dir.path
     ctx.actions.run(
         executable = ctx.executable._mdbook,
         arguments = [
             "build",
-            "-d", out_dir_path,
+            "-d",
+            out_dir_path,
             out_book_toml.dirname,
         ],
-        inputs = ctx.files.srcs + [ out_book_toml ],
-        outputs = [ out_dir ],
+        inputs = ctx.files.srcs + [out_book_toml],
+        outputs = [out_dir],
     )
     return [
         DefaultInfo(
             files = depset([out_dir]),
-        )
+        ),
     ]
 
 mdbook_html = rule(
@@ -100,11 +102,10 @@ mdbook_html = rule(
             allow_files = True,
             doc = "The sources of the generated book. Exaclty one file must be named SUMMARY.md, and that file's location will be used to determine the root of the book sources.",
         ),
-
         "_mdbook": attr.label(
             doc = "The mdbook tool.",
             executable = True,
-            cfg = "host",
+            cfg = "exec",
             default = "@crate_index//:mdbook__mdbook",
         ),
     },

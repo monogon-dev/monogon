@@ -4,7 +4,7 @@ See https://systemd.io/BOOT_LOADER_SPECIFICATION/#type-2-efi-unified-kernel-imag
 """
 
 load("//build/toolchain/llvm-efi:transition.bzl", "build_efi_transition")
-load("//osbase/build:def.bzl", "VerityConfig")
+load("//osbase/build:def.bzl", "VerityInfo")
 
 def _efi_unified_kernel_image_impl(ctx):
     # Find the dependency paths to be passed to mkpayload.
@@ -25,9 +25,9 @@ def _efi_unified_kernel_image_impl(ctx):
         )
         deps["cmdline"] = cmdline
 
-    # Get the dm-verity target table from VerityConfig provider.
+    # Get the dm-verity target table from VerityInfo provider.
     if ctx.attr.verity:
-        deps["rootfs_dm_table"] = ctx.attr.verity[VerityConfig].table
+        deps["rootfs_dm_table"] = ctx.attr.verity[VerityInfo].table
 
     # Format deps into command line arguments while keeping track of mkpayload
     # runtime inputs.
@@ -119,7 +119,7 @@ efi_unified_kernel_image = rule(
         "verity": attr.label(
             doc = "The DeviceMapper Verity rootfs target table.",
             allow_single_file = True,
-            providers = [DefaultInfo, VerityConfig],
+            providers = [DefaultInfo, VerityInfo],
         ),
         "_mkpayload": attr.label(
             doc = "The mkpayload executable.",
@@ -130,6 +130,6 @@ efi_unified_kernel_image = rule(
         ),
     },
     toolchains = [
-        "@bazel_tools//tools/cpp:toolchain_type"
+        "@bazel_tools//tools/cpp:toolchain_type",
     ],
 )

@@ -53,7 +53,7 @@ go_library(
         "//osbase/test/launch",
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_kballard_go_shellquote//:go-shellquote",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@io_bazel_rules_go//go/runfiles",
         "@io_k8s_client_go//kubernetes",
         "@io_k8s_client_go//rest",
         "@io_k8s_utils//ptr",

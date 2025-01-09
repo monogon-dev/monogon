@@ -14,16 +14,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-load(
-    "//build/utils:detect_root.bzl",
-    "detect_root",
-)
-
 """
 Build a sysroot-style tarball containing musl/linux headers and libraries.
 
 This can then be used to build a C toolchain that builds C/C++ binaries for Metropolis nodes.
 """
+
+load(
+    "//build/utils:detect_root.bzl",
+    "detect_root",
+)
 
 def _musl_gcc_tarball(ctx):
     tarball_name = ctx.attr.name + ".tar.xz"
@@ -37,7 +37,6 @@ def _musl_gcc_tarball(ctx):
     compiler_headers_path = "lib/gcc/x86_64-redhat-linux/14/include"
 
     musl_root = detect_root(ctx.attr.musl)
-    musl_files = ctx.files.musl
 
     # This builds a tarball containing musl, musl headers and linux headers.
     # This is done by some carefully crafted tar command line arguments that rewrite
@@ -50,16 +49,16 @@ def _musl_gcc_tarball(ctx):
 
     # Order is important here as this is a terrible hack producing a tar file with duplicate files. The decompressor
     # will then overwrite the wrong one with the correct one for us.
-    arguments += [compiler_headers_path]
+    arguments.append(compiler_headers_path)
     command += " --transform 's|^'$2'|include|' /$2"
 
-    arguments += [musl_headers_path]
+    arguments.append(musl_headers_path)
     command += " --transform 's|^'$3'|include|' $3"
 
-    arguments += [linux_headers_path]
+    arguments.append(linux_headers_path)
     command += " --transform 's|^'$4'|include|' $4"
 
-    arguments += [musl_root]
+    arguments.append(musl_root)
     command += " --transform 's|^'$5'|lib|' $5"
 
     ctx.actions.run_shell(

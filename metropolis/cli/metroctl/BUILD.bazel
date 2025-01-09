@@ -56,7 +56,7 @@ go_library(
         "@com_github_adrg_xdg//:xdg",
         "@com_github_schollz_progressbar_v3//:progressbar",
         "@com_github_spf13_cobra//:cobra",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@io_bazel_rules_go//go/runfiles",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
         "@io_k8s_client_go//pkg/apis/clientauthentication/v1:clientauthentication",
         "@io_k8s_utils//ptr",

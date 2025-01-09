@@ -22,7 +22,7 @@ go_test(
     },
     deps = [
         "//osbase/cmd",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@io_bazel_rules_go//go/runfiles",
     ],
 )
 

@@ -1,5 +1,5 @@
-load(":musl.bzl", "musl_headers")
 load(":linux.bzl", "linux_headers")
+load(":musl.bzl", "musl_headers")
 load(":tarball.bzl", "musl_gcc_tarball")
 
 linux_headers(

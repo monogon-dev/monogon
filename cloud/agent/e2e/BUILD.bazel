@@ -24,7 +24,7 @@ go_test(
         "//osbase/pki",
         "@com_github_cavaliergopher_cpio//:cpio",
         "@com_github_klauspost_compress//zstd",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@io_bazel_rules_go//go/runfiles",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//credentials",
         "@org_golang_google_protobuf//proto",

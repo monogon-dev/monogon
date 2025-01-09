@@ -14,8 +14,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@@//build/utils:template_file.bzl", "template_file")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 genrule(
     name = "config-h",

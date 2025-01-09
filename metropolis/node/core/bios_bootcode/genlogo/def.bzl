@@ -16,8 +16,6 @@ def _build_logo_impl(ctx):
         files = depset([output]),
     )
 
-    pass
-
 gen_logo = rule(
     implementation = _build_logo_impl,
     attrs = {

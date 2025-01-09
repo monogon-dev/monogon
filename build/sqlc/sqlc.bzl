@@ -14,37 +14,37 @@ def _parse_migrations(files):
     for file in files:
         if not file.basename.endswith(".up.sql") and not file.basename.endswith(".down.sql"):
             fail("migration %s must end woth .{up,down}.sql" % file.basename)
-        if len(file.basename.split('.')) != 3:
+        if len(file.basename.split(".")) != 3:
             fail("migration %s must not contain any . other than in .{up,down}.sql extension" % file.basename)
-        first = file.basename.split('.')[0]
-        if len(first.split('_')) < 2:
+        first = file.basename.split(".")[0]
+        if len(first.split("_")) < 2:
             fail("migration %s must be in <timestamp>_<name>.{up,down}.sql format" % file.basename)
-        timestamp = first.split('_')[0]
+        timestamp = first.split("_")[0]
         if not timestamp.isdigit():
             fail("migration %s must be in <timestamp>_<name>.{up,down}.sql format" % file.basename)
         timestamp = int(timestamp)
         if timestamp < 1662136250:
             fail("migration %s must be in <timestamp>_<name>.{up,down}.sql format" % file.basename)
 
-        if file.basename.endswith('.up.sql'):
+        if file.basename.endswith(".up.sql"):
             if timestamp in uppers:
-               fail("migration %s conflicts with %s" % [file.basename, uppers[timestamp].basename])
+                fail("migration %s conflicts with %s" % [file.basename, uppers[timestamp].basename])
             uppers[timestamp] = file
-        if file.basename.endswith('.down.sql'):
+        if file.basename.endswith(".down.sql"):
             if timestamp in downers:
-               fail("migration %s conflicts with %s" % [file.basename, downers[timestamp].basename])
+                fail("migration %s conflicts with %s" % [file.basename, downers[timestamp].basename])
             downers[timestamp] = file
 
     # Check each 'up' has a corresponding 'down', and vice-versa.
     for timestamp, up in uppers.items():
         if timestamp not in downers:
             fail("%s has no corresponding 'down' migration" % up.basename)
-        if downers[timestamp].basename.replace('down.sql', 'up.sql') != up.basename:
+        if downers[timestamp].basename.replace("down.sql", "up.sql") != up.basename:
             fail("%s has no corresponding 'down' migration" % up.basename)
     for timestamp, down in downers.items():
         if timestamp not in uppers:
             fail("%s has no corresponding 'up' migration" % down.basename)
-        if uppers[timestamp].basename.replace('up.sql', 'down.sql') != down.basename:
+        if uppers[timestamp].basename.replace("up.sql", "down.sql") != down.basename:
             fail("%s has no corresponding 'up' migration" % down.basename)
 
     return uppers, downers
@@ -57,7 +57,7 @@ def _sqlc_go_library(ctx):
 
     # Split migrations into 'up' and 'down'. Only pass 'up' to sqlc. Use both
     # to generate golang-migrate compatible bindata.
-    uppers, downers = _parse_migrations(ctx.files.migrations)
+    uppers, _ = _parse_migrations(ctx.files.migrations)
 
     # Make sure given queries have no repeating basenames. This ensures clean
     # mapping source SQL file name and generated Go file.
@@ -73,6 +73,7 @@ def _sqlc_go_library(ctx):
         ctx.actions.declare_file("db.go"),
         ctx.actions.declare_file("models.go"),
     ]
+
     # For every query file, basename.go is also generated.
     for basename in query_basenames:
         sqlc_go_sources.append(ctx.actions.declare_file(basename + ".go"))
@@ -83,15 +84,16 @@ def _sqlc_go_library(ctx):
     if ctx.attr.dialect == "cockroachdb":
         overrides = [
             # INT is 64-bit in cockroachdb (32-bit in postgres).
-            { "go_type": "int64", "db_type": "pg_catalog.int4" },
+            {"go_type": "int64", "db_type": "pg_catalog.int4"},
         ]
 
     config = ctx.actions.declare_file("_config.yaml")
+
     # All paths in config are relative to the config file. However, Bazel paths
     # are relative to the execution root/CWD. To make things work regardless of
     # config file placement, we prepend all config paths with a `../../ ...`
     # path walk that makes the path be execroot relative again.
-    config_walk = '../' * config.path.count('/')
+    config_walk = "../" * config.path.count("/")
     config_data = json.encode({
         "version": 2,
         "sql": [
@@ -117,10 +119,11 @@ def _sqlc_go_library(ctx):
         executable = ctx.executable._sqlc,
         arguments = [
             "generate",
-            "-f", config.path,
+            "-f",
+            config.path,
         ],
         inputs = [
-            config
+            config,
         ] + uppers.values() + ctx.files.queries,
         outputs = sqlc_go_sources,
     )
@@ -132,7 +135,6 @@ def _sqlc_go_library(ctx):
         source,
         OutputGroupInfo(go_generated_srcs = depset(library.srcs)),
     ]
-
 
 sqlc_go_library = rule(
     implementation = _sqlc_go_library,

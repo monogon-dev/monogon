@@ -14,12 +14,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-load("@bazel_gazelle//:deps.bzl", "go_repository")
 load(
     "@io_bazel_rules_go//go:def.bzl",
-    "GoLibrary",
     "go_context",
-    "go_library",
 )
 
 def _bindata_impl(ctx):
@@ -65,10 +62,10 @@ bindata = rule(
         "srcs": attr.label_list(
             mandatory = True,
             allow_files = True,
-         ),
+        ),
         "package": attr.string(
             mandatory = True,
-         ),
+        ),
         "bindata": attr.label(
             allow_single_file = True,
             default = Label("@com_github_kevinburke_go_bindata//go-bindata"),

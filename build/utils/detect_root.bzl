@@ -57,7 +57,7 @@ def detect_root(source):
 
 def _get_level(path):
     normalized = path
-    for i in range(len(path)):
+    for _ in range(len(path)):
         new_normalized = normalized.replace("//", "/")
         if len(new_normalized) == len(normalized):
             break

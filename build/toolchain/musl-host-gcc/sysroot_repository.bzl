@@ -30,7 +30,6 @@ filegroup(
 )
 """)
 
-
 musl_sysroot_rule = repository_rule(
     implementation = _musl_sysroot_rule_impl,
     attrs = {

@@ -1,8 +1,8 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+load("@rules_pkg//:mappings.bzl", "pkg_files")
+load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("//osbase/build:def.bzl", "erofs_image", "verity_image")
 load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
-load("@rules_pkg//:pkg.bzl", "pkg_zip")
-load("@rules_pkg//:mappings.bzl", "pkg_files")
 
 # Macro for generating multiple TestOS instances to check if the updater works.
 def testos(variant):

@@ -1,4 +1,4 @@
-load("@rules_proto_grpc_buf//:defs.bzl", "buf_proto_breaking_test", "buf_proto_lint_test")
+load("@rules_proto_grpc_buf//:defs.bzl", "buf_proto_lint_test")
 load("@rules_proto_grpc_doc//:defs.bzl", "doc_html_compile")
 
 doc_html_compile(

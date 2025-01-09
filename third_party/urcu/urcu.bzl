@@ -1,10 +1,10 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@@//build/utils:template_file.bzl", "template_file")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 template_file(
     name = "config.h",
     src = "@@//third_party/urcu:config.h.in",
-    substitutions = { },
+    substitutions = {},
 )
 
 cc_library(

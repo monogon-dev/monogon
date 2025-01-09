@@ -1,11 +1,51 @@
-load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@bazel_gazelle//:def.bzl", "gazelle", "gazelle_test")
 load("@bazeldnf//:def.bzl", "bazeldnf")
+load("@buildifier_prebuilt//:rules.bzl", "buildifier", "buildifier_test")
+load("@rules_multirun//:defs.bzl", "command", "multirun")
+
+exports_files([
+    "MODULE.bazel",
+])
 
 # gazelle:prefix source.monogon.dev
 # gazelle:go_naming_convention import
 # gazelle:exclude **/gomod-generated-placeholder.go
 # gazelle:exclude .bazeldnf/**
 gazelle(name = "gazelle")
+
+gazelle_test(
+    name = "gazelle_test",
+    workspace = "//:MODULE.bazel",
+)
+
+BUILDIFIER_EXCLUDES = [
+    "./.git/*",
+    "./.ijwb/*",
+]
+
+# Buildifier formats all Starlark files.
+buildifier(
+    name = "buildifier",
+    exclude_patterns = BUILDIFIER_EXCLUDES,
+    lint_mode = "fix",
+    mode = "fix",
+)
+
+buildifier_test(
+    name = "buildifier_test",
+    exclude_patterns = BUILDIFIER_EXCLUDES,
+    lint_mode = "warn",
+    lint_warnings = [
+        "-module-docstring",
+        "-function-docstring-args",
+        "-function-docstring",
+        "-function-docstring-header",
+        "-function-docstring-return",
+        "-unnamed-macro",  #TODO(tim): Update code to pass this
+    ],
+    no_sandbox = True,
+    workspace = "//:MODULE.bazel",
+)
 
 # Shortcut for the Go SDK
 alias(
@@ -37,4 +77,23 @@ alias(
     name = "goimports",
     actual = "@org_golang_x_tools//cmd/goimports:goimports",
     visibility = ["//visibility:public"],
+)
+
+command(
+    name = "go-mod-tidy",
+    arguments = [
+        "mod",
+        "tidy",
+    ],
+    command = ":go",
+)
+
+# Shortcut to update go.mod, gazelle files and formatting.
+multirun(
+    name = "tidy",
+    commands = [
+        ":go-mod-tidy",
+        ":gazelle",
+        ":buildifier",
+    ],
 )

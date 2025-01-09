@@ -40,7 +40,7 @@ go_test(
         "//metropolis/test/launch",
         "//metropolis/test/localregistry",
         "//metropolis/test/util",
-        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@io_bazel_rules_go//go/runfiles",
         "@io_k8s_api//core/v1:core",
         "@io_k8s_apimachinery//pkg/api/errors",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",

@@ -1,8 +1,6 @@
 load(
     "@io_bazel_rules_go//go:def.bzl",
-    "GoLibrary",
     "go_context",
-    "go_library",
 )
 
 def _go_version_library_impl(ctx):
@@ -61,7 +59,7 @@ go_version_library = rule(
         ),
         "_genversion": attr.label(
             default = Label("//version/stampgo"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),
