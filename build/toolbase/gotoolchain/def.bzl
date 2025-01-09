@@ -18,7 +18,7 @@ def _toolchain_library_impl(ctx):
         output = out,
         substitutions = {
             "GOROOT": go.sdk.root_file.dirname,
-            "GOTOOL": go.go.path,
+            "GOTOOL": go.sdk.go.path,
         },
     )
 
@@ -30,10 +30,13 @@ def _toolchain_library_impl(ctx):
 
     # Hack: we want to inject runfiles into the generated GoSource, because
     # there's no other way to make rules_go pick up runfiles otherwise.
-    runfiles = ctx.runfiles(files = [
-        go.go,
-        go.sdk_root,
-    ] + go.sdk_files)
+    runfiles = ctx.runfiles(
+        [
+            go.sdk.go,
+            go.sdk.root_file,
+        ],
+        transitive_files = depset(transitive = [go.sdk.headers, go.sdk.srcs, go.sdk.libs, go.sdk.tools]),
+    )
     source = {
         key: getattr(source, key)
         for key in dir(source)

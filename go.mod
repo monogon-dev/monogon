@@ -59,7 +59,7 @@ require (
 	4d63.com/gocheckcompilerdirectives v1.2.1
 	cloud.google.com/go/storage v1.38.0
 	github.com/adrg/xdg v0.4.0
-	github.com/bazelbuild/rules_go v0.50.1
+	github.com/bazelbuild/rules_go v0.51.0
 	github.com/cavaliergopher/cpio v1.0.1
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cockroachdb/cockroach-go/v2 v2.2.10

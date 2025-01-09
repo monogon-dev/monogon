@@ -1,9 +1,3 @@
-# Don't apply `--noremote_upload_local_results` and `--noremote_accept_cached` to the disk cache.
-# If you have both `--noremote_upload_local_results` and `--disk_cache`, then this fixes a bug where
-# Bazel doesn't write to the local disk cache as it treats as a remote cache.
-# Docs: https://bazel.build/reference/command-line-reference#flag--incompatible_remote_results_ignore_disk
-build --incompatible_remote_results_ignore_disk
-
 # Directories used by sandboxed non-worker execution may be reused to avoid unnecessary setup costs.
 # Save time on Sandbox creation and deletion when many of the same kind of action run during the
 # build.
@@ -27,3 +21,7 @@ build --nolegacy_external_runfiles
 # outside of `bazel run`. In those cases, the script will need to call
 # `bazel build --build_runfile_links //my/binary:target` and then execute the resulting program.
 build --nobuild_runfile_links
+
+# Needed prior to Bazel 8; see
+# https://github.com/bazelbuild/bazel/issues/20577
+coverage --build_runfile_links
