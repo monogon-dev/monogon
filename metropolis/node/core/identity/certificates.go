@@ -101,7 +101,7 @@ func VerifyInCluster(cert, ca *x509.Certificate) (ed25519.PublicKey, error) {
 
 	// Ensure subject cert is signed by ca.
 	if err := cert.CheckSignatureFrom(ca); err != nil {
-		return nil, fmt.Errorf("signature veritifcation failed: %w", err)
+		return nil, fmt.Errorf("signature verification failed: %w", err)
 	}
 
 	// Ensure subject certificate is _not_ CA. CAs (cluster or possibly
