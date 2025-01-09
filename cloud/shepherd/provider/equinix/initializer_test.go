@@ -119,6 +119,7 @@ func TestInitializerSmokes(t *testing.T) {
 			HardwareReservationID: res.ID,
 			ProjectSSHKeys:        []string{kid},
 		})
+		f.mu.Lock()
 		f.devices[dev.ID].Network = []*packngo.IPAddressAssignment{
 			{
 				IpAddressCommon: packngo.IpAddressCommon{
@@ -130,6 +131,7 @@ func TestInitializerSmokes(t *testing.T) {
 				},
 			},
 		}
+		f.mu.Unlock()
 		err = sess.Transact(ctx, func(q *model.Queries) error {
 			machine, err := q.NewMachine(ctx)
 			if err != nil {
