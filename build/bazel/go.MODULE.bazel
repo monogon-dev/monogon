@@ -88,6 +88,7 @@ use_repo(
     "io_k8s_kubernetes",
     "io_k8s_pod_security_admission",
     "io_k8s_utils",
+    "org_go4_netipx",
     "org_golang_google_api",
     "org_golang_google_genproto_googleapis_api",
     "org_golang_google_grpc",

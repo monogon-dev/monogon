@@ -11,6 +11,7 @@ go_library(
     deps = [
         "//osbase/net/proto",
         "@com_github_vishvananda_netlink//:netlink",
+        "@org_go4_netipx//:netipx",
         "@org_golang_x_sys//unix",
     ],
 )

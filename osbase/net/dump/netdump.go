@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"net/netip"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/vishvananda/netlink"
+	"go4.org/netipx"
 	"golang.org/x/sys/unix"
 
 	netapi "source.monogon.dev/osbase/net/proto"
@@ -27,6 +29,11 @@ const (
 	protoBoot   = 3
 	protoStatic = 4
 )
+
+type ifaceAddrRef struct {
+	iface   *netapi.Interface
+	addrIdx int
+}
 
 // Dump dumps the network configuration of the current network namespace into
 // a osbase.net.proto.Net structure. This is currently only expected to work for
@@ -48,6 +55,8 @@ func Dump() (*netapi.Net, []error, error) {
 	ifIdxMap := make(map[int]*netapi.Interface)
 	// Map interface index -> names of children
 	ifChildren := make(map[int][]string)
+	// Interface address implied on-link routes
+	impliedOnLinkRoutes := make(map[netip.Prefix]ifaceAddrRef)
 	// Map interface index -> number of reverse dependencies
 	ifNRevDeps := make(map[int]int)
 	for _, link := range links {
@@ -151,7 +160,17 @@ func Dump() (*netapi.Net, []error, error) {
 					SourceIp:    a.IP.String(),
 				})
 			}
-			iface.Address = append(iface.Address, a.IPNet.String())
+			ones, bits := a.Mask.Size()
+			baseAddr, ok := netip.AddrFromSlice(a.IP.Mask(a.Mask))
+			prefix := netip.PrefixFrom(baseAddr, ones)
+			if ok && bits != 0 {
+				if !prefix.IsSingleIP() {
+					impliedOnLinkRoutes[prefix] = ifaceAddrRef{iface: &iface, addrIdx: len(iface.Address)}
+				}
+				iface.Address = append(iface.Address, a.IPNet.String())
+			} else {
+				warnings = append(warnings, fmt.Errorf("address %v on %q is invalid, ignoring", a.IPNet, iface.Name))
+			}
 		}
 		if linkAttrs.MasterIndex != 0 {
 			ifChildren[linkAttrs.MasterIndex] = append(ifChildren[linkAttrs.MasterIndex], iface.Name)
@@ -194,6 +213,16 @@ func Dump() (*netapi.Net, []error, error) {
 				panic("route family changed under us")
 			}
 		} else {
+			dst, ok := netipx.FromStdIPNet(r.Dst)
+			if !ok {
+				warnings = append(warnings, fmt.Errorf("route %v invalid, ignoring", r.Dst))
+			}
+			if ref, ok := impliedOnLinkRoutes[dst]; ok && !r.Gw.IsUnspecified() && len(r.Gw) != 0 {
+				// Address is not on-link, remove prefix from address to not
+				// get an improper on-link route.
+				prefix := netip.MustParsePrefix(ref.iface.Address[ref.addrIdx])
+				ref.iface.Address[ref.addrIdx] = netip.PrefixFrom(prefix.Addr(), prefix.Addr().BitLen()).String()
+			}
 			route.Destination = r.Dst.String()
 		}
 		if !r.Gw.IsUnspecified() && len(r.Gw) != 0 {
