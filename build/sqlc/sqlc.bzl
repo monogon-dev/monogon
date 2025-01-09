@@ -55,8 +55,7 @@ def _sqlc_go_library(ctx):
     importpath_parts = ctx.attr.importpath.split("/")
     package_name = importpath_parts[-1]
 
-    # Split migrations into 'up' and 'down'. Only pass 'up' to sqlc. Use both
-    # to generate golang-migrate compatible bindata.
+    # Split migrations into 'up' and 'down'. Only pass 'up' to sqlc.
     uppers, _ = _parse_migrations(ctx.files.migrations)
 
     # Make sure given queries have no repeating basenames. This ensures clean
@@ -154,12 +153,6 @@ sqlc_go_library = rule(
         ),
         "_sqlc": attr.label(
             default = Label("@com_github_sqlc_dev_sqlc//cmd/sqlc"),
-            allow_single_file = True,
-            executable = True,
-            cfg = "exec",
-        ),
-        "_bindata": attr.label(
-            default = Label("@com_github_kevinburke_go_bindata//go-bindata"),
             allow_single_file = True,
             executable = True,
             cfg = "exec",
