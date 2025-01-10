@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "gofmt",
+    srcs = ["gofmt.go"],
+    importpath = "source.monogon.dev/build/analysis/gofmt",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/analysis/lib",
+        "@com_github_golangci_gofmt//gofmt",
+        "@org_golang_x_tools//go/analysis",
+    ],
+)
