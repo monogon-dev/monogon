@@ -240,12 +240,12 @@ message UpdateNodeRolesRequest {
     string id = 4;
   }
 
-  // kubernetesController adjusts the appropriate role when set.
-  optional bool kubernetesWorker = 2;
-  // kubernetesController adjusts the appropriate role when set. Nodes performing
+  // kubernetes_worker adjusts the appropriate role when set.
+  optional bool kubernetes_worker = 2;
+  // kubernetes_controller adjusts the appropriate role when set. Nodes performing
   // this role must also be consensus members.
-  optional bool kubernetesController = 5;
-  optional bool consensusMember = 3;
+  optional bool kubernetes_controller = 5;
+  optional bool consensus_member = 3;
 }
 
 message UpdateNodeRolesResponse {

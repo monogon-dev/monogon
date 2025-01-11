@@ -54,8 +54,8 @@ message NodeRoles {
         // watcher and curator.Watch.
         bytes initial_crl = 3;
         message Peer {
-            string Name = 1;
-            string URL = 2;
+            string name = 1;
+            string url = 2;
         }
         repeated Peer peers = 4;
     }

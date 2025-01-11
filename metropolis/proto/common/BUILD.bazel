@@ -9,7 +9,6 @@ buf_proto_lint_test(
         "PACKAGE_VERSION_SUFFIX",
         "ENUM_VALUE_PREFIX",  # TODO: evaluate correctness
         "ENUM_ZERO_VALUE_SUFFIX",  # TODO: evaluate correctness
-        "FIELD_LOWER_SNAKE_CASE",  # TODO: evaluate correctness
     ],
     protos = [":common_proto"],
     use_rules = [

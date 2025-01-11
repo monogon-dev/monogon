@@ -281,7 +281,7 @@ func (n *Node) proto() *ppb.Node {
 		for i, p := range n.consensusMember.Peers {
 			peers[i] = &cpb.NodeRoles_ConsensusMember_Peer{
 				Name: p.Name,
-				URL:  p.URL,
+				Url:  p.URL,
 			}
 		}
 		msg.Roles.ConsensusMember = &cpb.NodeRoles_ConsensusMember{
@@ -365,7 +365,7 @@ func nodeUnmarshal(kv *mvccpb.KeyValue) (*Node, error) {
 		for _, p := range cm.Peers {
 			peers = append(peers, NodeRoleConsensusMemberPeer{
 				Name: p.Name,
-				URL:  p.URL,
+				URL:  p.Url,
 			})
 		}
 		n.consensusMember = &NodeRoleConsensusMember{

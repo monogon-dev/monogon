@@ -185,12 +185,12 @@ func (s *workerControlPlane) run(ctx context.Context) error {
 					// we're starting with.
 					supervisor.Logger(ctx).Infof("Node role mandates cluster membership with initial peers:")
 					for _, p := range role.Peers {
-						supervisor.Logger(ctx).Infof("  - %s (%s)", p.Name, p.URL)
+						supervisor.Logger(ctx).Infof("  - %s (%s)", p.Name, p.Url)
 					}
 					nodes := make([]consensus.ExistingNode, len(role.Peers))
 					for i, p := range role.Peers {
 						nodes[i].Name = p.Name
-						nodes[i].URL = p.URL
+						nodes[i].URL = p.Url
 					}
 
 					// Build and submit config to startup V.
