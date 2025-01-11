@@ -1,23 +1,38 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_proto_grpc_buf//:defs.bzl", "buf_proto_lint_test")
+
+buf_proto_lint_test(
+    name = "proto_proto_lint_test",
+    except_rules = [
+        "PACKAGE_VERSION_SUFFIX",
+        "ENUM_VALUE_PREFIX",  # TODO: evaluate correctness
+        "ENUM_ZERO_VALUE_SUFFIX",  # TODO: evaluate correctness
+    ],
+    protos = [":proto_proto"],
+    use_rules = [
+        "DEFAULT",
+        "COMMENTS",
+    ],
+)
 
 proto_library(
-    name = "net_proto_proto",
+    name = "proto_proto",
     srcs = ["net.proto"],
     visibility = ["//visibility:public"],
 )
 
 go_proto_library(
-    name = "net_proto_go_proto",
+    name = "proto_go_proto",
     importpath = "source.monogon.dev/osbase/net/proto",
-    proto = ":net_proto_proto",
+    proto = ":proto_proto",
     visibility = ["//visibility:public"],
 )
 
 go_library(
     name = "proto",
-    embed = [":net_proto_go_proto"],
+    embed = [":proto_go_proto"],
     importpath = "source.monogon.dev/osbase/net/proto",
     visibility = ["//visibility:public"],
 )

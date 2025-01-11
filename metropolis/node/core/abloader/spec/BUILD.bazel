@@ -1,7 +1,23 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_proto_grpc_buf//:defs.bzl", "buf_proto_lint_test")
 load("@rules_rust//proto/prost:defs.bzl", "rust_prost_library")
+
+buf_proto_lint_test(
+    name = "abloader_proto_lint_test",
+    except_rules = [
+        "PACKAGE_VERSION_SUFFIX",
+        "ENUM_VALUE_PREFIX",  # TODO: evaluate correctness
+        "ENUM_ZERO_VALUE_SUFFIX",  # TODO: evaluate correctness
+        "PACKAGE_DIRECTORY_MATCH",  # TODO: evaluate correctness
+    ],
+    protos = [":abloader_proto"],
+    use_rules = [
+        "DEFAULT",
+        "COMMENTS",
+    ],
+)
 
 proto_library(
     name = "abloader_proto",

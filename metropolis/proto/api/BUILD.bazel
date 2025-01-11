@@ -1,6 +1,26 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_proto_grpc_buf//:defs.bzl", "buf_proto_lint_test")
+
+buf_proto_lint_test(
+    name = "api_proto_lint_test",
+    except_rules = [
+        "PACKAGE_VERSION_SUFFIX",
+        "RPC_REQUEST_RESPONSE_UNIQUE",  # TODO: evaluate correctness
+        "ENUM_VALUE_PREFIX",  # TODO: evaluate correctness
+        "ENUM_ZERO_VALUE_SUFFIX",  # TODO: evaluate correctness
+        "RPC_REQUEST_STANDARD_NAME",  # TODO: evaluate correctness
+        "RPC_RESPONSE_STANDARD_NAME",  # TODO: evaluate correctness
+        "SERVICE_SUFFIX",  # TODO: evaluate correctness
+        "FIELD_LOWER_SNAKE_CASE",  # TODO: evaluate correctness
+    ],
+    protos = [":api_proto"],
+    use_rules = [
+        "DEFAULT",
+        "COMMENTS",
+    ],
+)
 
 proto_library(
     name = "api_proto",
@@ -15,7 +35,7 @@ proto_library(
         "//metropolis/proto/common:common_proto",
         "//metropolis/proto/ext:ext_proto",
         "//osbase/logtree/proto:proto_proto",
-        "//osbase/net/proto:net_proto_proto",
+        "//osbase/net/proto:proto_proto",
         "@protobuf//:duration_proto",
         "@protobuf//:field_mask_proto",
     ],

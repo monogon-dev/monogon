@@ -1,4 +1,3 @@
-load("@rules_proto_grpc_buf//:defs.bzl", "buf_proto_lint_test")
 load("@rules_proto_grpc_doc//:defs.bzl", "doc_html_compile")
 
 doc_html_compile(
@@ -6,27 +5,5 @@ doc_html_compile(
     protos = [
         "//metropolis/proto/api:api_proto",
         "//metropolis/proto/common:common_proto",
-    ],
-)
-
-buf_proto_lint_test(
-    name = "proto_lint_test",
-    except_rules = [
-        "PACKAGE_VERSION_SUFFIX",
-        "RPC_REQUEST_RESPONSE_UNIQUE",
-        "ENUM_VALUE_PREFIX",  # TODO: evaluate correctness
-        "ENUM_ZERO_VALUE_SUFFIX",  # TODO: evaluate correctness
-        "RPC_REQUEST_STANDARD_NAME",  # TODO: evaluate correctness
-        "RPC_RESPONSE_STANDARD_NAME",  # TODO: evaluate correctness
-        "SERVICE_SUFFIX",  # TODO: evaluate correctness
-        "FIELD_LOWER_SNAKE_CASE",  # TODO: evaluate correctness
-    ],
-    protos = [
-        "//metropolis/proto/api:api_proto",
-        "//metropolis/proto/common:common_proto",
-    ],
-    use_rules = [
-        "DEFAULT",
-        "COMMENTS",
     ],
 )
