@@ -7,7 +7,6 @@ buf_proto_lint_test(
     name = "spec_proto_lint_test",
     except_rules = [
         "PACKAGE_VERSION_SUFFIX",
-        "PACKAGE_DIRECTORY_MATCH",  # TODO: evaluate correctness
     ],
     protos = [":spec_proto"],
     use_rules = [

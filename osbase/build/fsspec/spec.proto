@@ -16,7 +16,7 @@
 
 syntax = "proto3";
 
-package osbase.node.build.fsspec;
+package osbase.build.fsspec;
 option go_package = "source.monogon.dev/osbase/build/fsspec";
 
 // FSSpec is the spec from which a filesystem is generated. It consists of files, directories and symbolic

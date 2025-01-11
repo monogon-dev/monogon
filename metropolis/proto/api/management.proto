@@ -452,11 +452,11 @@ message GetLogsRequest {
 message GetLogsResponse {
   // Entries from the requested historical entries (via WithBackLog). They will
   // all be served before the first stream_entries are served (if any).
-  repeated osbase.pkg.logtree.proto.LogEntry backlog_entries = 1;
+  repeated osbase.logtree.proto.LogEntry backlog_entries = 1;
   // Entries streamed as they arrive. Currently no server-side buffering is
   // enabled, instead every line is served as early as it arrives. However, this
   // might change in the future, so this behaviour cannot be depended upon.
-  repeated osbase.pkg.logtree.proto.LogEntry stream_entries = 2;
+  repeated osbase.logtree.proto.LogEntry stream_entries = 2;
 }
 
 enum ActivationMode {

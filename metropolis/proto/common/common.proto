@@ -255,7 +255,7 @@ message LogFilter {
     // If leveled logs are returned, all entries at severity lower than `minimum`
     // will be discarded.
     message LeveledWithMinimumSeverity {
-        osbase.pkg.logtree.proto.LeveledLogSeverity minimum = 1;
+        osbase.logtree.proto.LeveledLogSeverity minimum = 1;
     }
     oneof filter {
         WithChildren with_children = 1;

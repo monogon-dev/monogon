@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package monogon.metropolis.pkg.localregistry;
+package metropolis.test.localregistry.spec;
 
 option go_package = "source.monogon.dev/metropolis/test/localregistry/spec";
 

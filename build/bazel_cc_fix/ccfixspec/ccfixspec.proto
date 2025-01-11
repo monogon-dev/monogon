@@ -16,7 +16,7 @@
 
 syntax = "proto3";
 
-package ccfixspec;
+package build.bazel_cc_fix.ccfixspec;
 
 // CCFixSpec is the root configuration message for bazel_cc_fix
 message CCFixSpec {

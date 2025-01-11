@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package osbase.build.mkucode;
+package osbase.build.mkucode.spec;
 option go_package = "source.monogon.dev/osbase/build/mkucode/spec";
 
 message UCode {

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package metropolis.pkg.kmod;
+package osbase.kmod.spec;
 
 option go_package = "source.monogon.dev/osbase/kmod/spec";
 

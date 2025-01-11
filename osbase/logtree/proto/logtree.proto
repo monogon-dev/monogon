@@ -15,7 +15,7 @@
 // limitations under the License.
 
 syntax = "proto3";
-package osbase.pkg.logtree.proto;
+package osbase.logtree.proto;
 option go_package = "source.monogon.dev/osbase/logtree/proto";
 
 import "google/protobuf/timestamp.proto";

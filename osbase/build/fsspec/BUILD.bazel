@@ -9,7 +9,6 @@ buf_proto_lint_test(
         "PACKAGE_VERSION_SUFFIX",
         "ENUM_VALUE_PREFIX",  # TODO: evaluate correctness
         "ENUM_ZERO_VALUE_SUFFIX",  # TODO: evaluate correctness
-        "PACKAGE_DIRECTORY_MATCH",  # TODO: evaluate correctness
     ],
     protos = [":spec_proto"],
     use_rules = [

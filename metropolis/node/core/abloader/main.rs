@@ -15,7 +15,7 @@ use uefi::table::boot;
 use uefi::{prelude::*, CStr16};
 use uefi_services::println;
 
-use abloader_proto::monogon::metropolis::node::core::abloader;
+use abloader_proto::metropolis::node::core::abloader::spec::*;
 
 const A_LOADER_PATH: &CStr16 = cstr16!("\\EFI\\metropolis\\boot-a.efi");
 const B_LOADER_PATH: &CStr16 = cstr16!("\\EFI\\metropolis\\boot-b.efi");
@@ -58,9 +58,9 @@ impl fmt::Display for ReadLoaderStateError {
     }
 }
 
-fn read_loader_state(fs: &mut FileSystem) -> Result<abloader::AbLoaderData, ReadLoaderStateError> {
+fn read_loader_state(fs: &mut FileSystem) -> Result<AbLoaderData, ReadLoaderStateError> {
     let state_raw = fs.read(&LOADER_STATE_PATH).map_err(|e| ReadLoaderStateError::FSReadError(e))?;
-    abloader::AbLoaderData::decode(state_raw.as_slice()).map_err(|e| ReadLoaderStateError::DecodeError(e))
+    AbLoaderData::decode(state_raw.as_slice()).map_err(|e| ReadLoaderStateError::DecodeError(e))
 }
 
 fn load_slot_image(slot: &ValidSlot, boot_services: &BootServices) -> uefi::Result<Handle> {
@@ -117,9 +117,9 @@ fn main(_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
             Ok(d) => d, 
             Err(e) => {
                 println!("Unable to load A/B loader state, using default slot A: {}", e);
-                abloader::AbLoaderData {
-                    active_slot: abloader::Slot::A.into(),
-                    next_slot: abloader::Slot::None.into(),
+                AbLoaderData {
+                    active_slot: Slot::A.into(),
+                    next_slot: Slot::None.into(),
                 }
             }
         };
@@ -127,9 +127,9 @@ fn main(_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
         // If next_slot is set, use it as slot to boot but clear it in the
         // state file as the next boot should not use it again. If it should
         // be permanently activated, it is the OS's job to put it into 
-        if loader_data.next_slot != abloader::Slot::None.into() {
+        if loader_data.next_slot != Slot::None.into() {
             let next_slot = loader_data.next_slot;
-            loader_data.next_slot = abloader::Slot::None.into();
+            loader_data.next_slot = Slot::None.into();
             let new_loader_data = loader_data.encode_to_vec();
             esp_fs
                 .write(&LOADER_STATE_PATH, new_loader_data)
@@ -140,9 +140,9 @@ fn main(_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
         }
     };
 
-    let boot_slot = match abloader::Slot::try_from(boot_slot_raw) {
-        Ok(abloader::Slot::A) => ValidSlot::A,
-        Ok(abloader::Slot::B) => ValidSlot::B,
+    let boot_slot = match Slot::try_from(boot_slot_raw) {
+        Ok(Slot::A) => ValidSlot::A,
+        Ok(Slot::B) => ValidSlot::B,
         _ => {
             println!("Invalid slot ({}) active, falling back to A", boot_slot_raw);
             ValidSlot::A
