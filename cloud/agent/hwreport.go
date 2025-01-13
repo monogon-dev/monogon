@@ -48,9 +48,9 @@ func (c *hwReportContext) gatherSMBIOS() {
 	if smbTbl.BIOSInformationRaw != nil && smbTbl.BIOSInformationRaw.StructureVersion.AtLeast(2, 2) {
 		uefiSupport := smbTbl.BIOSInformationRaw.BIOSCharacteristicsExtensionByte2&smbios.UEFISpecificationSupported != 0
 		if uefiSupport {
-			c.node.EfiSupport = api.EFISupport_EFI_SUPPORTED
+			c.node.EfiSupport = api.EFISupport_EFI_SUPPORT_SUPPORTED
 		} else {
-			c.node.EfiSupport = api.EFISupport_EFI_UNSUPPORTED
+			c.node.EfiSupport = api.EFISupport_EFI_SUPPORT_UNSUPPORTED
 		}
 	}
 	for _, d := range smbTbl.MemoryDevicesRaw {
@@ -192,7 +192,7 @@ func (c *hwReportContext) gatherCPU() {
 var FRUUnavailable = [16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (c *hwReportContext) gatherNVMe(bd *api.BlockDevice, bde os.DirEntry) error {
-	bd.Protocol = api.BlockDevice_NVME
+	bd.Protocol = api.BlockDevice_PROTOCOL_NVME
 	nvmeDev, err := nvme.Open("/dev/" + bde.Name())
 	if err != nil {
 		return fmt.Errorf("unable to open NVMe device: %w", err)
@@ -218,7 +218,7 @@ func (c *hwReportContext) gatherNVMe(bd *api.BlockDevice, bde os.DirEntry) error
 }
 
 func (c *hwReportContext) gatherSCSI(bd *api.BlockDevice, bde os.DirEntry) error {
-	bd.Protocol = api.BlockDevice_SCSI
+	bd.Protocol = api.BlockDevice_PROTOCOL_SCSI
 	scsiDev, err := scsi.Open("/dev/" + bde.Name())
 	if err != nil {
 		return fmt.Errorf("unable to open SCSI device: %w", err)
@@ -234,7 +234,7 @@ func (c *hwReportContext) gatherSCSI(bd *api.BlockDevice, bde os.DirEntry) error
 
 	// SAT-5 R8 Table 14
 	if inquiryData.Vendor == "ATA" { // ATA device behind SAT
-		bd.Protocol = api.BlockDevice_ATA
+		bd.Protocol = api.BlockDevice_PROTOCOL_ATA
 		// TODO: ATA Vendor from WWN if available
 	} else { // Normal SCSI device
 		bd.Vendor = inquiryData.Vendor
@@ -326,7 +326,7 @@ func (c *hwReportContext) gatherBlockDevices() {
 		}
 		if strings.HasPrefix(bde.Name(), "mmcblk") {
 			// TODO: MMC information
-			bd.Protocol = api.BlockDevice_MMC
+			bd.Protocol = api.BlockDevice_PROTOCOL_MMC
 			c.node.BlockDevice = append(c.node.BlockDevice, &bd)
 		}
 	}
@@ -403,7 +403,7 @@ func gatherHWReport() (*api.Node, []error) {
 	hwReportCtx := hwReportContext{
 		node: &api.Node{},
 	}
-	hwReportCtx.node.EfiSupport = api.EFISupport_EFI_UNKNOWN
+	hwReportCtx.node.EfiSupport = api.EFISupport_EFI_SUPPORT_UNKNOWN
 
 	hwReportCtx.gatherCPU()
 	hwReportCtx.gatherSMBIOS()
@@ -420,7 +420,7 @@ func gatherHWReport() (*api.Node, []error) {
 	hwReportCtx.gatherBlockDevices()
 
 	if _, err := os.Stat("/sys/firmware/efi/runtime"); err == nil {
-		hwReportCtx.node.EfiSupport = api.EFISupport_EFI_ENABLED
+		hwReportCtx.node.EfiSupport = api.EFISupport_EFI_SUPPORT_ENABLED
 	}
 
 	return hwReportCtx.node, hwReportCtx.errors

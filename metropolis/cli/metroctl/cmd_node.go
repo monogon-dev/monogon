@@ -102,11 +102,11 @@ var nodeUpdateCmd = &cobra.Command{
 		var am apb.ActivationMode
 		switch strings.ToLower(activationMode) {
 		case "none":
-			am = apb.ActivationMode_ACTIVATION_NONE
+			am = apb.ActivationMode_ACTIVATION_MODE_NONE
 		case "reboot":
-			am = apb.ActivationMode_ACTIVATION_REBOOT
+			am = apb.ActivationMode_ACTIVATION_MODE_REBOOT
 		case "kexec":
-			am = apb.ActivationMode_ACTIVATION_KEXEC
+			am = apb.ActivationMode_ACTIVATION_MODE_KEXEC
 		default:
 			return fmt.Errorf("invalid value for flag activation-mode")
 		}
@@ -214,7 +214,7 @@ var nodeUpdateCmd = &cobra.Command{
 							continue
 						}
 						s := nodes[0]
-						if s.Health == apb.Node_HEALTHY {
+						if s.Health == apb.Node_HEALTH_HEALTHY {
 							if s.Status != nil && s.Status.Version != nil {
 								log.Printf("node %s updated in %v to version %s", s.Id, time.Since(start), version.Semver(s.Status.Version))
 							} else {
@@ -378,15 +378,15 @@ It can also be used to reboot into the firmware (BIOS) setup UI by passing the
 		}
 		var req apb.RebootRequest
 		if kexecFlag {
-			req.Type = apb.RebootRequest_KEXEC
+			req.Type = apb.RebootRequest_TYPE_KEXEC
 		} else {
-			req.Type = apb.RebootRequest_FIRMWARE
+			req.Type = apb.RebootRequest_TYPE_FIRMWARE
 		}
 		if firmwareFlag {
-			req.NextBoot = apb.RebootRequest_START_FIRMWARE_UI
+			req.NextBoot = apb.RebootRequest_NEXT_BOOT_START_FIRMWARE_UI
 		}
 		if rollbackFlag {
-			req.NextBoot = apb.RebootRequest_START_ROLLBACK
+			req.NextBoot = apb.RebootRequest_NEXT_BOOT_START_ROLLBACK
 		}
 
 		nmgmt, err := dialNode(ctx, args[0])
@@ -417,7 +417,7 @@ var nodePoweroffCmd = &cobra.Command{
 		}
 
 		if _, err := nmgmt.Reboot(ctx, &apb.RebootRequest{
-			Type: apb.RebootRequest_POWER_OFF,
+			Type: apb.RebootRequest_TYPE_POWER_OFF,
 		}); err != nil {
 			return fmt.Errorf("reboot RPC failed: %w", err)
 		}

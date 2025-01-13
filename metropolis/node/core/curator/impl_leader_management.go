@@ -161,19 +161,19 @@ func (l *leaderManagement) nodeHealth(node *Node, now time.Time) (apb.Node_Healt
 		// If no heartbeats were received, but the leadership has only just
 		// started, the node's health is unknown.
 		case nts.IsZero() && (now.Sub(l.ls.startTs) < HeartbeatTimeout):
-			nh = apb.Node_UNKNOWN
+			nh = apb.Node_HEALTH_UNKNOWN
 		// If the leader had received heartbeats from the node, but the last
 		// heartbeat is stale, the node is timing out.
 		case lhb > HeartbeatTimeout:
-			nh = apb.Node_HEARTBEAT_TIMEOUT
+			nh = apb.Node_HEALTH_HEARTBEAT_TIMEOUT
 		// Otherwise, the node can be declared healthy.
 		default:
-			nh = apb.Node_HEALTHY
+			nh = apb.Node_HEALTH_HEALTHY
 		}
 	} else {
 		// Since node isn't UP, its health is unknown. Non-UP nodes can't access
 		// the heartbeat RPC.
-		nh = apb.Node_UNKNOWN
+		nh = apb.Node_HEALTH_UNKNOWN
 	}
 	return nh, lhb
 }

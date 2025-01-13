@@ -117,7 +117,7 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 		ID:       nodeID,
 		Pubkey:   nodePub,
 		JPub:     nodeJoinPub,
-		TPMUsage: cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED,
+		TPMUsage: cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_AND_USED,
 	})
 
 	// Here we would enable the leader node's roles. But for tests, we don't enable
@@ -840,7 +840,7 @@ func TestJoin(t *testing.T) {
 		pubkey:           npub,
 		jkey:             jpub,
 		state:            cpb.NodeState_NODE_STATE_UP,
-		tpmUsage:         cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED,
+		tpmUsage:         cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_AND_USED,
 	}
 	if err := nodeSave(ctx, cl.l, &node); err != nil {
 		t.Fatalf("nodeSave failed: %v", err)
@@ -983,13 +983,13 @@ func TestClusterHeartbeat(t *testing.T) {
 	// with no recorded node heartbeats. In this case the node's health is
 	// UNKNOWN, since it wasn't given enough time to submit a single heartbeat.
 	cl.l.ls.startTs = time.Now()
-	expectNode(cl.localNodeID, apb.Node_UNKNOWN)
+	expectNode(cl.localNodeID, apb.Node_HEALTH_UNKNOWN)
 
 	// Let's turn the clock forward a bit. In this case the node is still UP,
 	// but the current leadership has been assumed more than HeartbeatTimeout
 	// ago. If no heartbeats arrived during this period, the node is timing out.
 	cl.l.ls.startTs = cl.l.ls.startTs.Add(-HeartbeatTimeout)
-	expectNode(cl.localNodeID, apb.Node_HEARTBEAT_TIMEOUT)
+	expectNode(cl.localNodeID, apb.Node_HEALTH_HEARTBEAT_TIMEOUT)
 
 	// Now we'll simulate the node sending a couple of heartbeats. The node is
 	// expected to be HEALTHY after the first of them arrives.
@@ -1007,7 +1007,7 @@ func TestClusterHeartbeat(t *testing.T) {
 			t.Fatalf("While receiving a heartbeat reply: %v", err)
 		}
 
-		expectNode(cl.localNodeID, apb.Node_HEALTHY)
+		expectNode(cl.localNodeID, apb.Node_HEALTH_HEALTHY)
 	}
 
 	// This case tests timing out from a healthy state. The passage of time is
@@ -1017,7 +1017,7 @@ func TestClusterHeartbeat(t *testing.T) {
 	lts := smv.(time.Time)
 	lts = lts.Add(-HeartbeatTimeout)
 	cl.l.ls.heartbeatTimestamps.Store(cl.localNodeID, lts)
-	expectNode(cl.localNodeID, apb.Node_HEARTBEAT_TIMEOUT)
+	expectNode(cl.localNodeID, apb.Node_HEALTH_HEARTBEAT_TIMEOUT)
 
 	// This case verifies that health of non-UP nodes is assessed to be UNKNOWN,
 	// regardless of leadership tenure, since only UP nodes are capable of
@@ -1042,7 +1042,7 @@ func TestClusterHeartbeat(t *testing.T) {
 	if err := nodeSave(ctx, cl.l, &node); err != nil {
 		t.Fatalf("nodeSave failed: %v", err)
 	}
-	expectNode(nodeID, apb.Node_UNKNOWN)
+	expectNode(nodeID, apb.Node_HEALTH_UNKNOWN)
 }
 
 // TestManagementClusterInfo exercises GetClusterInfo after setting a status.
@@ -1800,7 +1800,7 @@ func TestClusterTPMModeSetting(t *testing.T) {
 			})
 
 			var useTPM bool
-			if resR.TpmUsage == cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED {
+			if resR.TpmUsage == cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_AND_USED {
 				useTPM = true
 			}
 

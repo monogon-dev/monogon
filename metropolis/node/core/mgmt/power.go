@@ -19,23 +19,23 @@ func (s *Service) Reboot(ctx context.Context, req *apb.RebootRequest) (*apb.Rebo
 	// Do not yet perform any system-wide actions here as the request might
 	// still get rejected. There is another switch statement for that below.
 	switch req.Type {
-	case apb.RebootRequest_KEXEC:
+	case apb.RebootRequest_TYPE_KEXEC:
 		method = unix.LINUX_REBOOT_CMD_KEXEC
-	case apb.RebootRequest_FIRMWARE:
+	case apb.RebootRequest_TYPE_FIRMWARE:
 		method = unix.LINUX_REBOOT_CMD_RESTART
-	case apb.RebootRequest_POWER_OFF:
+	case apb.RebootRequest_TYPE_POWER_OFF:
 		method = unix.LINUX_REBOOT_CMD_POWER_OFF
 	default:
 		return nil, status.Error(codes.Unimplemented, "unimplemented type value")
 	}
 	switch req.NextBoot {
-	case apb.RebootRequest_START_NORMAL:
-	case apb.RebootRequest_START_ROLLBACK:
+	case apb.RebootRequest_NEXT_BOOT_START_NORMAL:
+	case apb.RebootRequest_NEXT_BOOT_START_ROLLBACK:
 		if err := s.UpdateService.Rollback(); err != nil {
 			return nil, status.Errorf(codes.Unavailable, "performing rollback failed: %v", err)
 		}
-	case apb.RebootRequest_START_FIRMWARE_UI:
-		if req.Type == apb.RebootRequest_KEXEC {
+	case apb.RebootRequest_NEXT_BOOT_START_FIRMWARE_UI:
+		if req.Type == apb.RebootRequest_TYPE_KEXEC {
 			return nil, status.Error(codes.InvalidArgument, "START_FIRMWARE_UI cannot be used with KEXEC type")
 		}
 		supp, err := efivarfs.OSIndicationsSupported()
@@ -50,11 +50,11 @@ func (s *Service) Reboot(ctx context.Context, req *apb.RebootRequest) (*apb.Rebo
 	}
 
 	switch req.Type {
-	case apb.RebootRequest_KEXEC:
+	case apb.RebootRequest_TYPE_KEXEC:
 		if err := s.UpdateService.KexecLoadNext(); err != nil {
 			return nil, status.Errorf(codes.Unavailable, "failed to stage kexec kernel: %v", err)
 		}
-	case apb.RebootRequest_FIRMWARE:
+	case apb.RebootRequest_TYPE_FIRMWARE:
 		// Best-effort, if it fails this will still be a firmware reboot.
 		os.WriteFile("/sys/kernel/reboot/mode", []byte("cold"), 0644)
 	}

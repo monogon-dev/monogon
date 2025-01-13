@@ -75,11 +75,11 @@ func mkLeveledEntry(dn string, severity string, lines string) *lpb.LogEntry {
 	var sev lpb.LeveledLogSeverity
 	switch severity {
 	case "i":
-		sev = lpb.LeveledLogSeverity_INFO
+		sev = lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_INFO
 	case "w":
-		sev = lpb.LeveledLogSeverity_WARNING
+		sev = lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_WARNING
 	case "e":
-		sev = lpb.LeveledLogSeverity_ERROR
+		sev = lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_ERROR
 	}
 	return &lpb.LogEntry{
 		Dn: dn, Kind: &lpb.LogEntry_Leveled_{
@@ -130,18 +130,18 @@ func TestLogService_Logs_Backlog(t *testing.T) {
 		var backlogCount int64
 		switch {
 		case backlog < 0:
-			backlogMode = api.GetLogsRequest_BACKLOG_ALL
+			backlogMode = api.GetLogsRequest_BACKLOG_MODE_ALL
 		case backlog > 0:
-			backlogMode = api.GetLogsRequest_BACKLOG_COUNT
+			backlogMode = api.GetLogsRequest_BACKLOG_MODE_COUNT
 			backlogCount = backlog
 		case backlog == 0:
-			backlogMode = api.GetLogsRequest_BACKLOG_DISABLE
+			backlogMode = api.GetLogsRequest_BACKLOG_MODE_DISABLE
 		}
 		return &api.GetLogsRequest{
 			Dn:           dn,
 			BacklogMode:  backlogMode,
 			BacklogCount: backlogCount,
-			StreamMode:   api.GetLogsRequest_STREAM_DISABLE,
+			StreamMode:   api.GetLogsRequest_STREAM_MODE_DISABLE,
 		}
 	}
 	mkRecursive := func(in *api.GetLogsRequest) *api.GetLogsRequest {
@@ -220,8 +220,8 @@ func TestLogService_Logs_Stream(t *testing.T) {
 	mgmt := api.NewNodeManagementClient(cl)
 	srv, err := mgmt.Logs(ctx, &api.GetLogsRequest{
 		Dn:          "",
-		BacklogMode: api.GetLogsRequest_BACKLOG_ALL,
-		StreamMode:  api.GetLogsRequest_STREAM_UNBUFFERED,
+		BacklogMode: api.GetLogsRequest_BACKLOG_MODE_ALL,
+		StreamMode:  api.GetLogsRequest_STREAM_MODE_UNBUFFERED,
 		Filters: []*cpb.LogFilter{
 			{
 				Filter: &cpb.LogFilter_WithChildren_{
@@ -299,13 +299,13 @@ func TestLogService_Logs_Filters(t *testing.T) {
 		{
 			req: &api.GetLogsRequest{
 				Dn:          "main",
-				BacklogMode: api.GetLogsRequest_BACKLOG_ALL,
-				StreamMode:  api.GetLogsRequest_STREAM_DISABLE,
+				BacklogMode: api.GetLogsRequest_BACKLOG_MODE_ALL,
+				StreamMode:  api.GetLogsRequest_STREAM_MODE_DISABLE,
 				Filters: []*cpb.LogFilter{
 					{
 						Filter: &cpb.LogFilter_LeveledWithMinimumSeverity_{
 							LeveledWithMinimumSeverity: &cpb.LogFilter_LeveledWithMinimumSeverity{
-								Minimum: lpb.LeveledLogSeverity_WARNING,
+								Minimum: lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_WARNING,
 							},
 						},
 					},
@@ -320,8 +320,8 @@ func TestLogService_Logs_Filters(t *testing.T) {
 		{
 			req: &api.GetLogsRequest{
 				Dn:          "main",
-				BacklogMode: api.GetLogsRequest_BACKLOG_ALL,
-				StreamMode:  api.GetLogsRequest_STREAM_DISABLE,
+				BacklogMode: api.GetLogsRequest_BACKLOG_MODE_ALL,
+				StreamMode:  api.GetLogsRequest_STREAM_MODE_DISABLE,
 				Filters: []*cpb.LogFilter{
 					{
 						Filter: &cpb.LogFilter_OnlyRaw_{
@@ -338,8 +338,8 @@ func TestLogService_Logs_Filters(t *testing.T) {
 		{
 			req: &api.GetLogsRequest{
 				Dn:          "main",
-				BacklogMode: api.GetLogsRequest_BACKLOG_ALL,
-				StreamMode:  api.GetLogsRequest_STREAM_DISABLE,
+				BacklogMode: api.GetLogsRequest_BACKLOG_MODE_ALL,
+				StreamMode:  api.GetLogsRequest_STREAM_MODE_DISABLE,
 				Filters: []*cpb.LogFilter{
 					{
 						Filter: &cpb.LogFilter_OnlyLeveled_{

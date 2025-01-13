@@ -199,9 +199,9 @@ func (s *Service) KexecLoadNext() error {
 		return fmt.Errorf("bad A/B state: %w", err)
 	}
 	slotToLoad := Slot(state.ActiveSlot)
-	if state.NextSlot != abloaderpb.Slot_NONE {
+	if state.NextSlot != abloaderpb.Slot_SLOT_NONE {
 		slotToLoad = Slot(state.NextSlot)
-		state.NextSlot = abloaderpb.Slot_NONE
+		state.NextSlot = abloaderpb.Slot_SLOT_NONE
 		err = s.setABState(state)
 		if err != nil {
 			return fmt.Errorf("while updating A/B state: %w", err)

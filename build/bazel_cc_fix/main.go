@@ -203,12 +203,12 @@ func (m rewriteMetadata) fixIncludesAndGetRefs(filePath string, quoteIncludes, s
 			searchPath = quoteIncludes
 		} else if inclType == "<" {
 			searchPath = systemIncludes
-			workspaceRelativeFilePath = applyReplaceDirectives(spec.Replace, ccfixspec.Replace_SYSTEM, inclFile, false)
+			workspaceRelativeFilePath = applyReplaceDirectives(spec.Replace, ccfixspec.Replace_TYPE_SYSTEM, inclFile, false)
 		}
 		if workspaceRelativeFilePath == "" {
 			workspaceRelativeFilePath = findFileInWorkspace(searchPath, inclFile, isGeneratedFile)
 		}
-		workspaceRelativeFilePath = applyReplaceDirectives(spec.Replace, ccfixspec.Replace_WORKSPACE, workspaceRelativeFilePath, true)
+		workspaceRelativeFilePath = applyReplaceDirectives(spec.Replace, ccfixspec.Replace_TYPE_WORKSPACE, workspaceRelativeFilePath, true)
 		if workspaceRelativeFilePath == "" {
 			continue
 		}

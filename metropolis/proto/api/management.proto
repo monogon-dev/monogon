@@ -184,18 +184,18 @@ message Node {
 
     // Health describes node's health as seen from the cluster perspective.
     enum Health {
-      INVALID = 0;
+      HEALTH_INVALID = 0;
       // UNKNOWN is used whenever there were no heartbeats received from a
       // given node AND too little time has passed since last Curator leader
       // election to know whether the node is actually timing out. UNKNOWN
       // is also returned for nodes which NodeState does not equal
       // NODE_STATE_UP.
-      UNKNOWN = 1;
+      HEALTH_UNKNOWN = 1;
       // HEALTHY describes nodes that have sent a heartbeat recently.
-      HEALTHY = 2;
+      HEALTH_HEALTHY = 2;
       // HEARTBEAT_TIMEOUT describes nodes that have not sent a heartbeat in
       // the interval specified by curator.HeartbeatTimeout.
-      HEARTBEAT_TIMEOUT = 3;
+      HEALTH_HEARTBEAT_TIMEOUT = 3;
     }
     Health health = 5;
     // time_since_heartbeat is the duration since the last of the node's
@@ -342,27 +342,27 @@ message RebootRequest {
     // signals the firmware to perform a thorough reset if possible. This
     // maximizes chances to clear hardware-related issues. The exact
     // implementation is up to firmware.
-    FIRMWARE = 1;
+    TYPE_FIRMWARE = 1;
     // KEXEC performs a KEXEC reboot without going through firmware at all.
     // This is the fastest reboot option, but does not fully reset most
     // hardware and has compatibility issues on certain hardware.
-    KEXEC = 2;
+    TYPE_KEXEC = 2;
     // POWER_OFF fully powers off the system. It can only be started again by
     // a physical power button, Wake On LAN if set supported by the NIC or
     // an out-of-band management controller if available.
-    POWER_OFF = 3;
+    TYPE_POWER_OFF = 3;
   }
   Type type = 1;
   enum NextBoot {
     // START_NORMAL starts the system normally, respecting standard A/B slot
     // booting rules. Any staged but not activated updates will be activated
     // as with a normal reboot.
-    START_NORMAL = 0;
+    NEXT_BOOT_START_NORMAL = 0;
     // START_ROLLBACK tries to boot into the currently inactive slot on reboot.
-    START_ROLLBACK = 1;
+    NEXT_BOOT_START_ROLLBACK = 1;
     // START_FIRMWARE_UI tries to boot into the EFI firmware UI. Cannot be used
     // together with KEXEC as firmare is not involved there.
-    START_FIRMWARE_UI = 2;
+    NEXT_BOOT_START_FIRMWARE_UI = 2;
   }
   // NextBoot can be used to select the boot slot to reboot into. This works
   // even for POWER_OFF, but there the next boot will need to be triggered
@@ -426,25 +426,25 @@ message GetLogsRequest {
   repeated metropolis.proto.common.LogFilter filters = 2;
 
   enum BacklogMode {
-    BACKLOG_INVALID = 0;
+    BACKLOG_MODE_INVALID = 0;
     // No historic data will be returned.
-    BACKLOG_DISABLE = 1;
+    BACKLOG_MODE_DISABLE = 1;
     // All available historic data will be returned.
-    BACKLOG_ALL = 2;
+    BACKLOG_MODE_ALL = 2;
     // At most backlog_count entries will be returned, if available.
-    BACKLOG_COUNT = 3;
+    BACKLOG_MODE_COUNT = 3;
   }
   BacklogMode backlog_mode = 3;
   int64 backlog_count = 4;
 
   enum StreamMode {
-    STREAM_INVALID = 0;
+    STREAM_MODE_INVALID = 0;
     // No streaming entries, gRPC stream will be closed as soon as all backlog
     // data is served.
-    STREAM_DISABLE = 1;
+    STREAM_MODE_DISABLE = 1;
     // Entries will be streamed as early as available right after all backlog
     // data is served.
-    STREAM_UNBUFFERED = 2;
+    STREAM_MODE_UNBUFFERED = 2;
   }
   StreamMode stream_mode = 5;
 }
@@ -460,15 +460,15 @@ message GetLogsResponse {
 }
 
 enum ActivationMode {
-  ACTIVATION_INVALID = 0;
+  ACTIVATION_MODE_INVALID = 0;
   // The new bundle is not activated immediately. It gets activated on the next
   // reboot/reset.
-  ACTIVATION_NONE = 1;
+  ACTIVATION_MODE_NONE = 1;
   // The node is rebooted immediately to activate the new image.
-  ACTIVATION_REBOOT = 2;
+  ACTIVATION_MODE_REBOOT = 2;
   // The node uses kexec to activate the new image immediately without fully
   // rebooting.
-  ACTIVATION_KEXEC = 3;
+  ACTIVATION_MODE_KEXEC = 3;
 }
 
 message UpdateNodeRequest {

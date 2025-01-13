@@ -25,23 +25,23 @@ func LookupModules(meta *kmodpb.Meta, modalias string) (mods []*kmodpb.Module) {
 func lookupModulesRec(n *kmodpb.RadixNode, needle string, matches map[uint32]bool) {
 	for _, c := range n.Children {
 		switch c.Type {
-		case kmodpb.RadixNode_LITERAL:
+		case kmodpb.RadixNode_TYPE_LITERAL:
 			if len(needle) < len(c.Literal) {
 				continue
 			}
 			if c.Literal == needle[:len(c.Literal)] {
 				lookupModulesRec(c, needle[len(c.Literal):], matches)
 			}
-		case kmodpb.RadixNode_WILDCARD:
+		case kmodpb.RadixNode_TYPE_WILDCARD:
 			for i := 0; i <= len(needle); i++ {
 				lookupModulesRec(c, needle[i:], matches)
 			}
-		case kmodpb.RadixNode_SINGLE_WILDCARD:
+		case kmodpb.RadixNode_TYPE_SINGLE_WILDCARD:
 			if len(needle) < 1 {
 				continue
 			}
 			lookupModulesRec(c, needle[1:], matches)
-		case kmodpb.RadixNode_BYTE_RANGE:
+		case kmodpb.RadixNode_TYPE_BYTE_RANGE:
 			if len(needle) < 1 {
 				continue
 			}
@@ -93,7 +93,7 @@ func addPatternRec(n *kmodpb.RadixNode, parts []*kmodpb.RadixNode, currPartOverr
 			continue
 		}
 		switch c.Type {
-		case kmodpb.RadixNode_LITERAL:
+		case kmodpb.RadixNode_TYPE_LITERAL:
 			if c.Literal[0] == currPart.Literal[0] {
 				var i int
 				for i < len(c.Literal) && i < len(currPart.Literal) && c.Literal[i] == currPart.Literal[i] {
@@ -107,11 +107,11 @@ func addPatternRec(n *kmodpb.RadixNode, parts []*kmodpb.RadixNode, currPartOverr
 					return addPatternRec(c, parts[1:], nil)
 				}
 				if i == len(c.Literal) {
-					return addPatternRec(c, parts, &kmodpb.RadixNode{Type: kmodpb.RadixNode_LITERAL, Literal: currPart.Literal[i:], ModuleIndex: currPart.ModuleIndex})
+					return addPatternRec(c, parts, &kmodpb.RadixNode{Type: kmodpb.RadixNode_TYPE_LITERAL, Literal: currPart.Literal[i:], ModuleIndex: currPart.ModuleIndex})
 				}
 				// Split current node
 				splitOldPart := &kmodpb.RadixNode{
-					Type:        kmodpb.RadixNode_LITERAL,
+					Type:        kmodpb.RadixNode_TYPE_LITERAL,
 					Literal:     c.Literal[i:],
 					Children:    c.Children,
 					ModuleIndex: c.ModuleIndex,
@@ -129,7 +129,7 @@ func addPatternRec(n *kmodpb.RadixNode, parts []*kmodpb.RadixNode, currPartOverr
 					parts = parts[1:]
 				} else {
 					splitNewPart = &kmodpb.RadixNode{
-						Type:        kmodpb.RadixNode_LITERAL,
+						Type:        kmodpb.RadixNode_TYPE_LITERAL,
 						Literal:     currPart.Literal[i:],
 						ModuleIndex: currPart.ModuleIndex,
 					}
@@ -143,14 +143,14 @@ func addPatternRec(n *kmodpb.RadixNode, parts []*kmodpb.RadixNode, currPartOverr
 				return addPatternRec(splitNewPart, parts[1:], nil)
 			}
 
-		case kmodpb.RadixNode_BYTE_RANGE:
+		case kmodpb.RadixNode_TYPE_BYTE_RANGE:
 			if c.StartByte == currPart.StartByte && c.EndByte == currPart.EndByte {
 				if len(parts) == 1 {
 					c.ModuleIndex = append(c.ModuleIndex, parts[0].ModuleIndex...)
 				}
 				return addPatternRec(c, parts[1:], nil)
 			}
-		case kmodpb.RadixNode_SINGLE_WILDCARD, kmodpb.RadixNode_WILDCARD:
+		case kmodpb.RadixNode_TYPE_SINGLE_WILDCARD, kmodpb.RadixNode_TYPE_WILDCARD:
 			if len(parts) == 1 {
 				c.ModuleIndex = append(c.ModuleIndex, parts[0].ModuleIndex...)
 			}
@@ -179,13 +179,13 @@ func printTree(r *kmodpb.RadixNode, indent int, noIndent bool) {
 		fmt.Printf("%v ", r.ModuleIndex)
 	}
 	switch r.Type {
-	case kmodpb.RadixNode_LITERAL:
+	case kmodpb.RadixNode_TYPE_LITERAL:
 		fmt.Printf("%q: ", r.Literal)
-	case kmodpb.RadixNode_SINGLE_WILDCARD:
+	case kmodpb.RadixNode_TYPE_SINGLE_WILDCARD:
 		fmt.Printf("?: ")
-	case kmodpb.RadixNode_WILDCARD:
+	case kmodpb.RadixNode_TYPE_WILDCARD:
 		fmt.Printf("*: ")
-	case kmodpb.RadixNode_BYTE_RANGE:
+	case kmodpb.RadixNode_TYPE_BYTE_RANGE:
 		fmt.Printf("[%c-%c]: ", rune(r.StartByte), rune(r.EndByte))
 	default:
 		log.Fatalf("Unknown tree type %T\n", r)
@@ -210,7 +210,7 @@ func parsePattern(pattern string) ([]*kmodpb.RadixNode, error) {
 	storeCurrentLiteral := func() {
 		if currentLiteral.Len() > 0 {
 			out = append(out, &kmodpb.RadixNode{
-				Type:    kmodpb.RadixNode_LITERAL,
+				Type:    kmodpb.RadixNode_TYPE_LITERAL,
 				Literal: currentLiteral.String(),
 			})
 			currentLiteral.Reset()
@@ -221,16 +221,16 @@ func parsePattern(pattern string) ([]*kmodpb.RadixNode, error) {
 		case '*':
 			storeCurrentLiteral()
 			i += 1
-			if len(out) > 0 && out[len(out)-1].Type == kmodpb.RadixNode_WILDCARD {
+			if len(out) > 0 && out[len(out)-1].Type == kmodpb.RadixNode_TYPE_WILDCARD {
 				continue
 			}
 			out = append(out, &kmodpb.RadixNode{
-				Type: kmodpb.RadixNode_WILDCARD,
+				Type: kmodpb.RadixNode_TYPE_WILDCARD,
 			})
 		case '?':
 			storeCurrentLiteral()
 			out = append(out, &kmodpb.RadixNode{
-				Type: kmodpb.RadixNode_SINGLE_WILDCARD,
+				Type: kmodpb.RadixNode_TYPE_SINGLE_WILDCARD,
 			})
 			i += 1
 		case '[':
@@ -242,7 +242,7 @@ func parsePattern(pattern string) ([]*kmodpb.RadixNode, error) {
 				return nil, errors.New("illegal byte range notation, incorrect dash or closing character")
 			}
 			nn := &kmodpb.RadixNode{
-				Type:      kmodpb.RadixNode_BYTE_RANGE,
+				Type:      kmodpb.RadixNode_TYPE_BYTE_RANGE,
 				StartByte: uint32(pattern[i+1]),
 				EndByte:   uint32(pattern[i+3]),
 			}

@@ -563,10 +563,10 @@ func (l *leaderCurator) JoinNode(ctx context.Context, req *ipb.JoinNodeRequest) 
 		}
 	}
 
-	if node.tpmUsage == cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED && !req.UsingSealedConfiguration {
+	if node.tpmUsage == cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_AND_USED && !req.UsingSealedConfiguration {
 		return nil, status.Errorf(codes.PermissionDenied, "node registered with TPM, cannot join without one")
 	}
-	if node.tpmUsage != cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED && req.UsingSealedConfiguration {
+	if node.tpmUsage != cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_AND_USED && req.UsingSealedConfiguration {
 		return nil, status.Errorf(codes.PermissionDenied, "node registered without TPM, cannot join with one")
 	}
 

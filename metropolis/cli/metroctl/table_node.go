@@ -23,7 +23,10 @@ func nodeEntry(n *apb.Node) clitable.Entry {
 		address = n.Status.ExternalAddress
 	}
 	res.Add("address", address)
-	res.Add("health", n.Health.String())
+
+	health := n.Health.String()
+	health = strings.ReplaceAll(health, "HEALTH_", "")
+	res.Add("health", health)
 
 	var roles []string
 	if n.Roles.ConsensusMember != nil {
@@ -40,11 +43,11 @@ func nodeEntry(n *apb.Node) clitable.Entry {
 
 	tpm := "unk"
 	switch n.TpmUsage {
-	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED:
+	case cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_AND_USED:
 		tpm = "yes"
-	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_BUT_UNUSED:
+	case cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_BUT_UNUSED:
 		tpm = "unused"
-	case cpb.NodeTPMUsage_NODE_TPM_NOT_PRESENT:
+	case cpb.NodeTPMUsage_NODE_TPM_USAGE_NOT_PRESENT:
 		tpm = "no"
 	}
 	res.Add("tpm", tpm)

@@ -17,7 +17,7 @@ func MakeMetaFromModuleInfo(modinfos []ModuleInfo) (*kmodpb.Meta, error) {
 	modInfoMap := make(map[string]ModuleInfo)
 	var meta kmodpb.Meta
 	meta.ModuleDeviceMatches = &kmodpb.RadixNode{
-		Type: kmodpb.RadixNode_ROOT,
+		Type: kmodpb.RadixNode_TYPE_ROOT,
 	}
 	var i uint32
 	for _, m := range modinfos {

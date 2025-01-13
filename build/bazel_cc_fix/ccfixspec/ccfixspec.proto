@@ -35,15 +35,15 @@ message CCFixSpec {
 
 message Replace {
   enum Type {
-    UNKNOWN = 0;
+    TYPE_UNKNOWN = 0;
     // SYSTEM replaces included system headers (within < >) with the given
     // workspace or inter-workspace (external/<otherworkspace>) paths. It
     // matches literally as these files are generally not resolvable.
-    SYSTEM = 1;
+    TYPE_SYSTEM = 1;
     // WORKSPACE replaces included workspace-relative headers (after resolving)
     // with the given workspace or inter-workspace paths. It matches
     // pre-resolved workspace-relative paths.
-    WORKSPACE = 2;
+    TYPE_WORKSPACE = 2;
   }
   Type type = 1;
   string from = 2;

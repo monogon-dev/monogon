@@ -57,17 +57,17 @@ message Bond {
   }
   enum TransmitHashPolicy {
     // Layer 2 MAC address
-    LAYER2 = 0;
+    TRANSMIT_HASH_POLICY_LAYER2 = 0;
     // IP address, protocol and port
-    LAYER3_4 = 1;
+    TRANSMIT_HASH_POLICY_LAYER3_4 = 1;
     // MAC address and IP address
-    LAYER2_3 = 2;
+    TRANSMIT_HASH_POLICY_LAYER2_3 = 2;
     // Encapsulated MAC address and IP address
-    ENCAP_LAYER2_3 = 3;
+    TRANSMIT_HASH_POLICY_ENCAP_LAYER2_3 = 3;
     // Encapsulated IP address, protocol and port
-    ENCAP_LAYER3_4 = 4;
+    TRANSMIT_HASH_POLICY_ENCAP_LAYER3_4 = 4;
     // VLAN ID and source MAC
-    VLAN_SRCMAC = 5;
+    TRANSMIT_HASH_POLICY_VLAN_SRCMAC = 5;
   }
   TransmitHashPolicy transmit_hash_policy = 4;
   // Use the Link Aggregation Control Protocol to automatically use the
@@ -75,15 +75,15 @@ message Bond {
   message LACP {
     enum Rate {
       // LACP slow rate, one packet every 30s
-      SLOW = 0;
+      RATE_SLOW = 0;
       // LACP fast rate, one packet every 1s
-      FAST = 1;
+      RATE_FAST = 1;
     }
     Rate rate = 1;
     enum SelectionLogic {
-      STABLE = 0;
-      BANDWIDTH = 1;
-      COUNT = 2;
+      SELECTION_LOGIC_STABLE = 0;
+      SELECTION_LOGIC_BANDWIDTH = 1;
+      SELECTION_LOGIC_COUNT = 2;
     }
     SelectionLogic selection_logic = 2;
     int32 actor_system_priority = 3;
@@ -109,12 +109,12 @@ message VLAN {
   enum Protocol {
     // C-VLAN, also known as "standard" VLAN inserts a header with the
     // VLAN ID (VID) right before the EtherType.
-    CVLAN = 0;
+    PROTOCOL_CVLAN = 0;
     // S-VLAN, also known as QinQ or 802.1ad (obsolete) inserts a second VLAN ID
     // before the C-VLAN header. This allows stacking two VLANs. The ID
     // specified here is just for the outer VLAN, the inner one can be set by
     // creating another VLAN interface and setting this one to be its parent.
-    SVLAN = 1;
+    PROTOCOL_SVLAN = 1;
   }
   Protocol protocol = 3;
 }
@@ -130,12 +130,12 @@ message IPv4Autoconfig {}
 message IPv6Autoconfig {
   enum Privacy {
     // Do not generate privacy addresses.
-    DISABLE = 0;
+    PRIVACY_DISABLE = 0;
     // Generate privacy addresses, but prefer non-privacy addresses.
-    AVOID = 1;
+    PRIVACY_AVOID = 1;
     // Generate privacy addresses and use them over other non-privacy
     // addresses.
-    PREFER = 2;
+    PRIVACY_PREFER = 2;
   }
   // privacy controls if and how privacy addresses (see RFC 4941) are used if
   // DHCPv6 is not used for addressing. If DHCPv6 is used for addressing

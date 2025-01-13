@@ -76,9 +76,9 @@ message SpecialFile {
   string path = 1;
 
   enum Type {
-    CHARACTER_DEV = 0;
-    BLOCK_DEV = 1;
-    FIFO = 2;
+    TYPE_CHARACTER_DEV = 0;
+    TYPE_BLOCK_DEV = 1;
+    TYPE_FIFO = 2;
   }
 
   // Type of special file.

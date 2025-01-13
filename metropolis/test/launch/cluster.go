@@ -1166,7 +1166,7 @@ func (c *Cluster) RebootNode(ctx context.Context, idx int) error {
 		launch.Log("Cluster: node health: %+v", cs.Health)
 
 		lhb := time.Now().Add(-cs.TimeSinceHeartbeat.AsDuration())
-		if lhb.After(start) && cs.Health == apb.Node_HEALTHY {
+		if lhb.After(start) && cs.Health == apb.Node_HEALTH_HEALTHY {
 			break
 		}
 		time.Sleep(time.Second)
@@ -1353,7 +1353,7 @@ func (c *Cluster) AllNodesHealthy(ctx context.Context) error {
 
 	var unhealthy []string
 	for _, node := range nodes {
-		if node.Health == apb.Node_HEALTHY {
+		if node.Health == apb.Node_HEALTH_HEALTHY {
 			continue
 		}
 		unhealthy = append(unhealthy, node.Id)

@@ -8,7 +8,6 @@ buf_proto_lint_test(
     except_rules = [
         "PACKAGE_VERSION_SUFFIX",
         "MESSAGE_PASCAL_CASE",
-        "ENUM_VALUE_PREFIX",  # TODO: evaluate correctness
         "ENUM_ZERO_VALUE_SUFFIX",  # TODO: evaluate correctness
     ],
     protos = [":api_proto"],

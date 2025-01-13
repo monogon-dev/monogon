@@ -18,8 +18,8 @@ import (
 )
 
 var vlanProtoMap = map[netlink.VlanProtocol]netapi.VLAN_Protocol{
-	netlink.VLAN_PROTOCOL_8021Q:  netapi.VLAN_CVLAN,
-	netlink.VLAN_PROTOCOL_8021AD: netapi.VLAN_SVLAN,
+	netlink.VLAN_PROTOCOL_8021Q:  netapi.VLAN_PROTOCOL_CVLAN,
+	netlink.VLAN_PROTOCOL_8021AD: netapi.VLAN_PROTOCOL_SVLAN,
 }
 
 // From iproute2's rt_protos
@@ -265,19 +265,19 @@ func Dump() (*netapi.Net, []error, error) {
 func getIPv6IfaceAutoconfigPrivacy(name string) (netapi.IPv6Autoconfig_Privacy, error) {
 	useTempaddrRaw, err := os.ReadFile(fmt.Sprintf("/proc/sys/net/ipv6/conf/%s/use_tempaddr", name))
 	if err != nil {
-		return netapi.IPv6Autoconfig_DISABLE, fmt.Errorf("failed to read use_tempaddr sysctl for interface %q: %w", name, err)
+		return netapi.IPv6Autoconfig_PRIVACY_DISABLE, fmt.Errorf("failed to read use_tempaddr sysctl for interface %q: %w", name, err)
 	}
 	useTempaddr, err := strconv.ParseInt(strings.TrimSpace(string(useTempaddrRaw)), 10, 64)
 	if err != nil {
-		return netapi.IPv6Autoconfig_DISABLE, fmt.Errorf("failed to parse use_tempaddr sysctl for interface %q: %w", name, err)
+		return netapi.IPv6Autoconfig_PRIVACY_DISABLE, fmt.Errorf("failed to parse use_tempaddr sysctl for interface %q: %w", name, err)
 	}
 	switch {
 	case useTempaddr <= 0:
-		return netapi.IPv6Autoconfig_DISABLE, nil
+		return netapi.IPv6Autoconfig_PRIVACY_DISABLE, nil
 	case useTempaddr == 1:
-		return netapi.IPv6Autoconfig_AVOID, nil
+		return netapi.IPv6Autoconfig_PRIVACY_AVOID, nil
 	case useTempaddr > 1:
-		return netapi.IPv6Autoconfig_PREFER, nil
+		return netapi.IPv6Autoconfig_PRIVACY_PREFER, nil
 	default:
 		panic("switch is complete but hit default case")
 	}

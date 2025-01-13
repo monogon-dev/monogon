@@ -92,22 +92,22 @@ func main() {
 		dn := logsCmd.Arg(0)
 		req := &apb.GetLogsRequest{
 			Dn:          dn,
-			BacklogMode: apb.GetLogsRequest_BACKLOG_DISABLE,
-			StreamMode:  apb.GetLogsRequest_STREAM_DISABLE,
+			BacklogMode: apb.GetLogsRequest_BACKLOG_MODE_DISABLE,
+			StreamMode:  apb.GetLogsRequest_STREAM_MODE_DISABLE,
 			Filters:     nil,
 		}
 
 		switch *logsTailN {
 		case 0:
 		case -1:
-			req.BacklogMode = apb.GetLogsRequest_BACKLOG_ALL
+			req.BacklogMode = apb.GetLogsRequest_BACKLOG_MODE_ALL
 		default:
-			req.BacklogMode = apb.GetLogsRequest_BACKLOG_COUNT
+			req.BacklogMode = apb.GetLogsRequest_BACKLOG_MODE_COUNT
 			req.BacklogCount = int64(*logsTailN)
 		}
 
 		if *logsStream {
-			req.StreamMode = apb.GetLogsRequest_STREAM_UNBUFFERED
+			req.StreamMode = apb.GetLogsRequest_STREAM_MODE_UNBUFFERED
 		}
 
 		if *logsRecursive {

@@ -176,7 +176,7 @@ func (e *ESPSealedConfiguration) SealSecureBoot(c *ppb.SealedConfiguration, tpmU
 	}
 
 	switch tpmUsage {
-	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED:
+	case cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_AND_USED:
 		// Use Secure Boot PCRs to seal the configuration.
 		// See: TCG PC Client Platform Firmware Profile Specification v1.05,
 		//      table 3.3.4.1
@@ -186,8 +186,8 @@ func (e *ESPSealedConfiguration) SealSecureBoot(c *ppb.SealedConfiguration, tpmU
 		if err != nil {
 			return fmt.Errorf("while using tpm: %w", err)
 		}
-	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_BUT_UNUSED:
-	case cpb.NodeTPMUsage_NODE_TPM_NOT_PRESENT:
+	case cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_BUT_UNUSED:
+	case cpb.NodeTPMUsage_NODE_TPM_USAGE_NOT_PRESENT:
 	default:
 		return fmt.Errorf("unknown tpmUsage %d", tpmUsage)
 	}
@@ -208,13 +208,13 @@ func (e *ESPSealedConfiguration) Unseal(tpmUsage cpb.NodeTPMUsage) (*ppb.SealedC
 	}
 
 	switch tpmUsage {
-	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED:
+	case cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_AND_USED:
 		bytes, err = tpm.Unseal(bytes)
 		if err != nil {
 			return nil, fmt.Errorf("%w: when unsealing: %w", ErrSealedCorrupted, err)
 		}
-	case cpb.NodeTPMUsage_NODE_TPM_PRESENT_BUT_UNUSED:
-	case cpb.NodeTPMUsage_NODE_TPM_NOT_PRESENT:
+	case cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_BUT_UNUSED:
+	case cpb.NodeTPMUsage_NODE_TPM_USAGE_NOT_PRESENT:
 	default:
 		return nil, fmt.Errorf("unknown tpmUsage %d", tpmUsage)
 	}

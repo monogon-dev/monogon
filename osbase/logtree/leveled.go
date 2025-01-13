@@ -25,13 +25,13 @@ import (
 
 func SeverityFromProto(s lpb.LeveledLogSeverity) (logging.Severity, error) {
 	switch s {
-	case lpb.LeveledLogSeverity_INFO:
+	case lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_INFO:
 		return logging.INFO, nil
-	case lpb.LeveledLogSeverity_WARNING:
+	case lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_WARNING:
 		return logging.WARNING, nil
-	case lpb.LeveledLogSeverity_ERROR:
+	case lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_ERROR:
 		return logging.ERROR, nil
-	case lpb.LeveledLogSeverity_FATAL:
+	case lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_FATAL:
 		return logging.FATAL, nil
 	default:
 		return "", fmt.Errorf("unknown severity value %d", s)
@@ -41,14 +41,14 @@ func SeverityFromProto(s lpb.LeveledLogSeverity) (logging.Severity, error) {
 func SeverityToProto(s logging.Severity) lpb.LeveledLogSeverity {
 	switch s {
 	case logging.INFO:
-		return lpb.LeveledLogSeverity_INFO
+		return lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_INFO
 	case logging.WARNING:
-		return lpb.LeveledLogSeverity_WARNING
+		return lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_WARNING
 	case logging.ERROR:
-		return lpb.LeveledLogSeverity_ERROR
+		return lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_ERROR
 	case logging.FATAL:
-		return lpb.LeveledLogSeverity_FATAL
+		return lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_FATAL
 	default:
-		return lpb.LeveledLogSeverity_INVALID
+		return lpb.LeveledLogSeverity_LEVELED_LOG_SEVERITY_INVALID
 	}
 }

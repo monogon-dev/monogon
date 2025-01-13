@@ -97,17 +97,17 @@ func (spec *entrySpec) writeRecursive(w *erofs.Writer, pathname string) {
 			GID:         uint16(inode.SpecialFile.Gid),
 		}
 		switch inode.SpecialFile.Type {
-		case fsspec.SpecialFile_FIFO:
+		case fsspec.SpecialFile_TYPE_FIFO:
 			err = w.Create(pathname, &erofs.FIFO{
 				Base: base,
 			})
-		case fsspec.SpecialFile_CHARACTER_DEV:
+		case fsspec.SpecialFile_TYPE_CHARACTER_DEV:
 			err = w.Create(pathname, &erofs.CharacterDevice{
 				Base:  base,
 				Major: inode.SpecialFile.Major,
 				Minor: inode.SpecialFile.Minor,
 			})
-		case fsspec.SpecialFile_BLOCK_DEV:
+		case fsspec.SpecialFile_TYPE_BLOCK_DEV:
 			err = w.Create(pathname, &erofs.BlockDevice{
 				Base:  base,
 				Major: inode.SpecialFile.Major,

@@ -22,11 +22,11 @@ import "google/protobuf/timestamp.proto";
 
 // Severity level corresponding to //osbase/logtree.Severity.
 enum LeveledLogSeverity {
-  INVALID = 0;
-  INFO = 1;
-  WARNING = 2;
-  ERROR = 3;
-  FATAL = 4;
+  LEVELED_LOG_SEVERITY_INVALID = 0;
+  LEVELED_LOG_SEVERITY_INFO = 1;
+  LEVELED_LOG_SEVERITY_WARNING = 2;
+  LEVELED_LOG_SEVERITY_ERROR = 3;
+  LEVELED_LOG_SEVERITY_FATAL = 4;
 }
 
 // LogEntry corresponding to logtree.LogEntry in //osbase/logtree.

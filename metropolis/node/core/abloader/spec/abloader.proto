@@ -3,9 +3,9 @@ syntax = "proto3";
 package metropolis.node.core.abloader.spec;
 
 enum Slot {
-    NONE = 0;
-    A = 1;
-    B = 2;
+    SLOT_NONE = 0;
+    SLOT_A = 1;
+    SLOT_B = 2;
 }
 
 // ABLoaderData contains data the A/B loader needs to chose which slot to boot

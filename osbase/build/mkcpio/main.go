@@ -196,11 +196,11 @@ func main() {
 		case *fsspec.SpecialFile:
 			mode := cpio.FileMode(i.Mode)
 			switch i.Type {
-			case fsspec.SpecialFile_CHARACTER_DEV:
+			case fsspec.SpecialFile_TYPE_CHARACTER_DEV:
 				mode |= cpio.TypeChar
-			case fsspec.SpecialFile_BLOCK_DEV:
+			case fsspec.SpecialFile_TYPE_BLOCK_DEV:
 				mode |= cpio.TypeBlock
-			case fsspec.SpecialFile_FIFO:
+			case fsspec.SpecialFile_TYPE_FIFO:
 				mode |= cpio.TypeFifo
 			}
 

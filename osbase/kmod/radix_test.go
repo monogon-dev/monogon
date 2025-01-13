@@ -20,18 +20,18 @@ func TestParsePattern(t *testing.T) {
 		expectedNodes []*kmodpb.RadixNode
 	}{
 		{"Empty", "", nil},
-		{"SingleLiteral", "asdf", []*kmodpb.RadixNode{{Type: kmodpb.RadixNode_LITERAL, Literal: "asdf"}}},
+		{"SingleLiteral", "asdf", []*kmodpb.RadixNode{{Type: kmodpb.RadixNode_TYPE_LITERAL, Literal: "asdf"}}},
 		{"SingleWildcard", "as*df", []*kmodpb.RadixNode{
-			{Type: kmodpb.RadixNode_LITERAL, Literal: "as"},
-			{Type: kmodpb.RadixNode_WILDCARD},
-			{Type: kmodpb.RadixNode_LITERAL, Literal: "df"},
+			{Type: kmodpb.RadixNode_TYPE_LITERAL, Literal: "as"},
+			{Type: kmodpb.RadixNode_TYPE_WILDCARD},
+			{Type: kmodpb.RadixNode_TYPE_LITERAL, Literal: "df"},
 		}},
-		{"EscapedWildcard", "a\\*", []*kmodpb.RadixNode{{Type: kmodpb.RadixNode_LITERAL, Literal: "a*"}}},
-		{"SingleRange", "[y-z]", []*kmodpb.RadixNode{{Type: kmodpb.RadixNode_BYTE_RANGE, StartByte: 121, EndByte: 122}}},
+		{"EscapedWildcard", "a\\*", []*kmodpb.RadixNode{{Type: kmodpb.RadixNode_TYPE_LITERAL, Literal: "a*"}}},
+		{"SingleRange", "[y-z]", []*kmodpb.RadixNode{{Type: kmodpb.RadixNode_TYPE_BYTE_RANGE, StartByte: 121, EndByte: 122}}},
 		{"SingleWildcardChar", "a?c", []*kmodpb.RadixNode{
-			{Type: kmodpb.RadixNode_LITERAL, Literal: "a"},
-			{Type: kmodpb.RadixNode_SINGLE_WILDCARD},
-			{Type: kmodpb.RadixNode_LITERAL, Literal: "c"},
+			{Type: kmodpb.RadixNode_TYPE_LITERAL, Literal: "a"},
+			{Type: kmodpb.RadixNode_TYPE_SINGLE_WILDCARD},
+			{Type: kmodpb.RadixNode_TYPE_LITERAL, Literal: "c"},
 		}},
 	}
 	for _, c := range cases {
@@ -50,7 +50,7 @@ func TestParsePattern(t *testing.T) {
 
 func TestLookupComplex(t *testing.T) {
 	root := &kmodpb.RadixNode{
-		Type: kmodpb.RadixNode_LITERAL,
+		Type: kmodpb.RadixNode_TYPE_LITERAL,
 	}
 	if err := AddPattern(root, "usb:v0B95p1790d*dc*dsc*dp*icFFiscFFip00in*", 2); err != nil {
 		t.Error(err)
@@ -84,7 +84,7 @@ func FuzzRadixImpl(f *testing.F) {
 		values := strings.Split(b, "\x00")
 		var patternsRegexp []regexp.Regexp
 		root := &kmodpb.RadixNode{
-			Type: kmodpb.RadixNode_LITERAL,
+			Type: kmodpb.RadixNode_TYPE_LITERAL,
 		}
 		for i, p := range patternsRaw {
 			if !isASCII(p) {
@@ -103,13 +103,13 @@ func FuzzRadixImpl(f *testing.F) {
 			regexb.WriteString("(?s)^")
 			for _, part := range pp {
 				switch part.Type {
-				case kmodpb.RadixNode_LITERAL:
+				case kmodpb.RadixNode_TYPE_LITERAL:
 					regexb.WriteString(regexp.QuoteMeta(part.Literal))
-				case kmodpb.RadixNode_SINGLE_WILDCARD:
+				case kmodpb.RadixNode_TYPE_SINGLE_WILDCARD:
 					regexb.WriteString(".")
-				case kmodpb.RadixNode_WILDCARD:
+				case kmodpb.RadixNode_TYPE_WILDCARD:
 					regexb.WriteString(".*")
-				case kmodpb.RadixNode_BYTE_RANGE:
+				case kmodpb.RadixNode_TYPE_BYTE_RANGE:
 					regexb.WriteString(fmt.Sprintf("[%s-%s]", regexp.QuoteMeta(string([]rune{rune(part.StartByte)})), regexp.QuoteMeta(string([]rune{rune(part.EndByte)}))))
 				default:
 					t.Errorf("Unknown node type %v", part.Type)

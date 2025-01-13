@@ -83,11 +83,11 @@ func (c *Cluster) NodeTPMUsage(have bool) (usage cpb.NodeTPMUsage, err error) {
 	}
 	switch {
 	case have && use:
-		usage = cpb.NodeTPMUsage_NODE_TPM_PRESENT_AND_USED
+		usage = cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_AND_USED
 	case have && !use:
-		usage = cpb.NodeTPMUsage_NODE_TPM_PRESENT_BUT_UNUSED
+		usage = cpb.NodeTPMUsage_NODE_TPM_USAGE_PRESENT_BUT_UNUSED
 	case !have:
-		usage = cpb.NodeTPMUsage_NODE_TPM_NOT_PRESENT
+		usage = cpb.NodeTPMUsage_NODE_TPM_USAGE_NOT_PRESENT
 	}
 	return
 }

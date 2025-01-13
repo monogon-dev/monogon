@@ -26,8 +26,8 @@ import (
 )
 
 var vlanProtoMap = map[netpb.VLAN_Protocol]netlink.VlanProtocol{
-	netpb.VLAN_CVLAN: netlink.VLAN_PROTOCOL_8021Q,
-	netpb.VLAN_SVLAN: netlink.VLAN_PROTOCOL_8021AD,
+	netpb.VLAN_PROTOCOL_CVLAN: netlink.VLAN_PROTOCOL_8021Q,
+	netpb.VLAN_PROTOCOL_SVLAN: netlink.VLAN_PROTOCOL_8021AD,
 }
 
 func (s *Service) runStaticConfig(ctx context.Context) error {
@@ -322,24 +322,24 @@ func deviceIfaceFromSpec(it *netpb.Interface_Device, hostDevices []deviceIfData,
 }
 
 var lacpRateMap = map[netpb.Bond_LACP_Rate]netlink.BondLacpRate{
-	netpb.Bond_LACP_SLOW: netlink.BOND_LACP_RATE_SLOW,
-	netpb.Bond_LACP_FAST: netlink.BOND_LACP_RATE_FAST,
+	netpb.Bond_LACP_RATE_SLOW: netlink.BOND_LACP_RATE_SLOW,
+	netpb.Bond_LACP_RATE_FAST: netlink.BOND_LACP_RATE_FAST,
 }
 
 var lacpAdSelectMap = map[netpb.Bond_LACP_SelectionLogic]netlink.BondAdSelect{
-	netpb.Bond_LACP_STABLE:    netlink.BOND_AD_SELECT_STABLE,
-	netpb.Bond_LACP_BANDWIDTH: netlink.BOND_AD_SELECT_BANDWIDTH,
-	netpb.Bond_LACP_COUNT:     netlink.BOND_AD_SELECT_COUNT,
+	netpb.Bond_LACP_SELECTION_LOGIC_STABLE:    netlink.BOND_AD_SELECT_STABLE,
+	netpb.Bond_LACP_SELECTION_LOGIC_BANDWIDTH: netlink.BOND_AD_SELECT_BANDWIDTH,
+	netpb.Bond_LACP_SELECTION_LOGIC_COUNT:     netlink.BOND_AD_SELECT_COUNT,
 }
 
 var xmitHashPolicyMap = map[netpb.Bond_TransmitHashPolicy]netlink.BondXmitHashPolicy{
-	netpb.Bond_LAYER2:         netlink.BOND_XMIT_HASH_POLICY_LAYER2,
-	netpb.Bond_LAYER2_3:       netlink.BOND_XMIT_HASH_POLICY_LAYER2_3,
-	netpb.Bond_LAYER3_4:       netlink.BOND_XMIT_HASH_POLICY_LAYER3_4,
-	netpb.Bond_ENCAP_LAYER2_3: netlink.BOND_XMIT_HASH_POLICY_ENCAP2_3,
-	netpb.Bond_ENCAP_LAYER3_4: netlink.BOND_XMIT_HASH_POLICY_ENCAP3_4,
+	netpb.Bond_TRANSMIT_HASH_POLICY_LAYER2:         netlink.BOND_XMIT_HASH_POLICY_LAYER2,
+	netpb.Bond_TRANSMIT_HASH_POLICY_LAYER2_3:       netlink.BOND_XMIT_HASH_POLICY_LAYER2_3,
+	netpb.Bond_TRANSMIT_HASH_POLICY_LAYER3_4:       netlink.BOND_XMIT_HASH_POLICY_LAYER3_4,
+	netpb.Bond_TRANSMIT_HASH_POLICY_ENCAP_LAYER2_3: netlink.BOND_XMIT_HASH_POLICY_ENCAP2_3,
+	netpb.Bond_TRANSMIT_HASH_POLICY_ENCAP_LAYER3_4: netlink.BOND_XMIT_HASH_POLICY_ENCAP3_4,
 	// TODO(vishvananda/netlink#860): constant not in netlink yet
-	netpb.Bond_VLAN_SRCMAC: 5,
+	netpb.Bond_TRANSMIT_HASH_POLICY_VLAN_SRCMAC: 5,
 }
 
 func bondIfaceFromSpec(it *netpb.Interface_Bond, i *netpb.Interface) (*netlink.Bond, error) {

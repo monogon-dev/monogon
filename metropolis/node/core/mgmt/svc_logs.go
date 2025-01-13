@@ -77,10 +77,10 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 
 	// Turn backlog mode into logtree option(s).
 	switch req.BacklogMode {
-	case api.GetLogsRequest_BACKLOG_DISABLE:
-	case api.GetLogsRequest_BACKLOG_ALL:
+	case api.GetLogsRequest_BACKLOG_MODE_DISABLE:
+	case api.GetLogsRequest_BACKLOG_MODE_ALL:
 		options = append(options, logtree.WithBacklog(logtree.BacklogAllAvailable))
-	case api.GetLogsRequest_BACKLOG_COUNT:
+	case api.GetLogsRequest_BACKLOG_MODE_COUNT:
 		count := int(req.BacklogCount)
 		if count <= 0 {
 			return status.Errorf(codes.InvalidArgument, "backlog_count must be > 0 if backlog_mode is BACKLOG_COUNT")
@@ -93,8 +93,8 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 	// Turn stream mode into logtree option(s).
 	streamEnable := false
 	switch req.StreamMode {
-	case api.GetLogsRequest_STREAM_DISABLE:
-	case api.GetLogsRequest_STREAM_UNBUFFERED:
+	case api.GetLogsRequest_STREAM_MODE_DISABLE:
+	case api.GetLogsRequest_STREAM_MODE_UNBUFFERED:
 		streamEnable = true
 		options = append(options, logtree.WithStream())
 	}

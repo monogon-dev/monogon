@@ -371,14 +371,14 @@ message ClusterConfiguration {
 // NodeTPMUsage describes whether a node has a TPM2.0 and if it is/should be
 // actively used to seal secrets before saving them to its EFI system partition.
 enum NodeTPMUsage {
-    NODE_TPM_INVALID = 0;
+    NODE_TPM_USAGE_INVALID = 0;
     // This node has no TPM 2.0.
-    NODE_TPM_NOT_PRESENT = 1;
+    NODE_TPM_USAGE_NOT_PRESENT = 1;
     // This node has a TPM 2.0 but the cluster configuration mandates not using
     // it.
-    NODE_TPM_PRESENT_BUT_UNUSED = 2;
+    NODE_TPM_USAGE_PRESENT_BUT_UNUSED = 2;
     // This node has a TPM 2.0 and it is being actively used.
-    NODE_TPM_PRESENT_AND_USED = 3;
+    NODE_TPM_USAGE_PRESENT_AND_USED = 3;
 }
 
 // NodeStorageSecurity describes how a node encrypts and/or authenticates its

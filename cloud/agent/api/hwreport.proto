@@ -23,11 +23,11 @@ message BlockDevice {
   int32 physical_block_size_bytes = 8;
 
   enum Protocol {
-    UNKNOWN = 0;
-    SCSI = 1;
-    ATA = 2;
-    NVME = 3;
-    MMC = 4;
+    PROTOCOL_UNKNOWN = 0;
+    PROTOCOL_SCSI = 1;
+    PROTOCOL_ATA = 2;
+    PROTOCOL_NVME = 3;
+    PROTOCOL_MMC = 4;
   }
   Protocol protocol = 9;
 
@@ -97,23 +97,23 @@ message CPU {
 
 enum EFISupport {
   // EFI support was not evaluated by the report generator.
-  EFI_INVALID = 0;
+  EFI_SUPPORT_INVALID = 0;
   // It is not known if EFI is supported by the node. EFI runtime services are
   // not available. This occurs if the report generator generally supports
   // reporting EFI support, but none of its mechanisms to determine EFI support
   // returned any data.
-  EFI_UNKNOWN = 1;
+  EFI_SUPPORT_UNKNOWN = 1;
   // The firmware indicates that EFI is not supported by the node. EFI runtime
   // services are not available.
   // Note that the firmware indication can be wrong.
-  EFI_UNSUPPORTED = 2;
+  EFI_SUPPORT_UNSUPPORTED = 2;
   // The firmware indicates that EFI is supported, but EFI runtime services
   // are not available. This usually means that the hardware report was
   // generated from a kernel booted in Compatibility Support Mode (CSM).
   // Note that the firmware indication can be wrong.
-  EFI_SUPPORTED = 3;
+  EFI_SUPPORT_SUPPORTED = 3;
   // EFI and its runtime services are available and working.
-  EFI_ENABLED = 4;
+  EFI_SUPPORT_ENABLED = 4;
 }
 
 message Node {

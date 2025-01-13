@@ -18,16 +18,16 @@ message Module {
 message RadixNode {
     enum Type {
         // Matches one or more characters literally.
-        LITERAL = 0;
+        TYPE_LITERAL = 0;
         // Matches zero or more arbitrary characters.
-        WILDCARD = 1;
+        TYPE_WILDCARD = 1;
         // Matches exactly one arbitrary character.
-        SINGLE_WILDCARD = 2;
+        TYPE_SINGLE_WILDCARD = 2;
         // Matches exactly one character between start_byte and end_byte.
-        BYTE_RANGE = 3;
+        TYPE_BYTE_RANGE = 3;
         // Root matches nothing, but serves a the root node for a radix
         // tree.
-        ROOT = 4;
+        TYPE_ROOT = 4;
     }
     Type type = 1;
 
