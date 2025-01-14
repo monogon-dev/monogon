@@ -34,8 +34,8 @@ func (f *curatorFollower) GetCurrentLeader(_ *cpb.GetCurrentLeaderRequest, srv c
 			return err
 		}
 
-		if st.leader != nil {
-			return status.Errorf(codes.Unavailable, "node became leader, try again")
+		if st.follower == nil {
+			return status.Errorf(codes.Unavailable, "election status changed, try again")
 		}
 
 		lock := st.follower.lock
