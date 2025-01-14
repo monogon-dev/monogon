@@ -352,6 +352,11 @@ OVERRIDES = {
             "//third_party/go/patches:etcd-integration-logging.patch",
         ],
     },
+    "k8s.io/component-base": {
+        "patches": [
+            "//third_party/go/patches:k8s-fix-metrics-data-race.patch",
+        ],
+    },
     "k8s.io/mount-utils": {
         "pre_patches": [
             "//third_party/go/patches:k8s-native-mounter.patch",
