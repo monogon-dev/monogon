@@ -822,8 +822,12 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	}
 
 	if opts.NodeLogsToFiles {
+		nodeLogDir := ld
+		if os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR") != "" {
+			nodeLogDir = os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+		}
 		for i := range opts.NumNodes {
-			path := path.Join(ld, fmt.Sprintf("node-%d.txt", i))
+			path := path.Join(nodeLogDir, fmt.Sprintf("node-%d.txt", i))
 			port, err := NewSerialFileLogger(path)
 			if err != nil {
 				return nil, fmt.Errorf("could not open log file for node %d: %w", i, err)
