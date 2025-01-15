@@ -9,7 +9,7 @@ Usage
 
 This is expected to run with a given bucket name and a hardcoded set of credentials which are used to authenticate requests. When an authenticated request is received, the mirror will download uncached data if it isn't in the cache yet. This is expected to be used by trusted users, e.g. employees.
 
-Users should deploy a .netrc inside their home folder based on the following template to allow bazel to authenticate against the mirror.
+There are two ways to authenticate with bazel. Either with the credential helper or a .netrc file, which a user should deploy a inside their home folder based on the following template to allow bazel to authenticate against the mirror.
 
 `~/.netrc`
 ```

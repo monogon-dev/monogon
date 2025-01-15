@@ -15,6 +15,7 @@ gazelle(name = "gazelle")
 
 gazelle_test(
     name = "gazelle_test",
+    tags = ["no-remote"],
     workspace = "//:MODULE.bazel",
 )
 
@@ -44,6 +45,7 @@ buildifier_test(
         "-unnamed-macro",  #TODO(tim): Update code to pass this
     ],
     no_sandbox = True,
+    tags = ["no-remote"],
     workspace = "//:MODULE.bazel",
 )
 

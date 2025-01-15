@@ -21,6 +21,14 @@ build:dbg --compilation_mode=dbg
 # Run race config with race detector
 build:race --@io_bazel_rules_go//go/config:race
 
+# Only download the final result, the intermediate files can stay on the
+# server side.
+build:remote --remote_download_toplevel
+build:remote --noremote_upload_local_results
+
+# Set the execution platform which adds constraints for the scheduler.
+build:remote --extra_execution_platforms=//build/platforms:remote_amd64
+
 # Force netgo and osusergo
 build --@io_bazel_rules_go//go/config:tags=osusergo,netgo
 
