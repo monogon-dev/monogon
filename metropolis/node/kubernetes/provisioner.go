@@ -66,8 +66,8 @@ type csiProvisionerServer struct {
 	InformerFactory  informers.SharedInformerFactory
 	VolumesDirectory *localstorage.DataVolumesDirectory
 
-	claimQueue           workqueue.RateLimitingInterface
-	pvQueue              workqueue.RateLimitingInterface
+	claimQueue           workqueue.TypedRateLimitingInterface[string]
+	pvQueue              workqueue.TypedRateLimitingInterface[string]
 	recorder             record.EventRecorder
 	pvcInformer          coreinformers.PersistentVolumeClaimInformer
 	pvInformer           coreinformers.PersistentVolumeInformer
@@ -93,8 +93,8 @@ func (p *csiProvisionerServer) Run(ctx context.Context) error {
 	p.pvcInformer = p.InformerFactory.Core().V1().PersistentVolumeClaims()
 	p.storageClassInformer = p.InformerFactory.Storage().V1().StorageClasses()
 
-	p.claimQueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
-	p.pvQueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	p.claimQueue = workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]())
+	p.pvQueue = workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[string]())
 
 	p.logger = supervisor.Logger(ctx)
 
@@ -186,24 +186,18 @@ func (p *csiProvisionerServer) enqueuePV(obj interface{}) {
 
 // processQueueItems gets items from the given work queue and calls the process
 // function for each of them. It self- terminates once the queue is shut down.
-func (p *csiProvisionerServer) processQueueItems(queue workqueue.RateLimitingInterface, process func(key string) error) {
+func (p *csiProvisionerServer) processQueueItems(queue workqueue.TypedRateLimitingInterface[string], process func(key string) error) {
 	for {
 		obj, shutdown := queue.Get()
 		if shutdown {
 			return
 		}
 
-		func(obj interface{}) {
+		func(obj string) {
 			defer queue.Done(obj)
-			key, ok := obj.(string)
-			if !ok {
-				queue.Forget(obj)
-				p.logger.Errorf("Expected string in workqueue, got %+v", obj)
-				return
-			}
 
-			if err := process(key); err != nil {
-				p.logger.Warningf("Failed processing item %q, requeueing (numrequeues: %d): %v", key, queue.NumRequeues(obj), err)
+			if err := process(obj); err != nil {
+				p.logger.Warningf("Failed processing item %q, requeueing (numrequeues: %d): %v", obj, queue.NumRequeues(obj), err)
 				queue.AddRateLimited(obj)
 			}
 
