@@ -186,9 +186,9 @@ func (p *csiProvisionerServer) processQueueItems(queue workqueue.TypedRateLimiti
 			if err := process(obj); err != nil {
 				p.logger.Warningf("Failed processing item %q, requeueing (numrequeues: %d): %v", obj, queue.NumRequeues(obj), err)
 				queue.AddRateLimited(obj)
+			} else {
+				queue.Forget(obj)
 			}
-
-			queue.Forget(obj)
 		}(obj)
 	}
 }
