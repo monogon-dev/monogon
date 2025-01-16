@@ -62,8 +62,8 @@ http_archive(
 # Derived from Mozilla NSS, currently needed for containerd to be able to pull images
 http_file(
     name = "cacerts",
-    integrity = "sha256-G/RYQSVo4TSkUU9eFwoyjREJHgcccRCVXJiE7YeXKsk=",
-    urls = ["https://curl.se/ca/cacert-2024-07-02.pem"],
+    integrity = "sha256-o/Mowh453dHyvhzqQ6wN7IGeqiCpBCXX2pAaEVMbOqU=",
+    urls = ["https://curl.se/ca/cacert-2024-12-31.pem"],
 )
 
 # ini.h, a tiny ini parser library
