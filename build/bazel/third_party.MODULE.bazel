@@ -84,12 +84,12 @@ git_repository(
     shallow_since = "1615306886 +0100",
 )
 
-LINUX_VERSION = "6.6.50"
+LINUX_VERSION = "6.6.71"
 
 http_archive(
     name = "linux",
     build_file = "//third_party/linux/external:BUILD.repo",
-    integrity = "sha256-wGXjba8oIQBgyRo37z6SrFgUeE5jRXfgTkBil+rS6G4=",
+    integrity = "sha256-IZcVui3PplOfugmtP5ISdy81Bxietg13+OibBsMuck4=",
     patch_args = ["-p1"],
     patches = [
         "//third_party/linux/external:0001-block-partition-expose-PARTUUID-through-uevent.patch",
