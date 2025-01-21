@@ -31,8 +31,6 @@ import (
 	"math/bits"
 	"os"
 	"sync"
-	"syscall"
-	"unsafe"
 
 	"golang.org/x/sys/unix"
 )
@@ -45,38 +43,9 @@ var (
 )
 
 const (
-	// LOOP_CONFIGURE from @linux//include/uapi/linux:loop.h
-	loopConfigure = 0x4C0A
 	// LOOP_MAJOR from @linux//include/uapi/linux:major.h
 	loopMajor = 7
 )
-
-// struct loop_config from @linux//include/uapi/linux:loop.h
-type loopConfig struct {
-	fd uint32
-	// blockSize is a power of 2 between 512 and os.Getpagesize(), defaults
-	// reasonably
-	blockSize uint32
-	info      loopInfo64
-	_reserved [64]byte
-}
-
-// struct loop_info64 from @linux//include/uapi/linux:loop.h
-type loopInfo64 struct {
-	device         uint64
-	inode          uint64
-	rdevice        uint64
-	offset         uint64 // used
-	sizeLimit      uint64 // used
-	number         uint32
-	encryptType    uint32
-	encryptKeySize uint32
-	flags          uint32   // Flags from Flag constant
-	filename       [64]byte // used
-	cryptname      [64]byte
-	encryptkey     [32]byte
-	init           [2]uint64
-}
 
 type Config struct {
 	// Block size of the loop device in bytes. Power of 2 between 512 and page
@@ -145,13 +114,12 @@ func Create(f *os.File, c Config) (*Device, error) {
 		return nil, fmt.Errorf("failed to access loop control device: %w", err)
 	}
 	for {
-		devNum, _, errno := syscall.Syscall(unix.SYS_IOCTL, loopControlFd.Fd(), unix.LOOP_CTL_GET_FREE, 0)
-		if errno != unix.Errno(0) {
-			return nil, fmt.Errorf("failed to allocate loop device: %w", os.NewSyscallError("ioctl(LOOP_CTL_GET_FREE)", errno))
+		devNum, err := unix.IoctlRetInt(int(loopControlFd.Fd()), unix.LOOP_CTL_GET_FREE)
+		if err != nil {
+			return nil, fmt.Errorf("failed to allocate loop device: %w", os.NewSyscallError("ioctl(LOOP_CTL_GET_FREE)", err))
 		}
 		dev, err := os.OpenFile(fmt.Sprintf("/dev/loop%v", devNum), os.O_RDWR|os.O_EXCL, 0)
-		var pe *os.PathError
-		if errors.As(err, &pe) && errors.Is(pe.Err, unix.EBUSY) {
+		if errors.Is(err, unix.EBUSY) {
 			// We have lost the race, get a new device
 			continue
 		}
@@ -159,18 +127,19 @@ func Create(f *os.File, c Config) (*Device, error) {
 			return nil, fmt.Errorf("failed to open newly-allocated loop device: %w", err)
 		}
 
-		var config loopConfig
-		config.fd = uint32(f.Fd())
-		config.blockSize = c.BlockSize
-		config.info.flags = c.Flags
-		config.info.offset = c.Offset
-		config.info.sizeLimit = c.SizeLimit
+		var config unix.LoopConfig
+		config.Fd = uint32(f.Fd())
+		config.Size = c.BlockSize
+		config.Info.Flags = c.Flags
+		config.Info.Offset = c.Offset
+		config.Info.Sizelimit = c.SizeLimit
 
-		if _, _, err := syscall.Syscall(unix.SYS_IOCTL, dev.Fd(), loopConfigure, uintptr(unsafe.Pointer(&config))); err != 0 {
-			if err == unix.EBUSY {
-				// We have lost the race, get a new device
-				continue
-			}
+		err = unix.IoctlLoopConfigure(int(dev.Fd()), &config)
+		if errors.Is(err, unix.EBUSY) {
+			// We have lost the race, get a new device
+			continue
+		}
+		if err != nil {
 			return nil, os.NewSyscallError("ioctl(LOOP_CONFIGURE)", err)
 		}
 		return &Device{dev: dev, num: uint32(devNum)}, nil
@@ -184,16 +153,15 @@ func Open(path string) (*Device, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open device: %w", err)
 	}
-	var loopInfo loopInfo64
-	_, _, errNo := syscall.Syscall(unix.SYS_IOCTL, potentialDevice.Fd(), unix.LOOP_GET_STATUS64, uintptr(unsafe.Pointer(&loopInfo)))
-	if errNo == syscall.Errno(0) {
-		return &Device{dev: potentialDevice, num: loopInfo.number}, nil
+	loopInfo, err := unix.IoctlLoopGetStatus64(int(potentialDevice.Fd()))
+	if err == nil {
+		return &Device{dev: potentialDevice, num: loopInfo.Number}, nil
 	}
 	potentialDevice.Close()
-	if errNo == syscall.EINVAL {
+	if errors.Is(err, unix.EINVAL) {
 		return nil, errors.New("not a loop device")
 	}
-	return nil, fmt.Errorf("failed to determine state of potential loop device: %w", errNo)
+	return nil, fmt.Errorf("failed to determine state of potential loop device: %w", err)
 }
 
 func (d *Device) ensureOpen() error {

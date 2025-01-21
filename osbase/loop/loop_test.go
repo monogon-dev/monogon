@@ -21,7 +21,6 @@ import (
 	"io"
 	"math"
 	"os"
-	"runtime"
 	"syscall"
 	"testing"
 	"unsafe"
@@ -199,11 +198,4 @@ func TestResize(t *testing.T) {
 	assert.NoError(t, f.Sync())
 	assert.NoError(t, dev.RefreshSize())
 	require.Equal(t, uint64(96*1024), getBlkdevSize(dev.dev))
-}
-
-func TestStructSize(t *testing.T) {
-	if runtime.GOOS != "linux" && runtime.GOARCH != "amd64" {
-		t.Skip("Reference value not available")
-	}
-	require.Equal(t, uintptr(304), unsafe.Sizeof(loopConfig{}))
 }
