@@ -8,7 +8,7 @@ buf_proto_lint_test(
     name = "abloader_proto_lint_test",
     except_rules = [
         "PACKAGE_VERSION_SUFFIX",
-        "ENUM_ZERO_VALUE_SUFFIX",  # TODO: evaluate correctness
+        "ENUM_ZERO_VALUE_SUFFIX",
     ],
     protos = [":abloader_proto"],
     use_rules = [

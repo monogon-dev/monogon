@@ -7,8 +7,8 @@ buf_proto_lint_test(
     name = "api_proto_lint_test",
     except_rules = [
         "PACKAGE_VERSION_SUFFIX",
+        "ENUM_ZERO_VALUE_SUFFIX",
         "RPC_REQUEST_RESPONSE_UNIQUE",  # TODO: evaluate correctness
-        "ENUM_ZERO_VALUE_SUFFIX",  # TODO: evaluate correctness
         "RPC_REQUEST_STANDARD_NAME",  # TODO: evaluate correctness
         "RPC_RESPONSE_STANDARD_NAME",  # TODO: evaluate correctness
         "SERVICE_SUFFIX",  # TODO: evaluate correctness
