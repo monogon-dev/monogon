@@ -28,7 +28,12 @@ var ethernetNull = net.HardwareAddr{0, 0, 0, 0, 0, 0}
 func (s *Service) runNeighborAnnounce(ctx context.Context) error {
 	l := supervisor.Logger(ctx)
 	linkUpdates := make(chan netlink.LinkUpdate, 10)
-	if err := netlink.LinkSubscribe(linkUpdates, ctx.Done()); err != nil {
+	options := netlink.LinkSubscribeOptions{
+		ErrorCallback: func(err error) {
+			l.Errorf("netlink subscription error: %v", err)
+		},
+	}
+	if err := netlink.LinkSubscribeWithOptions(linkUpdates, ctx.Done(), options); err != nil {
 		return fmt.Errorf("while subscribing to netlink link updates: %w", err)
 	}
 	lastIfState := make(map[string]bool)
