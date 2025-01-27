@@ -34,7 +34,10 @@ func (s *Service) runNeighborAnnounce(ctx context.Context) error {
 	lastIfState := make(map[string]bool)
 	for {
 		select {
-		case u := <-linkUpdates:
+		case u, ok := <-linkUpdates:
+			if !ok {
+				return fmt.Errorf("link update channel closed")
+			}
 			attrs := u.Link.Attrs()
 			before := lastIfState[attrs.Name]
 			now := attrs.RawFlags&unix.IFF_RUNNING != 0
