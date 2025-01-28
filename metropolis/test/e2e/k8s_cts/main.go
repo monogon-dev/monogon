@@ -105,7 +105,7 @@ func main() {
 		log.Fatalf("Failed to launch cluster: %v", err)
 	}
 	log.Println("Cluster initialized")
-	clientSet, err := cl.GetKubeClientSet()
+	clientSet, _, err := cl.GetKubeClientSet()
 	if err != nil {
 		log.Fatalf("Failed to get clientSet: %v", err)
 	}

@@ -98,7 +98,7 @@ func TestE2EKubernetesLabels(t *testing.T) {
 		t.Fatalf("Could not get curator client: %v", err)
 	}
 	mgmt := apb.NewManagementClient(con)
-	clientSet, err := cluster.GetKubeClientSet()
+	clientSet, _, err := cluster.GetKubeClientSet()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -281,7 +281,7 @@ func TestE2EKubernetes(t *testing.T) {
 		}
 	}()
 
-	clientSet, err := cluster.GetKubeClientSet()
+	clientSet, _, err := cluster.GetKubeClientSet()
 	if err != nil {
 		t.Fatal(err)
 	}

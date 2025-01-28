@@ -1279,7 +1279,7 @@ func (c *Cluster) DialNode(_ context.Context, addr string) (net.Conn, error) {
 // Kubernetes authenticating proxy using the cluster owner identity.
 // It currently has access to everything (i.e. the cluster-admin role)
 // via the owner-admin binding.
-func (c *Cluster) GetKubeClientSet() (kubernetes.Interface, error) {
+func (c *Cluster) GetKubeClientSet() (kubernetes.Interface, *rest.Config, error) {
 	pkcs8Key, err := x509.MarshalPKCS8PrivateKey(c.Owner.PrivateKey)
 	if err != nil {
 		// We explicitly pass an Ed25519 private key in, so this can't happen
@@ -1300,7 +1300,11 @@ func (c *Cluster) GetKubeClientSet() (kubernetes.Interface, error) {
 			return c.DialNode(ctx, address)
 		},
 	}
-	return kubernetes.NewForConfig(&clientConfig)
+	clientSet, err := kubernetes.NewForConfig(&clientConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+	return clientSet, &clientConfig, nil
 }
 
 // KubernetesControllerNodeAddresses returns the list of IP addresses of nodes
