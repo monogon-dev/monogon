@@ -224,6 +224,11 @@ OVERRIDES = {
             "gazelle:proto disable",
         ],
     },
+    "k8s.io/client-go": {
+        "pre_patches": [
+            "//third_party/go/patches:k8s-fix-websocket-custom-dialer.patch",
+        ],
+    },
     "k8s.io/cri-api": {
         "directives": [
             "gazelle:proto disable",

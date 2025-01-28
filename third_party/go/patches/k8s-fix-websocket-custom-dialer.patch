@@ -1,0 +1,64 @@
+From 82e2653680c00d388ab40f9aa98abcbd6644d059 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@monogon.tech>
+Date: Tue, 28 Jan 2025 12:54:09 +0100
+Subject: [PATCH] Use custom dialer in websocket transport
+
+The WebSocket transport currently does not use custom dialer functions
+specified in the rest.Config transport config. This breaks all streaming
+functions when a custom Dial function is used.
+
+The underlying library supports custom dial functions, pipe them through
+properly.
+
+Signed-off-by: Lorenz Brun <lorenz@monogon.tech>
+---
+ .../k8s.io/client-go/transport/websocket/roundtripper.go  | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/transport/websocket/roundtripper.go b/transport/websocket/roundtripper.go
+index 924518e8bbd..0b9521cf37b 100644
+--- a/transport/websocket/roundtripper.go
++++ b/transport/websocket/roundtripper.go
+@@ -17,10 +17,12 @@ limitations under the License.
+ package websocket
+ 
+ import (
++	"context"
+ 	"crypto/tls"
+ 	"errors"
+ 	"fmt"
+ 	"io"
++	"net"
+ 	"net/http"
+ 	"net/url"
+ 	"strings"
+@@ -74,6 +76,10 @@ type RoundTripper struct {
+ 	// If Proxy is nil or returns a nil *URL, no proxy is used.
+ 	Proxier func(req *http.Request) (*url.URL, error)
+ 
++	// Dial specifies a function to use to dial TCP connections.
++	// If not specified, net.Dial is used.
++	Dial func(ctx context.Context, network, address string) (net.Conn, error)
++
+ 	// Conn holds the WebSocket connection after a round trip.
+ 	Conn *gwebsocket.Conn
+ }
+@@ -111,6 +117,7 @@ func (rt *RoundTripper) RoundTrip(request *http.Request) (retResp *http.Response
+ 	delete(request.Header, wsstream.WebSocketProtocolHeader)
+ 
+ 	dialer := gwebsocket.Dialer{
++		NetDialContext:  rt.Dial,
+ 		Proxy:           rt.Proxier,
+ 		TLSClientConfig: rt.TLSConfig,
+ 		Subprotocols:    protocolVersions,
+@@ -195,6 +202,7 @@ func RoundTripperFor(config *restclient.Config) (http.RoundTripper, ConnectionHo
+ 	}
+ 
+ 	upgradeRoundTripper := &RoundTripper{
++		Dial:      config.Dial,
+ 		TLSConfig: tlsConfig,
+ 		Proxier:   proxy,
+ 	}
+-- 
+2.47.0
+
