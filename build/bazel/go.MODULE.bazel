@@ -302,6 +302,11 @@ OVERRIDES = {
             "//third_party/go/patches:cni-fix-cachepath.patch",
         ],
     },
+    "github.com/containernetworking/plugins": {
+        "patches": [
+            "//third_party/go/patches:cniplugins-add-linkgroup.patch",
+        ],
+    },
     "github.com/corverroos/commentwrap": {
         "patches": [
             "//third_party/go/patches:commentwrap-uri.patch",

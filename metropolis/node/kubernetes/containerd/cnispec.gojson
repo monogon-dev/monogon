@@ -6,6 +6,8 @@
         {
             "type": "ptp",
             "mtu": 1420,
+            {{/* Must be node.LinkGroupK8sPod */}}
+            "linkGroup": 8,
             "ipam": {
                 "type": "host-local",
                 "dataDir": "/ephemeral/containerd/ipam",

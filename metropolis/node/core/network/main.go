@@ -24,10 +24,12 @@ import (
 	"strconv"
 
 	"github.com/google/nftables"
+	"github.com/google/nftables/binaryutil"
 	"github.com/google/nftables/expr"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/vishvananda/netlink"
 
+	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
 	"source.monogon.dev/osbase/event/memory"
@@ -274,41 +276,38 @@ func (s *Service) Run(ctx context.Context) error {
 		Table:    s.natTable,
 		Type:     nftables.ChainTypeNAT,
 	})
-	// SNAT/Masquerade all traffic coming from interfaces starting with
-	// veth going to interfaces not starting with veth.
-	// This NATs all container traffic going out of the host without
-	// affecting anything else and without needing to care about specific
-	// interfaces. Will need to be changed when we support L3 attachments
-	// (BGP, ...).
+	// SNAT/Masquerade all traffic coming from pod interface (identified by
+	// group) not going to another pod, either local or over clusternet.
+	// Will need to be changed when we support L3 attachments (BGP, ...).
 	s.nftConn.AddRule(&nftables.Rule{
 		Table: s.natTable,
 		Chain: s.natPostroutingChain,
 		Exprs: []expr.Any{
 			&expr.Meta{
-				Key:      expr.MetaKeyIIFNAME,
-				Register: 8, // covers registers 8-12 (16 bytes/4 regs)
+				Key:      expr.MetaKeyIIFGROUP,
+				Register: 8,
 			},
-			// Check if incoming interface starts with veth
+			// Check if incoming interface is a K8s pod
 			&expr.Cmp{
 				Op:       expr.CmpOpEq,
 				Register: 8,
-				Data:     []byte{'v', 'e', 't', 'h'},
+				Data:     binaryutil.NativeEndian.PutUint32(node.LinkGroupK8sPod),
 			},
 			&expr.Meta{
-				Key:      expr.MetaKeyOIFNAME,
-				Register: 8, // covers registers 8-12
+				Key:      expr.MetaKeyOIFGROUP,
+				Register: 8,
 			},
-			// Check if outgoing interface doesn't start with veth
+			// Check if outgoing interface is not a K8s pod
 			&expr.Cmp{
 				Op:       expr.CmpOpNeq,
 				Register: 8,
-				Data:     []byte{'v', 'e', 't', 'h'},
+				Data:     binaryutil.NativeEndian.PutUint32(node.LinkGroupK8sPod),
 			},
 			// Check if outgoing interface isn't clusternet
 			&expr.Cmp{
 				Op:       expr.CmpOpNeq,
 				Register: 8,
-				Data:     []byte{'c', 'l', 'u', 's', 't', 'e', 'r', 'n', 'e', 't'},
+				Data:     binaryutil.NativeEndian.PutUint32(node.LinkGroupClusternet),
 			},
 			&expr.Masq{
 				FullyRandom: true,

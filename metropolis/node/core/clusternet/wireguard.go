@@ -86,7 +86,7 @@ func (s *localWireguard) setup(clusterNet *net.IPNet) error {
 		}
 	}
 
-	wgInterface := &netlink.Wireguard{LinkAttrs: netlink.LinkAttrs{Name: clusterNetDeviceName, Flags: net.FlagUp}}
+	wgInterface := &netlink.Wireguard{LinkAttrs: netlink.LinkAttrs{Name: clusterNetDeviceName, Flags: net.FlagUp, Group: common.LinkGroupClusternet}}
 	if err := netlink.LinkAdd(wgInterface); err != nil {
 		return fmt.Errorf("when adding network interface: %w", err)
 	}
