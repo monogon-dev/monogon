@@ -45,7 +45,7 @@ service AAA {
     // channel opened from a given IP address or with a given existing TLS
     // certificate), and some dependent on external systems (eg. SSO).
     //
-    // If the requested identity within the first EscrowFromClient is not
+    // If the requested identity within the first EscrowRequest is not
     // defined, the server may:
     //
     //  - Abort the connection immediately with an error about an unknown
@@ -146,7 +146,7 @@ service AAA {
     // will lead to retrieving identities from with the same namespace of
     // entities.
     //
-    rpc Escrow(stream EscrowFromClient) returns (stream EscrowFromServer) {
+    rpc Escrow(stream EscrowRequest) returns (stream EscrowResponse) {
         option (metropolis.proto.ext.authorization) = {
             // The AAA implementation performs its own checks as needed, so the
             // RPC middleware should allow everything through.
@@ -155,9 +155,9 @@ service AAA {
     }
 }
 
-message EscrowFromClient {
+message EscrowRequest {
     // Parameters used for the entirety of the escrow flow. These must be set
-    // only during the first EscrowFromClient message, and are ignored in
+    // only during the first EscrowRequest message, and are ignored in
     // further messages.
     message Parameters {
         // The requested identity name. This is currently opaque and not defined,
@@ -178,7 +178,7 @@ message EscrowFromClient {
 
     // Proofs. These should only be submitted by the client after the server
     // requests them, but if they are submitted within the first
-    // EscrowFromClientMessage they will be interpreted too. The problem with
+    // EscrowRequestMessage they will be interpreted too. The problem with
     // ahead of time proofs is that different a proof request from the server
     // might parametrize the request in a way that would elicit a different
     // answer from the client, so care must be taken to ensure that the
@@ -193,7 +193,7 @@ message EscrowFromClient {
     Proofs proofs = 2;
 }
 
-message EscrowFromServer {
+message EscrowResponse {
     // A proof requested from the server. Within an Escrow RPC, proofs can be
     // either 'needed' or 'fulfilled'. Each proof has a kind, and kinds within
     // all proof requests (either needed or fulfilled) are unique.
@@ -209,7 +209,7 @@ message EscrowFromServer {
             KIND_REFRESH_CERTIFICATE = 1;
             // The client needs to present a static, plaintext password/token.
             // This can be fulfilled by setting
-            // EscrowFromClient.proofs.plaintext_password.
+            // EscrowRequest.proofs.plaintext_password.
             // If the client presents an invalid password, the Escrow RPC will
             // fail.
             KIND_PLAINTEXT_PASSWORD = 2;

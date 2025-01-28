@@ -8,9 +8,9 @@ buf_proto_lint_test(
     except_rules = [
         "PACKAGE_VERSION_SUFFIX",
         "ENUM_ZERO_VALUE_SUFFIX",
-        "RPC_REQUEST_RESPONSE_UNIQUE",  # TODO: evaluate correctness
-        "RPC_REQUEST_STANDARD_NAME",  # TODO: evaluate correctness
-        "RPC_RESPONSE_STANDARD_NAME",  # TODO: evaluate correctness
+        "RPC_REQUEST_RESPONSE_UNIQUE",
+        "RPC_REQUEST_STANDARD_NAME",
+        "RPC_RESPONSE_STANDARD_NAME",
         "SERVICE_SUFFIX",
     ],
     protos = [":api_proto"],

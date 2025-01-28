@@ -128,7 +128,7 @@ func agentRunnable(ctx context.Context) error {
 	b.MaxElapsedTime = 0
 	// Main heartbeat loop
 	for {
-		req := bpb.AgentHeartbeatRequest{
+		req := bpb.HeartbeatRequest{
 			MachineId: agentInit.TakeoverInit.MachineId,
 		}
 		if sentFirstHeartBeat && !hwReportSent {

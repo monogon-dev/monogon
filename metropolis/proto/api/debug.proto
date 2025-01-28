@@ -29,7 +29,7 @@ service NodeDebugService {
 
     // A reimplementation of metropolis.api.NodeManagement.Logs that's available
     // before the node starts up the management service.
-    rpc GetLogs(GetLogsRequest) returns (stream GetLogsResponse);
+    rpc Logs(LogsRequest) returns (stream LogsResponse);
 
     // Trace enables tracing of Metropolis using the Linux ftrace infrastructure.
     rpc Trace(TraceRequest) returns (stream TraceEvent);

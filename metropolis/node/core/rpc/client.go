@@ -218,8 +218,8 @@ func RetrieveOwnerCertificate(ctx context.Context, aaa apb.AAAClient, private ed
 		}
 		return nil, err
 	}
-	if err := srv.Send(&apb.EscrowFromClient{
-		Parameters: &apb.EscrowFromClient_Parameters{
+	if err := srv.Send(&apb.EscrowRequest{
+		Parameters: &apb.EscrowRequest_Parameters{
 			RequestedIdentityName: "owner",
 			PublicKey:             private.Public().(ed25519.PublicKey),
 		},

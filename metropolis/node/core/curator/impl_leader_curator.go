@@ -291,7 +291,7 @@ func (l *leaderCurator) Heartbeat(stream ipb.Curator_HeartbeatServer) error {
 		// Update the node's timestamp within the local Curator state.
 		l.ls.heartbeatTimestamps.Store(id, time.Now())
 
-		rsp := &ipb.HeartbeatUpdateResponse{}
+		rsp := &ipb.HeartbeatResponse{}
 		if err := stream.Send(rsp); err != nil {
 			return err
 		}

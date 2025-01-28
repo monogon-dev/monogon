@@ -62,7 +62,7 @@ func sanitizedEntries(entries []*lpb.LogEntry) []*lpb.LogEntry {
 	return res
 }
 
-func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsServer) error {
+func (s *LogService) Logs(req *api.LogsRequest, srv api.NodeManagement_LogsServer) error {
 	if len(req.Filters) > logFilterMax {
 		return status.Errorf(codes.InvalidArgument, "requested %d filters, maximum permitted is %d", len(req.Filters), logFilterMax)
 	}
@@ -80,10 +80,10 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 
 	// Turn backlog mode into logtree option(s).
 	switch req.BacklogMode {
-	case api.GetLogsRequest_BACKLOG_MODE_DISABLE:
-	case api.GetLogsRequest_BACKLOG_MODE_ALL:
+	case api.LogsRequest_BACKLOG_MODE_DISABLE:
+	case api.LogsRequest_BACKLOG_MODE_ALL:
 		options = append(options, logtree.WithBacklog(logtree.BacklogAllAvailable))
-	case api.GetLogsRequest_BACKLOG_MODE_COUNT:
+	case api.LogsRequest_BACKLOG_MODE_COUNT:
 		count := int(req.BacklogCount)
 		if count <= 0 {
 			return status.Errorf(codes.InvalidArgument, "backlog_count must be > 0 if backlog_mode is BACKLOG_COUNT")
@@ -96,8 +96,8 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 	// Turn stream mode into logtree option(s).
 	streamEnable := false
 	switch req.StreamMode {
-	case api.GetLogsRequest_STREAM_MODE_DISABLE:
-	case api.GetLogsRequest_STREAM_MODE_UNBUFFERED:
+	case api.LogsRequest_STREAM_MODE_DISABLE:
+	case api.LogsRequest_STREAM_MODE_UNBUFFERED:
 		streamEnable = true
 		options = append(options, logtree.WithStream())
 	}
@@ -155,7 +155,7 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 		chunk = append(chunk, p)
 
 		if len(chunk) >= maxChunkSize {
-			err := srv.Send(&api.GetLogsResponse{
+			err := srv.Send(&api.LogsResponse{
 				BacklogEntries: sanitizedEntries(chunk),
 			})
 			if err != nil {
@@ -167,7 +167,7 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 
 	// Send last chunk of backlog, if present..
 	if len(chunk) > 0 {
-		err := srv.Send(&api.GetLogsResponse{
+		err := srv.Send(&api.LogsResponse{
 			BacklogEntries: sanitizedEntries(chunk),
 		})
 		if err != nil {
@@ -191,7 +191,7 @@ func (s *LogService) Logs(req *api.GetLogsRequest, srv api.NodeManagement_LogsSe
 			// TODO(q3k): log this once we have logtree/gRPC compatibility.
 			continue
 		}
-		err := srv.Send(&api.GetLogsResponse{
+		err := srv.Send(&api.LogsResponse{
 			StreamEntries: []*lpb.LogEntry{p},
 		})
 		if err != nil {

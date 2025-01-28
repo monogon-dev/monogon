@@ -98,10 +98,10 @@ func (a *leaderAAA) Escrow(srv apb.AAA_EscrowServer) error {
 	pk := peerInfo.Unauthenticated.SelfSignedPublicKey
 	if pk == nil {
 		// No cert was presented, respond with REFRESH_CERTIFICATE request.
-		err := srv.Send(&apb.EscrowFromServer{
-			Needed: []*apb.EscrowFromServer_ProofRequest{
+		err := srv.Send(&apb.EscrowResponse{
+			Needed: []*apb.EscrowResponse_ProofRequest{
 				{
-					Kind: apb.EscrowFromServer_ProofRequest_KIND_REFRESH_CERTIFICATE,
+					Kind: apb.EscrowResponse_ProofRequest_KIND_REFRESH_CERTIFICATE,
 				},
 			},
 		})
@@ -141,10 +141,10 @@ func (a *leaderAAA) Escrow(srv apb.AAA_EscrowServer) error {
 		return status.Errorf(codes.Unavailable, "ensuring new certificate failed: %v", err)
 	}
 
-	return srv.Send(&apb.EscrowFromServer{
-		Fulfilled: []*apb.EscrowFromServer_ProofRequest{
+	return srv.Send(&apb.EscrowResponse{
+		Fulfilled: []*apb.EscrowResponse_ProofRequest{
 			{
-				Kind: apb.EscrowFromServer_ProofRequest_KIND_REFRESH_CERTIFICATE,
+				Kind: apb.EscrowResponse_ProofRequest_KIND_REFRESH_CERTIFICATE,
 			},
 		},
 		EmittedCertificate: ocBytes,

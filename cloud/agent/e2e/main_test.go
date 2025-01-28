@@ -67,8 +67,8 @@ type fakeServer struct {
 	installationReport  *bpb.OSInstallationReport
 }
 
-func (f *fakeServer) Heartbeat(ctx context.Context, req *bpb.AgentHeartbeatRequest) (*bpb.AgentHeartbeatResponse, error) {
-	var res bpb.AgentHeartbeatResponse
+func (f *fakeServer) Heartbeat(ctx context.Context, req *bpb.HeartbeatRequest) (*bpb.HeartbeatResponse, error) {
+	var res bpb.HeartbeatResponse
 	if req.HardwareReport != nil {
 		f.hardwareReport = req.HardwareReport
 	}

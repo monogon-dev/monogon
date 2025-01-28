@@ -77,24 +77,24 @@ func main() {
 	case "logs":
 		logsCmd.Parse(os.Args[2:])
 		dn := logsCmd.Arg(0)
-		req := &apb.GetLogsRequest{
+		req := &apb.LogsRequest{
 			Dn:          dn,
-			BacklogMode: apb.GetLogsRequest_BACKLOG_MODE_DISABLE,
-			StreamMode:  apb.GetLogsRequest_STREAM_MODE_DISABLE,
+			BacklogMode: apb.LogsRequest_BACKLOG_MODE_DISABLE,
+			StreamMode:  apb.LogsRequest_STREAM_MODE_DISABLE,
 			Filters:     nil,
 		}
 
 		switch *logsTailN {
 		case 0:
 		case -1:
-			req.BacklogMode = apb.GetLogsRequest_BACKLOG_MODE_ALL
+			req.BacklogMode = apb.LogsRequest_BACKLOG_MODE_ALL
 		default:
-			req.BacklogMode = apb.GetLogsRequest_BACKLOG_MODE_COUNT
+			req.BacklogMode = apb.LogsRequest_BACKLOG_MODE_COUNT
 			req.BacklogCount = int64(*logsTailN)
 		}
 
 		if *logsStream {
-			req.StreamMode = apb.GetLogsRequest_STREAM_MODE_UNBUFFERED
+			req.StreamMode = apb.LogsRequest_STREAM_MODE_UNBUFFERED
 		}
 
 		if *logsRecursive {
@@ -103,7 +103,7 @@ func main() {
 			})
 		}
 
-		stream, err := debugClient.GetLogs(ctx, req)
+		stream, err := debugClient.Logs(ctx, req)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to get logs: %v\n", err)
 			os.Exit(1)

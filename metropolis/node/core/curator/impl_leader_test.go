@@ -1001,7 +1001,7 @@ func TestClusterHeartbeat(t *testing.T) {
 		t.Fatalf("While initializing heartbeat stream: %v", err)
 	}
 	for i := 0; i < 3; i++ {
-		if err := stream.Send(&ipb.HeartbeatUpdateRequest{}); err != nil {
+		if err := stream.Send(&ipb.HeartbeatRequest{}); err != nil {
 			t.Fatalf("While sending a heartbeat: %v", err)
 		}
 

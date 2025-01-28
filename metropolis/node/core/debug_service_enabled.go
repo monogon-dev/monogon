@@ -85,7 +85,7 @@ func (s *debugService) GetDebugKubeconfig(ctx context.Context, req *apb.GetDebug
 	}
 }
 
-func (s *debugService) GetLogs(req *apb.GetLogsRequest, srv apb.NodeDebugService_GetLogsServer) error {
+func (s *debugService) Logs(req *apb.LogsRequest, srv apb.NodeDebugService_LogsServer) error {
 	svc := mgmt.LogService{
 		LogTree: s.logtree,
 	}

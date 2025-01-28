@@ -72,7 +72,7 @@ func TestAgentCallbackService(t *testing.T) {
 		defer conn.Close()
 
 		stub := apb.NewAgentCallbackClient(conn)
-		_, err = stub.Heartbeat(ctx, &apb.AgentHeartbeatRequest{
+		_, err = stub.Heartbeat(ctx, &apb.HeartbeatRequest{
 			MachineId:      mid.String(),
 			HardwareReport: &apb.AgentHardwareReport{},
 		})
@@ -138,7 +138,7 @@ func TestOSInstallationFlow(t *testing.T) {
 		t.Fatalf("could not start session")
 	}
 
-	heartbeat := func(mid uuid.UUID, report *apb.OSInstallationReport) (*apb.AgentHeartbeatResponse, error) {
+	heartbeat := func(mid uuid.UUID, report *apb.OSInstallationReport) (*apb.HeartbeatResponse, error) {
 		creds, err := rpc.NewEphemeralCredentials(priv, rpc.WantInsecure())
 		if err != nil {
 			t.Fatalf("could not generate ephemeral credentials: %v", err)
@@ -150,7 +150,7 @@ func TestOSInstallationFlow(t *testing.T) {
 		defer conn.Close()
 
 		stub := apb.NewAgentCallbackClient(conn)
-		return stub.Heartbeat(ctx, &apb.AgentHeartbeatRequest{
+		return stub.Heartbeat(ctx, &apb.HeartbeatRequest{
 			MachineId:          mid.String(),
 			HardwareReport:     &apb.AgentHardwareReport{},
 			InstallationReport: report,

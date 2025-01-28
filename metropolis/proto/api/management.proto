@@ -377,7 +377,7 @@ message RebootResponse {
 // NodeManagement runs on every node of the cluster and providers management
 // and troubleshooting RPCs to operators. All requests must be authenticated.
 service NodeManagement {
-  // GetLogs Returns historical and/or streaming logs for a given DN with given
+  // Logs Returns historical and/or streaming logs for a given DN with given
   // filters from the system global LogTree.
   //
   // For more information about this API, see //osbase/logtree. But, in
@@ -393,7 +393,7 @@ service NodeManagement {
   //     example paths, see the console logs of a running Metropolis node, or
   //     request all logs (at DN "").
   //
-  rpc Logs(GetLogsRequest) returns (stream GetLogsResponse) {
+  rpc Logs(LogsRequest) returns (stream LogsResponse) {
     option (metropolis.proto.ext.authorization) = {
       need: PERMISSION_READ_NODE_LOGS
     };
@@ -418,7 +418,7 @@ service NodeManagement {
   }
 }
 
-message GetLogsRequest {
+message LogsRequest {
   // DN from which to request logs. All supervised runnables live at `root.`,
   // the init code lives at `init.`.
   string dn = 1;
@@ -449,7 +449,7 @@ message GetLogsRequest {
   StreamMode stream_mode = 5;
 }
 
-message GetLogsResponse {
+message LogsResponse {
   // Entries from the requested historical entries (via WithBackLog). They will
   // all be served before the first stream_entries are served (if any).
   repeated osbase.logtree.proto.LogEntry backlog_entries = 1;

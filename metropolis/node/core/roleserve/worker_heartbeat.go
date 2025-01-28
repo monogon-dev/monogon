@@ -45,7 +45,7 @@ func (s *workerHeartbeat) run(ctx context.Context) error {
 	}
 
 	for {
-		if err := stream.Send(&ipb.HeartbeatUpdateRequest{}); err != nil {
+		if err := stream.Send(&ipb.HeartbeatRequest{}); err != nil {
 			return fmt.Errorf("while sending a heartbeat: %w", err)
 		}
 		next := time.Now().Add(curator.HeartbeatTimeout)

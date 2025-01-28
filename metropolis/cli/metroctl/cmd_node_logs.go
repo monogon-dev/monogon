@@ -97,9 +97,9 @@ unnecessary lines are fetched.
 		}
 		nmgmt := api.NewNodeManagementClient(cl)
 
-		streamMode := api.GetLogsRequest_STREAM_MODE_DISABLE
+		streamMode := api.LogsRequest_STREAM_MODE_DISABLE
 		if logFlags.follow {
-			streamMode = api.GetLogsRequest_STREAM_MODE_UNBUFFERED
+			streamMode = api.LogsRequest_STREAM_MODE_UNBUFFERED
 		}
 		var filters []*cpb.LogFilter
 		if !logFlags.exact {
@@ -109,17 +109,17 @@ unnecessary lines are fetched.
 				},
 			})
 		}
-		backlogMode := api.GetLogsRequest_BACKLOG_MODE_ALL
+		backlogMode := api.LogsRequest_BACKLOG_MODE_ALL
 		var backlogCount int64
 		switch {
 		case logFlags.backlog > 0:
-			backlogMode = api.GetLogsRequest_BACKLOG_MODE_COUNT
+			backlogMode = api.LogsRequest_BACKLOG_MODE_COUNT
 			backlogCount = int64(logFlags.backlog)
 		case logFlags.backlog == 0:
-			backlogMode = api.GetLogsRequest_BACKLOG_MODE_DISABLE
+			backlogMode = api.LogsRequest_BACKLOG_MODE_DISABLE
 		}
 
-		srv, err := nmgmt.Logs(ctx, &api.GetLogsRequest{
+		srv, err := nmgmt.Logs(ctx, &api.LogsRequest{
 			Dn:           logFlags.dn,
 			BacklogMode:  backlogMode,
 			BacklogCount: backlogCount,

@@ -31,7 +31,7 @@ var (
 	errAgentUnauthenticated = errors.New("machine id or public key unknown")
 )
 
-func (a *agentCallbackService) Heartbeat(ctx context.Context, req *apb.AgentHeartbeatRequest) (*apb.AgentHeartbeatResponse, error) {
+func (a *agentCallbackService) Heartbeat(ctx context.Context, req *apb.HeartbeatRequest) (*apb.HeartbeatResponse, error) {
 	// Extract ED25519 self-signed certificate from client connection.
 	cert, err := rpc.GetPeerCertificate(ctx)
 	if err != nil {
@@ -160,7 +160,7 @@ func (a *agentCallbackService) Heartbeat(ctx context.Context, req *apb.AgentHear
 		klog.Errorf("Failure during OS installation request retrieval: %v", err)
 	}
 
-	return &apb.AgentHeartbeatResponse{
+	return &apb.HeartbeatResponse{
 		InstallationRequest: installRequest,
 	}, nil
 }

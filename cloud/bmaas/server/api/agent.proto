@@ -17,7 +17,7 @@ service AgentCallback {
   // isn't reactive, so it would have to do its own inner polling to create
   // a stream of updates. To keep things simple, we instead let the agent decide
   // on the cadence of updates it wants to keep up with.
-  rpc Heartbeat(AgentHeartbeatRequest) returns (AgentHeartbeatResponse);
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
 }
 
 message AgentHardwareReport {
@@ -50,7 +50,7 @@ message OSInstallationReport {
   }
 }
 
-message AgentHeartbeatRequest {
+message HeartbeatRequest {
   // MachineID that this agent represents. Technically not necessary since
   // keypairs between agents should be unique, but this provides an extra layer
   // of protection against programming bugs.
@@ -90,7 +90,7 @@ message OSInstallationRequest {
   }
 }
 
-message AgentHeartbeatResponse {
+message HeartbeatResponse {
   // If set, the control plane is requesting the installation of an operating
   // system.
   OSInstallationRequest installation_request = 1;

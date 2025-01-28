@@ -50,7 +50,7 @@ service Curator {
 
     // Heartbeat is used by nodes to periodicall update their heartbeat
     // timestamps within the current Curator leader.
-    rpc Heartbeat(stream HeartbeatUpdateRequest) returns (stream HeartbeatUpdateResponse) {
+    rpc Heartbeat(stream HeartbeatRequest) returns (stream HeartbeatResponse) {
         option (metropolis.proto.ext.authorization) = {
             need: PERMISSION_UPDATE_NODE_SELF
         };
@@ -252,10 +252,10 @@ message UpdateNodeStatusRequest {
 message UpdateNodeStatusResponse {
 }
 
-message HeartbeatUpdateRequest {
+message HeartbeatRequest {
 }
 
-message HeartbeatUpdateResponse {
+message HeartbeatResponse {
 }
 
 message RegisterNodeRequest {

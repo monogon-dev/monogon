@@ -128,26 +128,26 @@ func TestLogService_Logs_Backlog(t *testing.T) {
 	s.LogTree.MustLeveledFor("main.roleserver.controlplane").Infof("Starting etcd...")
 	s.LogTree.MustLeveledFor("main.weirdo").Infof("Here comes some invalid utf-8: a\xc5z")
 
-	mkReq := func(dn string, backlog int64) *api.GetLogsRequest {
-		var backlogMode api.GetLogsRequest_BacklogMode
+	mkReq := func(dn string, backlog int64) *api.LogsRequest {
+		var backlogMode api.LogsRequest_BacklogMode
 		var backlogCount int64
 		switch {
 		case backlog < 0:
-			backlogMode = api.GetLogsRequest_BACKLOG_MODE_ALL
+			backlogMode = api.LogsRequest_BACKLOG_MODE_ALL
 		case backlog > 0:
-			backlogMode = api.GetLogsRequest_BACKLOG_MODE_COUNT
+			backlogMode = api.LogsRequest_BACKLOG_MODE_COUNT
 			backlogCount = backlog
 		case backlog == 0:
-			backlogMode = api.GetLogsRequest_BACKLOG_MODE_DISABLE
+			backlogMode = api.LogsRequest_BACKLOG_MODE_DISABLE
 		}
-		return &api.GetLogsRequest{
+		return &api.LogsRequest{
 			Dn:           dn,
 			BacklogMode:  backlogMode,
 			BacklogCount: backlogCount,
-			StreamMode:   api.GetLogsRequest_STREAM_MODE_DISABLE,
+			StreamMode:   api.LogsRequest_STREAM_MODE_DISABLE,
 		}
 	}
-	mkRecursive := func(in *api.GetLogsRequest) *api.GetLogsRequest {
+	mkRecursive := func(in *api.LogsRequest) *api.LogsRequest {
 		in.Filters = append(in.Filters, &cpb.LogFilter{
 			Filter: &cpb.LogFilter_WithChildren_{
 				WithChildren: &cpb.LogFilter_WithChildren{},
@@ -156,7 +156,7 @@ func TestLogService_Logs_Backlog(t *testing.T) {
 		return in
 	}
 	for i, te := range []struct {
-		req  *api.GetLogsRequest
+		req  *api.LogsRequest
 		want []*lpb.LogEntry
 	}{
 		{
@@ -221,10 +221,10 @@ func TestLogService_Logs_Stream(t *testing.T) {
 
 	// Start streaming all logs.
 	mgmt := api.NewNodeManagementClient(cl)
-	srv, err := mgmt.Logs(ctx, &api.GetLogsRequest{
+	srv, err := mgmt.Logs(ctx, &api.LogsRequest{
 		Dn:          "",
-		BacklogMode: api.GetLogsRequest_BACKLOG_MODE_ALL,
-		StreamMode:  api.GetLogsRequest_STREAM_MODE_UNBUFFERED,
+		BacklogMode: api.LogsRequest_BACKLOG_MODE_ALL,
+		StreamMode:  api.LogsRequest_STREAM_MODE_UNBUFFERED,
 		Filters: []*cpb.LogFilter{
 			{
 				Filter: &cpb.LogFilter_WithChildren_{
@@ -295,15 +295,15 @@ func TestLogService_Logs_Filters(t *testing.T) {
 	s.LogTree.MustLeveledFor("main").Errorf("Something failed very hard!")
 
 	for i, te := range []struct {
-		req  *api.GetLogsRequest
+		req  *api.LogsRequest
 		want []*lpb.LogEntry
 	}{
 		// Case 0: request given level
 		{
-			req: &api.GetLogsRequest{
+			req: &api.LogsRequest{
 				Dn:          "main",
-				BacklogMode: api.GetLogsRequest_BACKLOG_MODE_ALL,
-				StreamMode:  api.GetLogsRequest_STREAM_MODE_DISABLE,
+				BacklogMode: api.LogsRequest_BACKLOG_MODE_ALL,
+				StreamMode:  api.LogsRequest_STREAM_MODE_DISABLE,
 				Filters: []*cpb.LogFilter{
 					{
 						Filter: &cpb.LogFilter_LeveledWithMinimumSeverity_{
@@ -321,10 +321,10 @@ func TestLogService_Logs_Filters(t *testing.T) {
 		},
 		// Case 1: request raw only
 		{
-			req: &api.GetLogsRequest{
+			req: &api.LogsRequest{
 				Dn:          "main",
-				BacklogMode: api.GetLogsRequest_BACKLOG_MODE_ALL,
-				StreamMode:  api.GetLogsRequest_STREAM_MODE_DISABLE,
+				BacklogMode: api.LogsRequest_BACKLOG_MODE_ALL,
+				StreamMode:  api.LogsRequest_STREAM_MODE_DISABLE,
 				Filters: []*cpb.LogFilter{
 					{
 						Filter: &cpb.LogFilter_OnlyRaw_{
@@ -339,10 +339,10 @@ func TestLogService_Logs_Filters(t *testing.T) {
 		},
 		// Case 2: request leveled only
 		{
-			req: &api.GetLogsRequest{
+			req: &api.LogsRequest{
 				Dn:          "main",
-				BacklogMode: api.GetLogsRequest_BACKLOG_MODE_ALL,
-				StreamMode:  api.GetLogsRequest_STREAM_MODE_DISABLE,
+				BacklogMode: api.LogsRequest_BACKLOG_MODE_ALL,
+				StreamMode:  api.LogsRequest_STREAM_MODE_DISABLE,
 				Filters: []*cpb.LogFilter{
 					{
 						Filter: &cpb.LogFilter_OnlyLeveled_{
