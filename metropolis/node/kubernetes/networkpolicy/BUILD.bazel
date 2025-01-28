@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "networkpolicy",
+    srcs = ["networkpolicy.go"],
+    importpath = "source.monogon.dev/metropolis/node/kubernetes/networkpolicy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/logging",
+        "//metropolis/node",
+        "//osbase/supervisor",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_client_go//informers",
+        "@io_k8s_client_go//kubernetes",
+        "@io_k8s_client_go//kubernetes/typed/core/v1:core",
+        "@io_k8s_client_go//tools/cache",
+        "@io_k8s_client_go//tools/cache/synctrack",
+        "@io_k8s_client_go//tools/record",
+        "@io_k8s_client_go//util/workqueue",
+        "@io_k8s_kubectl//pkg/scheme",
+        "@org_dolansoft_git_dolansoft_k8s_nft_npc//nftctrl",
+    ],
+)

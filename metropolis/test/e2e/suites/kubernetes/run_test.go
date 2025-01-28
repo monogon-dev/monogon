@@ -22,8 +22,10 @@ import (
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	corev1 "k8s.io/api/core/v1"
+	nwkv1 "k8s.io/api/networking/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 	"k8s.io/utils/ptr"
 
@@ -390,6 +392,51 @@ func TestE2EKubernetes(t *testing.T) {
 				}}
 			},
 		})
+		ct.TestPodConnectivity(t, 0, 1, 1234, connectivity.ExpectedSuccess)
+	})
+	t.Run("Network Policy Smoke Test", func(t *testing.T) {
+		ct := connectivity.SetupTest(t, &connectivity.TestSpec{
+			Name:       "npc-smoke",
+			ClientSet:  clientSet,
+			RESTConfig: restConfig,
+			NumPods:    2,
+			ExtraPodConfig: func(i int, pod *corev1.Pod) {
+				// Spread pods out over nodes to test inter-node network
+				pod.Labels = make(map[string]string)
+				pod.Labels["name"] = "npc-smoke"
+				pod.Spec.TopologySpreadConstraints = []corev1.TopologySpreadConstraint{{
+					MaxSkew:           1,
+					TopologyKey:       "kubernetes.io/hostname",
+					WhenUnsatisfiable: corev1.DoNotSchedule,
+					LabelSelector:     metav1.SetAsLabelSelector(pod.Labels),
+				}}
+			},
+		})
+		// Test connectivity before applying network policy
+		ct.TestPodConnectivity(t, 0, 1, 1234, connectivity.ExpectedSuccess)
+		ct.TestPodConnectivity(t, 0, 1, 1235, connectivity.ExpectedSuccess)
+		nwp := &nwkv1.NetworkPolicy{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "npc-smoke",
+			},
+			Spec: nwkv1.NetworkPolicySpec{
+				PodSelector: metav1.LabelSelector{MatchLabels: map[string]string{"name": "npc-smoke"}},
+				Ingress: []nwkv1.NetworkPolicyIngressRule{{
+					Ports: []nwkv1.NetworkPolicyPort{{
+						Protocol: ptr.To(corev1.ProtocolTCP),
+						Port:     &intstr.IntOrString{Type: intstr.Int, IntVal: 1234},
+					}},
+					From: []nwkv1.NetworkPolicyPeer{{
+						PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{"name": "npc-smoke"}},
+					}},
+				}},
+			},
+		}
+		if _, err := clientSet.NetworkingV1().NetworkPolicies("default").Create(context.Background(), nwp, metav1.CreateOptions{}); err != nil {
+			t.Fatal(err)
+		}
+		// Check if policy is in effect
+		ct.TestPodConnectivityEventual(t, 0, 1, 1235, connectivity.ExpectedReject, 30*time.Second)
 		ct.TestPodConnectivity(t, 0, 1, 1234, connectivity.ExpectedSuccess)
 	})
 	for _, runtimeClass := range []string{"runc", "gvisor"} {

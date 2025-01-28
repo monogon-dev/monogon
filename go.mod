@@ -58,6 +58,7 @@ replace github.com/prometheus/procfs => github.com/prometheus/procfs v0.14.0
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1
 	cloud.google.com/go/storage v1.38.0
+	git.dolansoft.org/dolansoft/k8s-nft-npc v0.0.0-20250205205926-b7f770fa8391
 	github.com/adrg/xdg v0.4.0
 	github.com/bazelbuild/rules_go v0.52.0
 	github.com/cavaliergopher/cpio v1.0.1
@@ -146,7 +147,7 @@ require (
 	k8s.io/client-go v0.32.0
 	k8s.io/component-base v0.32.0
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/kubectl v0.0.0
+	k8s.io/kubectl v0.32.0
 	k8s.io/kubelet v0.32.0
 	k8s.io/kubernetes v1.32.0
 	k8s.io/pod-security-admission v0.0.0
@@ -280,6 +281,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hodgesds/perf-utils v0.7.0 // indirect
+	github.com/igrmk/treemap/v2 v2.0.1 // indirect
 	github.com/illumos/go-kstat v0.0.0-20210513183136-173c9b0a9973 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/intel/goresctrl v0.8.0 // indirect

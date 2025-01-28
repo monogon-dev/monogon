@@ -33,6 +33,7 @@ go_library(
         "//metropolis/node/kubernetes/clusternet",
         "//metropolis/node/kubernetes/metricsprovider",
         "//metropolis/node/kubernetes/metricsproxy",
+        "//metropolis/node/kubernetes/networkpolicy",
         "//metropolis/node/kubernetes/nfproxy",
         "//metropolis/node/kubernetes/pki",
         "//metropolis/node/kubernetes/plugins/kvmdevice",

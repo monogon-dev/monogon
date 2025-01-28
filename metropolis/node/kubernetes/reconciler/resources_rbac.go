@@ -94,7 +94,17 @@ func (r resourceClusterRoles) Expected() []meta.Object {
 				},
 				{
 					APIGroups: []string{""},
-					Resources: []string{"services", "nodes", "namespaces"},
+					Resources: []string{"services", "nodes", "namespaces", "pods"},
+					Verbs:     []string{"get", "list", "watch"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"events"},
+					Verbs:     []string{"get", "list", "watch", "create", "update", "patch"},
+				},
+				{
+					APIGroups: []string{"networking.k8s.io"},
+					Resources: []string{"networkpolicies"},
 					Verbs:     []string{"get", "list", "watch"},
 				},
 			},

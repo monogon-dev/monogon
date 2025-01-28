@@ -23,6 +23,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/kubernetes/clusternet"
 	"source.monogon.dev/metropolis/node/kubernetes/metricsprovider"
+	"source.monogon.dev/metropolis/node/kubernetes/networkpolicy"
 	"source.monogon.dev/metropolis/node/kubernetes/nfproxy"
 	kpki "source.monogon.dev/metropolis/node/kubernetes/pki"
 	"source.monogon.dev/metropolis/node/kubernetes/plugins/kvmdevice"
@@ -209,6 +210,10 @@ func (s *Worker) Run(ctx context.Context) error {
 		ClientSet:   clients["netserv"].client,
 	}
 
+	npc := networkpolicy.Service{
+		Kubernetes: clients["netserv"].client,
+	}
+
 	var dnsIPRanges []netip.Prefix
 	for _, ipNet := range []net.IPNet{s.c.ServiceIPRange, s.c.ClusterNet} {
 		ipPrefix, err := netip.ParsePrefix(ipNet.String())
@@ -250,6 +255,7 @@ func (s *Worker) Run(ctx context.Context) error {
 		{"nfproxy", nfproxy.Run},
 		{"dns-service", dnsService.Run},
 		{"dns-listener", runDNSListener},
+		{"npc", npc.Run},
 		{"kvmdeviceplugin", kvmDevicePlugin.Run},
 		{"kubelet", kubelet.Run},
 	} {
