@@ -313,11 +313,6 @@ OVERRIDES = {
             "//third_party/com_github_corverroos_commentwrap:commentwrap-uri.patch",
         ],
     },
-    "github.com/go-delve/delve": {
-        "patches": [
-            "//third_party/com_github_go_delve_delve:delve-fix-cgo.patch",
-        ],
-    },
     "github.com/pganalyze/pg_query_go/v4": {
         "patches": [
             "//third_party/com_github_pganalyze_pg_query_go_v4:pganalyze-add-cdeps.patch",
