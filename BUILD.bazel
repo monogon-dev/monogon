@@ -42,7 +42,6 @@ buildifier_test(
         "-function-docstring",
         "-function-docstring-header",
         "-function-docstring-return",
-        "-unnamed-macro",  #TODO(tim): Update code to pass this
     ],
     no_sandbox = True,
     tags = ["no-remote"],

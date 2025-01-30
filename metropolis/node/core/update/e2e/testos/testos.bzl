@@ -5,6 +5,7 @@ load("//osbase/build:def.bzl", "erofs_image", "verity_image")
 load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
 
 # Macro for generating multiple TestOS instances to check if the updater works.
+# buildifier: disable=unnamed-macro
 def testos(variant):
     erofs_image(
         name = "rootfs_" + variant,
