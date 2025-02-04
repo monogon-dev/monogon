@@ -9,15 +9,6 @@ cc_library(
     srcs = glob([
         "src/*.c",
         "src/*.h",
-
-        "vendor/protobuf-c/protobuf-c.h",
-        "vendor/protobuf-c/protobuf-c.c",
-
-        "vendor/xxhash/xxhash.c",
-
-        "protobuf/pg_query.pb-c.c",
-        "protobuf/pg_query.pb-c.h",
-
         "src/postgres/include/*.h",
         "src/postgres/include/**/*.h",
     ], [
@@ -29,7 +20,13 @@ cc_library(
         "src/pg_query_readfuncs_defs.c",
         "src/pg_query_readfuncs_conds.c",
         "src/pg_query_json_helper.c",
-    ]),
+    ]) + [
+        "vendor/protobuf-c/protobuf-c.h",
+        "vendor/protobuf-c/protobuf-c.c",
+        "vendor/xxhash/xxhash.c",
+        "protobuf/pg_query.pb-c.c",
+        "protobuf/pg_query.pb-c.h",
+    ],
     textual_hdrs = [
         "src/pg_query_enum_defs.c",
         "src/pg_query_fingerprint_defs.c",

@@ -40,7 +40,7 @@ COCKROACH_VERSION = "22.1.6"
 
 http_archive(
     name = "cockroach",
-    build_file = "//third_party/cockroach:BUILD.repo",
+    build_file = "//third_party/cockroach:cockroach.bzl",
     integrity = "sha256-CCHP9XcEAPuUyLbCqzONlvQRT78rMga8im3PYvnA9Oo=",
     strip_prefix = "cockroach-v%s.linux-amd64" % COCKROACH_VERSION,
     urls = [
@@ -88,15 +88,15 @@ LINUX_VERSION = "6.6.71"
 
 http_archive(
     name = "linux",
-    build_file = "//third_party/linux/external:BUILD.repo",
+    build_file = "//third_party/linux:linux.bzl",
     integrity = "sha256-IZcVui3PplOfugmtP5ISdy81Bxietg13+OibBsMuck4=",
     patch_args = ["-p1"],
     patches = [
-        "//third_party/linux/external:0001-block-partition-expose-PARTUUID-through-uevent.patch",
-        "//third_party/linux/external:disable-static-ifs.patch",
-        "//third_party/linux/external:enable-pmsg.patch",
-        "//third_party/linux/external:lacp_fix.patch",
-        "//third_party/linux/external:fb-devs-knob.patch",
+        "//third_party/linux/patches:0001-block-partition-expose-PARTUUID-through-uevent.patch",
+        "//third_party/linux/patches:disable-static-ifs.patch",
+        "//third_party/linux/patches:enable-pmsg.patch",
+        "//third_party/linux/patches:lacp_fix.patch",
+        "//third_party/linux/patches:fb-devs-knob.patch",
     ],
     strip_prefix = "linux-" + LINUX_VERSION,
     urls = ["https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-%s.tar.xz" % LINUX_VERSION],
@@ -106,7 +106,7 @@ LINUX_FIRMWARE_VERSION = "20240909"
 
 http_archive(
     name = "linux-firmware",
-    build_file = "//third_party/linux-firmware:BUILD.repo",
+    build_file = "//third_party/linux-firmware:linux-firmware.bzl",
     integrity = "sha256-k+m2riJAZhY5yHT1/Dj2d9GK/jZbF6E/7mtPxPukLBA=",
     strip_prefix = "linux-firmware-" + LINUX_FIRMWARE_VERSION,
     urls = ["https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/snapshot/linux-firmware-%s.tar.gz" % LINUX_FIRMWARE_VERSION],
@@ -116,7 +116,7 @@ INTEL_UCODE_VERSION = "20240910"
 
 http_archive(
     name = "intel_ucode",
-    build_file = "//third_party/intel_ucode:BUILD.repo",
+    build_file = "//third_party/intel_ucode:intel_ucode.bzl",
     integrity = "sha256-i3WC6sfpppE1bhizvcvHstsJSU4EDsmApKX7bQ2iYb8=",
     strip_prefix = "Intel-Linux-Processor-Microcode-Data-Files-microcode-" + INTEL_UCODE_VERSION,
     urls = ["https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files/archive/refs/tags/microcode-%s.tar.gz" % INTEL_UCODE_VERSION],
@@ -124,7 +124,7 @@ http_archive(
 
 git_repository(
     name = "edk2",
-    build_file = "//third_party/edk2/external:BUILD.repo",
+    build_file = "//third_party/edk2:edk2.bzl",
     commit = "b24306f15daa2ff8510b06702114724b33895d3c",  # stable202202
     patch_args = ["-p1"],
     patches = [
@@ -140,7 +140,7 @@ MUSL_VERSION = "1.1.24"
 
 http_archive(
     name = "musl",
-    build_file = "//third_party/musl:BUILD.repo",
+    build_file = "//third_party/musl:musl.bzl",
     integrity = "sha256-E3DJqBKyzyp9koAlEMygBYzDfmanvt1wBR8KNAFQIqM=",
     strip_prefix = "musl-" + MUSL_VERSION,
     urls = ["https://www.musl-libc.org/releases/musl-%s.tar.gz" % MUSL_VERSION],
@@ -280,7 +280,7 @@ LIBPG_QUERY_VERSION = "15-4.2.3"
 
 http_archive(
     name = "libpg_query",
-    build_file = "//third_party/libpg_query/external:BUILD.repo",
+    build_file = "//third_party/libpg_query:libpg_query.bzl",
     integrity = "sha256-i4INY0QrFnfOTw3yqVs/r9vFIKgpAd74EhdVnsTfnms=",
     strip_prefix = "libpg_query-" + LIBPG_QUERY_VERSION,
     urls = ["https://github.com/pganalyze/libpg_query/archive/refs/tags/%s.tar.gz" % LIBPG_QUERY_VERSION],

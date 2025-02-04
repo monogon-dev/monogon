@@ -1,10 +1,10 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
 filegroup(
     name = "all",
     srcs = glob(["**"]),
     visibility = ["//visibility:public"],
 )
-
-load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 # Build gen_init_cpio separately for the initramfs generation stage
 cc_binary(
