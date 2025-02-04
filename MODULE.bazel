@@ -16,7 +16,7 @@ single_version_override(
     patches = [
         "//third_party/go/patches:rules_go_absolute_embedsrc.patch",
     ],
-    version = "0.51.0",
+    version = "0.52.0",
 )
 
 bazel_dep(name = "gazelle")
