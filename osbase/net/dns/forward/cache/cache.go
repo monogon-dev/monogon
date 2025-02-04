@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package cache implements a cache. The cache hold 256 shards, each shard
 // holds a cache: a map with a mutex. There is no fancy expunge algorithm, it
 // just randomly evicts elements when it gets full.

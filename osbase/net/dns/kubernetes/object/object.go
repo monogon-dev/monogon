@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package object holds functions that convert the objects from the k8s API in
 // to a more memory efficient structures.
 //

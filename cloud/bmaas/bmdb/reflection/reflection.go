@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package reflection implements facilities to retrieve information about the
 // implemented Tags and their types from a plain CockroachDB SQL connection,
 // bypassing the queries/types defined in models. Then, the retrieved Schema can

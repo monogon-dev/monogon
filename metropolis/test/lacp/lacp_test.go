@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package lacp contains an integration test for our custom LACP patches.
 // It tests relevant behavior that other parts of the Monogon network stack
 // rely on, like proper carrier state indications.

@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 package nvme
 
 // SecureEraseType specifices what type of secure erase should be performed by

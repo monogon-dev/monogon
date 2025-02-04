@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // test_agent is used by the Equinix Metal Manager test code. Its only role
 // is to ensure successful delivery of the BMaaS agent executable to the test
 // hosts, together with its subsequent execution.

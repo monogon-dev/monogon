@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // This assembles standalone microcode files into the format expected by the
 // Linux microcode loader. See
 // https://www.kernel.org/doc/html/latest/x86/microcode.html for further

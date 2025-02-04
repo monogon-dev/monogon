@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package main implements 'stampgo', a tool to convert build status data into a
 // version.spec.Version proto, which is then embedded into a Go source file.
 package main

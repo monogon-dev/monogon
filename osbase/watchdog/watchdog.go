@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package watchdog provides access to hardware watchdogs. These can be used to
 // automatically reset/reboot a system if they are no longer pinged.
 package watchdog

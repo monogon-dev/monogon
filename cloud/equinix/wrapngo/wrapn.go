@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package wrapngo wraps packngo methods providing the following usability
 // enhancements:
 // - API call rate limiting

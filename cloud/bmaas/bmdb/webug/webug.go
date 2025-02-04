@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package webug implements a web-based debug/troubleshooting/introspection
 // system for the BMDB. It's optimized for use by developers and trained
 // operators, prioritizing information density, fast navigation and heavy

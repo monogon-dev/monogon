@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package fat32 implements a writer for the FAT32 filesystem.
 package fat32
 

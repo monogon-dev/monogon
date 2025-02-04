@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // This file contains common implementation related to filtering of protobuf
 // messages with Common Expression Language.
 package curator

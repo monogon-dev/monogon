@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package psample provides a receiver for sampled network packets using the
 // Netlink psample interface.
 package psample

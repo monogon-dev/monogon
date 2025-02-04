@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package scruffy implements Scruffy, The Janitor.
 //
 // Scruffy is a BMaaS component which runs a bunch of important, housekeeping-ish

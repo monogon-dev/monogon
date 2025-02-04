@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 package logging
 
 // Leveled is a generic interface for glog-style logging. There are four

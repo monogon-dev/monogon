@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package hostsfile implements a service which owns and writes all node-local
 // files/interfaces used by the system to resolve the local node's name and the
 // names of other nodes in the cluster:

@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package sinbin implements a sinbin for naughty processed elements that we wish
 // to time out for a while. This is kept in memory, and effectively implements a
 // simplified version of the Circuit Breaker pattern.

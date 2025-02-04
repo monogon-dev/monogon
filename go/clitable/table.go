@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package clitable implements tabular display for command line tools.
 //
 // The generated tables are vaguely reminiscent of the output of 'kubectl'. For

@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // This file implements test helper functions that augment the way any given
 // test is run.
 package util

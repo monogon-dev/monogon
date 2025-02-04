@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package localregistry implements a read-only OCI Distribution / Docker
 // V2 container image registry backed by local layers.
 package localregistry

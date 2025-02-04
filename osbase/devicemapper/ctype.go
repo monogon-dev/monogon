@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 package devicemapper
 
 // Linux kernel ctype data from @linux//include/linux:ctype.h

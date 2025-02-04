@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 // swtpm_cert (from swtpm project) reimplemented in Go.

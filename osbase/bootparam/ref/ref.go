@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package ref provides the reference implementation for kernel command line
 // parsing as present in the Linux kernel. This is a separate package and
 // not part of the bootparam tests because Go does not let you use cgo in

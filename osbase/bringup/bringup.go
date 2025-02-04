@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package bringup implements a simple wrapper which configures all default
 // mounts, logging and the corresponding forwarders to tty0 and ttyS0. It
 // then configures a new logtree and starts a supervisor to run the provided

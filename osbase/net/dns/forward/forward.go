@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package forward implements a forwarding proxy.
 //
 // A cache is used to reduce load on the upstream servers. Cached items are only

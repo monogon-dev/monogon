@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // The pstore package provides functions for interfacing with the Linux kernel's
 // pstore (persistent storage) system.
 // Documentation for pstore itself can be found at

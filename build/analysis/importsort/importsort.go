@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // importsort implements import grouping style checks as per
 // CODING_STANDARDS.md.
 package importsort

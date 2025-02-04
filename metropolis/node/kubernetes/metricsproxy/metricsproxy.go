@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package metricsproxy implements an authenticating proxy in front of the K8s
 // controller-manager and scheduler providing unauthenticated access to the
 // metrics via local ports

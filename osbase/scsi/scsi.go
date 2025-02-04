@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // INCITS 502 Revision 19 / SPC-5 R19
 package scsi
 

@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package bmdb implements a connector to the Bare Metal Database, which is the
 // main data store backing information about bare metal machines.
 //

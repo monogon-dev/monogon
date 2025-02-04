@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package clusternet implements a Cluster Networking mesh service running on all
 // Metropolis nodes.
 //

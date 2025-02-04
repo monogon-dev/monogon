@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // takeover is a self-contained executable which when executed loads the BMaaS
 // agent via kexec. It is intended to be called over SSH, given a binary
 // TakeoverInit message over standard input and (if all preparation work

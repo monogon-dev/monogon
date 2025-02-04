@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package core contains parts of metroctl which do significant amounts of work
 // beyond just providing a CLI for them.
 // This package is intended to be used for integrating with functions provided

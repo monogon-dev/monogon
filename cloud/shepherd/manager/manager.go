@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package manager, itself a part of BMaaS project, provides implementation
 // governing Equinix bare metal server lifecycle according to conditions set by
 // Bare Metal Database (BMDB).

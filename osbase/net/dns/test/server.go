@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 package test
 
 // Taken and modified from CoreDNS, under Apache 2.0.

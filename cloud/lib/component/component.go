@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package component implements reusable bits for cloud service components. Each
 // component is currently defined as being a standalone Go binary with its own
 // internal gRPC listener. Subsequent listeners (eg. public gRPC or HTTP) can be

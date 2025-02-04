@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 package object
 
 // Taken and modified from the Kubernetes plugin of CoreDNS, under Apache 2.0.

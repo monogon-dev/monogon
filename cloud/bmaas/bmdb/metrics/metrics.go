@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package metrics implements a Prometheus metrics submission interface for BMDB
 // client components. A Metrics object can be attached to a BMDB object, which
 // will make all BMDB sessions/transactions/work statistics be submitted to that

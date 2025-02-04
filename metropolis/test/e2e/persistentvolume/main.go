@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // This is a test for PersistentVolumes provided by our provisioner. It tests
 // that volumes have the right mount flags, and the expected quotas.
 //

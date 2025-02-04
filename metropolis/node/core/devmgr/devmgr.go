@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package devmgr is the userspace pendant to the kernel device management
 // system. It talks to the kernel and the performs any further userspace actions
 // related to device events. It corresponds very roughly to systemd-udevd on

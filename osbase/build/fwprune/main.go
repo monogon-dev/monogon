@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // fwprune is a buildsystem utility that filters linux-firmware repository
 // contents to include only files required by the built-in kernel modules,
 // that are specified in modules.builtin.modinfo.

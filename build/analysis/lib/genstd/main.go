@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // This tool generates //build/analysis/lib:stdlib_packages.go, which contains a
 // set of all Go stdlib packges. This is generated ahead of time in the build
 // system as it can be an expensive operation that also depends on the presence

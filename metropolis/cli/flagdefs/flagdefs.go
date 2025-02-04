@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package flagdefs contains shared flag definitions for Metropolis.
 // The usage is the same as for the standard flags in the [flag] package,
 // except that the [flag.FlagSet] needs to be passed in the first parameter.

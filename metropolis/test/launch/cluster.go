@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // cluster builds on the launch package and implements launching Metropolis
 // nodes and clusters in a virtualized environment using qemu. It's kept in a
 // separate package as it depends on a Metropolis node image, which might not be

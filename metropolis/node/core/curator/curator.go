@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // package curator implements the Curator, a service responsible for management
 // of the Metropolis cluster that it is running on.
 //

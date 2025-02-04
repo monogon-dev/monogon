@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package time implements a supervisor runnable which is responsible for
 // keeping both the system clock and the RTC accurate.
 // Metropolis nodes need accurate time both for themselves (for log

@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package tinylb implements a small and simple userland round-robin load
 // balancer, mostly for TCP connections. However, it is entirely
 // protocol-agnostic, and only expects net.Listener and net.Conn objects.

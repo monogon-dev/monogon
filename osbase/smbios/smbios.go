@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package smbios implements parsing of SMBIOS data structures.
 // SMBIOS data is commonly populated by platform firmware to convey various
 // metadata (including name, vendor, slots and serial numbers) about the

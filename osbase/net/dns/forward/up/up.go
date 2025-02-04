@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package up is used to run a function for some duration. If a new function is
 // added while a previous run is still ongoing, nothing new will be executed.
 package up

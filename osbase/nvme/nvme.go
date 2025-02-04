@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package nvme provides methods and data structures for issuing commands to
 // device speaking the NVMe protocol.
 // This package is written against the NVMe Specification Revision 1.3 and

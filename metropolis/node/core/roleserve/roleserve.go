@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package roleserve implements the roleserver/“Role Server”.
 //
 // The Role Server runs on every node and is responsible for running all of the

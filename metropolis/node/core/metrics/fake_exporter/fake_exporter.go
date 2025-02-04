@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // fake_exporter is a tiny Prometheus-compatible metrics exporter which exports a
 // single metric with a value configured at startup. It is used to test the
 // metrics service.

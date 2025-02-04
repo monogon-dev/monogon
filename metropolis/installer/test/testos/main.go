@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // TestOS is a tiny "operating system" which is packaged the exact same way as
 // an actual Metropolis node but only outputs a single flag before exiting.
 // It's used for decoupling the installer tests from the Metropolis Node code.

@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package msguid provides functions to convert UUIDs/GUIDs to and from
 // Microsoft's idiosyncratic "mixed-endian" format.
 // See https://uefi.org/specs/UEFI/2.10/Apx_A_GUID_and_Time_Formats.html#text-representation-relationships-apxa-guid-and-time-formats

@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package mflags implements custom flags for use in monogon projects.
 // It provides them to be used like normal flag.$Var and registers the
 // required flag functions.

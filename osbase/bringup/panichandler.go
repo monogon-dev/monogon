@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 package bringup
 
 // This uses the unstable overrideWrite interface to also emit all runtime

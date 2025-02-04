@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package cmd contains helpers that abstract away the chore of starting new
 // processes, tracking their lifetime, inspecting their output, etc.
 package cmd

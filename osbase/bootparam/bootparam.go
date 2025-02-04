@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package bootparam implements encoding and decoding of Linux kernel command
 // lines as documented in
 // https://docs.kernel.org/admin-guide/kernel-parameters.html

@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package proxy implements a forwarding proxy. It caches an upstream net.Conn
 // for some time, so if the same client returns the upstream's Conn will be
 // precached. Depending on how you benchmark this looks to be 50% faster than

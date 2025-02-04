@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // httpserver serves a test HTTP endpoint for E2E testing.
 package main
 

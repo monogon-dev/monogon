@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package qcow2 implements generating QEMU copy-on-write image files.
 package qcow2
 

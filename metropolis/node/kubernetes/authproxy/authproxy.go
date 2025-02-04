@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package authproxy implements an authenticating proxy in front of the K8s
 // API server converting Metropolis credentials into authentication headers.
 package authproxy

@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package socksproxy implements a limited subset of the SOCKS 5 (RFC1928)
 // protocol in the form of a pluggable Proxy object. However, this
 // implementation is _not_ RFC1928 compliant, as it does not implement GSSAPI

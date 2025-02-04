@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package unraw implements a facility to convert raw logs from external sources
 // into leveled logs.
 //

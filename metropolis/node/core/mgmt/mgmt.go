@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package mgmt implements the node-local management service, a.k.a.
 // metropolis.proto.api.NodeManagement.
 package mgmt

@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package gpt implements reading and writing GUID Partition Tables as specified
 // in the UEFI Specification. It only implements up to 128 partitions per table
 // (same as most other implementations) as more would require a dynamic table

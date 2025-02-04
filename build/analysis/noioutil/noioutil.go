@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 // Package noioutil contains a Go analysis pass designed to prevent use of the
 // deprecated ioutil package for which a tree-wide migration was already done.
 package noioutil

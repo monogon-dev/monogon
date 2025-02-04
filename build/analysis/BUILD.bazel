@@ -92,7 +92,7 @@ NOGO_PASSES += [
     "//build/analysis/noioutil",
     "//build/analysis/importsort",
     "//build/analysis/gofmt",
-    #    "//build/analysis/haslicense", #TODO(tim): Enable when fixed
+    "//build/analysis/haslicense",
 ]
 
 # NOGO_CONFIG_OVERRIDES contains the overrides for nogo to exempt specific files

@@ -1,3 +1,6 @@
+// Copyright The Monogon Project Authors.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 // Minimal GnuTLS certtool-like tool in Go. Implements only what's needed for
