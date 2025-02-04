@@ -8,16 +8,7 @@
 # NOTE: When editing this file, also update the lockfile.
 #   bazel mod deps --lockfile_mode=update
 
-bazel_dep(name = "platforms")
-single_version_override(
-    module_name = "platforms",
-    patch_strip = 1,
-    patches = [
-        "//third_party:platforms-add-uefi.patch",
-    ],
-    version = "0.0.10",
-)
-
+bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "rules_go", repo_name = "io_bazel_rules_go")
 single_version_override(
     module_name = "rules_go",
