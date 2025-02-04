@@ -1,6 +1,6 @@
-load("@bazel_gazelle//:def.bzl", "gazelle", "gazelle_test")
 load("@bazeldnf//:def.bzl", "bazeldnf")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier", "buildifier_test")
+load("@gazelle//:def.bzl", "gazelle", "gazelle_test")
 load("@rules_multirun//:defs.bzl", "command", "multirun")
 
 exports_files([

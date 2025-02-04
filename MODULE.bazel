@@ -19,7 +19,7 @@ single_version_override(
     version = "0.51.0",
 )
 
-bazel_dep(name = "gazelle", repo_name = "bazel_gazelle")
+bazel_dep(name = "gazelle")
 single_version_override(
     module_name = "gazelle",
     patch_strip = 1,
