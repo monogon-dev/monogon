@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "metricsprovider",
+    srcs = ["metricsprovider.go"],
+    importpath = "source.monogon.dev/metropolis/node/kubernetes/metricsprovider",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_prometheus_client_golang//prometheus",
+        "@io_k8s_client_go//util/workqueue",
+    ],
+)
