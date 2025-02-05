@@ -613,9 +613,9 @@ func TestAgentStartWorkflowParallel(t *testing.T) {
 	// Wait for at least three workers to be alive.
 	for i := 0; i < 3; i++ {
 		select {
-			case workStarted <- struct{}{}:
-			case <-ctx.Done():
-				t.FailNow()
+		case workStarted <- struct{}{}:
+		case <-ctx.Done():
+			t.FailNow()
 		}
 	}
 

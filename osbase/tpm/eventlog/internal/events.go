@@ -57,7 +57,8 @@ var (
 // EventType describes the type of event signalled in the event log.
 type EventType uint32
 
-// 	BIOS Events (TCG PC Client Specific Implementation Specification for Conventional BIOS 1.21)
+// BIOS Events (TCG PC Client Specific Implementation Specification for
+// Conventional BIOS 1.21)
 const (
 	PrebootCert          EventType = 0x00000000
 	PostCode             EventType = 0x00000001
@@ -193,7 +194,7 @@ type UEFIVariableData struct {
 // ParseUEFIVariableData parses the data section of an event structured as a
 // UEFI variable.
 //
-//   https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClient_Specific_Platform_Profile_for_TPM_2p0_1p04_PUBLIC.pdf#page=100
+//	https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClient_Specific_Platform_Profile_for_TPM_2p0_1p04_PUBLIC.pdf#page=100
 func ParseUEFIVariableData(r io.Reader) (ret UEFIVariableData, err error) {
 	err = binary.Read(r, binary.LittleEndian, &ret.Header)
 	if err != nil {

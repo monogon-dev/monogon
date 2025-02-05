@@ -129,16 +129,16 @@ func (l *Lease) Routes() []*dhcpv4.Route {
 
 // sanitizeRoutes filters the list of routes by removing routes that are
 // obviously invalid. It filters out routes according to the following criteria:
-// 1. The route is not an interface route and its router is not a unicast or
-//    link-local address.
-// 2. Each route's router must be reachable according to the routes listed
-//    before it and the assigned network.
-// 3. The network mask must consist of all-ones followed by all-zeros. Non-
-//    contiguous routes are not allowed.
-// 4. If multiple routes match the same destination, only the first one is kept.
-// 5. Routes covering the loopback IP space (127.0.0.0/8) will be ignored if
-//    they are smaller than a /9 to prevent them from interfering with loopback
-//    IPs.
+//  1. The route is not an interface route and its router is not a unicast or
+//     link-local address.
+//  2. Each route's router must be reachable according to the routes listed
+//     before it and the assigned network.
+//  3. The network mask must consist of all-ones followed by all-zeros. Non-
+//     contiguous routes are not allowed.
+//  4. If multiple routes match the same destination, only the first one is kept.
+//  5. Routes covering the loopback IP space (127.0.0.0/8) will be ignored if
+//     they are smaller than a /9 to prevent them from interfering with loopback
+//     IPs.
 func sanitizeRoutes(routes []*dhcpv4.Route, assignedNet *net.IPNet) []*dhcpv4.Route {
 	var saneRoutes []*dhcpv4.Route
 	for _, route := range routes {

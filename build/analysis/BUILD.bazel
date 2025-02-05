@@ -91,7 +91,7 @@ NOGO_PASSES += [
     "//build/analysis/checkcompilerdirectives",
     "//build/analysis/noioutil",
     "//build/analysis/importsort",
-    #    "//build/analysis/gofmt",  # TODO(tim): Enable when formatted
+    "//build/analysis/gofmt",
 ]
 
 # NOGO_CONFIG_OVERRIDES contains the overrides for nogo to exempt specific files
@@ -213,6 +213,7 @@ DISABLED_FOR_EXTERNAL_CODE = [
     "returnerrcheck",
     "hash",
     "errcmp",
+    "gofmt",
 ] + ALL_STATICCHECK_ANALYZERS
 
 # We override the variable with itself unioned with the other

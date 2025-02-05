@@ -96,7 +96,7 @@ func (e ReplayError) Error() string {
 
 // TPM algorithms. See the TPM 2.0 specification section 6.3.
 //
-//   https://trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf#page=42
+//	https://trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf#page=42
 const (
 	algSHA1   uint16 = 0x0004
 	algSHA256 uint16 = 0x000B
@@ -383,7 +383,7 @@ pcrLoop:
 // parser instead of holding a measurement. For TPM 2.0, this event type is
 // used to signal switching from SHA1 format to a variable length digest.
 //
-//   https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf#page=110
+//	https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientSpecPlat_TPM_2p0_1p04_pub.pdf#page=110
 const eventTypeNoAction = 0x03
 
 // ParseEventLog parses an unverified measurement log.
@@ -445,7 +445,8 @@ type specAlgSize struct {
 }
 
 // Expected values for various Spec ID Event fields.
-//   https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf#page=19
+//
+//	https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf#page=19
 var wantSignature = [16]byte{0x53, 0x70,
 	0x65, 0x63, 0x20, 0x49,
 	0x44, 0x20, 0x45, 0x76,
@@ -459,7 +460,8 @@ const (
 )
 
 // parseSpecIDEvent parses a TCG_EfiSpecIDEventStruct structure from the reader.
-//   https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf#page=18
+//
+//	https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf#page=18
 func parseSpecIDEvent(b []byte) (*specIDEvent, error) {
 	r := bytes.NewReader(b)
 	var header struct {
@@ -522,7 +524,8 @@ type rawEvent struct {
 }
 
 // TPM 1.2 event log format. See "5.1 SHA1 Event Log Entry Format"
-//   https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf#page=15
+//
+//	https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf#page=15
 type rawEventHeader struct {
 	PCRIndex  uint32
 	Type      uint32
@@ -567,7 +570,8 @@ func parseRawEvent(r *bytes.Buffer, specID *specIDEvent) (event rawEvent, err er
 }
 
 // TPM 2.0 event log format. See "5.2 Crypto Agile Log Entry Format"
-//   https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf#page=15
+//
+//	https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf#page=15
 type rawEvent2Header struct {
 	PCRIndex uint32
 	Type     uint32

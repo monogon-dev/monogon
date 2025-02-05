@@ -19,42 +19,42 @@ Package logtree implements a tree-shaped logger for debug events. It provides lo
 glog-like API and io.Writer API, with loggers placed in a hierarchical structure defined by a dot-delimited path
 (called a DN, short for Distinguished Name).
 
-    tree.MustLeveledFor("foo.bar.baz").Warningf("Houston, we have a problem: %v", err)
-    fmt.Fprintf(tree.MustRawFor("foo.bar.baz"), "some\nunstructured\ndata\n")
+	tree.MustLeveledFor("foo.bar.baz").Warningf("Houston, we have a problem: %v", err)
+	fmt.Fprintf(tree.MustRawFor("foo.bar.baz"), "some\nunstructured\ndata\n")
 
 Logs in this context are unstructured, operational and developer-centric human readable text messages presented as lines
 of text to consumers, with some attached metadata. Logtree does not deal with 'structured' logs as some parts of the
 industry do, and instead defers any machine-readable logs to either be handled by metrics systems like Prometheus or
 event sourcing systems like Kafka.
 
-Tree Structure
+# Tree Structure
 
 As an example, consider an application that produces logs with the following DNs:
 
-    listener.http
-    listener.grpc
-    svc
-    svc.cache
-    svc.cache.gc
+	listener.http
+	listener.grpc
+	svc
+	svc.cache
+	svc.cache.gc
 
 This would correspond to a tree as follows:
 
-                          .------.
-                         |   ""   |
-                         | (root) |
-                          '------'
-           .----------------'   '------.
-    .--------------.           .---------------.
-    |     svc      |           |    listener   |
-    '--------------'           '---------------'
-           |                   .----'      '----.
-    .--------------.  .---------------.  .---------------.
-    |  svc.cache   |  | listener.http |  | listener.grpc |
-    '--------------'  '---------------'  '---------------'
-           |
-    .--------------.
-    | svc.cache.gc |
-    '--------------'
+	                      .------.
+	                     |   ""   |
+	                     | (root) |
+	                      '------'
+	       .----------------'   '------.
+	.--------------.           .---------------.
+	|     svc      |           |    listener   |
+	'--------------'           '---------------'
+	       |                   .----'      '----.
+	.--------------.  .---------------.  .---------------.
+	|  svc.cache   |  | listener.http |  | listener.grpc |
+	'--------------'  '---------------'  '---------------'
+	       |
+	.--------------.
+	| svc.cache.gc |
+	'--------------'
 
 In this setup, every DN acts as a separate logging target, each with its own retention policy and quota. Logging to a DN
 under foo.bar does NOT automatically log to foo - all tree mechanisms are applied on log access by consumers. Loggers
@@ -70,14 +70,14 @@ other systems) to select subtrees of logs for readout. In the example tree, a co
 logs of the entire tree, just a single DN (like svc), or a subtree (like everything under listener, ie. messages emitted
 to listener.http and listener.grpc).
 
-Leveled Log Producer API
+# Leveled Log Producer API
 
 As part of the glog-like logging API available to producers, the following metadata is attached to emitted logs in
 addition to the DN of the logger to which the log entry was emitted:
 
- - timestamp at which the entry was emitted
- - a severity level (one of FATAL, ERROR, WARN or INFO)
- - a source of the message (file name and line number)
+  - timestamp at which the entry was emitted
+  - a severity level (one of FATAL, ERROR, WARN or INFO)
+  - a source of the message (file name and line number)
 
 In addition, the logger mechanism supports a variable verbosity level (so-called 'V-logging') that can be set at every
 node of the tree. For more information about the producer-facing logging API, see the documentation of the LeveledLogger
@@ -88,14 +88,14 @@ string lines. This allows for log producers to submit long, multi-line messages 
 with other entries, and allows for access API consumers to maintain semantic linking between multiple lines being emitted
 as a single atomic entry.
 
-Raw Log Producer API
+# Raw Log Producer API
 
 In addition to leveled, glog-like logging, LogTree supports 'raw logging'. This is implemented as an io.Writer that will
 split incoming bytes into newline-delimited lines, and log them into that logtree's DN. This mechanism is primarily
 intended to support storage of unstructured log data from external processes - for example binaries running with redirected
 stdout/stderr.
 
-Log Access API
+# Log Access API
 
 The Log Access API is mostly exposed via a single function on the LogTree struct: Read. It allows access to log entries
 that have been already buffered inside LogTree and to subscribe to receive future entries over a channel. As outlined
@@ -111,6 +111,5 @@ The data returned from the log access API is a LogEntry, which itself can contai
 logging entry. Helper functions are available on LogEntry that allow canonical string representations to be returned, for
 easy use in consuming tools/interfaces. Alternatively, the consumer can itself access the internal raw/leveled entries and
 print them according to their own preferred format.
-
 */
 package logtree

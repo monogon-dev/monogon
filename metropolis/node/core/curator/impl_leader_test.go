@@ -1201,28 +1201,28 @@ func TestUpdateNodeRoles(t *testing.T) {
 	// Define the test payloads. Each role is optional, and will be updated
 	// only if it's not nil, and its value differs from the current state.
 	ue := []*apb.UpdateNodeRolesRequest{
-		&apb.UpdateNodeRolesRequest{
+		{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[0].pubkey,
 			},
 			KubernetesWorker: ptr.To(false),
 			ConsensusMember:  ptr.To(false),
 		},
-		&apb.UpdateNodeRolesRequest{
+		{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[1].pubkey,
 			},
 			KubernetesWorker: ptr.To(false),
 			ConsensusMember:  ptr.To(true),
 		},
-		&apb.UpdateNodeRolesRequest{
+		{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[2].pubkey,
 			},
 			KubernetesWorker: ptr.To(true),
 			ConsensusMember:  ptr.To(true),
 		},
-		&apb.UpdateNodeRolesRequest{
+		{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[2].pubkey,
 			},
@@ -1270,14 +1270,14 @@ func TestUpdateNodeRoles(t *testing.T) {
 	// currently can't be a KubernetesController if it's not a ConsensusMember as
 	// well.
 	uf := []*apb.UpdateNodeRolesRequest{
-		&apb.UpdateNodeRolesRequest{
+		{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[0].pubkey,
 			},
 			KubernetesController: ptr.To(true),
 			ConsensusMember:      ptr.To(false),
 		},
-		&apb.UpdateNodeRolesRequest{
+		{
 			Node: &apb.UpdateNodeRolesRequest_Pubkey{
 				Pubkey: tn[0].pubkey,
 			},

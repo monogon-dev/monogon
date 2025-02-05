@@ -115,7 +115,8 @@ func (n *Namespace) etcdPath(f string, args ...interface{}) string {
 
 // Client makes a Kubernetes PKI-compatible client certificate template.
 // Directly derived from Kubernetes PKI requirements documented at
-//   https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually
+//
+//	https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually
 func Client(identity string, groups []string) x509.Certificate {
 	return x509.Certificate{
 		Subject: pkix.Name{

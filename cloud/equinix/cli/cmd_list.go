@@ -16,10 +16,10 @@ import (
 )
 
 var listCmd = &cobra.Command{
-	Use: "list",
+	Use:  "list",
 	Long: `This lists all hardware reservations inside a specified organization or project.`,
-	Args:  cobra.NoArgs,
-	Run:   doList,
+	Args: cobra.NoArgs,
+	Run:  doList,
 }
 
 func init() {

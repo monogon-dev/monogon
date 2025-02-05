@@ -160,10 +160,10 @@ type namedFile struct {
 // Validate checks that a given pointer to a Directory or pointer to a
 // structure containing Directory does not contain any programmer errors in its
 // definition:
-//  - all subdirectories/files must be named
-//  - all subdirectory/file names within a directory must be unique
-//  - all subdirectory/file names within a directory must not contain the '/'
-//    character (as it is a common path delimiter)
+//   - all subdirectories/files must be named
+//   - all subdirectory/file names within a directory must be unique
+//   - all subdirectory/file names within a directory must not contain the '/'
+//     character (as it is a common path delimiter)
 func Validate(d interface{}) error {
 	names := make(map[string]bool)
 

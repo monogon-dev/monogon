@@ -96,8 +96,8 @@ func newDummyProvider(cap int) *dummyProvider {
 }
 
 type dummyProvider struct {
-	capacity int
-	machines map[shepherd.ProviderID]*dummyMachine
+	capacity   int
+	machines   map[shepherd.ProviderID]*dummyMachine
 	muMachines sync.RWMutex
 }
 

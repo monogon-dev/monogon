@@ -19,9 +19,9 @@ func isWorkspace(dir string) bool {
 // WorkspaceDirectory returns the workspace directory from which a given
 // command line tool is running. This handles the following cases:
 //
-// 1. The command line tool was invoked via `bazel run`.
-// 2. The command line tool was started directly in a workspace directory (but
-//    not a subdirectory).
+//  1. The command line tool was invoked via `bazel run`.
+//  2. The command line tool was started directly in a workspace directory (but
+//     not a subdirectory).
 //
 // If the workspace directory path cannot be inferred based on the above
 // assumptions, an error is returned.

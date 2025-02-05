@@ -79,7 +79,7 @@ func setSetupWg[T any](w event.Watcher[T]) *sync.WaitGroup {
 
 // testClient is an etcd connection to the test cluster.
 type testClient struct {
-	client     *clientv3.Client
+	client *clientv3.Client
 }
 
 func newTestClient(t *testing.T) *testClient {
@@ -95,7 +95,7 @@ func newTestClient(t *testing.T) *testClient {
 	}
 
 	return &testClient{
-		client:     cli,
+		client: cli,
 	}
 }
 
