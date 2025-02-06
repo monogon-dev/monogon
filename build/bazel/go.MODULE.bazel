@@ -227,7 +227,7 @@ OVERRIDES = {
     },
     "k8s.io/client-go": {
         "pre_patches": [
-            "//third_party/go/patches:k8s-fix-websocket-custom-dialer.patch",
+            "//third_party/com_k8s_io_client_go:k8s-fix-websocket-custom-dialer.patch",
         ],
     },
     "k8s.io/cri-api": {
@@ -305,7 +305,7 @@ OVERRIDES = {
     },
     "github.com/containernetworking/plugins": {
         "patches": [
-            "//third_party/go/patches:cniplugins-add-linkgroup.patch",
+            "//third_party/com_github_containernetworking_plugins:cniplugins-add-linkgroup.patch",
         ],
     },
     "github.com/corverroos/commentwrap": {
