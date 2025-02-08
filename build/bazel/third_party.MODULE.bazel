@@ -1,5 +1,30 @@
 # third_party external repositories
 
+github_repository = use_repo_rule("//build/github_repository:def.bzl", "github_repository")
+
+github_repository(
+    name = "edk2",
+    build_file = "//third_party/edk2:edk2.bzl",
+    integrity = "sha256-vid2bYN5OEJvcIstC5iQKZqwH1/jnXFM8FN3mjDU20k=",
+    owner = "tianocore",
+    patch_args = ["-p1"],
+    patches = [
+        "//third_party/edk2/patches:disable-werror.patch",
+        "//third_party/edk2/patches:remove-brotli-build.patch",
+    ],
+    ref = "b24306f15daa2ff8510b06702114724b33895d3c",  # stable202202
+    repo = "edk2",
+    submodules = {
+        "CryptoPkg/Library/OpensslLib/openssl": "sha256-WoyWOXrAhTcXJRNpcEZ7y+hwrCXWHIcJA2N1NxoORsY=",
+        "ArmPkg/Library/ArmSoftFloatLib/berkeley-softfloat-3": "sha256-+q6ImBTqaikvfKA9mzbmx+lbqypkd3gEiDzIIrjUh1c=",
+        "UnitTestFrameworkPkg/Library/CmockaLib/cmocka": "sha256-Wc1LgauvrjXZSsXZHPSuWwUSLmiHE81ttR5eTO9HHY8=",
+        "MdeModulePkg/Universal/RegularExpressionDxe/oniguruma": "sha256-7ql3OA67GHHV3jjE9/FUQu5pDJC995BZDZMKa780fyg=",
+        "MdeModulePkg/Library/BrotliCustomDecompressLib/brotli": "sha256-bWyszgUIa33r51EnQV/5w2YYSfVk/i9fOwOD1Iqk7Xc=",
+        "BaseTools/Source/C/BrotliCompress/brotli": "sha256-bWyszgUIa33r51EnQV/5w2YYSfVk/i9fOwOD1Iqk7Xc=",
+        "RedfishPkg/Library/JsonLib/jansson": "sha256-55NcDZHW0i9t7nEKJrI+Io7MT+jvfo91ZVjDWZ9ow7Q=",
+    },
+)
+
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -120,20 +145,6 @@ http_archive(
     integrity = "sha256-i3WC6sfpppE1bhizvcvHstsJSU4EDsmApKX7bQ2iYb8=",
     strip_prefix = "Intel-Linux-Processor-Microcode-Data-Files-microcode-" + INTEL_UCODE_VERSION,
     urls = ["https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files/archive/refs/tags/microcode-%s.tar.gz" % INTEL_UCODE_VERSION],
-)
-
-git_repository(
-    name = "edk2",
-    build_file = "//third_party/edk2:edk2.bzl",
-    commit = "b24306f15daa2ff8510b06702114724b33895d3c",  # stable202202
-    patch_args = ["-p1"],
-    patches = [
-        "//third_party/edk2/patches:disable-werror.patch",
-        "//third_party/edk2/patches:remove-brotli-build.patch",
-    ],
-    recursive_init_submodules = True,
-    remote = "https://github.com/tianocore/edk2",
-    shallow_since = "1645456780 +0000",
 )
 
 MUSL_VERSION = "1.1.24"

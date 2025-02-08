@@ -1,0 +1,2 @@
+# GitHub repository repository_rule
+This package provides a repository_rule for fetching GitHub repositories including their submodules without relying on git_repository, which prevents proper caching.
