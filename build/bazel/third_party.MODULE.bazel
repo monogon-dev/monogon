@@ -25,8 +25,6 @@ github_repository(
     },
 )
 
-git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
@@ -51,10 +49,14 @@ http_archive(
 )
 
 # Used in swtpm
-git_repository(
+BORINGSSL_VERSION = "d7278cebad5b8eda0901246f2215344cffece4f4"
+
+http_archive(
     name = "boringssl",
-    commit = "d7278cebad5b8eda0901246f2215344cffece4f4",
-    remote = "https://boringssl.googlesource.com/boringssl",
+    integrity = "sha256-bpWXzfHbkV8J3Ed1Hp/L8WyFnWnFDn3+IuNN8A0IGyY=",
+    urls = [
+        "https://boringssl.googlesource.com/boringssl/+archive/%s.tar.gz" % BORINGSSL_VERSION,
+    ],
 )
 
 # CockroachDB binary used for tests.
@@ -102,11 +104,13 @@ http_archive(
     urls = ["https://github.com/benhoyt/inih/archive/%s.tar.gz" % INIH_VERSION],
 )
 
-git_repository(
+GPERF_VERSION = "de9373c2d48a3edf29862eb8be44764a7f7d24c6"
+
+http_archive(
     name = "gperf",
-    commit = "de9373c2d48a3edf29862eb8be44764a7f7d24c6",
-    remote = "https://github.com/monogon-dev/gperf.git",
-    shallow_since = "1615306886 +0100",
+    integrity = "sha256-xHLG+LYlXSuNG1rNvXwgjoSSG/FAZ9fu2WT4rTvnJkU=",
+    strip_prefix = "gperf-" + GPERF_VERSION,
+    urls = ["https://github.com/monogon-dev/gperf/archive/%s.tar.gz" % GPERF_VERSION],
 )
 
 LINUX_VERSION = "6.6.71"
