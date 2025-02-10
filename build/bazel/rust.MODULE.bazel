@@ -15,6 +15,9 @@ crate.from_cargo(
     cargo_lockfile = "//third_party/rust:Cargo.lock",
     generate_binaries = True,
     manifests = ["//third_party/rust:Cargo.toml"],
+    supported_platform_triples = [
+        "x86_64-unknown-linux-gnu",
+    ],
 )
 crate.from_cargo(
     name = "crate_index_efi",
@@ -26,5 +29,8 @@ crate.from_cargo(
         "x86_64-unknown-uefi",
     ],
 )
-use_repo(crate, "crate_index")
-use_repo(crate, "crate_index_efi")
+use_repo(
+    crate,
+    "crate_index",
+    "crate_index_efi",
+)
