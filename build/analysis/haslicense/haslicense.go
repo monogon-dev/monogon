@@ -27,14 +27,18 @@ var Analyzer = &analysis.Analyzer{
 			}
 
 			if len(file.Comments) > 0 {
-				var sb strings.Builder
-				for _, c := range file.Comments[0].List {
-					sb.WriteString(c.Text)
-					sb.WriteRune('\n')
+				var hasCopyright, hasSPDX bool
+				lines := strings.Split(file.Comments[0].Text(), "\n")
+				for _, line := range lines {
+					switch {
+					case strings.HasPrefix(line, "Copyright "):
+						hasCopyright = true
+					case strings.HasPrefix(line, "SPDX-License-Identifier"):
+						hasSPDX = true
+					}
 				}
-				sb.WriteRune('\n')
 
-				if strings.HasPrefix(sb.String(), header) {
+				if hasCopyright && hasSPDX {
 					continue
 				}
 			}
