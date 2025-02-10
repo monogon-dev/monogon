@@ -115,9 +115,13 @@ func readRequest(r io.Reader) (*connectRequest, error) {
 	}
 
 	var addrBytes []byte
+	var hostnameBytes []byte
 	switch header.Atyp {
 	case 1:
 		addrBytes = make([]byte, 4)
+	case 3:
+		// Variable-length string to resolve
+		addrBytes = make([]byte, 1)
 	case 4:
 		addrBytes = make([]byte, 16)
 	default:
@@ -127,20 +131,30 @@ func readRequest(r io.Reader) (*connectRequest, error) {
 		return nil, fmt.Errorf("when reading address: %w", err)
 	}
 
+	// Handle domain name addressing, required by for example Chrome
+	if header.Atyp == 3 {
+		hostnameBytes = make([]byte, addrBytes[0])
+		if _, err := io.ReadFull(r, hostnameBytes); err != nil {
+			return nil, fmt.Errorf("when reading address: %w", err)
+		}
+	}
+
 	var port uint16
 	if err := binary.Read(r, binary.BigEndian, &port); err != nil {
 		return nil, fmt.Errorf("when reading port: %w", err)
 	}
 
 	return &connectRequest{
-		address: addrBytes,
-		port:    port,
+		address:  addrBytes,
+		hostname: string(hostnameBytes),
+		port:     port,
 	}, nil
 }
 
 type connectRequest struct {
-	address net.IP
-	port    uint16
+	address  net.IP
+	hostname string
+	port     uint16
 }
 
 // Reply is an RFC1928 6. “Replies” reply field value. It's returned to the

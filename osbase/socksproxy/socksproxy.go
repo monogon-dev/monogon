@@ -52,6 +52,10 @@ type ConnectRequest struct {
 	// This address might be invalid/malformed/internal, and the Connect method
 	// should sanitize it before using it.
 	Address net.IP
+	// Hostname is a string that the client requested to connect to. Only set if
+	// Address is empty. Format and resolution rules are up to the implementer,
+	// a lot of clients only allow valid DNS labels.
+	Hostname string
 	// Port is the TCP port number that the client requested to connect to.
 	Port uint16
 }
@@ -105,7 +109,13 @@ type hostHandler struct{}
 
 func (h *hostHandler) Connect(ctx context.Context, req *ConnectRequest) *ConnectResponse {
 	port := fmt.Sprintf("%d", req.Port)
-	addr := net.JoinHostPort(req.Address.String(), port)
+	var host string
+	if req.Hostname != "" {
+		host = req.Hostname
+	} else {
+		host = req.Address.String()
+	}
+	addr := net.JoinHostPort(host, port)
 	s, err := net.Dial("tcp", addr)
 	if err != nil {
 		log.Printf("HostHandler could not dial %q: %v", addr, err)
@@ -192,8 +202,9 @@ func handle(ctx context.Context, handler Handler, con net.Conn) {
 
 	// Ask handler.Connect for a backend.
 	conRes := handler.Connect(ctxR, &ConnectRequest{
-		Address: req.address,
-		Port:    req.port,
+		Address:  req.address,
+		Hostname: req.hostname,
+		Port:     req.port,
 	})
 	// Handle programming error when returned value is nil.
 	if conRes == nil {

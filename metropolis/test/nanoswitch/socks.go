@@ -23,16 +23,29 @@ type socksHandler struct{}
 
 func (s *socksHandler) Connect(ctx context.Context, req *socksproxy.ConnectRequest) *socksproxy.ConnectResponse {
 	logger := supervisor.Logger(ctx)
-	target := net.JoinHostPort(req.Address.String(), fmt.Sprintf("%d", req.Port))
-
-	if len(req.Address) != 4 {
-		logger.Warningf("Connect %s: wrong address type", target)
-		return &socksproxy.ConnectResponse{
-			Error: socksproxy.ReplyAddressTypeNotSupported,
+	var target string
+	var addr net.IP
+	if req.Hostname == "" {
+		target = net.JoinHostPort(req.Address.String(), fmt.Sprintf("%d", req.Port))
+		if req.Address.To4() == nil {
+			logger.Warningf("Connect %s: wrong address type", target)
+			return &socksproxy.ConnectResponse{
+				Error: socksproxy.ReplyAddressTypeNotSupported,
+			}
 		}
+		addr = req.Address
+	} else {
+		target = net.JoinHostPort(req.Hostname, fmt.Sprintf("%d", req.Port))
+		ip, err := net.ResolveIPAddr("ip", req.Hostname)
+		if err != nil {
+			logger.Warningf("Connect %s: while resolving hostname: %v", target, err)
+			return &socksproxy.ConnectResponse{
+				Error: socksproxy.ReplyAddressTypeNotSupported,
+			}
+		}
+		addr = ip.IP
 	}
 
-	addr := req.Address
 	switchCIDR := net.IPNet{
 		IP:   switchIP.Mask(switchSubnetMask),
 		Mask: switchSubnetMask,
