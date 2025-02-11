@@ -36,11 +36,10 @@ single_version_override(
     module_name = "rules_rust",
     patch_strip = 1,
     patches = [
-        "//third_party/rules_rust:rust-uefi-platform.patch",
         "//third_party/rules_rust:rust-prost-nostd.patch",
         "//third_party/rules_rust:rust-reproducibility.patch",
     ],
-    version = "0.56.0",
+    version = "0.57.1",
 )
 
 bazel_dep(name = "rules_rust_prost")
@@ -50,10 +49,10 @@ single_version_override(
     patches = [
         "//third_party/rules_rust:rust-prost-nostd.patch",
     ],
-    version = "0.56.0",
+    version = "0.57.1",
 )
 
-bazel_dep(name = "rules_rust_protobuf", version = "0.56.0")
+bazel_dep(name = "rules_rust_protobuf", version = "0.57.1")
 bazel_dep(name = "zlib")
 single_version_override(
     module_name = "zlib",
