@@ -35,10 +35,10 @@ go_binary(
 node_initramfs(
     name = "initramfs",
     files = {
-        ":nanoswitch": "/init",
+        "/init": ":nanoswitch",
 
         # CA Certificate bundle
-        "@cacerts//file": "/etc/ssl/cert.pem",
+        "/etc/ssl/cert.pem": "@cacerts//file",
     },
     fsspecs = [
         "//osbase/build:earlydev.fsspec",

@@ -50,9 +50,9 @@ static_binary_tarball(
 node_initramfs(
     name = "initramfs",
     files = {
-        "//cloud/agent:agent": "/init",
-        "//osbase/net/dns:resolv.conf": "/etc/resolv.conf",
-        "@cacerts//file": "/etc/ssl/cert.pem",
+        "/init": "//cloud/agent:agent",
+        "/etc/resolv.conf": "//osbase/net/dns:resolv.conf",
+        "/etc/ssl/cert.pem": "@cacerts//file",
     },
     fsspecs = [
         "//osbase/build:earlydev.fsspec",

@@ -6,7 +6,7 @@ load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
 erofs_image(
     name = "rootfs",
     files = {
-        ":testos": "/init",
+        "/init": ":testos",
     },
 )
 

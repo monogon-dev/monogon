@@ -31,7 +31,7 @@ go_binary(
 node_initramfs(
     name = "initramfs",
     files = {
-        "//metropolis/installer": "/init",
+        "/init": "//metropolis/installer",
     },
     fsspecs = [
         "//osbase/build:earlydev.fsspec",

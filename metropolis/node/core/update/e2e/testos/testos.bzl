@@ -10,8 +10,8 @@ def testos(variant):
     erofs_image(
         name = "rootfs_" + variant,
         files = {
-            ":testos_" + variant: "/init",
-            "//osbase/net/dns:resolv.conf": "/etc/resolv.conf",
+            "/init": ":testos_" + variant,
+            "/etc/resolv.conf": "//osbase/net/dns:resolv.conf",
         },
         fsspecs = [
             "//osbase/build:earlydev.fsspec",

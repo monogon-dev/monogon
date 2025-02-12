@@ -30,7 +30,7 @@ def _ktest_impl(ctx):
     initramfs_name = ctx.label.name + ".cpio.zst"
     initramfs = ctx.actions.declare_file(initramfs_name)
 
-    fsspec_core_impl(ctx, ctx.executable._mkcpio, initramfs, [(ctx.attr._ktest_init[0], "/init"), (ctx.attr.tester[0], "/tester")], [ctx.attr._earlydev])
+    fsspec_core_impl(ctx, ctx.executable._mkcpio, initramfs, [("/init", ctx.attr._ktest_init[0]), ("/tester", ctx.attr.tester[0])], [ctx.attr._earlydev])
 
     script_file = ctx.actions.declare_file(ctx.label.name + ".sh")
 
@@ -65,7 +65,7 @@ k_test = rule(
             # Runs inside the given kernel, needs to be build for Linux/static
             cfg = build_static_transition,
         ),
-        "files": attr.label_keyed_string_dict(
+        "files": attr.string_keyed_label_dict(
             allow_files = True,
             doc = """
                 Dictionary of Labels to String, placing a given Label's output file in the initramfs at the location
@@ -74,7 +74,7 @@ k_test = rule(
             # Attach pure transition to ensure all binaries added to the initramfs are pure/static binaries.
             cfg = build_pure_transition,
         ),
-        "files_cc": attr.label_keyed_string_dict(
+        "files_cc": attr.string_keyed_label_dict(
             allow_files = True,
             doc = """
                  Special case of 'files' for compilation targets that need to be built with the musl toolchain like

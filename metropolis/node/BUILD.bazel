@@ -45,56 +45,56 @@ go_binary_with_tag(
 erofs_image(
     name = "rootfs",
     files = {
-        "//metropolis/node/core": "/core",
+        "/core": "//metropolis/node/core",
 
         # CA Certificate bundle & os-release & resolv.conf & hosts
         # These should not be explicitly used by Metropolis code and are only here for compatibility with
         # paths hardcoded by standard libraries (like Go's).
-        "@cacerts//file": "/etc/ssl/cert.pem",
-        "//metropolis/node:passwd": "/etc/passwd",
-        "//osbase/net/dns:resolv.conf": "/etc/resolv.conf",
-        "//osbase/net/dns:hosts": "/etc/hosts",
-        ":os-release-info": "/etc/os-release",
+        "/etc/ssl/cert.pem": "@cacerts//file",
+        "/etc/passwd": ":passwd",
+        "/etc/resolv.conf": "//osbase/net/dns:resolv.conf",
+        "/etc/hosts": "//osbase/net/dns:hosts",
+        "/etc/os-release": ":os-release-info",
 
         # Metrics exporters
-        "@com_github_prometheus_node_exporter//:node_exporter": "/metrics/bin/node_exporter",
+        "/metrics/bin/node_exporter": "@com_github_prometheus_node_exporter//:node_exporter",
 
         # Hyperkube
-        "//metropolis/node/kubernetes/hyperkube": "/kubernetes/bin/kube",
+        "/kubernetes/bin/kube": "//metropolis/node/kubernetes/hyperkube",
 
         # runsc/gVisor
-        "@dev_gvisor_gvisor//runsc": "/containerd/bin/runsc",
-        "@dev_gvisor_gvisor//shim": "/containerd/bin/containerd-shim-runsc-v1",
+        "/containerd/bin/runsc": "@dev_gvisor_gvisor//runsc",
+        "/containerd/bin/containerd-shim-runsc-v1": "@dev_gvisor_gvisor//shim",
 
         # runc (runtime in files_cc because of cgo)
-        "@com_github_containerd_containerd_v2//cmd/containerd-shim-runc-v2": "/containerd/bin/containerd-shim-runc-v2",
+        "/containerd/bin/containerd-shim-runc-v2": "@com_github_containerd_containerd_v2//cmd/containerd-shim-runc-v2",
 
         # Containerd
-        "@com_github_containerd_containerd_v2//cmd/containerd": "/containerd/bin/containerd",
+        "/containerd/bin/containerd": "@com_github_containerd_containerd_v2//cmd/containerd",
 
         # Containerd config files
-        "//metropolis/node/kubernetes/containerd:runsc.toml": "/containerd/conf/runsc.toml",
-        "//metropolis/node/kubernetes/containerd:config.toml": "/containerd/conf/config.toml",
-        "//metropolis/node/kubernetes/containerd:cnispec.gojson": "/containerd/conf/cnispec.gojson",
+        "/containerd/conf/runsc.toml": "//metropolis/node/kubernetes/containerd:runsc.toml",
+        "/containerd/conf/config.toml": "//metropolis/node/kubernetes/containerd:config.toml",
+        "/containerd/conf/cnispec.gojson": "//metropolis/node/kubernetes/containerd:cnispec.gojson",
 
         # Containerd preseed bundles
-        "//metropolis/test/e2e/preseedtest:preseedtest_tarball": "/containerd/preseed/k8s.io/preseedtest.tar",
-        "//metropolis/node/kubernetes/pause:pause_tarball": "/containerd/preseed/k8s.io/pause.tar",
+        "/containerd/preseed/k8s.io/preseedtest.tar": "//metropolis/test/e2e/preseedtest:preseedtest_tarball",
+        "/containerd/preseed/k8s.io/pause.tar": "//metropolis/node/kubernetes/pause:pause_tarball",
 
         # CNI Plugins
-        "@com_github_containernetworking_plugins//plugins/main/loopback": "/containerd/bin/cni/loopback",
-        "@com_github_containernetworking_plugins//plugins/main/ptp": "/containerd/bin/cni/ptp",
-        "@com_github_containernetworking_plugins//plugins/ipam/host-local": "/containerd/bin/cni/host-local",
+        "/containerd/bin/cni/loopback": "@com_github_containernetworking_plugins//plugins/main/loopback",
+        "/containerd/bin/cni/ptp": "@com_github_containernetworking_plugins//plugins/main/ptp",
+        "/containerd/bin/cni/host-local": "@com_github_containernetworking_plugins//plugins/ipam/host-local",
 
         # Delve
-        "@com_github_go_delve_delve//cmd/dlv:dlv": "/dlv",
+        "/dlv": "@com_github_go_delve_delve//cmd/dlv:dlv",
     },
     files_cc = {
-        "//metropolis/node/core/minit": "/init",
+        "/init": "//metropolis/node/core/minit",
         # runc runtime, with cgo
-        ":runc": "/containerd/bin/runc",
-        "@xfsprogs//:mkfs": "/bin/mkfs.xfs",
-        "@chrony//:chrony": "/time/chrony",
+        "/containerd/bin/runc": ":runc",
+        "/bin/mkfs.xfs": "@xfsprogs//:mkfs",
+        "/time/chrony": "@chrony//:chrony",
     },
     fsspecs = [
         ":erofs-layout.fsspec",

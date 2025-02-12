@@ -61,7 +61,7 @@ def fsspec_core_impl(ctx, tool, output_file, extra_files = [], extra_fsspecs = [
 
     fs_files = []
     inputs = []
-    for label, p in ctx.attr.files.items() + ctx.attr.files_cc.items() + extra_files:
+    for p, label in ctx.attr.files.items() + ctx.attr.files_cc.items() + extra_files:
         if not p.startswith("/"):
             fail("file {} invalid: must begin with /".format(p))
 
@@ -134,7 +134,7 @@ node_initramfs = rule(
         their permissions set to 0444. All parent directories will be created with 0755 permissions.
     """,
     attrs = {
-        "files": attr.label_keyed_string_dict(
+        "files": attr.string_keyed_label_dict(
             mandatory = True,
             allow_files = True,
             doc = """
@@ -144,7 +144,7 @@ node_initramfs = rule(
             # Attach pure transition to ensure all binaries added to the initramfs are pure/static binaries.
             cfg = build_pure_transition,
         ),
-        "files_cc": attr.label_keyed_string_dict(
+        "files_cc": attr.string_keyed_label_dict(
             allow_files = True,
             doc = """
                  Special case of 'files' for compilation targets that need to be built with the musl toolchain like
@@ -196,7 +196,7 @@ erofs_image = rule(
         their permissions set to 0444. All parent directories will be created with 0555 permissions.
     """,
     attrs = {
-        "files": attr.label_keyed_string_dict(
+        "files": attr.string_keyed_label_dict(
             mandatory = True,
             allow_files = True,
             doc = """
@@ -206,7 +206,7 @@ erofs_image = rule(
             # Attach pure transition to ensure all binaries added to the initramfs are pure/static binaries.
             cfg = build_pure_transition,
         ),
-        "files_cc": attr.label_keyed_string_dict(
+        "files_cc": attr.string_keyed_label_dict(
             allow_files = True,
             doc = """
                  Special case of 'files' for compilation targets that need to be built with the musl toolchain like

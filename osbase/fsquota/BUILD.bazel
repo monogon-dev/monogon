@@ -27,7 +27,7 @@ k_test(
     name = "ktest",
     cmdline = "ramdisk_size=51200",
     files_cc = {
-        "@xfsprogs//:mkfs": "/mkfs.xfs",
+        "/mkfs.xfs": "@xfsprogs//:mkfs",
     },
     tester = ":fsquota_test",
 )

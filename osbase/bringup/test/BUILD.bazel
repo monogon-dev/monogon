@@ -28,6 +28,7 @@ go_test(
     ],
 )
 
+# TODO(tim): Replace instances with macro
 go_library(
     name = "succeeded_lib",
     srcs = ["main_succeeded.go"],
@@ -53,7 +54,7 @@ go_binary(
 node_initramfs(
     name = "initramfs_succeeded",
     files = {
-        ":succeeded": "/init",
+        "/init": ":succeeded",
     },
     fsspecs = [
         "//osbase/build:earlydev.fsspec",
@@ -94,7 +95,7 @@ go_binary(
 node_initramfs(
     name = "initramfs_panic",
     files = {
-        ":panic": "/init",
+        "/init": ":panic",
     },
     fsspecs = [
         "//osbase/build:earlydev.fsspec",
@@ -135,7 +136,7 @@ go_binary(
 node_initramfs(
     name = "initramfs_error",
     files = {
-        ":error": "/init",
+        "/init": ":error",
     },
     fsspecs = [
         "//osbase/build:earlydev.fsspec",
