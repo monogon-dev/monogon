@@ -48,9 +48,9 @@ A node ID and exporter must be provided. Currently available exporters are:
 
 		// First connect to the main management service and figure out the node's IP
 		// address.
-		cc, err := dialAuthenticated(ctx)
+		cc, err := newAuthenticatedClient(ctx)
 		if err != nil {
-			return fmt.Errorf("while dialing node: %w", err)
+			return fmt.Errorf("while creating client: %w", err)
 		}
 		mgmt := api.NewManagementClient(cc)
 		nodes, err := core.GetNodes(ctx, mgmt, fmt.Sprintf("node.id == %q", args[0]))

@@ -65,9 +65,9 @@ func TestAgentCallbackService(t *testing.T) {
 		if err != nil {
 			t.Fatalf("could not generate ephemeral credentials: %v", err)
 		}
-		conn, err := grpc.Dial(s.ListenPublic, grpc.WithTransportCredentials(creds))
+		conn, err := grpc.NewClient(s.ListenPublic, grpc.WithTransportCredentials(creds))
 		if err != nil {
-			t.Fatalf("Dial failed: %v", err)
+			t.Fatalf("NewClient failed: %v", err)
 		}
 		defer conn.Close()
 
@@ -143,9 +143,9 @@ func TestOSInstallationFlow(t *testing.T) {
 		if err != nil {
 			t.Fatalf("could not generate ephemeral credentials: %v", err)
 		}
-		conn, err := grpc.Dial(s.ListenPublic, grpc.WithTransportCredentials(creds))
+		conn, err := grpc.NewClient(s.ListenPublic, grpc.WithTransportCredentials(creds))
 		if err != nil {
-			t.Fatalf("Dial failed: %v", err)
+			t.Fatalf("NewClient failed: %v", err)
 		}
 		defer conn.Close()
 

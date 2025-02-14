@@ -20,9 +20,9 @@ import (
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 )
 
-func dialAuthenticated(ctx context.Context) (*grpc.ClientConn, error) {
-	// Collect credentials, validate command parameters, and try dialing the
-	// cluster.
+func newAuthenticatedClient(ctx context.Context) (*grpc.ClientConn, error) {
+	// Collect credentials, validate command parameters, and create the grpc
+	// client.
 	ocert, opkey, err := core.GetOwnerCredentials(flags.configPath)
 	if errors.Is(err, core.ErrNoCredentials) {
 		return nil, fmt.Errorf("you have to take ownership of the cluster first: %w", err)
@@ -50,23 +50,23 @@ func dialAuthenticated(ctx context.Context) (*grpc.ClientConn, error) {
 	}
 	opts = append(opts, grpc.WithTransportCredentials(creds))
 
-	cc, err := grpc.Dial(resolver.MetropolisControlAddress, opts...)
+	cc, err := grpc.NewClient(resolver.MetropolisControlAddress, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("while dialing cluster: %w", err)
+		return nil, fmt.Errorf("while creating client: %w", err)
 	}
 	return cc, nil
 }
 
-func dialAuthenticatedNode(ctx context.Context, id, address string, cacert *x509.Certificate) (*grpc.ClientConn, error) {
-	// Collect credentials, validate command parameters, and try dialing the
-	// cluster.
+func newAuthenticatedNodeClient(ctx context.Context, id, address string, cacert *x509.Certificate) (*grpc.ClientConn, error) {
+	// Collect credentials, validate command parameters, and create the grpc
+	// client.
 	ocert, opkey, err := core.GetOwnerCredentials(flags.configPath)
 	if errors.Is(err, core.ErrNoCredentials) {
 		return nil, fmt.Errorf("you have to take ownership of the cluster first: %w", err)
 	}
-	cc, err := core.DialNode(ctx, opkey, ocert, cacert, flags.proxyAddr, id, address)
+	cc, err := core.NewNodeClient(ctx, opkey, ocert, cacert, flags.proxyAddr, id, address)
 	if err != nil {
-		return nil, fmt.Errorf("while dialing node: %w", err)
+		return nil, fmt.Errorf("while creating client: %w", err)
 	}
 	return cc, nil
 }

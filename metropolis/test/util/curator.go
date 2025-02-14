@@ -105,9 +105,9 @@ func MakeTestCurator(t *testing.T) (*TestCurator, *grpc.ClientConn) {
 	withLocalDialer := grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
 		return externalLis.Dial()
 	})
-	cl, err := grpc.Dial("local", withLocalDialer, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cl, err := grpc.NewClient("passthrough:///local", withLocalDialer, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		t.Fatalf("Dialing GRPC failed: %v", err)
+		t.Fatalf("Creating GRPC Client failed: %v", err)
 	}
 
 	return cur, cl

@@ -35,9 +35,9 @@ var nodeDescribeCmd = &cobra.Command{
 	Example: "metroctl node describe metropolis-c556e31c3fa2bf0a36e9ccb9fd5d6056",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		cc, err := dialAuthenticated(ctx)
+		cc, err := newAuthenticatedClient(ctx)
 		if err != nil {
-			return fmt.Errorf("while dialing node: %w", err)
+			return fmt.Errorf("while creating client: %w", err)
 		}
 		mgmt := apb.NewManagementClient(cc)
 
@@ -67,9 +67,9 @@ var nodeListCmd = &cobra.Command{
 	Example: "metroctl node list --filter node.status.external_address==\"10.8.0.2\"",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		cc, err := dialAuthenticated(ctx)
+		cc, err := newAuthenticatedClient(ctx)
 		if err != nil {
-			return fmt.Errorf("while dialing node: %w", err)
+			return fmt.Errorf("while creating client: %w", err)
 		}
 		mgmt := apb.NewManagementClient(cc)
 
@@ -130,7 +130,7 @@ var nodeUpdateCmd = &cobra.Command{
 			return fmt.Errorf("could not get CA certificate: %w", err)
 		}
 
-		conn, err := dialAuthenticated(ctx)
+		conn, err := newAuthenticatedClient(ctx)
 		if err != nil {
 			return err
 		}
@@ -182,9 +182,9 @@ var nodeUpdateCmd = &cobra.Command{
 
 			go func(n *apb.Node) {
 				defer wg.Done()
-				cc, err := dialAuthenticatedNode(ctx, n.Id, n.Status.ExternalAddress, cacert)
+				cc, err := newAuthenticatedNodeClient(ctx, n.Id, n.Status.ExternalAddress, cacert)
 				if err != nil {
-					log.Fatalf("failed to dial node: %v", err)
+					log.Fatalf("failed to create node client: %v", err)
 				}
 				nodeMgmt := apb.NewNodeManagementClient(cc)
 				log.Printf("sending update request to: %s (%s)", n.Id, n.Status.ExternalAddress)
@@ -258,7 +258,7 @@ var nodeDeleteCmd = &cobra.Command{
 		}
 
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		conn, err := dialAuthenticated(ctx)
+		conn, err := newAuthenticatedClient(ctx)
 		if err != nil {
 			return err
 		}
@@ -304,12 +304,12 @@ var nodeDeleteCmd = &cobra.Command{
 	Args: PrintUsageOnWrongArgs(cobra.ExactArgs(1)),
 }
 
-func dialNode(ctx context.Context, node string) (apb.NodeManagementClient, error) {
+func newNodeClient(ctx context.Context, node string) (apb.NodeManagementClient, error) {
 	// First connect to the main management service and figure out the node's IP
 	// address.
-	cc, err := dialAuthenticated(ctx)
+	cc, err := newAuthenticatedClient(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("while dialing node: %w", err)
+		return nil, fmt.Errorf("while creating client: %w", err)
 	}
 	mgmt := apb.NewManagementClient(cc)
 	nodes, err := core.GetNodes(ctx, mgmt, fmt.Sprintf("node.id == %q", node))
@@ -333,10 +333,10 @@ func dialNode(ctx context.Context, node string) (apb.NodeManagementClient, error
 		return nil, fmt.Errorf("could not get CA certificate: %w", err)
 	}
 
-	// Dial the actual node at its management port.
-	cl, err := dialAuthenticatedNode(ctx, n.Id, n.Status.ExternalAddress, cacert)
+	// Create a gprc client with the actual node and its management port.
+	cl, err := newAuthenticatedNodeClient(ctx, n.Id, n.Status.ExternalAddress, cacert)
 	if err != nil {
-		return nil, fmt.Errorf("while dialing node: %w", err)
+		return nil, fmt.Errorf("while creating client: %w", err)
 	}
 	nmgmt := apb.NewNodeManagementClient(cl)
 	return nmgmt, nil
@@ -392,9 +392,9 @@ It can also be used to reboot into the firmware (BIOS) setup UI by passing the
 			req.NextBoot = apb.RebootRequest_NEXT_BOOT_START_ROLLBACK
 		}
 
-		nmgmt, err := dialNode(ctx, args[0])
+		nmgmt, err := newNodeClient(ctx, args[0])
 		if err != nil {
-			return fmt.Errorf("failed to dial node: %w", err)
+			return fmt.Errorf("failed to create node client: %w", err)
 		}
 
 		if _, err := nmgmt.Reboot(ctx, &req); err != nil {
@@ -414,7 +414,7 @@ var nodePoweroffCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 
-		nmgmt, err := dialNode(ctx, args[0])
+		nmgmt, err := newNodeClient(ctx, args[0])
 		if err != nil {
 			return err
 		}

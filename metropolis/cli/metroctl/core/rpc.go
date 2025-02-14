@@ -53,7 +53,7 @@ func DialOpts(ctx context.Context, c *ConnectOptions) ([]grpc.DialOption, error)
 	return opts, nil
 }
 
-func DialNode(ctx context.Context, opkey ed25519.PrivateKey, ocert, ca *x509.Certificate, proxyAddr, nodeId, nodeAddr string) (*grpc.ClientConn, error) {
+func NewNodeClient(ctx context.Context, opkey ed25519.PrivateKey, ocert, ca *x509.Certificate, proxyAddr, nodeId, nodeAddr string) (*grpc.ClientConn, error) {
 	var dialOpts []grpc.DialOption
 
 	if opkey == nil {
@@ -77,7 +77,7 @@ func DialNode(ctx context.Context, opkey ed25519.PrivateKey, ocert, ca *x509.Cer
 	dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
 
 	endpoint := net.JoinHostPort(nodeAddr, node.NodeManagementPort.PortString())
-	return grpc.Dial(endpoint, dialOpts...)
+	return grpc.NewClient(endpoint, dialOpts...)
 }
 
 // GetNodes retrieves node records, filtered by the supplied node filter

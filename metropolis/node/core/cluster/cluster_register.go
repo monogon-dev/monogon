@@ -35,7 +35,7 @@ import (
 // test multiple nodes in a cluster. It does notably not run either
 // etcd/consensus or the curator, which also prevents Kubernetes from running.
 func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_ClusterRegister) error {
-	//// Do a validation pass on the provided NodeParameters.Register data, fail early
+	// Do a validation pass on the provided NodeParameters.Register data, fail early
 	// if it looks invalid.
 	ca, err := x509.ParseCertificate(register.CaCertificate)
 	if err != nil {
@@ -90,9 +90,9 @@ func (m *Manager) register(ctx context.Context, register *apb.NodeParameters_Clu
 	if err != nil {
 		return fmt.Errorf("could not create ephemeral credentials: %w", err)
 	}
-	eph, err := grpc.Dial(resolver.MetropolisControlAddress, grpc.WithTransportCredentials(ephCreds), grpc.WithResolvers(r))
+	eph, err := grpc.NewClient(resolver.MetropolisControlAddress, grpc.WithTransportCredentials(ephCreds), grpc.WithResolvers(r))
 	if err != nil {
-		return fmt.Errorf("could not dial cluster with ephemeral credentials: %w", err)
+		return fmt.Errorf("could not create client with ephemeral credentials: %w", err)
 	}
 	cur := ipb.NewCuratorClient(eph)
 

@@ -222,10 +222,10 @@ func (r *Resolver) runCuratorUpdater(ctx context.Context, opts []grpc.DialOption
 		Time:    10 * time.Second,
 		Timeout: 5 * time.Second,
 	}))
-	cl, err := grpc.Dial(MetropolisControlAddress, opts...)
+	cl, err := grpc.NewClient(MetropolisControlAddress, opts...)
 	if err != nil {
 		// This generally shouldn't happen.
-		return fmt.Errorf("could not dial gRPC: %w", err)
+		return fmt.Errorf("could not create gRPC client: %w", err)
 	}
 	defer cl.Close()
 
@@ -342,9 +342,9 @@ func (r *Resolver) watchLeaderVia(ctx context.Context, via string, opts []grpc.D
 		Timeout:             5 * time.Second,
 		PermitWithoutStream: true,
 	}))
-	cl, err := grpc.Dial(via, opts...)
+	cl, err := grpc.NewClient(via, opts...)
 	if err != nil {
-		r.logger.Infof("WATCHLEADER: dialing %s failed: %v", via, err)
+		r.logger.Infof("WATCHLEADER: creating client %s failed: %v", via, err)
 		return false
 	}
 	defer cl.Close()

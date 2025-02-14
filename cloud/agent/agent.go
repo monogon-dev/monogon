@@ -96,12 +96,12 @@ func agentRunnable(ctx context.Context) error {
 		rootCAs.AddCert(caCert)
 	}
 
-	conn, err := grpc.Dial(agentInit.TakeoverInit.BmaasEndpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
+	conn, err := grpc.NewClient(agentInit.TakeoverInit.BmaasEndpoint, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
 		Certificates: []tls.Certificate{*ephemeralCert},
 		RootCAs:      rootCAs,
 	})))
 	if err != nil {
-		return fmt.Errorf("error dialing BMaaS gRPC endpoint: %w", err)
+		return fmt.Errorf("error creating BMaaS gRPC client: %w", err)
 	}
 	c := bpb.NewAgentCallbackClient(conn)
 

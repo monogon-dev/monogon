@@ -114,9 +114,9 @@ func TestWorkerStatusPush(t *testing.T) {
 	withLocalDialer := grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
 		return lis.Dial()
 	})
-	cl, err := grpc.Dial("local", withLocalDialer, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cl, err := grpc.NewClient("passthrough:///local", withLocalDialer, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		t.Fatalf("Dial failed: %v", err)
+		t.Fatalf("NewClient failed: %v", err)
 	}
 	defer cl.Close()
 

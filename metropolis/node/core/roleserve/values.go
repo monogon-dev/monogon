@@ -53,9 +53,9 @@ type CuratorConnection struct {
 
 func newCuratorConnection(creds *identity.NodeCredentials, res *resolver.Resolver) *CuratorConnection {
 	c := rpc.NewAuthenticatedCredentials(creds.TLSCredentials(), rpc.WantRemoteCluster(creds.ClusterCA()))
-	conn, err := grpc.Dial(resolver.MetropolisControlAddress, grpc.WithTransportCredentials(c), grpc.WithResolvers(res))
+	conn, err := grpc.NewClient(resolver.MetropolisControlAddress, grpc.WithTransportCredentials(c), grpc.WithResolvers(res))
 	if err != nil {
-		// TOOD(q3k): triple check that Dial will not fail
+		// TODO: triple check that NewClient will not fail
 		panic(err)
 	}
 	return &CuratorConnection{

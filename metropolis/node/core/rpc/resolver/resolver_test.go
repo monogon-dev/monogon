@@ -176,9 +176,10 @@ func TestResolverSimple(t *testing.T) {
 		Certificates:       []tls.Certificate{eph.Manager},
 		InsecureSkipVerify: true,
 	})
-	cl, err := grpc.Dial("metropolis:///control", grpc.WithTransportCredentials(creds), grpc.WithResolvers(r))
+
+	cl, err := grpc.NewClient(MetropolisControlAddress, grpc.WithTransportCredentials(creds), grpc.WithResolvers(r))
 	if err != nil {
-		t.Fatalf("Could not dial: %v", err)
+		t.Fatalf("Could not create client: %v", err)
 	}
 
 	// Test logic follows.

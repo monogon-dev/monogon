@@ -103,9 +103,9 @@ Available configuration fields:
 		}
 
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		cc, err := dialAuthenticated(ctx)
+		cc, err := newAuthenticatedClient(ctx)
 		if err != nil {
-			return fmt.Errorf("while dialing node: %w", err)
+			return fmt.Errorf("while creating client: %w", err)
 		}
 		mgmt := apb.NewManagementClient(cc)
 

@@ -66,11 +66,11 @@ func TestExternalServerSecurity(t *testing.T) {
 	})
 
 	// Authenticate as manager externally, ensure that GetRegisterTicket runs.
-	cl, err := grpc.Dial("local",
+	cl, err := grpc.NewClient("passthrough:///local",
 		grpc.WithTransportCredentials(NewAuthenticatedCredentials(eph.Manager, WantRemoteCluster(eph.CA))),
 		withLocalDialer)
 	if err != nil {
-		t.Fatalf("Dial: %v", err)
+		t.Fatalf("NewClient: %v", err)
 	}
 	defer cl.Close()
 	mgmt := apb.NewManagementClient(cl)
@@ -81,11 +81,11 @@ func TestExternalServerSecurity(t *testing.T) {
 
 	// Authenticate as node externally, ensure that GetRegisterTicket is refused
 	// (this is because nodes miss the GET_REGISTER_TICKET permissions).
-	cl, err = grpc.Dial("local",
+	cl, err = grpc.NewClient("passthrough:///local",
 		grpc.WithTransportCredentials(NewAuthenticatedCredentials(eph.Nodes[0].TLSCredentials(), WantRemoteCluster(eph.CA))),
 		withLocalDialer)
 	if err != nil {
-		t.Fatalf("Dial: %v", err)
+		t.Fatalf("NewClient: %v", err)
 	}
 	defer cl.Close()
 	mgmt = apb.NewManagementClient(cl)
@@ -114,9 +114,9 @@ func TestExternalServerSecurity(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewEphemeralCredentials: %v", err)
 	}
-	cl, err = grpc.Dial("local", grpc.WithTransportCredentials(ephCreds), withLocalDialer)
+	cl, err = grpc.NewClient("passthrough:///local", grpc.WithTransportCredentials(ephCreds), withLocalDialer)
 	if err != nil {
-		t.Fatalf("Dial: %v", err)
+		t.Fatalf("NewClient: %v", err)
 	}
 	defer cl.Close()
 	mgmt = apb.NewManagementClient(cl)

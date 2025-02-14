@@ -104,10 +104,10 @@ func TestE2ECore(t *testing.T) {
 
 	// Dial first node's curator.
 	creds := rpc.NewAuthenticatedCredentials(cluster.Owner, rpc.WantInsecure())
-	remote := net.JoinHostPort(cluster.NodeIDs[0], common.CuratorServicePort.PortString())
-	cl, err := grpc.Dial(remote, grpc.WithContextDialer(cluster.DialNode), grpc.WithTransportCredentials(creds))
+	remote := net.JoinHostPort(cluster.Nodes[cluster.NodeIDs[0]].ManagementAddress, common.CuratorServicePort.PortString())
+	cl, err := grpc.NewClient(remote, grpc.WithContextDialer(cluster.DialNode), grpc.WithTransportCredentials(creds))
 	if err != nil {
-		t.Fatalf("failed to dial first node's curator: %v", err)
+		t.Fatalf("failed to create first node's curator client: %v", err)
 	}
 	defer cl.Close()
 	mgmt := apb.NewManagementClient(cl)

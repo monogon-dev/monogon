@@ -63,9 +63,9 @@ func (m *Manager) join(ctx context.Context, sc *ppb.SealedConfiguration, cd *cpb
 	if err != nil {
 		return fmt.Errorf("could not create ephemeral credentials: %w", err)
 	}
-	eph, err := grpc.Dial(resolver.MetropolisControlAddress, grpc.WithTransportCredentials(ephCreds), grpc.WithResolvers(r))
+	eph, err := grpc.NewClient(resolver.MetropolisControlAddress, grpc.WithTransportCredentials(ephCreds), grpc.WithResolvers(r))
 	if err != nil {
-		return fmt.Errorf("could not dial cluster with join credentials: %w", err)
+		return fmt.Errorf("could not create client with join credentials: %w", err)
 	}
 	cur := ipb.NewCuratorClient(eph)
 

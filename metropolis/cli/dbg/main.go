@@ -29,9 +29,9 @@ func main() {
 	ctx := context.Background()
 	// Hardcode localhost since this should never be used to interface with a
 	// production node because of missing encryption & authentication
-	grpcClient, err := grpc.Dial("localhost:7837", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcClient, err := grpc.NewClient("localhost:7837", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		fmt.Printf("Failed to dial debug service (is it running): %v\n", err)
+		fmt.Printf("Failed create debug service: %v\n", err)
 	}
 	debugClient := apb.NewNodeDebugServiceClient(grpcClient)
 	if len(os.Args) < 2 {

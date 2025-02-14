@@ -206,20 +206,16 @@ func (c *Cluster) CuratorClient() (*grpc.ClientConn, error) {
 		r := resolver.New(c.ctxT, resolver.WithLogger(logging.NewFunctionBackend(func(severity logging.Severity, msg string) {
 			launch.Log("Cluster: client resolver: %s: %s", severity, msg)
 		})))
-		for _, n := range c.NodeIDs {
-			ep, err := resolver.NodeWithDefaultPort(n)
-			if err != nil {
-				return nil, fmt.Errorf("could not add node %q by DNS: %w", n, err)
-			}
-			r.AddEndpoint(ep)
+		for _, n := range c.Nodes {
+			r.AddEndpoint(resolver.NodeAtAddressWithDefaultPort(n.ManagementAddress))
 		}
-		authClient, err := grpc.Dial(resolver.MetropolisControlAddress,
+		authClient, err := grpc.NewClient(resolver.MetropolisControlAddress,
 			grpc.WithTransportCredentials(authCreds),
 			grpc.WithResolvers(r),
 			grpc.WithContextDialer(c.DialNode),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("dialing with owner credentials failed: %w", err)
+			return nil, fmt.Errorf("creating client with owner credentials failed: %w", err)
 		}
 		c.authClient = authClient
 	}
@@ -651,12 +647,13 @@ type Cluster struct {
 
 // NodeInCluster represents information about a node that's part of a Cluster.
 type NodeInCluster struct {
-	// ID of the node, which can be used to dial this node's services via DialNode.
+	// ID of the node, which can be used to dial this node's services via
+	// NewNodeClient.
 	ID     string
 	Pubkey []byte
-	// Address of the node on the network ran by nanoswitch. Not reachable from the
-	// host unless dialed via DialNode or via the nanoswitch SOCKS proxy (reachable
-	// on Cluster.Ports[SOCKSPort]).
+	// Address of the node on the network ran by nanoswitch. Not reachable from
+	// the host unless dialed via NewNodeClient or via the nanoswitch SOCKS
+	// proxy (reachable on Cluster.Ports[SOCKSPort]).
 	ManagementAddress string
 }
 
@@ -677,9 +674,9 @@ func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certif
 	initDialer := func(_ context.Context, addr string) (net.Conn, error) {
 		return socksDialer.Dial("tcp", addr)
 	}
-	initClient, err := grpc.Dial(remote, grpc.WithContextDialer(initDialer), grpc.WithTransportCredentials(initCreds))
+	initClient, err := grpc.NewClient(remote, grpc.WithContextDialer(initDialer), grpc.WithTransportCredentials(initCreds))
 	if err != nil {
-		return nil, nil, fmt.Errorf("dialing with ephemeral credentials failed: %w", err)
+		return nil, nil, fmt.Errorf("creating client with ephemeral credentials failed: %w", err)
 	}
 	defer initClient.Close()
 
@@ -705,9 +702,9 @@ func firstConnection(ctx context.Context, socksDialer proxy.Dialer) (*tls.Certif
 
 	// Now connect authenticated and get the node ID.
 	creds := rpc.NewAuthenticatedCredentials(*cert, rpc.WantInsecure())
-	authClient, err := grpc.Dial(remote, grpc.WithContextDialer(initDialer), grpc.WithTransportCredentials(creds))
+	authClient, err := grpc.NewClient(remote, grpc.WithContextDialer(initDialer), grpc.WithTransportCredentials(creds))
 	if err != nil {
-		return nil, nil, fmt.Errorf("dialing with owner credentials failed: %w", err)
+		return nil, nil, fmt.Errorf("creating client with owner credentials failed: %w", err)
 	}
 	defer authClient.Close()
 	mgmt := apb.NewManagementClient(authClient)
@@ -1258,7 +1255,7 @@ func (c *Cluster) Close() error {
 //
 // For example:
 //
-//	grpc.Dial("metropolis-deadbeef:1234", grpc.WithContextDialer(c.DialNode))
+//	grpc.NewClient("passthrough:///metropolis-deadbeef:1234", grpc.WithContextDialer(c.DialNode))
 func (c *Cluster) DialNode(_ context.Context, addr string) (net.Conn, error) {
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {

@@ -64,9 +64,9 @@ endpoint must be provided with the --endpoints parameter.`,
 		}
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 
-		cc, err := grpc.Dial(resolver.MetropolisControlAddress, opts...)
+		cc, err := grpc.NewClient(resolver.MetropolisControlAddress, opts...)
 		if err != nil {
-			return fmt.Errorf("while dialing the cluster: %w", err)
+			return fmt.Errorf("while creating client: %w", err)
 		}
 		aaa := apb.NewAAAClient(cc)
 

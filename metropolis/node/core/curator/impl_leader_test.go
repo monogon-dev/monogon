@@ -243,17 +243,17 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 	// Create an authenticated manager gRPC client.
 	creds := rpc.NewAuthenticatedCredentials(ownerCreds, rpc.WantRemoteCluster(ca))
 	gcreds := grpc.WithTransportCredentials(creds)
-	mcl, err := grpc.Dial("local", withLocalDialer, gcreds)
+	mcl, err := grpc.NewClient("passthrough:///local", withLocalDialer, gcreds)
 	if err != nil {
-		t.Fatalf("Dialing external GRPC failed: %v", err)
+		t.Fatalf("Creating external GRPC client failed: %v", err)
 	}
 
 	// Create a node gRPC client for the local node.
 	creds = rpc.NewAuthenticatedCredentials(nodeCredentials.TLSCredentials(), rpc.WantRemoteCluster(ca))
 	gcreds = grpc.WithTransportCredentials(creds)
-	lcl, err := grpc.Dial("local", withLocalDialer, gcreds)
+	lcl, err := grpc.NewClient("passthrough:///local", withLocalDialer, gcreds)
 	if err != nil {
-		t.Fatalf("Dialing external GRPC failed: %v", err)
+		t.Fatalf("Creating external GRPC client failed: %v", err)
 	}
 
 	// Create an ephemeral node gRPC client for the 'other node'.
@@ -261,9 +261,9 @@ func fakeLeader(t *testing.T, opts ...*fakeLeaderOption) fakeLeaderData {
 	if err != nil {
 		t.Fatalf("NewEphemeralCredentials: %v", err)
 	}
-	ocl, err := grpc.Dial("local", withLocalDialer, grpc.WithTransportCredentials(otherEphCreds))
+	ocl, err := grpc.NewClient("passthrough:///local", withLocalDialer, grpc.WithTransportCredentials(otherEphCreds))
 	if err != nil {
-		t.Fatalf("Dialing external GRPC failed: %v", err)
+		t.Fatalf("Creating external GRPC client failed: %v", err)
 	}
 
 	// Close the clients on context cancel.
@@ -858,9 +858,9 @@ func TestJoin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewEphemeralCredentials: %v", err)
 	}
-	eph, err := grpc.Dial("local", withLocalDialer, grpc.WithTransportCredentials(ephCreds))
+	eph, err := grpc.NewClient("passthrough:///local", withLocalDialer, grpc.WithTransportCredentials(ephCreds))
 	if err != nil {
-		t.Fatalf("Dialing external GRPC failed: %v", err)
+		t.Fatalf("Creating external GRPC client failed: %v", err)
 	}
 	cur := ipb.NewCuratorClient(eph)
 	jr, err := cur.JoinNode(ctx, &ipb.JoinNodeRequest{
@@ -1794,9 +1794,9 @@ func TestClusterTPMModeSetting(t *testing.T) {
 			withLocalDialer := grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
 				return cl.curatorLis.Dial()
 			})
-			eph, err := grpc.Dial("local", withLocalDialer, grpc.WithTransportCredentials(ephCreds))
+			eph, err := grpc.NewClient("passthrough:///local", withLocalDialer, grpc.WithTransportCredentials(ephCreds))
 			if err != nil {
-				t.Fatalf("Dialing external GRPC failed: %v", err)
+				t.Fatalf("Creating external GRPC client failed: %v", err)
 			}
 			t.Cleanup(func() {
 				eph.Close()

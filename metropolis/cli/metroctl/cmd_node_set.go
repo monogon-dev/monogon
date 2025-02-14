@@ -34,9 +34,9 @@ var addRoleCmd = &cobra.Command{
 	Args:    PrintUsageOnWrongArgs(cobra.MinimumNArgs(2)),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		cc, err := dialAuthenticated(ctx)
+		cc, err := newAuthenticatedClient(ctx)
 		if err != nil {
-			return fmt.Errorf("while dialing node: %w", err)
+			return fmt.Errorf("while creating client: %w", err)
 		}
 		mgmt := api.NewManagementClient(cc)
 
@@ -78,9 +78,9 @@ var removeRoleCmd = &cobra.Command{
 	Args:    PrintUsageOnWrongArgs(cobra.ArbitraryArgs),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		cc, err := dialAuthenticated(ctx)
+		cc, err := newAuthenticatedClient(ctx)
 		if err != nil {
-			return fmt.Errorf("while dialing node: %w", err)
+			return fmt.Errorf("while creating client: %w", err)
 		}
 		mgmt := api.NewManagementClient(cc)
 

@@ -86,9 +86,9 @@ func makeNodeParams() (*api.NodeParameters, error) {
 			},
 		}
 	} else {
-		cc, err := dialAuthenticated(ctx)
+		cc, err := newAuthenticatedClient(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("while dialing node: %w", err)
+			return nil, fmt.Errorf("while creating client: %w", err)
 		}
 		mgmt := api.NewManagementClient(cc)
 		resT, err := mgmt.GetRegisterTicket(ctx, &api.GetRegisterTicketRequest{})

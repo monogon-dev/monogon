@@ -156,9 +156,9 @@ func GetClusterCAWithTOFU(ctx context.Context, c *ConnectOptions) (*x509.Certifi
 		return nil, err
 	}
 	opts = append(opts, grpc.WithTransportCredentials(creds))
-	cc, err := grpc.Dial(resolver.MetropolisControlAddress, opts...)
+	cc, err := grpc.NewClient(resolver.MetropolisControlAddress, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("while dialing cluster to retrieve CA: %w", err)
+		return nil, fmt.Errorf("while creating grpc client: %w", err)
 	}
 	cur := ipb.NewCuratorLocalClient(cc)
 	res, err := cur.GetCACertificate(ctx, &ipb.GetCACertificateRequest{})
