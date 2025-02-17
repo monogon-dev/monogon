@@ -1,4 +1,4 @@
-From 884ecf096ba58528cca2a4c4be4b30089036a55a Mon Sep 17 00:00:00 2001
+From c3812bf1e990bdb282fd27cfa3dc3987e5a80607 Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
 Date: Thu, 12 Sep 2024 17:22:04 +0200
 Subject: [PATCH] net: add config option for tunnel fallback devs
@@ -18,10 +18,10 @@ additional actions.
  2 files changed, 34 insertions(+), 1 deletion(-)
 
 diff --git a/net/Kconfig b/net/Kconfig
-index d27d0deac0bf..bc3f70f81b5e 100644
+index a629f92dc86b..13d508908a66 100644
 --- a/net/Kconfig
 +++ b/net/Kconfig
-@@ -447,6 +447,39 @@ config LWTUNNEL_BPF
+@@ -453,6 +453,39 @@ config LWTUNNEL_BPF
  	  Allows to run BPF programs as a nexthop action following a route
  	  lookup for incoming and outgoing packets.
  
@@ -62,7 +62,7 @@ index d27d0deac0bf..bc3f70f81b5e 100644
  	bool
  	default n
 diff --git a/net/core/sysctl_net_core.c b/net/core/sysctl_net_core.c
-index 86a2476678c4..d9a0b13ceb4a 100644
+index 5dd54a813398..45d0d5dab5ff 100644
 --- a/net/core/sysctl_net_core.c
 +++ b/net/core/sysctl_net_core.c
 @@ -37,7 +37,7 @@ static int min_mem_pcpu_rsv = SK_MEMORY_PCPU_RESERVE;
@@ -75,5 +75,5 @@ index 86a2476678c4..d9a0b13ceb4a 100644
  
  /* 0 - Keep current behavior:
 -- 
-2.44.1
+2.47.2
 

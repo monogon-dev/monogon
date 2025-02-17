@@ -1,3 +1,4 @@
+
 A few virtual drivers (bonding, dummy) predate netlink (~2003), which means that
 the kernel had no way to dynamically create network interfaces.
 The solution was kernel module paramter which statically precreated a list of

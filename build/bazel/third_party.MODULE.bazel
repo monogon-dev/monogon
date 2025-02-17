@@ -113,12 +113,12 @@ http_archive(
     urls = ["https://github.com/monogon-dev/gperf/archive/%s.tar.gz" % GPERF_VERSION],
 )
 
-LINUX_VERSION = "6.6.71"
+LINUX_VERSION = "6.12.15"
 
 http_archive(
     name = "linux",
     build_file = "//third_party/linux:linux.bzl",
-    integrity = "sha256-IZcVui3PplOfugmtP5ISdy81Bxietg13+OibBsMuck4=",
+    integrity = "sha256-X/W9hOoOIsU0NzAttdOU0Kkti4saiM4g0QmCmOn3Ywo=",
     patch_args = ["-p1"],
     patches = [
         "//third_party/linux/patches:0001-block-partition-expose-PARTUUID-through-uevent.patch",
