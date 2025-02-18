@@ -18,7 +18,8 @@
 Ktest provides a macro to run tests under a normal Metropolis node kernel
 """
 
-load("//osbase/build:def.bzl", "FSSpecInfo", "build_pure_transition", "build_static_transition", "fsspec_core_impl")
+load("//osbase/build:def.bzl", "build_pure_transition", "build_static_transition")
+load("//osbase/build/fsspec:def.bzl", "FSSpecInfo", "fsspec_core_impl")
 
 _KTEST_SCRIPT = """
 #!/usr/bin/env bash

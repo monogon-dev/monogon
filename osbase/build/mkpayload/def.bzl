@@ -4,7 +4,7 @@ See https://systemd.io/BOOT_LOADER_SPECIFICATION/#type-2-efi-unified-kernel-imag
 """
 
 load("//build/toolchain/llvm-efi:transition.bzl", "build_efi_transition")
-load("//osbase/build:def.bzl", "VerityInfo")
+load("//osbase/build/mkverity:def.bzl", "VerityInfo")
 
 def _efi_unified_kernel_image_impl(ctx):
     # Find the dependency paths to be passed to mkpayload.

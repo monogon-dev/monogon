@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_test")
-load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
+load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
 
 go_test(
     name = "test_test",

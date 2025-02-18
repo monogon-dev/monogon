@@ -1,6 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
-load("//osbase/build:def.bzl", "node_initramfs")
-load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
+load("//osbase/build/mkcpio:def.bzl", "node_initramfs")
+load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
 
 go_test(
     name = "test_test",

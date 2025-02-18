@@ -1,4 +1,4 @@
-load("//osbase/build:def.bzl", "FSSpecInfo")
+load("//osbase/build/fsspec:def.bzl", "FSSpecInfo")
 
 def _fsspec_linux_firmware(ctx):
     fsspec_out = ctx.actions.declare_file(ctx.label.name + ".prototxt")

@@ -1,7 +1,8 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
-load("//osbase/build:def.bzl", "erofs_image", "verity_image")
-load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
+load("//osbase/build/mkerofs:def.bzl", "erofs_image")
+load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
+load("//osbase/build/mkverity:def.bzl", "verity_image")
 
 erofs_image(
     name = "rootfs",

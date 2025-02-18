@@ -1,8 +1,9 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
 load("@rules_pkg//:mappings.bzl", "pkg_files")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
-load("//osbase/build:def.bzl", "erofs_image", "verity_image")
-load("//osbase/build:efi.bzl", "efi_unified_kernel_image")
+load("//osbase/build/mkerofs:def.bzl", "erofs_image")
+load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
+load("//osbase/build/mkverity:def.bzl", "verity_image")
 
 # Macro for generating multiple TestOS instances to check if the updater works.
 # buildifier: disable=unnamed-macro
