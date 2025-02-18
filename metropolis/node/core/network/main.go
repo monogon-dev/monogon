@@ -296,10 +296,7 @@ func (s *Service) Run(ctx context.Context) error {
 				Register: 8,
 				Data:     binaryutil.NativeEndian.PutUint32(node.LinkGroupClusternet),
 			},
-			&expr.Masq{
-				FullyRandom: true,
-				Persistent:  true,
-			},
+			&expr.Masq{},
 		},
 	})
 
