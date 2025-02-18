@@ -1,6 +1,11 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
-load("//osbase/build/mkcpio:def.bzl", "node_initramfs")
-load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+load(":bringup.bzl", "bringup_test")
+
+bringup_test(variant = "succeeded")
+
+bringup_test(variant = "error")
+
+bringup_test(variant = "panic")
 
 go_test(
     name = "test_test",
@@ -26,128 +31,4 @@ go_test(
         "//osbase/cmd",
         "@io_bazel_rules_go//go/runfiles",
     ],
-)
-
-# TODO(tim): Replace instances with macro
-go_library(
-    name = "succeeded_lib",
-    srcs = ["main_succeeded.go"],
-    importpath = "source.monogon.dev/osbase/bringup/test",
-    visibility = ["//visibility:private"],
-    deps = [
-        "//osbase/bootparam",
-        "//osbase/bringup",
-        "//osbase/efivarfs",
-        "//osbase/logtree",
-        "//osbase/supervisor",
-        "@org_golang_x_sys//unix",
-        "@org_uber_go_multierr//:multierr",
-    ],
-)
-
-go_binary(
-    name = "succeeded",
-    embed = [":succeeded_lib"],
-    visibility = ["//visibility:private"],
-)
-
-node_initramfs(
-    name = "initramfs_succeeded",
-    files = {
-        "/init": ":succeeded",
-    },
-    fsspecs = [
-        "//osbase/build:earlydev.fsspec",
-    ],
-    visibility = ["//visibility:private"],
-)
-
-efi_unified_kernel_image(
-    name = "kernel_succeeded",
-    cmdline = "quiet console=ttyS0 init=/init",
-    initrd = [":initramfs_succeeded"],
-    kernel = "//third_party/linux",
-    visibility = ["//visibility:private"],
-)
-
-go_library(
-    name = "panic_lib",
-    srcs = ["main_panic.go"],
-    importpath = "source.monogon.dev/osbase/bringup/test",
-    visibility = ["//visibility:private"],
-    deps = [
-        "//osbase/bootparam",
-        "//osbase/bringup",
-        "//osbase/efivarfs",
-        "//osbase/logtree",
-        "//osbase/supervisor",
-        "@org_golang_x_sys//unix",
-        "@org_uber_go_multierr//:multierr",
-    ],
-)
-
-go_binary(
-    name = "panic",
-    embed = [":panic_lib"],
-    visibility = ["//visibility:private"],
-)
-
-node_initramfs(
-    name = "initramfs_panic",
-    files = {
-        "/init": ":panic",
-    },
-    fsspecs = [
-        "//osbase/build:earlydev.fsspec",
-    ],
-    visibility = ["//visibility:private"],
-)
-
-efi_unified_kernel_image(
-    name = "kernel_panic",
-    cmdline = "quiet console=ttyS0 init=/init",
-    initrd = [":initramfs_panic"],
-    kernel = "//third_party/linux",
-    visibility = ["//visibility:private"],
-)
-
-go_library(
-    name = "error_lib",
-    srcs = ["main_error.go"],
-    importpath = "source.monogon.dev/osbase/bringup/test",
-    visibility = ["//visibility:private"],
-    deps = [
-        "//osbase/bootparam",
-        "//osbase/bringup",
-        "//osbase/efivarfs",
-        "//osbase/logtree",
-        "//osbase/supervisor",
-        "@org_golang_x_sys//unix",
-        "@org_uber_go_multierr//:multierr",
-    ],
-)
-
-go_binary(
-    name = "error",
-    embed = [":error_lib"],
-    visibility = ["//visibility:private"],
-)
-
-node_initramfs(
-    name = "initramfs_error",
-    files = {
-        "/init": ":error",
-    },
-    fsspecs = [
-        "//osbase/build:earlydev.fsspec",
-    ],
-    visibility = ["//visibility:private"],
-)
-
-efi_unified_kernel_image(
-    name = "kernel_error",
-    cmdline = "quiet console=ttyS0 init=/init",
-    initrd = [":initramfs_error"],
-    kernel = "//third_party/linux",
-    visibility = ["//visibility:private"],
 )
