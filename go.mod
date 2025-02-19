@@ -58,7 +58,7 @@ replace github.com/prometheus/procfs => github.com/prometheus/procfs v0.14.0
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1
 	cloud.google.com/go/storage v1.43.0
-	git.dolansoft.org/dolansoft/k8s-nft-npc v0.0.0-20250205205926-b7f770fa8391
+	git.dolansoft.org/dolansoft/k8s-nft-npc v0.0.0-20250227164540-47778d43dcec
 	github.com/adrg/xdg v0.4.0
 	github.com/bazelbuild/rules_go v0.53.0
 	github.com/cavaliergopher/cpio v1.0.1
