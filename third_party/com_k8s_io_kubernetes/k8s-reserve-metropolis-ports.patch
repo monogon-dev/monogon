@@ -1,44 +1,42 @@
-From b10b2922f0b4fb114b6b535df1ba9fca583c6cf2 Mon Sep 17 00:00:00 2001
+From 922898cb67ccedc6f0b67af9b398895d7fb55e56 Mon Sep 17 00:00:00 2001
 From: Tim Windelschmidt <tim@monogon.tech>
 Date: Sat, 9 Sep 2023 14:22:59 +0200
-Subject: [PATCH 6/6] reserve metropolis system ports
+Subject: [PATCH] reserve metropolis system ports
 
 ---
- .../service/portallocator/controller/repair.go    | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+ .../core/service/portallocator/controller/repair.go  | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/pkg/registry/core/service/portallocator/controller/repair.go b/pkg/registry/core/service/portallocator/controller/repair.go
-index fa870760490..0f67fe7eb9b 100644
+index 0ec22c55a54..f890b9c133e 100644
 --- a/pkg/registry/core/service/portallocator/controller/repair.go
 +++ b/pkg/registry/core/service/portallocator/controller/repair.go
 @@ -22,6 +22,8 @@ import (
  	"sync"
  	"time"
-
+ 
 +	"source.monogon.dev/metropolis/node"
 +
  	corev1 "k8s.io/api/core/v1"
  	"k8s.io/apimachinery/pkg/api/errors"
  	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-@@ -133,6 +136,18 @@ func (c *Repair) doRunOnce() error {
- 		return fmt.Errorf("unable to refresh the port block: %v", err)
- 	}
-
-+	// pretend that metropolis system ports are in use by an actual service
-+	var metropolisService corev1.Service
-+	for _, p := range node.SystemPorts {
-+		metropolisService.Spec.Ports = append(metropolisService.Spec.Ports, corev1.ServicePort{
-+			Name:     p.String(),
-+			Protocol: corev1.ProtocolTCP,
-+			Port:     int32(p),
-+			NodePort: int32(p),
-+		})
-+	}
-+	list.Items = append(list.Items, metropolisService)
-+
- 	rebuilt, err := portallocator.NewInMemory(c.portRange)
+@@ -148,6 +150,16 @@ func (c *Repair) doRunOnce() error {
  	if err != nil {
  		return fmt.Errorf("unable to create port allocator: %v", err)
+ 	}
++
++	// pretend that metropolis system ports are in use by an actual service
++	for _, p := range node.SystemPorts {
++		if err := rebuilt.Allocate(int(p)); err != nil {
++			return fmt.Errorf("unable to allocate metropolis port: %v", err)
++		}
++		// remove it from the old set, so it doesn't appear leaked
++		stored.Release(int(p))
++	}
++
+ 	// Check every Service's ports, and rebuild the state as we think it should be.
+ 	for i := range list.Items {
+ 		svc := &list.Items[i]
 -- 
-2.41.0
+2.47.1
 
