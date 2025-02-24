@@ -1,8 +1,14 @@
 # Import Aspect bazelrc presets
-import %workspace%/third_party/bazelrc/aspect/bazel7.bazelrc
+import %workspace%/third_party/bazelrc/aspect/bazel8.bazelrc
 import %workspace%/third_party/bazelrc/aspect/convenience.bazelrc
 import %workspace%/third_party/bazelrc/aspect/correctness.bazelrc
 import %workspace%/third_party/bazelrc/aspect/performance.bazelrc
+
+# We still require WORKSPACE support as bazeldnf isn't bzlmod compatible yet.
+common --enable_workspace
+
+# rules_proto_grpc isn't fully compatible with Bazel 8 yet.
+common --noincompatible_disallow_ctx_resolve_tools
 
 # Actually make the lock file a lock file by not updating it without any
 # request to do so.
@@ -91,7 +97,6 @@ build --cxxopt=-std=c++17
 # Set workspace status file and stamp
 build --stamp --workspace_status_command=./build/print-workspace-status.py
 
-test --experimental_allow_tags_propagation
 # Assume a 10k IOPS device (average NVMe) and 64GiB of RAM for test scheduling.
 test --local_resources=iops=10000 --local_resources=ram=64000
 
