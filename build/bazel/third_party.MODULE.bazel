@@ -5,23 +5,28 @@ github_repository = use_repo_rule("//build/github_repository:def.bzl", "github_r
 github_repository(
     name = "edk2",
     build_file = "//third_party/edk2:edk2.bzl",
-    integrity = "sha256-vid2bYN5OEJvcIstC5iQKZqwH1/jnXFM8FN3mjDU20k=",
+    integrity = "sha256-AbL7G1i/RNxE8U4vibfQKYaf9cHa4XCOjiO2AHQ8DVc=",
     owner = "tianocore",
     patch_args = ["-p1"],
     patches = [
         "//third_party/edk2/patches:disable-werror.patch",
         "//third_party/edk2/patches:remove-brotli-build.patch",
     ],
-    ref = "b24306f15daa2ff8510b06702114724b33895d3c",  # stable202202
+    ref = "fbe0805b2091393406952e84724188f8c1941837",  # stable202502
     repo = "edk2",
     submodules = {
-        "CryptoPkg/Library/OpensslLib/openssl": "sha256-WoyWOXrAhTcXJRNpcEZ7y+hwrCXWHIcJA2N1NxoORsY=",
-        "ArmPkg/Library/ArmSoftFloatLib/berkeley-softfloat-3": "sha256-+q6ImBTqaikvfKA9mzbmx+lbqypkd3gEiDzIIrjUh1c=",
+        "CryptoPkg/Library/OpensslLib/openssl": "sha256-MvIqVMARnJx7foEjQtEtIrOb3mHEYDi/QB56NW5MdFQ=",
         "UnitTestFrameworkPkg/Library/CmockaLib/cmocka": "sha256-Wc1LgauvrjXZSsXZHPSuWwUSLmiHE81ttR5eTO9HHY8=",
         "MdeModulePkg/Universal/RegularExpressionDxe/oniguruma": "sha256-7ql3OA67GHHV3jjE9/FUQu5pDJC995BZDZMKa780fyg=",
         "MdeModulePkg/Library/BrotliCustomDecompressLib/brotli": "sha256-bWyszgUIa33r51EnQV/5w2YYSfVk/i9fOwOD1Iqk7Xc=",
         "BaseTools/Source/C/BrotliCompress/brotli": "sha256-bWyszgUIa33r51EnQV/5w2YYSfVk/i9fOwOD1Iqk7Xc=",
         "RedfishPkg/Library/JsonLib/jansson": "sha256-55NcDZHW0i9t7nEKJrI+Io7MT+jvfo91ZVjDWZ9ow7Q=",
+        "UnitTestFrameworkPkg/Library/GoogleTestLib/googletest": "sha256-PDCVSIuTaxRTjcpk1+aLzeCaihjSoypHtZh37/A0BAM=",
+        "UnitTestFrameworkPkg/Library/SubhookLib/subhook": "sha256-9lsubdME4ZGF11FlK9XrxyqB1QO/VCA3rLNFDkOrwJU=",
+        "MdePkg/Library/BaseFdtLib/libfdt": "sha256-EZORD0df3gfzzU/hwaNT1puM7bV0lnE0g4/NyCCNIk4=",
+        "MdePkg/Library/MipiSysTLib/mipisyst": "sha256-n9o7mng0OrK+bwbOY5ZTbn4GWrrCm0fI6y5Cy7TE8As=",
+        "CryptoPkg/Library/MbedTlsLib/mbedtls": "sha256-tcfnxU4BPBaPSq4DblmRJ4XxG0ruvVf2FloU6Hm5qCw=",
+        "SecurityPkg/DeviceSecurity/SpdmLib/libspdm": "sha256-Y0y98QvK8y80RrG/i+fopgzs0elQDlEvAePBW3TLz9M=",
     },
 )
 
