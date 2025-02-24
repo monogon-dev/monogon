@@ -1,3 +1,5 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
 cc_binary(
     name = "efistub",
     srcs = [("src/boot/efi/%s" % v) for v in [

@@ -1,3 +1,4 @@
+load("@rules_cc//cc:defs.bzl", "cc_toolchain")
 load("//build/toolchain:cc_toolchain_config.bzl", "host_cc_toolchain_config")
 
 # This file defines //build/toolchain/musl-host-gcc:musl_host_toolchain.
