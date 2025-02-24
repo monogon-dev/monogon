@@ -81,7 +81,7 @@ def _github_repository(ctx):
         )
         if integrity == "":
             # buildifier: disable=print
-            print("Missing integrity for submodule \"{submodule}\": \"{sha256}\". Consider adding it.".format(
+            print("Missing integrity for submodule \"{submodule}\": \"{integrity}\". Consider adding it.".format(
                 submodule = submodule,
                 integrity = download_info.integrity,
             ))
