@@ -5,14 +5,6 @@
 # Docs: https://bazel.build/reference/command-line-reference#flag--reuse_sandbox_directories
 build --experimental_reuse_sandbox_directories
 
-# Do not build runfiles symlink forests for external repositories under
-# `.runfiles/wsname/external/repo` (in addition to `.runfiles/repo`). This reduces runfiles &
-# sandbox creation times & prevents accidentally depending on this feature which may flip to off by
-# default in the future. Note, some rules may fail under this flag, please file issues with the rule
-# author.
-# Docs: https://bazel.build/reference/command-line-reference#flag--legacy_external_runfiles
-build --nolegacy_external_runfiles
-
 # Avoid creating a runfiles tree for binaries or tests until it is needed.
 # Docs: https://bazel.build/reference/command-line-reference#flag--build_runfile_links
 # See https://github.com/bazelbuild/bazel/issues/6627

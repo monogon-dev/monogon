@@ -57,10 +57,10 @@ replace github.com/prometheus/procfs => github.com/prometheus/procfs v0.14.0
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1
-	cloud.google.com/go/storage v1.38.0
+	cloud.google.com/go/storage v1.43.0
 	git.dolansoft.org/dolansoft/k8s-nft-npc v0.0.0-20250205205926-b7f770fa8391
 	github.com/adrg/xdg v0.4.0
-	github.com/bazelbuild/rules_go v0.52.0
+	github.com/bazelbuild/rules_go v0.53.0
 	github.com/cavaliergopher/cpio v1.0.1
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cockroachdb/cockroach-go/v2 v2.2.10
@@ -125,19 +125,19 @@ require (
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/crypto v0.30.0
-	golang.org/x/net v0.32.0
+	golang.org/x/crypto v0.31.0
+	golang.org/x/net v0.33.0
 	golang.org/x/sync v0.10.0
 	golang.org/x/sys v0.28.0
 	golang.org/x/term v0.27.0
 	golang.org/x/text v0.21.0
-	golang.org/x/time v0.7.0
+	golang.org/x/time v0.8.0
 	golang.org/x/tools v0.28.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220208144051-fde48d68ee68
-	google.golang.org/api v0.169.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20241007155032-5fefd90f89a9
-	google.golang.org/grpc v1.67.1
-	google.golang.org/protobuf v1.35.1
+	google.golang.org/api v0.214.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20250106144421-5f5ef82da422
+	google.golang.org/grpc v1.67.3
+	google.golang.org/protobuf v1.36.3
 	gvisor.dev/gvisor v0.0.0-20241119070250-e4f9220466df
 	honnef.co/go/tools v0.5.1
 	k8s.io/api v0.32.0
@@ -156,9 +156,11 @@ require (
 
 require (
 	cel.dev/expr v0.18.0 // indirect
-	cloud.google.com/go v0.112.1 // indirect
-	cloud.google.com/go/compute/metadata v0.5.0 // indirect
-	cloud.google.com/go/iam v1.1.6 // indirect
+	cloud.google.com/go v0.118.0 // indirect
+	cloud.google.com/go/auth v0.13.0 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.2.6 // indirect
+	cloud.google.com/go/compute/metadata v0.6.0 // indirect
+	cloud.google.com/go/iam v1.3.1 // indirect
 	dario.cat/mergo v1.0.1 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20231105174938-2b5cbb29f3e2 // indirect
@@ -263,11 +265,11 @@ require (
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-dap v0.12.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/s2a-go v0.1.7 // indirect
+	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/subcommands v1.0.2-0.20190508160503-636abe8753b8 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
-	github.com/googleapis/gax-go/v2 v2.12.2 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
+	github.com/googleapis/gax-go/v2 v2.14.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
@@ -409,11 +411,11 @@ require (
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20231108232855-2478ac86f678 // indirect
 	golang.org/x/mod v0.22.0 // indirect
-	golang.org/x/oauth2 v0.23.0 // indirect
+	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/telemetry v0.0.0-20241106142447-58a1122356f5 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20220202223031-3b95c81cc178 // indirect
-	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38 // indirect
+	google.golang.org/genproto v0.0.0-20250115164207-1a7da9e5054f // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
 	gopkg.in/djherbis/times.v1 v1.2.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
