@@ -28,6 +28,6 @@ def kconfig_patch(name, src, out, override_configs, **kwargs):
         cmd = """
         $(location //osbase/build/kconfig-patcher) \
             -in $< -out $@ '%s'
-        """ % struct(overrides = override_configs).to_json(),
+        """ % json.encode(struct(overrides = override_configs)),
         **kwargs
     )
