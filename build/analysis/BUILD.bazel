@@ -189,13 +189,6 @@ NOGO_CONFIG_OVERRIDES = {
             "external/com_github_sbezverk_nfproxy": "third_party",
         },
     },
-    "unparam": {
-        "exclude_files": {
-            "external/": "third_party",
-            "bazel-out/": "generated_output",
-            "cgo/": "cgo",
-        },
-    },
 }
 
 # All analyzers that should be disabled for external, generated or cgo code.
@@ -216,6 +209,7 @@ DISABLED_FOR_EXTERNAL_CODE = [
     "errcmp",
     "gofmt",
     "haslicense",
+    "unparam",
 ] + ALL_STATICCHECK_ANALYZERS
 
 # We override the variable with itself unioned with the other
