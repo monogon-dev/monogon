@@ -83,8 +83,18 @@ func (d *Device) Sync() error {
 }
 
 // Open opens a block device given a path to its inode.
-func Open(path string) (*Device, error) {
-	outFile, err := os.OpenFile(path, os.O_RDWR, 0640)
+func Open(path string, opts ...Option) (*Device, error) {
+	var o options
+	o.collect(opts)
+	flags := o.genericFlags()
+	if o.direct {
+		return nil, errors.New("WithDirect not supported on Windows")
+	}
+	if o.exclusive {
+		return nil, errors.New("WithExclusive not supported on Windows")
+	}
+
+	outFile, err := os.OpenFile(path, flags, 0640)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open block device: %w", err)
 	}

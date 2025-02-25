@@ -7,9 +7,56 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 )
 
 var ErrNotBlockDevice = errors.New("not a block device")
+
+// options aggregates all open options for all platforms.
+// If these were defined per-platform selecting the right ones per platform
+// would require multiple per-platform files at each call site.
+type options struct {
+	readOnly  bool
+	direct    bool
+	exclusive bool
+}
+
+func (o *options) collect(opts []Option) {
+	for _, f := range opts {
+		f(o)
+	}
+}
+
+func (o *options) genericFlags() int {
+	if o.readOnly {
+		return os.O_RDONLY
+	} else {
+		return os.O_RDWR
+	}
+}
+
+type Option func(*options)
+
+// WithReadonly opens the block device read-only. Any write calls will fail.
+// Passed as an option to Open.
+func WithReadonly(o *options) {
+	o.readOnly = true
+}
+
+// WithDirect opens the block device bypassing any caching by the kernel.
+// Note that additional alignment requirements might be imposed by the
+// underlying device.
+// Unsupported on non-Linux currently, will return an error.
+func WithDirect(o *options) {
+	o.direct = true
+}
+
+// WithExclusive tries to acquire a pseudo-exclusive lock (only with other
+// exclusive FDs) over the block device.
+// Unsupported on non-Linux currently, will return an error.
+func WithExclusive(o *options) {
+	o.exclusive = true
+}
 
 // BlockDev represents a generic block device made up of equally-sized blocks.
 // All offsets and intervals are expressed in bytes and must be aligned to

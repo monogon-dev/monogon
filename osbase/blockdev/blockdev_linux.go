@@ -182,9 +182,18 @@ func (d *Device) ResizePartition(partitionNo int32, startByte, lengthBytes int64
 }
 
 // Open opens a block device given a path to its inode.
-// TODO: exclusive, O_DIRECT
-func Open(path string) (*Device, error) {
-	outFile, err := os.OpenFile(path, os.O_RDWR, 0640)
+func Open(path string, opts ...Option) (*Device, error) {
+	var o options
+	o.collect(opts)
+	flags := o.genericFlags()
+	if o.direct {
+		flags |= unix.O_DIRECT
+	}
+	if o.exclusive {
+		flags |= unix.O_EXCL
+	}
+
+	outFile, err := os.OpenFile(path, flags, 0640)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open block device: %w", err)
 	}
