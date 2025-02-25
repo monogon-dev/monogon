@@ -90,7 +90,7 @@ func handleBlockDevice(diskBlockDev string, blockDevs []os.DirEntry, espUUID uui
 		return nil
 	}
 
-	blkdev, err := blockdev.Open(fmt.Sprintf("/dev/%v", data["DEVNAME"]))
+	blkdev, err := blockdev.Open(fmt.Sprintf("/dev/%v", data["DEVNAME"]), blockdev.WithReadonly)
 	if err != nil {
 		return fmt.Errorf("failed to open block device: %w", err)
 	}
