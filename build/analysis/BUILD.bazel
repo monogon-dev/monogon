@@ -1,6 +1,7 @@
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@com_github_sluongng_nogo_analyzer//staticcheck:def.bzl", ALL_STATICCHECK_ANALYZERS = "ANALYZERS", format_staticcheck_analyzers = "staticcheck_analyzers")
 load("@io_bazel_rules_go//go:def.bzl", "nogo")
+load(":def.bzl", "build_nogo_config", "exclude_from_checks", "exclude_from_external")
 
 # NOGO_PASSES contains all enabled analyzers that nogo should execute.
 NOGO_PASSES = []
@@ -95,144 +96,62 @@ NOGO_PASSES += [
     "//build/analysis/haslicense",
 ]
 
-# NOGO_CONFIG_OVERRIDES contains the overrides for nogo to exempt specific files
-# from being analyzed.
-NOGO_CONFIG_OVERRIDES = {
-    "shift": {
-        "exclude_files": {
-            "external/dev_gvisor_gvisor": "third_party",
-        },
-    },
-    "stringintconv": {
-        "exclude_files": {
-            "external/com_github_masterminds_goutils": "third_party",
-        },
-    },
-    "noioutil": {
-        "exclude_files": {
-            "external/": "TODO(tim): break me up and filter out unmaintained dependencies",
-        },
-    },
-    "nilness": {
-        "exclude_files": {
-            "external/org_golang_x_tools": "third_party",
-            "external/in_gopkg_yaml_v2": "third_party",
-            "external/com_github_google_cadvisor": "third_party",
-            "external/com_github_pkg_sftp": "third_party",
-            "external/com_github_vishvananda_netlink": "third_party",
-            "external/com_github_go_sql_driver_mysql": "third_party",
-            "external/com_github_google_go_tpm": "third_party",
-            "external/com_github_json_iterator_go": "third_party",
-            "external/com_github_gregjones_httpcache": "third_party",
-            "external/com_github_cilium_ebpf": "third_party",
-            "external/com_github_urfave_cli": "third_party",
-            "external/in_gopkg_square_go_jose_v2": "third_party",
-            "external/com_github_alecthomas_kingpin_v2": "third_party",
-            "external/io_k8s_mount_utils": "third_party",
-            "external/com_github_stefanberger_go_pkcs11uri": "third_party",
-            "external/com_github_go_delve_delve": "third_party",
-            "external/io_opencensus_go": "third_party",
-            "external/io_k8s_apimachinery": "third_party",
-            "external/io_k8s_kubernetes": "third_party",
-            "external/io_k8s_kube_openapi": "third_party",
-            "external/io_k8s_apiextensions_apiserver": "third_party",
-            "external/io_etcd_go_etcd_client_v3": "third_party",
-            "external/com_github_coredns_coredns": "third_party",
-            "external/io_etcd_go_etcd_server_v3": "third_party",
-            "external/com_github_containerd_containerd_v2": "third_party",
-            "external/io_k8s_client_go": "third_party",
-            "external/io_k8s_apiserver": "third_party",
-            "external/io_k8s_kubectl": "third_party",
-            "external/com_github_spf13_pflag": "third_party",
-            "external/com_github_burntsushi_toml": "third_party",
-        },
-    },
-    "unsafeptr": {
-        "exclude_files": {
-            "external/com_github_modern_go_reflect2/": "third_party",
-            "sqlite3.*go": "third_party",
-            "external/dev_gvisor_gvisor/": "third_party",
-            "external/io_k8s_sigs_structured_merge_diff/": "third_party",
-            "external/com_github_go_delve_delve/": "third_party",
-            "external/com_github_mailru_easyjson/jlexer/": "third_party",
-            "external/com_github_cilium_ebpf/": "third_party",
-            "external/org_golang_x_sys": "third_party",
-            "external/net_starlark_go": "third_party",
-            "external/com_github_pingcap_tidb_parser": "third_party",
-            "external/com_github_dennwc_btrfs": "third_party",
-        },
-    },
-    "lostcancel": {
-        "exclude_files": {
-            "external/org_golang_x_tools": "third_party",
-            "external/com_github_grpc_ecosystem_grpc_gateway": "third_party",
-        },
-    },
-    "deepequalerrors": {
-        "exclude_files": {
-            "external/com_github_u_root_uio": "third_party",
-        },
-    },
-    "copylocks": {
-        "exclude_files": {
-            "external/org_golang_google_protobuf": "third_party",
-            "external/com_github_derekparker_trie": "third_party",
-            "external/com_github_hodgesds_perf_utils": "third_party",
-            "external/com_github_google_gnostic": "third_party",
-            "external/com_github_coredns_coredns": "third_party",
-            "external/com_github_pseudomuto_protoc_gen_doc": "third_party",
-            "external/io_k8s_apiserver": "third_party",
-        },
-    },
-    "defers": {
-        "exclude_files": {
-            "external/com_github_sbezverk_nfproxy": "third_party",
-        },
-    },
-}
+NOGO_CONFIG = [
+    exclude_from_checks("dev_gvisor_gvisor", "shift", "unsafeptr"),
+    exclude_from_checks("com_github_modern_go_reflect2", "unsafeptr"),
+    exclude_from_checks("io_k8s_sigs_structured_merge_diff", "unsafeptr"),
+    exclude_from_checks("com_github_go_delve_delve", "unsafeptr"),
+    exclude_from_checks("com_github_mailru_easyjson/jlexer", "unsafeptr"),
+    exclude_from_checks("com_github_cilium_ebpf", "unsafeptr"),
+    exclude_from_checks("net_starlark_go", "unsafeptr"),
+    exclude_from_checks("org_golang_x_sys", "unsafeptr"),
+    exclude_from_checks("com_github_pingcap_tidb_parser", "unsafeptr"),
+    exclude_from_checks("com_github_dennwc_btrfs", "unsafeptr"),
+    exclude_from_checks("com_github_u_root_uio", "deepequalerrors"),
+    exclude_from_checks("com_github_sbezverk_nfproxy", "defers"),
 
-# All analyzers that should be disabled for external, generated or cgo code.
-DISABLED_FOR_EXTERNAL_CODE = [
-    "exclude_files",
-    "commentwrap",
-    "importsort",
-    "unreachable",
-    "unusedwrite",
-    "composites",
-    "stdmethods",
-    "reflectvaluecompare",
-    "unconvert",
-    "errwrap",
-    "ruleguard",
-    "returnerrcheck",
-    "hash",
-    "errcmp",
-    "gofmt",
-    "haslicense",
-    "unparam",
-] + ALL_STATICCHECK_ANALYZERS
+    # All analyzers that should be disabled for external, generated or cgo code.
+    exclude_from_external(ALL_STATICCHECK_ANALYZERS),
+    exclude_from_external([
+        "exclude_files",
+        "commentwrap",
+        "importsort",
+        "unreachable",
+        "unusedwrite",
+        "composites",
+        "stdmethods",
+        "reflectvaluecompare",
+        "unconvert",
+        "errwrap",
+        "ruleguard",
+        "returnerrcheck",
+        "hash",
+        "errcmp",
+        "gofmt",
+        "unparam",
+        "haslicense",
+        "nilness",
+        "printf",
+        "gocheckcompilerdirectives",
+        "copylocks",
+        "noioutil",
+        "lostcancel",
+    ]),
 
-# We override the variable with itself unioned with the other
-# config part, as the Intellij integration doesn't understand
-# the |= expression which makes editing this file kinda annoying.
-NOGO_CONFIG_EXTERNAL = {
-    analyzer: {
-        "exclude_files": {
-            # Don't run linters on external dependencies
-            "external/": "third_party",
-            "bazel-out/": "generated_output",
-            "cgo/": "cgo",
+    # Additional custom entries.
+    {
+        "unsafeptr": {
+            "exclude_files": {
+                "sqlite3.*go": "third_party",
+            },
         },
-    }
-    for analyzer in DISABLED_FOR_EXTERNAL_CODE
-}
-
-NOGO_CONFIG = NOGO_CONFIG_OVERRIDES | NOGO_CONFIG_EXTERNAL
+    },
+]
 
 write_file(
     name = "nogo_config",
     out = "nogo_config.json",
-    content = [json.encode_indent(NOGO_CONFIG)],
+    content = [json.encode_indent(build_nogo_config(NOGO_CONFIG))],
 )
 
 nogo(

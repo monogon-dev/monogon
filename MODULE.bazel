@@ -15,6 +15,7 @@ single_version_override(
     patch_strip = 1,
     patches = [
         "//third_party/rules_go:rules_go_absolute_embedsrc.patch",
+        "//third_party/rules_go:introduce-all-scope-for-nogo.patch",
     ],
     version = "0.53.0",
 )
