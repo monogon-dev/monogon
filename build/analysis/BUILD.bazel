@@ -196,14 +196,6 @@ NOGO_CONFIG_OVERRIDES = {
             "cgo/": "cgo",
         },
     },
-    "haslicense": {
-        "exclude_files": {
-            "metropolis/node/kubernetes/metricsprovider": "Multi-Party copyright statement (#376)",
-            "external/": "third_party",
-            "bazel-out/": "generated_output",
-            "cgo/": "cgo",
-        },
-    },
 }
 
 # All analyzers that should be disabled for external, generated or cgo code.
@@ -223,6 +215,7 @@ DISABLED_FOR_EXTERNAL_CODE = [
     "hash",
     "errcmp",
     "gofmt",
+    "haslicense",
 ] + ALL_STATICCHECK_ANALYZERS
 
 # We override the variable with itself unioned with the other
