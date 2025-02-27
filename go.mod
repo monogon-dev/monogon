@@ -81,7 +81,7 @@ require (
 	github.com/google/go-tpm v0.3.3
 	github.com/google/go-tpm-tools v0.3.5
 	github.com/google/gopacket v1.1.19
-	github.com/google/nftables v0.2.1-0.20241213063025-eb340357409e
+	github.com/google/nftables v0.3.0
 	github.com/google/uuid v1.6.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/improbable-eng/grpc-web v0.15.0
@@ -96,7 +96,7 @@ require (
 	github.com/mdlayher/ethtool v0.2.0
 	github.com/mdlayher/genetlink v1.3.2
 	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
-	github.com/mdlayher/netlink v1.7.2
+	github.com/mdlayher/netlink v1.7.3-0.20250113171957-fbb4dce95f42
 	github.com/mdlayher/packet v1.1.2
 	github.com/miekg/dns v1.1.58
 	github.com/mitchellh/go-wordwrap v1.0.1
