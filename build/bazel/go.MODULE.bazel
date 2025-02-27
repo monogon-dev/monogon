@@ -41,6 +41,7 @@ use_repo(
     "com_github_kballard_go_shellquote",
     "com_github_klauspost_compress",
     "com_github_lib_pq",
+    "com_github_mattfenwick_cyclonus",
     "com_github_mattn_go_shellwords",
     "com_github_mdlayher_arp",
     "com_github_mdlayher_ethernet",
