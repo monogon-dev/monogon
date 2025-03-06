@@ -188,28 +188,22 @@ func (*csiPluginServer) NodeGetVolumeStats(ctx context.Context, req *csi.NodeGet
 }
 
 func (s *csiPluginServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
-	if req.CapacityRange.LimitBytes <= 0 {
-		return nil, status.Error(codes.InvalidArgument, "invalid expanded volume size: at or below zero bytes")
+	info, err := os.Stat(req.VolumePath)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "failed to stat volume: %v", err)
 	}
-	loopdev, err := loop.Open(req.VolumePath)
-	if err == nil {
-		defer loopdev.Close()
-		volumePath := filepath.Join(s.VolumesDirectory.FullPath(), req.VolumeId)
-		imageFile, err := os.OpenFile(volumePath, os.O_RDWR, 0)
+	if info.IsDir() {
+		// Mount volume. Nothing to do here.
+	} else {
+		// Block volume.
+		loopdev, err := loop.Open(req.VolumePath)
 		if err != nil {
-			return nil, status.Errorf(codes.Unavailable, "failed to open block volume backing file: %v", err)
+			return nil, status.Errorf(codes.Unavailable, "failed to open loop device: %v", err)
 		}
-		defer imageFile.Close()
-		if err := unix.Fallocate(int(imageFile.Fd()), 0, 0, req.CapacityRange.LimitBytes); err != nil {
-			return nil, status.Errorf(codes.Unavailable, "failed to expand volume using fallocate: %v", err)
-		}
+		defer loopdev.Close()
 		if err := loopdev.RefreshSize(); err != nil {
 			return nil, status.Errorf(codes.Unavailable, "failed to refresh loop device size: %v", err)
 		}
-		return &csi.NodeExpandVolumeResponse{CapacityBytes: req.CapacityRange.LimitBytes}, nil
-	}
-	if err := fsquota.SetQuota(req.VolumePath, uint64(req.CapacityRange.LimitBytes), uint64(req.CapacityRange.LimitBytes)/inodeCapacityRatio); err != nil {
-		return nil, status.Errorf(codes.Unavailable, "failed to update quota: %v", err)
 	}
 	return &csi.NodeExpandVolumeResponse{CapacityBytes: req.CapacityRange.LimitBytes}, nil
 }

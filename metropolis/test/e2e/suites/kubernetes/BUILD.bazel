@@ -46,6 +46,7 @@ go_test(
         "@io_k8s_api//networking/v1:networking",
         "@io_k8s_apimachinery//pkg/api/errors",
         "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_apimachinery//pkg/types",
         "@io_k8s_apimachinery//pkg/util/intstr",
         "@io_k8s_kubernetes//pkg/api/v1/pod",
         "@io_k8s_utils//ptr",

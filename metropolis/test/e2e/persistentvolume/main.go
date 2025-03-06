@@ -88,16 +88,16 @@ func checkBlockVolume(path string, expectedBytes uint64) error {
 	return nil
 }
 
-func testPersistentVolume() error {
-	if err := checkFilesystemVolume("/vol/default", 0, 1*1024*1024); err != nil {
+func testPersistentVolume(expectedBytes uint64) error {
+	if err := checkFilesystemVolume("/vol/default", 0, expectedBytes); err != nil {
 		return err
 	}
-	if err := checkFilesystemVolume("/vol/readonly", unix.ST_RDONLY, 1*1024*1024); err != nil {
+	if err := checkFilesystemVolume("/vol/readonly", unix.ST_RDONLY, expectedBytes); err != nil {
 		return err
 	}
 	// Block volumes are not supported on gVisor.
 	if *runtimeClass != "gvisor" {
-		if err := checkBlockVolume("/vol/block", 1*1024*1024); err != nil {
+		if err := checkBlockVolume("/vol/block", expectedBytes); err != nil {
 			return err
 		}
 	}
@@ -108,12 +108,26 @@ func main() {
 	flag.Parse()
 	fmt.Printf("PersistentVolume tests starting on %s...\n", *runtimeClass)
 
-	if err := testPersistentVolume(); err != nil {
+	if err := testPersistentVolume(1 * 1024 * 1024); err != nil {
 		fmt.Println(err.Error())
 		// The final log line communicates the test outcome to the e2e test.
-		fmt.Println("[TESTS-FAILED]")
+		fmt.Println("[INIT-FAILED]")
 	} else {
-		fmt.Println("[TESTS-PASSED]")
+		fmt.Println("[INIT-PASSED]")
+
+		nextLog := time.Now().Add(10 * time.Second)
+		for {
+			if err := testPersistentVolume(4 * 1024 * 1024); err != nil {
+				if time.Now().After(nextLog) {
+					fmt.Println("Waiting for resize:", err.Error())
+					nextLog = time.Now().Add(10 * time.Second)
+				}
+				time.Sleep(100 * time.Millisecond)
+			} else {
+				fmt.Println("[RESIZE-PASSED]")
+				break
+			}
+		}
 	}
 
 	// Sleep forever, because if the process exits, Kubernetes will restart it.

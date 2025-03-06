@@ -73,8 +73,18 @@ func (r resourceClusterRoles) Expected() []meta.Object {
 				},
 				{
 					APIGroups: []string{""},
-					Resources: []string{"persistentvolumes", "persistentvolumeclaims"},
-					Verbs:     []string{"*"},
+					Resources: []string{"persistentvolumes"},
+					Verbs:     []string{"get", "list", "watch", "create", "patch", "delete"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"persistentvolumeclaims"},
+					Verbs:     []string{"get", "list", "watch"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"persistentvolumeclaims/status"},
+					Verbs:     []string{"patch"},
 				},
 			},
 		},
