@@ -11,7 +11,6 @@ package fsquota
 import (
 	"errors"
 	"fmt"
-	"math"
 	"os"
 
 	"golang.org/x/sys/unix"
@@ -84,7 +83,10 @@ func SetQuota(path string, maxBytes uint64, maxInodes uint64) error {
 	}
 
 	// Always round up to the nearest block size
-	bytesLimitBlocks := uint64(math.Ceil(float64(maxBytes) / float64(1024)))
+	bytesLimitBlocks := maxBytes / 1024
+	if bytesLimitBlocks*1024 < maxBytes {
+		bytesLimitBlocks += 1
+	}
 
 	return quotactl.SetQuota(dir, quotactl.QuotaTypeProject, lastID, &quotactl.Quota{
 		BHardLimit: bytesLimitBlocks,
