@@ -15,8 +15,7 @@ go_test(
         "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
         "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
         "xCloudImagePath": "$(rlocationpath @debian_11_cloudimage//file )",
-        # TODO(tim): Hardcoded because of https://github.com/monogon-dev/monogon/issues/316
-        "xTakeoverPath": "_main/metropolis/cli/takeover/takeover/takeover_bin",
+        "xTakeoverPath": "$(rlocationpath //metropolis/cli/takeover )",
     },
     deps = [
         "//go/net/ssh",

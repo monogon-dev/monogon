@@ -14,8 +14,7 @@ go_test(
         "xCloudImagePath": "$(rlocationpath @debian_11_cloudimage//file )",
         "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
         "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
-        # TODO(tim): Hardcoded because of https://github.com/monogon-dev/monogon/issues/316
-        "xTakeoverPath": "_main/cloud/agent/takeover/takeover_bin_/takeover_bin",
+        "xTakeoverPath": "$(rlocationpath //cloud/agent/takeover )",
     },
     deps = [
         "//cloud/agent/api",
