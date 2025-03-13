@@ -6,7 +6,7 @@ def _build_static_transition_impl(_settings, _attr):
     """
     return {
         "@io_bazel_rules_go//go/config:static": True,
-        "//build/platforms/linkmode:static": True,
+        "@toolchain_cc_mngn//buildmode:static": True,
     }
 
 build_static_transition = transition(
@@ -14,7 +14,7 @@ build_static_transition = transition(
     inputs = [],
     outputs = [
         "@io_bazel_rules_go//go/config:static",
-        "//build/platforms/linkmode:static",
+        "@toolchain_cc_mngn//buildmode:static",
     ],
 )
 
@@ -61,7 +61,7 @@ _new_settings = {
     # to a stable hash.
     # See the transition's comment block for more information.
     "@io_bazel_rules_go//go/config:static": False,
-    "//build/platforms/linkmode:static": False,
+    "@toolchain_cc_mngn//buildmode:static": False,
 }
 
 def _ignore_unused_configuration_impl(_settings, _attr):

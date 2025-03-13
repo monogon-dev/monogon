@@ -50,6 +50,9 @@ replace github.com/bazelbuild/buildtools => github.com/bazelbuild/buildtools v0.
 // organization at once.
 replace github.com/packethost/packngo => github.com/monogon-dev/packngo v0.0.0-20240122175436-ecbd9eb00ddb
 
+// https://github.com/mattn/go-sqlite3/issues/1164
+replace github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.14.24
+
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1
 	cloud.google.com/go/storage v1.43.0

@@ -75,21 +75,20 @@ bazel_dep(name = "rules_proto_grpc_buf", version = "5.0.1")
 # Currently supported version are listed here:
 # https://protobuf.dev/support/version-support/
 bazel_dep(name = "protobuf", version = "29.3")
-
-# Load musl toolchain Metropolis sysroot tarball into external repository.
-musl_sysroot_rule = use_repo_rule("//build/toolchain/musl-host-gcc:sysroot_repository.bzl", "musl_sysroot_rule")
-
-musl_sysroot_rule(
-    name = "musl_sysroot",
-    snapshot = "//build/toolchain/musl-host-gcc:sysroot.tar.xz",
+bazel_dep(name = "toolchain_cc_mngn")
+git_override(
+    module_name = "toolchain_cc_mngn",
+    commit = "6e241ef6ebcbdc630d332fa789a1b53b52c27771",
+    remote = "https://review.monogon.dev/toolchain_cc",
 )
 
-# Register our custom CC toolchains.
-register_toolchains("//build/toolchain/musl-host-gcc:musl_host_toolchain")
-
-register_toolchains("//build/toolchain/llvm-efi:efi_k8_toolchain")
-
 register_toolchains("//build/toolchain:host_cc_toolchain")
+
+register_toolchains("@toolchain_cc_mngn//linux_musl:linux_x86_64_linux_x86_64_musl_static")
+
+register_toolchains("@toolchain_cc_mngn//efi:linux_x86_64_efi_x86_64")
+
+register_toolchains("@toolchain_cc_mngn//efi:linux_x86_64_efi_aarch64")
 
 # Rust Toolchains
 register_toolchains("@rust_toolchains//:all")

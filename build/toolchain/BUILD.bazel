@@ -51,7 +51,7 @@ host_cc_toolchain_config(name = "host_cc_k8_toolchain_config")
 
 config_setting(
     name = "is_dynamic",
-    flag_values = {"//build/platforms/linkmode:static": "False"},
+    flag_values = {"@toolchain_cc_mngn//buildmode:static": "False"},
 )
 
 toolchain(
