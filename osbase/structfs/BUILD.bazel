@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "structfs",
+    srcs = [
+        "blob.go",
+        "structfs.go",
+    ],
+    importpath = "source.monogon.dev/osbase/structfs",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "structfs_test",
+    srcs = ["structfs_test.go"],
+    deps = [":structfs"],
+)
