@@ -16,6 +16,7 @@ import (
 	"source.monogon.dev/osbase/efivarfs"
 	"source.monogon.dev/osbase/fat32"
 	"source.monogon.dev/osbase/gpt"
+	"source.monogon.dev/osbase/structfs"
 )
 
 var (
@@ -60,17 +61,17 @@ type Params struct {
 	Output blockdev.BlockDev
 	// ABLoader provides the A/B loader which then loads the EFI loader for the
 	// correct slot.
-	ABLoader fat32.SizedReader
+	ABLoader structfs.Blob
 	// EFIPayload provides contents of the EFI payload file. It must not be
 	// nil. This gets put into boot slot A.
-	EFIPayload fat32.SizedReader
+	EFIPayload structfs.Blob
 	// SystemImage provides contents of the Metropolis system partition.
 	// If nil, no contents will be copied into the partition.
-	SystemImage io.Reader
+	SystemImage structfs.Blob
 	// NodeParameters provides contents of the node parameters file. If nil,
 	// the node parameters file won't be created in the target ESP
 	// filesystem.
-	NodeParameters fat32.SizedReader
+	NodeParameters structfs.Blob
 	// DiskGUID is a unique identifier of the image and a part of Table
 	// header. It's optional and can be left blank if the identifier is
 	// to be randomly generated. Setting it to a predetermined value can
@@ -86,7 +87,7 @@ type Params struct {
 
 type plan struct {
 	*Params
-	rootInode        fat32.Inode
+	efiRoot          structfs.Tree
 	tbl              *gpt.Table
 	efiPartition     *gpt.Partition
 	systemPartitionA *gpt.Partition
@@ -100,7 +101,7 @@ func (i *plan) Apply() (*efivarfs.LoadOption, error) {
 	// Ignore errors, this is only advisory.
 	i.Output.Discard(0, i.Output.BlockCount()*i.Output.BlockSize())
 
-	if err := fat32.WriteFS(blockdev.NewRWS(i.efiPartition), i.rootInode, fat32.Options{
+	if err := fat32.WriteFS(blockdev.NewRWS(i.efiPartition), i.efiRoot, fat32.Options{
 		BlockSize:  uint16(i.efiPartition.BlockSize()),
 		BlockCount: uint32(i.efiPartition.BlockCount()),
 		Label:      "MNGN_BOOT",
@@ -108,9 +109,15 @@ func (i *plan) Apply() (*efivarfs.LoadOption, error) {
 		return nil, fmt.Errorf("failed to write FAT32: %w", err)
 	}
 
-	if _, err := io.Copy(blockdev.NewRWS(i.systemPartitionA), i.SystemImage); err != nil {
+	systemImage, err := i.SystemImage.Open()
+	if err != nil {
+		return nil, fmt.Errorf("failed to open system image: %w", err)
+	}
+	if _, err := io.Copy(blockdev.NewRWS(i.systemPartitionA), systemImage); err != nil {
+		systemImage.Close()
 		return nil, fmt.Errorf("failed to write system partition A: %w", err)
 	}
+	systemImage.Close()
 
 	if err := i.tbl.Write(); err != nil {
 		return nil, fmt.Errorf("failed to write Table: %w", err)
@@ -155,25 +162,22 @@ func Plan(p *Params) (*plan, error) {
 		return nil, fmt.Errorf("failed to allocate ESP: %w", err)
 	}
 
-	params.rootInode = fat32.Inode{
-		Attrs: fat32.AttrDirectory,
-	}
-	if err := params.rootInode.PlaceFile(strings.TrimPrefix(EFIBootAPath, "/"), params.EFIPayload); err != nil {
+	if err := params.efiRoot.PlaceFile(strings.TrimPrefix(EFIBootAPath, "/"), params.EFIPayload); err != nil {
 		return nil, err
 	}
 	// Place the A/B loader at the EFI bootloader autodiscovery path.
-	if err := params.rootInode.PlaceFile(strings.TrimPrefix(EFIPayloadPath, "/"), params.ABLoader); err != nil {
+	if err := params.efiRoot.PlaceFile(strings.TrimPrefix(EFIPayloadPath, "/"), params.ABLoader); err != nil {
 		return nil, err
 	}
 	if params.NodeParameters != nil {
-		if err := params.rootInode.PlaceFile(nodeParamsPath, params.NodeParameters); err != nil {
+		if err := params.efiRoot.PlaceFile(nodeParamsPath, params.NodeParameters); err != nil {
 			return nil, err
 		}
 	}
 
 	// Try to layout the fat32 partition. If it detects that the disk is too
 	// small, an error will be returned.
-	if _, err := fat32.SizeFS(params.rootInode, fat32.Options{
+	if _, err := fat32.SizeFS(params.efiRoot, fat32.Options{
 		BlockSize:  uint16(params.efiPartition.BlockSize()),
 		BlockCount: uint32(params.efiPartition.BlockCount()),
 		Label:      "MNGN_BOOT",

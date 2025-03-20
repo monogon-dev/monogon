@@ -40,6 +40,7 @@ go_library(
         "//osbase/kexec",
         "//osbase/net/dump",
         "//osbase/net/proto",
+        "//osbase/structfs",
         "//osbase/supervisor",
         "@com_github_cavaliergopher_cpio//:cpio",
         "@com_github_klauspost_compress//zstd",

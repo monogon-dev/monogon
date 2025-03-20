@@ -24,6 +24,7 @@ go_test(
         "//metropolis/proto/api",
         "//osbase/build/mkimage/osimage",
         "//osbase/cmd",
+        "//osbase/structfs",
         "@com_github_diskfs_go_diskfs//:go-diskfs",
         "@com_github_diskfs_go_diskfs//disk",
         "@com_github_diskfs_go_diskfs//partition/gpt",

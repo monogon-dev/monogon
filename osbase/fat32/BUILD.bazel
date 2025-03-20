@@ -11,6 +11,7 @@ go_library(
     ],
     importpath = "source.monogon.dev/osbase/fat32",
     visibility = ["//visibility:public"],
+    deps = ["//osbase/structfs"],
 )
 
 go_test(
@@ -28,6 +29,7 @@ go_test(
         "xFsckPath": "$(rlocationpath @com_github_dosfstools_dosfstools//:fsck )",
     },
     deps = [
+        "//osbase/structfs",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
         "@io_bazel_rules_go//go/runfiles",

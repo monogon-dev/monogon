@@ -19,9 +19,9 @@ import (
 	"log"
 	"os"
 
-	"source.monogon.dev/osbase/blkio"
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
+	"source.monogon.dev/osbase/structfs"
 )
 
 func main() {
@@ -51,33 +51,30 @@ func main() {
 	// Open the input files for osimage.Create, fill in reader objects and
 	// metadata in osimage.Params.
 	// Start with the EFI Payload the OS will boot from.
-	p, err := blkio.NewFileReader(efiPayload)
+	var err error
+	cfg.EFIPayload, err = structfs.OSPathBlob(efiPayload)
 	if err != nil {
 		log.Fatalf("while opening the EFI payload at %q: %v", efiPayload, err)
 	}
-	cfg.EFIPayload = p
 
-	ab, err := blkio.NewFileReader(abLoaderPayload)
+	cfg.ABLoader, err = structfs.OSPathBlob(abLoaderPayload)
 	if err != nil {
 		log.Fatalf("while opening the abloader payload at %q: %v", abLoaderPayload, err)
 	}
-	cfg.ABLoader = ab
 
 	// Attempt to open the system image if its path is set. In case the path
 	// isn't set, the system partition will still be created, but no
 	// contents will be written into it.
 	if systemImage != "" {
-		img, err := os.Open(systemImage)
+		cfg.SystemImage, err = structfs.OSPathBlob(systemImage)
 		if err != nil {
 			log.Fatalf("while opening the system image at %q: %v", systemImage, err)
 		}
-		defer img.Close()
-		cfg.SystemImage = img
 	}
 
 	// Attempt to open the node parameters file if its path is set.
 	if nodeParams != "" {
-		np, err := blkio.NewFileReader(nodeParams)
+		np, err := structfs.OSPathBlob(nodeParams)
 		if err != nil {
 			log.Fatalf("while opening node parameters at %q: %v", nodeParams, err)
 		}

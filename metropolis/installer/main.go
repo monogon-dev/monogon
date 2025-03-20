@@ -8,12 +8,10 @@ package main
 
 import (
 	"archive/zip"
-	"bytes"
 	"context"
 	_ "embed"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,6 +23,7 @@ import (
 	"source.monogon.dev/osbase/bringup"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
+	"source.monogon.dev/osbase/structfs"
 	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/osbase/sysfs"
 )
@@ -104,19 +103,22 @@ probeLoop:
 	return suitable, nil
 }
 
-// FileSizedReader is a small adapter from fs.File to fs.SizedReader
-// Panics on Stat() failure, so should only be used with sources where Stat()
-// cannot fail.
-type FileSizedReader struct {
-	fs.File
+// zipBlob looks up a file in a [zip.Reader] and adapts it to [structfs.Blob].
+func zipBlob(reader *zip.Reader, name string) (zipFileBlob, error) {
+	for _, file := range reader.File {
+		if file.Name == name {
+			return zipFileBlob{file}, nil
+		}
+	}
+	return zipFileBlob{}, fmt.Errorf("file %q not found", name)
 }
 
-func (f FileSizedReader) Size() int64 {
-	stat, err := f.Stat()
-	if err != nil {
-		panic(err)
-	}
-	return stat.Size()
+type zipFileBlob struct {
+	*zip.File
+}
+
+func (f zipFileBlob) Size() int64 {
+	return int64(f.File.UncompressedSize64)
 }
 
 func main() {
@@ -162,7 +164,7 @@ func installerRunnable(ctx context.Context) error {
 		return fmt.Errorf("while mounting the installer ESP: %w", err)
 	}
 
-	nodeParameters, err := os.Open("/installer/metropolis-installer/nodeparams.pb")
+	nodeParameters, err := structfs.OSPathBlob("/installer/metropolis-installer/nodeparams.pb")
 	if err != nil {
 		return fmt.Errorf("failed to open node parameters from ESP: %w", err)
 	}
@@ -173,16 +175,14 @@ func installerRunnable(ctx context.Context) error {
 		return fmt.Errorf("failed to open node bundle from ESP: %w", err)
 	}
 	defer bundle.Close()
-	efiPayload, err := bundle.Open("kernel_efi.efi")
+	efiPayload, err := zipBlob(&bundle.Reader, "kernel_efi.efi")
 	if err != nil {
 		return fmt.Errorf("cannot open EFI payload in bundle: %w", err)
 	}
-	defer efiPayload.Close()
-	systemImage, err := bundle.Open("verity_rootfs.img")
+	systemImage, err := zipBlob(&bundle.Reader, "verity_rootfs.img")
 	if err != nil {
 		return fmt.Errorf("cannot open system image in bundle: %w", err)
 	}
-	defer systemImage.Close()
 
 	// Build the osimage parameters.
 	installParams := osimage.Params{
@@ -198,9 +198,9 @@ func installerRunnable(ctx context.Context) error {
 			Data: 128,
 		},
 		SystemImage:    systemImage,
-		EFIPayload:     FileSizedReader{efiPayload},
-		ABLoader:       bytes.NewReader(abloader),
-		NodeParameters: FileSizedReader{nodeParameters},
+		EFIPayload:     efiPayload,
+		ABLoader:       structfs.Bytes(abloader),
+		NodeParameters: nodeParameters,
 	}
 	// Calculate the minimum target size based on the installation parameters.
 	minSize := uint64((installParams.PartitionSize.ESP +

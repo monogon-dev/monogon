@@ -28,12 +28,12 @@ var invalidDOSNameChar = regexp.MustCompile("^[^A-Z0-9!#$%&'()@^_\x60{}~-]$")
 // well as valid ASCII
 var validDOSName = regexp.MustCompile(`^^([A-Z0-9!#$%&'()@^_\x60{}~-]{0,8})(\.[A-Z0-9!#$%&'()-@^_\x60{}~-]{1,3})?$`)
 
-func makeUniqueDOSNames(inodes []*Inode) error {
+func makeUniqueDOSNames(nodes []*node) error {
 	taken := make(map[[11]byte]bool)
-	var lossyNameInodes []*Inode
+	var lossyNameNodes []*node
 	// Make two passes to ensure that names can always be passed through even
 	// if they would conflict with a generated name.
-	for _, i := range inodes {
+	for _, i := range nodes {
 		for j := range i.dosName {
 			i.dosName[j] = ' '
 		}
@@ -54,7 +54,7 @@ func makeUniqueDOSNames(inodes []*Inode) error {
 			taken[i.dosName] = true
 			continue
 		}
-		lossyNameInodes = append(lossyNameInodes, i)
+		lossyNameNodes = append(lossyNameNodes, i)
 	}
 	// Willfully ignore the recommended short name generation algorithm as it
 	// requires tons of bookkeeping and doesn't result in stable names so
@@ -63,7 +63,7 @@ func makeUniqueDOSNames(inodes []*Inode) error {
 	// of that because of long file name entries), so 4 hex characters
 	// guarantee uniqueness, regardless of the rest of name.
 	var nameIdx int
-	for _, i := range lossyNameInodes {
+	for _, i := range lossyNameNodes {
 		nameUpper := strings.ToUpper(i.Name)
 		dotParts := strings.Split(nameUpper, ".")
 		for j := range dotParts {

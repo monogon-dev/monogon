@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/go/net/ssh"
-	"source.monogon.dev/osbase/fat32"
+	"source.monogon.dev/osbase/structfs"
 )
 
 var sshCmd = &cobra.Command{
@@ -130,14 +130,20 @@ var sshCmd = &cobra.Command{
 			return err
 		}
 
-		barUploader := func(r fat32.SizedReader, targetPath string) {
+		barUploader := func(blob structfs.Blob, targetPath string) {
+			content, err := blob.Open()
+			if err != nil {
+				log.Fatalf("error while uploading %q: %v", targetPath, err)
+			}
+			defer content.Close()
+
 			bar := progressbar.DefaultBytes(
-				r.Size(),
+				blob.Size(),
 				targetPath,
 			)
 			defer bar.Close()
 
-			proxyReader := progressbar.NewReader(r, bar)
+			proxyReader := progressbar.NewReader(content, bar)
 			defer proxyReader.Close()
 
 			if err := conn.Upload(ctx, targetPath, &proxyReader); err != nil {

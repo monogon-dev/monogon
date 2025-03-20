@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
+
+	"source.monogon.dev/osbase/structfs"
 )
 
 var (
@@ -39,14 +41,14 @@ func init() {
 	}
 }
 
-func testWithFsck(t *testing.T, rootInode Inode, opts Options) {
+func testWithFsck(t *testing.T, root structfs.Tree, opts Options) {
 	t.Helper()
 	testFile, err := os.CreateTemp("", "fat32-fsck-test")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(testFile.Name())
-	sizeBlocks, err := SizeFS(rootInode, opts)
+	sizeBlocks, err := SizeFS(root, opts)
 	if err != nil {
 		t.Fatalf("failed to calculate size: %v", err)
 	}
@@ -62,7 +64,7 @@ func testWithFsck(t *testing.T, rootInode Inode, opts Options) {
 		t.Fatalf("seek failed: %v", err)
 	}
 
-	if err := WriteFS(testFile, rootInode, opts); err != nil {
+	if err := WriteFS(testFile, root, opts); err != nil {
 		t.Fatalf("failed to write test FS: %v", err)
 	}
 	// Run fsck non-interactively (-n), disallow spaces in short file names (-S)
@@ -89,11 +91,7 @@ func TestBasicFsck(t *testing.T) {
 	for _, blockSize := range []uint16{512, 4096, 32768} {
 		for _, fixed := range []string{"", "Fixed"} {
 			t.Run(fmt.Sprintf("BlockSize%d%v", blockSize, fixed), func(t *testing.T) {
-				rootInode := Inode{
-					Attrs:      AttrDirectory,
-					ModTime:    time.Date(2022, 03, 04, 5, 6, 7, 8, time.UTC),
-					CreateTime: time.Date(2022, 03, 04, 5, 6, 7, 8, time.UTC),
-				}
+				var root structfs.Tree
 				files := []struct {
 					name    string
 					path    string
@@ -105,7 +103,7 @@ func TestBasicFsck(t *testing.T) {
 					{"LargeFile", "test1/largefile.txt", largeString.String()},
 				}
 				for _, c := range files {
-					err := rootInode.PlaceFile(c.path, strings.NewReader(c.content))
+					err := root.PlaceFile(c.path, structfs.Bytes(c.content))
 					if err != nil {
 						t.Errorf("failed to place file: %v", err)
 					}
@@ -115,7 +113,7 @@ func TestBasicFsck(t *testing.T) {
 					// Use a block count that is slightly higher than the minimum
 					opts.BlockCount = 67000
 				}
-				testWithFsck(t, rootInode, opts)
+				testWithFsck(t, root, opts)
 			})
 		}
 	}
@@ -125,19 +123,18 @@ func TestLotsOfFilesFsck(t *testing.T) {
 	if os.Getenv("IN_KTEST") == "true" {
 		t.Skip("In ktest")
 	}
-	rootInode := Inode{
-		Attrs:   AttrDirectory,
-		ModTime: time.Date(2022, 03, 04, 5, 6, 7, 8, time.UTC),
-	}
+	var root structfs.Tree
 	for i := 0; i < (32*1024)-2; i++ {
-		rootInode.Children = append(rootInode.Children, &Inode{
+		root = append(root, &structfs.Node{
 			Name:    fmt.Sprintf("test%d", i),
-			Content: strings.NewReader("random test content"),
-			// Add some random attributes
-			Attrs: AttrHidden | AttrSystem,
-			// And a random ModTime
+			Content: structfs.Bytes("random test content"),
+			// Add a random ModTime
 			ModTime: time.Date(2022, 03, 04, 5, 6, 7, 8, time.UTC),
+			Sys: &DirEntrySys{
+				// Add some random attributes
+				Attrs: AttrHidden | AttrSystem,
+			},
 		})
 	}
-	testWithFsck(t, rootInode, Options{ID: 1234, Label: "TEST"})
+	testWithFsck(t, root, Options{ID: 1234, Label: "TEST"})
 }

@@ -21,9 +21,9 @@ import (
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 
-	"source.monogon.dev/osbase/blkio"
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
+	"source.monogon.dev/osbase/structfs"
 )
 
 var (
@@ -197,18 +197,16 @@ func setup(t *testing.T) (*bundleServing, []string) {
 	t.Cleanup(func() { os.Remove(rootDevPath) })
 	defer rootDisk.Close()
 
-	boot, err := blkio.NewFileReader(xBootPath)
+	boot, err := structfs.OSPathBlob(xBootPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer boot.Close()
-	system, err := os.Open(xSystemXPath)
+	system, err := structfs.OSPathBlob(xSystemXPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer system.Close()
 
-	loader, err := blkio.NewFileReader(xAbloaderPath)
+	loader, err := structfs.OSPathBlob(xAbloaderPath)
 	if err != nil {
 		t.Fatal(err)
 	}

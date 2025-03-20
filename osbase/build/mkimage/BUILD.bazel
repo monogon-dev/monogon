@@ -6,9 +6,9 @@ go_library(
     importpath = "source.monogon.dev/osbase/build/mkimage",
     visibility = ["//visibility:private"],
     deps = [
-        "//osbase/blkio",
         "//osbase/blockdev",
         "//osbase/build/mkimage/osimage",
+        "//osbase/structfs",
     ],
 )
 

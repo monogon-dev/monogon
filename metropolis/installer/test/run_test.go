@@ -7,7 +7,6 @@
 package installer
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -27,6 +26,7 @@ import (
 	mctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/cmd"
+	"source.monogon.dev/osbase/structfs"
 )
 
 var (
@@ -134,21 +134,21 @@ func checkEspContents(image *disk.Disk) error {
 func TestMain(m *testing.M) {
 	installerImage = filepath.Join(os.Getenv("TEST_TMPDIR"), "installer.img")
 
-	installer, err := os.ReadFile(xInstallerPath)
+	installer, err := structfs.OSPathBlob(xInstallerPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bundle, err := os.ReadFile(xBundlePath)
+	bundle, err := structfs.OSPathBlob(xBundlePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	iargs := mctl.MakeInstallerImageArgs{
-		Installer:  bytes.NewReader(installer),
+		Installer:  installer,
 		TargetPath: installerImage,
 		NodeParams: &api.NodeParameters{},
-		Bundle:     bytes.NewReader(bundle),
+		Bundle:     bundle,
 	}
 	if err := mctl.MakeInstallerImage(iargs); err != nil {
 		log.Fatalf("Couldn't create the installer image at %q: %v", installerImage, err)

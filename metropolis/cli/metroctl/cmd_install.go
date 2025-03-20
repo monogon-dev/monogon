@@ -4,7 +4,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/ed25519"
 	_ "embed"
@@ -22,8 +21,7 @@ import (
 	"source.monogon.dev/metropolis/cli/flagdefs"
 	"source.monogon.dev/metropolis/cli/metroctl/core"
 	common "source.monogon.dev/metropolis/node"
-	"source.monogon.dev/osbase/blkio"
-	"source.monogon.dev/osbase/fat32"
+	"source.monogon.dev/osbase/structfs"
 )
 
 var installCmd = &cobra.Command{
@@ -111,20 +109,15 @@ func makeNodeParams() (*api.NodeParameters, error) {
 	return params, nil
 }
 
-func external(name, datafilePath string, flag *string) (fat32.SizedReader, error) {
+func external(name, datafilePath string, flag *string) (structfs.Blob, error) {
 	if flag == nil || *flag == "" {
 		rPath, err := runfiles.Rlocation(datafilePath)
 		if err != nil {
 			return nil, fmt.Errorf("no %s specified", name)
 		}
-		df, err := os.ReadFile(rPath)
-		if err != nil {
-			return nil, fmt.Errorf("can't read file: %w", err)
-		}
-		return bytes.NewReader(df), nil
+		return structfs.OSPathBlob(rPath)
 	}
-
-	f, err := blkio.NewFileReader(*flag)
+	f, err := structfs.OSPathBlob(*flag)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open specified %s: %w", name, err)
 	}

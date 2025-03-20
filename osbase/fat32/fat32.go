@@ -13,9 +13,10 @@ import (
 	"io/fs"
 	"math"
 	"math/bits"
-	"strings"
 	"time"
 	"unicode/utf16"
+
+	"source.monogon.dev/osbase/structfs"
 )
 
 // This package contains multiple references to the FAT32 specification, called
@@ -33,7 +34,7 @@ type Options struct {
 	// as large as it needs to be.
 	BlockCount uint32
 
-	// Human-readable filesystem label. Maximum 10 bytes (gets cut off), should
+	// Human-readable filesystem label. Maximum 11 bytes (gets cut off), should
 	// be uppercase alphanumeric.
 	Label string
 
@@ -42,13 +43,7 @@ type Options struct {
 	ID uint32
 }
 
-// SizedReader is an io.Reader with a known size
-type SizedReader interface {
-	io.Reader
-	Size() int64
-}
-
-// Attribute is a bitset of flags set on an inode.
+// Attribute is a bitset of flags set on a directory entry.
 // See also the spec page 24
 type Attribute uint8
 
@@ -59,39 +54,51 @@ const (
 	AttrHidden Attribute = 0x02
 	// AttrSystem indicates that this is an operating system file.
 	AttrSystem Attribute = 0x04
-	// AttrDirectory indicates that this is a directory and not a file.
-	AttrDirectory Attribute = 0x10
+	// attrVolumeID indicates that this is a special directory entry which
+	// contains the volume label.
+	attrVolumeID Attribute = 0x08
+	// attrDirectory indicates that this is a directory and not a file.
+	attrDirectory Attribute = 0x10
 	// AttrArchive canonically indicates that a file has been created/modified
 	// since the last backup. Its use in practice is inconsistent.
 	AttrArchive Attribute = 0x20
 )
 
-// Inode is file or directory on the FAT32 filesystem. Note that the concept
-// of an inode doesn't really exist on FAT32, its directories are just special
-// files.
-type Inode struct {
-	// Name of the file or directory (not including its path)
-	Name string
-	// Time the file or directory was last modified
-	ModTime time.Time
+// DirEntrySys contains additional directory entry fields which are specific to
+// FAT32. To set these fields, the Sys field of a [structfs.Node] can be set to
+// a pointer to this or to a struct which embeds it.
+type DirEntrySys struct {
 	// Time the file or directory was created
 	CreateTime time.Time
 	// Attributes
 	Attrs Attribute
-	// Children of this directory (only valid when Attrs has AttrDirectory set)
-	Children []*Inode
-	// Content of this file
-	// Only valid when Attrs doesn't have AttrDirectory set.
-	Content SizedReader
+}
 
-	// Filled out on placement and write-out
-	startCluster int
-	parent       *Inode
+func (d *DirEntrySys) FAT32() *DirEntrySys {
+	return d
+}
+
+// DirEntrySysAccessor is used to access [DirEntrySys] instead of directly type
+// asserting the struct, to allow for embedding.
+type DirEntrySysAccessor interface {
+	FAT32() *DirEntrySys
+}
+
+// node is a file or directory on the FAT32 filesystem. It wraps a
+// [structfs.Node] and holds additional fields which are filled during planning.
+type node struct {
+	*structfs.Node
 	dosName      [11]byte
+	createTime   time.Time
+	attrs        Attribute
+	parent       *node
+	children     []*node
+	size         uint32
+	startCluster int
 }
 
 // Number of LFN entries + normal entry (all 32 bytes)
-func (i Inode) metaSize() (int64, error) {
+func (i node) metaSize() (int64, error) {
 	fileNameUTF16 := utf16.Encode([]rune(i.Name))
 	// VFAT file names are null-terminated
 	fileNameUTF16 = append(fileNameUTF16, 0x00)
@@ -112,9 +119,9 @@ func lfnChecksum(dosName [11]byte) uint8 {
 	return sum
 }
 
-// writeMeta writes information about this inode into the contents of the parent
-// inode.
-func (i Inode) writeMeta(w io.Writer) error {
+// writeMeta writes information about this node into the contents of the parent
+// node.
+func (i node) writeMeta(w io.Writer) error {
 	fileNameUTF16 := utf16.Encode([]rune(i.Name))
 	// VFAT file names are null-terminated
 	fileNameUTF16 = append(fileNameUTF16, 0x00)
@@ -153,21 +160,15 @@ func (i Inode) writeMeta(w io.Writer) error {
 			return err
 		}
 	}
-	selfSize, err := i.dataSize()
-	if err != nil {
-		return err
-	}
-	if selfSize >= 4*1024*1024*1024 {
-		return errors.New("single file size exceeds 4GiB which is prohibited in FAT32")
-	}
-	if i.Attrs&AttrDirectory != 0 {
+	selfSize := i.size
+	if i.attrs&attrDirectory != 0 {
 		selfSize = 0 // Directories don't have an explicit size
 	}
 	date, t, _ := timeToMsDosTime(i.ModTime)
-	cdate, ctime, ctens := timeToMsDosTime(i.CreateTime)
+	cdate, ctime, ctens := timeToMsDosTime(i.createTime)
 	if err := binary.Write(w, binary.LittleEndian, &dirEntry{
 		DOSName:           i.dosName,
-		Attributes:        uint8(i.Attrs),
+		Attributes:        uint8(i.attrs),
 		CreationTenMilli:  ctens,
 		CreationTime:      ctime,
 		CreationDate:      cdate,
@@ -175,27 +176,27 @@ func (i Inode) writeMeta(w io.Writer) error {
 		LastWrittenToTime: t,
 		LastWrittenToDate: date,
 		FirstClusterLow:   uint16(i.startCluster & 0xffff),
-		FileSize:          uint32(selfSize),
+		FileSize:          selfSize,
 	}); err != nil {
 		return err
 	}
 	return nil
 }
 
-// writeData writes the contents of this inode (including possible metadata
+// writeData writes the contents of this node (including possible metadata
 // of its children, but not its children's data)
-func (i Inode) writeData(w io.Writer, volumeLabel [11]byte) error {
-	if i.Attrs&AttrDirectory != 0 {
+func (i node) writeData(w io.Writer, volumeLabel [11]byte) error {
+	if i.attrs&attrDirectory != 0 {
 		if i.parent == nil {
 			if err := binary.Write(w, binary.LittleEndian, &dirEntry{
 				DOSName:    volumeLabel,
-				Attributes: 0x08, // Volume ID, internal use only
+				Attributes: uint8(attrVolumeID),
 			}); err != nil {
 				return err
 			}
 		} else {
 			date, t, _ := timeToMsDosTime(i.ModTime)
-			cdate, ctime, ctens := timeToMsDosTime(i.CreateTime)
+			cdate, ctime, ctens := timeToMsDosTime(i.createTime)
 			if err := binary.Write(w, binary.LittleEndian, &dirEntry{
 				DOSName:           [11]byte{'.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
 				CreationDate:      cdate,
@@ -203,7 +204,7 @@ func (i Inode) writeData(w io.Writer, volumeLabel [11]byte) error {
 				CreationTenMilli:  ctens,
 				LastWrittenToTime: t,
 				LastWrittenToDate: date,
-				Attributes:        uint8(i.Attrs),
+				Attributes:        uint8(i.attrs),
 				FirstClusterHigh:  uint16(i.startCluster >> 16),
 				FirstClusterLow:   uint16(i.startCluster & 0xffff),
 			}); err != nil {
@@ -224,93 +225,56 @@ func (i Inode) writeData(w io.Writer, volumeLabel [11]byte) error {
 				CreationTenMilli:  ctens,
 				LastWrittenToTime: t,
 				LastWrittenToDate: date,
-				Attributes:        uint8(AttrDirectory),
+				Attributes:        uint8(attrDirectory),
 				FirstClusterHigh:  uint16(startCluster >> 16),
 				FirstClusterLow:   uint16(startCluster & 0xffff),
 			}); err != nil {
 				return err
 			}
 		}
-		err := makeUniqueDOSNames(i.Children)
-		if err != nil {
-			return err
-		}
-		for _, c := range i.Children {
+		for _, c := range i.children {
 			if err := c.writeMeta(w); err != nil {
 				return err
 			}
 		}
 	} else {
-		if _, err := io.CopyN(w, i.Content, i.Content.Size()); err != nil {
+		content, err := i.Content.Open()
+		if err != nil {
+			return err
+		}
+		defer content.Close()
+		if _, err := io.CopyN(w, content, int64(i.size)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (i Inode) dataSize() (int64, error) {
-	if i.Attrs&AttrDirectory != 0 {
-		var size int64
-		if i.parent != nil {
-			// Dot and dotdot directories
-			size += 2 * 32
-		} else {
-			// Volume ID
-			size += 1 * 32
-		}
-		for _, c := range i.Children {
-			cs, err := c.metaSize()
-			if err != nil {
-				return 0, err
-			}
-			size += cs
-		}
-		if size > 2*1024*1024 {
-			return 0, errors.New("directory contains > 2MiB of metadata which is prohibited in FAT32")
-		}
-		return size, nil
+func (i node) dirSize() (uint32, error) {
+	var size int64
+	if i.parent != nil {
+		// Dot and dotdot directories
+		size += 2 * 32
 	} else {
-		return i.Content.Size(), nil
+		// Volume ID
+		size += 1 * 32
 	}
-}
-
-func (i *Inode) PlaceFile(path string, reader SizedReader) error {
-	pathParts := strings.Split(path, "/")
-	inodeRef := i
-	for j, part := range pathParts {
-		var childExists bool
-		for _, child := range inodeRef.Children {
-			if strings.EqualFold(child.Name, part) {
-				inodeRef = child
-				childExists = true
-				break
-			}
+	for _, c := range i.children {
+		cs, err := c.metaSize()
+		if err != nil {
+			return 0, err
 		}
-		if j == len(pathParts)-1 { // Is last path part (i.e. file name)
-			if childExists {
-				return &fs.PathError{Path: path, Err: fs.ErrExist, Op: "create"}
-			}
-			newInode := &Inode{
-				Name:    part,
-				Content: reader,
-			}
-			inodeRef.Children = append(inodeRef.Children, newInode)
-			return nil
-		} else if !childExists {
-			newInode := &Inode{
-				Name:  part,
-				Attrs: AttrDirectory,
-			}
-			inodeRef.Children = append(inodeRef.Children, newInode)
-			inodeRef = newInode
-		}
+		size += cs
 	}
-	panic("unreachable")
+	if size > 2*1024*1024 {
+		return 0, errors.New("directory contains > 2MiB of metadata which is prohibited in FAT32")
+	}
+	return uint32(size), nil
 }
 
 type planningState struct {
-	// List of inodes in filesystem layout order
-	orderedInodes []*Inode
+	// List of nodes in filesystem layout order
+	orderedNodes []*node
 	// File Allocation Table
 	fat []uint32
 	// Size of a single cluster in the FAT in bytes
@@ -335,16 +299,54 @@ func (p *planningState) allocBytes(b int64) int {
 	return allocStartCluster
 }
 
-func (i *Inode) placeRecursively(p *planningState) error {
-	selfDataSize, err := i.dataSize()
-	if err != nil {
-		return fmt.Errorf("%s: %w", i.Name, err)
+func (i *node) placeRecursively(p *planningState) error {
+	if i.Mode.IsDir() {
+		for _, c := range i.Node.Children {
+			node := &node{
+				Node:       c,
+				createTime: c.ModTime,
+				parent:     i,
+			}
+			if sys, ok := c.Sys.(DirEntrySysAccessor); ok {
+				sys := sys.FAT32()
+				node.attrs = sys.Attrs & (AttrReadOnly | AttrHidden | AttrSystem | AttrArchive)
+				if !sys.CreateTime.IsZero() {
+					node.createTime = sys.CreateTime
+				}
+			}
+			switch {
+			case c.Mode.IsRegular():
+				size := c.Content.Size()
+				if size < 0 {
+					return fmt.Errorf("%s: negative file size", c.Name)
+				}
+				if size >= 4*1024*1024*1024 {
+					return fmt.Errorf("%s: single file size exceeds 4GiB which is prohibited in FAT32", c.Name)
+				}
+				node.size = uint32(size)
+				if len(c.Children) != 0 {
+					return fmt.Errorf("%s: file cannot have children", c.Name)
+				}
+			case c.Mode.IsDir():
+				node.attrs |= attrDirectory
+			default:
+				return fmt.Errorf("%s: unsupported file type %s", c.Name, c.Mode.Type().String())
+			}
+			i.children = append(i.children, node)
+		}
+		err := makeUniqueDOSNames(i.children)
+		if err != nil {
+			return err
+		}
+		i.size, err = i.dirSize()
+		if err != nil {
+			return fmt.Errorf("%s: %w", i.Name, err)
+		}
 	}
-	i.startCluster = p.allocBytes(selfDataSize)
-	p.orderedInodes = append(p.orderedInodes, i)
-	for _, c := range i.Children {
-		c.parent = i
-		err = c.placeRecursively(p)
+	i.startCluster = p.allocBytes(int64(i.size))
+	p.orderedNodes = append(p.orderedNodes, i)
+	for _, c := range i.children {
+		err := c.placeRecursively(p)
 		if err != nil {
 			return fmt.Errorf("%s/%w", i.Name, err)
 		}
@@ -352,10 +354,9 @@ func (i *Inode) placeRecursively(p *planningState) error {
 	return nil
 }
 
-// WriteFS writes a filesystem described by a root inode and its children to a
-// given io.Writer.
-func WriteFS(w io.Writer, rootInode Inode, opts Options) error {
-	bs, fsi, p, err := prepareFS(&opts, rootInode)
+// WriteFS writes a filesystem described by a tree to a given io.Writer.
+func WriteFS(w io.Writer, root structfs.Tree, opts Options) error {
+	bs, fsi, p, err := prepareFS(&opts, root)
 	if err != nil {
 		return err
 	}
@@ -405,9 +406,9 @@ func WriteFS(w io.Writer, rootInode Inode, opts Options) error {
 		}
 	}
 
-	for _, i := range p.orderedInodes {
+	for _, i := range p.orderedNodes {
 		if err := i.writeData(wb, bs.Label); err != nil {
-			return fmt.Errorf("failed to write inode %q: %w", i.Name, err)
+			return fmt.Errorf("failed to write contents of %q: %w", i.Name, err)
 		}
 		if err := wb.FinishBlock(int64(opts.BlockSize)*int64(bs.BlocksPerCluster), true); err != nil {
 			return err
@@ -420,7 +421,7 @@ func WriteFS(w io.Writer, rootInode Inode, opts Options) error {
 	return nil
 }
 
-func prepareFS(opts *Options, rootInode Inode) (*bootSector, *fsinfo, *planningState, error) {
+func prepareFS(opts *Options, root structfs.Tree) (*bootSector, *fsinfo, *planningState, error) {
 	if opts.BlockSize == 0 {
 		opts.BlockSize = 512
 	}
@@ -436,9 +437,6 @@ func prepareFS(opts *Options, rootInode Inode) (*bootSector, *fsinfo, *planningS
 			return nil, nil, nil, fmt.Errorf("failed to assign random FAT ID: %w", err)
 		}
 		opts.ID = binary.BigEndian.Uint32(buf[:])
-	}
-	if rootInode.Attrs&AttrDirectory == 0 {
-		return nil, nil, nil, errors.New("root inode must be a directory (i.e. have AttrDirectory set)")
 	}
 	bs := bootSector{
 		// Assembled x86_32 machine code corresponding to
@@ -499,7 +497,14 @@ func prepareFS(opts *Options, rootInode Inode) (*bootSector, *fsinfo, *planningS
 	}
 	// First two clusters are special
 	p.fat = append(p.fat, 0x0fffff00|uint32(bs.MediaCode), 0x0fffffff)
-	err := rootInode.placeRecursively(&p)
+	rootNode := &node{
+		Node: &structfs.Node{
+			Mode:     fs.ModeDir,
+			Children: root,
+		},
+		attrs: attrDirectory,
+	}
+	err := rootNode.placeRecursively(&p)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -514,7 +519,7 @@ func prepareFS(opts *Options, rootInode Inode) (*bootSector, *fsinfo, *planningS
 		p.fat = append(p.fat, fatFree)
 	}
 
-	bs.RootClusterNumber = uint32(rootInode.startCluster)
+	bs.RootClusterNumber = uint32(rootNode.startCluster)
 
 	bs.BlocksPerFAT = uint32(binary.Size(p.fat)+int(opts.BlockSize)-1) / uint32(opts.BlockSize)
 	occupiedBlocks := uint32(bs.ReservedBlocks) + (uint32(len(p.fat)-2) * uint32(bs.BlocksPerCluster)) + bs.BlocksPerFAT*uint32(bs.NumFATs)
@@ -552,10 +557,10 @@ func prepareFS(opts *Options, rootInode Inode) (*bootSector, *fsinfo, *planningS
 }
 
 // SizeFS returns the number of blocks required to hold the filesystem defined
-// by rootInode and opts. This can be used for sizing calculations before
-// calling WriteFS.
-func SizeFS(rootInode Inode, opts Options) (int64, error) {
-	bs, _, _, err := prepareFS(&opts, rootInode)
+// by root and opts. This can be used for sizing calculations before calling
+// WriteFS.
+func SizeFS(root structfs.Tree, opts Options) (int64, error) {
+	bs, _, _, err := prepareFS(&opts, root)
 	if err != nil {
 		return 0, err
 	}

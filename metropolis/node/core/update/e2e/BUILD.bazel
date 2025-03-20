@@ -25,9 +25,9 @@ go_test(
         "xAbloaderPath": "$(rlocationpath //metropolis/node/core/abloader )",
     },
     deps = [
-        "//osbase/blkio",
         "//osbase/blockdev",
         "//osbase/build/mkimage/osimage",
+        "//osbase/structfs",
         "@io_bazel_rules_go//go/runfiles",
     ],
 )

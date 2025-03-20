@@ -16,6 +16,7 @@ go_library(
         "//osbase/bringup",
         "//osbase/build/mkimage/osimage",
         "//osbase/efivarfs",
+        "//osbase/structfs",
         "//osbase/supervisor",
         "//osbase/sysfs",
         "@org_golang_x_sys//unix",

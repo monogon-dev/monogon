@@ -4,7 +4,6 @@
 package core
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"math"
@@ -16,6 +15,7 @@ import (
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/fat32"
 	"source.monogon.dev/osbase/gpt"
+	"source.monogon.dev/osbase/structfs"
 )
 
 type MakeInstallerImageArgs struct {
@@ -23,13 +23,13 @@ type MakeInstallerImageArgs struct {
 	TargetPath string
 
 	// Reader for the installer EFI executable. Mandatory.
-	Installer fat32.SizedReader
+	Installer structfs.Blob
 
 	// Optional NodeParameters to be embedded for use by the installer.
 	NodeParams *api.NodeParameters
 
 	// Optional Reader for a Metropolis bundle for use by the installer.
-	Bundle fat32.SizedReader
+	Bundle structfs.Blob
 }
 
 // MakeInstallerImage generates an installer disk image containing a Table
@@ -40,7 +40,7 @@ func MakeInstallerImage(args MakeInstallerImageArgs) error {
 		return errors.New("installer is mandatory")
 	}
 
-	espRoot := fat32.Inode{Attrs: fat32.AttrDirectory}
+	var espRoot structfs.Tree
 
 	// This needs to be a "Removable Media" according to the UEFI Specification
 	// V2.9 Section 3.5.1.1. This file is booted by any compliant UEFI firmware
@@ -54,7 +54,7 @@ func MakeInstallerImage(args MakeInstallerImageArgs) error {
 		if err != nil {
 			return fmt.Errorf("failed to marshal node params: %w", err)
 		}
-		if err := espRoot.PlaceFile("metropolis-installer/nodeparams.pb", bytes.NewReader(nodeParamsRaw)); err != nil {
+		if err := espRoot.PlaceFile("metropolis-installer/nodeparams.pb", structfs.Bytes(nodeParamsRaw)); err != nil {
 			return err
 		}
 	}

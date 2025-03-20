@@ -4,9 +4,9 @@
 package fat32
 
 import (
-	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"math/rand"
 	"os"
 	"strings"
@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
+
+	"source.monogon.dev/osbase/structfs"
 )
 
 func TestKernelInterop(t *testing.T) {
@@ -25,7 +27,7 @@ func TestKernelInterop(t *testing.T) {
 
 	type testCase struct {
 		name     string
-		setup    func(root *Inode) error
+		setup    func() structfs.Tree
 		validate func(t *testing.T) error
 	}
 
@@ -43,14 +45,15 @@ func TestKernelInterop(t *testing.T) {
 	tests := []testCase{
 		{
 			name: "SimpleFolder",
-			setup: func(root *Inode) error {
-				root.Children = []*Inode{{
-					Name:       "testdir",
-					Attrs:      AttrDirectory,
-					CreateTime: testTimestamp1,
-					ModTime:    testTimestamp2,
+			setup: func() structfs.Tree {
+				return structfs.Tree{{
+					Name:    "testdir",
+					Mode:    fs.ModeDir,
+					ModTime: testTimestamp2,
+					Sys: &DirEntrySys{
+						CreateTime: testTimestamp1,
+					},
 				}}
-				return nil
 			},
 			validate: func(t *testing.T) error {
 				var stat unix.Statx_t
@@ -81,14 +84,15 @@ func TestKernelInterop(t *testing.T) {
 		},
 		{
 			name: "SimpleFile",
-			setup: func(root *Inode) error {
-				root.Children = []*Inode{{
-					Name:       "testfile",
-					CreateTime: testTimestamp3,
-					ModTime:    testTimestamp4,
-					Content:    strings.NewReader(testContent1),
+			setup: func() structfs.Tree {
+				return structfs.Tree{{
+					Name:    "testfile",
+					ModTime: testTimestamp4,
+					Sys: &DirEntrySys{
+						CreateTime: testTimestamp3,
+					},
+					Content: structfs.Bytes(testContent1),
 				}}
-				return nil
 			},
 			validate: func(t *testing.T) error {
 				var stat unix.Statx_t
@@ -118,20 +122,23 @@ func TestKernelInterop(t *testing.T) {
 		},
 		{
 			name: "FolderHierarchy",
-			setup: func(i *Inode) error {
-				i.Children = []*Inode{{
-					Name:       "l1",
-					Attrs:      AttrDirectory,
-					CreateTime: testTimestamp1,
-					ModTime:    testTimestamp2,
-					Children: []*Inode{{
-						Name:       "l2",
-						Attrs:      AttrDirectory,
+			setup: func() structfs.Tree {
+				return structfs.Tree{{
+					Name:    "l1",
+					Mode:    fs.ModeDir,
+					ModTime: testTimestamp2,
+					Sys: &DirEntrySys{
 						CreateTime: testTimestamp1,
-						ModTime:    testTimestamp2,
+					},
+					Children: structfs.Tree{{
+						Name:    "l2",
+						Mode:    fs.ModeDir,
+						ModTime: testTimestamp2,
+						Sys: &DirEntrySys{
+							CreateTime: testTimestamp1,
+						},
 					}},
 				}}
-				return nil
 			},
 			validate: func(t *testing.T) error {
 				dirInfo, err := os.ReadDir("/dut/l1")
@@ -149,14 +156,13 @@ func TestKernelInterop(t *testing.T) {
 		},
 		{
 			name: "LargeFile",
-			setup: func(i *Inode) error {
+			setup: func() structfs.Tree {
 				content := make([]byte, 6500)
 				io.ReadFull(rand.New(rand.NewSource(1)), content)
-				i.Children = []*Inode{{
+				return structfs.Tree{{
 					Name:    "test.bin",
-					Content: bytes.NewReader(content),
+					Content: structfs.Bytes(content),
 				}}
-				return nil
 			},
 			validate: func(t *testing.T) error {
 				var stat unix.Stat_t
@@ -176,12 +182,11 @@ func TestKernelInterop(t *testing.T) {
 		},
 		{
 			name: "Unicode",
-			setup: func(i *Inode) error {
-				i.Children = []*Inode{{
+			setup: func() structfs.Tree {
+				return structfs.Tree{{
 					Name:    "✨😂", // Really exercise that UTF-16 conversion
-					Content: strings.NewReader("😂"),
+					Content: structfs.Bytes("😂"),
 				}}
-				return nil
 			},
 			validate: func(t *testing.T) error {
 				file, err := os.Open("/dut/✨😂")
@@ -197,25 +202,26 @@ func TestKernelInterop(t *testing.T) {
 					t.Fatalf("Failed to open unicode file: %v (available files: %v)", err, strings.Join(availableFileNames, ", "))
 				}
 				defer file.Close()
-				contents, err := io.ReadAll(file)
-				if err != nil {
-					t.Errorf("Wrong content: expected %x, got %x", []byte("😂"), contents)
-				}
+				expected := []byte("😂")
+				actual, err := io.ReadAll(file)
+				assert.NoError(t, err, "failed to read test file")
+				assert.Equal(t, expected, actual, "content not identical")
 				return nil
 			},
 		},
 		{
 			name: "MultipleMetaClusters",
-			setup: func(root *Inode) error {
+			setup: func() structfs.Tree {
 				// Only test up to 2048 files as Linux gets VERY slow if going
 				// up to the maximum of approximately 32K
+				var root structfs.Tree
 				for i := 0; i < 2048; i++ {
-					root.Children = append(root.Children, &Inode{
+					root = append(root, &structfs.Node{
 						Name:    fmt.Sprintf("verylongtestfilename%d", i),
-						Content: strings.NewReader("random test content"),
+						Content: structfs.Bytes("random test content"),
 					})
 				}
-				return nil
+				return root
 			},
 			validate: func(t *testing.T) error {
 				files, err := os.ReadDir("/dut")
@@ -245,13 +251,8 @@ func TestKernelInterop(t *testing.T) {
 				t.Fatalf("failed to get ramdisk block size: %v", err)
 			}
 			defer file.Close()
-			rootInode := Inode{
-				Attrs: AttrDirectory,
-			}
-			if err := test.setup(&rootInode); err != nil {
-				t.Fatalf("setup failed: %v", err)
-			}
-			if err := WriteFS(file, rootInode, Options{
+			root := test.setup()
+			if err := WriteFS(file, root, Options{
 				ID:         1234,
 				Label:      "KTEST",
 				BlockSize:  uint16(blockSize),

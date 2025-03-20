@@ -27,6 +27,7 @@ import (
 
 	"source.monogon.dev/osbase/fat32"
 	"source.monogon.dev/osbase/freeport"
+	"source.monogon.dev/osbase/structfs"
 )
 
 var (
@@ -79,25 +80,16 @@ func TestE2E(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rootInode := fat32.Inode{
-		Attrs: fat32.AttrDirectory,
-		Children: []*fat32.Inode{
-			{
-				Name:    "user-data",
-				Content: strings.NewReader("#cloud-config\n" + string(userData)),
-			},
-			{
-				Name:    "meta-data",
-				Content: strings.NewReader(""),
-			},
-		},
+	root := structfs.Tree{
+		structfs.File("user-data", structfs.Bytes("#cloud-config\n"+string(userData))),
+		structfs.File("meta-data", structfs.Bytes("")),
 	}
 	cloudInitDataFile, err := os.CreateTemp("", "cidata*.img")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(cloudInitDataFile.Name())
-	if err := fat32.WriteFS(cloudInitDataFile, rootInode, fat32.Options{Label: "cidata"}); err != nil {
+	if err := fat32.WriteFS(cloudInitDataFile, root, fat32.Options{Label: "cidata"}); err != nil {
 		t.Fatal(err)
 	}
 

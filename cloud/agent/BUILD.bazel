@@ -27,6 +27,7 @@ go_library(
         "//osbase/pki",
         "//osbase/scsi",
         "//osbase/smbios",
+        "//osbase/structfs",
         "//osbase/supervisor",
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@com_github_mdlayher_ethtool//:ethtool",

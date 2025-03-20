@@ -5,10 +5,8 @@ package main
 
 import (
 	"archive/zip"
-	"bytes"
 	_ "embed"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -16,24 +14,28 @@ import (
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
+	"source.monogon.dev/osbase/structfs"
 )
 
 //go:embed metropolis/node/core/abloader/abloader.efi
 var abloader []byte
 
-// FileSizedReader is a small adapter from fs.File to fs.SizedReader
-// Panics on Stat() failure, so should only be used with sources where Stat()
-// cannot fail.
-type FileSizedReader struct {
-	fs.File
+// zipBlob looks up a file in a [zip.Reader] and adapts it to [structfs.Blob].
+func zipBlob(reader *zip.Reader, name string) (zipFileBlob, error) {
+	for _, file := range reader.File {
+		if file.Name == name {
+			return zipFileBlob{file}, nil
+		}
+	}
+	return zipFileBlob{}, fmt.Errorf("file %q not found", name)
 }
 
-func (f FileSizedReader) Size() int64 {
-	stat, err := f.Stat()
-	if err != nil {
-		panic(err)
-	}
-	return stat.Size()
+type zipFileBlob struct {
+	*zip.File
+}
+
+func (f zipFileBlob) Size() int64 {
+	return int64(f.File.UncompressedSize64)
 }
 
 // EnvInstallTarget environment variable which tells the takeover binary where
@@ -93,12 +95,12 @@ func setupOSImageParams(bundle *zip.Reader, metropolisSpecRaw []byte, installTar
 		return nil, fmt.Errorf("failed to open root device: %w", err)
 	}
 
-	efiPayload, err := bundle.Open("kernel_efi.efi")
+	efiPayload, err := zipBlob(bundle, "kernel_efi.efi")
 	if err != nil {
 		return nil, fmt.Errorf("invalid bundle: %w", err)
 	}
 
-	systemImage, err := bundle.Open("verity_rootfs.img")
+	systemImage, err := zipBlob(bundle, "verity_rootfs.img")
 	if err != nil {
 		return nil, fmt.Errorf("invalid bundle: %w", err)
 	}
@@ -110,9 +112,9 @@ func setupOSImageParams(bundle *zip.Reader, metropolisSpecRaw []byte, installTar
 			Data:   128,
 		},
 		SystemImage:    systemImage,
-		EFIPayload:     FileSizedReader{efiPayload},
-		ABLoader:       bytes.NewReader(abloader),
-		NodeParameters: bytes.NewReader(metropolisSpecRaw),
+		EFIPayload:     efiPayload,
+		ABLoader:       structfs.Bytes(abloader),
+		NodeParameters: structfs.Bytes(metropolisSpecRaw),
 		Output:         rootDev,
 	}, nil
 }
