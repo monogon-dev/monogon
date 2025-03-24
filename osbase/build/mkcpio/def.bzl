@@ -40,8 +40,8 @@ node_initramfs = rule(
         "symlinks": attr.string_dict(
             default = {},
             doc = """
-                Symbolic links to create. Similar format as in files and files_cc, so the target of the symlink is the
-                key and the value of it is the location of the symlink itself. Only raw strings are allowed as targets,
+                Symbolic links to create. Similar format as in files and files_cc, so the key is the location of the
+                symlink itself and the value of it is target of the symlink. Only raw strings are allowed as targets,
                 labels are not permitted. Include the file using files or files_cc, then symlink to its location.
             """,
         ),

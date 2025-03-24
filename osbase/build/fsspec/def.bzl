@@ -46,7 +46,7 @@ def fsspec_core_impl(ctx, tool, output_file, extra_files = [], extra_fsspecs = [
         fs_files.append(struct(path = p, source_path = src.path, mode = mode, uid = 0, gid = 0))
 
     fs_symlinks = []
-    for target, p in ctx.attr.symlinks.items():
+    for p, target in ctx.attr.symlinks.items():
         fs_symlinks.append(struct(path = p, target_path = target))
 
     fs_spec_content = struct(file = fs_files, directory = [], symbolic_link = fs_symlinks)

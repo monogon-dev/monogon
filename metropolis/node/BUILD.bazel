@@ -103,7 +103,7 @@ erofs_image(
         "//third_party:firmware",
     ],
     symlinks = {
-        "/ephemeral/machine-id": "/etc/machine-id",
+        "/etc/machine-id": "/ephemeral/machine-id",
     },
 )
 
