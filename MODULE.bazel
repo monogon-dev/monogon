@@ -99,7 +99,7 @@ register_toolchains("@rust_toolchains//:all")
 # Protobuf Toolchains
 register_toolchains("@rules_rust_protobuf//:default_proto_toolchain")
 
-register_toolchains("//build/rust:prost_efi_toolchain")
+register_toolchains("//build/toolchain/rust-efi:prost_efi_toolchain")
 
 include("//build/bazel:rust.MODULE.bazel")
 
