@@ -10,6 +10,8 @@ import (
 	"runtime/debug"
 	"sort"
 	"time"
+
+	"source.monogon.dev/osbase/logtree"
 )
 
 // The processor maintains runnable goroutines - ie., when requested will start
@@ -283,7 +285,8 @@ func (s *supervisor) processDied(r *processorRequestDied) {
 		err = fmt.Errorf("returned nil when %s", n.state)
 	}
 
-	s.ilogger.Errorf("%s: %v", n.dn(), err)
+	s.logtree.MustLeveledFor(logtree.DN(n.dn())).Fatalf("runnable returned error: %v", err)
+
 	// Mark as dead.
 	n.state = NodeStateDead
 	s.metrics.NotifyNodeState(r.dn, n.state)
