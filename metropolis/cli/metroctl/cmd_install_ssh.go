@@ -121,7 +121,11 @@ var sshCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		takeover, err := external("takeover", "_main/metropolis/cli/takeover/takeover_bin_/takeover_bin", bundlePath)
+		takeoverPath, err := cmd.Flags().GetString("takeover")
+		if err != nil {
+			return err
+		}
+		takeover, err := external("takeover", "_main/metropolis/cli/takeover/takeover_bin_/takeover_bin", &takeoverPath)
 		if err != nil {
 			return err
 		}
