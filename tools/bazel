@@ -88,36 +88,44 @@ intellij_patch() {
       ij_home="${sorted[0]}"
   fi
 
+
   # If we don't have or can't find ij_home, don't bother with attempting to patch anything.
   if [[ -d "${ij_home}" ]]; then
       # aspect_path is the path to the aspect external repository that IntelliJ will
       # inject into bazel via --override_repository.
       local aspect_path="${ij_home}/ijwb/aspect"
-      # Our copy of it.
-      local patched_path="${ij_home}/ijwb/aspect-monogon"
-      # Checksum of the patch that was used to create patched_path.
-      local checksum_file="${patched_path}/checksum"
-      # The patch
-      local patch_file="${DIR}/../intellij/patches/bazel_intellij_aspect_filter.patch"
-      # The checksum of the patch we're about to apply.
-      local checksum
-      checksum=$(sha256sum "$patch_file" | cut -d' ' -f1)
+      if [[ -d "${aspect_path}" ]]; then
+          # aspect_path is the path to the aspect external repository that IntelliJ will
+          # inject into bazel via --override_repository.
+          local aspect_path="${ij_home}/ijwb/aspect"
+          # Our copy of it.
+          local patched_path="${ij_home}/ijwb/aspect-monogon"
+          # Checksum of the patch that was used to create patched_path.
+          local checksum_file="${patched_path}/checksum"
+          # The patch
+          local patch_file="${DIR}/../intellij/patches/bazel_intellij_aspect_filter.patch"
+          # The checksum of the patch we're about to apply.
+          local checksum
+          checksum=$(sha256sum "$patch_file" | cut -d' ' -f1)
 
-      # If the patched aspect repository doesn't exist, or the checksum of the patch
-      # we're about to apply doesn't match the checksum of the patch that was used
-      # to create the patched aspect repository, apply the patch.
+          # If the patched aspect repository doesn't exist, or the checksum of the patch
+          # we're about to apply doesn't match the checksum of the patch that was used
+          # to create the patched aspect repository, apply the patch.
 
-      if ! [[ -d "${patched_path}" ]] || ! [[ "$(cat "${checksum_file}")" == "${checksum}" ]]; then
-          echo "IntelliJ found at ${ij_home}, patching aspect repository." >&2
-          # Copy the aspect repository to the patched path.
-          rm -rf "${patched_path}"
-          cp -r "${aspect_path}" "${patched_path}"
-          # Apply the patch.
-          patch -d "${patched_path}" -p1 < "${patch_file}"
-          # Write the checksum of the patch to the checksum file.
-          echo "${checksum}" > "${checksum_file}"
+          if ! [[ -d "${patched_path}" ]] || ! [[ "$(cat "${checksum_file}")" == "${checksum}" ]]; then
+              echo "IntelliJ found at ${ij_home}, patching aspect repository." >&2
+              # Copy the aspect repository to the patched path.
+              rm -rf "${patched_path}"
+              cp -r "${aspect_path}" "${patched_path}"
+              # Apply the patch.
+              patch -d "${patched_path}" -p1 < "${patch_file}"
+              # Write the checksum of the patch to the checksum file.
+              echo "${checksum}" > "${checksum_file}"
+          else
+              echo "IntelliJ found at ${ij_home}, aspect repository already patched." >&2
+          fi
       else
-          echo "IntelliJ found at ${ij_home}, aspect repository already patched." >&2
+        echo "IntelliJ found at ${ij_home}, but aspect repository is missing. Skipping..."
       fi
   fi
 }
