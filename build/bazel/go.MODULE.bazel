@@ -332,8 +332,6 @@ OVERRIDES = {
     "github.com/google/nftables": {
         "pre_patches": [
             "//third_party/com_github_google_nftables:nftables-dynamic-exprs.patch",
-            "//third_party/com_github_google_nftables:nftables-rule-handle.patch",
-            "//third_party/com_github_google_nftables:nftables-element-batching.patch",
         ],
     },
     "k8s.io/kubectl": {

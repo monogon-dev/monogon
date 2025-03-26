@@ -76,7 +76,7 @@ require (
 	github.com/google/go-tpm v0.3.3
 	github.com/google/go-tpm-tools v0.3.5
 	github.com/google/gopacket v1.1.19
-	github.com/google/nftables v0.3.0
+	github.com/google/nftables v0.3.1-0.20250326085720-8095c5167898
 	github.com/google/uuid v1.6.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/improbable-eng/grpc-web v0.15.0
@@ -121,12 +121,12 @@ require (
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/crypto v0.33.0
-	golang.org/x/net v0.35.0
-	golang.org/x/sync v0.11.0
-	golang.org/x/sys v0.30.0
-	golang.org/x/term v0.29.0
-	golang.org/x/text v0.22.0
+	golang.org/x/crypto v0.36.0
+	golang.org/x/net v0.37.0
+	golang.org/x/sync v0.12.0
+	golang.org/x/sys v0.31.0
+	golang.org/x/term v0.30.0
+	golang.org/x/text v0.23.0
 	golang.org/x/time v0.10.0
 	golang.org/x/tools v0.30.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220208144051-fde48d68ee68
