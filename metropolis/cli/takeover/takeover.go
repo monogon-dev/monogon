@@ -5,7 +5,6 @@ package main
 
 import (
 	"archive/zip"
-	"bytes"
 	_ "embed"
 	"fmt"
 	"io"
@@ -24,6 +23,7 @@ import (
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/kexec"
 	netdump "source.monogon.dev/osbase/net/dump"
+	"source.monogon.dev/osbase/structfs"
 )
 
 //go:embed third_party/linux/bzImage
@@ -45,6 +45,43 @@ func newMemfile(name string, flags int) (*os.File, error) {
 	return os.NewFile(uintptr(fd), name), nil
 }
 
+func writeCPIO(w io.Writer, root structfs.Tree) error {
+	cpioW := cpio.NewWriter(w)
+	for path, node := range root.Walk() {
+		switch {
+		case node.Mode.IsDir():
+			err := cpioW.WriteHeader(&cpio.Header{
+				Name: "/" + path,
+				Mode: cpio.TypeDir | (cpio.FileMode(node.Mode) & cpio.ModePerm),
+			})
+			if err != nil {
+				return err
+			}
+		case node.Mode.IsRegular():
+			err := cpioW.WriteHeader(&cpio.Header{
+				Name: "/" + path,
+				Size: node.Content.Size(),
+				Mode: cpio.TypeReg | (cpio.FileMode(node.Mode) & cpio.ModePerm),
+			})
+			if err != nil {
+				return err
+			}
+			content, err := node.Content.Open()
+			if err != nil {
+				return fmt.Errorf("cpio write %q: %w", path, err)
+			}
+			_, err = io.Copy(cpioW, content)
+			content.Close()
+			if err != nil {
+				return fmt.Errorf("cpio write %q: %w", path, err)
+			}
+		default:
+			return fmt.Errorf("cpio write %q: unsupported file type %s", path, node.Mode.Type().String())
+		}
+	}
+	return cpioW.Close()
+}
+
 func setupTakeover(nodeParamsRaw []byte, target string) ([]string, error) {
 	// Validate we are running via EFI.
 	if _, err := os.Stat("/sys/firmware/efi"); os.IsNotExist(err) {
@@ -57,17 +94,17 @@ func setupTakeover(nodeParamsRaw []byte, target string) ([]string, error) {
 		return nil, err
 	}
 
-	bundleRaw, err := os.Open(filepath.Join(filepath.Dir(currPath), "bundle.zip"))
+	bundleBlob, err := structfs.OSPathBlob(filepath.Join(filepath.Dir(currPath), "bundle.zip"))
 	if err != nil {
 		return nil, err
 	}
 
-	bundleStat, err := bundleRaw.Stat()
+	bundleRaw, err := bundleBlob.Open()
 	if err != nil {
 		return nil, err
 	}
-
-	bundle, err := zip.NewReader(bundleRaw, bundleStat.Size())
+	defer bundleRaw.Close()
+	bundle, err := zip.NewReader(bundleRaw.(io.ReaderAt), bundleBlob.Size())
 	if err != nil {
 		return nil, fmt.Errorf("failed to open node bundle: %w", err)
 	}
@@ -123,62 +160,38 @@ func setupTakeover(nodeParamsRaw []byte, target string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create initramfs memfile: %w", err)
 	}
-	if _, err := kernelFile.ReadFrom(bytes.NewReader(kernel)); err != nil {
-		return nil, fmt.Errorf("failed to read kernel into memory-backed file: %w", err)
+	if _, err := kernelFile.Write(kernel); err != nil {
+		return nil, fmt.Errorf("failed to write kernel into memory-backed file: %w", err)
 	}
-	if _, err := initramfsFile.ReadFrom(bytes.NewReader(ucode)); err != nil {
-		return nil, fmt.Errorf("failed to read ucode into memory-backed file: %w", err)
+	if _, err := initramfsFile.Write(ucode); err != nil {
+		return nil, fmt.Errorf("failed to write ucode into memory-backed file: %w", err)
 	}
-	if _, err := initramfsFile.ReadFrom(bytes.NewReader(initramfs)); err != nil {
-		return nil, fmt.Errorf("failed to read initramfs into memory-backed file: %w", err)
+	if _, err := initramfsFile.Write(initramfs); err != nil {
+		return nil, fmt.Errorf("failed to write initramfs into memory-backed file: %w", err)
 	}
 
 	// Append this executable, the bundle and node params to initramfs
+	self, err := structfs.OSPathBlob("/proc/self/exe")
+	if err != nil {
+		return nil, err
+	}
+	root := structfs.Tree{
+		structfs.File("init", self, structfs.WithPerm(0o755)),
+		structfs.File("params.pb", structfs.Bytes(nodeParamsRaw)),
+		structfs.File("bundle.zip", bundleBlob),
+	}
 	compressedW, err := zstd.NewWriter(initramfsFile, zstd.WithEncoderLevel(1))
 	if err != nil {
 		return nil, fmt.Errorf("while creating zstd writer: %w", err)
 	}
-	{
-		self, err := os.Open("/proc/self/exe")
-		if err != nil {
-			return nil, err
-		}
-		selfStat, err := self.Stat()
-		if err != nil {
-			return nil, err
-		}
-
-		cpioW := cpio.NewWriter(compressedW)
-		cpioW.WriteHeader(&cpio.Header{
-			Name: "/init",
-			Size: selfStat.Size(),
-			Mode: cpio.TypeReg | 0o755,
-		})
-		io.Copy(cpioW, self)
-		cpioW.Close()
+	err = writeCPIO(compressedW, root)
+	if err != nil {
+		return nil, err
 	}
-	{
-		cpioW := cpio.NewWriter(compressedW)
-		cpioW.WriteHeader(&cpio.Header{
-			Name: "/bundle.zip",
-			Size: bundleStat.Size(),
-			Mode: cpio.TypeReg | 0o644,
-		})
-		bundleRaw.Seek(0, io.SeekStart)
-		io.Copy(cpioW, bundleRaw)
-		cpioW.Close()
+	err = compressedW.Close()
+	if err != nil {
+		return nil, err
 	}
-	{
-		cpioW := cpio.NewWriter(compressedW)
-		cpioW.WriteHeader(&cpio.Header{
-			Name: "/params.pb",
-			Size: int64(len(nodeParamsRaw)),
-			Mode: cpio.TypeReg | 0o644,
-		})
-		cpioW.Write(nodeParamsRaw)
-		cpioW.Close()
-	}
-	compressedW.Close()
 
 	initParams := bootparam.Params{
 		bootparam.Param{Param: "quiet"},
