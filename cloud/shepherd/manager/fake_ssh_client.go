@@ -9,26 +9,22 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
-	"time"
 
+	"golang.org/x/crypto/ssh"
 	"google.golang.org/protobuf/proto"
 
 	apb "source.monogon.dev/cloud/agent/api"
-
-	"source.monogon.dev/go/net/ssh"
 )
 
-// FakeSSHClient is an Client that pretends to start an agent, but in reality
-// just responds with what an agent would respond on every execution attempt.
-type FakeSSHClient struct{}
+type fakeSSHClient struct{}
 
-type fakeSSHConnection struct{}
-
-func (f *FakeSSHClient) Dial(ctx context.Context, address string, timeout time.Duration) (ssh.Connection, error) {
-	return &fakeSSHConnection{}, nil
+// FakeSSHDial pretends to start an agent, but in reality just responds with
+// what an agent would respond on every execution attempt.
+func FakeSSHDial(ctx context.Context, address string, config *ssh.ClientConfig) (SSHClient, error) {
+	return &fakeSSHClient{}, nil
 }
 
-func (f *fakeSSHConnection) Execute(ctx context.Context, command string, stdin []byte) (stdout []byte, stderr []byte, err error) {
+func (f *fakeSSHClient) Execute(ctx context.Context, command string, stdin []byte) (stdout []byte, stderr []byte, err error) {
 	var aim apb.TakeoverInit
 	if err := proto.Unmarshal(stdin, &aim); err != nil {
 		return nil, nil, fmt.Errorf("while unmarshaling TakeoverInit message: %w", err)
@@ -52,13 +48,13 @@ func (f *fakeSSHConnection) Execute(ctx context.Context, command string, stdin [
 	return arspb, nil, nil
 }
 
-func (f *fakeSSHConnection) Upload(ctx context.Context, targetPath string, _ io.Reader) error {
+func (f *fakeSSHClient) UploadExecutable(ctx context.Context, targetPath string, _ io.Reader) error {
 	if targetPath != "/fake/path" {
 		return fmt.Errorf("unexpected target path in test")
 	}
 	return nil
 }
 
-func (f *fakeSSHConnection) Close() error {
+func (f *fakeSSHClient) Close() error {
 	return nil
 }

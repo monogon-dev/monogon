@@ -1,9 +1,9 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "ssh",
-    srcs = ["ssh_client.go"],
-    importpath = "source.monogon.dev/go/net/ssh",
+    name = "sshtakeover",
+    srcs = ["sshtakeover.go"],
+    importpath = "source.monogon.dev/osbase/net/sshtakeover",
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_pkg_sftp//:sftp",

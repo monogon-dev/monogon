@@ -18,7 +18,6 @@ go_library(
         "//cloud/lib/component",
         "//cloud/shepherd",
         "//cloud/shepherd/manager",
-        "//go/net/ssh",
         "@io_k8s_klog_v2//:klog",
         "@org_golang_x_crypto//ssh",
     ],

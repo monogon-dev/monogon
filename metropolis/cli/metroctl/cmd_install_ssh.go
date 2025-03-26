@@ -18,12 +18,12 @@ import (
 
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
-	xssh "golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/term"
 	"google.golang.org/protobuf/proto"
 
-	"source.monogon.dev/go/net/ssh"
+	"source.monogon.dev/osbase/net/sshtakeover"
 	"source.monogon.dev/osbase/structfs"
 )
 
@@ -47,11 +47,11 @@ var sshCmd = &cobra.Command{
 			return fmt.Errorf("flag disk is required")
 		}
 
-		var authMethods []xssh.AuthMethod
+		var authMethods []ssh.AuthMethod
 		if aconn, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
 			defer aconn.Close()
 			a := agent.NewClient(aconn)
-			authMethods = append(authMethods, xssh.PublicKeysCallback(a.Signers))
+			authMethods = append(authMethods, ssh.PublicKeysCallback(a.Signers))
 		} else {
 			log.Printf("error while establishing ssh agent connection: %v", err)
 			log.Println("ssh agent authentication will not be available.")
@@ -62,7 +62,7 @@ var sshCmd = &cobra.Command{
 		stdin := int(syscall.Stdin) // nolint:unconvert
 		if term.IsTerminal(stdin) {
 			authMethods = append(authMethods,
-				xssh.PasswordCallback(func() (string, error) {
+				ssh.PasswordCallback(func() (string, error) {
 					fmt.Printf("%s@%s's password: ", user, address)
 					b, err := term.ReadPassword(stdin)
 					if err != nil {
@@ -71,7 +71,7 @@ var sshCmd = &cobra.Command{
 					fmt.Println()
 					return string(b), nil
 				}),
-				xssh.KeyboardInteractive(func(name, instruction string, questions []string, echos []bool) ([]string, error) {
+				ssh.KeyboardInteractive(func(name, instruction string, questions []string, echos []bool) ([]string, error) {
 					answers := make([]string, 0, len(questions))
 					for i, q := range questions {
 						fmt.Print(q)
@@ -95,13 +95,19 @@ var sshCmd = &cobra.Command{
 			log.Println("stdin is not interactive. password authentication will not be available.")
 		}
 
-		cl := ssh.DirectClient{
-			Username:    user,
-			AuthMethods: authMethods,
+		conf := &ssh.ClientConfig{
+			User: user,
+			Auth: authMethods,
+			// Ignore the host key, since it's likely the first time anything logs into
+			// this device, and also because there's no way of knowing its fingerprint.
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			// Timeout sets a bound on the time it takes to set up the connection, but
+			// not on total session time.
+			Timeout: 5 * time.Second,
 		}
 
 		ctx, _ := signal.NotifyContext(context.Background(), os.Interrupt)
-		conn, err := cl.Dial(ctx, address, 5*time.Second)
+		conn, err := sshtakeover.Dial(ctx, address, conf)
 		if err != nil {
 			return fmt.Errorf("error while establishing ssh connection: %w", err)
 		}
@@ -146,7 +152,7 @@ var sshCmd = &cobra.Command{
 			proxyReader := progressbar.NewReader(content, bar)
 			defer proxyReader.Close()
 
-			if err := conn.Upload(ctx, targetPath, &proxyReader); err != nil {
+			if err := conn.UploadExecutable(ctx, targetPath, &proxyReader); err != nil {
 				log.Fatalf("error while uploading %q: %v", targetPath, err)
 			}
 		}

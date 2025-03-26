@@ -144,7 +144,7 @@ func main() {
 		klog.Exitf("Failed to open BMDB connection: %v", err)
 	}
 
-	sshClient, err := c.SSHConfig.NewClient()
+	err = c.SSHConfig.Configure(&c.InitializerConfig.SSHConfig)
 	if err != nil {
 		klog.Exitf("Failed to create SSH client: %v", err)
 	}
@@ -168,7 +168,7 @@ func main() {
 		klog.Exitf("%v", err)
 	}
 
-	initializer, err := manager.NewInitializer(mini, sshClient, c.InitializerConfig)
+	initializer, err := manager.NewInitializer(mini, c.InitializerConfig)
 	if err != nil {
 		klog.Exitf("%v", err)
 	}

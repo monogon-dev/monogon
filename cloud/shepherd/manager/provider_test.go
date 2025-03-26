@@ -8,15 +8,14 @@ import (
 	"fmt"
 	"net/netip"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/ssh"
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	"source.monogon.dev/cloud/shepherd"
-	"source.monogon.dev/go/net/ssh"
 )
 
 type dummyMachine struct {
@@ -43,17 +42,12 @@ func (dm *dummyMachine) Availability() shepherd.Availability {
 }
 
 type dummySSHClient struct {
-	ssh.Client
-	dp *dummyProvider
-}
-
-type dummySSHConnection struct {
-	ssh.Connection
+	SSHClient
 	m *dummyMachine
 }
 
-func (dsc *dummySSHConnection) Execute(ctx context.Context, command string, stdin []byte) ([]byte, []byte, error) {
-	stdout, stderr, err := dsc.Connection.Execute(ctx, command, stdin)
+func (dsc *dummySSHClient) Execute(ctx context.Context, command string, stdin []byte) ([]byte, []byte, error) {
+	stdout, stderr, err := dsc.SSHClient.Execute(ctx, command, stdin)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -62,8 +56,8 @@ func (dsc *dummySSHConnection) Execute(ctx context.Context, command string, stdi
 	return stdout, stderr, nil
 }
 
-func (dsc *dummySSHClient) Dial(ctx context.Context, address string, timeout time.Duration) (ssh.Connection, error) {
-	conn, err := dsc.Client.Dial(ctx, address, timeout)
+func (dp *dummyProvider) FakeSSHDial(ctx context.Context, address string, config *ssh.ClientConfig) (SSHClient, error) {
+	conn, err := FakeSSHDial(ctx, address, config)
 	if err != nil {
 		return nil, err
 	}
@@ -74,21 +68,14 @@ func (dsc *dummySSHClient) Dial(ctx context.Context, address string, timeout tim
 		return nil, err
 	}
 
-	dsc.dp.muMachines.RLock()
-	m := dsc.dp.machines[shepherd.ProviderID(uid.String())]
-	dsc.dp.muMachines.RUnlock()
+	dp.muMachines.RLock()
+	m := dp.machines[shepherd.ProviderID(uid.String())]
+	dp.muMachines.RUnlock()
 	if m == nil {
 		return nil, fmt.Errorf("failed finding machine in map")
 	}
 
-	return &dummySSHConnection{conn, m}, nil
-}
-
-func (dp *dummyProvider) sshClient() ssh.Client {
-	return &dummySSHClient{
-		Client: &FakeSSHClient{},
-		dp:     dp,
-	}
+	return &dummySSHClient{conn, m}, nil
 }
 
 func newDummyProvider(cap int) *dummyProvider {

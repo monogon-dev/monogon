@@ -40,7 +40,6 @@ go_library(
     deps = [
         "//go/clitable",
         "//go/logging",
-        "//go/net/ssh",
         "//metropolis/cli/flagdefs",
         "//metropolis/cli/metroctl/core",
         "//metropolis/node",
@@ -50,6 +49,7 @@ go_library(
         "//metropolis/proto/common",
         "//osbase/logtree",
         "//osbase/logtree/proto",
+        "//osbase/net/sshtakeover",
         "//osbase/structfs",
         "//version",
         "@com_github_adrg_xdg//:xdg",

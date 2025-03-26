@@ -12,12 +12,14 @@ import (
 	"encoding/pem"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/ssh"
 	"google.golang.org/protobuf/proto"
 	"k8s.io/klog/v2"
 
@@ -27,7 +29,7 @@ import (
 	"source.monogon.dev/cloud/bmaas/bmdb/metrics"
 	"source.monogon.dev/cloud/bmaas/bmdb/model"
 	"source.monogon.dev/cloud/shepherd"
-	"source.monogon.dev/go/net/ssh"
+	"source.monogon.dev/osbase/net/sshtakeover"
 )
 
 // InitializerConfig configures how the Initializer will deploy Agents on
@@ -54,14 +56,20 @@ type InitializerConfig struct {
 	// certificate.
 	EndpointCACertificate []byte
 
-	// SSHTimeout is the amount of time set aside for the initializing
-	// SSH session to run its course. Upon timeout, the iteration would be
-	// declared a failure. Must be set.
-	SSHConnectTimeout time.Duration
+	SSHConfig ssh.ClientConfig
 	// SSHExecTimeout is the amount of time set aside for executing the agent and
 	// getting its output once the SSH connection has been established. Upon timeout,
 	// the iteration would be declared as failure. Must be set.
 	SSHExecTimeout time.Duration
+
+	// DialSSH can be set in tests to override how ssh connections are started.
+	DialSSH func(ctx context.Context, address string, config *ssh.ClientConfig) (SSHClient, error)
+}
+
+type SSHClient interface {
+	Execute(ctx context.Context, command string, stdin []byte) (stdout []byte, stderr []byte, err error)
+	UploadExecutable(ctx context.Context, targetPath string, src io.Reader) error
+	Close() error
 }
 
 func (ic *InitializerConfig) RegisterFlags() {
@@ -99,7 +107,7 @@ func (ic *InitializerConfig) RegisterFlags() {
 		ic.EndpointCACertificate = block.Bytes
 		return nil
 	})
-	flag.DurationVar(&ic.SSHConnectTimeout, "agent_ssh_connect_timeout", 2*time.Second, "Timeout for connecting over SSH to a machine")
+	flag.DurationVar(&ic.SSHConfig.Timeout, "agent_ssh_connect_timeout", 2*time.Second, "Timeout for connecting over SSH to a machine")
 	flag.DurationVar(&ic.SSHExecTimeout, "agent_ssh_exec_timeout", 60*time.Second, "Timeout for connecting over SSH to a machine")
 }
 
@@ -117,7 +125,7 @@ func (ic *InitializerConfig) Check() error {
 	if ic.Endpoint == "" {
 		return fmt.Errorf("agent endpoint must be set")
 	}
-	if ic.SSHConnectTimeout == 0 {
+	if ic.SSHConfig.Timeout == 0 {
 		return fmt.Errorf("agent SSH connection timeout must be set")
 	}
 	if ic.SSHExecTimeout == 0 {
@@ -131,13 +139,12 @@ func (ic *InitializerConfig) Check() error {
 type Initializer struct {
 	InitializerConfig
 
-	sshClient ssh.Client
-	p         shepherd.Provider
+	p shepherd.Provider
 }
 
 // NewInitializer creates an Initializer instance, checking the
 // InitializerConfig, SharedConfig and AgentConfig for errors.
-func NewInitializer(p shepherd.Provider, sshClient ssh.Client, ic InitializerConfig) (*Initializer, error) {
+func NewInitializer(p shepherd.Provider, ic InitializerConfig) (*Initializer, error) {
 	if err := ic.Check(); err != nil {
 		return nil, err
 	}
@@ -145,8 +152,7 @@ func NewInitializer(p shepherd.Provider, sshClient ssh.Client, ic InitializerCon
 	return &Initializer{
 		InitializerConfig: ic,
 
-		p:         p,
-		sshClient: sshClient,
+		p: p,
 	}, nil
 }
 
@@ -215,7 +221,13 @@ func (i *Initializer) startAgent(ctx context.Context, m shepherd.Machine, mid uu
 	addr := net.JoinHostPort(ni.String(), "22")
 	klog.V(1).Infof("Dialing machine (machine ID: %s, addr: %s).", mid, addr)
 
-	conn, err := i.sshClient.Dial(sctx, addr, i.SSHConnectTimeout)
+	var conn SSHClient
+	var err error
+	if i.DialSSH != nil {
+		conn, err = i.DialSSH(sctx, addr, &i.SSHConfig)
+	} else {
+		conn, err = sshtakeover.Dial(sctx, addr, &i.SSHConfig)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("while dialing the machine: %w", err)
 	}
@@ -224,7 +236,7 @@ func (i *Initializer) startAgent(ctx context.Context, m shepherd.Machine, mid uu
 	// Upload the agent executable.
 
 	klog.Infof("Uploading the agent executable (machine ID: %s, addr: %s).", mid, addr)
-	if err := conn.Upload(sctx, i.TargetPath, bytes.NewReader(i.Executable)); err != nil {
+	if err := conn.UploadExecutable(sctx, i.TargetPath, bytes.NewReader(i.Executable)); err != nil {
 		return nil, fmt.Errorf("while uploading agent executable: %w", err)
 	}
 	klog.V(1).Infof("Upload successful (machine ID: %s, addr: %s).", mid, addr)

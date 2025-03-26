@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/packethost/packngo"
+	"golang.org/x/crypto/ssh"
 	"golang.org/x/time/rate"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
@@ -51,14 +52,17 @@ func newInitializerDut(t *testing.T) *initializerDut {
 		ControlLoopConfig: manager.ControlLoopConfig{
 			DBQueryLimiter: rate.NewLimiter(rate.Every(time.Second), 10),
 		},
-		Executable:        []byte("beep boop i'm a real program"),
-		TargetPath:        "/fake/path",
-		Endpoint:          "example.com:1234",
-		SSHConnectTimeout: time.Second,
-		SSHExecTimeout:    time.Second,
+		Executable: []byte("beep boop i'm a real program"),
+		TargetPath: "/fake/path",
+		Endpoint:   "example.com:1234",
+		SSHConfig: ssh.ClientConfig{
+			Timeout: time.Second,
+		},
+		SSHExecTimeout: time.Second,
+		DialSSH:        manager.FakeSSHDial,
 	}
 
-	i, err := manager.NewInitializer(provider, &manager.FakeSSHClient{}, ic)
+	i, err := manager.NewInitializer(provider, ic)
 	if err != nil {
 		t.Fatalf("Could not create Initializer: %v", err)
 	}

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/crypto/ssh"
 	"golang.org/x/time/rate"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
@@ -24,14 +25,17 @@ func TestInitializerSmokes(t *testing.T) {
 		ControlLoopConfig: ControlLoopConfig{
 			DBQueryLimiter: rate.NewLimiter(rate.Every(time.Second), 10),
 		},
-		Executable:        []byte("beep boop i'm a real program"),
-		TargetPath:        "/fake/path",
-		Endpoint:          "example.com:1234",
-		SSHConnectTimeout: time.Second,
-		SSHExecTimeout:    time.Second,
+		Executable: []byte("beep boop i'm a real program"),
+		TargetPath: "/fake/path",
+		Endpoint:   "example.com:1234",
+		SSHConfig: ssh.ClientConfig{
+			Timeout: time.Second,
+		},
+		SSHExecTimeout: time.Second,
+		DialSSH:        provider.FakeSSHDial,
 	}
 
-	i, err := NewInitializer(provider, provider.sshClient(), ic)
+	i, err := NewInitializer(provider, ic)
 	if err != nil {
 		t.Fatalf("Could not create Initializer: %v", err)
 	}

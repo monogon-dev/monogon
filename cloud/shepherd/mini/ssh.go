@@ -7,11 +7,10 @@ import (
 	"flag"
 	"fmt"
 
-	xssh "golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh"
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/shepherd/manager"
-	"source.monogon.dev/go/net/ssh"
 )
 
 type sshConfig struct {
@@ -40,32 +39,35 @@ func (sc *sshConfig) RegisterFlags() {
 	sc.SSHKey.RegisterFlags()
 }
 
-func (sc *sshConfig) NewClient() (*ssh.DirectClient, error) {
+func (sc *sshConfig) Configure(config *ssh.ClientConfig) error {
 	if err := sc.check(); err != nil {
-		return nil, err
+		return err
 	}
 
-	c := ssh.DirectClient{
-		Username: sc.User,
-	}
+	config.User = sc.User
 
 	switch {
 	case sc.Pass != "":
-		c.AuthMethods = []xssh.AuthMethod{xssh.Password(sc.Pass)}
+		config.Auth = []ssh.AuthMethod{ssh.Password(sc.Pass)}
 	case sc.SSHKey.KeyPersistPath != "":
 		signer, err := sc.SSHKey.Signer()
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		pubKey, err := sc.SSHKey.PublicKey()
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		klog.Infof("Using ssh key auth with public key: %s", pubKey)
 
-		c.AuthMethods = []xssh.AuthMethod{xssh.PublicKeys(signer)}
+		config.Auth = []ssh.AuthMethod{ssh.PublicKeys(signer)}
 	}
-	return &c, nil
+
+	// Ignore the host key, since it's likely the first time anything logs into
+	// this device, and also because there's no way of knowing its fingerprint.
+	config.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+
+	return nil
 }

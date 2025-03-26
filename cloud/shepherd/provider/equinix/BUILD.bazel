@@ -22,7 +22,6 @@ go_library(
         "//cloud/lib/sinbin",
         "//cloud/shepherd",
         "//cloud/shepherd/manager",
-        "//go/net/ssh",
         "@com_github_packethost_packngo//:packngo",
         "@io_k8s_klog_v2//:klog",
         "@org_golang_x_crypto//ssh",
@@ -49,6 +48,7 @@ go_test(
         "//cloud/shepherd/manager",
         "@com_github_google_uuid//:uuid",
         "@com_github_packethost_packngo//:packngo",
+        "@org_golang_x_crypto//ssh",
         "@org_golang_x_time//rate",
     ],
 )

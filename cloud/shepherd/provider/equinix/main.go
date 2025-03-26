@@ -11,7 +11,7 @@ import (
 	"os"
 	"os/signal"
 
-	xssh "golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh"
 	"k8s.io/klog/v2"
 
 	"source.monogon.dev/cloud/bmaas/bmdb"
@@ -19,7 +19,6 @@ import (
 	"source.monogon.dev/cloud/equinix/wrapngo"
 	"source.monogon.dev/cloud/lib/component"
 	"source.monogon.dev/cloud/shepherd/manager"
-	"source.monogon.dev/go/net/ssh"
 )
 
 type Config struct {
@@ -94,18 +93,19 @@ func main() {
 		klog.Exitf("%v", err)
 	}
 
-	sshClient := &ssh.DirectClient{
-		AuthMethods: []xssh.AuthMethod{xssh.PublicKeys(sshSigner)},
-		// Equinix OS installations always use root.
-		Username: "root",
-	}
+	c.InitializerConfig.SSHConfig.Auth = []ssh.AuthMethod{ssh.PublicKeys(sshSigner)}
+	// Equinix OS installations always use root.
+	c.InitializerConfig.SSHConfig.User = "root"
+	// Ignore the host key, since it's likely the first time anything logs into
+	// this device, and also because there's no way of knowing its fingerprint.
+	c.InitializerConfig.SSHConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
 
 	provisioner, err := manager.NewProvisioner(provider, c.ProvisionerConfig)
 	if err != nil {
 		klog.Exitf("%v", err)
 	}
 
-	initializer, err := manager.NewInitializer(provider, sshClient, c.InitializerConfig)
+	initializer, err := manager.NewInitializer(provider, c.InitializerConfig)
 	if err != nil {
 		klog.Exitf("%v", err)
 	}
