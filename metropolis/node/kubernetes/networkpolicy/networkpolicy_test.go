@@ -810,21 +810,18 @@ func TestCyclonus(t *testing.T) {
 			recorder := &testRecorder{t: t}
 			nft, err := nftctrl.New(recorder, podIfaceGroup)
 			if err != nil {
-				t.Errorf("Failed to create nftctrl: %v", err)
-				return
+				t.Fatalf("Failed to create nftctrl: %v", err)
 			}
 			defer nft.Close()
 			kubernetes.nft = nft
 
 			if err := kubernetes.initializeNft(); err != nil {
-				t.Errorf("nftctrl initialization failed: %v", err)
-				return
+				t.Fatalf("nftctrl initialization failed: %v", err)
 			}
 
 			result := interpreter.ExecuteTestCase(testCase)
 			if result.Err != nil {
-				t.Error(result.Err)
-				return
+				t.Fatal(result.Err)
 			}
 			if !result.Passed(ignoreLoopback) {
 				printer.PrintTestCaseResult(result)
@@ -863,8 +860,7 @@ func TestCyclonus(t *testing.T) {
 			recorder := &testRecorder{t: t}
 			nft, err := nftctrl.New(recorder, podIfaceGroup)
 			if err != nil {
-				t.Errorf("Failed to create nftctrl: %v", err)
-				return
+				t.Fatalf("Failed to create nftctrl: %v", err)
 			}
 			defer nft.Close()
 
@@ -874,13 +870,11 @@ func TestCyclonus(t *testing.T) {
 			}
 
 			if err := testCase.init(testCaseState, nft); err != nil {
-				t.Errorf("initialization failed: %v", err)
-				return
+				t.Fatalf("initialization failed: %v", err)
 			}
 
 			if err := nft.Flush(); err != nil {
-				t.Errorf("flush failed: %v", err)
-				return
+				t.Fatalf("flush failed: %v", err)
 			}
 
 			parsedPolicy := matcher.BuildNetworkPolicies(true, testCaseState.Policies)

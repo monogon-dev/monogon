@@ -251,7 +251,7 @@ func TestKernelInterop(t *testing.T) {
 			}
 			_ = file.Close()
 			if err := os.MkdirAll("/test", 0755); err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 			if err := unix.Mount("/dev/ram0", "/test", "erofs", unix.MS_NOEXEC|unix.MS_NODEV, ""); err != nil {
 				t.Fatal(err)

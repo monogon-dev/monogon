@@ -157,8 +157,7 @@ func TestClusternetBasic(t *testing.T) {
 				break
 			}
 			if time.Now().After(deadline) {
-				t.Error(err)
-				return
+				t.Fatal(err)
 			}
 		}
 

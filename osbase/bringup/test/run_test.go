@@ -69,7 +69,7 @@ func TestBringupSuccess(t *testing.T) {
 	expectedOutput := "_BRINGUP_LAUNCH_SUCCESS_"
 	result, err := runQemu(ctx, extraArgs, expectedOutput)
 	if err != nil {
-		t.Error(err.Error())
+		t.Error(err)
 	}
 	if !result {
 		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
@@ -85,7 +85,7 @@ func TestBringupPanic(t *testing.T) {
 	expectedOutput := "root runnable paniced"
 	result, err := runQemu(ctx, extraArgs, expectedOutput)
 	if err != nil {
-		t.Error(err.Error())
+		t.Error(err)
 	}
 	if !result {
 		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
@@ -102,7 +102,7 @@ func TestBringupError(t *testing.T) {
 	expectedOutput := "this is an error"
 	result, err := runQemu(ctx, extraArgs, expectedOutput)
 	if err != nil {
-		t.Error(err.Error())
+		t.Error(err)
 	}
 	if !result {
 		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)

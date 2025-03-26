@@ -45,7 +45,7 @@ func TestParsePattern(t *testing.T) {
 			}
 			diff := cmp.Diff(c.expectedNodes, out, protocmp.Transform())
 			if diff != "" {
-				t.Error(diff)
+				t.Fatal(diff)
 			}
 		})
 	}
@@ -56,18 +56,18 @@ func TestLookupComplex(t *testing.T) {
 		Type: kmodpb.RadixNode_TYPE_LITERAL,
 	}
 	if err := AddPattern(root, "usb:v0B95p1790d*dc*dsc*dp*icFFiscFFip00in*", 2); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	if err := AddPattern(root, "usb:v0B95p178Ad*dc*dsc*dp*icFFiscFFip00in*", 3); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	if err := AddPattern(root, "acpi*:PNP0C14:*", 10); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	matches := make(map[uint32]bool)
 	lookupModulesRec(root, "acpi:PNP0C14:asdf", matches)
 	if !matches[10] {
-		t.Error("value should match pattern 10")
+		t.Fatal("value should match pattern 10")
 	}
 }
 

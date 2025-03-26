@@ -45,7 +45,7 @@ func TestBasic(t *testing.T) {
 		t.Fatal(err, string(out))
 	}
 	if err := os.Mkdir("/test", 0755); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	if err := unix.Mount("/dev/ram0", "/test", "xfs", unix.MS_NOEXEC|unix.MS_NODEV, "prjquota"); err != nil {

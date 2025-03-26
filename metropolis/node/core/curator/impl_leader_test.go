@@ -1682,11 +1682,11 @@ func TestUpdateNodeClusterNetworking(t *testing.T) {
 		},
 	})
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	ev, err := w.Recv()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	cn := ev.Nodes[0].Clusternet
 	if want, got := "GaNXuc/yl8IaXduX6PQ+ZxIG4HtBACubHrRI7rqfA20=", cn.WireguardPubkey; want != got {

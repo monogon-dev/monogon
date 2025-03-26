@@ -130,7 +130,7 @@ func FuzzTopoSort(f *testing.F) {
 			return
 		}
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 		validateSolution(t, g, solution)
 
@@ -140,7 +140,7 @@ func FuzzTopoSort(f *testing.F) {
 			return
 		}
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 		validateSolution(t, g, detSolution)
 	})

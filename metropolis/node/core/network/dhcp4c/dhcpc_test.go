@@ -232,7 +232,7 @@ func TestDiscoverRequesting(t *testing.T) {
 	p.bmt.sendPackets(terribleOffer, offer)
 
 	if err := p.c.runState(context.Background()); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, stateRequesting, p.c.state, "DHCP client didn't process offer")
 	assert.Equal(t, testIP, p.c.offer.YourIPAddr, "DHCP client requested invalid offer")
@@ -257,7 +257,7 @@ func TestRequestingBound(t *testing.T) {
 	}
 
 	if err := p.c.runState(context.Background()); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, stateBound, p.c.state, "DHCP client didn't process offer")
 	assert.Equal(t, testIP, p.c.lease.YourIPAddr, "DHCP client requested invalid offer")
@@ -278,7 +278,7 @@ func TestRequestingDiscover(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		p.bmt.sendPackets()
 		if err := p.c.runState(context.Background()); err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 		assert.Equal(t, dhcpv4.MessageTypeRequest, p.bmt.sentPacket.MessageType(), "Invalid message type for requesting")
 		if p.c.state == stateDiscovering {
@@ -312,7 +312,7 @@ func TestDiscoverRapidCommit(t *testing.T) {
 	}
 	p.bmt.sendPackets(offer)
 	if err := p.c.runState(context.Background()); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, stateBound, p.c.state, "DHCP client didn't process offer")
 	assert.Equal(t, testIP, p.c.lease.YourIPAddr, "DHCP client requested invalid offer")
@@ -350,7 +350,7 @@ func TestBoundRenewingBound(t *testing.T) {
 
 	p.ft.Advance(5*time.Second - 5*time.Millisecond)
 	if err := p.c.runState(context.Background()); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	// We cannot intercept time.After so we just advance the clock by the time slept
 	p.ft.Advance(5 * time.Millisecond)
@@ -364,7 +364,7 @@ func TestBoundRenewingBound(t *testing.T) {
 		return nil
 	}
 	if err := p.c.runState(context.Background()); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, stateBound, p.c.state, "DHCP client didn't renew")
 	assert.Equal(t, p.ft.Now().Add(leaseTime), p.c.leaseDeadline, "lease deadline not updated")
@@ -401,7 +401,7 @@ func TestRenewingRebinding(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		p.umt.sendPackets()
 		if err := p.c.runState(context.Background()); err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 		assert.Equal(t, dhcpv4.MessageTypeRequest, p.umt.sentPacket.MessageType(), "Invalid message type for renewal")
 		p.ft.time = p.umt.setDeadline
@@ -438,7 +438,7 @@ func TestRebindingBound(t *testing.T) {
 
 	p.ft.Advance(9 * time.Second)
 	if err := p.c.runState(context.Background()); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, dhcpv4.MessageTypeRequest, p.bmt.sentPacket.MessageType(), "DHCP rebind sent invalid message type")
 	assert.Equal(t, stateRebinding, p.c.state, "DHCP client transferred out of rebinding state without trigger")
@@ -452,7 +452,7 @@ func TestRebindingBound(t *testing.T) {
 		return nil
 	}
 	if err := p.c.runState(context.Background()); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, dhcpv4.MessageTypeRequest, p.bmt.sentPacket.MessageType())
 	assert.Equal(t, stateBound, p.c.state, "DHCP client didn't go back to bound")
@@ -484,7 +484,7 @@ func TestRebindingDiscovering(t *testing.T) {
 		p.bmt.sendPackets()
 		p.bmt.sentPacket = nil
 		if err := p.c.runState(context.Background()); err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 		if p.c.state == stateDiscovering {
 			assert.Nil(t, p.bmt.sentPacket)

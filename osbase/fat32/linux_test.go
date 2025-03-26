@@ -262,14 +262,16 @@ func TestKernelInterop(t *testing.T) {
 			}
 			_ = file.Close()
 			if err := os.MkdirAll("/dut", 0755); err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 			// TODO(lorenz): Set CONFIG_FAT_DEFAULT_UTF8 for Monogon Kernel
 			if err := unix.Mount("/dev/ram0", "/dut", "vfat", unix.MS_NOEXEC|unix.MS_NODEV, "utf8=1"); err != nil {
 				t.Fatal(err)
 			}
 			defer unix.Unmount("/dut", 0)
-			test.validate(t)
+			if err := test.validate(t); err != nil {
+				t.Fatal(err)
+			}
 		})
 
 	}

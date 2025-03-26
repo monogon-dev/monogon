@@ -110,10 +110,10 @@ func TestGetKmsgDumps(t *testing.T) {
 			dumps, err := getKmsgDumpsFromFS(c.inputFS)
 			switch {
 			case err == nil && c.expectErr:
-				t.Error("Expected error, but got none")
+				t.Fatal("Expected error, but got none")
 				return
 			case err != nil && !c.expectErr:
-				t.Errorf("Got unexpected error: %v", err)
+				t.Fatalf("Got unexpected error: %v", err)
 				return
 			case err != nil && c.expectErr:
 				// Got expected error

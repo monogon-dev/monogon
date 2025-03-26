@@ -166,7 +166,7 @@ func TestInstallerImage(t *testing.T) {
 	// ESP contents are in order.
 	image, err := diskfs.OpenWithMode(installerImage, diskfs.ReadOnly)
 	if err != nil {
-		t.Errorf("Couldn't open the installer image at %q: %s", installerImage, err.Error())
+		t.Fatalf("Couldn't open the installer image at %q: %s", installerImage, err)
 	}
 	// Verify that GPT exists.
 	ti, err := image.GetPartitionTable()
@@ -174,22 +174,22 @@ func TestInstallerImage(t *testing.T) {
 		t.Fatalf("Couldn't read the installer image partition table: %s", err)
 	}
 	if ti.Type() != "gpt" {
-		t.Error("Couldn't verify that the installer image contains a GPT.")
+		t.Fatal("Couldn't verify that the installer image contains a GPT.")
 	}
 	// Check that the first partition is likely to be a valid ESP.
 	pi := ti.GetPartitions()
 	esp := (pi[0]).(*gpt.Partition)
 	if esp.Start == 0 || esp.End == 0 {
-		t.Error("The installer's ESP GPT entry looks off.")
+		t.Fatal("The installer's ESP GPT entry looks off.")
 	}
 	// Verify that the image contains only one partition.
 	second := (pi[1]).(*gpt.Partition)
 	if second.Name != "" || second.Start != 0 || second.End != 0 {
-		t.Error("It appears the installer image contains more than one partition.")
+		t.Fatal("It appears the installer image contains more than one partition.")
 	}
 	// Verify the ESP contents.
 	if err := checkEspContents(image); err != nil {
-		t.Error(err.Error())
+		t.Fatal(err)
 	}
 }
 
@@ -203,7 +203,7 @@ func TestNoBlockDevices(t *testing.T) {
 	expectedOutput := "couldn't find a suitable block device"
 	result, err := runQemuWithInstaller(ctx, nil, expectedOutput)
 	if err != nil {
-		t.Error(err.Error())
+		t.Fatal(err)
 	}
 	if !result {
 		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
@@ -219,17 +219,17 @@ func TestBlockDeviceTooSmall(t *testing.T) {
 	imagePath, err := getStorage(64)
 	defer os.Remove(imagePath)
 	if err != nil {
-		t.Error(err.Error())
+		t.Fatal(err)
 	}
 
 	// Run QEMU. Expect the installer to fail with a predefined error string.
 	expectedOutput := "couldn't find a suitable block device"
 	result, err := runQemuWithInstaller(ctx, qemuDriveParam(imagePath), expectedOutput)
 	if err != nil {
-		t.Error(err.Error())
+		t.Fatal(err)
 	}
 	if !result {
-		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
+		t.Fatalf("QEMU didn't produce the expected output %q", expectedOutput)
 	}
 }
 
@@ -244,23 +244,23 @@ func TestInstall(t *testing.T) {
 	storagePath, err := getStorage(4096*2 + 384 + 128 + 2)
 	defer os.Remove(storagePath)
 	if err != nil {
-		t.Error(err.Error())
+		t.Fatal(err)
 	}
 
 	// Run QEMU. Expect the installer to succeed.
 	expectedOutput := "Installation completed"
 	result, err := runQemuWithInstaller(ctx, qemuDriveParam(storagePath), expectedOutput)
 	if err != nil {
-		t.Error(err.Error())
+		t.Fatal(err)
 	}
 	if !result {
-		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
+		t.Fatalf("QEMU didn't produce the expected output %q", expectedOutput)
 	}
 
 	// Verify the resulting node image. Check whether the node GPT was created.
 	storage, err := diskfs.OpenWithMode(storagePath, diskfs.ReadOnly)
 	if err != nil {
-		t.Errorf("Couldn't open the resulting node image at %q: %s", storagePath, err.Error())
+		t.Fatalf("Couldn't open the resulting node image at %q: %s", storagePath, err)
 	}
 	// Verify that GPT exists.
 	ti, err := storage.GetPartitionTable()
@@ -268,37 +268,37 @@ func TestInstall(t *testing.T) {
 		t.Fatalf("Couldn't read the installer image partition table: %s", err)
 	}
 	if ti.Type() != "gpt" {
-		t.Error("Couldn't verify that the resulting node image contains a GPT.")
+		t.Fatal("Couldn't verify that the resulting node image contains a GPT.")
 	}
 	// Check that the first partition is likely to be a valid ESP.
 	pi := ti.GetPartitions()
 	esp := (pi[0]).(*gpt.Partition)
 	if esp.Name != osimage.ESPLabel || esp.Start == 0 || esp.End == 0 {
-		t.Error("The node's ESP GPT entry looks off.")
+		t.Fatal("The node's ESP GPT entry looks off.")
 	}
 	// Verify the system partition's GPT entry.
 	system := (pi[1]).(*gpt.Partition)
 	if system.Name != osimage.SystemALabel || system.Start == 0 || system.End == 0 {
-		t.Error("The node's system partition GPT entry looks off.")
+		t.Fatal("The node's system partition GPT entry looks off.")
 	}
 	// Verify the system partition's GPT entry.
 	systemB := (pi[2]).(*gpt.Partition)
 	if systemB.Name != osimage.SystemBLabel || systemB.Start == 0 || systemB.End == 0 {
-		t.Error("The node's system partition GPT entry looks off.")
+		t.Fatal("The node's system partition GPT entry looks off.")
 	}
 	// Verify the data partition's GPT entry.
 	data := (pi[3]).(*gpt.Partition)
 	if data.Name != osimage.DataLabel || data.Start == 0 || data.End == 0 {
-		t.Errorf("The node's data partition GPT entry looks off: %+v", data)
+		t.Fatalf("The node's data partition GPT entry looks off: %+v", data)
 	}
 	// Verify that there are no more partitions.
 	fourth := (pi[4]).(*gpt.Partition)
 	if fourth.Name != "" || fourth.Start != 0 || fourth.End != 0 {
-		t.Error("The resulting node image contains more partitions than expected.")
+		t.Fatal("The resulting node image contains more partitions than expected.")
 	}
 	// Verify the ESP contents.
 	if err := checkEspContents(storage); err != nil {
-		t.Error(err.Error())
+		t.Fatal(err)
 	}
 	storage.File.Close()
 	// Run QEMU again. Expect TestOS to launch successfully.
@@ -306,9 +306,9 @@ func TestInstall(t *testing.T) {
 	time.Sleep(time.Second)
 	result, err = runQemu(ctx, qemuDriveParam(storagePath), expectedOutput)
 	if err != nil {
-		t.Error(err.Error())
+		t.Fatal(err)
 	}
 	if !result {
-		t.Errorf("QEMU didn't produce the expected output %q", expectedOutput)
+		t.Fatalf("QEMU didn't produce the expected output %q", expectedOutput)
 	}
 }

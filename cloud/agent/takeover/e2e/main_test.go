@@ -208,7 +208,7 @@ func TestE2E(t *testing.T) {
 	switch res := resp.Result.(type) {
 	case *api.TakeoverResponse_Success:
 		if res.Success.InitMessage.BmaasEndpoint != init.BmaasEndpoint {
-			t.Error("InitMessage not passed through properly")
+			t.Fatal("InitMessage not passed through properly")
 		}
 	case *api.TakeoverResponse_Error:
 		t.Fatalf("takeover returned error: %v", res.Error.Message)
