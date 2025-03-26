@@ -27,7 +27,6 @@ func TestProxy(t *testing.T) {
 	defer s.Close()
 
 	p := NewProxy(s.Addr)
-	p.readTimeout = 10 * time.Millisecond
 	p.Start(5 * time.Second)
 	m := new(dns.Msg)
 
@@ -45,7 +44,6 @@ func TestProxy(t *testing.T) {
 
 func TestProtocolSelection(t *testing.T) {
 	p := NewProxy("bad_address")
-	p.readTimeout = 10 * time.Millisecond
 
 	go func() {
 		p.Connect(new(dns.Msg), false)
@@ -106,7 +104,6 @@ func TestCoreDNSOverflow(t *testing.T) {
 	defer s.Close()
 
 	p := NewProxy(s.Addr)
-	p.readTimeout = 10 * time.Millisecond
 	p.Start(5 * time.Second)
 	defer p.Stop()
 
@@ -120,6 +117,7 @@ func TestCoreDNSOverflow(t *testing.T) {
 		response, err := p.Connect(queryMsg, useTCP)
 		if err != nil {
 			t.Errorf("Failed to connect to testdnsserver: %s", err)
+			return
 		}
 
 		if response.Truncated != expectTruncated {
