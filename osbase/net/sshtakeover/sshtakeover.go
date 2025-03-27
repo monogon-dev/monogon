@@ -79,31 +79,32 @@ func (p *Client) Execute(ctx context.Context, command string, stdin []byte) (std
 	}
 }
 
+type contextReader struct {
+	r   io.Reader
+	ctx context.Context
+}
+
+func (r *contextReader) Read(p []byte) (n int, err error) {
+	if r.ctx.Err() != nil {
+		return 0, r.ctx.Err()
+	}
+	return r.r.Read(p)
+}
+
 // Upload a given blob to a targetPath on the system.
 func (p *Client) Upload(ctx context.Context, targetPath string, src io.Reader) error {
+	src = &contextReader{r: src, ctx: ctx}
+
 	df, err := p.sc.Create(targetPath)
 	if err != nil {
 		return fmt.Errorf("while creating file on the host: %w", err)
 	}
-
-	doneC := make(chan error, 1)
-
-	go func() {
-		_, err := df.ReadFromWithConcurrency(src, 0)
-		df.Close()
-		doneC <- err
-	}()
-
-	select {
-	case err := <-doneC:
-		if err != nil {
-			return fmt.Errorf("while copying file: %w", err)
-		}
-	case <-ctx.Done():
-		df.Close()
-		return ctx.Err()
+	_, err = df.ReadFromWithConcurrency(src, 0)
+	closeErr := df.Close()
+	if err != nil {
+		return err
 	}
-	return nil
+	return closeErr
 }
 
 // UploadExecutable uploads a given blob to a targetPath on the system

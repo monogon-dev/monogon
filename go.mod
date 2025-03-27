@@ -100,7 +100,7 @@ require (
 	github.com/opencontainers/runc v1.2.2
 	github.com/packethost/packngo v0.29.0
 	github.com/pkg/errors v0.9.1
-	github.com/pkg/sftp v1.13.1
+	github.com/pkg/sftp v1.13.8
 	github.com/prometheus/client_golang v1.21.0
 	github.com/prometheus/node_exporter v1.9.0
 	github.com/rivo/uniseg v0.4.7
