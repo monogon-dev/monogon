@@ -24,8 +24,71 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/osbase/net/sshtakeover"
-	"source.monogon.dev/osbase/structfs"
 )
+
+// progressbarUpdater wraps a [progressbar.ProgressBar] with an improved
+// interface for updating progress. It updates the progress bar in a separate
+// goroutine and at most 60 times per second. The stop function stops the
+// updates and can be safely called multiple times.
+type progressbarUpdater struct {
+	bar    *progressbar.ProgressBar
+	update chan int64
+	close  chan struct{}
+}
+
+func startProgressbarUpdater(bar *progressbar.ProgressBar) *progressbarUpdater {
+	updater := &progressbarUpdater{
+		bar:    bar,
+		update: make(chan int64, 1),
+		close:  make(chan struct{}),
+	}
+	go updater.run()
+	return updater
+}
+
+func (p *progressbarUpdater) add(num int64) {
+	for {
+		select {
+		case p.update <- num:
+			return
+		case oldNum := <-p.update:
+			num += oldNum
+		}
+	}
+}
+
+func (p *progressbarUpdater) run() {
+	for {
+		select {
+		case num := <-p.update:
+			p.bar.Add64(num)
+		case <-p.close:
+			return
+		}
+		select {
+		case <-time.After(time.Second / 60):
+		case <-p.close:
+			return
+		}
+	}
+}
+
+func (p *progressbarUpdater) stop() {
+	if p.close == nil {
+		return
+	}
+	p.close <- struct{}{}
+	p.close = nil
+	select {
+	case num := <-p.update:
+		// Do one last update to make the bar reach 100%.
+		p.bar.Add64(num)
+	default:
+	}
+	if !p.bar.IsFinished() {
+		p.bar.Exit()
+	}
+}
 
 var sshCmd = &cobra.Command{
 	Use:     "ssh --disk=<disk> <target>",
@@ -136,30 +199,33 @@ var sshCmd = &cobra.Command{
 			return err
 		}
 
-		barUploader := func(blob structfs.Blob, targetPath string) {
-			content, err := blob.Open()
-			if err != nil {
-				log.Fatalf("error while uploading %q: %v", targetPath, err)
-			}
-			defer content.Close()
+		log.Println("Uploading files to target host.")
+		totalSize := takeover.Size() + bundle.Size()
+		barUpdater := startProgressbarUpdater(progressbar.DefaultBytes(totalSize))
+		defer barUpdater.stop()
+		conn.SetProgress(barUpdater.add)
 
-			bar := progressbar.DefaultBytes(
-				blob.Size(),
-				targetPath,
-			)
-			defer bar.Close()
-
-			proxyReader := progressbar.NewReader(content, bar)
-			defer proxyReader.Close()
-
-			if err := conn.UploadExecutable(ctx, targetPath, &proxyReader); err != nil {
-				log.Fatalf("error while uploading %q: %v", targetPath, err)
-			}
+		takeoverContent, err := takeover.Open()
+		if err != nil {
+			return err
+		}
+		err = conn.UploadExecutable(ctx, takeoverTargetPath, takeoverContent)
+		takeoverContent.Close()
+		if err != nil {
+			return fmt.Errorf("error while uploading %q: %w", takeoverTargetPath, err)
 		}
 
-		log.Println("Uploading required binaries to target host.")
-		barUploader(takeover, takeoverTargetPath)
-		barUploader(bundle, bundleTargetPath)
+		bundleContent, err := bundle.Open()
+		if err != nil {
+			return err
+		}
+		err = conn.Upload(ctx, bundleTargetPath, bundleContent)
+		bundleContent.Close()
+		if err != nil {
+			return fmt.Errorf("error while uploading %q: %w", bundleTargetPath, err)
+		}
+
+		barUpdater.stop()
 
 		// Start the agent and wait for the agent's output to arrive.
 		log.Printf("Starting the takeover executable at path %q.", takeoverTargetPath)

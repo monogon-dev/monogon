@@ -18,8 +18,9 @@ import (
 )
 
 type Client struct {
-	cl *ssh.Client
-	sc *sftp.Client
+	cl       *ssh.Client
+	sc       *sftp.Client
+	progress func(int64)
 }
 
 // Dial starts an ssh client connection.
@@ -79,21 +80,26 @@ func (p *Client) Execute(ctx context.Context, command string, stdin []byte) (std
 	}
 }
 
-type contextReader struct {
-	r   io.Reader
-	ctx context.Context
+type wrappedReader struct {
+	r        io.Reader
+	ctx      context.Context
+	progress func(int64)
 }
 
-func (r *contextReader) Read(p []byte) (n int, err error) {
+func (r *wrappedReader) Read(p []byte) (n int, err error) {
 	if r.ctx.Err() != nil {
 		return 0, r.ctx.Err()
 	}
-	return r.r.Read(p)
+	n, err = r.r.Read(p)
+	if r.progress != nil {
+		r.progress(int64(n))
+	}
+	return
 }
 
 // Upload a given blob to a targetPath on the system.
 func (p *Client) Upload(ctx context.Context, targetPath string, src io.Reader) error {
-	src = &contextReader{r: src, ctx: ctx}
+	src = &wrappedReader{r: src, ctx: ctx, progress: p.progress}
 
 	df, err := p.sc.Create(targetPath)
 	if err != nil {
@@ -117,6 +123,12 @@ func (p *Client) UploadExecutable(ctx context.Context, targetPath string, src io
 		return fmt.Errorf("while setting file permissions: %w", err)
 	}
 	return nil
+}
+
+// SetProgress sets a callback which will be called repeatedly during uploads
+// with a number of bytes that have been read.
+func (p *Client) SetProgress(callback func(int64)) {
+	p.progress = callback
 }
 
 func (p *Client) Close() error {
