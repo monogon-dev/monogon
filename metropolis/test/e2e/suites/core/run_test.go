@@ -20,15 +20,14 @@ import (
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	"google.golang.org/grpc"
 
+	apb "source.monogon.dev/metropolis/proto/api"
+	cpb "source.monogon.dev/metropolis/proto/common"
+
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	mlaunch "source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/localregistry"
 	"source.monogon.dev/metropolis/test/util"
-	"source.monogon.dev/osbase/test/launch"
-
-	apb "source.monogon.dev/metropolis/proto/api"
-	cpb "source.monogon.dev/metropolis/proto/common"
 )
 
 var (
@@ -99,8 +98,6 @@ func TestE2ECore(t *testing.T) {
 			t.Fatalf("cluster Close failed: %v", err)
 		}
 	}()
-
-	launch.Log("E2E: Cluster running, starting tests...")
 
 	// Dial first node's curator.
 	creds := rpc.NewAuthenticatedCredentials(cluster.Owner, rpc.WantInsecure())

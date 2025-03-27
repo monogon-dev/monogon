@@ -15,7 +15,6 @@ go_test(
         "//metropolis/proto/common",
         "//metropolis/test/launch",
         "//metropolis/test/util",
-        "//osbase/test/launch",
         "@io_k8s_utils//ptr",
     ],
 )

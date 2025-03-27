@@ -15,7 +15,6 @@ go_library(
         "//metropolis/proto/common",
         "//osbase/event/memory",
         "//osbase/pki",
-        "//osbase/test/launch",
         "@com_zx2c4_golang_wireguard_wgctrl//wgtypes",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//credentials/insecure",

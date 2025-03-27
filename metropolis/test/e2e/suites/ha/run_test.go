@@ -15,7 +15,6 @@ import (
 	mlaunch "source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/localregistry"
 	"source.monogon.dev/metropolis/test/util"
-	"source.monogon.dev/osbase/test/launch"
 )
 
 var (
@@ -81,8 +80,6 @@ func TestE2ECoreHA(t *testing.T) {
 			t.Fatalf("cluster Close failed: %v", err)
 		}
 	}()
-
-	launch.Log("E2E: Cluster running, starting tests...")
 
 	util.MustTestEventual(t, "Add ConsensusMember roles", ctx, smallTestTimeout, func(ctx context.Context) error {
 		// Make everything but the first node into ConsensusMember.

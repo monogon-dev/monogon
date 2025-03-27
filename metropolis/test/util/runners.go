@@ -11,8 +11,6 @@ import (
 	"fmt"
 	"testing"
 	"time"
-
-	"source.monogon.dev/osbase/test/launch"
 )
 
 // TestEventual creates a new subtest looping the given function until it either
@@ -23,14 +21,14 @@ func TestEventual(t *testing.T, name string, ctx context.Context, timeout time.D
 	start := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	t.Helper()
-	launch.Log("Test: %s: starting...", name)
+	fmt.Printf("Test: %s: starting...\n", name)
 	return t.Run(name, func(t *testing.T) {
 		defer cancel()
 		var lastErr = errors.New("test didn't run to completion at least once")
 		for {
 			err := f(ctx)
 			if err == nil {
-				launch.Log("Test: %s: okay after %.1f seconds", name, time.Since(start).Seconds())
+				fmt.Printf("Test: %s: okay after %.1f seconds\n", name, time.Since(start).Seconds())
 				return
 			}
 			if errors.Is(err, ctx.Err()) {
