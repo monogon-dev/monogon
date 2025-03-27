@@ -13,7 +13,7 @@ import (
 	"os"
 	"time"
 
-	"source.monogon.dev/osbase/test/launch"
+	"source.monogon.dev/osbase/test/qemu"
 )
 
 var (
@@ -25,7 +25,7 @@ var (
 func main() {
 	flag.Parse()
 
-	hostFeedbackConn, vmFeedbackConn, err := launch.NewSocketPair()
+	hostFeedbackConn, vmFeedbackConn, err := qemu.NewSocketPair()
 	if err != nil {
 		log.Fatalf("Failed to create socket pair: %v", err)
 	}
@@ -42,7 +42,7 @@ func main() {
 		exitCodeChan <- returnCode[0]
 	}()
 
-	if err := launch.RunMicroVM(context.Background(), &launch.MicroVMOptions{
+	if err := qemu.RunMicroVM(context.Background(), &qemu.MicroVMOptions{
 		Name:                        "ktest",
 		KernelPath:                  *kernelPath,
 		InitramfsPath:               *initrdPath,

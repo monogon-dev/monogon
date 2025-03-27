@@ -1,8 +1,8 @@
 // Copyright The Monogon Project Authors.
 // SPDX-License-Identifier: Apache-2.0
 
-// launch implements test harnesses for running qemu VMs from tests.
-package launch
+// Package qemu implements test harnesses for running qemu VMs from tests.
+package qemu
 
 import (
 	"bytes"
@@ -53,7 +53,7 @@ func PrettyPrintQemuArgs(name string, args []string) {
 			argsFmt += " "
 		}
 	}
-	Log("Running %s:\n  %s\n", name, argsFmt)
+	fmt.Fprintf(os.Stderr, "Running %s:\n  %s\n", name, argsFmt)
 }
 
 // PortMap represents where VM ports are mapped to on the host. It maps from the VM

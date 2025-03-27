@@ -12,8 +12,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"source.monogon.dev/osbase/test/launch"
 )
 
 // A TPMFactory manufactures virtual TPMs using swtpm.
@@ -103,13 +101,13 @@ type TPMPlatform struct {
 // to a directory that will be created if it doens't exist yet, and can be passed
 // to swtpm to actually emulate the created TPM.
 func (f *TPMFactory) Manufacture(ctx context.Context, path string, platform *TPMPlatform) error {
-	launch.Log("Starting to manufacture TPM for %s... (%+v)", path, platform)
+	logf("Starting to manufacture TPM for %s... (%+v)", path, platform)
 
 	// Path to state file. Used to make sure Manufacture runs only once.
 	permall := filepath.Join(path, "tpm2-00.permall")
 
 	if _, err := os.Stat(permall); err == nil {
-		launch.Log("Skipping manufacturing TPM for %s, already exists", path)
+		logf("Skipping manufacturing TPM for %s, already exists", path)
 		return nil
 	}
 	// Prepare swtpm-localca.options.
@@ -159,6 +157,6 @@ func (f *TPMFactory) Manufacture(ctx context.Context, path string, platform *TPM
 		return fmt.Errorf("%s did not get created during TPM manufacture", permall)
 	}
 
-	launch.Log("Successfully manufactured TPM for %s", path)
+	logf("Successfully manufactured TPM for %s", path)
 	return nil
 }

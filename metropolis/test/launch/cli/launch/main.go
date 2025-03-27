@@ -13,7 +13,7 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 
 	mlaunch "source.monogon.dev/metropolis/test/launch"
-	"source.monogon.dev/osbase/test/launch"
+	"source.monogon.dev/osbase/test/qemu"
 )
 
 func main() {
@@ -44,7 +44,7 @@ func main() {
 	}
 	err = mlaunch.LaunchNode(ctx, ld, sd, tpmf, &mlaunch.NodeOptions{
 		Name:       "test-node",
-		Ports:      launch.IdentityPortMap(ports),
+		Ports:      qemu.IdentityPortMap(ports),
 		SerialPort: os.Stdout,
 		RunVNC:     true,
 		NodeParameters: &apb.NodeParameters{

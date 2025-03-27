@@ -1,12 +1,9 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "launch",
-    srcs = [
-        "launch.go",
-        "log.go",
-    ],
-    importpath = "source.monogon.dev/osbase/test/launch",
+    name = "qemu",
+    srcs = ["launch.go"],
+    importpath = "source.monogon.dev/osbase/test/qemu",
     visibility = [
         "//metropolis:__subpackages__",
         "//osbase:__subpackages__",

@@ -7,7 +7,7 @@ go_library(
     srcs = ["main.go"],
     importpath = "source.monogon.dev/osbase/test/ktest",
     visibility = ["//visibility:private"],
-    deps = ["//osbase/test/launch"],
+    deps = ["//osbase/test/qemu"],
 )
 
 go_binary(

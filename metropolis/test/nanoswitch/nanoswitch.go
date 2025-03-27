@@ -34,7 +34,7 @@ import (
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
 	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/supervisor"
-	"source.monogon.dev/osbase/test/launch"
+	"source.monogon.dev/osbase/test/qemu"
 )
 
 var switchIP = net.IP{10, 1, 0, 1}
@@ -235,7 +235,7 @@ func main() {
 				if attrs.Flags&net.FlagUp != net.FlagUp {
 					netlink.LinkSetUp(link) // Attempt to take up all ethernet links
 				}
-				if bytes.Equal(attrs.HardwareAddr, launch.HostInterfaceMAC) {
+				if bytes.Equal(attrs.HardwareAddr, qemu.HostInterfaceMAC) {
 					externalLink = link
 				} else {
 					vmLinks = append(vmLinks, link)
