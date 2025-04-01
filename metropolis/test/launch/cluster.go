@@ -784,6 +784,12 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create the launch directory: %w", err)
 	}
+
+	nodeLogDir := ld
+	if os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR") != "" {
+		nodeLogDir = os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+	}
+
 	// Create the metroctl config directory. We keep it in /tmp because in some
 	// scenarios it's end-user visible and we want it short.
 	md, err := os.MkdirTemp("/tmp", "metroctl-*")
@@ -822,10 +828,6 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 	}
 
 	if opts.NodeLogsToFiles {
-		nodeLogDir := ld
-		if os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR") != "" {
-			nodeLogDir = os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
-		}
 		for i := range opts.NumNodes {
 			path := path.Join(nodeLogDir, fmt.Sprintf("node-%d.txt", i))
 			port, err := NewSerialFileLogger(path)
@@ -881,7 +883,8 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 		var serialPort io.ReadWriter
 		var err error
 		if opts.NodeLogsToFiles {
-			loggerPath := path.Join(ld, "nanoswitch.txt")
+
+			loggerPath := path.Join(nodeLogDir, "nanoswitch.txt")
 			serialPort, err = NewSerialFileLogger(loggerPath)
 			if err != nil {
 				logf("Could not open log file for nanoswitch: %v", err)
@@ -899,7 +902,7 @@ func LaunchCluster(ctx context.Context, opts ClusterOptions) (*Cluster, error) {
 			PortMap:                portMap,
 			GuestServiceMap:        guestSvcMap,
 			SerialPort:             serialPort,
-			PcapDump:               path.Join(ld, "nanoswitch.pcap"),
+			PcapDump:               path.Join(nodeLogDir, "nanoswitch.pcap"),
 		}); err != nil {
 			if !errors.Is(err, ctxT.Err()) {
 				logf("Failed to launch nanoswitch: %v", err)
