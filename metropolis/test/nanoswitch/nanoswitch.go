@@ -27,12 +27,11 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 	"github.com/vishvananda/netlink"
-	"golang.org/x/sys/unix"
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
-	"source.monogon.dev/osbase/logtree"
+	"source.monogon.dev/osbase/bringup"
 	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/osbase/test/qemu"
 )
@@ -188,135 +187,107 @@ func nfifname(n string) []byte {
 }
 
 func main() {
-	lt := logtree.New()
-	reader, err := lt.Read("", logtree.WithChildren(), logtree.WithStream())
+	bringup.Runnable(root).Run()
+}
+
+func root(ctx context.Context) (err error) {
+	logger := supervisor.Logger(ctx)
+	logger.Info("Starting NanoSwitch, a tiny TOR switch emulator")
+
+	c := &nftables.Conn{}
+
+	links, err := netlink.LinkList()
 	if err != nil {
-		panic(fmt.Sprintf("could not set up root log reader: %v", err))
+		logger.Fatalf("Failed to list links: %v", err)
 	}
-	go func() {
-		for p := range reader.Stream {
-			fmt.Fprintf(os.Stderr, "%s\n", p.ConciseString(nil, 120))
-		}
-	}()
-	supervisor.New(context.Background(), func(ctx context.Context) error {
-		logger := supervisor.Logger(ctx)
-		logger.Info("Starting NanoSwitch, a tiny TOR switch emulator")
-
-		// Set up target filesystems.
-		for _, el := range []struct {
-			dir   string
-			fs    string
-			flags uintptr
-		}{
-			{"/sys", "sysfs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
-			{"/proc", "proc", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV},
-			{"/dev", "devtmpfs", unix.MS_NOEXEC | unix.MS_NOSUID},
-			{"/dev/pts", "devpts", unix.MS_NOEXEC | unix.MS_NOSUID},
-		} {
-			if err := os.Mkdir(el.dir, 0755); err != nil && !os.IsExist(err) {
-				return fmt.Errorf("could not make %s: %w", el.dir, err)
+	var externalLink netlink.Link
+	var vmLinks []netlink.Link
+	for _, link := range links {
+		attrs := link.Attrs()
+		if link.Type() == "device" && len(attrs.HardwareAddr) > 0 {
+			if attrs.Flags&net.FlagUp != net.FlagUp {
+				netlink.LinkSetUp(link) // Attempt to take up all ethernet links
 			}
-			if err := unix.Mount(el.fs, el.dir, el.fs, el.flags, ""); err != nil {
-				return fmt.Errorf("could not mount %s on %s: %w", el.fs, el.dir, err)
+			if bytes.Equal(attrs.HardwareAddr, qemu.HostInterfaceMAC) {
+				externalLink = link
+			} else {
+				vmLinks = append(vmLinks, link)
 			}
 		}
+	}
+	vmBridgeLink := &netlink.Bridge{LinkAttrs: netlink.LinkAttrs{Name: "vmbridge", Flags: net.FlagUp}}
+	if err := netlink.LinkAdd(vmBridgeLink); err != nil {
+		logger.Fatalf("Failed to create vmbridge: %v", err)
+	}
+	for _, link := range vmLinks {
+		if err := netlink.LinkSetMaster(link, vmBridgeLink); err != nil {
+			logger.Fatalf("Failed to add VM interface to bridge: %v", err)
+		}
+		logger.Infof("Assigned interface %s to bridge", link.Attrs().Name)
+	}
+	if err := netlink.AddrReplace(vmBridgeLink, &netlink.Addr{IPNet: &net.IPNet{IP: switchIP, Mask: switchSubnetMask}}); err != nil {
+		logger.Fatalf("Failed to assign static IP to vmbridge: %v", err)
+	}
+	if externalLink != nil {
+		nat := c.AddTable(&nftables.Table{
+			Family: nftables.TableFamilyIPv4,
+			Name:   "nat",
+		})
 
-		c := &nftables.Conn{}
+		postrouting := c.AddChain(&nftables.Chain{
+			Name:     "postrouting",
+			Hooknum:  nftables.ChainHookPostrouting,
+			Priority: nftables.ChainPriorityNATSource,
+			Table:    nat,
+			Type:     nftables.ChainTypeNAT,
+		})
 
-		links, err := netlink.LinkList()
-		if err != nil {
-			logger.Fatalf("Failed to list links: %v", err)
-		}
-		var externalLink netlink.Link
-		var vmLinks []netlink.Link
-		for _, link := range links {
-			attrs := link.Attrs()
-			if link.Type() == "device" && len(attrs.HardwareAddr) > 0 {
-				if attrs.Flags&net.FlagUp != net.FlagUp {
-					netlink.LinkSetUp(link) // Attempt to take up all ethernet links
-				}
-				if bytes.Equal(attrs.HardwareAddr, qemu.HostInterfaceMAC) {
-					externalLink = link
-				} else {
-					vmLinks = append(vmLinks, link)
-				}
-			}
-		}
-		vmBridgeLink := &netlink.Bridge{LinkAttrs: netlink.LinkAttrs{Name: "vmbridge", Flags: net.FlagUp}}
-		if err := netlink.LinkAdd(vmBridgeLink); err != nil {
-			logger.Fatalf("Failed to create vmbridge: %v", err)
-		}
-		for _, link := range vmLinks {
-			if err := netlink.LinkSetMaster(link, vmBridgeLink); err != nil {
-				logger.Fatalf("Failed to add VM interface to bridge: %v", err)
-			}
-			logger.Infof("Assigned interface %s to bridge", link.Attrs().Name)
-		}
-		if err := netlink.AddrReplace(vmBridgeLink, &netlink.Addr{IPNet: &net.IPNet{IP: switchIP, Mask: switchSubnetMask}}); err != nil {
-			logger.Fatalf("Failed to assign static IP to vmbridge: %v", err)
-		}
-		if externalLink != nil {
-			nat := c.AddTable(&nftables.Table{
-				Family: nftables.TableFamilyIPv4,
-				Name:   "nat",
-			})
-
-			postrouting := c.AddChain(&nftables.Chain{
-				Name:     "postrouting",
-				Hooknum:  nftables.ChainHookPostrouting,
-				Priority: nftables.ChainPriorityNATSource,
-				Table:    nat,
-				Type:     nftables.ChainTypeNAT,
-			})
-
-			// Masquerade/SNAT all traffic going out of the external interface
-			c.AddRule(&nftables.Rule{
-				Table: nat,
-				Chain: postrouting,
-				Exprs: []expr.Any{
-					&expr.Meta{Key: expr.MetaKeyOIFNAME, Register: 1},
-					&expr.Cmp{
-						Op:       expr.CmpOpEq,
-						Register: 1,
-						Data:     nfifname(externalLink.Attrs().Name),
-					},
-					&expr.Masq{},
+		// Masquerade/SNAT all traffic going out of the external interface
+		c.AddRule(&nftables.Rule{
+			Table: nat,
+			Chain: postrouting,
+			Exprs: []expr.Any{
+				&expr.Meta{Key: expr.MetaKeyOIFNAME, Register: 1},
+				&expr.Cmp{
+					Op:       expr.CmpOpEq,
+					Register: 1,
+					Data:     nfifname(externalLink.Attrs().Name),
 				},
-			})
+				&expr.Masq{},
+			},
+		})
 
-			if err := c.Flush(); err != nil {
-				panic(err)
-			}
-
-			netIface := &net.Interface{
-				Name:         externalLink.Attrs().Name,
-				MTU:          externalLink.Attrs().MTU,
-				Index:        externalLink.Attrs().Index,
-				Flags:        externalLink.Attrs().Flags,
-				HardwareAddr: externalLink.Attrs().HardwareAddr,
-			}
-			dhcpClient, err := dhcp4c.NewClient(netIface)
-			if err != nil {
-				logger.Fatalf("Failed to create DHCP client: %v", err)
-			}
-			dhcpClient.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter}
-			dhcpClient.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(externalLink), dhcpcb.ManageRoutes(externalLink))
-			supervisor.Run(ctx, "dhcp-client", dhcpClient.Run)
-			if err := os.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1\n"), 0644); err != nil {
-				logger.Fatalf("Failed to write ip forwards: %v", err)
-			}
-		} else {
-			logger.Info("No upstream interface detected")
+		if err := c.Flush(); err != nil {
+			panic(err)
 		}
-		supervisor.Run(ctx, "dhcp-server", runDHCPServer(vmBridgeLink))
-		supervisor.Run(ctx, "proxy-cur1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.CuratorServicePort))
-		supervisor.Run(ctx, "proxy-dbg1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.DebugServicePort))
-		supervisor.Run(ctx, "proxy-k8s-api1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.KubernetesAPIPort))
-		supervisor.Run(ctx, "proxy-k8s-api-wrapped1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.KubernetesAPIWrappedPort))
-		supervisor.Run(ctx, "socks", runSOCKSProxy)
-		supervisor.Signal(ctx, supervisor.SignalHealthy)
-		supervisor.Signal(ctx, supervisor.SignalDone)
-		return nil
-	}, supervisor.WithExistingLogtree(lt))
-	select {}
+
+		netIface := &net.Interface{
+			Name:         externalLink.Attrs().Name,
+			MTU:          externalLink.Attrs().MTU,
+			Index:        externalLink.Attrs().Index,
+			Flags:        externalLink.Attrs().Flags,
+			HardwareAddr: externalLink.Attrs().HardwareAddr,
+		}
+		dhcpClient, err := dhcp4c.NewClient(netIface)
+		if err != nil {
+			logger.Fatalf("Failed to create DHCP client: %v", err)
+		}
+		dhcpClient.RequestedOptions = []dhcpv4.OptionCode{dhcpv4.OptionRouter}
+		dhcpClient.LeaseCallback = dhcpcb.Compose(dhcpcb.ManageIP(externalLink), dhcpcb.ManageRoutes(externalLink))
+		supervisor.Run(ctx, "dhcp-client", dhcpClient.Run)
+		if err := os.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1\n"), 0644); err != nil {
+			logger.Fatalf("Failed to write ip forwards: %v", err)
+		}
+	} else {
+		logger.Info("No upstream interface detected")
+	}
+	supervisor.Run(ctx, "dhcp-server", runDHCPServer(vmBridgeLink))
+	supervisor.Run(ctx, "proxy-cur1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.CuratorServicePort))
+	supervisor.Run(ctx, "proxy-dbg1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.DebugServicePort))
+	supervisor.Run(ctx, "proxy-k8s-api1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.KubernetesAPIPort))
+	supervisor.Run(ctx, "proxy-k8s-api-wrapped1", userspaceProxy(net.IPv4(10, 1, 0, 2), common.KubernetesAPIWrappedPort))
+	supervisor.Run(ctx, "socks", runSOCKSProxy)
+	supervisor.Signal(ctx, supervisor.SignalHealthy)
+	supervisor.Signal(ctx, supervisor.SignalDone)
+	return nil
 }

@@ -13,7 +13,7 @@ go_library(
         "//metropolis/node",
         "//metropolis/node/core/network/dhcp4c",
         "//metropolis/node/core/network/dhcp4c/callback",
-        "//osbase/logtree",
+        "//osbase/bringup",
         "//osbase/socksproxy",
         "//osbase/supervisor",
         "//osbase/test/qemu",
@@ -22,7 +22,6 @@ go_library(
         "@com_github_insomniacslk_dhcp//dhcpv4",
         "@com_github_insomniacslk_dhcp//dhcpv4/server4",
         "@com_github_vishvananda_netlink//:netlink",
-        "@org_golang_x_sys//unix",
     ],
 )
 
