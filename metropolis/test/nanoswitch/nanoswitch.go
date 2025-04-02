@@ -33,11 +33,18 @@ import (
 	dhcpcb "source.monogon.dev/metropolis/node/core/network/dhcp4c/callback"
 	"source.monogon.dev/osbase/bringup"
 	"source.monogon.dev/osbase/supervisor"
-	"source.monogon.dev/osbase/test/qemu"
 )
 
-var switchIP = net.IP{10, 1, 0, 1}
-var switchSubnetMask = net.CIDRMask(24, 32)
+var (
+	// HostInterfaceMAC is the MAC address the host SLIRP network interface has if it
+	// is not disabled (see DisableHostNetworkInterface in MicroVMOptions)
+	// ONCHANGE(//osbase/test/qemu:launch.go): constraints must be kept in sync with
+	// HostInterfaceMAC.
+	HostInterfaceMAC = net.HardwareAddr{0x02, 0x72, 0x82, 0xbf, 0xc3, 0x56}
+
+	switchIP         = net.IP{10, 1, 0, 1}
+	switchSubnetMask = net.CIDRMask(24, 32)
+)
 
 // defaultLeaseOptions sets the lease options needed to properly configure
 // connectivity to nanoswitch.
@@ -208,7 +215,7 @@ func root(ctx context.Context) (err error) {
 			if attrs.Flags&net.FlagUp != net.FlagUp {
 				netlink.LinkSetUp(link) // Attempt to take up all ethernet links
 			}
-			if bytes.Equal(attrs.HardwareAddr, qemu.HostInterfaceMAC) {
+			if bytes.Equal(attrs.HardwareAddr, HostInterfaceMAC) {
 				externalLink = link
 			} else {
 				vmLinks = append(vmLinks, link)

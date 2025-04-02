@@ -22,6 +22,12 @@ import (
 	"source.monogon.dev/osbase/freeport"
 )
 
+var (
+	// HostInterfaceMAC is the MAC address the host SLIRP network interface has if it
+	// is not disabled (see DisableHostNetworkInterface in MicroVMOptions)
+	HostInterfaceMAC = net.HardwareAddr{0x02, 0x72, 0x82, 0xbf, 0xc3, 0x56}
+)
+
 type QemuValue map[string][]string
 
 // ToOption encodes structured data into a QEMU option. Example: "test", {"key1":
@@ -129,10 +135,6 @@ func NewSocketPair() (*os.File, *os.File, error) {
 	fd2 := os.NewFile(uintptr(fds[1]), "network1")
 	return fd1, fd2, nil
 }
-
-// HostInterfaceMAC is the MAC address the host SLIRP network interface has if it
-// is not disabled (see DisableHostNetworkInterface in MicroVMOptions)
-var HostInterfaceMAC = net.HardwareAddr{0x02, 0x72, 0x82, 0xbf, 0xc3, 0x56}
 
 // MicroVMOptions contains all options to start a MicroVM
 type MicroVMOptions struct {
