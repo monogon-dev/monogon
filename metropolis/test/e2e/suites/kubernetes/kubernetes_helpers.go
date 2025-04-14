@@ -78,7 +78,7 @@ func makeHTTPServerDeploymentSpec(name string) *appsv1.Deployment {
 						{
 							Name:            "test",
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Image:           "test.monogon.internal/metropolis/test/e2e/httpserver/httpserver_image",
+							Image:           "test.monogon.internal/httpserver:latest",
 							LivenessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									HTTPGet: &corev1.HTTPGetAction{Port: intstr.FromInt(8080)},
@@ -130,7 +130,7 @@ func makeSelftestSpec(name string) *batchv1.Job {
 						{
 							Name:            "test",
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Image:           "test.monogon.internal/metropolis/test/e2e/selftest/selftest_image",
+							Image:           "test.monogon.internal/selftest:latest",
 						},
 					},
 					RestartPolicy: corev1.RestartPolicyOnFailure,
@@ -191,7 +191,7 @@ func makeTestStatefulSet(name string, runtimeClass string) *appsv1.StatefulSet {
 						{
 							Name:            "test",
 							ImagePullPolicy: corev1.PullIfNotPresent,
-							Image:           "test.monogon.internal/metropolis/test/e2e/persistentvolume/persistentvolume_image",
+							Image:           "test.monogon.internal/persistentvolume:latest",
 							Args:            []string{"-runtimeclass", runtimeClass},
 							VolumeMounts: []corev1.VolumeMount{
 								{

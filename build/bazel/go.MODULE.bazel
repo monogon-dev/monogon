@@ -24,7 +24,6 @@ use_repo(
     "com_github_coreos_go_semver",
     "com_github_corverroos_commentwrap",
     "com_github_diskfs_go_diskfs",
-    "com_github_docker_distribution",
     "com_github_gdamore_tcell_v2",
     "com_github_go_delve_delve",
     "com_github_golang_migrate_migrate_v4",

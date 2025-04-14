@@ -2,12 +2,12 @@ load("//metropolis/test/localregistry:def.bzl", "localregistry_manifest")
 
 localregistry_manifest(
     name = "testimages_manifest",
-    images = [
-        "//metropolis/test/e2e/selftest:selftest_image",
-        "//metropolis/test/e2e/persistentvolume:persistentvolume_image",
-        "//metropolis/test/e2e/httpserver:httpserver_image",
-        "//metropolis/test/e2e/connectivity/agent:agent_image",
-    ],
+    images = {
+        "selftest:latest": "//metropolis/test/e2e/selftest:selftest_image",
+        "persistentvolume:latest": "//metropolis/test/e2e/persistentvolume:persistentvolume_image",
+        "httpserver:latest": "//metropolis/test/e2e/httpserver:httpserver_image",
+        "connectivity/agent:latest": "//metropolis/test/e2e/connectivity/agent:agent_image",
+    },
     visibility = [
         "//metropolis/test/e2e/suites:__subpackages__",
     ],

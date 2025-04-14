@@ -6,10 +6,12 @@ option go_package = "source.monogon.dev/metropolis/test/localregistry/spec";
 
 // Single image metadata
 message Image {
-    // Name of the image (no domain or tag, just slash-separated path)
-    string name = 1;
-    // Path to the image
-    string path = 2;
+    // Repository where the image is served
+    string repository = 1;
+    // Tag where the image is served
+    string tag = 2;
+    // Path to the OCI layout directory containing the image
+    string path = 3;
 }
 
 // Main message

@@ -65,7 +65,6 @@ require (
 	github.com/coreos/go-semver v0.3.1
 	github.com/corverroos/commentwrap v0.0.0-20191204065359-2926638be44c
 	github.com/diskfs/go-diskfs v1.2.0
-	github.com/docker/distribution v2.8.2+incompatible
 	github.com/gdamore/tcell/v2 v2.7.4
 	github.com/go-delve/delve v1.24.0
 	github.com/golang-migrate/migrate/v4 v4.15.2

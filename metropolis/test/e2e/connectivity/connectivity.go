@@ -218,7 +218,7 @@ func SetupTest(t *testing.T, s *TestSpec) *Tester {
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{{
 					Name:  "connectivitytester",
-					Image: "test.monogon.internal/metropolis/test/e2e/connectivity/agent/agent_image",
+					Image: "test.monogon.internal/connectivity/agent:latest",
 					Stdin: true,
 				}},
 				EnableServiceLinks: ptr.To(false),

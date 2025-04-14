@@ -1,14 +1,14 @@
-#load("@io_bazel_rules_docker//container:providers.bzl", "ImageInfo")
-
 def _localregistry_manifest_impl(ctx):
     manifest_out = ctx.actions.declare_file(ctx.label.name + ".prototxt")
 
     images = []
     referenced = [manifest_out]
-    for i in ctx.attr.images:
-        image_file = i.files.to_list()[0]
+    for key, label in ctx.attr.images.items():
+        image_file = label[DefaultInfo].files.to_list()[0]
+        repository, _, tag = key.partition(":")
         image = struct(
-            name = i.label.package + "/" + i.label.name,
+            repository = repository,
+            tag = tag,
             path = image_file.short_path,
         )
         referenced.append(image_file)
@@ -23,10 +23,12 @@ localregistry_manifest = rule(
         Builds a manifest for serving images directly from the build files.
     """,
     attrs = {
-        "images": attr.label_list(
+        "images": attr.string_keyed_label_dict(
             mandatory = True,
             doc = """
-                List of images to be served from the local registry.
+                Images to be served from the local registry.
+                The key defines the repository and tag, separated by ':'.
+                The value is a label which must contain an OCI layout directory.
             """,
             providers = [],
         ),

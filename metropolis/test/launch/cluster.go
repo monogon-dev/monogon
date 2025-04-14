@@ -51,7 +51,7 @@ import (
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
-	"source.monogon.dev/metropolis/test/localregistry"
+	"source.monogon.dev/osbase/oci/registry"
 	"source.monogon.dev/osbase/test/qemu"
 )
 
@@ -583,7 +583,7 @@ type ClusterOptions struct {
 	// Optional local registry which will be made available to the cluster to
 	// pull images from. This is a more efficient alternative to preseeding all
 	// images used for testing.
-	LocalRegistry *localregistry.Server
+	LocalRegistry *registry.Server
 
 	// InitialClusterConfiguration will be passed to the first node when creating the
 	// cluster, and defines some basic properties of the cluster. If not specified,
