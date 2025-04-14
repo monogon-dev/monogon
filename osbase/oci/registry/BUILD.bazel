@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "registry",
+    srcs = [
+        "auth.go",
+        "client.go",
+        "headers.go",
+        "server.go",
+    ],
+    importpath = "source.monogon.dev/osbase/oci/registry",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//osbase/oci",
+        "//osbase/structfs",
+        "@com_github_cenkalti_backoff_v4//:backoff",
+        "@com_github_opencontainers_image_spec//specs-go/v1:specs-go",
+    ],
+)
+
+go_test(
+    name = "registry_test",
+    srcs = ["headers_test.go"],
+    embed = [":registry"],
+)
