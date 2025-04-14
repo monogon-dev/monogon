@@ -170,7 +170,8 @@ func agentRunnable(ctx context.Context) error {
 			installationReport = &bpb.OSInstallationReport{
 				Generation: res.InstallationRequest.Generation,
 			}
-			if err := install(res.InstallationRequest, agentInit.NetworkConfig, l); err != nil {
+			installCtx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+			if err := install(installCtx, res.InstallationRequest, agentInit.NetworkConfig); err != nil {
 				l.Errorf("Installation failed: %v", err)
 				installationReport.Result = &bpb.OSInstallationReport_Error_{
 					Error: &bpb.OSInstallationReport_Error{
@@ -183,6 +184,7 @@ func agentRunnable(ctx context.Context) error {
 					Success: &bpb.OSInstallationReport_Success{},
 				}
 			}
+			cancel()
 		} else {
 			time.Sleep(30 * time.Second)
 		}

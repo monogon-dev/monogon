@@ -16,7 +16,6 @@ import (
 	"math/big"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -34,6 +33,8 @@ import (
 	apb "source.monogon.dev/cloud/agent/api"
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
 	mpb "source.monogon.dev/metropolis/proto/api"
+	"source.monogon.dev/osbase/oci"
+	"source.monogon.dev/osbase/oci/registry"
 	"source.monogon.dev/osbase/pki"
 )
 
@@ -41,7 +42,7 @@ var (
 	// These are filled by bazel at linking time with the canonical path of
 	// their corresponding file. Inside the init function we resolve it
 	// with the rules_go runfiles package to the real path.
-	xBundleFilePath    string
+	xImagePath         string
 	xOvmfVarsPath      string
 	xOvmfCodePath      string
 	xKernelPath        string
@@ -51,7 +52,7 @@ var (
 func init() {
 	var err error
 	for _, path := range []*string{
-		&xBundleFilePath, &xOvmfVarsPath, &xOvmfCodePath,
+		&xImagePath, &xOvmfVarsPath, &xOvmfCodePath,
 		&xKernelPath, &xInitramfsOrigPath,
 	} {
 		*path, err = runfiles.Rlocation(*path)
@@ -95,15 +96,26 @@ func TestMetropolisInstallE2E(t *testing.T) {
 		Port: 3000,
 	}
 
-	blobAddr := net.TCPAddr{
+	registryAddr := net.TCPAddr{
 		IP:   net.IPv4(10, 42, 0, 6),
 		Port: 80,
+	}
+
+	image, err := oci.ReadLayout(xImagePath)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	f.installationRequest = &bpb.OSInstallationRequest{
 		Generation: 5,
 		Type: &bpb.OSInstallationRequest_Metropolis{Metropolis: &bpb.MetropolisInstallationRequest{
-			BundleUrl:      (&url.URL{Scheme: "http", Host: blobAddr.String(), Path: "/bundle.bin"}).String(),
+			OsImage: &mpb.OSImageRef{
+				Scheme:     "http",
+				Host:       registryAddr.String(),
+				Repository: "testos",
+				Tag:        "latest",
+				Digest:     image.ManifestDigest,
+			},
 			NodeParameters: &mpb.NodeParameters{},
 			RootDevice:     "vda",
 		}},
@@ -165,18 +177,16 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	go s.Serve(grpcLis)
 	grpcListenAddr := grpcLis.Addr().(*net.TCPAddr)
 
-	m := http.NewServeMux()
+	registryServer := registry.NewServer()
+	registryServer.AddImage("testos", "latest", image)
 
-	m.HandleFunc("/bundle.bin", func(w http.ResponseWriter, req *http.Request) {
-		http.ServeFile(w, req, xBundleFilePath)
-	})
-	blobLis, err := net.Listen("tcp", "127.0.0.1:0")
+	registryLis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	blobListenAddr := blobLis.Addr().(*net.TCPAddr)
-	go http.Serve(blobLis, m)
+	registryListenAddr := registryLis.Addr().(*net.TCPAddr)
+	go http.Serve(registryLis, registryServer)
 
 	_, privateKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -237,7 +247,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 	compressedW.Close()
 
 	grpcGuestFwd := fmt.Sprintf("guestfwd=tcp:%s-tcp:127.0.0.1:%d", grpcAddr.String(), grpcListenAddr.Port)
-	blobGuestFwd := fmt.Sprintf("guestfwd=tcp:%s-tcp:127.0.0.1:%d", blobAddr.String(), blobListenAddr.Port)
+	registryGuestFwd := fmt.Sprintf("guestfwd=tcp:%s-tcp:127.0.0.1:%d", registryAddr.String(), registryListenAddr.Port)
 
 	ovmfVars, err := os.CreateTemp("", "agent-ovmf-vars")
 	if err != nil {
@@ -257,7 +267,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + ovmfVars.Name(),
 		"-drive", "if=virtio,format=raw,cache=unsafe,file=" + rootDisk.Name(),
-		"-netdev", fmt.Sprintf("user,id=net0,net=10.42.0.0/24,dhcpstart=10.42.0.10,%s,%s", grpcGuestFwd, blobGuestFwd),
+		"-netdev", fmt.Sprintf("user,id=net0,net=10.42.0.0/24,dhcpstart=10.42.0.10,%s,%s", grpcGuestFwd, registryGuestFwd),
 		"-device", "virtio-net-pci,netdev=net0,mac=22:d5:8e:76:1d:07",
 		"-device", "virtio-rng-pci",
 		"-serial", "stdio",

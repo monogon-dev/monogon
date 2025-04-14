@@ -4,60 +4,45 @@
 package main
 
 import (
-	"archive/zip"
-	"bytes"
+	"context"
 	_ "embed"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"google.golang.org/protobuf/proto"
 
 	bpb "source.monogon.dev/cloud/bmaas/server/api"
-	"source.monogon.dev/go/logging"
+	npb "source.monogon.dev/osbase/net/proto"
+
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
-	npb "source.monogon.dev/osbase/net/proto"
+	ociosimage "source.monogon.dev/osbase/oci/osimage"
+	"source.monogon.dev/osbase/oci/registry"
 	"source.monogon.dev/osbase/structfs"
+	"source.monogon.dev/osbase/supervisor"
 )
 
 //go:embed metropolis/node/core/abloader/abloader.efi
 var abloader []byte
 
-// zipBlob looks up a file in a [zip.Reader] and adapts it to [structfs.Blob].
-func zipBlob(reader *zip.Reader, name string) (zipFileBlob, error) {
-	for _, file := range reader.File {
-		if file.Name == name {
-			return zipFileBlob{file}, nil
-		}
-	}
-	return zipFileBlob{}, fmt.Errorf("file %q not found", name)
-}
-
-type zipFileBlob struct {
-	*zip.File
-}
-
-func (f zipFileBlob) Size() int64 {
-	return int64(f.File.UncompressedSize64)
-}
-
 // install dispatches OSInstallationRequests to the appropriate installer
 // method
-func install(req *bpb.OSInstallationRequest, netConfig *npb.Net, l logging.Leveled) error {
+func install(ctx context.Context, req *bpb.OSInstallationRequest, netConfig *npb.Net) error {
 	switch reqT := req.Type.(type) {
 	case *bpb.OSInstallationRequest_Metropolis:
-		return installMetropolis(reqT.Metropolis, netConfig, l)
+		return installMetropolis(ctx, reqT.Metropolis, netConfig)
 	default:
 		return errors.New("unknown installation request type")
 	}
 }
 
-func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Net, l logging.Leveled) error {
+func installMetropolis(ctx context.Context, req *bpb.MetropolisInstallationRequest, netConfig *npb.Net) error {
+	l := supervisor.Logger(ctx)
 	// Validate we are running via EFI.
 	if _, err := os.Stat("/sys/firmware/efi"); os.IsNotExist(err) {
 		// nolint:ST1005
@@ -70,62 +55,46 @@ func installMetropolis(req *bpb.MetropolisInstallationRequest, netConfig *npb.Ne
 		req.NodeParameters.NetworkConfig = netConfig
 	}
 
-	// Download into a buffer as ZIP files cannot efficiently be read from
-	// HTTP in Go as the ReaderAt has no way of indicating continuous sections,
-	// thus a ton of small range requests would need to be used, causing
-	// a huge latency penalty as well as costing a lot of money on typical
-	// object storages. This should go away when we switch to a better bundle
-	// format which can be streamed.
-	var bundleRaw bytes.Buffer
-	b := backoff.NewExponentialBackOff()
-	err := backoff.Retry(func() error {
-		bundleRes, err := http.Get(req.BundleUrl)
-		if err != nil {
-			l.Warningf("Metropolis bundle request failed: %v", err)
-			return fmt.Errorf("HTTP request failed: %w", err)
-		}
-		defer bundleRes.Body.Close()
-		switch bundleRes.StatusCode {
-		case http.StatusTooEarly, http.StatusTooManyRequests,
-			http.StatusInternalServerError, http.StatusBadGateway,
-			http.StatusServiceUnavailable, http.StatusGatewayTimeout:
-			l.Warningf("Metropolis bundle request HTTP %d error, retrying", bundleRes.StatusCode)
-			return fmt.Errorf("HTTP error %d", bundleRes.StatusCode)
-		default:
-			// Non-standard code range used for proxy-related issue by various
-			// vendors. Treat as non-permanent error.
-			if bundleRes.StatusCode >= 520 && bundleRes.StatusCode < 599 {
-				l.Warningf("Metropolis bundle request HTTP %d error, retrying", bundleRes.StatusCode)
-				return fmt.Errorf("HTTP error %d", bundleRes.StatusCode)
-			}
-			if bundleRes.StatusCode != 200 {
-				l.Errorf("Metropolis bundle request permanent HTTP %d error, aborting", bundleRes.StatusCode)
-				return backoff.Permanent(fmt.Errorf("HTTP error %d", bundleRes.StatusCode))
-			}
-		}
-		if _, err := bundleRaw.ReadFrom(bundleRes.Body); err != nil {
-			l.Warningf("Metropolis bundle download failed, retrying: %v", err)
-			bundleRaw.Reset()
-			return err
-		}
-		return nil
-	}, b)
-	if err != nil {
-		return fmt.Errorf("error downloading Metropolis bundle: %w", err)
+	if req.OsImage == nil {
+		return fmt.Errorf("missing OS image in OS installation request")
 	}
-	l.Info("Metropolis Bundle downloaded")
-	bundle, err := zip.NewReader(bytes.NewReader(bundleRaw.Bytes()), int64(bundleRaw.Len()))
-	if err != nil {
-		return fmt.Errorf("failed to open node bundle: %w", err)
+	if req.OsImage.Digest == "" {
+		return fmt.Errorf("missing digest in OS installation request")
 	}
-	efiPayload, err := zipBlob(bundle, "kernel_efi.efi")
-	if err != nil {
-		return fmt.Errorf("invalid bundle: %w", err)
+
+	client := &registry.Client{
+		GetBackOff: func() backoff.BackOff {
+			return backoff.NewExponentialBackOff()
+		},
+		RetryNotify: func(err error, d time.Duration) {
+			l.Warningf("Error while fetching OS image, retrying in %v: %v", d, err)
+		},
+		UserAgent:  "Monogon-Cloud-Agent",
+		Scheme:     req.OsImage.Scheme,
+		Host:       req.OsImage.Host,
+		Repository: req.OsImage.Repository,
 	}
-	systemImage, err := zipBlob(bundle, "verity_rootfs.img")
+
+	image, err := client.Read(ctx, req.OsImage.Tag, req.OsImage.Digest)
 	if err != nil {
-		return fmt.Errorf("invalid bundle: %w", err)
+		return fmt.Errorf("failed to fetch OS image: %w", err)
 	}
+
+	osImage, err := ociosimage.Read(image)
+	if err != nil {
+		return fmt.Errorf("failed to fetch OS image: %w", err)
+	}
+
+	efiPayload, err := osImage.Payload("kernel.efi")
+	if err != nil {
+		return fmt.Errorf("cannot open EFI payload in OS image: %w", err)
+	}
+	systemImage, err := osImage.Payload("system")
+	if err != nil {
+		return fmt.Errorf("cannot open system image in OS image: %w", err)
+	}
+
+	l.Info("OS image config downloaded")
 
 	nodeParamsRaw, err := proto.Marshal(req.NodeParameters)
 	if err != nil {

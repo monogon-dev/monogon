@@ -3,6 +3,7 @@ package cloud.bmaas.server.api;
 option go_package = "source.monogon.dev/cloud/bmaas/server/api";
 
 import "metropolis/proto/api/configuration.proto";
+import "metropolis/proto/api/management.proto";
 import "cloud/agent/api/hwreport.proto";
 
 // AgentCallback runs on the BMDB Server and exposes a gRPC interface to agents
@@ -65,8 +66,9 @@ message HeartbeatRequest {
 }
 
 message MetropolisInstallationRequest {
-  // An HTTPS URL to a Metropolis bundle containing the OS to install.
-  string bundle_url = 1;
+  reserved 1;
+  // Parameters for fetching the OS image to install.
+  metropolis.proto.api.OSImageRef os_image = 4;
   // Node parameters to be supplied to the new node. Note that network_config
   // is automatically filled out if coming from the takeover.
   metropolis.proto.api.NodeParameters node_parameters = 2;

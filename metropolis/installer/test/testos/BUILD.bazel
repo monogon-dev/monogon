@@ -1,5 +1,4 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("//osbase/build/mkerofs:def.bzl", "erofs_image")
 load("//osbase/build/mkoci:def.bzl", "oci_os_image")
 load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
@@ -22,18 +21,6 @@ efi_unified_kernel_image(
     cmdline = "quiet console=ttyS0 init=/init",
     kernel = "//third_party/linux",
     verity = ":verity_rootfs",
-)
-
-# An intermediary "bundle" format until we finalize the actual bundle format. This is NOT stable until migrated
-# to the actual bundle format.
-# TODO(lorenz): Replace this
-pkg_zip(
-    name = "testos_bundle",
-    srcs = [
-        ":kernel_efi",
-        ":verity_rootfs",
-    ],
-    visibility = ["//visibility:public"],
 )
 
 oci_os_image(

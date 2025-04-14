@@ -481,6 +481,21 @@ message UpdateNodeRequest {
   ActivationMode activation_mode = 3;
 }
 
+// OSImageRef contains the parameters for fetching an OS image from an OCI
+// registry.
+message OSImageRef {
+  // Scheme must be either http or https.
+  string scheme = 1;
+  // Host with optional port.
+  string host = 2;
+  // Repository containing the image.
+  string repository = 3;
+  // Tag is optional. If not set, the manifest is fetched by digest instead.
+  string tag = 4;
+  // Digest is required. It is used to verify the manifest.
+  string digest = 5;
+}
+
 message UpdateNodeResponse {}
 
 message UpdateNodeLabelsRequest {
