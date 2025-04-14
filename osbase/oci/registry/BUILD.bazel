@@ -20,6 +20,20 @@ go_library(
 
 go_test(
     name = "registry_test",
-    srcs = ["headers_test.go"],
+    srcs = [
+        "client_test.go",
+        "headers_test.go",
+    ],
+    data = [
+        "//osbase/oci/osimage:test_image_uncompressed",
+    ],
     embed = [":registry"],
+    x_defs = {
+        "xImagePath": "$(rlocationpath //osbase/oci/osimage:test_image_uncompressed )",
+    },
+    deps = [
+        "//osbase/oci",
+        "@com_github_cenkalti_backoff_v4//:backoff",
+        "@io_bazel_rules_go//go/runfiles",
+    ],
 )

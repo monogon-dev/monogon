@@ -1,4 +1,5 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("//osbase/build/mkoci:def.bzl", "oci_os_image")
 
 go_library(
     name = "osimage",
@@ -12,5 +13,47 @@ go_library(
         "//osbase/oci",
         "//osbase/structfs",
         "@com_github_klauspost_compress//zstd",
+    ],
+)
+
+oci_os_image(
+    name = "test_image",
+    srcs = {
+        # We need some test payload, which should be multiple MB in size to test
+        # the chunking, but also not too large.
+        "test": "//third_party/linux",
+    },
+    visibility = ["//osbase/oci:__subpackages__"],
+)
+
+oci_os_image(
+    name = "test_image_uncompressed",
+    srcs = {
+        "test": "//third_party/linux",
+    },
+    compression_level = 0,
+    visibility = ["//osbase/oci:__subpackages__"],
+)
+
+go_test(
+    name = "osimage_test",
+    srcs = ["osimage_test.go"],
+    data = [
+        ":test_image",
+        ":test_image_uncompressed",
+        "//third_party/linux",
+    ],
+    embed = [":osimage"],
+    x_defs = {
+        "xImagePath": "$(rlocationpath :test_image )",
+        "xImageUncompressedPath": "$(rlocationpath :test_image_uncompressed )",
+        "xTestPayloadPath": "$(rlocationpath //third_party/linux )",
+    },
+    deps = [
+        "//osbase/oci",
+        "//osbase/oci/registry",
+        "@com_github_cenkalti_backoff_v4//:backoff",
+        "@com_github_opencontainers_image_spec//specs-go/v1:specs-go",
+        "@io_bazel_rules_go//go/runfiles",
     ],
 )
