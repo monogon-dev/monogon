@@ -9,12 +9,16 @@ package sshtakeover
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
+	"os"
 
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
+
+	"source.monogon.dev/osbase/structfs"
 )
 
 type Client struct {
@@ -121,6 +125,37 @@ func (p *Client) UploadExecutable(ctx context.Context, targetPath string, src io
 	}
 	if err := p.sc.Chmod(targetPath, 0755); err != nil {
 		return fmt.Errorf("while setting file permissions: %w", err)
+	}
+	return nil
+}
+
+func (p *Client) UploadTree(ctx context.Context, targetPath string, tree structfs.Tree) error {
+	if err := p.sc.RemoveAll(targetPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("RemoveAll: %w", err)
+	}
+	if err := p.sc.Mkdir(targetPath); err != nil {
+		return err
+	}
+	for nodePath, node := range tree.Walk() {
+		fullPath := targetPath + "/" + nodePath
+		switch {
+		case node.Mode.IsDir():
+			if err := p.sc.Mkdir(fullPath); err != nil {
+				return fmt.Errorf("sftp mkdir %q: %w", fullPath, err)
+			}
+		case node.Mode.IsRegular():
+			reader, err := node.Content.Open()
+			if err != nil {
+				return fmt.Errorf("upload %q: %w", nodePath, err)
+			}
+			if err := p.Upload(ctx, fullPath, reader); err != nil {
+				reader.Close()
+				return fmt.Errorf("upload %q: %w", fullPath, err)
+			}
+			reader.Close()
+		default:
+			return fmt.Errorf("upload %q: unsupported file type %s", nodePath, node.Mode.Type().String())
+		}
 	}
 	return nil
 }

@@ -50,6 +50,7 @@ go_library(
         "//osbase/logtree",
         "//osbase/logtree/proto",
         "//osbase/net/sshtakeover",
+        "//osbase/oci",
         "//osbase/structfs",
         "//version",
         "@com_github_adrg_xdg//:xdg",
@@ -78,7 +79,7 @@ go_binary(
         "//conditions:default": [
             "//metropolis/cli/takeover",
             "//metropolis/installer:kernel",
-            "//metropolis/node:bundle",
+            "//metropolis/node:oci_image",
         ],
     }),
     embed = [":metroctl_lib"],

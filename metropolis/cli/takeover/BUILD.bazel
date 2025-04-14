@@ -40,6 +40,8 @@ go_library(
         "//osbase/kexec",
         "//osbase/net/dump",
         "//osbase/net/proto",
+        "//osbase/oci",
+        "//osbase/oci/osimage",
         "//osbase/structfs",
         "//osbase/supervisor",
         "@com_github_cavaliergopher_cpio//:cpio",

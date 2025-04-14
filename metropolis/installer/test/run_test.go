@@ -26,6 +26,7 @@ import (
 	mctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/cmd"
+	"source.monogon.dev/osbase/oci"
 	"source.monogon.dev/osbase/structfs"
 )
 
@@ -36,14 +37,14 @@ var (
 	xOvmfCodePath  string
 	xOvmfVarsPath  string
 	xInstallerPath string
-	xBundlePath    string
+	xImagePath     string
 )
 
 func init() {
 	var err error
 	for _, path := range []*string{
 		&xOvmfCodePath, &xOvmfVarsPath,
-		&xInstallerPath, &xBundlePath,
+		&xInstallerPath, &xImagePath,
 	} {
 		*path, err = runfiles.Rlocation(*path)
 		if err != nil {
@@ -139,7 +140,7 @@ func TestMain(m *testing.M) {
 		log.Fatal(err)
 	}
 
-	bundle, err := structfs.OSPathBlob(xBundlePath)
+	image, err := oci.ReadLayout(xImagePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -148,7 +149,7 @@ func TestMain(m *testing.M) {
 		Installer:  installer,
 		TargetPath: installerImage,
 		NodeParams: &api.NodeParameters{},
-		Bundle:     bundle,
+		Image:      image,
 	}
 	if err := mctl.MakeInstallerImage(iargs); err != nil {
 		log.Fatalf("Couldn't create the installer image at %q: %v", installerImage, err)

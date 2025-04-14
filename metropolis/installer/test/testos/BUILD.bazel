@@ -1,6 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("//osbase/build/mkerofs:def.bzl", "erofs_image")
+load("//osbase/build/mkoci:def.bzl", "oci_os_image")
 load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
 load("//osbase/build/mkverity:def.bzl", "verity_image")
 
@@ -32,6 +33,15 @@ pkg_zip(
         ":kernel_efi",
         ":verity_rootfs",
     ],
+    visibility = ["//visibility:public"],
+)
+
+oci_os_image(
+    name = "testos_image",
+    srcs = {
+        "system": ":verity_rootfs",
+        "kernel.efi": ":kernel_efi",
+    },
     visibility = ["//visibility:public"],
 )
 

@@ -4,6 +4,7 @@ load("//build/go:def.bzl", "go_binary_with_tag")
 load("//osbase/build/genosrelease:defs.bzl", "os_release")
 load("//osbase/build/mkerofs:def.bzl", "erofs_image")
 load("//osbase/build/mkimage:def.bzl", "node_image")
+load("//osbase/build/mkoci:def.bzl", "oci_os_image")
 load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
 load("//osbase/build/mkverity:def.bzl", "verity_image")
 
@@ -119,6 +120,15 @@ efi_unified_kernel_image(
     kernel = "//third_party/linux",
     os_release = ":os-release-info",
     verity = ":verity_rootfs",
+)
+
+oci_os_image(
+    name = "oci_image",
+    srcs = {
+        "system": ":verity_rootfs",
+        "kernel.efi": ":kernel_efi",
+    },
+    visibility = ["//visibility:public"],
 )
 
 # An intermediary "bundle" format until we finalize the actual bundle format. This is NOT stable until migrated

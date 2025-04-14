@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Installer creates a Metropolis image at a suitable block device based on the
-// installer bundle present in the installation medium's ESP, after which it
-// reboots. It's meant to be used as an init process.
+// OS image present in the installation medium's ESP, after which it reboots.
+// It's meant to be used as an init process.
 package main
 
 import (
-	"archive/zip"
 	"context"
 	_ "embed"
 	"errors"
@@ -23,6 +22,8 @@ import (
 	"source.monogon.dev/osbase/bringup"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
+	"source.monogon.dev/osbase/oci"
+	ociosimage "source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/structfs"
 	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/osbase/sysfs"
@@ -103,24 +104,6 @@ probeLoop:
 	return suitable, nil
 }
 
-// zipBlob looks up a file in a [zip.Reader] and adapts it to [structfs.Blob].
-func zipBlob(reader *zip.Reader, name string) (zipFileBlob, error) {
-	for _, file := range reader.File {
-		if file.Name == name {
-			return zipFileBlob{file}, nil
-		}
-	}
-	return zipFileBlob{}, fmt.Errorf("file %q not found", name)
-}
-
-type zipFileBlob struct {
-	*zip.File
-}
-
-func (f zipFileBlob) Size() int64 {
-	return int64(f.File.UncompressedSize64)
-}
-
 func main() {
 	bringup.Runnable(installerRunnable).Run()
 }
@@ -159,7 +142,7 @@ func installerRunnable(ctx context.Context) error {
 		}
 	}
 	espPath := filepath.Join("/dev", espDev)
-	// Mount the installer partition. The installer bundle will be read from it.
+	// Mount the installer partition. The OS image will be read from it.
 	if err := mountInstallerESP(espPath); err != nil {
 		return fmt.Errorf("while mounting the installer ESP: %w", err)
 	}
@@ -169,19 +152,22 @@ func installerRunnable(ctx context.Context) error {
 		return fmt.Errorf("failed to open node parameters from ESP: %w", err)
 	}
 
-	// TODO(lorenz): Replace with proper bundles
-	bundle, err := zip.OpenReader("/installer/metropolis-installer/bundle.bin")
+	ociImage, err := oci.ReadLayout("/installer/metropolis-installer/osimage")
 	if err != nil {
-		return fmt.Errorf("failed to open node bundle from ESP: %w", err)
+		return fmt.Errorf("failed to read OS image from ESP: %w", err)
 	}
-	defer bundle.Close()
-	efiPayload, err := zipBlob(&bundle.Reader, "kernel_efi.efi")
+	osImage, err := ociosimage.Read(ociImage)
 	if err != nil {
-		return fmt.Errorf("cannot open EFI payload in bundle: %w", err)
+		return fmt.Errorf("failed to read OS image from ESP: %w", err)
 	}
-	systemImage, err := zipBlob(&bundle.Reader, "verity_rootfs.img")
+
+	efiPayload, err := osImage.Payload("kernel.efi")
 	if err != nil {
-		return fmt.Errorf("cannot open system image in bundle: %w", err)
+		return fmt.Errorf("cannot open EFI payload in OS image: %w", err)
+	}
+	systemImage, err := osImage.Payload("system")
+	if err != nil {
+		return fmt.Errorf("cannot open system image in OS image: %w", err)
 	}
 
 	// Build the osimage parameters.

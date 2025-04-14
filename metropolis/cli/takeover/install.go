@@ -4,7 +4,6 @@
 package main
 
 import (
-	"archive/zip"
 	_ "embed"
 	"fmt"
 	"os"
@@ -14,29 +13,13 @@ import (
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
+	"source.monogon.dev/osbase/oci"
+	ociosimage "source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/structfs"
 )
 
 //go:embed metropolis/node/core/abloader/abloader.efi
 var abloader []byte
-
-// zipBlob looks up a file in a [zip.Reader] and adapts it to [structfs.Blob].
-func zipBlob(reader *zip.Reader, name string) (zipFileBlob, error) {
-	for _, file := range reader.File {
-		if file.Name == name {
-			return zipFileBlob{file}, nil
-		}
-	}
-	return zipFileBlob{}, fmt.Errorf("file %q not found", name)
-}
-
-type zipFileBlob struct {
-	*zip.File
-}
-
-func (f zipFileBlob) Size() int64 {
-	return int64(f.File.UncompressedSize64)
-}
 
 // EnvInstallTarget environment variable which tells the takeover binary where
 // to install to
@@ -54,22 +37,12 @@ func installMetropolis(l logging.Leveled) error {
 		return err
 	}
 
-	bundleRaw, err := os.Open("/bundle.zip")
+	image, err := oci.ReadLayout("/osimage")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read OS image: %w", err)
 	}
 
-	bundleStat, err := bundleRaw.Stat()
-	if err != nil {
-		return err
-	}
-
-	bundle, err := zip.NewReader(bundleRaw, bundleStat.Size())
-	if err != nil {
-		return fmt.Errorf("failed to open node bundle: %w", err)
-	}
-
-	installParams, err := setupOSImageParams(bundle, metropolisSpecRaw, os.Getenv(EnvInstallTarget))
+	installParams, err := setupOSImageParams(image, metropolisSpecRaw, os.Getenv(EnvInstallTarget))
 	if err != nil {
 		return err
 	}
@@ -89,20 +62,24 @@ func installMetropolis(l logging.Leveled) error {
 	return nil
 }
 
-func setupOSImageParams(bundle *zip.Reader, metropolisSpecRaw []byte, installTarget string) (*osimage.Params, error) {
+func setupOSImageParams(image *oci.Image, metropolisSpecRaw []byte, installTarget string) (*osimage.Params, error) {
 	rootDev, err := blockdev.Open(filepath.Join("/dev", installTarget))
 	if err != nil {
 		return nil, fmt.Errorf("failed to open root device: %w", err)
 	}
 
-	efiPayload, err := zipBlob(bundle, "kernel_efi.efi")
+	osImage, err := ociosimage.Read(image)
 	if err != nil {
-		return nil, fmt.Errorf("invalid bundle: %w", err)
+		return nil, fmt.Errorf("failed to read OS image: %w", err)
 	}
 
-	systemImage, err := zipBlob(bundle, "verity_rootfs.img")
+	efiPayload, err := osImage.Payload("kernel.efi")
 	if err != nil {
-		return nil, fmt.Errorf("invalid bundle: %w", err)
+		return nil, fmt.Errorf("cannot open EFI payload in OS image: %w", err)
+	}
+	systemImage, err := osImage.Payload("system")
+	if err != nil {
+		return nil, fmt.Errorf("cannot open system image in OS image: %w", err)
 	}
 
 	return &osimage.Params{

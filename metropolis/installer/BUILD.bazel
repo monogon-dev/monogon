@@ -16,6 +16,8 @@ go_library(
         "//osbase/bringup",
         "//osbase/build/mkimage/osimage",
         "//osbase/efivarfs",
+        "//osbase/oci",
+        "//osbase/oci/osimage",
         "//osbase/structfs",
         "//osbase/supervisor",
         "//osbase/sysfs",

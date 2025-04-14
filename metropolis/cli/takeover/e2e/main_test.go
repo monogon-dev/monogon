@@ -32,7 +32,7 @@ var (
 	// These are filled by bazel at linking time with the canonical path of
 	// their corresponding file. Inside the init function we resolve it
 	// with the rules_go runfiles package to the real path.
-	xBundleFilePath string
+	xImagePath      string
 	xOvmfVarsPath   string
 	xOvmfCodePath   string
 	xCloudImagePath string
@@ -44,7 +44,7 @@ func init() {
 	var err error
 	for _, path := range []*string{
 		&xCloudImagePath, &xOvmfVarsPath, &xOvmfCodePath,
-		&xTakeoverPath, &xBundleFilePath, &xMetroctlPath,
+		&xTakeoverPath, &xImagePath, &xMetroctlPath,
 	} {
 		*path, err = runfiles.Rlocation(*path)
 		if err != nil {
@@ -203,7 +203,7 @@ func TestE2E(t *testing.T) {
 		"--bootstrap",
 		"--cluster", "cluster.internal",
 		"--takeover", xTakeoverPath,
-		"--bundle", xBundleFilePath,
+		"--image", xImagePath,
 	}
 	installCmd := exec.Command(xMetroctlPath, installArgs...)
 	installCmd.Env = append(installCmd.Environ(), fmt.Sprintf("SSH_AUTH_SOCK=%s", sshAuthSock))

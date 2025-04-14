@@ -11,12 +11,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"source.monogon.dev/metropolis/cli/metroctl/core"
+	"source.monogon.dev/osbase/oci"
 )
 
 var genusbCmd = &cobra.Command{
 	Use:     "genusb target",
 	Short:   "Generates a Metropolis installer disk or image.",
-	Example: "metroctl install --bundle=metropolis-v0.1.zip genusb /dev/sdx",
+	Example: "metroctl install --image=metropolis-v0.1 genusb /dev/sdx",
 	Args:    PrintUsageOnWrongArgs(cobra.ExactArgs(1)), // One positional argument: the target
 	RunE: func(cmd *cobra.Command, args []string) error {
 		params, err := makeNodeParams()
@@ -29,20 +30,24 @@ var genusbCmd = &cobra.Command{
 			return err
 		}
 
-		installer, err := external("installer", "_main/metropolis/installer/kernel.efi", &installerPath)
+		installer, err := externalFile("installer", "_main/metropolis/installer/kernel.efi", &installerPath)
 		if err != nil {
 			return err
 		}
-		bundle, err := external("bundle", "_main/metropolis/node/bundle.zip", bundlePath)
+		imagePathResolved, err := external("image", "_main/metropolis/node/oci_image", imagePath)
 		if err != nil {
 			return err
+		}
+		image, err := oci.ReadLayout(imagePathResolved)
+		if err != nil {
+			return fmt.Errorf("failed to read OS image: %w", err)
 		}
 
 		installerImageArgs := core.MakeInstallerImageArgs{
 			TargetPath: args[0],
 			Installer:  installer,
 			NodeParams: params,
-			Bundle:     bundle,
+			Image:      image,
 		}
 
 		log.Printf("Generating installer image (this can take a while, see issues/92).")

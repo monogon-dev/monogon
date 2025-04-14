@@ -36,7 +36,7 @@ var installCmd = &cobra.Command{
 var bootstrap = installCmd.PersistentFlags().Bool("bootstrap", false, "Create a bootstrap installer image.")
 var bootstrapTPMMode = flagdefs.TPMModePflag(installCmd.PersistentFlags(), "bootstrap-tpm-mode", cpb.ClusterConfiguration_TPM_MODE_REQUIRED, "TPM mode to set on cluster")
 var bootstrapStorageSecurityPolicy = flagdefs.StorageSecurityPolicyPflag(installCmd.PersistentFlags(), "bootstrap-storage-security", cpb.ClusterConfiguration_STORAGE_SECURITY_POLICY_NEEDS_ENCRYPTION_AND_AUTHENTICATION, "Storage security policy to set on cluster")
-var bundlePath = installCmd.PersistentFlags().StringP("bundle", "b", "", "Path to the Metropolis bundle to be installed")
+var imagePath = installCmd.PersistentFlags().StringP("image", "", "", "Path to the OCI layout directory containing the Metropolis OS image to be installed")
 var nodeParamPath = installCmd.PersistentFlags().String("node-params", "", "Path to the metropolis.proto.api.NodeParameters prototext file (advanced usage only)")
 
 func makeNodeParams() (*api.NodeParameters, error) {
@@ -109,19 +109,26 @@ func makeNodeParams() (*api.NodeParameters, error) {
 	return params, nil
 }
 
-func external(name, datafilePath string, flag *string) (structfs.Blob, error) {
+func external(name, datafilePath string, flag *string) (string, error) {
 	if flag == nil || *flag == "" {
 		rPath, err := runfiles.Rlocation(datafilePath)
 		if err != nil {
-			return nil, fmt.Errorf("no %s specified", name)
+			return "", fmt.Errorf("no %s specified", name)
 		}
-		return structfs.OSPathBlob(rPath)
+		return rPath, nil
 	}
-	f, err := structfs.OSPathBlob(*flag)
+	return *flag, nil
+}
+
+func externalFile(name, datafilePath string, flag *string) (structfs.Blob, error) {
+	path, err := external(name, datafilePath, flag)
+	if err != nil {
+		return nil, err
+	}
+	f, err := structfs.OSPathBlob(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open specified %s: %w", name, err)
 	}
-
 	return f, nil
 }
 

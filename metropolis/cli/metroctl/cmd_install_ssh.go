@@ -24,6 +24,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/osbase/net/sshtakeover"
+	"source.monogon.dev/osbase/oci"
 )
 
 // progressbarUpdater wraps a [progressbar.ProgressBar] with an improved
@@ -93,7 +94,7 @@ func (p *progressbarUpdater) stop() {
 var sshCmd = &cobra.Command{
 	Use:     "ssh --disk=<disk> <target>",
 	Short:   "Installs Metropolis on a Linux system accessible via SSH.",
-	Example: "metroctl install --bundle=metropolis-v0.1.zip --takeover=takeover ssh --disk=nvme0n1 root@ssh-enabled-server.example",
+	Example: "metroctl install --image=metropolis-v0.1 --takeover=takeover ssh --disk=nvme0n1 root@ssh-enabled-server.example",
 	Args:    cobra.ExactArgs(1), // One positional argument: the target
 	RunE: func(cmd *cobra.Command, args []string) error {
 		user, address, err := parseSSHAddr(args[0])
@@ -185,22 +186,36 @@ var sshCmd = &cobra.Command{
 		}
 
 		const takeoverTargetPath = "/root/takeover"
-		const bundleTargetPath = "/root/bundle.zip"
-		bundle, err := external("bundle", "_main/metropolis/node/bundle.zip", bundlePath)
+		const imageTargetPath = "/root/osimage"
+
+		imagePathResolved, err := external("image", "_main/metropolis/node/oci_image", imagePath)
 		if err != nil {
 			return err
+		}
+		image, err := oci.ReadLayout(imagePathResolved)
+		if err != nil {
+			return fmt.Errorf("failed to read OS image: %w", err)
+		}
+		imageLayout, err := oci.CreateLayout(image)
+		if err != nil {
+			return fmt.Errorf("failed to read OS image: %w", err)
 		}
 		takeoverPath, err := cmd.Flags().GetString("takeover")
 		if err != nil {
 			return err
 		}
-		takeover, err := external("takeover", "_main/metropolis/cli/takeover/takeover_bin_/takeover_bin", &takeoverPath)
+		takeover, err := externalFile("takeover", "_main/metropolis/cli/takeover/takeover_bin_/takeover_bin", &takeoverPath)
 		if err != nil {
 			return err
 		}
 
 		log.Println("Uploading files to target host.")
-		totalSize := takeover.Size() + bundle.Size()
+		totalSize := takeover.Size()
+		for _, entry := range imageLayout.Walk() {
+			if entry.Mode.IsRegular() {
+				totalSize += entry.Content.Size()
+			}
+		}
 		barUpdater := startProgressbarUpdater(progressbar.DefaultBytes(totalSize))
 		defer barUpdater.stop()
 		conn.SetProgress(barUpdater.add)
@@ -215,14 +230,9 @@ var sshCmd = &cobra.Command{
 			return fmt.Errorf("error while uploading %q: %w", takeoverTargetPath, err)
 		}
 
-		bundleContent, err := bundle.Open()
+		err = conn.UploadTree(ctx, imageTargetPath, imageLayout)
 		if err != nil {
-			return err
-		}
-		err = conn.Upload(ctx, bundleTargetPath, bundleContent)
-		bundleContent.Close()
-		if err != nil {
-			return fmt.Errorf("error while uploading %q: %w", bundleTargetPath, err)
+			return fmt.Errorf("error while uploading OS image: %w", err)
 		}
 
 		barUpdater.stop()

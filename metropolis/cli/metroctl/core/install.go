@@ -15,6 +15,7 @@ import (
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/fat32"
 	"source.monogon.dev/osbase/gpt"
+	"source.monogon.dev/osbase/oci"
 	"source.monogon.dev/osbase/structfs"
 )
 
@@ -28,13 +29,13 @@ type MakeInstallerImageArgs struct {
 	// Optional NodeParameters to be embedded for use by the installer.
 	NodeParams *api.NodeParameters
 
-	// Optional Reader for a Metropolis bundle for use by the installer.
-	Bundle structfs.Blob
+	// Optional OS image for use by the installer.
+	Image *oci.Image
 }
 
 // MakeInstallerImage generates an installer disk image containing a Table
 // partition table and a single FAT32 partition with an installer and optionally
-// with a bundle and/or Node Parameters.
+// with an OS image and/or Node Parameters.
 func MakeInstallerImage(args MakeInstallerImageArgs) error {
 	if args.Installer == nil {
 		return errors.New("installer is mandatory")
@@ -58,8 +59,12 @@ func MakeInstallerImage(args MakeInstallerImageArgs) error {
 			return err
 		}
 	}
-	if args.Bundle != nil {
-		if err := espRoot.PlaceFile("metropolis-installer/bundle.bin", args.Bundle); err != nil {
+	if args.Image != nil {
+		imageLayout, err := oci.CreateLayout(args.Image)
+		if err != nil {
+			return err
+		}
+		if err := espRoot.PlaceDir("metropolis-installer/osimage", imageLayout); err != nil {
 			return err
 		}
 	}

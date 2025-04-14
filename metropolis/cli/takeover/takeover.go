@@ -4,7 +4,6 @@
 package main
 
 import (
-	"archive/zip"
 	_ "embed"
 	"fmt"
 	"io"
@@ -23,6 +22,7 @@ import (
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/kexec"
 	netdump "source.monogon.dev/osbase/net/dump"
+	"source.monogon.dev/osbase/oci"
 	"source.monogon.dev/osbase/structfs"
 )
 
@@ -94,19 +94,9 @@ func setupTakeover(nodeParamsRaw []byte, target string) ([]string, error) {
 		return nil, err
 	}
 
-	bundleBlob, err := structfs.OSPathBlob(filepath.Join(filepath.Dir(currPath), "bundle.zip"))
+	image, err := oci.ReadLayout(filepath.Join(filepath.Dir(currPath), "osimage"))
 	if err != nil {
-		return nil, err
-	}
-
-	bundleRaw, err := bundleBlob.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer bundleRaw.Close()
-	bundle, err := zip.NewReader(bundleRaw.(io.ReaderAt), bundleBlob.Size())
-	if err != nil {
-		return nil, fmt.Errorf("failed to open node bundle: %w", err)
+		return nil, fmt.Errorf("failed to read OS image: %w", err)
 	}
 
 	// Dump the current network configuration
@@ -140,7 +130,7 @@ func setupTakeover(nodeParamsRaw []byte, target string) ([]string, error) {
 		return nil, fmt.Errorf("failed marshaling: %w", err)
 	}
 
-	oParams, err := setupOSImageParams(bundle, nodeParamsRaw, target)
+	oParams, err := setupOSImageParams(image, nodeParamsRaw, target)
 	if err != nil {
 		return nil, err
 	}
@@ -170,15 +160,19 @@ func setupTakeover(nodeParamsRaw []byte, target string) ([]string, error) {
 		return nil, fmt.Errorf("failed to write initramfs into memory-backed file: %w", err)
 	}
 
-	// Append this executable, the bundle and node params to initramfs
+	// Append this executable, node params and OS image to initramfs.
 	self, err := structfs.OSPathBlob("/proc/self/exe")
+	if err != nil {
+		return nil, err
+	}
+	imageLayout, err := oci.CreateLayout(image)
 	if err != nil {
 		return nil, err
 	}
 	root := structfs.Tree{
 		structfs.File("init", self, structfs.WithPerm(0o755)),
 		structfs.File("params.pb", structfs.Bytes(nodeParamsRaw)),
-		structfs.File("bundle.zip", bundleBlob),
+		structfs.Dir("osimage", imageLayout),
 	}
 	compressedW, err := zstd.NewWriter(initramfsFile, zstd.WithEncoderLevel(1))
 	if err != nil {
