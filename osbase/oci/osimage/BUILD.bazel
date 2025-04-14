@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "osimage",
+    srcs = [
+        "osimage.go",
+        "types.go",
+    ],
+    importpath = "source.monogon.dev/osbase/oci/osimage",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//osbase/oci",
+        "//osbase/structfs",
+        "@com_github_klauspost_compress//zstd",
+    ],
+)
