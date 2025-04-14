@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "oci",
+    srcs = [
+        "layout.go",
+        "oci.go",
+    ],
+    importpath = "source.monogon.dev/osbase/oci",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//osbase/structfs",
+        "@com_github_opencontainers_go_digest//:go-digest",
+        "@com_github_opencontainers_image_spec//specs-go",
+        "@com_github_opencontainers_image_spec//specs-go/v1:specs-go",
+    ],
+)
+
+go_test(
+    name = "oci_test",
+    srcs = ["oci_test.go"],
+    embed = [":oci"],
+)

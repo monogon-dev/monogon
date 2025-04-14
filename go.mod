@@ -97,6 +97,7 @@ require (
 	github.com/miekg/dns v1.1.58
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/opencontainers/go-digest v1.0.0
+	github.com/opencontainers/image-spec v1.1.0
 	github.com/opencontainers/runc v1.2.2
 	github.com/packethost/packngo v0.29.0
 	github.com/pkg/errors v0.9.1
@@ -340,7 +341,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/onsi/ginkgo/v2 v2.22.0 // indirect
 	github.com/onsi/gomega v1.36.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
 	github.com/opencontainers/runtime-tools v0.9.1-0.20221107090550-2e043c6bd626 // indirect
 	github.com/opencontainers/selinux v1.11.1 // indirect
