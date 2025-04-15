@@ -23,22 +23,46 @@
 # Files:
 #  - tools/build_defs/detect_root.bzl
 
-def detect_root(source):
-    """Detects the path to the topmost directory of the 'source' outputs.
-    To be used with external build systems to point to the source code/tools directories.
+def detect_roots(sources):
+    """Does the same as detect_root but filters for source and generated files first."""
+
+    src, gen = [], []
+    for f in sources:
+        if f.is_source:
+            src.append(f)
+        else:
+            gen.append(f)
+
+    return (
+        detect_root(src),
+        detect_root(gen),
+    )
+
+def detect_root(sources):
+    """Detects the path to the topmost directory of the sources file list.
+    To be used with external build systems to point to the sources code/tools directories.
 """
 
     root = ""
-    sources = source.files.to_list()
     if (root and len(root) > 0) or len(sources) == 0:
         return root
 
     root = ""
     level = -1
     num_at_level = 0
+    source_type = None
+    warning_printed = False
 
     # find topmost directory
     for file in sources:
+        if source_type == None:
+            source_type = file.is_source
+
+        if source_type != file.is_source and not warning_printed:
+            # buildifier: disable=print
+            print("WARNING: Source and non-source (generated) files in same list. This will result in undefined behavior.")
+            warning_printed = True
+
         file_level = _get_level(file.path)
         if level == -1 or level > file_level:
             root = file.path

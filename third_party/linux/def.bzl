@@ -58,7 +58,7 @@ def _linux_image_impl(ctx):
     image_format = ctx.attr.image_format
 
     # Root of the given Linux sources.
-    root = detect_root(ctx.attr.kernel_src)
+    root = detect_root(ctx.attr.kernel_src.files.to_list())
 
     # Figure out target CC toolchain
     cc_toolchain = find_cpp_toolchain(ctx)
