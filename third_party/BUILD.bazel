@@ -24,3 +24,9 @@ alias(
     actual = "@zlib",
     visibility = ["//visibility:public"],
 )
+
+alias(
+    name = "zstd",
+    actual = "@zstd//:zstd",
+    visibility = ["//visibility:public"],
+)

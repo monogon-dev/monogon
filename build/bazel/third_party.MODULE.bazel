@@ -287,3 +287,16 @@ http_archive(
     strip_prefix = "swtpm-" + SWTPM_VERSION,
     urls = ["https://github.com/stefanberger/swtpm/archive/%s.tar.gz" % SWTPM_VERSION],
 )
+
+ELFUTILS_VERSION = "0.192.1"
+
+http_archive(
+    name = "libelf",
+    build_file = "//third_party/libelf:libelf.bzl",
+    integrity = "sha256-o1l1WlQgDg2fq0vxadWvfSF30SsySHTGwy6qxcznkpU=",
+    strip_prefix = "libelf-%s" % ELFUTILS_VERSION,
+    urls = [
+        # TODO(tim): Migrate this to a proper bzlmod module with the official upstream.
+        "https://github.com/arachsys/libelf/archive/refs/tags/v%s.tar.gz" % ELFUTILS_VERSION,
+    ],
+)
