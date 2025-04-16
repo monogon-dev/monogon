@@ -15,20 +15,19 @@ And either:
 
 #### metroctl
 First, you'll need *metroctl*, the command line utility for working with Metropolis clusters.
-You can get it from GitHub Releases (https://github.com/monogon-dev/monogon/releases) with
+There are currently no release builds available, so you'll need to build it yourself:
 ```shell
-curl -L -o metroctl https://github.com/monogon-dev/monogon/releases/download/metropolis-v0.1/metroctl
-chmod +x metroctl
+bazel build //metropolis:metroctl
 ```
 Optionally you can move the file to a location in PATH, like /usr/local/bin or ~/bin/.
 
-#### The installation bundle
+#### The installation image
 
-To install Metropolis, you'll need a *bundle*. A *bundle* contains all resources to install or update a Metropolis node.
-You can get a prebuilt bundle from GitHub Releases with
-```shell
-curl -L -o bundle.zip https://github.com/monogon-dev/monogon/releases/download/metropolis-v0.1/bundle.zip
-```
+To install Metropolis, you'll need an *OS image*.
+Metropolis OS images are represented as OCI artifacts and contain all resources to install or update a Metropolis node.
+OS images can be stored in an OCI registry, or on local disk as an OCI layout directory.
+
+When building metroctl, an OS image is also built.
 
 ## Installation
 
@@ -36,11 +35,11 @@ curl -L -o bundle.zip https://github.com/monogon-dev/monogon/releases/download/m
 
 Let's generate the installer image that we'll use to install the first node of the upcoming cluster. To do that, use the *metroctl* tool in the following way:
 ```shell
-metroctl install genusb bootstrap-node-installer.img --bootstrap --cluster=cluster.internal --bundle=<installation-bundle-path>
+bazel run //metropolis:metroctl -- install genusb /path/to/bootstrap-node-installer.img --bootstrap --cluster=cluster.internal
 ```
 If you're going to install from a USB stick or other types of removable storage, supply metroctl with a device path:
 ```shell
-metroctl install genusb /dev/sdx --bootstrap --cluster=cluster.internal --bundle=<installation-bundle-path>
+bazel run //metropolis:metroctl -- install genusb /dev/sdx --bootstrap --cluster=cluster.internal
 ```
 Since a new GPT will need to be generated for the target device, the image file cannot simply be copied into it.
 **Caution:** make sure you'll be using the correct path. *metroctl* will overwrite data on the target device.
@@ -85,7 +84,7 @@ If this didn't work out the first time you tried, try giving the bootstrap node 
 
 Additional nodes can be provided with the non-bootstrap installer image. It can be generated with *metroctl*. This time, note the lack of the *--bootstrap* flag.
 ```shell
-metroctl --endpoints <bootstrap-node-address> install genusb second-node-installer.img --bundle=<installation-bundle-path>
+bazel run //metropolis:metroctl -- --endpoints <bootstrap-node-address> install genusb /path/to/second-node-installer.img
 ```
 
 Complete the installation process with one or more nodes.
