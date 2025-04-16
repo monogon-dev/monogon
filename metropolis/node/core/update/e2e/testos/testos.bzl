@@ -1,7 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
-load("@rules_pkg//:mappings.bzl", "pkg_files")
-load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("//osbase/build/mkerofs:def.bzl", "erofs_image")
+load("//osbase/build/mkoci:def.bzl", "oci_os_image")
 load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
 load("//osbase/build/mkverity:def.bzl", "verity_image")
 
@@ -34,25 +33,12 @@ def testos(variant):
         visibility = ["//metropolis/node/core/update/e2e:__pkg__"],
     )
 
-    # An intermediary "bundle" format until we finalize the actual bundle format. This is NOT stable until migrated
-    # to the actual bundle format.
-    # TODO(lorenz): Replace this
-    pkg_files(
-        name = "testos_bundle_files_" + variant,
-        srcs = [
-            ":kernel_efi_" + variant,
-            ":verity_rootfs_" + variant,
-        ],
-        renames = {
-            ":kernel_efi_" + variant: "kernel_efi.efi",
-            ":verity_rootfs_" + variant: "verity_rootfs.img",
+    oci_os_image(
+        name = "testos_image_" + variant,
+        srcs = {
+            "system": ":verity_rootfs_" + variant,
+            "kernel.efi": ":kernel_efi_" + variant,
         },
-    )
-    pkg_zip(
-        name = "testos_bundle_" + variant,
-        srcs = [
-            ":testos_bundle_files_" + variant,
-        ],
         visibility = ["//metropolis/node/core/update/e2e:__pkg__"],
     )
 

@@ -53,10 +53,10 @@ func NewServer() *Server {
 //
 // If the tag is empty, the image can only be fetched by digest.
 func (s *Server) AddImage(repository string, tag string, image *oci.Image) error {
-	if !repositoryRegexp.MatchString(repository) {
+	if !RepositoryRegexp.MatchString(repository) {
 		return fmt.Errorf("invalid repository %q", repository)
 	}
-	if tag != "" && !tagRegexp.MatchString(tag) {
+	if tag != "" && !TagRegexp.MatchString(tag) {
 		return fmt.Errorf("invalid tag %q", tag)
 	}
 

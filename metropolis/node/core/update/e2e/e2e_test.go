@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -23,6 +22,8 @@ import (
 
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
+	"source.monogon.dev/osbase/oci"
+	"source.monogon.dev/osbase/oci/registry"
 	"source.monogon.dev/osbase/structfs"
 )
 
@@ -30,8 +31,8 @@ var (
 	// These are filled by bazel at linking time with the canonical path of
 	// their corresponding file. Inside the init function we resolve it
 	// with the rules_go runfiles package to the real path.
-	xBundleYPath  string
-	xBundleZPath  string
+	xImageYPath   string
+	xImageZPath   string
 	xOvmfVarsPath string
 	xOvmfCodePath string
 	xBootPath     string
@@ -42,7 +43,7 @@ var (
 func init() {
 	var err error
 	for _, path := range []*string{
-		&xBundleYPath, &xBundleZPath, &xOvmfVarsPath,
+		&xImageYPath, &xImageZPath, &xOvmfVarsPath,
 		&xOvmfCodePath, &xBootPath, &xSystemXPath,
 		&xAbloaderPath,
 	} {
@@ -52,8 +53,6 @@ func init() {
 		}
 	}
 }
-
-const Mi = 1024 * 1024
 
 var variantRegexp = regexp.MustCompile(`TESTOS_VARIANT=([A-Z])`)
 
@@ -68,11 +67,11 @@ func stdoutHandler(t *testing.T, cmd *exec.Cmd, cancel context.CancelFunc, testo
 			if strings.HasPrefix(s.Text(), "[") {
 				continue
 			}
-			errIdx := strings.Index(s.Text(), "Error installing new bundle")
+			errIdx := strings.Index(s.Text(), "Error installing new image")
 			if errIdx != -1 {
 				cancel()
 			}
-			t.Log("vm: " + s.Text())
+			fmt.Printf("vm: %q\n", s.Text())
 			if m := variantRegexp.FindStringSubmatch(s.Text()); len(m) == 2 {
 				select {
 				case testosStarted <- m[1]:
@@ -94,7 +93,7 @@ func stderrHandler(t *testing.T, cmd *exec.Cmd) {
 			if strings.HasPrefix(s.Text(), "[") {
 				continue
 			}
-			t.Log("qemu: " + s.Text())
+			fmt.Printf("qemu: %q\n", s.Text())
 		}
 	}()
 }
@@ -132,61 +131,34 @@ func runAndCheckVariant(t *testing.T, expectedVariant string, qemuArgs []string)
 	}
 }
 
-type bundleServing struct {
-	t              *testing.T
-	bundlePaths    map[string]string
-	bundleFilePath string
-	// Protects bundleFilePath above
-	m sync.Mutex
-}
-
-func (b *bundleServing) setNextBundle(variant string) {
-	b.m.Lock()
-	defer b.m.Unlock()
-	p, ok := b.bundlePaths[variant]
-	if !ok {
-		b.t.Fatalf("no bundle for variant %s available", variant)
-	}
-	b.bundleFilePath = p
-}
-
-// setup sets up an an HTTP server for serving bundles which can be controlled
-// through the returned bundleServing struct as well as the initial boot disk
-// and EFI variable storage. It also returns the required QEMU arguments to
-// boot the initial TestOS.
-func setup(t *testing.T) (*bundleServing, []string) {
+// setup sets up a registry server as well as the initial boot disk
+// and EFI variable storage. It also returns the required QEMU arguments.
+func setup(t *testing.T) []string {
 	t.Helper()
-	blobAddr := net.TCPAddr{
+	registryAddr := net.TCPAddr{
 		IP:   net.IPv4(10, 42, 0, 5),
 		Port: 80,
 	}
 
-	b := bundleServing{
-		t:           t,
-		bundlePaths: make(map[string]string),
-	}
-
-	m := http.NewServeMux()
-	b.bundlePaths["Y"] = xBundleYPath
-	b.bundlePaths["Z"] = xBundleZPath
-	m.HandleFunc("/bundle.bin", func(w http.ResponseWriter, req *http.Request) {
-		b.m.Lock()
-		bundleFilePath := b.bundleFilePath
-		b.m.Unlock()
-		if bundleFilePath == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("No next bundle set in the test harness"))
-			return
-		}
-		http.ServeFile(w, req, bundleFilePath)
-	})
-	blobLis, err := net.Listen("tcp", "127.0.0.1:0")
+	imageY, err := oci.ReadLayout(xImageYPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { blobLis.Close() })
-	blobListenAddr := blobLis.Addr().(*net.TCPAddr)
-	go http.Serve(blobLis, m)
+	imageZ, err := oci.ReadLayout(xImageZPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	registryServer := registry.NewServer()
+	registryServer.AddImage("testos", "y", imageY)
+	registryServer.AddImage("testos", "z", imageZ)
+	registryLis, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { registryLis.Close() })
+	registryListenAddr := registryLis.Addr().(*net.TCPAddr)
+	go http.Serve(registryLis, registryServer)
 
 	rootDevPath := filepath.Join(t.TempDir(), "root.img")
 	// Make a 512 bytes * 2Mi = 1Gi file-backed block device
@@ -225,7 +197,7 @@ func setup(t *testing.T) (*bundleServing, []string) {
 		t.Fatalf("unable to generate starting point image: %v", err)
 	}
 
-	blobGuestFwd := fmt.Sprintf("guestfwd=tcp:%s-tcp:127.0.0.1:%d", blobAddr.String(), blobListenAddr.Port)
+	registryGuestFwd := fmt.Sprintf("guestfwd=tcp:%s-tcp:127.0.0.1:%d", registryAddr.String(), registryListenAddr.Port)
 
 	ovmfVars, err := os.CreateTemp("", "ab-ovmf-vars")
 	if err != nil {
@@ -248,33 +220,33 @@ func setup(t *testing.T) (*bundleServing, []string) {
 		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + ovmfVars.Name(),
 		"-drive", "if=virtio,format=raw,cache=unsafe,file=" + rootDevPath,
-		"-netdev", fmt.Sprintf("user,id=net0,net=10.42.0.0/24,dhcpstart=10.42.0.10,%s", blobGuestFwd),
+		"-netdev", fmt.Sprintf("user,id=net0,net=10.42.0.0/24,dhcpstart=10.42.0.10,%s", registryGuestFwd),
 		"-device", "virtio-net-pci,netdev=net0,mac=22:d5:8e:76:1d:07",
 		"-device", "virtio-rng-pci",
 		"-serial", "stdio",
 		"-no-reboot",
+		"-fw_cfg", "name=opt/testos_y_digest,string=" + imageY.ManifestDigest,
+		"-fw_cfg", "name=opt/testos_z_digest,string=" + imageZ.ManifestDigest,
 	}
-	return &b, qemuArgs
+	return qemuArgs
 }
 
 func TestABUpdateSequenceReboot(t *testing.T) {
-	bsrv, qemuArgs := setup(t)
+	qemuArgs := setup(t)
 
-	t.Log("Launching X image to install Y")
-	bsrv.setNextBundle("Y")
+	fmt.Println("Launching X image to install Y")
 	runAndCheckVariant(t, "X", qemuArgs)
 
-	t.Log("Launching Y on slot B to install Z on slot A")
-	bsrv.setNextBundle("Z")
+	fmt.Println("Launching Y on slot B to install Z on slot A")
 	runAndCheckVariant(t, "Y", qemuArgs)
 
-	t.Log("Launching Z on slot A")
+	fmt.Println("Launching Z on slot A")
 	runAndCheckVariant(t, "Z", qemuArgs)
 }
 
 func TestABUpdateSequenceKexec(t *testing.T) {
-	bsrv, qemuArgs := setup(t)
-	qemuArgs = append(qemuArgs, "-fw_cfg", "name=use_kexec,string=1")
+	qemuArgs := setup(t)
+	qemuArgs = append(qemuArgs, "-fw_cfg", "name=opt/use_kexec,string=1")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -314,8 +286,7 @@ func TestABUpdateSequenceKexec(t *testing.T) {
 					return
 				}
 			}
-			bsrv.setNextBundle(expectedVariant)
-			t.Logf("Got %s, installing %s", variant, expectedVariant)
+			fmt.Printf("Got %s, installing %s\n", variant, expectedVariant)
 		case err := <-procExit:
 			t.Fatalf("QEMU exited unexpectedly: %v", err)
 		case <-ctx.Done():

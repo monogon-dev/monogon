@@ -401,7 +401,7 @@ service NodeManagement {
   // UpdateNode updates the node operating system to a new version.
   //
   // Metropolis uses a side-by-side (A/B) update process. This method installs
-  // the OS from the given bundle into the inactive slot, activates that slot
+  // the OS from the given image into the inactive slot, activates that slot
   // and then (optionally) reboots to activate it.
   rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse) {
     option (metropolis.proto.ext.authorization) = {
@@ -459,28 +459,6 @@ message LogsResponse {
   repeated osbase.logtree.proto.LogEntry stream_entries = 2;
 }
 
-enum ActivationMode {
-  ACTIVATION_MODE_INVALID = 0;
-  // The new bundle is not activated immediately. It gets activated on the next
-  // reboot/reset.
-  ACTIVATION_MODE_NONE = 1;
-  // The node is rebooted immediately to activate the new image.
-  ACTIVATION_MODE_REBOOT = 2;
-  // The node uses kexec to activate the new image immediately without fully
-  // rebooting.
-  ACTIVATION_MODE_KEXEC = 3;
-}
-
-message UpdateNodeRequest {
-  // An HTTPS URL to a Metropolis bundle containing the new OS to install.
-  string bundle_url = 1;
-
-  reserved 2;
-
-  // Specifies how the updated image should be activated.
-  ActivationMode activation_mode = 3;
-}
-
 // OSImageRef contains the parameters for fetching an OS image from an OCI
 // registry.
 message OSImageRef {
@@ -494,6 +472,28 @@ message OSImageRef {
   string tag = 4;
   // Digest is required. It is used to verify the manifest.
   string digest = 5;
+}
+
+enum ActivationMode {
+  ACTIVATION_MODE_INVALID = 0;
+  // The new image is not activated immediately. It gets activated on the next
+  // reboot/reset.
+  ACTIVATION_MODE_NONE = 1;
+  // The node is rebooted immediately to activate the new image.
+  ACTIVATION_MODE_REBOOT = 2;
+  // The node uses kexec to activate the new image immediately without fully
+  // rebooting.
+  ACTIVATION_MODE_KEXEC = 3;
+}
+
+message UpdateNodeRequest {
+  reserved 1, 2;
+
+  // Parameters for fetching the new OS image to install.
+  metropolis.proto.api.OSImageRef os_image = 4;
+
+  // Specifies how the updated image should be activated.
+  ActivationMode activation_mode = 3;
 }
 
 message UpdateNodeResponse {}

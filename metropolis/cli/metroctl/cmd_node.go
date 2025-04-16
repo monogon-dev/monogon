@@ -19,6 +19,8 @@ import (
 
 	"source.monogon.dev/go/clitable"
 	"source.monogon.dev/metropolis/cli/metroctl/core"
+	"source.monogon.dev/osbase/oci"
+	"source.monogon.dev/osbase/oci/registry"
 	"source.monogon.dev/version"
 
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -83,18 +85,64 @@ var nodeListCmd = &cobra.Command{
 	Args: PrintUsageOnWrongArgs(cobra.ArbitraryArgs),
 }
 
+// parseImageRef parses a reference to an OCI image stored in a registry.
+//
+// The format is [http[s]://]host[:port]/repository[:tag]@digest, where []
+// indicates optional components. This format is for convenience and is similar
+// to what other tools use.
+func parseImageRef(imageRef string) (*apb.OSImageRef, error) {
+	scheme := "https"
+	var ok bool
+	if imageRef, ok = strings.CutPrefix(imageRef, "https://"); ok {
+		scheme = "https"
+	} else if imageRef, ok = strings.CutPrefix(imageRef, "http://"); ok {
+		scheme = "http"
+	}
+	host, rest, ok := strings.Cut(imageRef, "/")
+	if !ok || host == "" {
+		return nil, fmt.Errorf("missing host")
+	}
+	rest, digest, ok := strings.Cut(rest, "@")
+	if !ok || digest == "" {
+		return nil, fmt.Errorf("missing digest")
+	}
+	repository, tag, _ := strings.Cut(rest, ":")
+
+	if !registry.RepositoryRegexp.MatchString(repository) {
+		return nil, fmt.Errorf("invalid repository %q", repository)
+	}
+	if tag != "" && !registry.TagRegexp.MatchString(tag) {
+		return nil, fmt.Errorf("invalid tag %q", tag)
+	}
+	if _, _, err := oci.ParseDigest(digest); err != nil {
+		return nil, err
+	}
+
+	return &apb.OSImageRef{
+		Scheme:     scheme,
+		Host:       host,
+		Repository: repository,
+		Tag:        tag,
+		Digest:     digest,
+	}, nil
+}
+
 var nodeUpdateCmd = &cobra.Command{
 	Short:   "Updates the operating system of a cluster node.",
 	Use:     "update [NodeIDs]",
-	Example: "metroctl node update --bundle-url https://example.com/bundle.zip --activation-mode reboot metropolis-25fa5f5e9349381d4a5e9e59de0215e3",
+	Example: "metroctl node update --image-ref registry.example/monogon-os/node:0.1-amd64@sha256:345db5d8fc468218c5232bf54a1358b6825c28d658fa12c9a1edcc7539690686 --activation-mode reboot metropolis-25fa5f5e9349381d4a5e9e59de0215e3",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		bundleUrl, err := cmd.Flags().GetString("bundle-url")
+		imageRef, err := cmd.Flags().GetString("image-ref")
 		if err != nil {
 			return err
 		}
 
-		if len(bundleUrl) == 0 {
-			return fmt.Errorf("flag bundle-url is required")
+		if len(imageRef) == 0 {
+			return fmt.Errorf("flag image-ref is required")
+		}
+		osImage, err := parseImageRef(imageRef)
+		if err != nil {
+			return fmt.Errorf("invalid image-ref: %w", err)
 		}
 
 		activationMode, err := cmd.Flags().GetString("activation-mode")
@@ -158,7 +206,7 @@ var nodeUpdateCmd = &cobra.Command{
 		}
 
 		updateReq := &apb.UpdateNodeRequest{
-			BundleUrl:      bundleUrl,
+			OsImage:        osImage,
 			ActivationMode: am,
 		}
 
@@ -431,7 +479,7 @@ var nodePoweroffCmd = &cobra.Command{
 }
 
 func init() {
-	nodeUpdateCmd.Flags().String("bundle-url", "", "The URL to the new version")
+	nodeUpdateCmd.Flags().String("image-ref", "", "Reference to the new version stored in an OCI registry, in the format [http[s]://]host[:port]/repository[:tag]@digest")
 	nodeUpdateCmd.Flags().String("activation-mode", "reboot", "How the update should be activated (kexec, reboot, none)")
 	nodeUpdateCmd.Flags().Uint64("max-unavailable", 1, "Maximum nodes which can be unavailable during the update process")
 	nodeUpdateCmd.Flags().StringArray("exclude", nil, "List of nodes to exclude (useful with the \"all\" argument)")

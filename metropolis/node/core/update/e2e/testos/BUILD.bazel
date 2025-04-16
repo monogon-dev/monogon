@@ -15,6 +15,7 @@ go_library(
     deps = [
         "//metropolis/node/core/network",
         "//metropolis/node/core/update",
+        "//metropolis/proto/api",
         "//osbase/blockdev",
         "//osbase/bringup",
         "//osbase/build/mkimage/osimage",

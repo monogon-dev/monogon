@@ -38,9 +38,9 @@ const (
 )
 
 var (
-	repositoryRegexp = regexp.MustCompile(`^` + repositoryExpr + `$`)
-	tagRegexp        = regexp.MustCompile(`^` + tagExpr + `$`)
-	digestRegexp     = regexp.MustCompile(`^` + digestExpr + `$`)
+	RepositoryRegexp = regexp.MustCompile(`^` + repositoryExpr + `$`)
+	TagRegexp        = regexp.MustCompile(`^` + tagExpr + `$`)
+	DigestRegexp     = regexp.MustCompile(`^` + digestExpr + `$`)
 )
 
 // Client is an OCI registry client.
@@ -81,10 +81,10 @@ type Client struct {
 // advantage of fetching by tag is that it allows a pull through cache to
 // display tags to a user inspecting the cache contents.
 func (c *Client) Read(ctx context.Context, tag, digest string) (*oci.Image, error) {
-	if !repositoryRegexp.MatchString(c.Repository) {
+	if !RepositoryRegexp.MatchString(c.Repository) {
 		return nil, fmt.Errorf("invalid repository %q", c.Repository)
 	}
-	if tag != "" && !tagRegexp.MatchString(tag) {
+	if tag != "" && !TagRegexp.MatchString(tag) {
 		return nil, fmt.Errorf("invalid tag %q", tag)
 	}
 	if digest != "" {
@@ -137,7 +137,7 @@ type clientBlobs struct {
 }
 
 func (r *clientBlobs) Blob(descriptor *ocispecv1.Descriptor) (io.ReadCloser, error) {
-	if !digestRegexp.MatchString(string(descriptor.Digest)) {
+	if !DigestRegexp.MatchString(string(descriptor.Digest)) {
 		return nil, fmt.Errorf("invalid blob digest %q", descriptor.Digest)
 	}
 	blobPath := fmt.Sprintf("/v2/%s/blobs/%s", r.client.Repository, descriptor.Digest)

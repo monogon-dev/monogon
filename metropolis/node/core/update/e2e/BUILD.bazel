@@ -12,12 +12,12 @@ go_test(
         "//metropolis/node/core/update/e2e/testos:kernel_efi_x",
         "//metropolis/node/core/abloader",
         # For the two update tests
-        "//metropolis/node/core/update/e2e/testos:testos_bundle_y",
-        "//metropolis/node/core/update/e2e/testos:testos_bundle_z",
+        "//metropolis/node/core/update/e2e/testos:testos_image_y",
+        "//metropolis/node/core/update/e2e/testos:testos_image_z",
     ],
     x_defs = {
-        "xBundleYPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:testos_bundle_y )",
-        "xBundleZPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:testos_bundle_z )",
+        "xImageYPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:testos_image_y )",
+        "xImageZPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:testos_image_z )",
         "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
         "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
         "xBootPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:kernel_efi_x )",
@@ -27,6 +27,8 @@ go_test(
     deps = [
         "//osbase/blockdev",
         "//osbase/build/mkimage/osimage",
+        "//osbase/oci",
+        "//osbase/oci/registry",
         "//osbase/structfs",
         "@io_bazel_rules_go//go/runfiles",
     ],

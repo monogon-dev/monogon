@@ -4,7 +4,6 @@
 package update
 
 import (
-	"archive/zip"
 	"bytes"
 	"context"
 	"crypto/sha256"
@@ -13,12 +12,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"golang.org/x/sys/unix"
@@ -27,12 +26,18 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/go/logging"
-	abloaderpb "source.monogon.dev/metropolis/node/core/abloader/spec"
+	mversion "source.monogon.dev/metropolis/version"
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
 	"source.monogon.dev/osbase/gpt"
 	"source.monogon.dev/osbase/kexec"
+	ociosimage "source.monogon.dev/osbase/oci/osimage"
+	"source.monogon.dev/osbase/oci/registry"
+	"source.monogon.dev/version"
+
+	abloaderpb "source.monogon.dev/metropolis/node/core/abloader/spec"
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 // Service contains data and functionality to perform A/B updates on a
@@ -255,41 +260,55 @@ func (s *Service) setABState(d *abloaderpb.ABLoaderData) error {
 	return nil
 }
 
-// InstallBundle installs the bundle at the given HTTP(S) URL into the currently
-// inactive slot and sets that slot to boot next. If it doesn't return an error,
-// a reboot boots into the new slot.
-func (s *Service) InstallBundle(ctx context.Context, bundleURL string, withKexec bool) error {
+// InstallImage fetches the given image, installs it into the currently inactive
+// slot and sets that slot to boot next. If it doesn't return an error, a reboot
+// boots into the new slot.
+func (s *Service) InstallImage(ctx context.Context, imageRef *apb.OSImageRef, withKexec bool) error {
+	if imageRef == nil {
+		return fmt.Errorf("missing OS image in OS installation request")
+	}
+	if imageRef.Digest == "" {
+		return fmt.Errorf("missing digest in OS installation request")
+	}
 	if s.ESPPath == "" {
 		return errors.New("no ESP information provided to update service, cannot continue")
 	}
-	// Download into a buffer as ZIP files cannot efficiently be read from
-	// HTTP in Go as the ReaderAt has no way of indicating continuous sections,
-	// thus a ton of small range requests would need to be used, causing
-	// a huge latency penalty as well as costing a lot of money on typical
-	// object storages. This should go away when we switch to a better bundle
-	// format which can be streamed.
-	var bundleRaw bytes.Buffer
-	b := backoff.NewExponentialBackOff()
-	err := backoff.Retry(func() error {
-		return s.tryDownloadBundle(ctx, bundleURL, &bundleRaw)
-	}, backoff.WithContext(b, ctx))
-	if err != nil {
-		return fmt.Errorf("error downloading Metropolis bundle: %w", err)
+
+	downloadCtx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+	defer cancel()
+
+	client := &registry.Client{
+		GetBackOff: func() backoff.BackOff {
+			return backoff.NewExponentialBackOff()
+		},
+		RetryNotify: func(err error, d time.Duration) {
+			s.Logger.Warningf("Error while fetching OS image, retrying in %v: %v", d, err)
+		},
+		UserAgent:  "MonogonOS/" + strings.TrimPrefix(version.Semver(mversion.Version), "v"),
+		Scheme:     imageRef.Scheme,
+		Host:       imageRef.Host,
+		Repository: imageRef.Repository,
 	}
-	bundle, err := zip.NewReader(bytes.NewReader(bundleRaw.Bytes()), int64(bundleRaw.Len()))
+
+	image, err := client.Read(downloadCtx, imageRef.Tag, imageRef.Digest)
 	if err != nil {
-		return fmt.Errorf("failed to open node bundle: %w", err)
+		return fmt.Errorf("failed to fetch OS image: %w", err)
 	}
-	efiPayload, err := bundle.Open("kernel_efi.efi")
+
+	osImage, err := ociosimage.Read(image)
 	if err != nil {
-		return fmt.Errorf("invalid bundle: %w", err)
+		return fmt.Errorf("failed to fetch OS image: %w", err)
 	}
-	defer efiPayload.Close()
-	systemImage, err := bundle.Open("verity_rootfs.img")
+
+	efiPayload, err := osImage.Payload("kernel.efi")
 	if err != nil {
-		return fmt.Errorf("invalid bundle: %w", err)
+		return fmt.Errorf("cannot open EFI payload in OS image: %w", err)
 	}
-	defer systemImage.Close()
+	systemImage, err := osImage.Payload("system")
+	if err != nil {
+		return fmt.Errorf("cannot open system image in OS image: %w", err)
+	}
+
 	activeSlot := s.CurrentlyRunningSlot()
 	if activeSlot == SlotInvalid {
 		return errors.New("unable to determine active slot, cannot continue")
@@ -300,8 +319,18 @@ func (s *Service) InstallBundle(ctx context.Context, bundleURL string, withKexec
 	if err != nil {
 		return status.Errorf(codes.Internal, "Inactive system slot unavailable: %v", err)
 	}
-	defer systemPart.Close()
-	if _, err := io.Copy(blockdev.NewRWS(systemPart), systemImage); err != nil {
+	systemImageContent, err := systemImage.Open()
+	if err != nil {
+		systemPart.Close()
+		return fmt.Errorf("failed to open system image: %w", err)
+	}
+	_, err = io.Copy(blockdev.NewRWS(systemPart), systemImageContent)
+	systemImageContent.Close()
+	closeErr := systemPart.Close()
+	if err == nil {
+		err = closeErr
+	}
+	if err != nil {
 		return status.Errorf(codes.Unavailable, "Failed to copy system image: %v", err)
 	}
 
@@ -310,7 +339,13 @@ func (s *Service) InstallBundle(ctx context.Context, bundleURL string, withKexec
 		return fmt.Errorf("failed to open boot file: %w", err)
 	}
 	defer bootFile.Close()
-	if _, err := io.Copy(bootFile, efiPayload); err != nil {
+	efiPayloadContent, err := efiPayload.Open()
+	if err != nil {
+		return fmt.Errorf("failed to open EFI payload: %w", err)
+	}
+	_, err = io.Copy(bootFile, efiPayloadContent)
+	efiPayloadContent.Close()
+	if err != nil {
 		return fmt.Errorf("failed to write boot file: %w", err)
 	}
 
@@ -328,38 +363,6 @@ func (s *Service) InstallBundle(ctx context.Context, bundleURL string, withKexec
 		}
 	}
 
-	return nil
-}
-
-func (*Service) tryDownloadBundle(ctx context.Context, bundleURL string, bundleRaw *bytes.Buffer) error {
-	bundleReq, err := http.NewRequestWithContext(ctx, "GET", bundleURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	bundleRes, err := http.DefaultClient.Do(bundleReq)
-	if err != nil {
-		return fmt.Errorf("HTTP request failed: %w", err)
-	}
-	defer bundleRes.Body.Close()
-	switch bundleRes.StatusCode {
-	case http.StatusTooEarly, http.StatusTooManyRequests,
-		http.StatusInternalServerError, http.StatusBadGateway,
-		http.StatusServiceUnavailable, http.StatusGatewayTimeout:
-		return fmt.Errorf("HTTP error %d", bundleRes.StatusCode)
-	default:
-		// Non-standard code range used for proxy-related issue by various
-		// vendors. Treat as non-permanent error.
-		if bundleRes.StatusCode >= 520 && bundleRes.StatusCode < 599 {
-			return fmt.Errorf("HTTP error %d", bundleRes.StatusCode)
-		}
-		if bundleRes.StatusCode != 200 {
-			return backoff.Permanent(fmt.Errorf("HTTP error %d", bundleRes.StatusCode))
-		}
-	}
-	if _, err := bundleRaw.ReadFrom(bundleRes.Body); err != nil {
-		bundleRaw.Reset()
-		return err
-	}
 	return nil
 }
 

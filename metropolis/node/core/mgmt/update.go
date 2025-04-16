@@ -23,7 +23,7 @@ func (s *Service) UpdateNode(ctx context.Context, req *apb.UpdateNodeRequest) (*
 	if req.ActivationMode == apb.ActivationMode_ACTIVATION_MODE_INVALID {
 		return nil, status.Errorf(codes.InvalidArgument, "activation_mode needs to be explicitly specified")
 	}
-	if err := s.UpdateService.InstallBundle(ctx, req.BundleUrl, req.ActivationMode == apb.ActivationMode_ACTIVATION_MODE_KEXEC); err != nil {
+	if err := s.UpdateService.InstallImage(ctx, req.OsImage, req.ActivationMode == apb.ActivationMode_ACTIVATION_MODE_KEXEC); err != nil {
 		return nil, status.Errorf(codes.Unavailable, "error installing update: %v", err)
 	}
 	if req.ActivationMode != apb.ActivationMode_ACTIVATION_MODE_NONE {

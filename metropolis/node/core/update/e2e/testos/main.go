@@ -18,6 +18,8 @@ import (
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/gpt"
 	"source.monogon.dev/osbase/supervisor"
+
+	apb "source.monogon.dev/metropolis/proto/api"
 )
 
 var Variant = "U"
@@ -68,16 +70,35 @@ func testosRunnable(ctx context.Context) error {
 	if err := updateSvc.MarkBootSuccessful(); err != nil {
 		supervisor.Logger(ctx).Errorf("error marking boot successful: %w", err)
 	}
-	_, err = os.Stat("/sys/firmware/qemu_fw_cfg/by_name/use_kexec/raw")
+
+	_, err = os.Stat("/sys/firmware/qemu_fw_cfg/by_name/opt/use_kexec/raw")
 	useKexec := err == nil
 	supervisor.Logger(ctx).Infof("Kexec: %v", useKexec)
-	if Variant != "Z" {
-		if err := updateSvc.InstallBundle(ctx, "http://10.42.0.5:80/bundle.bin", useKexec); err != nil {
-			supervisor.Logger(ctx).Errorf("Error installing new bundle: %v", err)
+
+	nextVariantMap := map[string]string{
+		"X": "y",
+		"Y": "z",
+	}
+	nextVariant := nextVariantMap[Variant]
+
+	if nextVariant != "" {
+		nextDigest, err := os.ReadFile(fmt.Sprintf("/sys/firmware/qemu_fw_cfg/by_name/opt/testos_%s_digest/raw", nextVariant))
+		if err != nil {
+			return fmt.Errorf("unable to read next digest: %w", err)
+		}
+		imageRef := &apb.OSImageRef{
+			Scheme:     "http",
+			Host:       "10.42.0.5:80",
+			Repository: "testos",
+			Tag:        nextVariant,
+			Digest:     string(nextDigest),
+		}
+		if err := updateSvc.InstallImage(ctx, imageRef, useKexec); err != nil {
+			supervisor.Logger(ctx).Errorf("Error installing new image: %v", err)
 		}
 	}
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
-	supervisor.Logger(ctx).Info("Installed bundle successfully, powering off")
+	supervisor.Logger(ctx).Info("Installed image successfully, powering off")
 	unix.Sync()
 	time.Sleep(1 * time.Second)
 	if useKexec && Variant != "Z" {
