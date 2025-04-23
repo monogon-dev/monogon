@@ -27,6 +27,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "metropolis/node/core/minit/stamp.h"
+
 void handle_signal(pid_t child_pid, int signum);
 
 #define NUM_CONSOLES 3
@@ -81,7 +83,7 @@ int main() {
     cprintf(
         "\n"
         "  Metropolis Cluster Operating System\n"
-        "  Copyright 2020-2024 The Monogon Project Authors\n"
+        "  " COPYRIGHT_LINE "\n"
         "\n"
     );
 

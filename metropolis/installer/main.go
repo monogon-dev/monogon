@@ -32,6 +32,9 @@ import (
 //go:embed metropolis/node/core/abloader/abloader_bin.efi
 var abloader []byte
 
+// Filled at linking time.
+var copyrightLine string
+
 const mib = 1024 * 1024
 
 // mountInstallerESP mounts the filesystem the installer was loaded from based
@@ -112,7 +115,7 @@ func installerRunnable(ctx context.Context) error {
 	l := supervisor.Logger(ctx)
 
 	l.Info("Metropolis Installer")
-	l.Info("Copyright (c) 2024 The Monogon Project Authors")
+	l.Info(copyrightLine)
 	l.Info("")
 
 	// Validate we are running via EFI.

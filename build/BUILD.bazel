@@ -12,6 +12,7 @@ filtered_stamp(
         "KUBERNETES_gitCommit",
         "KUBERNETES_gitTreeState",
         "KUBERNETES_buildDate",
+        "MONOGON_copyright",
     ],
     visibility = ["//visibility:public"],
 )

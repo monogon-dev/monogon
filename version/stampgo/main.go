@@ -54,7 +54,7 @@ func parseStatusFile(path string) (map[string]string, error) {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
-		parts := strings.Split(line, " ")
+		parts := strings.SplitN(line, " ", 2)
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("invalid line: %q", line)
 		}

@@ -1,9 +1,19 @@
+load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+expand_template(
+    name = "stamp",
+    out = "stamp.h",
+    stamp = 1,
+    stamp_substitutions = {"copyright": "{{STABLE_MONOGON_copyright}}"},
+    template = ["#define COPYRIGHT_LINE \"copyright\""],
+)
 
 cc_binary(
     name = "minit",
     srcs = [
         "main.c",
+        ":stamp",
     ],
     visibility = [
         "//metropolis/node:__pkg__",

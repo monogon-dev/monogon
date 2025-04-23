@@ -13,6 +13,9 @@ import (
 	"source.monogon.dev/version"
 )
 
+// Filled at linking time.
+var copyrightLine string
+
 // pageStatusData encompasses all data to be shown within the status page.
 type pageStatusData struct {
 	netAddr     string
@@ -39,7 +42,7 @@ func (c *Console) pageStatus(d *pageStatusData) {
 
 	// Draw the top part.
 	c.drawTextCentered(c.width/2, splitV/2, "Monogon Cluster Operating System", sty1)
-	c.drawTextCentered(c.width/2, splitV/2+1, "Copyright 2022-2024 The Monogon Project Authors", sty1)
+	c.drawTextCentered(c.width/2, splitV/2+1, copyrightLine, sty1)
 
 	// Horizontal split between left logo and right status lines, a la 'fetch'.
 	splitH := split(c.width, logoWidth, 60)

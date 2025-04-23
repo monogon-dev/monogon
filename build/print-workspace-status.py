@@ -56,6 +56,10 @@ git_tags: [str] = [t.decode().strip() for t in git_tags_b if t.decode().strip() 
 variables["STABLE_MONOGON_gitCommit"] = git_commit
 variables["STABLE_MONOGON_gitTreeState"] = git_tree_state
 
+copyright_year = git_commit_date.partition("-")[0]
+copyright_line = f"Copyright 2020-{copyright_year} The Monogon Project Authors"
+variables["STABLE_MONOGON_copyright"] = copyright_line
+
 # Per product. Each product has it's own semver-style version number, which is
 # deduced from git tags.
 #
