@@ -284,7 +284,7 @@ func (s *Service) InstallImage(ctx context.Context, imageRef *apb.OSImageRef, wi
 		RetryNotify: func(err error, d time.Duration) {
 			s.Logger.Warningf("Error while fetching OS image, retrying in %v: %v", d, err)
 		},
-		UserAgent:  "MonogonOS/" + strings.TrimPrefix(version.Semver(mversion.Version), "v"),
+		UserAgent:  "MonogonOS/" + version.Semver(mversion.Version),
 		Scheme:     imageRef.Scheme,
 		Host:       imageRef.Host,
 		Repository: imageRef.Repository,

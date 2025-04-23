@@ -106,10 +106,6 @@ func main() {
 
 	productVersion := values["STABLE_MONOGON_"+flagProduct+"_version"]
 	if productVersion != "" {
-		if productVersion[0] != 'v' {
-			log.Fatalf("Invalid %s version %q: does not start with v", flagProduct, productVersion)
-		}
-		productVersion = productVersion[1:]
 		v, err := semver.NewVersion(productVersion)
 		if err != nil {
 			log.Fatalf("Invalid %s version %q: %v", flagProduct, productVersion, err)

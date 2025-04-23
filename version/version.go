@@ -23,7 +23,7 @@ func Release(rel *spec.Version_Release) string {
 // Semver converts a spec.Version proto message into a SemVer 2.0.0 compatible
 // string.
 func Semver(v *spec.Version) string {
-	ver := "v" + Release(v.Release)
+	ver := Release(v.Release)
 	var prerelease []string
 	if git := v.GitInformation; git != nil {
 		if n := git.CommitsSinceRelease; n != 0 {

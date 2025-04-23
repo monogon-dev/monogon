@@ -103,7 +103,7 @@ def parse_tag(tag: str, product: str) -> Optional[Version]:
     # tags. All prerelease identifies will be appended by this code.
     if not re.match(r"^v[0-9]+\.[0-9]+\.[0-9]+$", version):
         return None
-    return Version(product, version, [])
+    return Version(product, version[1:], [])
 
 
 # Is this a release build of the given product?
@@ -148,8 +148,8 @@ for product in ["metropolis", "cloud"]:
             break
 
     if version is None:
-        # This product never had a release! Use v0.0.0 as a fallback.
-        version = Version(product, "v0.0.0", [])
+        # This product never had a release! Use 0.0.0 as a fallback.
+        version = Version(product, "0.0.0", [])
         if not args.nostamp:
             # ... and count the number of all commits ever to use as the devXXX
             # prerelease identifier.
