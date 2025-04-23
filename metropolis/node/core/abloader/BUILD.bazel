@@ -6,6 +6,10 @@ rust_binary(
     srcs = ["main.rs"],
     edition = "2021",
     platform = "//build/platforms:efi_amd64",
+    # rust_binary depends on the status files by default, even if no stamp
+    # variables are used, which causes unnecessary rebuilds when the stable
+    # status file changes.
+    stamp = 0,
     target_compatible_with = [
         "@platforms//os:uefi",
     ],
