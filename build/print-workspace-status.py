@@ -20,6 +20,7 @@
 #    means there is no such thing as a 'version' for the monorepo by itself,
 #    only within the context of some product.
 
+import argparse
 from dataclasses import dataclass
 import re
 import subprocess
@@ -27,25 +28,32 @@ import subprocess
 from typing import Optional
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--nostamp", action="store_true")
+args = parser.parse_args()
+
 # Variables to output. These will be printed to stdout at the end of the script
 # runtime, sorted by key.
 variables: dict[str, str] = {}
 
-# Git build tree status: clean or dirty.
-git_tree_state: str = "clean"
-git_status = subprocess.check_output(["git", "status", "--porcelain"])
-if git_status.decode().strip() != "":
-    git_tree_state = "dirty"
+git_tree_state: str = "unknown"
 
-# Git commit hash.
-git_commit: str = (
-    subprocess.check_output(["git", "rev-parse", "HEAD^{commit}"]).decode().strip()
-)
+if not args.nostamp:
+    # Git build tree status: clean or dirty.
+    git_tree_state = "clean"
+    git_status = subprocess.check_output(["git", "status", "--porcelain"])
+    if git_status.decode().strip() != "":
+        git_tree_state = "dirty"
 
-# Git commit date.
-git_commit_date: str = (
-    subprocess.check_output(["git", "show", "--pretty=format:%cI", "--no-patch", "HEAD"]).decode().strip()
-)
+    # Git commit hash.
+    git_commit: str = (
+        subprocess.check_output(["git", "rev-parse", "HEAD^{commit}"]).decode().strip()
+    )
+
+    # Git commit date.
+    git_commit_date: str = (
+        subprocess.check_output(["git", "show", "--pretty=format:%cI", "--no-patch", "HEAD"]).decode().strip()
+    )
 
 # Git tags pointing at this commit.
 git_tags_b: [bytes] = subprocess.check_output(
@@ -53,11 +61,15 @@ git_tags_b: [bytes] = subprocess.check_output(
 ).split(b"\n")
 git_tags: [str] = [t.decode().strip() for t in git_tags_b if t.decode().strip() != ""]
 
-variables["STABLE_MONOGON_gitCommit"] = git_commit
-variables["STABLE_MONOGON_gitTreeState"] = git_tree_state
+if not args.nostamp:
+    variables["STABLE_MONOGON_gitCommit"] = git_commit
+    variables["STABLE_MONOGON_gitTreeState"] = git_tree_state
 
-copyright_year = git_commit_date.partition("-")[0]
-copyright_line = f"Copyright 2020-{copyright_year} The Monogon Project Authors"
+if args.nostamp:
+    copyright_line = "Copyright The Monogon Project Authors"
+else:
+    copyright_year = git_commit_date.partition("-")[0]
+    copyright_line = f"Copyright 2020-{copyright_year} The Monogon Project Authors"
 variables["STABLE_MONOGON_copyright"] = copyright_line
 
 # Per product. Each product has it's own semver-style version number, which is
@@ -123,6 +135,8 @@ for product in ["metropolis", "cloud"]:
             version = parse_tag(tag, product)
             if version is None:
                 continue
+            if args.nostamp:
+                break
             # Found the latest tag for this product. Augment it with the
             # devXXX identifier and add it to our versions.
             count = (
@@ -136,18 +150,22 @@ for product in ["metropolis", "cloud"]:
     if version is None:
         # This product never had a release! Use v0.0.0 as a fallback.
         version = Version(product, "v0.0.0", [])
-        # ... and count the number of all commits ever to use as the devXXX
-        # prerelease identifier.
-        count = (
-            subprocess.check_output(["git", "rev-list", "HEAD", "--count"])
-            .decode()
-            .strip()
-        )
-        version.prerelease.append(f"dev{count}")
+        if not args.nostamp:
+            # ... and count the number of all commits ever to use as the devXXX
+            # prerelease identifier.
+            count = (
+                subprocess.check_output(["git", "rev-list", "HEAD", "--count"])
+                .decode()
+                .strip()
+            )
+            version.prerelease.append(f"dev{count}")
 
-    version.prerelease.append(f"g{git_commit[:8]}")
-    if git_tree_state == "dirty":
-        version.prerelease.append("dirty")
+    if args.nostamp:
+        version.prerelease.append("nostamp")
+    else:
+        version.prerelease.append(f"g{git_commit[:8]}")
+        if git_tree_state == "dirty":
+            version.prerelease.append("dirty")
     variables[f"STABLE_MONOGON_{product}_version"] = str(version)
 
 

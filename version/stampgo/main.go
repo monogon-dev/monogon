@@ -30,7 +30,6 @@ var (
 
 var (
 	rePrereleaseCommitOffset = regexp.MustCompile(`^dev([0-9]+)$`)
-	rePrereleaseDirty        = regexp.MustCompile(`^dirty$`)
 	rePrereleaseGitHash      = regexp.MustCompile(`^g[0-9a-f]+$`)
 )
 
@@ -83,28 +82,26 @@ func main() {
 		log.Fatalf("Failed to read workspace status file: %v", err)
 	}
 
-	commitHash := values["STABLE_MONOGON_gitCommit"]
-	if commitHash == "" {
-		log.Fatalf("No git commit in workspace status")
-	}
-	if len(commitHash) < 8 {
-		log.Fatalf("Git commit hash too short")
-	}
-	buildTreeState := spec.Version_GitInformation_BUILD_TREE_STATE_INVALID
-	switch values["STABLE_MONOGON_gitTreeState"] {
-	case "clean":
-		buildTreeState = spec.Version_GitInformation_BUILD_TREE_STATE_CLEAN
-	case "dirty":
-		buildTreeState = spec.Version_GitInformation_BUILD_TREE_STATE_DIRTY
-	default:
-		log.Fatalf("Invalid git tree state %q", values["STABLE_MONOGON_gitTreeState"])
-	}
+	version := &spec.Version{}
 
-	version := &spec.Version{
-		GitInformation: &spec.Version_GitInformation{
+	commitHash := values["STABLE_MONOGON_gitCommit"]
+	if commitHash != "" {
+		if len(commitHash) < 8 {
+			log.Fatalf("Git commit hash too short")
+		}
+		buildTreeState := spec.Version_GitInformation_BUILD_TREE_STATE_INVALID
+		switch values["STABLE_MONOGON_gitTreeState"] {
+		case "clean":
+			buildTreeState = spec.Version_GitInformation_BUILD_TREE_STATE_CLEAN
+		case "dirty":
+			buildTreeState = spec.Version_GitInformation_BUILD_TREE_STATE_DIRTY
+		default:
+			log.Fatalf("Invalid git tree state %q", values["STABLE_MONOGON_gitTreeState"])
+		}
+		version.GitInformation = &spec.Version_GitInformation{
 			CommitHash:     commitHash[:8],
 			BuildTreeState: buildTreeState,
-		},
+		}
 	}
 
 	productVersion := values["STABLE_MONOGON_"+flagProduct+"_version"]
@@ -119,22 +116,24 @@ func main() {
 		}
 		// Parse prerelease strings (v1.2.3-foo-bar -> [foo, bar])
 		for _, el := range v.PreRelease.Slice() {
-			// Skip empty slices which happens when there's a semver string with no
-			// prerelease data.
-			if el == "" {
-				continue
-			}
 			preCommitOffset := rePrereleaseCommitOffset.FindStringSubmatch(el)
-			preDirty := rePrereleaseDirty.FindStringSubmatch(el)
 			preGitHash := rePrereleaseGitHash.FindStringSubmatch(el)
 			switch {
+			case el == "":
+				// Skip empty slices which happens when there's a semver string with no
+				// prerelease data.
+			case el == "nostamp":
+				// Ignore field, we have it from the global monorepo state.
 			case preCommitOffset != nil:
 				offset, err := strconv.ParseUint(preCommitOffset[1], 10, 64)
 				if err != nil {
 					log.Fatalf("Invalid commit offset value: %v", err)
 				}
+				if version.GitInformation == nil {
+					log.Fatalf("Have git offset but no git commit")
+				}
 				version.GitInformation.CommitsSinceRelease = offset
-			case preDirty != nil:
+			case el == "dirty":
 				// Ignore field, we have it from the global monorepo state.
 			case preGitHash != nil:
 				// Ignore field, we have it from the global monorepo state.

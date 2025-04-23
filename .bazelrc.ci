@@ -15,4 +15,4 @@ build --disk_cache=~/.cache/bazel-monogon/
 build --experimental_disk_cache_gc_max_size=150G
 
 # Disable stamping for cache determinism
-build --nostamp
+build --config=nostamp

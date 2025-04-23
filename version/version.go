@@ -33,6 +33,8 @@ func Semver(v *spec.Version) string {
 		if git.BuildTreeState != spec.Version_GitInformation_BUILD_TREE_STATE_CLEAN {
 			prerelease = append(prerelease, "dirty")
 		}
+	} else {
+		prerelease = append(prerelease, "nostamp")
 	}
 
 	if len(prerelease) > 0 {
