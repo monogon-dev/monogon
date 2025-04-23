@@ -1,5 +1,4 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load(":kubernetes_version_def.bzl", "version_x_defs")
 
 go_library(
     name = "hyperkube_lib",
@@ -18,9 +17,24 @@ go_library(
     ],
 )
 
+stamp_pkgs = [
+    "k8s.io/component-base/version",
+    "k8s.io/client-go/pkg/version",
+]
+
+stamp_vars = [
+    "gitMajor",
+    "gitMinor",
+    "gitVersion",
+    "gitCommit",
+    "gitTreeState",
+    "buildDate",
+]
+
 go_binary(
     name = "hyperkube",
     embed = [":hyperkube_lib"],
+    stampsrcs = ["//build:stabler_status"],
     visibility = ["//metropolis/node:__pkg__"],
-    x_defs = version_x_defs(),
+    x_defs = {"%s.%s" % (pkg, var): "{STABLER_KUBERNETES_%s}" % var for pkg in stamp_pkgs for var in stamp_vars},
 )

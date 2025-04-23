@@ -1,0 +1,17 @@
+load("//build/filter_stamp:def.bzl", "filtered_stamp")
+
+# This is a filtered stable status file which contains only the variables which
+# do not change on every commit. Using this instead of the status file avoids
+# unnecessary rebuilds.
+filtered_stamp(
+    name = "stabler_status",
+    vars = [
+        "KUBERNETES_gitMajor",
+        "KUBERNETES_gitMinor",
+        "KUBERNETES_gitVersion",
+        "KUBERNETES_gitCommit",
+        "KUBERNETES_gitTreeState",
+        "KUBERNETES_buildDate",
+    ],
+    visibility = ["//visibility:public"],
+)

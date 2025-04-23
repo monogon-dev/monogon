@@ -21,11 +21,8 @@
 #    only within the context of some product.
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
-import os
 import re
 import subprocess
-import time
 
 from typing import Optional
 
@@ -45,17 +42,16 @@ git_commit: str = (
     subprocess.check_output(["git", "rev-parse", "HEAD^{commit}"]).decode().strip()
 )
 
+# Git commit date.
+git_commit_date: str = (
+    subprocess.check_output(["git", "show", "--pretty=format:%cI", "--no-patch", "HEAD"]).decode().strip()
+)
+
 # Git tags pointing at this commit.
 git_tags_b: [bytes] = subprocess.check_output(
     ["git", "tag", "--sort=-version:refname", "--points-at", "HEAD"]
 ).split(b"\n")
 git_tags: [str] = [t.decode().strip() for t in git_tags_b if t.decode().strip() != ""]
-
-# Build timestamp, respecting SOURCE_DATE_EPOCH for reproducible builds.
-build_timestamp = int(time.time())
-sde = os.environ.get("SOURCE_DATE_EPOCH")
-if sde is not None:
-    build_timestamp = int(sde)
 
 variables["STABLE_MONOGON_gitCommit"] = git_commit
 variables["STABLE_MONOGON_gitTreeState"] = git_tree_state
@@ -94,6 +90,10 @@ def parse_tag(tag: str, product: str) -> Optional[Version]:
     return Version(product, version, [])
 
 
+# Is this a release build of the given product?
+is_release: dict[str, bool] = {}
+
+
 for product in ["metropolis", "cloud"]:
     # Get exact version from tags.
     version = None
@@ -101,6 +101,8 @@ for product in ["metropolis", "cloud"]:
         version = parse_tag(tag, product)
         if version is not None:
             break
+
+    is_release[product] = version is not None and git_tree_state == "clean"
 
     if version is None:
         # No exact version found. Use latest tag for the given product and
@@ -193,15 +195,16 @@ kubernetes_version_parsed = re.match(
 if not kubernetes_version_parsed:
     raise Exception("invalid Kubernetes version: " + kubernetes_version)
 
-# The Kubernetes build tree is considered clean iff the monorepo build tree is
-# considered clean.
-variables["KUBERNETES_gitTreeState"] = git_tree_state
-variables["KUBERNETES_buildDate"] = datetime.fromtimestamp(
-    build_timestamp, timezone.utc
-).strftime("%Y-%m-%dT%H:%M:%SZ")
 variables["STABLE_KUBERNETES_gitMajor"] = kubernetes_version_parsed[1]
 variables["STABLE_KUBERNETES_gitMinor"] = kubernetes_version_parsed[2]
 variables["STABLE_KUBERNETES_gitVersion"] = kubernetes_version + "+mngn"
+
+# Stamp commit info into Kubernetes only for release builds, to avoid
+# unnecessary rebuilds of hyperkube during development.
+if is_release["metropolis"]:
+    variables["STABLE_KUBERNETES_gitCommit"] = git_commit
+    variables["STABLE_KUBERNETES_gitTreeState"] = git_tree_state
+    variables["STABLE_KUBERNETES_buildDate"] = git_commit_date
 
 # Emit variables to stdout for consumption by Bazel and targets.
 for key in sorted(variables.keys()):
