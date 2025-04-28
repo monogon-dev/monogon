@@ -56,7 +56,7 @@ def _ktest_impl(ctx):
 k_test = rule(
     implementation = _ktest_impl,
     doc = """
-        Run a given test program under the Monogon kernel. 
+        Run a given test program under the Monogon kernel.
     """,
     attrs = {
         "tester": attr.label(
@@ -103,7 +103,6 @@ k_test = rule(
         ),
         "kernel": attr.label(
             default = Label("//osbase/test/ktest:linux-testing"),
-            cfg = "exec",
             allow_single_file = True,
         ),
         "cmdline": attr.string(
@@ -112,7 +111,7 @@ k_test = rule(
         # Tool
         "_ktest": attr.label(
             default = Label("//osbase/test/ktest"),
-            cfg = "exec",
+            cfg = "target",
             executable = True,
             allow_files = True,
         ),
