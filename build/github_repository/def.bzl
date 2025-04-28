@@ -41,24 +41,31 @@ def _github_repository(ctx):
     )
 
     for submodule, integrity in ctx.attr.submodules.items():
-        url = build_submodule_info_url(
-            owner = ctx.attr.owner,
-            repo = ctx.attr.repo,
-            ref = ctx.attr.ref,
-            submodule = submodule,
-        )
+        if submodule not in ctx.attr.submodule_info:
+            url = build_submodule_info_url(
+                owner = ctx.attr.owner,
+                repo = ctx.attr.repo,
+                ref = ctx.attr.ref,
+                submodule = submodule,
+            )
 
-        submodule_info_path = submodule + ".submodule_info"
-        ctx.download(
-            url = url,
-            headers = {
-                "Accept": "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28",
-            },
-            output = submodule_info_path,
-        )
+            submodule_info_path = submodule + ".submodule_info"
+            ctx.download(
+                url = url,
+                headers = {
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+                output = submodule_info_path,
+            )
 
-        submodule_info = json.decode(ctx.read(submodule_info_path))
+            submodule_info = json.decode(ctx.read(submodule_info_path))
+
+            # buildifier: disable=print
+            print("Missing submodule_info for submodule %s. Consider adding it: \n%s" % (submodule, submodule_info))
+        else:
+            submodule_info = json.decode(ctx.attr.submodule_info[submodule])
+
         if submodule_info["type"] != "submodule":
             fail("provided submodule path is not a submodule")
 
@@ -81,7 +88,7 @@ def _github_repository(ctx):
         )
         if integrity == "":
             # buildifier: disable=print
-            print("Missing integrity for submodule \"{submodule}\": \"{integrity}\". Consider adding it.".format(
+            print("Missing integrity for submodule {submodule}. Consider adding it:\n\"{submodule}\": \"{integrity}\".".format(
                 submodule = submodule,
                 integrity = download_info.integrity,
             ))
@@ -105,6 +112,13 @@ _github_repository_attrs = {
         mandatory = False,
         default = {},
         doc = "The list of submodules with their integrity as value",
+    ),
+    "submodule_info": attr.string_dict(
+        mandatory = False,
+        default = {},
+        doc = """The list of submodules with their GitHub API response as value.
+        This is a workaround until https://github.com/bazelbuild/bazel/issues/24777
+        is implemented to prevent hitting GitHub API limits.""",
     ),
     "ref": attr.string(
         default = "",
