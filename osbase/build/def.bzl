@@ -86,3 +86,12 @@ ignore_unused_configuration = transition(
     inputs = [],
     outputs = list(_new_settings.keys()),
 )
+
+ignore_unused_configuration_target = rule(
+    cfg = ignore_unused_configuration,
+    implementation = _forward_impl,
+    attrs = {
+        "dep": attr.label(mandatory = True),
+    },
+    doc = """Applies ignore_unused_configuration transition to a target.""",
+)

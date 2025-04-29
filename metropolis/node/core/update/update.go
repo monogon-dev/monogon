@@ -425,7 +425,7 @@ func (s *Service) stageKexec(bootFile io.ReaderAt, targetSlot Slot) error {
 	return nil
 }
 
-//go:embed metropolis/node/core/abloader/abloader.efi
+//go:embed metropolis/node/core/abloader/abloader_bin.efi
 var abloader []byte
 
 func (s *Service) fixupPreloader() error {

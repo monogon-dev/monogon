@@ -29,7 +29,7 @@ import (
 	"source.monogon.dev/osbase/sysfs"
 )
 
-//go:embed metropolis/node/core/abloader/abloader.efi
+//go:embed metropolis/node/core/abloader/abloader_bin.efi
 var abloader []byte
 
 const mib = 1024 * 1024
