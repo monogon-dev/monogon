@@ -1,7 +1,12 @@
-load("//build/go:def.bzl", "go_binary_with_tag")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary")
 
-go_binary_with_tag(
+# keep
+go_binary(
     name = "sqlc",
-    binary = "@com_github_sqlc_dev_sqlc//cmd/sqlc",
-    gotags = ["nowasm"],
+    embed = ["@com_github_sqlc_dev_sqlc//cmd/sqlc:sqlc_lib"],
+    gotags = [
+        "osusergo",
+        "netgo",
+        "nowasm",
+    ],
 )

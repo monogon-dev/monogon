@@ -161,6 +161,8 @@ OVERRIDES = {
     "github.com/opencontainers/runc": {
         "directives": [
             "gazelle:build_tags seccomp",
+            # Make @com_github_opencontainers_runc//:runc_lib visible
+            "gazelle:go_visibility //visibility:public",
         ],
         "patches": [
             "//third_party/com_github_opencontainers_runc:runc-add-cdeps.patch",
@@ -178,6 +180,8 @@ OVERRIDES = {
         "directives": [
             "gazelle:proto disable",
             "gazelle:build_tags nowasm",
+            # Make @com_github_sqlc_dev_sqlc//cmd/sqlc:sqlc_lib visible
+            "gazelle:go_visibility //visibility:public",
         ],
     },
     "github.com/containerd/ttrpc": {

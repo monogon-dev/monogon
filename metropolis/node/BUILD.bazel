@@ -1,6 +1,5 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
-load("//build/go:def.bzl", "go_binary_with_tag")
 load("//osbase/build/genosrelease:defs.bzl", "os_release")
 load("//osbase/build/mkerofs:def.bzl", "erofs_image")
 load("//osbase/build/mkimage:def.bzl", "node_image")
@@ -38,10 +37,14 @@ exports_files([
     "passwd",
 ])
 
-go_binary_with_tag(
+go_binary(
     name = "runc",
-    binary = "@com_github_opencontainers_runc//:runc",
-    gotags = ["seccomp"],
+    embed = ["@com_github_opencontainers_runc//:runc_lib"],
+    gotags = [
+        "osusergo",
+        "netgo",
+        "seccomp",
+    ],
 )
 
 erofs_image(
