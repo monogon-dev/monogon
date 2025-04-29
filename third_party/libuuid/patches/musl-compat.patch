@@ -1,0 +1,13 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+index c6807e473ab7..27dc5f2f8cf1 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -21,7 +21,7 @@
+         "-Wno-implicit-function-declaration",
+         "-Wno-return-type",
+     ],
+-    defines = ["HAVE_NANOSLEEP"],
++    defines = ["HAVE_NANOSLEEP", "HAVE_SYS_FILE_H"],
+     includes = ["include"],
+     visibility = ["//visibility:public"],
+ )
