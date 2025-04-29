@@ -45,11 +45,13 @@ go_binary(
         "netgo",
         "seccomp",
     ],
+    pure = "off",
 )
 
 erofs_image(
     name = "rootfs",
     files = {
+        "/init": "//metropolis/node/core/minit",
         "/core": "//metropolis/node/core",
 
         # CA Certificate bundle & os-release & resolv.conf & hosts
@@ -71,7 +73,8 @@ erofs_image(
         "/containerd/bin/runsc": "@dev_gvisor_gvisor//runsc",
         "/containerd/bin/containerd-shim-runsc-v1": "@dev_gvisor_gvisor//shim",
 
-        # runc (runtime in files_cc because of cgo)
+        # runc
+        "/containerd/bin/runc": ":runc",
         "/containerd/bin/containerd-shim-runc-v2": "@com_github_containerd_containerd_v2//cmd/containerd-shim-runc-v2",
 
         # Containerd
@@ -93,12 +96,11 @@ erofs_image(
 
         # Delve
         "/dlv": "@com_github_go_delve_delve//cmd/dlv:dlv",
-    },
-    files_cc = {
-        "/init": "//metropolis/node/core/minit",
-        # runc runtime, with cgo
-        "/containerd/bin/runc": ":runc",
+
+        # file system tools
         "/bin/mkfs.xfs": "@xfsprogs//:mkfs",
+
+        # time
         "/time/chrony": "@chrony//:chrony",
     },
     fsspecs = [

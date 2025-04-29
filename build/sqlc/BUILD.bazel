@@ -9,4 +9,5 @@ go_binary(
         "netgo",
         "nowasm",
     ],
+    pure = "off",
 )

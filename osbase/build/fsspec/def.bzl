@@ -9,7 +9,7 @@ FSSpecInfo = provider(
 def fsspec_core_impl(ctx, tool, output_file, extra_files = [], extra_fsspecs = []):
     """
     fsspec_core_impl implements the core of an fsspec-based rule. It takes
-    input from the `files`,`files_cc`, `symlinks` and `fsspecs` attributes
+    input from the `files`, `symlinks` and `fsspecs` attributes
     and calls `tool` with the `-out` parameter pointing to `output_file`
     and paths to all fsspecs as positional arguments.
     """
@@ -18,7 +18,7 @@ def fsspec_core_impl(ctx, tool, output_file, extra_files = [], extra_fsspecs = [
 
     fs_files = []
     inputs = []
-    for p, label in ctx.attr.files.items() + ctx.attr.files_cc.items() + extra_files:
+    for p, label in ctx.attr.files.items() + extra_files:
         if not p.startswith("/"):
             fail("file {} invalid: must begin with /".format(p))
 
