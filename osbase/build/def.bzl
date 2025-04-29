@@ -1,3 +1,5 @@
+load("@bazel_skylib//lib:paths.bzl", "paths")
+
 def _build_static_transition_impl(_settings, _attr):
     """
     Transition that enables static build of Go and C binaries.
@@ -14,6 +16,41 @@ build_static_transition = transition(
         "@io_bazel_rules_go//go/config:static",
         "//command_line_option:platforms",
     ],
+)
+
+def _forward_impl(ctx):
+    # We can't pass DefaultInfo through as-is, since Bazel forbids executable
+    # if it's a file declared in a different target. To emulate that, symlink
+    # to the original executable, if there is one.
+    default_info = ctx.attr.dep[DefaultInfo]
+    new_executable = None
+    original_executable = default_info.files_to_run.executable
+    runfiles = default_info.default_runfiles
+    if original_executable:
+        # In order for the symlink to have the same basename as the original
+        # executable (important in the case of proto plugins), put it in a
+        # subdirectory named after the label to prevent collisions.
+        new_executable = ctx.actions.declare_file(paths.join(ctx.label.name, original_executable.basename))
+        ctx.actions.symlink(
+            output = new_executable,
+            target_file = original_executable,
+            is_executable = True,
+        )
+        runfiles = runfiles.merge(ctx.runfiles([new_executable]))
+
+    return [DefaultInfo(
+        files = default_info.files,
+        runfiles = runfiles,
+        executable = new_executable,
+    )]
+
+build_static_target = rule(
+    cfg = build_static_transition,
+    implementation = _forward_impl,
+    attrs = {
+        "dep": attr.label(mandatory = True),
+    },
+    doc = """Applies build_static_transition to a target.""",
 )
 
 _new_settings = {

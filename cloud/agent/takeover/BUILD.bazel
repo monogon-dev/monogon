@@ -1,6 +1,6 @@
-load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
+load("//osbase/build:def.bzl", "build_static_target")
 load("//osbase/build/mkcpio:def.bzl", "node_initramfs")
 
 go_library(
@@ -33,10 +33,9 @@ go_binary(
 )
 
 # Used by e2e tests, forces a static build
-platform_transition_binary(
+build_static_target(
     name = "takeover",
-    binary = ":takeover_bin",
-    target_platform = "//build/platforms:linux_amd64_static",
+    dep = ":takeover_bin",
     visibility = ["//visibility:public"],
 )
 
