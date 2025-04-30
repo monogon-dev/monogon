@@ -18,7 +18,7 @@ build_static_transition = transition(
     ],
 )
 
-def _forward_impl(ctx):
+def forward_impl(ctx):
     # We can't pass DefaultInfo through as-is, since Bazel forbids executable
     # if it's a file declared in a different target. To emulate that, symlink
     # to the original executable, if there is one.
@@ -46,7 +46,7 @@ def _forward_impl(ctx):
 
 build_static_target = rule(
     cfg = build_static_transition,
-    implementation = _forward_impl,
+    implementation = forward_impl,
     attrs = {
         "dep": attr.label(mandatory = True),
     },
@@ -89,7 +89,7 @@ ignore_unused_configuration = transition(
 
 ignore_unused_configuration_target = rule(
     cfg = ignore_unused_configuration,
-    implementation = _forward_impl,
+    implementation = forward_impl,
     attrs = {
         "dep": attr.label(mandatory = True),
     },
