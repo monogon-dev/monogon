@@ -34,7 +34,7 @@ build:remote --remote_download_toplevel
 build:remote --noremote_upload_local_results
 
 # Set the execution platform which adds constraints for the scheduler.
-build:remote --extra_execution_platforms=//build/platforms:remote_amd64
+build:remote --extra_execution_platforms=//build/platforms:remote_x86_64
 
 # Enable pure by default. Specific go_binary targets which need cgo should set
 # `pure = "off"`.
@@ -94,13 +94,13 @@ build --incompatible_enable_proto_toolchain_resolution
 # In our monorepo, we mostly ignore the host platform since we bring our own
 # execution environment. However, we still need to run a small number of tools
 # such as gazelle.
-build --host_platform=//build/platforms:linux_amd64
+build --host_platform=//build/platforms:linux_x86_64
 
 # Target platform for the monorepo is currently the same as the host platform,
 # but we'll support cross-compilation at some point. Do not rely on it.
-build --platforms=//build/platforms:linux_amd64
+build --platforms=//build/platforms:linux_x86_64
 # Make sure our platform is picked instead of the --host_platform.
-build --extra_execution_platforms=//build/platforms:linux_amd64
+build --extra_execution_platforms=//build/platforms:linux_x86_64
 
 # Build resources
 startup --batch_cpu_scheduling --io_nice_level 7

@@ -18,7 +18,6 @@ import (
 	"runtime/debug"
 	"strings"
 	"sync/atomic"
-	"syscall"
 	"time"
 
 	"github.com/opencontainers/runc/libcontainer/cgroups"
@@ -190,7 +189,7 @@ func rewireFD(lt *logtree.LogTree, dn logtree.DN, f *os.File, writeLog func(logg
 	var wErr, fErr error
 	wErr = wConn.Control(func(wFd uintptr) {
 		fErr = fConn.Control(func(fFd uintptr) {
-			err = syscall.Dup2(int(wFd), int(fFd))
+			err = unix.Dup2(int(wFd), int(fFd))
 		})
 	})
 

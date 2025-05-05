@@ -3,7 +3,6 @@ a kernel, and optional commandline and initramfs in one file.
 See https://systemd.io/BOOT_LOADER_SPECIFICATION/#type-2-efi-unified-kernel-images for more information.
 """
 
-load("//build/toolchain/llvm-efi:transition.bzl", "build_efi_transition")
 load("//osbase/build/mkverity:def.bzl", "VerityInfo")
 
 def _efi_unified_kernel_image_impl(ctx):
@@ -113,8 +112,6 @@ efi_unified_kernel_image = rule(
             doc = "The stub executable itself as a PE/COFF executable.",
             default = "@efistub//:efistub",
             allow_single_file = True,
-            executable = True,
-            cfg = build_efi_transition,
         ),
         "verity": attr.label(
             doc = "The DeviceMapper Verity rootfs target table.",

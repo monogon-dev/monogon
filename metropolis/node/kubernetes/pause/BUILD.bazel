@@ -20,7 +20,10 @@ static_binary_tarball(
 
 oci_image(
     name = "pause_image",
-    architecture = "amd64",
+    architecture = select({
+        "@platforms//cpu:x86_64": "amd64",
+        "@platforms//cpu:aarch64": "arm64",
+    }),
     entrypoint = ["/app/metropolis/node/kubernetes/pause/pause"],
     os = "linux",
     tars = [":pause_layer"],

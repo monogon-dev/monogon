@@ -5,7 +5,10 @@ rust_binary(
     name = "abloader_bin",
     srcs = ["main.rs"],
     edition = "2021",
-    platform = "//build/platforms:efi_amd64",
+    platform = select({
+        "@platforms//cpu:x86_64": "//build/platforms:uefi_x86_64",
+        "@platforms//cpu:aarch64": "//build/platforms:uefi_aarch64",
+    }),
     # rust_binary depends on the status files by default, even if no stamp
     # variables are used, which causes unnecessary rebuilds when the stable
     # status file changes.
