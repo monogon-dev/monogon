@@ -6,7 +6,7 @@ def _build_static_transition_impl(_settings, _attr):
     """
     return {
         "@io_bazel_rules_go//go/config:static": True,
-        "//command_line_option:platforms": "//build/platforms:linux_amd64_static",
+        "//build/platforms/linkmode:static": True,
     }
 
 build_static_transition = transition(
@@ -14,7 +14,7 @@ build_static_transition = transition(
     inputs = [],
     outputs = [
         "@io_bazel_rules_go//go/config:static",
-        "//command_line_option:platforms",
+        "//build/platforms/linkmode:static",
     ],
 )
 
@@ -63,9 +63,7 @@ _new_settings = {
     "@io_bazel_rules_go//go/config:race": False,
     "@io_bazel_rules_go//go/config:pure": False,
     "@io_bazel_rules_go//go/config:static": False,
-
-    # Note: this toolchain is not actually used to perform the build.
-    "//command_line_option:platforms": "//build/platforms:linux_amd64_static",
+    "//build/platforms/linkmode:static": False,
 }
 
 def _ignore_unused_configuration_impl(_settings, _attr):

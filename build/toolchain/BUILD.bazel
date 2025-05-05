@@ -49,6 +49,11 @@ cc_toolchain(
 
 host_cc_toolchain_config(name = "host_cc_k8_toolchain_config")
 
+config_setting(
+    name = "is_dynamic",
+    flag_values = {"//build/platforms/linkmode:static": "False"},
+)
+
 toolchain(
     name = "host_cc_toolchain",
     exec_compatible_with = [
@@ -58,6 +63,9 @@ toolchain(
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
+    ],
+    target_settings = [
+        ":is_dynamic",
     ],
     toolchain = ":host_cc_k8_toolchain",
     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",

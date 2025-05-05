@@ -18,18 +18,6 @@ platform(
     visibility = ["//visibility:public"],
 )
 
-# Linux x86_64 platform with static linking
-# (i.e. Metropolis node, scratch containers...).
-platform(
-    name = "linux_amd64_static",
-    constraint_values = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
-        "//build/platforms/linkmode:musl-static",
-    ],
-    visibility = ["//visibility:public"],
-)
-
 platform(
     name = "remote_amd64",
     constraint_values = [

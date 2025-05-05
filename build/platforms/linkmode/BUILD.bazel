@@ -1,14 +1,7 @@
-package(
-    default_visibility = ["//visibility:public"],
-)
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 
-# Minimal Metropolis node environment. No dynamic linker,
-# so everything has to be statically linked.
-constraint_value(
-    name = "musl-static",
-    constraint_setting = ":linkmode",
-)
-
-constraint_setting(
-    name = "linkmode",
+bool_flag(
+    name = "static",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
 )

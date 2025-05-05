@@ -42,6 +42,11 @@ filegroup(
     ],
 )
 
+config_setting(
+    name = "is_static",
+    flag_values = {"//build/platforms/linkmode:static": "True"},
+)
+
 toolchain(
     name = "musl_host_toolchain",
     exec_compatible_with = [
@@ -51,7 +56,9 @@ toolchain(
     target_compatible_with = [
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
-        "//build/platforms/linkmode:musl-static",
+    ],
+    target_settings = [
+        ":is_static",
     ],
     toolchain = ":musl_host_cc_k8_toolchain",
     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
