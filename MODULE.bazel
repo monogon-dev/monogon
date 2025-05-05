@@ -98,8 +98,6 @@ register_toolchains("//build/toolchain:host_cc_toolchain")
 register_toolchains("@rust_toolchains//:all")
 
 # Protobuf Toolchains
-register_toolchains("//build/toolchain/protobuf:protoc_sources_toolchain")
-
 register_toolchains("@rules_rust_protobuf//:default_proto_toolchain")
 
 register_toolchains("//build/toolchain/rust-efi:prost_efi_toolchain")

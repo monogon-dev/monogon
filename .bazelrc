@@ -57,6 +57,15 @@ build --experimental_exec_configuration_distinguisher=off
 # Enable resource set configuration via starlark for actions
 build --experimental_action_resource_set
 
+# Stop propagation of settings to exec config by default.
+# See https://github.com/bazelbuild/bazel/issues/22457
+build --experimental_exclude_starlark_flags_from_exec_config
+# These flags need to be propagated for nogo to work. We currently need to
+# reference rules_go with the canonical repo name; this is no longer necessary
+# once the fix for https://github.com/bazelbuild/bazel/issues/25208 is released.
+build --experimental_propagate_custom_flag=@@rules_go+//go/private:request_nogo
+build --experimental_propagate_custom_flag=@@rules_go+//go/private:bootstrap_nogo
+
 # Hardwire all action envs to just use /usr/bin from the above sandbox. This is
 # necessary on NixOS Bazel builds, as they really like to inject /nix/store/*
 # paths otherwise. We also explicitly set it to /usr/bin only (no /bin) as
