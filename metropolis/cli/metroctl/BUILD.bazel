@@ -1,3 +1,5 @@
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load(":defs.bzl", "buildkind")
 
@@ -12,6 +14,42 @@ config_setting(
     flag_values = {
         ":buildkind": "lite",
     },
+)
+
+# By default, the architecture for node binaries is inherited from the metroctl
+# binary, but it can be changed with this flag.
+# Example: --//metropolis/cli/metroctl:node_arch=x86_64
+string_flag(
+    name = "node_arch",
+    build_setting_default = "",
+    values = [
+        "",
+        "x86_64",
+        "aarch64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "node_arch_x86_64",
+    flag_values = {":node_arch": "x86_64"},
+)
+
+config_setting(
+    name = "node_arch_aarch64",
+    flag_values = {":node_arch": "aarch64"},
+)
+
+config_setting(
+    name = "node_arch_inherit_x86_64",
+    constraint_values = ["@platforms//cpu:x86_64"],
+    flag_values = {":node_arch": ""},
+)
+
+config_setting(
+    name = "node_arch_inherit_aarch64",
+    constraint_values = ["@platforms//cpu:aarch64"],
+    flag_values = {":node_arch": ""},
 )
 
 go_library(
@@ -73,15 +111,32 @@ go_library(
     ],
 )
 
+platform_transition_filegroup(
+    name = "node_arch_deps",
+    srcs = [
+        "//metropolis/cli/takeover",
+        "//metropolis/installer:kernel",
+        "//metropolis/node:oci_image",
+    ],
+    target_platform = select(
+        {
+            ":node_arch_x86_64": "//build/platforms:linux_x86_64",
+            ":node_arch_aarch64": "//build/platforms:linux_aarch64",
+            ":node_arch_inherit_x86_64": "//build/platforms:linux_x86_64",
+            ":node_arch_inherit_aarch64": "//build/platforms:linux_aarch64",
+        },
+        no_match_error = """
+        Metropolis Node does not support this architecture.
+        Specify a supported architecture with the node_arch flag.""",
+    ),
+    visibility = ["//visibility:private"],
+)
+
 go_binary(
     name = "metroctl",
     data = select({
         ":buildkind_lite": [],
-        "//conditions:default": [
-            "//metropolis/cli/takeover",
-            "//metropolis/installer:kernel",
-            "//metropolis/node:oci_image",
-        ],
+        "//conditions:default": [":node_arch_deps"],
     }),
     embed = [":metroctl_lib"],
     visibility = ["//visibility:public"],
