@@ -1,6 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
-load("//osbase/build/genosrelease:defs.bzl", "os_release")
+load("//osbase/build/genproductinfo:defs.bzl", "product_info")
 load("//osbase/build/mkerofs:def.bzl", "erofs_image")
 load("//osbase/build/mkimage:def.bzl", "node_image")
 load("//osbase/build/mkoci:def.bzl", "oci_os_image")
@@ -61,7 +61,7 @@ erofs_image(
         "/etc/passwd": ":passwd",
         "/etc/resolv.conf": "//osbase/net/dns:resolv.conf",
         "/etc/hosts": "//osbase/net/dns:hosts",
-        "/etc/os-release": ":os-release-info",
+        "/etc/os-release": ":product_info_os_release",
 
         # Metrics exporters
         "/metrics/bin/node_exporter": "@com_github_prometheus_node_exporter//:node_exporter",
@@ -123,7 +123,7 @@ efi_unified_kernel_image(
     cmdline = "console=ttyS0,115200 console=ttyS1,115200 console=ttyAMA0 console=tty0 quiet rootfstype=erofs init=/init loadpin.exclude=kexec-image,kexec-initramfs kernel.unknown_nmi_panic=1",
     initrd = ["//third_party:ucode"],
     kernel = "//third_party/linux",
-    os_release = ":os-release-info",
+    os_release = ":product_info_os_release",
     verity = ":verity_rootfs",
 )
 
@@ -161,10 +161,15 @@ node_image(
     ],
 )
 
-os_release(
-    name = "os-release-info",
+product_info(
+    name = "product_info",
+    components = [
+        "linux",
+        "kubernetes",
+    ],
     os_id = "metropolis-node",
     os_name = "Metropolis Node",
+    out_os_release = ":product_info_os_release",
     stamp_var = "STABLE_MONOGON_metropolis_version",
 )
 

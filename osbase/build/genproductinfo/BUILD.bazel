@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "genproductinfo_lib",
+    srcs = ["main.go"],
+    importpath = "source.monogon.dev/osbase/build/genproductinfo",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//osbase/oci/osimage",
+        "@com_github_joho_godotenv//:godotenv",
+    ],
+)
+
+go_binary(
+    name = "genproductinfo",
+    embed = [":genproductinfo_lib"],
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "flag_debug",
+    values = {"compilation_mode": "dbg"},
+)
+
+config_setting(
+    name = "flag_race",
+    flag_values = {"@io_bazel_rules_go//go/config:race": "True"},
+)

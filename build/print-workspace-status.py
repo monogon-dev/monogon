@@ -63,6 +63,7 @@ git_tags: [str] = [t.decode().strip() for t in git_tags_b if t.decode().strip() 
 
 if not args.nostamp:
     variables["STABLE_MONOGON_gitCommit"] = git_commit
+    variables["STABLE_MONOGON_gitCommitDate"] = git_commit_date
     variables["STABLE_MONOGON_gitTreeState"] = git_tree_state
 
 if args.nostamp:
@@ -231,6 +232,20 @@ else:
     variables["STABLE_KUBERNETES_gitCommit"] = ""
     variables["STABLE_KUBERNETES_gitTreeState"] = ""
     variables["STABLE_KUBERNETES_buildDate"] = "1970-01-01T00:00:00Z"
+
+
+# Collect component versions.
+with open("build/bazel/third_party.MODULE.bazel") as f:
+    third_party_bazel = f.read()
+
+linux_version_result = re.findall(r'^LINUX_VERSION = "([a-zA-Z0-9_.-]+)"$', third_party_bazel, re.MULTILINE)
+if len(linux_version_result) != 1:
+    raise Exception("did not find LINUX_VERSION")
+variables["STABLE_MONOGON_componentVersion_linux"] = linux_version_result[0]
+
+if kubernetes_version[:1] != "v":
+    raise Exception("expected v prefix: " + kubernetes_version)
+variables["STABLE_MONOGON_componentVersion_kubernetes"] = kubernetes_version[1:]
 
 # Emit variables to stdout for consumption by Bazel and targets.
 for key in sorted(variables.keys()):

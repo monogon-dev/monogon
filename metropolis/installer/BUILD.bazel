@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("//osbase/build/genosrelease:defs.bzl", "os_release")
+load("//osbase/build/genproductinfo:defs.bzl", "product_info")
 load("//osbase/build/mkcpio:def.bzl", "node_initramfs")
 load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
 
@@ -43,10 +43,11 @@ node_initramfs(
     visibility = ["//metropolis/installer/test:__pkg__"],
 )
 
-os_release(
-    name = "installer-release-info",
+product_info(
+    name = "product_info",
     os_id = "metropolis-installer",
     os_name = "Metropolis Installer",
+    out_os_release = ":product_info_os_release",
     stamp_var = "STABLE_MONOGON_metropolis_version",
 )
 
@@ -58,6 +59,6 @@ efi_unified_kernel_image(
         ":initramfs",
     ],
     kernel = "//third_party/linux",
-    os_release = ":installer-release-info",
+    os_release = ":product_info_os_release",
     visibility = ["//visibility:public"],
 )
