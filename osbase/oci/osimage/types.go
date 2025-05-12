@@ -21,6 +21,8 @@ type Config struct {
 	// FormatVersion should be incremented when making breaking changes to the
 	// image format. Readers must stop when they see an unknown version.
 	FormatVersion string `json:"format_version"`
+	// ProductInfo contains information about the content of the image.
+	ProductInfo ProductInfo `json:"product_info"`
 	// Payloads describes the payloads contained in the image. It has the same
 	// length and order as the layers list in the image manifest.
 	Payloads []PayloadInfo `json:"payloads"`

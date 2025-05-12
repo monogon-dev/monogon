@@ -1,6 +1,10 @@
 def _oci_os_image_impl(ctx):
     inputs = []
     arguments = []
+
+    inputs.append(ctx.file.product_info)
+    arguments += ["-product_info", ctx.file.product_info.path]
+
     for name, label in ctx.attr.srcs.items():
         files = label[DefaultInfo].files.to_list()
         if len(files) != 1:
@@ -42,6 +46,13 @@ oci_os_image = rule(
         Build an OS image OCI artifact.
     """,
     attrs = {
+        "product_info": attr.label(
+            doc = """
+                Product info of the OS in JSON format.
+            """,
+            mandatory = True,
+            allow_single_file = True,
+        ),
         "srcs": attr.string_keyed_label_dict(
             doc = """
                 Payloads to include in the OCI artifact.

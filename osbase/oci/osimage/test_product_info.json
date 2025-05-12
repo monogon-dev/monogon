@@ -1,0 +1,10 @@
+{
+	"id": "testos",
+	"name": "Test OS",
+	"version": "0.0.0",
+	"variant": "x86_64",
+	"architecture": "x86_64",
+	"commit_hash": "",
+	"commit_date": "",
+	"build_tree_dirty": false
+}

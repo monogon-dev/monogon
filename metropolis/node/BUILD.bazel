@@ -133,6 +133,7 @@ oci_os_image(
         "system": ":verity_rootfs",
         "kernel.efi": ":kernel_efi",
     },
+    product_info = ":product_info",
     visibility = ["//visibility:public"],
 )
 

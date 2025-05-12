@@ -1,4 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+load("//osbase/build/genproductinfo:test.bzl", "test_product_info")
 load("//osbase/build/mkerofs:def.bzl", "erofs_image")
 load("//osbase/build/mkoci:def.bzl", "oci_os_image")
 load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
@@ -33,12 +34,19 @@ def testos(variant):
         visibility = ["//metropolis/node/core/update/e2e:__pkg__"],
     )
 
+    test_product_info(
+        name = "product_info_" + variant,
+        os_id = "testos_" + variant,
+        os_name = "Test OS " + variant.upper(),
+    )
+
     oci_os_image(
         name = "testos_image_" + variant,
         srcs = {
             "system": ":verity_rootfs_" + variant,
             "kernel.efi": ":kernel_efi_" + variant,
         },
+        product_info = ":product_info_" + variant,
         visibility = ["//metropolis/node/core/update/e2e:__pkg__"],
     )
 

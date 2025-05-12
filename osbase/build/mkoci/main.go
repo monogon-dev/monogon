@@ -28,6 +28,7 @@ const hashChunkSize = 1024 * 1024
 var payloadNameRegexp = regexp.MustCompile(`^[0-9A-Za-z-](?:[0-9A-Za-z._-]{0,78}[0-9A-Za-z_-])?$`)
 
 var (
+	productInfoPath  = flag.String("product_info", "", "Path to the product info JSON file")
 	payloadName      = flag.String("payload_name", "", "Payload name for the next payload_file flag")
 	compressionLevel = flag.Int("compression_level", int(zstd.SpeedDefault), "Compression level")
 	outPath          = flag.String("out", "", "Output OCI Image Layout directory path")
@@ -201,9 +202,19 @@ func main() {
 	})
 	flag.Parse()
 
+	rawProductInfo, err := os.ReadFile(*productInfoPath)
+	if err != nil {
+		log.Fatalf("Failed to read product info file: %v", err)
+	}
+	var productInfo osimage.ProductInfo
+	err = json.Unmarshal(rawProductInfo, &productInfo)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Create blobs directory.
 	blobsPath := filepath.Join(*outPath, "blobs", "sha256")
-	err := os.MkdirAll(blobsPath, 0755)
+	err = os.MkdirAll(blobsPath, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -223,6 +234,7 @@ func main() {
 	// Write the OS image config.
 	imageConfig := osimage.Config{
 		FormatVersion: osimage.ConfigVersion,
+		ProductInfo:   productInfo,
 		Payloads:      payloadInfos,
 	}
 	imageConfigBytes, err := json.MarshalIndent(imageConfig, "", "\t")

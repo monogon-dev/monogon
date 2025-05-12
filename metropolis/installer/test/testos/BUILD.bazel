@@ -1,4 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//osbase/build/genproductinfo:test.bzl", "test_product_info")
 load("//osbase/build/mkerofs:def.bzl", "erofs_image")
 load("//osbase/build/mkoci:def.bzl", "oci_os_image")
 load("//osbase/build/mkpayload:def.bzl", "efi_unified_kernel_image")
@@ -23,12 +24,19 @@ efi_unified_kernel_image(
     verity = ":verity_rootfs",
 )
 
+test_product_info(
+    name = "product_info",
+    os_id = "testos",
+    os_name = "Test OS",
+)
+
 oci_os_image(
     name = "testos_image",
     srcs = {
         "system": ":verity_rootfs",
         "kernel.efi": ":kernel_efi",
     },
+    product_info = ":product_info",
     visibility = ["//visibility:public"],
 )
 
