@@ -60,8 +60,6 @@ _new_settings = {
     # Force-setting them to a stable value forces the build configuration
     # to a stable hash.
     # See the transition's comment block for more information.
-    "@io_bazel_rules_go//go/config:race": False,
-    "@io_bazel_rules_go//go/config:pure": False,
     "@io_bazel_rules_go//go/config:static": False,
     "//build/platforms/linkmode:static": False,
 }
