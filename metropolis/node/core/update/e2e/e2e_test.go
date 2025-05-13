@@ -23,6 +23,7 @@ import (
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/oci"
+	ociosimage "source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/oci/registry"
 	"source.monogon.dev/osbase/structfs"
 )
@@ -149,6 +150,11 @@ func setup(t *testing.T) []string {
 		t.Fatal(err)
 	}
 
+	osImageY, err := ociosimage.Read(imageY)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	registryServer := registry.NewServer()
 	registryServer.AddImage("testos", "y", imageY)
 	registryServer.AddImage("testos", "z", imageZ)
@@ -184,10 +190,11 @@ func setup(t *testing.T) []string {
 	}
 
 	if _, err := osimage.Write(&osimage.Params{
-		Output:      rootDisk,
-		ABLoader:    loader,
-		EFIPayload:  boot,
-		SystemImage: system,
+		Output:       rootDisk,
+		Architecture: osImageY.Config.ProductInfo.Architecture(),
+		ABLoader:     loader,
+		EFIPayload:   boot,
+		SystemImage:  system,
 		PartitionSize: osimage.PartitionSizeInfo{
 			ESP:    128,
 			System: 256,

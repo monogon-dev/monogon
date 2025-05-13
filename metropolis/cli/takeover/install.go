@@ -88,6 +88,7 @@ func setupOSImageParams(image *oci.Image, metropolisSpecRaw []byte, installTarge
 			System: 4096,
 			Data:   128,
 		},
+		Architecture:   osImage.Config.ProductInfo.Architecture(),
 		SystemImage:    systemImage,
 		EFIPayload:     efiPayload,
 		ABLoader:       structfs.Bytes(abloader),

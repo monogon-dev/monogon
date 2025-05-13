@@ -186,6 +186,7 @@ func installerRunnable(ctx context.Context) error {
 			// whenever it's writing to block devices, such as now.
 			Data: 128,
 		},
+		Architecture:   osImage.Config.ProductInfo.Architecture(),
 		SystemImage:    systemImage,
 		EFIPayload:     efiPayload,
 		ABLoader:       structfs.Bytes(abloader),

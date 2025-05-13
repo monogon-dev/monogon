@@ -428,7 +428,12 @@ func (s *Service) stageKexec(bootFile io.ReaderAt, targetSlot Slot) error {
 var abloader []byte
 
 func (s *Service) fixupPreloader() error {
-	abLoaderFile, err := os.Open(filepath.Join(s.ESPPath, osimage.EFIPayloadPath))
+	efiBootPath, err := osimage.EFIBootPath(productinfo.Get().Info.Architecture())
+	if err != nil {
+		return err
+	}
+	efiBootFilePath := filepath.Join(s.ESPPath, efiBootPath)
+	abLoaderFile, err := os.Open(efiBootFilePath)
 	if err != nil {
 		s.Logger.Warningf("A/B preloader not available, attempting to restore: %v", err)
 	} else {
@@ -458,7 +463,7 @@ func (s *Service) fixupPreloader() error {
 		return fmt.Errorf("while sync'ing preloader swap file: %w", err)
 	}
 	preloader.Close()
-	if err := os.Rename(filepath.Join(s.ESPPath, "preloader.swp"), filepath.Join(s.ESPPath, osimage.EFIPayloadPath)); err != nil {
+	if err := os.Rename(filepath.Join(s.ESPPath, "preloader.swp"), efiBootFilePath); err != nil {
 		return fmt.Errorf("while swapping preloader: %w", err)
 	}
 	s.Logger.Info("Successfully wrote current preloader")
@@ -468,6 +473,11 @@ func (s *Service) fixupPreloader() error {
 // fixupEFI checks for the existence and correctness of the EFI boot entry
 // repairs/recreates it if needed.
 func (s *Service) fixupEFI() error {
+	efiBootPath, err := osimage.EFIBootPath(productinfo.Get().Info.Architecture())
+	if err != nil {
+		return err
+	}
+	efiBootVarPath := "/" + efiBootPath
 	varNames, err := efivarfs.List(efivarfs.ScopeGlobal)
 	if err != nil {
 		return fmt.Errorf("failed to list EFI variables: %w", err)
@@ -504,7 +514,7 @@ func (s *Service) fixupEFI() error {
 		}
 		switch p := e.FilePath[1].(type) {
 		case efivarfs.FilePath:
-			if string(p) == "/"+osimage.EFIPayloadPath {
+			if string(p) == efiBootVarPath {
 				if validBootEntryIdx == -1 {
 					validBootEntryIdx = int(idx)
 				} else {
@@ -540,7 +550,7 @@ func (s *Service) fixupEFI() error {
 						PartitionUUID: s.ESPPart.ID,
 					},
 				},
-				efivarfs.FilePath("/" + osimage.EFIPayloadPath),
+				efivarfs.FilePath(efiBootVarPath),
 			},
 		})
 		if err == nil {

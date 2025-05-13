@@ -28,6 +28,7 @@ go_test(
         "//osbase/blockdev",
         "//osbase/build/mkimage/osimage",
         "//osbase/oci",
+        "//osbase/oci/osimage",
         "//osbase/oci/registry",
         "//osbase/structfs",
         "@io_bazel_rules_go//go/runfiles",

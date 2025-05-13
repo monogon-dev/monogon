@@ -112,6 +112,7 @@ func installMetropolis(ctx context.Context, req *apb.MetropolisInstallationReque
 			System: 4096,
 			Data:   128,
 		},
+		Architecture:   osImage.Config.ProductInfo.Architecture(),
 		SystemImage:    systemImage,
 		EFIPayload:     efiPayload,
 		ABLoader:       structfs.Bytes(abloader),

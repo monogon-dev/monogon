@@ -25,6 +25,7 @@ go_test(
         "//osbase/build/mkimage/osimage",
         "//osbase/cmd",
         "//osbase/oci",
+        "//osbase/oci/osimage",
         "//osbase/structfs",
         "@com_github_diskfs_go_diskfs//:go-diskfs",
         "@com_github_diskfs_go_diskfs//disk",

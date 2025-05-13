@@ -13,9 +13,11 @@ import (
 
 	"source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/fat32"
 	"source.monogon.dev/osbase/gpt"
 	"source.monogon.dev/osbase/oci"
+	ociosimage "source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/structfs"
 )
 
@@ -29,7 +31,7 @@ type MakeInstallerImageArgs struct {
 	// Optional NodeParameters to be embedded for use by the installer.
 	NodeParams *api.NodeParameters
 
-	// Optional OS image for use by the installer.
+	// OS image for use by the installer.
 	Image *oci.Image
 }
 
@@ -41,12 +43,18 @@ func MakeInstallerImage(args MakeInstallerImageArgs) error {
 		return errors.New("installer is mandatory")
 	}
 
+	osImage, err := ociosimage.Read(args.Image)
+	if err != nil {
+		return fmt.Errorf("failed to read OS image: %w", err)
+	}
+	bootPath, err := osimage.EFIBootPath(osImage.Config.ProductInfo.Architecture())
+	if err != nil {
+		return err
+	}
+
 	var espRoot structfs.Tree
 
-	// This needs to be a "Removable Media" according to the UEFI Specification
-	// V2.9 Section 3.5.1.1. This file is booted by any compliant UEFI firmware
-	// in absence of another bootable boot entry.
-	if err := espRoot.PlaceFile("EFI/BOOT/BOOTx64.EFI", args.Installer); err != nil {
+	if err := espRoot.PlaceFile(bootPath, args.Installer); err != nil {
 		return err
 	}
 
@@ -59,17 +67,14 @@ func MakeInstallerImage(args MakeInstallerImageArgs) error {
 			return err
 		}
 	}
-	if args.Image != nil {
-		imageLayout, err := oci.CreateLayout(args.Image)
-		if err != nil {
-			return err
-		}
-		if err := espRoot.PlaceDir("metropolis-installer/osimage", imageLayout); err != nil {
-			return err
-		}
+	imageLayout, err := oci.CreateLayout(args.Image)
+	if err != nil {
+		return err
+	}
+	if err := espRoot.PlaceDir("metropolis-installer/osimage", imageLayout); err != nil {
+		return err
 	}
 	var targetDev blockdev.BlockDev
-	var err error
 	targetDev, err = blockdev.Open(args.TargetPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {

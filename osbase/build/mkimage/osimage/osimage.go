@@ -31,11 +31,26 @@ const (
 	DataLabel    = "METROPOLIS-NODE-DATA"
 	ESPLabel     = "ESP"
 
-	EFIPayloadPath = "EFI/BOOT/BOOTx64.EFI"
 	EFIBootAPath   = "EFI/metropolis/boot-a.efi"
 	EFIBootBPath   = "EFI/metropolis/boot-b.efi"
 	nodeParamsPath = "metropolis/parameters.pb"
 )
+
+var EFIBootName = map[string]string{
+	"x86_64":  "BOOTx64.EFI",
+	"aarch64": "BOOTAA64.EFI",
+}
+
+// EFIBootPath returns the default file path according to the UEFI Specification
+// v2.11 Section 3.5.1.1. This file is booted by any compliant UEFI firmware in
+// absence of another bootable boot entry.
+func EFIBootPath(architecture string) (string, error) {
+	bootName, ok := EFIBootName[architecture]
+	if !ok {
+		return "", fmt.Errorf("unsupported architecture %q", architecture)
+	}
+	return "EFI/BOOT/" + bootName, nil
+}
 
 // PartitionSizeInfo contains parameters used during partition table
 // initialization and, in case of image files, space allocation.
@@ -58,6 +73,8 @@ type PartitionSizeInfo struct {
 type Params struct {
 	// Output is the block device to which the OS image is written.
 	Output blockdev.BlockDev
+	// Architecture is the CPU architecture of the OS image.
+	Architecture string
 	// ABLoader provides the A/B loader which then loads the EFI loader for the
 	// correct slot.
 	ABLoader structfs.Blob
@@ -86,6 +103,7 @@ type Params struct {
 
 type plan struct {
 	*Params
+	efiBootPath      string
 	efiRoot          structfs.Tree
 	tbl              *gpt.Table
 	efiPartition     *gpt.Partition
@@ -134,7 +152,7 @@ func (i *plan) Apply() (*efivarfs.LoadOption, error) {
 					PartitionUUID: i.efiPartition.ID,
 				},
 			},
-			efivarfs.FilePath("/" + EFIPayloadPath),
+			efivarfs.FilePath("/" + i.efiBootPath),
 		},
 	}, nil
 }
@@ -165,7 +183,11 @@ func Plan(p *Params) (*plan, error) {
 		return nil, err
 	}
 	// Place the A/B loader at the EFI bootloader autodiscovery path.
-	if err := params.efiRoot.PlaceFile(EFIPayloadPath, params.ABLoader); err != nil {
+	params.efiBootPath, err = EFIBootPath(p.Architecture)
+	if err != nil {
+		return nil, err
+	}
+	if err := params.efiRoot.PlaceFile(params.efiBootPath, params.ABLoader); err != nil {
 		return nil, err
 	}
 	if params.NodeParameters != nil {

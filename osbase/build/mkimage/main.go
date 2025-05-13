@@ -42,6 +42,7 @@ func main() {
 	flag.StringVar(&biosBootCodePayload, "bios_bootcode", "", "Optional path to the BIOS bootcode which gets placed at the start of the first block of the image. Limited to 440 bytes, padding is not required. It is only used by legacy BIOS boot.")
 	flag.StringVar(&nodeParams, "node_parameters", "", "Path to Node Parameters to be written to the ESP (default: don't write Node Parameters)")
 	flag.StringVar(&outputPath, "out", "", "Path to the resulting disk image or block device")
+	flag.StringVar(&cfg.Architecture, "architecture", "", "CPU architecture")
 	flag.Int64Var(&cfg.PartitionSize.Data, "data_partition_size", 2048, "Override the data partition size (default 2048 MiB). Used only when generating image files.")
 	flag.Int64Var(&cfg.PartitionSize.ESP, "esp_partition_size", 128, "Override the ESP partition size (default: 128MiB)")
 	flag.Int64Var(&cfg.PartitionSize.System, "system_partition_size", 1024, "Override the System partition size (default: 1024MiB)")

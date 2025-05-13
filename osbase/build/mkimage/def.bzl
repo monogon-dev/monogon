@@ -3,6 +3,8 @@ def _node_image_impl(ctx):
 
     arguments = ctx.actions.args()
     arguments.add_all([
+        "-architecture",
+        ctx.attr.architecture,
         "-efi",
         ctx.file.kernel.path,
         "-system",
@@ -31,13 +33,14 @@ def _node_image_impl(ctx):
 
     return [DefaultInfo(files = depset([img_file]), runfiles = ctx.runfiles(files = [img_file]))]
 
-node_image = rule(
+_node_image = rule(
     implementation = _node_image_impl,
     doc = """
         Build a disk image from an EFI kernel payload, ABLoader and system partition
         contents. See //osbase/build/mkimage for more information.
     """,
     attrs = {
+        "architecture": attr.string(mandatory = True),
         "kernel": attr.label(
             doc = "EFI binary containing a kernel.",
             mandatory = True,
@@ -69,4 +72,19 @@ node_image = rule(
             cfg = "exec",
         ),
     },
+)
+
+def _node_image_macro_impl(**kwargs):
+    _node_image(
+        architecture = select({
+            "@platforms//cpu:x86_64": "x86_64",
+            "@platforms//cpu:aarch64": "aarch64",
+        }),
+        **kwargs
+    )
+
+node_image = macro(
+    inherit_attrs = _node_image,
+    attrs = {"architecture": None},
+    implementation = _node_image_macro_impl,
 )

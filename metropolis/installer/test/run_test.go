@@ -27,6 +27,7 @@ import (
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/cmd"
 	"source.monogon.dev/osbase/oci"
+	ociosimage "source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/structfs"
 )
 
@@ -59,6 +60,7 @@ var (
 	// installerImage is a filesystem path pointing at the installer image that
 	// is generated during the test, and is removed afterwards.
 	installerImage string
+	bootPath       string
 )
 
 // runQemu starts a new QEMU process, expecting the given output to appear
@@ -124,9 +126,9 @@ func checkEspContents(image *disk.Disk) error {
 		return fmt.Errorf("couldn't read the installer ESP: %w", err)
 	}
 	// Make sure the EFI payload exists by attempting to open it.
-	efiPayload, err := fs.OpenFile("/"+osimage.EFIPayloadPath, os.O_RDONLY)
+	efiPayload, err := fs.OpenFile("/"+bootPath, os.O_RDONLY)
 	if err != nil {
-		return fmt.Errorf("couldn't open the installer's EFI Payload at %q: %w", osimage.EFIPayloadPath, err)
+		return fmt.Errorf("couldn't open the installer's EFI Payload at %q: %w", bootPath, err)
 	}
 	efiPayload.Close()
 	return nil
@@ -141,6 +143,15 @@ func TestMain(m *testing.M) {
 	}
 
 	image, err := oci.ReadLayout(xImagePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	osImage, err := ociosimage.Read(image)
+	if err != nil {
+		log.Fatal(err)
+	}
+	bootPath, err = osimage.EFIBootPath(osImage.Config.ProductInfo.Architecture())
 	if err != nil {
 		log.Fatal(err)
 	}
