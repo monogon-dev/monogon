@@ -50,13 +50,6 @@ build --sandbox_fake_username
 build --action_env=MONOGON_SANDBOX_DIGEST
 import %workspace%/.bazelrc.sandbox
 
-# Enable revised output directory hash suffix computation
-build --experimental_output_directory_naming_scheme=diff_against_dynamic_baseline
-build --experimental_exec_configuration_distinguisher=off
-
-# Enable resource set configuration via starlark for actions
-build --experimental_action_resource_set
-
 # Stop propagation of settings to exec config by default.
 # See https://github.com/bazelbuild/bazel/issues/22457
 build --experimental_exclude_starlark_flags_from_exec_config
