@@ -124,7 +124,7 @@ func checkEspContents(image *disk.Disk) error {
 		return fmt.Errorf("couldn't read the installer ESP: %w", err)
 	}
 	// Make sure the EFI payload exists by attempting to open it.
-	efiPayload, err := fs.OpenFile(osimage.EFIPayloadPath, os.O_RDONLY)
+	efiPayload, err := fs.OpenFile("/"+osimage.EFIPayloadPath, os.O_RDONLY)
 	if err != nil {
 		return fmt.Errorf("couldn't open the installer's EFI Payload at %q: %w", osimage.EFIPayloadPath, err)
 	}

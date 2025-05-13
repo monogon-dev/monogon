@@ -8,7 +8,6 @@ package osimage
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/google/uuid"
 
@@ -32,9 +31,9 @@ const (
 	DataLabel    = "METROPOLIS-NODE-DATA"
 	ESPLabel     = "ESP"
 
-	EFIPayloadPath = "/EFI/BOOT/BOOTx64.EFI"
-	EFIBootAPath   = "/EFI/metropolis/boot-a.efi"
-	EFIBootBPath   = "/EFI/metropolis/boot-b.efi"
+	EFIPayloadPath = "EFI/BOOT/BOOTx64.EFI"
+	EFIBootAPath   = "EFI/metropolis/boot-a.efi"
+	EFIBootBPath   = "EFI/metropolis/boot-b.efi"
 	nodeParamsPath = "metropolis/parameters.pb"
 )
 
@@ -135,7 +134,7 @@ func (i *plan) Apply() (*efivarfs.LoadOption, error) {
 					PartitionUUID: i.efiPartition.ID,
 				},
 			},
-			efivarfs.FilePath(EFIPayloadPath),
+			efivarfs.FilePath("/" + EFIPayloadPath),
 		},
 	}, nil
 }
@@ -162,11 +161,11 @@ func Plan(p *Params) (*plan, error) {
 		return nil, fmt.Errorf("failed to allocate ESP: %w", err)
 	}
 
-	if err := params.efiRoot.PlaceFile(strings.TrimPrefix(EFIBootAPath, "/"), params.EFIPayload); err != nil {
+	if err := params.efiRoot.PlaceFile(EFIBootAPath, params.EFIPayload); err != nil {
 		return nil, err
 	}
 	// Place the A/B loader at the EFI bootloader autodiscovery path.
-	if err := params.efiRoot.PlaceFile(strings.TrimPrefix(EFIPayloadPath, "/"), params.ABLoader); err != nil {
+	if err := params.efiRoot.PlaceFile(EFIPayloadPath, params.ABLoader); err != nil {
 		return nil, err
 	}
 	if params.NodeParameters != nil {

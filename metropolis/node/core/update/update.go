@@ -505,7 +505,7 @@ func (s *Service) fixupEFI() error {
 		}
 		switch p := e.FilePath[1].(type) {
 		case efivarfs.FilePath:
-			if string(p) == osimage.EFIPayloadPath {
+			if string(p) == "/"+osimage.EFIPayloadPath {
 				if validBootEntryIdx == -1 {
 					validBootEntryIdx = int(idx)
 				} else {
@@ -541,7 +541,7 @@ func (s *Service) fixupEFI() error {
 						PartitionUUID: s.ESPPart.ID,
 					},
 				},
-				efivarfs.FilePath(osimage.EFIPayloadPath),
+				efivarfs.FilePath("/" + osimage.EFIPayloadPath),
 			},
 		})
 		if err == nil {
