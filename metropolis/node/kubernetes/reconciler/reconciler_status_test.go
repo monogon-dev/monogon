@@ -15,26 +15,28 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/node/core/curator"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
+	"source.monogon.dev/metropolis/node/core/productinfo"
 	cpb "source.monogon.dev/metropolis/proto/common"
-	mversion "source.monogon.dev/metropolis/version"
 	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/version"
 	vpb "source.monogon.dev/version/spec"
 )
 
+var productInfo = productinfo.Get()
+
 // TestMinimumReleasesNotAboveMetropolisRelease tests that minimum releases
 // are not above the metropolis release itself, because that would cause
 // things to get stuck.
 func TestMinimumReleasesNotAboveMetropolisRelease(t *testing.T) {
-	if version.ReleaseLessThan(mversion.Version.Release, minReconcilerRelease) {
+	if version.ReleaseLessThan(productInfo.Version.Release, minReconcilerRelease) {
 		t.Errorf("Metropolis release %s is below the minimum reconciler release %s",
-			version.Semver(mversion.Version),
+			version.Semver(productInfo.Version),
 			version.Release(minReconcilerRelease),
 		)
 	}
-	if version.ReleaseLessThan(mversion.Version.Release, minApiserverRelease) {
+	if version.ReleaseLessThan(productInfo.Version.Release, minApiserverRelease) {
 		t.Errorf("Metropolis release %s is below the minimum apiserver release %s",
-			version.Semver(mversion.Version),
+			version.Semver(productInfo.Version),
 			version.Release(minApiserverRelease),
 		)
 	}
@@ -115,10 +117,13 @@ func putNode(t *testing.T, cl client.Namespaced, id string, node *ppb.Node) int6
 // will time out if WaitReady fails to return when it is supposed to.
 func TestWaitReady(t *testing.T) {
 	cl := startEtcd(t)
+	s := Service{
+		Etcd: cl,
+	}
 
 	isReady := make(chan struct{})
 	supervisor.TestHarness(t, func(ctx context.Context) error {
-		err := WaitReady(ctx, cl)
+		err := s.WaitReady(ctx)
 		if err != nil {
 			t.Error(err)
 		}
@@ -163,7 +168,7 @@ func TestWaitReady(t *testing.T) {
 		Version: &vpb.Version{
 			Release: &vpb.Version_Release{Major: 10000, Minor: 0, Patch: 0},
 		},
-		MinimumCompatibleRelease: mversion.Version.Release,
+		MinimumCompatibleRelease: productInfo.Version.Release,
 	})
 
 	<-isReady
@@ -263,7 +268,7 @@ func TestService(t *testing.T) {
 	waitForActions := func() {
 		isReady := make(chan struct{})
 		supervisor.TestHarness(t, func(ctx context.Context) error {
-			err := WaitReady(ctx, cl)
+			err := s.WaitReady(ctx)
 			if err != nil {
 				t.Error(err)
 			}

@@ -162,7 +162,7 @@ func (s *Controller) Run(ctx context.Context) error {
 	// starting the scheduler/controller-manager/etc just to get them to immediately
 	// fail and back off with 'unauthorized'.
 	supervisor.Logger(ctx).Info("Waiting for reconciler...")
-	err = reconciler.WaitReady(ctx, etcd)
+	err = reconcilerService.WaitReady(ctx)
 	if err != nil {
 		return fmt.Errorf("while waiting for reconciler: %w", err)
 	}

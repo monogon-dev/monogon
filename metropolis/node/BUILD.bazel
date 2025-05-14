@@ -54,6 +54,9 @@ erofs_image(
         "/init": "//metropolis/node/minit",
         "/core": "//metropolis/node/core",
 
+        # Product info
+        "/etc/product-info.json": ":product_info",
+
         # CA Certificate bundle & os-release & resolv.conf & hosts
         # These should not be explicitly used by Metropolis code and are only here for compatibility with
         # paths hardcoded by standard libraries (like Go's).
@@ -172,6 +175,7 @@ product_info(
     os_name = "Metropolis Node",
     out_os_release = ":product_info_os_release",
     stamp_var = "STABLE_MONOGON_metropolis_version",
+    visibility = [":__subpackages__"],
 )
 
 go_test(

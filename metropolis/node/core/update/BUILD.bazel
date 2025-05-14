@@ -11,8 +11,8 @@ go_library(
     deps = [
         "//go/logging",
         "//metropolis/node/abloader/spec",
+        "//metropolis/node/core/productinfo",
         "//metropolis/proto/api",
-        "//metropolis/version",
         "//osbase/blockdev",
         "//osbase/build/mkimage/osimage",
         "//osbase/efivarfs",
@@ -20,7 +20,6 @@ go_library(
         "//osbase/kexec",
         "//osbase/oci/osimage",
         "//osbase/oci/registry",
-        "//version",
         "@com_github_cenkalti_backoff_v4//:backoff",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//status",

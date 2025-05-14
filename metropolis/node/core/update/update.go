@@ -26,7 +26,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/go/logging"
-	mversion "source.monogon.dev/metropolis/version"
+	"source.monogon.dev/metropolis/node/core/productinfo"
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
@@ -34,7 +34,6 @@ import (
 	"source.monogon.dev/osbase/kexec"
 	ociosimage "source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/oci/registry"
-	"source.monogon.dev/version"
 
 	abloaderpb "source.monogon.dev/metropolis/node/abloader/spec"
 	apb "source.monogon.dev/metropolis/proto/api"
@@ -284,7 +283,7 @@ func (s *Service) InstallImage(ctx context.Context, imageRef *apb.OSImageRef, wi
 		RetryNotify: func(err error, d time.Duration) {
 			s.Logger.Warningf("Error while fetching OS image, retrying in %v: %v", d, err)
 		},
-		UserAgent:  "MonogonOS/" + version.Semver(mversion.Version),
+		UserAgent:  "MonogonOS/" + productinfo.Get().VersionString,
 		Scheme:     imageRef.Scheme,
 		Host:       imageRef.Host,
 		Repository: imageRef.Repository,

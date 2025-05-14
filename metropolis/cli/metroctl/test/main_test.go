@@ -16,12 +16,9 @@ import (
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 
-	mversion "source.monogon.dev/metropolis/version"
-
 	mlaunch "source.monogon.dev/metropolis/test/launch"
 	"source.monogon.dev/metropolis/test/util"
 	"source.monogon.dev/osbase/cmd"
-	"source.monogon.dev/version"
 )
 
 var (
@@ -42,6 +39,9 @@ func init() {
 		}
 	}
 }
+
+// This is filled at linking time.
+var metropolisVersion string
 
 // mctlRun starts metroctl, and waits till it exits. It returns nil, if the run
 // was successful.
@@ -279,7 +279,7 @@ func TestMetroctl(t *testing.T) {
 			if want, got := "yes", ontpm; want != got {
 				return fmt.Errorf("node tpm mismatch: wanted %q, got %q", want, got)
 			}
-			if want, got := version.Semver(mversion.Version), onver; want != got {
+			if want, got := metropolisVersion, onver; want != got {
 				return fmt.Errorf("node version mismatch: wanted %q, got %q", want, got)
 			}
 			if ontimeout < 0 || ontimeout > 30 {

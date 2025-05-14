@@ -10,8 +10,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	mversion "source.monogon.dev/metropolis/version"
-	"source.monogon.dev/version"
+	"source.monogon.dev/metropolis/node/core/productinfo"
 )
 
 //go:embed build/copyright_line.txt
@@ -49,13 +48,27 @@ func (c *Console) pageStatus(d *pageStatusData) {
 	splitH := split(c.width, logoWidth, 60)
 
 	// Status lines.
+	productInfo := productinfo.Get()
 	lines := []string{
-		fmt.Sprintf("Version: %s", version.Semver(mversion.Version)),
+		fmt.Sprintf("Version: %s", productInfo.VersionString),
+		fmt.Sprintf("Variant: %s", productInfo.Info.Variant),
+	}
+	if productInfo.Info.BuildTreeDirty {
+		lines = append(lines, "Build tree dirty")
+	}
+	if productInfo.Info.CommitHash != "" {
+		lines = append(lines,
+			fmt.Sprintf("Commit: %s", productInfo.Info.CommitHash),
+			fmt.Sprintf("Commit date: %s", productInfo.HumanCommitDate),
+		)
+	}
+	lines = append(lines,
+		"", // Blank line between product info and node info.
 		fmt.Sprintf("Node ID: %s", d.id),
 		fmt.Sprintf("CA fingerprint: %s", d.fingerprint),
 		fmt.Sprintf("Management address: %s", d.netAddr),
 		fmt.Sprintf("Roles: %s", d.roles),
-	}
+	)
 	// Calculate longest line.
 	maxLine := 0
 	for _, l := range lines {

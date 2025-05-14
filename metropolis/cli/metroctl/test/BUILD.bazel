@@ -9,13 +9,12 @@ go_test(
     rundir = ".",
     x_defs = {
         "xMetroctlPath": "$(rlocationpath //metropolis/cli/metroctl )",
+        "metropolisVersion": "{STABLE_MONOGON_metropolis_version}",
     },
     deps = [
         "//metropolis/test/launch",
         "//metropolis/test/util",
-        "//metropolis/version",
         "//osbase/cmd",
-        "//version",
         "@io_bazel_rules_go//go/runfiles",
     ],
 )

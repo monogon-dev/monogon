@@ -17,19 +17,18 @@ import (
 	"source.monogon.dev/metropolis/node/core/localstorage/declarative"
 	"source.monogon.dev/metropolis/node/core/metrics"
 	"source.monogon.dev/metropolis/node/core/network"
+	"source.monogon.dev/metropolis/node/core/productinfo"
 	"source.monogon.dev/metropolis/node/core/roleserve"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/metropolis/node/core/tconsole"
 	timesvc "source.monogon.dev/metropolis/node/core/time"
 	"source.monogon.dev/metropolis/node/core/update"
-	mversion "source.monogon.dev/metropolis/version"
 	"source.monogon.dev/osbase/bringup"
 	"source.monogon.dev/osbase/logtree"
 	"source.monogon.dev/osbase/net/dns"
 	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/osbase/sysctl"
 	"source.monogon.dev/osbase/tpm"
-	"source.monogon.dev/version"
 )
 
 func main() {
@@ -95,8 +94,17 @@ func consoleFilter(p *logtree.LogEntry) bool {
 func root(ctx context.Context) error {
 	logger := supervisor.Logger(ctx)
 
-	logger.Info("Starting Metropolis node init")
-	logger.Infof("Version: %s", version.Semver(mversion.Version))
+	productInfo := productinfo.Get()
+	logger.Infof("Starting %s init", productInfo.Info.Name)
+	logger.Infof("Version: %s", productInfo.VersionString)
+	logger.Infof("Variant: %s", productInfo.Info.Variant)
+	if productInfo.Info.BuildTreeDirty {
+		logger.Warning("Build tree dirty")
+	}
+	if productInfo.Info.CommitHash != "" {
+		logger.Infof("Commit: %s", productInfo.Info.CommitHash)
+		logger.Infof("Commit date: %s", productInfo.HumanCommitDate)
+	}
 
 	// Linux kernel default is 4096 which is far too low. Raise it to 1M which
 	// is what gVisor suggests.
@@ -198,8 +206,15 @@ func root(ctx context.Context) error {
 
 	// Initialize interactive consoles.
 	interactiveConsoles := []string{"/dev/tty0"}
+	consoleConfig := tconsole.Config{
+		Terminal:    tconsole.TerminalLinux,
+		LogTree:     supervisor.LogTree(ctx),
+		Network:     &networkSvc.Status,
+		Roles:       &rs.LocalRoles,
+		CuratorConn: &rs.CuratorConnection,
+	}
 	for _, c := range interactiveConsoles {
-		console, err := tconsole.New(tconsole.TerminalLinux, c, supervisor.LogTree(ctx), &networkSvc.Status, &rs.LocalRoles, &rs.CuratorConnection)
+		console, err := tconsole.New(consoleConfig, c)
 		if err != nil {
 			logger.Infof("Failed to initialize interactive console at %s: %v", c, err)
 		} else {

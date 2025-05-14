@@ -3,8 +3,14 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "standalone_lib",
     srcs = ["main.go"],
+    data = [
+        "//metropolis/node:product_info",
+    ],
     importpath = "source.monogon.dev/metropolis/node/core/tconsole/standalone",
     visibility = ["//visibility:private"],
+    x_defs = {
+        "source.monogon.dev/metropolis/node/core/productinfo.path": "$(rlocationpath //metropolis/node:product_info )",
+    },
     deps = [
         "//metropolis/node/core/network",
         "//metropolis/node/core/roleserve",

@@ -14,7 +14,7 @@ import (
 
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/network"
-	"source.monogon.dev/metropolis/version"
+	"source.monogon.dev/metropolis/node/core/productinfo"
 	"source.monogon.dev/osbase/event"
 	"source.monogon.dev/osbase/event/memory"
 	"source.monogon.dev/osbase/supervisor"
@@ -64,7 +64,7 @@ var getBootID = func(ctx context.Context) []byte {
 // workerStatusPushChannels.
 func workerStatusPushLoop(ctx context.Context, chans *workerStatusPushChannels) error {
 	status := cpb.NodeStatus{
-		Version: version.Version,
+		Version: productinfo.Get().Version,
 		BootId:  getBootID(ctx),
 	}
 

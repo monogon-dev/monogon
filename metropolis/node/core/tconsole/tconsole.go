@@ -21,12 +21,19 @@ import (
 	"source.monogon.dev/osbase/supervisor"
 )
 
+type Config struct {
+	Terminal    Terminal
+	LogTree     *logtree.LogTree
+	Network     event.Value[*network.Status]
+	Roles       event.Value[*cpb.NodeRoles]
+	CuratorConn event.Value[*roleserve.CuratorConnection]
+}
+
 // Console is a Terminal Console (TConsole), a user-interactive informational
 // display visible on the TTY of a running Metropolis instance.
 type Console struct {
 	// Quit will be closed when the user press CTRL-C. A new channel will be created
 	// on each New call.
-
 	Quit    chan struct{}
 	ttyPath string
 	tty     tcell.Tty
@@ -39,10 +46,8 @@ type Console struct {
 	// constructed dynamically in Run.
 	activePage int
 
-	reader      *logtree.LogReader
-	network     event.Value[*network.Status]
-	roles       event.Value[*cpb.NodeRoles]
-	curatorConn event.Value[*roleserve.CuratorConnection]
+	config Config
+	reader *logtree.LogReader
 }
 
 // New creates a new Console, taking over the TTY at the given path. The given
@@ -51,8 +56,8 @@ type Console struct {
 //
 // network, roles, curatorConn point to various Metropolis subsystems that are
 // used to populate the console data.
-func New(terminal Terminal, ttyPath string, lt *logtree.LogTree, network event.Value[*network.Status], roles event.Value[*cpb.NodeRoles], curatorConn event.Value[*roleserve.CuratorConnection]) (*Console, error) {
-	reader, err := lt.Read("", logtree.WithChildren(), logtree.WithStream())
+func New(config Config, ttyPath string) (*Console, error) {
+	reader, err := config.LogTree.Read("", logtree.WithChildren(), logtree.WithStream())
 	if err != nil {
 		return nil, fmt.Errorf("lt.Read: %w", err)
 	}
@@ -71,7 +76,7 @@ func New(terminal Terminal, ttyPath string, lt *logtree.LogTree, network event.V
 	screen.SetStyle(tcell.StyleDefault)
 
 	var pal palette
-	switch terminal {
+	switch config.Terminal {
 	case TerminalLinux:
 		pal = paletteLinux
 		tty.Write([]byte(pal.setupLinuxConsole()))
@@ -87,14 +92,11 @@ func New(terminal Terminal, ttyPath string, lt *logtree.LogTree, network event.V
 		screen:     screen,
 		width:      width,
 		height:     height,
-		network:    network,
 		palette:    pal,
 		Quit:       make(chan struct{}),
 		activePage: 0,
+		config:     config,
 		reader:     reader,
-
-		roles:       roles,
-		curatorConn: curatorConn,
 	}, nil
 }
 
@@ -131,13 +133,13 @@ func (c *Console) Run(ctx context.Context) error {
 	netAddrC := make(chan *network.Status)
 	rolesC := make(chan *cpb.NodeRoles)
 	curatorConnC := make(chan *roleserve.CuratorConnection)
-	if err := supervisor.Run(ctx, "netpipe", event.Pipe(c.network, netAddrC)); err != nil {
+	if err := supervisor.Run(ctx, "netpipe", event.Pipe(c.config.Network, netAddrC)); err != nil {
 		return err
 	}
-	if err := supervisor.Run(ctx, "rolespipe", event.Pipe(c.roles, rolesC)); err != nil {
+	if err := supervisor.Run(ctx, "rolespipe", event.Pipe(c.config.Roles, rolesC)); err != nil {
 		return err
 	}
-	if err := supervisor.Run(ctx, "curatorpipe", event.Pipe(c.curatorConn, curatorConnC)); err != nil {
+	if err := supervisor.Run(ctx, "curatorpipe", event.Pipe(c.config.CuratorConn, curatorConnC)); err != nil {
 		return err
 	}
 	supervisor.Signal(ctx, supervisor.SignalHealthy)

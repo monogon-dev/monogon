@@ -12,6 +12,7 @@ def testos(variant):
         name = "rootfs_" + variant,
         files = {
             "/init": ":testos_" + variant,
+            "/etc/product-info.json": ":product_info_" + variant,
             "/etc/resolv.conf": "//osbase/net/dns:resolv.conf",
         },
         fsspecs = [

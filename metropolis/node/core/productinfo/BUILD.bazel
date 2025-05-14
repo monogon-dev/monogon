@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "productinfo",
+    srcs = ["productinfo.go"],
+    importpath = "source.monogon.dev/metropolis/node/core/productinfo",
+    visibility = [
+        "//metropolis/node/core:__subpackages__",
+        "//metropolis/node/kubernetes:__subpackages__",
+    ],
+    deps = [
+        "//osbase/oci/osimage",
+        "//version",
+        "//version/spec",
+        "@com_github_coreos_go_semver//semver",
+        "@io_bazel_rules_go//go/runfiles",
+    ],
+)

@@ -19,7 +19,7 @@ import (
 	"source.monogon.dev/metropolis/node/core/consensus/client"
 	"source.monogon.dev/metropolis/node/core/curator"
 	ppb "source.monogon.dev/metropolis/node/core/curator/proto/private"
-	mversion "source.monogon.dev/metropolis/version"
+	"source.monogon.dev/metropolis/node/core/productinfo"
 	"source.monogon.dev/osbase/event/etcd"
 	"source.monogon.dev/osbase/event/memory"
 	"source.monogon.dev/osbase/supervisor"
@@ -69,8 +69,8 @@ var reconcileWait = 5 * time.Second
 
 // WaitReady watches the reconciler status and returns once initial
 // reconciliation is done and the reconciled state is compatible.
-func WaitReady(ctx context.Context, etcdClient client.Namespaced) error {
-	value := etcd.NewValue(etcdClient, statusKey, func(_, data []byte) (*ppb.KubernetesReconcilerStatus, error) {
+func (s *Service) WaitReady(ctx context.Context) error {
+	value := etcd.NewValue(s.Etcd, statusKey, func(_, data []byte) (*ppb.KubernetesReconcilerStatus, error) {
 		status := &ppb.KubernetesReconcilerStatus{}
 		if err := proto.Unmarshal(data, status); err != nil {
 			return nil, fmt.Errorf("could not unmarshal: %w", err)
@@ -98,11 +98,11 @@ func WaitReady(ctx context.Context, etcdClient client.Namespaced) error {
 			state,
 			version.Semver(status.Version),
 			version.Release(status.MinimumCompatibleRelease),
-			version.Semver(mversion.Version),
+			version.Semver(productinfo.Get().Version),
 			version.Release(minReconcilerRelease),
 		)
 
-		if version.ReleaseLessThan(mversion.Version.Release, status.MinimumCompatibleRelease) {
+		if version.ReleaseLessThan(productinfo.Get().Version.Release, status.MinimumCompatibleRelease) {
 			supervisor.Logger(ctx).Info("Not ready, because the local node release is below the reconciler minimum compatible release. Waiting for status change.")
 			continue
 		}
@@ -218,8 +218,8 @@ func (s *Service) watchNodes(ctx context.Context) error {
 	}
 
 	publish := func() {
-		minRelease := mversion.Version.Release
-		maxRelease := mversion.Version.Release
+		minRelease := productinfo.Get().Version.Release
+		maxRelease := productinfo.Get().Version.Release
 		for _, release := range releaseStruct {
 			if version.ReleaseLessThan(release, minRelease) {
 				minRelease = release
@@ -275,7 +275,7 @@ func (s *Service) watchReleases(ctx context.Context) error {
 		return err
 	}
 
-	shouldRun := !version.ReleaseLessThan(mversion.Version.Release, r.maxRelease)
+	shouldRun := !version.ReleaseLessThan(productinfo.Get().Version.Release, r.maxRelease)
 	if shouldRun {
 		supervisor.Logger(ctx).Info("This Kubernetes controller node has the latest release, starting election.")
 		err := supervisor.Run(ctx, "elect", s.elect)
@@ -293,7 +293,7 @@ func (s *Service) watchReleases(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		shouldRunNow := !version.ReleaseLessThan(mversion.Version.Release, r.maxRelease)
+		shouldRunNow := !version.ReleaseLessThan(productinfo.Get().Version.Release, r.maxRelease)
 		if shouldRunNow != shouldRun {
 			return errors.New("latest release changed, restarting")
 		}
@@ -360,7 +360,7 @@ func (s *Service) lead(ctx context.Context, isLeaderCmp clientv3.Cmp) error {
 
 	doneStatus := &ppb.KubernetesReconcilerStatus{
 		State:                    ppb.KubernetesReconcilerStatus_STATE_DONE,
-		Version:                  mversion.Version,
+		Version:                  productinfo.Get().Version,
 		MinimumCompatibleRelease: minApiserverRelease,
 	}
 	doneStatusBytes, err := proto.Marshal(doneStatus)
@@ -374,7 +374,7 @@ func (s *Service) lead(ctx context.Context, isLeaderCmp clientv3.Cmp) error {
 	} else if proto.Equal(status, doneStatus) {
 		// The status is already what we would set, so leave it as is.
 		log.Info("Status is already up to date.")
-	} else if !version.ReleaseLessThan(mversion.Version.Release, status.Version.Release) &&
+	} else if !version.ReleaseLessThan(productinfo.Get().Version.Release, status.Version.Release) &&
 		!version.ReleaseLessThan(status.MinimumCompatibleRelease, minApiserverRelease) {
 		// The status does not allow apiservers to start serving which would be
 		// incompatible after we reconcile. So just set the state to working.
@@ -408,8 +408,8 @@ func (s *Service) lead(ctx context.Context, isLeaderCmp clientv3.Cmp) error {
 		log.Info("Status allows incompatible releases, need to restrict.")
 
 		status.State = ppb.KubernetesReconcilerStatus_STATE_WORKING
-		if !version.ReleaseLessThan(status.Version.Release, mversion.Version.Release) {
-			status.Version = mversion.Version
+		if !version.ReleaseLessThan(status.Version.Release, productinfo.Get().Version.Release) {
+			status.Version = productinfo.Get().Version
 		}
 		if version.ReleaseLessThan(status.MinimumCompatibleRelease, minApiserverRelease) {
 			status.MinimumCompatibleRelease = minApiserverRelease
@@ -428,7 +428,7 @@ func (s *Service) lead(ctx context.Context, isLeaderCmp clientv3.Cmp) error {
 			if err != nil {
 				return err
 			}
-			if version.ReleaseLessThan(mversion.Version.Release, releases.maxRelease) {
+			if version.ReleaseLessThan(productinfo.Get().Version.Release, releases.maxRelease) {
 				// We will likely get canceled soon by watchReleases restarting, unless
 				// this is a very short transient that is not noticed by watchReleases.
 				continue

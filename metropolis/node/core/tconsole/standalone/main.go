@@ -33,8 +33,14 @@ func main() {
 	var curV memory.Value[*roleserve.CuratorConnection]
 
 	lt := logtree.New()
-
-	tc, err := tconsole.New(tconsole.TerminalGeneric, "/proc/self/fd/0", lt, &netV, &rolesV, &curV)
+	config := tconsole.Config{
+		Terminal:    tconsole.TerminalGeneric,
+		LogTree:     lt,
+		Network:     &netV,
+		Roles:       &rolesV,
+		CuratorConn: &curV,
+	}
+	tc, err := tconsole.New(config, "/proc/self/fd/0")
 	if err != nil {
 		log.Fatalf("tconsole.New: %v", err)
 	}
@@ -98,7 +104,7 @@ func main() {
 		supervisor.Signal(ctx, supervisor.SignalHealthy)
 		<-ctx.Done()
 		return ctx.Err()
-	}, supervisor.WithExistingLogtree(lt))
+	}, supervisor.WithExistingLogtree(lt), supervisor.WithPropagatePanic)
 	<-ctx.Done()
 	tc.Cleanup()
 }

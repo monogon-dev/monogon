@@ -21,8 +21,8 @@ import (
 	common "source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/consensus"
 	"source.monogon.dev/metropolis/node/core/curator"
+	"source.monogon.dev/metropolis/node/core/productinfo"
 	"source.monogon.dev/metropolis/test/util"
-	mversion "source.monogon.dev/metropolis/version"
 	"source.monogon.dev/osbase/supervisor"
 
 	ipb "source.monogon.dev/metropolis/node/core/curator/proto/api"
@@ -86,6 +86,9 @@ func TestWorkerStatusPush(t *testing.T) {
 	getBootID = func(ctx context.Context) []byte {
 		return []byte{1, 2, 3}
 	}
+
+	productInfo := productinfo.Get()
+
 	chans := workerStatusPushChannels{
 		address:           make(chan string),
 		localControlPlane: make(chan *localControlPlane),
@@ -135,7 +138,7 @@ func TestWorkerStatusPush(t *testing.T) {
 	cur.expectReports(t, []*ipb.UpdateNodeStatusRequest{
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
-			Version:         mversion.Version,
+			Version:         productInfo.Version,
 			BootId:          []byte{1, 2, 3},
 		}},
 	})
@@ -146,12 +149,12 @@ func TestWorkerStatusPush(t *testing.T) {
 	cur.expectReports(t, []*ipb.UpdateNodeStatusRequest{
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
-			Version:         mversion.Version,
+			Version:         productInfo.Version,
 			BootId:          []byte{1, 2, 3},
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
-			Version:         mversion.Version,
+			Version:         productInfo.Version,
 			BootId:          []byte{1, 2, 3},
 		}},
 	})
@@ -168,12 +171,12 @@ func TestWorkerStatusPush(t *testing.T) {
 	cur.expectReports(t, []*ipb.UpdateNodeStatusRequest{
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.10",
-			Version:         mversion.Version,
+			Version:         productInfo.Version,
 			BootId:          []byte{1, 2, 3},
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
-			Version:         mversion.Version,
+			Version:         productInfo.Version,
 			BootId:          []byte{1, 2, 3},
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
@@ -181,12 +184,12 @@ func TestWorkerStatusPush(t *testing.T) {
 			RunningCurator: &cpb.NodeStatus_RunningCurator{
 				Port: int32(common.CuratorServicePort),
 			},
-			Version: mversion.Version,
+			Version: productInfo.Version,
 			BootId:  []byte{1, 2, 3},
 		}},
 		{NodeId: nodeID, Status: &cpb.NodeStatus{
 			ExternalAddress: "192.0.2.11",
-			Version:         mversion.Version,
+			Version:         productInfo.Version,
 			BootId:          []byte{1, 2, 3},
 		}},
 	})
