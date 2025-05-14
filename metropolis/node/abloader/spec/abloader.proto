@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package metropolis.node.core.abloader.spec;
+package metropolis.node.abloader.spec;
 
 enum Slot {
     SLOT_NONE = 0;

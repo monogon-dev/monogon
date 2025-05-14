@@ -36,7 +36,7 @@ import (
 	"source.monogon.dev/osbase/oci/registry"
 	"source.monogon.dev/version"
 
-	abloaderpb "source.monogon.dev/metropolis/node/core/abloader/spec"
+	abloaderpb "source.monogon.dev/metropolis/node/abloader/spec"
 	apb "source.monogon.dev/metropolis/proto/api"
 )
 
@@ -425,7 +425,7 @@ func (s *Service) stageKexec(bootFile io.ReaderAt, targetSlot Slot) error {
 	return nil
 }
 
-//go:embed metropolis/node/core/abloader/abloader_bin.efi
+//go:embed metropolis/node/abloader/abloader_bin.efi
 var abloader []byte
 
 func (s *Service) fixupPreloader() error {

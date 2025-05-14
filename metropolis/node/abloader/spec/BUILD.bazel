@@ -31,7 +31,7 @@ rust_prost_library(
 
 go_proto_library(
     name = "abloader_go_proto",
-    importpath = "source.monogon.dev/metropolis/node/core/abloader/spec",
+    importpath = "source.monogon.dev/metropolis/node/abloader/spec",
     proto = ":abloader_proto",
     visibility = ["//visibility:public"],
 )
@@ -39,6 +39,6 @@ go_proto_library(
 go_library(
     name = "spec",
     embed = [":abloader_go_proto"],
-    importpath = "source.monogon.dev/metropolis/node/core/abloader/spec",
+    importpath = "source.monogon.dev/metropolis/node/abloader/spec",
     visibility = ["//visibility:public"],
 )

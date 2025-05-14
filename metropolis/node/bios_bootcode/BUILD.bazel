@@ -1,4 +1,4 @@
-load("//metropolis/node/core/bios_bootcode/genlogo:def.bzl", "gen_logo")
+load("//metropolis/node/bios_bootcode/genlogo:def.bzl", "gen_logo")
 
 gen_logo(
     name = "logo.asm",

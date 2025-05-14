@@ -8,7 +8,7 @@ go_library(
         "install.go",
     ],
     embedsrcs = [
-        "//metropolis/node/core/abloader",  #keep
+        "//metropolis/node/abloader",  #keep
     ],
     importpath = "source.monogon.dev/cloud/agent",
     visibility = ["//visibility:private"],

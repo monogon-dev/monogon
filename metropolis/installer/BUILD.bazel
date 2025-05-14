@@ -7,7 +7,7 @@ go_library(
     name = "installer_lib",
     srcs = ["main.go"],
     embedsrcs = [
-        "//metropolis/node/core/abloader",  #keep
+        "//metropolis/node/abloader",  #keep
     ],
     importpath = "source.monogon.dev/metropolis/installer",
     stampsrcs = ["//build:stabler_status"],

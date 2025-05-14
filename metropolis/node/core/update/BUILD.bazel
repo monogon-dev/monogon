@@ -4,13 +4,13 @@ go_library(
     name = "update",
     srcs = ["update.go"],
     embedsrcs = [
-        "//metropolis/node/core/abloader",  #keep
+        "//metropolis/node/abloader",  #keep
     ],
     importpath = "source.monogon.dev/metropolis/node/core/update",
     visibility = ["//visibility:public"],
     deps = [
         "//go/logging",
-        "//metropolis/node/core/abloader/spec",
+        "//metropolis/node/abloader/spec",
         "//metropolis/proto/api",
         "//metropolis/version",
         "//osbase/blockdev",

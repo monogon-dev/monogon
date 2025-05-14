@@ -20,7 +20,7 @@ use uefi::table::boot;
 use uefi::{prelude::*, CStr16};
 use uefi_services::println;
 
-use abloader_proto::metropolis::node::core::abloader::spec::*;
+use abloader_proto::metropolis::node::abloader::spec::*;
 
 const A_LOADER_PATH: &CStr16 = cstr16!("\\EFI\\metropolis\\boot-a.efi");
 const B_LOADER_PATH: &CStr16 = cstr16!("\\EFI\\metropolis\\boot-b.efi");
@@ -119,7 +119,7 @@ fn main(_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
             .expect("image filesystem not available");
 
         let mut loader_data = match read_loader_state(&mut esp_fs) {
-            Ok(d) => d, 
+            Ok(d) => d,
             Err(e) => {
                 println!("Unable to load A/B loader state, using default slot A: {}", e);
                 AbLoaderData {
@@ -131,7 +131,7 @@ fn main(_handle: Handle, mut system_table: SystemTable<Boot>) -> Status {
 
         // If next_slot is set, use it as slot to boot but clear it in the
         // state file as the next boot should not use it again. If it should
-        // be permanently activated, it is the OS's job to put it into 
+        // be permanently activated, it is the OS's job to put it into
         if loader_data.next_slot != Slot::None.into() {
             let next_slot = loader_data.next_slot;
             loader_data.next_slot = Slot::None.into();

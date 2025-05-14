@@ -27,7 +27,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "metropolis/node/core/minit/stamp.h"
+#include "metropolis/node/minit/stamp.h"
 
 void handle_signal(pid_t child_pid, int signum);
 

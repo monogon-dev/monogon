@@ -24,7 +24,7 @@ go_library(
         "//third_party/linux",  #keep
         "//third_party:ucode",  #keep
         ":initramfs",  #keep
-        "//metropolis/node/core/abloader",  #keep
+        "//metropolis/node/abloader",  #keep
     ],
     importpath = "source.monogon.dev/metropolis/cli/takeover",
     visibility = ["//visibility:private"],

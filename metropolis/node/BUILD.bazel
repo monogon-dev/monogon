@@ -51,7 +51,7 @@ go_binary(
 erofs_image(
     name = "rootfs",
     files = {
-        "/init": "//metropolis/node/core/minit",
+        "/init": "//metropolis/node/minit",
         "/core": "//metropolis/node/core",
 
         # CA Certificate bundle & os-release & resolv.conf & hosts
@@ -150,8 +150,8 @@ pkg_zip(
 
 node_image(
     name = "image",
-    abloader = "//metropolis/node/core/abloader",
-    bios_bootcode = "//metropolis/node/core/bios_bootcode",
+    abloader = "//metropolis/node/abloader",
+    bios_bootcode = "//metropolis/node/bios_bootcode",
     kernel = ":kernel_efi",
     system = ":verity_rootfs",
     visibility = [
