@@ -50,6 +50,11 @@ build --sandbox_fake_username
 build --action_env=MONOGON_SANDBOX_DIGEST
 import %workspace%/.bazelrc.sandbox
 
+# Enable path mapping to improve cache hit rate.
+# Actions in custom rules can opt in with supports-path-mapping.
+# See https://github.com/bazelbuild/bazel/discussions/22658
+build --experimental_output_paths=strip
+
 # Stop propagation of settings to exec config by default.
 # See https://github.com/bazelbuild/bazel/issues/22457
 build --experimental_exclude_starlark_flags_from_exec_config
