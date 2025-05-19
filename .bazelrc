@@ -50,6 +50,20 @@ build --sandbox_fake_username
 build --action_env=MONOGON_SANDBOX_DIGEST
 import %workspace%/.bazelrc.sandbox
 
+# Include platform in output directory name. For each platform we use, a short
+# name should be assigned here, otherwise Bazel uses a hash.
+build --experimental_platform_in_output_dir
+build --noexperimental_use_platforms_in_output_dir_legacy_heuristic
+build --experimental_override_name_platform_in_output_dir=//build/platforms:linux_x86_64=linux-x86_64
+build --experimental_override_name_platform_in_output_dir=//build/platforms:linux_aarch64=linux-aarch64
+build --experimental_override_name_platform_in_output_dir=//build/platforms:uefi_x86_64=uefi-x86_64
+build --experimental_override_name_platform_in_output_dir=//build/platforms:uefi_aarch64=uefi-aarch64
+build --experimental_override_name_platform_in_output_dir=//build/platforms:remote_x86_64=remote-x86_64
+build --experimental_override_name_platform_in_output_dir=@io_bazel_rules_go//go/toolchain:darwin_amd64=go-darwin-amd64
+build --experimental_override_name_platform_in_output_dir=@io_bazel_rules_go//go/toolchain:darwin_arm64=go-darwin-arm64
+build --experimental_override_name_platform_in_output_dir=@io_bazel_rules_go//go/toolchain:windows_amd64=go-windows-amd64
+build --experimental_override_name_platform_in_output_dir=@io_bazel_rules_go//go/toolchain:windows_arm64=go-windows-arm64
+
 # Enable path mapping to improve cache hit rate.
 # Actions in custom rules can opt in with supports-path-mapping.
 # See https://github.com/bazelbuild/bazel/discussions/22658
