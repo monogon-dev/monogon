@@ -4,6 +4,7 @@
 package tconsole
 
 import (
+	_ "embed"
 	"fmt"
 	"strings"
 
@@ -13,7 +14,7 @@ import (
 	"source.monogon.dev/version"
 )
 
-// Filled at linking time.
+//go:embed build/copyright_line.txt
 var copyrightLine string
 
 // pageStatusData encompasses all data to be shown within the status page.

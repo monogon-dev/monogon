@@ -227,6 +227,10 @@ if is_release["metropolis"]:
     variables["STABLE_KUBERNETES_gitCommit"] = git_commit
     variables["STABLE_KUBERNETES_gitTreeState"] = git_tree_state
     variables["STABLE_KUBERNETES_buildDate"] = git_commit_date
+else:
+    variables["STABLE_KUBERNETES_gitCommit"] = ""
+    variables["STABLE_KUBERNETES_gitTreeState"] = ""
+    variables["STABLE_KUBERNETES_buildDate"] = "1970-01-01T00:00:00Z"
 
 # Emit variables to stdout for consumption by Bazel and targets.
 for key in sorted(variables.keys()):

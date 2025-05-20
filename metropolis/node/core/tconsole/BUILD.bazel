@@ -10,12 +10,11 @@ go_library(
         "statusbar.go",
         "tconsole.go",
     ],
+    embedsrcs = [
+        "//build:copyright_line.txt",  #keep
+    ],
     importpath = "source.monogon.dev/metropolis/node/core/tconsole",
-    stampsrcs = ["//build:stabler_status"],
     visibility = ["//visibility:public"],
-    x_defs = {
-        "copyrightLine": "{STABLER_MONOGON_copyright}",
-    },
     deps = [
         "//metropolis/node/core/network",
         "//metropolis/node/core/roleserve",

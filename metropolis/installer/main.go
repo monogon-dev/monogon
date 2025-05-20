@@ -32,7 +32,7 @@ import (
 //go:embed metropolis/node/abloader/abloader_bin.efi
 var abloader []byte
 
-// Filled at linking time.
+//go:embed build/copyright_line.txt
 var copyrightLine string
 
 const mib = 1024 * 1024

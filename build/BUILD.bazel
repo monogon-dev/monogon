@@ -1,18 +1,42 @@
-load("//build/filter_stamp:def.bzl", "filtered_stamp")
+load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
 
-# This is a filtered stable status file which contains only the variables which
-# do not change on every commit. Using this instead of the status file avoids
-# unnecessary rebuilds.
-filtered_stamp(
-    name = "stabler_status",
-    vars = [
-        "KUBERNETES_gitMajor",
-        "KUBERNETES_gitMinor",
-        "KUBERNETES_gitVersion",
-        "KUBERNETES_gitCommit",
-        "KUBERNETES_gitTreeState",
-        "KUBERNETES_buildDate",
-        "MONOGON_copyright",
-    ],
+# The copyright and Kubernetes stamp variables change less often than the status
+# file. Instead of stamping these into Go binaries through x_defs, we create a
+# file for each variable and stamp through go:embed. With this indirection, only
+# the expand_template actions are executed each time the status file changes,
+# instead of relinking the Go binaries, which would be more expensive.
+
+expand_template(
+    name = "copyright_line",
+    out = "copyright_line.txt",
+    stamp = 1,
+    stamp_substitutions = {"copyright": "{{STABLE_MONOGON_copyright}}"},
+    template = ["copyright"],
+    visibility = ["//visibility:public"],
+)
+
+kubernetes_vars = [
+    "gitMajor",
+    "gitMinor",
+    "gitVersion",
+    "gitCommit",
+    "gitTreeState",
+    "buildDate",
+]
+
+[
+    expand_template(
+        name = "kubernetes_%s" % var,
+        out = "kubernetes_%s.txt" % var,
+        stamp = 1,
+        stamp_substitutions = {"value": "{{STABLE_KUBERNETES_%s}}" % var},
+        template = ["value"],
+    )
+    for var in kubernetes_vars
+]
+
+filegroup(
+    name = "kubernetes_stamp",
+    srcs = ["kubernetes_%s.txt" % var for var in kubernetes_vars],
     visibility = ["//visibility:public"],
 )

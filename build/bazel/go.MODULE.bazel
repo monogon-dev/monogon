@@ -235,6 +235,9 @@ OVERRIDES = {
         ],
     },
     "k8s.io/client-go": {
+        "patches": [
+            "//third_party/com_k8s_io_client_go:version-stamp.patch",
+        ],
         "pre_patches": [
             "//third_party/com_k8s_io_client_go:k8s-fix-websocket-custom-dialer.patch",
         ],
@@ -369,6 +372,7 @@ OVERRIDES = {
     "k8s.io/component-base": {
         "patches": [
             "//third_party/com_k8s_io_component_base:k8s-fix-metrics-data-race.patch",
+            "//third_party/com_k8s_io_component_base:version-stamp.patch",
         ],
     },
     "k8s.io/mount-utils": {
