@@ -1,17 +1,14 @@
-From f5a801460e8408c075c4654f33bc0c395b9265de Mon Sep 17 00:00:00 2001
-From: Fabian Meumertzheim <fabian@meumertzhe.im>
-Date: Sun, 16 Feb 2025 23:26:59 +0100
-Subject: [PATCH] Introduce `["all"]` scope for nogo
+commit 7c26118cffcb3d01bf5f668c4ca563c33d20814a
+Author: Fabian Meumertzheim <fabian@meumertzhe.im>
+Date:   Sun Feb 16 23:26:59 2025 +0100
 
----
- go/private/extensions.bzl | 53 +++++++++++++++++++++++----------------
- 1 file changed, 32 insertions(+), 21 deletions(-)
+    Introduce `["all"]` scope for nogo
 
 diff --git a/go/private/extensions.bzl b/go/private/extensions.bzl
-index a5c8fc9bbd..ea46dec35f 100644
+index a53dc6e3..8636b385 100644
 --- a/go/private/extensions.bzl
 +++ b/go/private/extensions.bzl
-@@ -74,16 +74,15 @@ _nogo_tag = tag_class(
+@@ -79,16 +79,15 @@ _nogo_tag = tag_class(
          ),
          "includes": attr.label_list(
              default = NOGO_DEFAULT_INCLUDES,
@@ -31,7 +28,7 @@ index a5c8fc9bbd..ea46dec35f 100644
  """,
          ),
          "excludes": attr.label_list(
-@@ -111,11 +110,9 @@ _MAX_NUM_TOOLCHAINS = 9999
+@@ -144,11 +143,9 @@ _MAX_NUM_TOOLCHAINS = 9999
  _TOOLCHAIN_INDEX_PAD_LENGTH = len(str(_MAX_NUM_TOOLCHAINS))
  
  def _go_sdk_impl(ctx):
@@ -46,14 +43,14 @@ index a5c8fc9bbd..ea46dec35f 100644
      for module in ctx.modules:
          if not module.is_root or not module.tags.nogo:
              continue
-@@ -126,22 +123,26 @@ def _go_sdk_impl(ctx):
+@@ -159,22 +156,26 @@ def _go_sdk_impl(ctx):
                  *[t for p in zip(module.tags.nogo, len(module.tags.nogo) * ["\n"]) for t in p]
              )
          nogo_tag = module.tags.nogo[0]
 -        for scope in nogo_tag.includes + nogo_tag.excludes:
 -            # Validate that the scope references a valid, visible repository.
 -            # buildifier: disable=no-effect
--            scope.workspace_name
+-            scope.repo_name
 -            if scope.name != "__pkg__" and scope.name != "__subpackages__":
 -                fail(
 -                    "go_sdk.nogo: all entries in includes and excludes must end with ':__pkg__' or ':__subpackages__', got '{}' in".format(scope.name),
@@ -85,14 +82,14 @@ index a5c8fc9bbd..ea46dec35f 100644
      )
  
      multi_version_module = {}
-@@ -300,6 +301,16 @@ def _go_sdk_impl(ctx):
+@@ -374,6 +375,16 @@ def _go_sdk_impl(ctx):
      else:
          return None
  
 +def _check_nogo_scope(scope, nogo_tag):
 +    # Validate that the scope references a valid, visible repository.
 +    # buildifier: disable=no-effect
-+    scope.workspace_name
++    scope.repo_name
 +    if scope.name != "__pkg__" and scope.name != "__subpackages__":
 +        fail(
 +            "go_sdk.nogo: all entries in includes and excludes must end with ':__pkg__' or ':__subpackages__', got '{}' in".format(scope.name),
@@ -100,5 +97,5 @@ index a5c8fc9bbd..ea46dec35f 100644
 +        )
 +
  def _default_go_sdk_name(*, module, multi_version, tag_type, index, suffix = ""):
-     # Keep the version out of the repository name if possible to prevent unnecessary rebuilds when
-     # it changes.
+     # Keep the version and name of the root module out of the repository name if possible to
+     # prevent unnecessary rebuilds when it changes.
