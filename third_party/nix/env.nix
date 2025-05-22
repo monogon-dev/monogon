@@ -22,6 +22,14 @@ let
       # stripped by (host_)action_env.
       export BAZEL_SH=/bin/bash
 
+      # buildFHSEnv makes /etc a tmpfs and symlinks some files from host /etc.
+      # Create some additional symlinks for files we want from host /etc.
+      for i in bazel.bazelrc gitconfig; do
+          if [[ -e "/.host-etc/$i" ]] && [[ ! -e "/etc/$i" ]]; then
+              ln -s "/.host-etc/$i" "/etc/$i"
+          fi
+      done
+
       ${extraConf}
 
       # Allow passing a custom command via env since nix-shell doesn't support
@@ -32,7 +40,7 @@ let
       exec $COMMAND
     '';
 in
-(pkgs.buildFHSUserEnv {
+(pkgs.buildFHSEnv {
   name = "monogon-nix";
   targetPkgs = pkgs: with pkgs; [
     git
