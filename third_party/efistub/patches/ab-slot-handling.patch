@@ -1,38 +1,38 @@
-From a8004bca64e697bf8f39af63c4325fbc9b507e48 Mon Sep 17 00:00:00 2001
+From 24a496c861fff6f8633453eedb92079976d3058f Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
 Date: Thu, 29 Jun 2023 03:54:01 +0200
-Subject: [PATCH] Implement filename-based A/B slot handling
+Subject: [PATCH 1/2] Implement filename-based A/B slot handling
 
 ---
  src/boot/efi/stub.c | 66 +++++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 66 insertions(+)
 
 diff --git a/src/boot/efi/stub.c b/src/boot/efi/stub.c
-index dad0f61335..88eda7e0e7 100644
+index 841a0e41bd..267ecbcc81 100644
 --- a/src/boot/efi/stub.c
 +++ b/src/boot/efi/stub.c
-@@ -5,6 +5,8 @@
- 
+@@ -6,6 +6,8 @@
  #include "cpio.h"
+ #include "devicetree.h"
  #include "disk.h"
 +#include "efibind.h"
 +#include "efidevp.h"
  #include "graphics.h"
  #include "linux.h"
  #include "measure.h"
-@@ -13,6 +15,31 @@
- #include "splash.h"
+@@ -15,6 +17,31 @@
+ #include "tpm-pcr.h"
  #include "util.h"
  
 +// From picolibc under BSD-3-Clause (c) 2018 Arm Ltd.
 +/* Small and efficient strstr implementation.  */
-+char * strstr (const char *hs, const char *ne)
++char16_t * strstr (const char16_t *hs, const char16_t *ne)
 +{
 +  UINTN i;
 +  int c = ne[0];
 +
 +  if (c == 0)
-+    return (char*)hs;
++    return (char16_t*)hs;
 +
 +  for ( ; hs[0] != '\0'; hs++)
 +    {
@@ -42,7 +42,7 @@ index dad0f61335..88eda7e0e7 100644
 +	if (hs[i] != ne[i])
 +	  break;
 +      if (ne[i] == '\0')
-+	return (char*)hs;
++	return (char16_t*)hs;
 +    }
 +
 +  return NULL;
@@ -50,10 +50,10 @@ index dad0f61335..88eda7e0e7 100644
 +
 +
  /* magic string to find in the binary image */
- static const char __attribute__((used)) magic[] = "#### LoaderInfo: systemd-stub " GIT_VERSION " ####";
+ _used_ _section_(".sdmagic") static const char magic[] = "#### LoaderInfo: systemd-stub " GIT_VERSION " ####";
  
-@@ -180,6 +207,45 @@ EFI_STATUS efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *sys_table) {
-                 cmdline_len = szs[SECTION_CMDLINE];
+@@ -232,6 +259,45 @@ EFI_STATUS efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *sys_table) {
+                 mangle_stub_cmdline(cmdline);
          }
  
 +        /* Extract last FILEPATH element from image path to check file name */
@@ -67,37 +67,37 @@ index dad0f61335..88eda7e0e7 100644
 +                current_path_elem = NextDevicePathNode(current_path_elem);
 +        }
 +        /* Check slot based on suffix of the last FILE_PATH value */
-+        CHAR8 slot = 'A';
-+        const CHAR16 suffix_a[] = L"boot-a.efi";
-+        const CHAR16 suffix_b[] = L"boot-b.efi";
-+        const UINTN suffix_len = (sizeof(suffix_a)/sizeof(CHAR16))-1;
++        char16_t slot = 'A';
++        const char16_t suffix_a[] = u"boot-a.efi";
++        const char16_t suffix_b[] = u"boot-b.efi";
++        const UINTN suffix_len = (sizeof(suffix_a)/sizeof(char16_t))-1;
 +        if (last_file_path != NULL) {
 +                UINTN plen = StrLen(last_file_path);
 +                if (suffix_len > plen) {
-+                        // TODO: Log
-+                } else if (StriCmp(suffix_a, last_file_path + (plen-suffix_len)) == 0) {
++                        Print(L"File name too short, blindly booting slot A\n");
++                } else if (StriCmp(suffix_a, &last_file_path[plen-suffix_len]) == 0){
 +                        slot = 'A';
-+                } else if (StriCmp(suffix_b, last_file_path + (plen-suffix_len)) == 0) {
++                } else if (StriCmp(suffix_b, &last_file_path[plen-suffix_len]) == 0) {
 +                        slot = 'B';
 +                } else {
-+                        // TODO: Log
++                        Print(L"Unknown file name, blindly booting slot A\n");
 +                }
 +        }
 +        Print(L"Booting into Slot %c\n", slot);
 +        /* Replace METROPOLIS-SYSTEM-X with the correct slot */
-+        const char slot_identifier[] = "METROPOLIS-SYSTEM-X";
-+        const UINTN slot_id_len = (sizeof(slot_identifier)/sizeof(char))-1;
++        const char16_t slot_identifier[] = u"METROPOLIS-SYSTEM-X\0";
++        const UINTN slot_id_len = (sizeof(slot_identifier)/sizeof(char16_t))-1;
 +        if (cmdline != NULL) {
-+                CHAR8 *rest_ptr = cmdline;
++                char16_t *rest_ptr = cmdline;
 +                while((rest_ptr = strstr(rest_ptr, slot_identifier))) {
-+                        rest_ptr[slot_id_len-1] = slot;
++                        rest_ptr[slot_id_len-2] = slot;
 +                        rest_ptr += slot_id_len;
-+                }
++                }                
 +        }
 +
-         /* if we are not in secure boot mode, or none was provided, accept a custom command line and replace the built-in one */
-         if ((!secure_boot_enabled() || cmdline_len == 0) && loaded_image->LoadOptionsSize > 0 &&
-             *(CHAR16 *) loaded_image->LoadOptions > 0x1F) {
+         export_variables(loaded_image);
+ 
+         if (pack_cpio(loaded_image,
 -- 
-2.40.1
+2.47.2
 

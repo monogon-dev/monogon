@@ -1,0 +1,212 @@
+From e14a6121d78dad23e3826499177353f9596ba0d7 Mon Sep 17 00:00:00 2001
+From: Lorenz Brun <lorenz@brun.one>
+Date: Thu, 22 May 2025 18:22:18 +0200
+Subject: [PATCH 2/2] Use local uchar.h
+
+---
+ src/boot/efi/bcd.h                    | 2 +-
+ src/boot/efi/cpio.c                   | 2 ++
+ src/boot/efi/cpio.h                   | 2 +-
+ src/boot/efi/devicetree.h             | 2 +-
+ src/boot/efi/disk.h                   | 2 +-
+ src/boot/efi/efi-string.h             | 2 +-
+ src/boot/efi/linux.h                  | 3 ++-
+ src/boot/efi/measure.h                | 2 +-
+ src/boot/efi/pe.h                     | 2 +-
+ src/boot/efi/secure-boot.c            | 2 +-
+ src/boot/efi/stub.c                   | 1 +
+ src/boot/efi/uchar.h                  | 6 ++++++
+ src/boot/efi/util.h                   | 2 +-
+ src/fundamental/efivars-fundamental.h | 3 +--
+ 14 files changed, 21 insertions(+), 12 deletions(-)
+ create mode 100644 src/boot/efi/uchar.h
+
+diff --git a/src/boot/efi/bcd.h b/src/boot/efi/bcd.h
+index c27af55c1e..17d79caf20 100644
+--- a/src/boot/efi/bcd.h
++++ b/src/boot/efi/bcd.h
+@@ -2,6 +2,6 @@
+ #pragma once
+ 
+ #include <stdint.h>
+-#include <uchar.h>
++#include "uchar.h"
+ 
+ char16_t *get_bcd_title(uint8_t *bcd, size_t bcd_len);
+diff --git a/src/boot/efi/cpio.c b/src/boot/efi/cpio.c
+index 76e2cd7f4e..5c2f68c2dc 100644
+--- a/src/boot/efi/cpio.c
++++ b/src/boot/efi/cpio.c
+@@ -1,5 +1,7 @@
+ /* SPDX-License-Identifier: LGPL-2.1-or-later */
+ 
++#include <stddef.h>
++
+ #include "cpio.h"
+ #include "measure.h"
+ #include "util.h"
+diff --git a/src/boot/efi/cpio.h b/src/boot/efi/cpio.h
+index beebef3d8b..90ed8cd025 100644
+--- a/src/boot/efi/cpio.h
++++ b/src/boot/efi/cpio.h
+@@ -3,7 +3,7 @@
+ 
+ #include <efi.h>
+ #include <stdbool.h>
+-#include <uchar.h>
++#include "uchar.h"
+ 
+ EFI_STATUS pack_cpio(
+                 EFI_LOADED_IMAGE_PROTOCOL *loaded_image,
+diff --git a/src/boot/efi/devicetree.h b/src/boot/efi/devicetree.h
+index d512cb5037..f3c6de78ba 100644
+--- a/src/boot/efi/devicetree.h
++++ b/src/boot/efi/devicetree.h
+@@ -2,7 +2,7 @@
+ #pragma once
+ 
+ #include <efi.h>
+-#include <uchar.h>
++#include "uchar.h"
+ 
+ struct devicetree_state {
+         EFI_PHYSICAL_ADDRESS addr;
+diff --git a/src/boot/efi/disk.h b/src/boot/efi/disk.h
+index 1a5a18733e..6f6b517a16 100644
+--- a/src/boot/efi/disk.h
++++ b/src/boot/efi/disk.h
+@@ -2,6 +2,6 @@
+ #pragma once
+ 
+ #include <efi.h>
+-#include <uchar.h>
++#include "uchar.h"
+ 
+ EFI_STATUS disk_get_part_uuid(EFI_HANDLE *handle, char16_t uuid[static 37]);
+diff --git a/src/boot/efi/efi-string.h b/src/boot/efi/efi-string.h
+index e12add0b19..a6c8b0c56a 100644
+--- a/src/boot/efi/efi-string.h
++++ b/src/boot/efi/efi-string.h
+@@ -3,7 +3,7 @@
+ 
+ #include <stdbool.h>
+ #include <stddef.h>
+-#include <uchar.h>
++#include "uchar.h"
+ 
+ #include "macro-fundamental.h"
+ 
+diff --git a/src/boot/efi/linux.h b/src/boot/efi/linux.h
+index f0a6a37ed1..f1b7ff851f 100644
+--- a/src/boot/efi/linux.h
++++ b/src/boot/efi/linux.h
+@@ -2,7 +2,8 @@
+ #pragma once
+ 
+ #include <efi.h>
+-#include <uchar.h>
++#include "uchar.h"
++#include <stddef.h>
+ 
+ EFI_STATUS linux_exec(
+                 EFI_HANDLE parent,
+diff --git a/src/boot/efi/measure.h b/src/boot/efi/measure.h
+index 19a50f47e7..9db41ab5ce 100644
+--- a/src/boot/efi/measure.h
++++ b/src/boot/efi/measure.h
+@@ -3,7 +3,7 @@
+ 
+ #include <efi.h>
+ #include <stdbool.h>
+-#include <uchar.h>
++#include "uchar.h"
+ 
+ #if ENABLE_TPM
+ 
+diff --git a/src/boot/efi/pe.h b/src/boot/efi/pe.h
+index ff7ff479ec..ef56cbbee9 100644
+--- a/src/boot/efi/pe.h
++++ b/src/boot/efi/pe.h
+@@ -2,7 +2,7 @@
+ #pragma once
+ 
+ #include <efidef.h>
+-#include <uchar.h>
++#include "uchar.h"
+ 
+ EFI_STATUS pe_memory_locate_sections(
+                 const void *base,
+diff --git a/src/boot/efi/secure-boot.c b/src/boot/efi/secure-boot.c
+index 65457bf423..f65330f396 100644
+--- a/src/boot/efi/secure-boot.c
++++ b/src/boot/efi/secure-boot.c
+@@ -41,7 +41,7 @@ EFI_STATUS secure_boot_enroll_at(EFI_FILE *root_dir, const char16_t *path) {
+ 
+         EFI_STATUS err;
+ 
+-        clear_screen(COLOR_NORMAL);
++        //clear_screen(COLOR_NORMAL);
+ 
+         Print(L"Enrolling secure boot keys from directory: %s\n"
+               L"Warning: Enrolling custom Secure Boot keys might soft-brick your machine!\n",
+diff --git a/src/boot/efi/stub.c b/src/boot/efi/stub.c
+index af80f17f81..f6b4cf060c 100644
+--- a/src/boot/efi/stub.c
++++ b/src/boot/efi/stub.c
+@@ -2,6 +2,7 @@
+ 
+ #include <efi.h>
+ #include <efilib.h>
++#include <stddef.h>
+ 
+ #include "cpio.h"
+ #include "devicetree.h"
+diff --git a/src/boot/efi/uchar.h b/src/boot/efi/uchar.h
+new file mode 100644
+index 0000000000..e4c0e6836b
+--- /dev/null
++++ b/src/boot/efi/uchar.h
+@@ -0,0 +1,6 @@
++#pragma once
++
++/** The UTF-16 character type. */
++typedef __CHAR16_TYPE__ char16_t;
++/** The UTF-32 character type. */
++typedef __CHAR32_TYPE__ char32_t;
+diff --git a/src/boot/efi/util.h b/src/boot/efi/util.h
+index 08f732f484..a10e74f569 100644
+--- a/src/boot/efi/util.h
++++ b/src/boot/efi/util.h
+@@ -54,7 +54,7 @@ static inline void freep(void *p) {
+ 
+ #define _cleanup_free_ _cleanup_(freep)
+ 
+-static __always_inline void erase_obj(void *p) {
++static __attribute__((always_inline)) void erase_obj(void *p) {
+ #ifdef __OPTIMIZE__
+         size_t l;
+         assert_cl(p);
+diff --git a/src/fundamental/efivars-fundamental.h b/src/fundamental/efivars-fundamental.h
+index fe34e6c714..5d0fc701af 100644
+--- a/src/fundamental/efivars-fundamental.h
++++ b/src/fundamental/efivars-fundamental.h
+@@ -1,7 +1,6 @@
+ /* SPDX-License-Identifier: LGPL-2.1-or-later */
+ #pragma once
+ 
+-#include <errno.h>
+ #include "string-util-fundamental.h"
+ 
+ /* Features of the loader, i.e. systemd-boot */
+@@ -32,7 +31,7 @@ typedef enum SecureBootMode {
+         SECURE_BOOT_SETUP,
+         SECURE_BOOT_USER,
+         _SECURE_BOOT_MAX,
+-        _SECURE_BOOT_INVALID = -EINVAL,
++        _SECURE_BOOT_INVALID = -22,
+ } SecureBootMode;
+ 
+ const sd_char *secure_boot_mode_to_string(SecureBootMode m);
+-- 
+2.47.2
+

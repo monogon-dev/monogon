@@ -279,16 +279,15 @@ http_archive(
 
 # Developed in the systemd monorepo, pinned to master as there have been a bunch of critical fixes for the
 # EFI stub since 249.
-EFISTUB_VERSION = "3542da2442d8b29661b47c42ad7e5fa9bc8562ec"
+EFISTUB_VERSION = "927ebebe588970fa2dd082a0daaef246229f009b"
 
 http_archive(
     name = "efistub",
     build_file = "//third_party/efistub:efistub.bzl",
-    integrity = "sha256-AhwTW+45ynNG0fCZI758BEo9NYZv9BGnyWJnAv9MlSM=",
+    integrity = "sha256-Epun4Cq5/ThCDKFoqFZaI+0Xb5wq+B0JMSkx3VsHR+0=",
     patch_args = ["-p1"],
     patches = [
-        "//third_party/efistub/patches:use-sysv-for-kernel.patch",
-        "//third_party/efistub/patches:remove-wrong-cmdline-assertion.patch",
+        "//third_party/efistub/patches:use-local-uchar.patch",
         "//third_party/efistub/patches:ab-slot-handling.patch",
     ],
     strip_prefix = "systemd-%s" % EFISTUB_VERSION,
