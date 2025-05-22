@@ -39,15 +39,14 @@ var (
 	// as command line parameters.
 	sections = map[string]struct {
 		descr    string
-		vma      string
 		required bool
 		file     *string
 	}{
-		"linux":   {"Linux kernel image", "0x2000000", true, nil},
-		"initrd":  {"initramfs", "0x5000000", false, nil},
-		"osrel":   {"OS release file in text format", "0x20000", false, nil},
-		"cmdline": {"a file containting additional kernel command line parameters", "0x30000", false, nil},
-		"splash":  {"a splash screen image in BMP format", "0x40000", false, nil},
+		"linux":   {"Linux kernel image", true, nil},
+		"initrd":  {"initramfs", false, nil},
+		"osrel":   {"OS release file in text format", false, nil},
+		"cmdline": {"a file containting additional kernel command line parameters", false, nil},
+		"splash":  {"a splash screen image in BMP format", false, nil},
 	}
 	initrdList      stringList
 	objcopy         = flag.String("objcopy", "", "objcopy executable")
@@ -151,7 +150,7 @@ func main() {
 		if *c.file != "" {
 			args = append(args, []string{
 				"--add-section", fmt.Sprintf(".%s=%s", name, *c.file),
-				"--change-section-vma", fmt.Sprintf(".%s=%s", name, c.vma),
+				fmt.Sprintf("--set-section-flags=.%s=data", name),
 			}...)
 		}
 	}

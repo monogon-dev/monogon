@@ -3,6 +3,9 @@ a kernel, and optional commandline and initramfs in one file.
 See https://systemd.io/BOOT_LOADER_SPECIFICATION/#type-2-efi-unified-kernel-images for more information.
 """
 
+load("@rules_cc//cc:action_names.bzl", "OBJ_COPY_ACTION_NAME")
+load("@rules_cc//cc:find_cc_toolchain.bzl", "CC_TOOLCHAIN_ATTRS", "find_cpp_toolchain", "use_cc_toolchain")
+load("//osbase/build:def.bzl", "build_static_transition")
 load("//osbase/build/mkverity:def.bzl", "VerityInfo")
 
 def _efi_unified_kernel_image_impl(ctx):
@@ -48,14 +51,25 @@ def _efi_unified_kernel_image_impl(ctx):
 
     # Append the objcopy parameter separately, as it's not of File type, and
     # it does not constitute an input, since it's part of the toolchain.
-    objcopy = ctx.toolchains["@bazel_tools//tools/cpp:toolchain_type"].cc.objcopy_executable
+    cc_toolchain = find_cpp_toolchain(ctx)
+    feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cc_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features,
+    )
+    objcopy = cc_common.get_tool_for_action(
+        feature_configuration = feature_configuration,
+        action_name = OBJ_COPY_ACTION_NAME,
+    )
+
     args.append("-objcopy={}".format(objcopy))
 
     # Run mkpayload.
     ctx.actions.run(
         mnemonic = "GenEFIKernelImage",
         progress_message = "Generating EFI unified kernel image: {}".format(image.short_path),
-        inputs = inputs,
+        inputs = depset(inputs, transitive = [cc_toolchain.all_files]),
         outputs = [image],
         executable = ctx.file._mkpayload,
         arguments = args,
@@ -65,10 +79,11 @@ def _efi_unified_kernel_image_impl(ctx):
     return [DefaultInfo(files = depset([image]), runfiles = ctx.runfiles(files = [image]))]
 
 efi_unified_kernel_image = rule(
+    cfg = build_static_transition,
     implementation = _efi_unified_kernel_image_impl,
     attrs = {
         "kernel": attr.label(
-            doc = "The Linux kernel executable bzImage. Needs to have EFI handover and EFI stub enabled.",
+            doc = "The Linux kernel executable Image. Needs to have EFI stub enabled.",
             mandatory = True,
             allow_single_file = True,
         ),
@@ -125,8 +140,7 @@ efi_unified_kernel_image = rule(
             executable = True,
             cfg = "exec",
         ),
-    },
-    toolchains = [
-        "@bazel_tools//tools/cpp:toolchain_type",
-    ],
+    } | CC_TOOLCHAIN_ATTRS,
+    toolchains = use_cc_toolchain(),
+    fragments = ["cpp"],
 )
