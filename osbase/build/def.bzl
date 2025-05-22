@@ -61,7 +61,7 @@ _new_settings = {
     # to a stable hash.
     # See the transition's comment block for more information.
     "@io_bazel_rules_go//go/config:static": False,
-    "@toolchain_cc_mngn//buildmode:static": False,
+    "@toolchain_cc_mngn//buildmode:static": True,
 }
 
 def _ignore_unused_configuration_impl(_settings, _attr):

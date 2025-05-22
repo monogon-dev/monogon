@@ -23,6 +23,8 @@ should be replaced by a hermetic build that at least uses rules_cc toolchain
 information, or even better, just uses cc_library targets.
 """
 
+load("@rules_cc//cc:action_names.bzl", "C_COMPILE_ACTION_NAME")
+load("@rules_cc//cc:find_cc_toolchain.bzl", "CC_TOOLCHAIN_ATTRS", "find_cpp_toolchain", "use_cc_toolchain")
 load("//build/utils:detect_root.bzl", "detect_root")
 load("//osbase/build:def.bzl", "ignore_unused_configuration")
 
@@ -45,10 +47,49 @@ def _linux_image_impl_resources(_os, _ninputs):
         "local_test": 0,
     }
 
+DISABLED_FEATURES = []
+
+# NOTE: Multicall tool is called as path/to/llvm clang to workaround bug in out-of-process execution where tool name is repeated and parsing breaks.
+
 def _linux_image_impl(ctx):
     kernel_config = ctx.file.kernel_config
     kernel_src = ctx.files.kernel_src
     image_format = ctx.attr.image_format
+
+    # Root of the given Linux sources.
+    root = detect_root(ctx.attr.kernel_src)
+
+    # Figure out target CC toolchain
+    cc_toolchain = find_cpp_toolchain(ctx)
+    feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cc_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = DISABLED_FEATURES + ctx.disabled_features,
+    )
+    c_compiler_path = cc_common.get_tool_for_action(
+        feature_configuration = feature_configuration,
+        action_name = C_COMPILE_ACTION_NAME,
+    )
+
+    # Figure out Kbuild ARCH option
+    target_arch = None
+    compressed_image_name = None
+
+    if ctx.target_platform_has_constraint(ctx.attr._constraint_x86_64[platform_common.ConstraintValueInfo]):
+        target_arch = "x86"
+        compressed_image_name = "bzImage"
+
+    if ctx.target_platform_has_constraint(ctx.attr._constraint_aarch64[platform_common.ConstraintValueInfo]):
+        target_arch = "arm64"
+        compressed_image_name = "Image"
+
+    if ctx.target_platform_has_constraint(ctx.attr._constraint_riscv64[platform_common.ConstraintValueInfo]):
+        target_arch = "riscv"
+        compressed_image_name = "Image"
+
+    if not target_arch:
+        fail("Target platform does not match expected constraints: @platforms//cpu:x86_64, @platforms//cpu:aarch64, or @platforms//cpu:riscv64.")
 
     # Tuple containing information about how to build and access the resulting
     # image.
@@ -58,18 +99,15 @@ def _linux_image_impl(ctx):
     # rule.
     (target, image_source, image_name) = {
         "vmlinux": ("vmlinux modules", "vmlinux", "vmlinux"),
-        "bzImage": ("all modules", "arch/x86/boot/bzImage", "bzImage"),
+        "Image": ("all modules", "arch/" + target_arch + "/boot/" + compressed_image_name, "Image"),
     }[image_format]
-
-    # Root of the given Linux sources.
-    root = detect_root(ctx.attr.kernel_src)
 
     image = ctx.actions.declare_file(image_name)
     modinfo = ctx.actions.declare_file("modules.builtin.modinfo")
     modules = ctx.actions.declare_directory("modules")
     ctx.actions.run_shell(
         outputs = [image, modinfo, modules],
-        inputs = [kernel_config] + kernel_src,
+        inputs = depset([kernel_config] + kernel_src, transitive = [cc_toolchain.all_files]),
         resource_set = _linux_image_impl_resources,
         command = '''
             kconfig=$1
@@ -79,12 +117,14 @@ def _linux_image_impl(ctx):
             root=$5
             modinfo=$6
             modules=$7
+            arch=$8
+            cc=$PWD/$9
 
             builddir=$(mktemp -d)
 
             mkdir ${root}/.bin
             cp ${kconfig} ${builddir}/.config
-            (cd ${root} && KBUILD_OUTPUT="${builddir}" make -j 16 ${target} >/dev/null)
+            (cd ${root} && make -j 16 KBUILD_OUTPUT="${builddir}" ARCH="${arch}" CC="${cc//clang/llvm} clang" LD="${cc//clang/ld.lld}" OBJCOPY="${cc//clang/llvm-objcopy}" OBJDUMP="${cc//clang/llvm-objdump}" AR="${cc//clang/llvm-ar}" NM="${cc//clang/llvm-nm}" STRIP="${cc//clang/llvm-strip}" READELF="${cc//clang/llvm-readelf}" olddefconfig ${target} >/dev/null)
             cp "${builddir}"/${image_source} ${image}
             cp "${builddir}"/modules.builtin.modinfo ${modinfo}
             # Not using modules_install as it tries to run depmod and friends
@@ -101,6 +141,8 @@ def _linux_image_impl(ctx):
             root,
             modinfo.path,
             modules.path,
+            target_arch,
+            c_compiler_path,
         ],
         use_default_shell_env = True,
     )
@@ -138,16 +180,28 @@ linux_image = rule(
         ),
         "image_format": attr.string(
             doc = """
-                Format of generated Linux image, one of 'vmlinux' or 'bzImage',
+                Format of generated Linux image, one of 'vmlinux' or 'Image',
             """,
             values = [
                 "vmlinux",
-                "bzImage",
+                "Image",
             ],
-            default = "bzImage",
+            default = "Image",
         ),
         "_allowlist_function_transition": attr.label(
             default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
         ),
-    },
+        # Bazel doesn't let you access the target platform directly, use these
+        "_constraint_x86_64": attr.label(
+            default = "@platforms//cpu:x86_64",
+        ),
+        "_constraint_aarch64": attr.label(
+            default = "@platforms//cpu:aarch64",
+        ),
+        "_constraint_riscv64": attr.label(
+            default = "@platforms//cpu:riscv64",
+        ),
+    } | CC_TOOLCHAIN_ATTRS,
+    toolchains = use_cc_toolchain(),
+    fragments = ["cpp"],
 )
