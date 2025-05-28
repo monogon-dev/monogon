@@ -1,2 +1,0 @@
--- Not removing added enum values, as the 'up' migration has 'if not exists',
--- and there is no harm in keeping unused enum values around.

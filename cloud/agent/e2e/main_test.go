@@ -31,8 +31,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	apb "source.monogon.dev/cloud/agent/api"
-	bpb "source.monogon.dev/cloud/bmaas/server/api"
 	mpb "source.monogon.dev/metropolis/proto/api"
+
 	"source.monogon.dev/osbase/oci"
 	"source.monogon.dev/osbase/oci/registry"
 	"source.monogon.dev/osbase/pki"
@@ -63,13 +63,13 @@ func init() {
 }
 
 type fakeServer struct {
-	hardwareReport      *bpb.AgentHardwareReport
-	installationRequest *bpb.OSInstallationRequest
-	installationReport  *bpb.OSInstallationReport
+	hardwareReport      *apb.AgentHardwareReport
+	installationRequest *apb.OSInstallationRequest
+	installationReport  *apb.OSInstallationReport
 }
 
-func (f *fakeServer) Heartbeat(ctx context.Context, req *bpb.HeartbeatRequest) (*bpb.HeartbeatResponse, error) {
-	var res bpb.HeartbeatResponse
+func (f *fakeServer) Heartbeat(ctx context.Context, req *apb.HeartbeatRequest) (*apb.HeartbeatResponse, error) {
+	var res apb.HeartbeatResponse
 	if req.HardwareReport != nil {
 		f.hardwareReport = req.HardwareReport
 	}
@@ -106,9 +106,9 @@ func TestMetropolisInstallE2E(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	f.installationRequest = &bpb.OSInstallationRequest{
+	f.installationRequest = &apb.OSInstallationRequest{
 		Generation: 5,
-		Type: &bpb.OSInstallationRequest_Metropolis{Metropolis: &bpb.MetropolisInstallationRequest{
+		Type: &apb.OSInstallationRequest_Metropolis{Metropolis: &apb.MetropolisInstallationRequest{
 			OsImage: &mpb.OSImageRef{
 				Scheme:     "http",
 				Host:       registryAddr.String(),
@@ -169,7 +169,7 @@ func TestMetropolisInstallE2E(t *testing.T) {
 		Certificate: [][]byte{serverCert},
 		PrivateKey:  serverPrivKey,
 	})))
-	bpb.RegisterAgentCallbackServer(s, &f)
+	apb.RegisterAgentCallbackServer(s, &f)
 	grpcLis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		panic(err)

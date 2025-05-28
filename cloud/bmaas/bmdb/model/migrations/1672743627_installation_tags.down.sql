@@ -1,2 +1,0 @@
-DROP TABLE machine_os_installation_report;
-DROP TABLE machine_os_installation_request;

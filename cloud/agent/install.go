@@ -15,7 +15,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"google.golang.org/protobuf/proto"
 
-	bpb "source.monogon.dev/cloud/bmaas/server/api"
+	apb "source.monogon.dev/cloud/agent/api"
 	npb "source.monogon.dev/osbase/net/proto"
 
 	"source.monogon.dev/osbase/blockdev"
@@ -32,16 +32,16 @@ var abloader []byte
 
 // install dispatches OSInstallationRequests to the appropriate installer
 // method
-func install(ctx context.Context, req *bpb.OSInstallationRequest, netConfig *npb.Net) error {
+func install(ctx context.Context, req *apb.OSInstallationRequest, netConfig *npb.Net) error {
 	switch reqT := req.Type.(type) {
-	case *bpb.OSInstallationRequest_Metropolis:
+	case *apb.OSInstallationRequest_Metropolis:
 		return installMetropolis(ctx, reqT.Metropolis, netConfig)
 	default:
 		return errors.New("unknown installation request type")
 	}
 }
 
-func installMetropolis(ctx context.Context, req *bpb.MetropolisInstallationRequest, netConfig *npb.Net) error {
+func installMetropolis(ctx context.Context, req *apb.MetropolisInstallationRequest, netConfig *npb.Net) error {
 	l := supervisor.Logger(ctx)
 	// Validate we are running via EFI.
 	if _, err := os.Stat("/sys/firmware/efi"); os.IsNotExist(err) {

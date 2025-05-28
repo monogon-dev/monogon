@@ -9,6 +9,7 @@ buf_proto_lint_test(
         "PACKAGE_VERSION_SUFFIX",
         "MESSAGE_PASCAL_CASE",
         "ENUM_ZERO_VALUE_SUFFIX",
+        "SERVICE_SUFFIX",
     ],
     protos = [":api_proto"],
     use_rules = [
@@ -25,15 +26,22 @@ proto_library(
         "takeover.proto",
     ],
     visibility = ["//visibility:public"],
-    deps = ["//osbase/net/proto:proto_proto"],
+    deps = [
+        "//metropolis/proto/api:api_proto",
+        "//osbase/net/proto:proto_proto",
+    ],
 )
 
 go_proto_library(
     name = "api_go_proto",
+    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
     importpath = "source.monogon.dev/cloud/agent/api",
     proto = ":api_proto",
     visibility = ["//visibility:public"],
-    deps = ["//osbase/net/proto"],
+    deps = [
+        "//metropolis/proto/api",
+        "//osbase/net/proto",
+    ],
 )
 
 go_library(

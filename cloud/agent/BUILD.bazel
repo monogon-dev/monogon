@@ -14,7 +14,6 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//cloud/agent/api",
-        "//cloud/bmaas/server/api",
         "//metropolis/node/core/devmgr",
         "//metropolis/node/core/network",
         "//osbase/blockdev",

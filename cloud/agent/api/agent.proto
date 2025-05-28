@@ -2,17 +2,111 @@ syntax = "proto3";
 package cloud.agent.api;
 import "osbase/net/proto/net.proto";
 import "cloud/agent/api/takeover.proto";
+import "cloud/agent/api/hwreport.proto";
+import "metropolis/proto/api/configuration.proto";
+import "metropolis/proto/api/management.proto";
 option go_package = "source.monogon.dev/cloud/agent/api";
 
 // AgentInit contains initialization information passed to the agent from the 
 // initial takeover process.
 message AgentInit {
-  // Original takeover init message which contains data to contact the BMaaS
-  // service with.
+  // Original takeover init message which contains data to contact the API
+  // server with.
   TakeoverInit takeover_init = 1;
-  // The Ed25519 private key to connect to the BMaaS service.
+  // The Ed25519 private key to connect to the API server.
   bytes private_key = 2;
   // A network configuration in case automatic configuration does not work or is
   // not desired. If left unset, automatic configuration is used.
   osbase.net.proto.Net network_config = 3;
+}
+
+// AgentCallback runs on the API Server and exposes a gRPC interface to agents
+// running on machines. These APIs are served over TLS using component-style
+// server certificates, but clients are authenticated using ephemeral
+// certificates proving ownership of an agent keypair.
+service AgentCallback {
+  // Heartbeat is called by agents repeatedly to upload a hardware report, signal
+  // liveness and retrieve actions to be performed on a host.
+  //
+  // This isn't a streaming RPC as the current server implementation actually
+  // isn't reactive, so it would have to do its own inner polling to create
+  // a stream of updates. To keep things simple, we instead let the agent decide
+  // on the cadence of updates it wants to keep up with.
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+}
+
+message AgentHardwareReport {
+  cloud.agent.api.Node report = 1;
+  // List of human-readable warnings which occurred during hardware report
+  // generation.
+  repeated string warning = 2;
+}
+
+// OSInstallationReport is submitted from the agent to the API server after
+// successful OS installation.
+message OSInstallationReport {
+  // generation must be set to the same value as 'generation' in the
+  // OSInstallation request which triggered the OS installation
+  int64 generation = 1;
+
+  // Success is set by the agent when the installation request has been
+  // successfully fulfilled. It is currently empty but is specified as a
+  // message to allow it to be expanded in the future.
+  message Success {}
+  // Error is set by the agent when the installation request could not be
+  // fulfilled due to an error.
+  message Error {
+    // A human-readable message of what went wrong.
+    string error = 1;
+  }
+  oneof result {
+    Success success = 2;
+    Error error = 3;
+  }
+}
+
+message HeartbeatRequest {
+  // MachineID that this agent represents. Technically not necessary since
+  // keypairs between agents should be unique, but this provides an extra layer
+  // of protection against programming bugs.
+  string machine_id = 1;
+  // Optional hardware report to be upserted for this machine. An agent should
+  // submit one at least once after it's started, as early as it can.
+  AgentHardwareReport hardware_report = 2;
+  // Optional installation report sent to be upserted to this machine. An agent
+  // should submit one after it successfully installed an operating system for
+  // a given OSInstallationRequest.
+  OSInstallationReport installation_report = 3;
+}
+
+message MetropolisInstallationRequest {
+  reserved 1;
+  // Parameters for fetching the OS image to install.
+  metropolis.proto.api.OSImageRef os_image = 4;
+  // Node parameters to be supplied to the new node. Note that network_config
+  // is automatically filled out if coming from the takeover.
+  metropolis.proto.api.NodeParameters node_parameters = 2;
+  // Name of the block device to be used as the root device for the install.
+  // A list of block devices can be taken from the node hardware report.
+  string root_device = 3;
+}
+
+// OSInstallationRequest is provided to the agent API server.
+message OSInstallationRequest {
+  // generation is the 'version' of the OS installation request, and will always
+  // be incremented within the API when a new OS installation request is
+  // submitted. The agent must pipe this through to the OSInstallationReport to
+  // let the rest of the system know which OS installation request it actually
+  // fulfilled.
+  int64 generation = 1;
+  // Selects which operating system installation flow is used.
+  oneof type {
+    MetropolisInstallationRequest metropolis = 2;
+  }
+}
+
+message HeartbeatResponse {
+  // If set, the control plane is requesting the installation of an operating
+  // system.
+  OSInstallationRequest installation_request = 1;
 }

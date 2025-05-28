@@ -22,7 +22,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	apb "source.monogon.dev/cloud/agent/api"
-	bpb "source.monogon.dev/cloud/bmaas/server/api"
 
 	"source.monogon.dev/metropolis/node/core/devmgr"
 	"source.monogon.dev/metropolis/node/core/network"
@@ -103,32 +102,32 @@ func agentRunnable(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error creating BMaaS gRPC client: %w", err)
 	}
-	c := bpb.NewAgentCallbackClient(conn)
+	c := apb.NewAgentCallbackClient(conn)
 
 	supervisor.Signal(ctx, supervisor.SignalHealthy)
 
-	assembleHWReport := func() *bpb.AgentHardwareReport {
+	assembleHWReport := func() *apb.AgentHardwareReport {
 		report, warnings := gatherHWReport()
 		var warningStrings []string
 		for _, w := range warnings {
 			l.Warningf("Hardware Report Warning: %v", w)
 			warningStrings = append(warningStrings, w.Error())
 		}
-		return &bpb.AgentHardwareReport{
+		return &apb.AgentHardwareReport{
 			Report:  report,
 			Warning: warningStrings,
 		}
 	}
 
 	var sentFirstHeartBeat, hwReportSent bool
-	var installationReport *bpb.OSInstallationReport
+	var installationReport *apb.OSInstallationReport
 	var installationGeneration int64
 	b := backoff.NewExponentialBackOff()
 	// Never stop retrying, there is nothing else to do
 	b.MaxElapsedTime = 0
 	// Main heartbeat loop
 	for {
-		req := bpb.HeartbeatRequest{
+		req := apb.HeartbeatRequest{
 			MachineId: agentInit.TakeoverInit.MachineId,
 		}
 		if sentFirstHeartBeat && !hwReportSent {
@@ -167,21 +166,21 @@ func agentRunnable(ctx context.Context) error {
 				// This installation request has already been attempted
 				continue
 			}
-			installationReport = &bpb.OSInstallationReport{
+			installationReport = &apb.OSInstallationReport{
 				Generation: res.InstallationRequest.Generation,
 			}
 			installCtx, cancel := context.WithTimeout(ctx, 15*time.Minute)
 			if err := install(installCtx, res.InstallationRequest, agentInit.NetworkConfig); err != nil {
 				l.Errorf("Installation failed: %v", err)
-				installationReport.Result = &bpb.OSInstallationReport_Error_{
-					Error: &bpb.OSInstallationReport_Error{
+				installationReport.Result = &apb.OSInstallationReport_Error_{
+					Error: &apb.OSInstallationReport_Error{
 						Error: err.Error(),
 					},
 				}
 			} else {
 				l.Info("Installation succeeded")
-				installationReport.Result = &bpb.OSInstallationReport_Success_{
-					Success: &bpb.OSInstallationReport_Success{},
+				installationReport.Result = &apb.OSInstallationReport_Success_{
+					Success: &apb.OSInstallationReport_Success{},
 				}
 			}
 			cancel()

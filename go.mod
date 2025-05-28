@@ -58,7 +58,6 @@ require (
 	github.com/bazelbuild/rules_go v0.54.0
 	github.com/cavaliergopher/cpio v1.0.1
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/cockroachdb/cockroach-go/v2 v2.2.10
 	github.com/container-storage-interface/spec v1.9.0
 	github.com/containerd/containerd/v2 v2.0.1
 	github.com/containernetworking/plugins v1.6.1
@@ -67,7 +66,6 @@ require (
 	github.com/diskfs/go-diskfs v1.2.0
 	github.com/gdamore/tcell/v2 v2.7.4
 	github.com/go-delve/delve v1.24.0
-	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golangci/gofmt v0.0.0-20250106114630-d62b90e6713d
 	github.com/google/cel-go v0.22.1
 	github.com/google/certificate-transparency-go v1.1.2
@@ -77,13 +75,10 @@ require (
 	github.com/google/gopacket v1.1.19
 	github.com/google/nftables v0.3.1-0.20250326085720-8095c5167898
 	github.com/google/uuid v1.6.0
-	github.com/iancoleman/strcase v0.3.0
-	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/insomniacslk/dhcp v0.0.0-20240829085014-a3a4c1f04475
 	github.com/joho/godotenv v1.4.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/klauspost/compress v1.17.11
-	github.com/lib/pq v1.10.9
 	github.com/mattfenwick/cyclonus v0.5.6
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875
@@ -98,7 +93,6 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0
 	github.com/opencontainers/runc v1.2.2
-	github.com/packethost/packngo v0.29.0
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.8
 	github.com/prometheus/client_golang v1.21.0
@@ -142,7 +136,6 @@ require (
 	k8s.io/cli-runtime v0.32.0
 	k8s.io/client-go v0.32.0
 	k8s.io/component-base v0.32.0
-	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubectl v0.32.0
 	k8s.io/kubelet v0.32.0
 	k8s.io/kubernetes v1.32.0
@@ -222,7 +215,6 @@ require (
 	github.com/dennwc/btrfs v0.0.0-20240418142341-0167142bde7a // indirect
 	github.com/dennwc/ioctl v1.0.0 // indirect
 	github.com/derekparker/trie v0.0.0-20230829180723-39f4de51ef7d // indirect
-	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -238,7 +230,6 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
-	github.com/gin-gonic/gin v1.9.1 // indirect
 	github.com/go-delve/liner v1.2.3-0.20231231155935-4726ab1d7f62 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.4 // indirect
@@ -275,9 +266,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
-	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-envparse v0.1.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hodgesds/perf-utils v0.7.0 // indirect
 	github.com/igrmk/treemap/v2 v2.0.1 // indirect
@@ -365,7 +354,6 @@ require (
 	github.com/riza-io/grpc-go v0.2.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
-	github.com/rs/cors v1.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/safchain/ethtool v0.5.10 // indirect
 	github.com/sassoftware/go-rpmutils v0.1.1 // indirect
@@ -439,6 +427,7 @@ require (
 	k8s.io/endpointslice v0.0.0 // indirect
 	k8s.io/externaljwt v0.0.0 // indirect
 	k8s.io/klog v1.0.0 // indirect
+	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kms v0.32.0 // indirect
 	k8s.io/kube-aggregator v0.0.0 // indirect
 	k8s.io/kube-controller-manager v0.0.0 // indirect
@@ -446,7 +435,6 @@ require (
 	k8s.io/kube-scheduler v0.0.0 // indirect
 	k8s.io/metrics v0.32.0 // indirect
 	k8s.io/mount-utils v0.0.0 // indirect
-	nhooyr.io/websocket v1.8.6 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/knftables v0.0.18 // indirect

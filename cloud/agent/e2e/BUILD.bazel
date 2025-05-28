@@ -19,7 +19,6 @@ go_test(
     },
     deps = [
         "//cloud/agent/api",
-        "//cloud/bmaas/server/api",
         "//metropolis/proto/api",
         "//osbase/oci",
         "//osbase/oci/registry",

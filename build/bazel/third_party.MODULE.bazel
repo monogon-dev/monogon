@@ -78,24 +78,9 @@ http_archive(
     ],
 )
 
-# CockroachDB binary used for tests.
-#
-# WARNING: Not distributed under an OSI certified license. Must only be used in
-# tests, not be redistributed!
+# CockroachDB repository used for linter passes.
 COCKROACH_VERSION = "22.1.6"
 
-http_archive(
-    name = "cockroach",
-    build_file = "//third_party/cockroach:cockroach.bzl",
-    integrity = "sha256-CCHP9XcEAPuUyLbCqzONlvQRT78rMga8im3PYvnA9Oo=",
-    strip_prefix = "cockroach-v%s.linux-amd64" % COCKROACH_VERSION,
-    urls = [
-        # TODO: select() to pick other host architectures.
-        "https://binaries.cockroachdb.com/cockroach-v%s.linux-amd64.tgz" % COCKROACH_VERSION,
-    ],
-)
-
-# CockroachDB repository used for linter passes.
 http_archive(
     name = "com_github_cockroachdb_cockroach",
     integrity = "sha256-bDVo7yRM5rh0aU7u7Lg+1PXV3/bPA3yVLs3naCimxQI=",
