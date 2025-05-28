@@ -214,20 +214,6 @@ http_archive(
     urls = ["https://chrony-project.org/releases/chrony-%s.tar.gz" % CHRONY_VERSION],
 )
 
-CAP_VERSION = "1.2.55"
-
-http_archive(
-    name = "cap",
-    build_file = "//third_party/cap:cap.bzl",
-    integrity = "sha256-4pMiAy6pTpBpauLRdTDtyRTHF2UjLuj9T944umOcslY=",
-    patch_args = ["-p1"],
-    patches = [
-        "//third_party/cap/patches:add_go_codegen.patch",
-    ],
-    strip_prefix = "libcap-cap/v%s/libcap" % CAP_VERSION,
-    urls = ["https://git.kernel.org/pub/scm/libs/libcap/libcap.git/snapshot/libcap-cap/v%s.tar.gz" % CAP_VERSION],
-)
-
 GNUEFI_VERSION = "3.0.14"
 
 http_archive(

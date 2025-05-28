@@ -153,7 +153,7 @@ cc_library(
     deps = [
         ":common",
         "@seccomp//:seccomp",
-        "@cap//:cap",
+        "@libcap//:libcap",
     ],
 )
 
