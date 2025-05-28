@@ -208,24 +208,6 @@ http_archive(
     urls = ["https://github.com/seccomp/libseccomp/archive/v%s.tar.gz" % SECCOMP_VERSION],
 )
 
-GLIB_VERSION = "2.67.5"
-
-http_archive(
-    name = "glib",
-    integrity = "sha256-QQlm23EmONx0kFTAo8MIdUXVEGZDE5wlgGOZpRqNSrE=",
-    patch_args = [
-        "-p1",
-        "-u",
-    ],
-    patches = [
-        "//third_party/glib/patches:bazel_cc_fix.patch",
-        "//third_party/glib/patches:bazel_support.patch",
-    ],
-    strip_prefix = "glib-" + GLIB_VERSION,
-    # We cannot use the actual release tarball as it contains files generated incorrectly for our environment
-    urls = ["https://gitlab.gnome.org/GNOME/glib/-/archive/%s/glib-%s.tar.gz" % (GLIB_VERSION, GLIB_VERSION)],
-)
-
 # ONCHANGE(//third_party/chrony:chrony.bzl): version needs to be kept in sync
 CHRONY_VERSION = "4.1"
 
