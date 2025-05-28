@@ -97,15 +97,6 @@ http_archive(
     urls = ["https://github.com/benhoyt/inih/archive/%s.tar.gz" % INIH_VERSION],
 )
 
-GPERF_VERSION = "de9373c2d48a3edf29862eb8be44764a7f7d24c6"
-
-http_archive(
-    name = "gperf",
-    integrity = "sha256-xHLG+LYlXSuNG1rNvXwgjoSSG/FAZ9fu2WT4rTvnJkU=",
-    strip_prefix = "gperf-" + GPERF_VERSION,
-    urls = ["https://github.com/monogon-dev/gperf/archive/%s.tar.gz" % GPERF_VERSION],
-)
-
 LINUX_VERSION = "6.12.15"
 
 http_archive(
