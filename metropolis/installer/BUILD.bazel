@@ -52,7 +52,7 @@ os_release(
 
 efi_unified_kernel_image(
     name = "kernel",
-    cmdline = "console=ttyS0,115200 console=tty0 quiet",
+    cmdline = "console=ttyS0,115200 console=ttyAMA0 console=tty0 quiet",
     initrd = [
         "//third_party:ucode",
         ":initramfs",

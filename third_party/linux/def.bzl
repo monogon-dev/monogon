@@ -170,7 +170,6 @@ linux_image = rule(
                 Linux kernel configuration file to build this kernel image with.
             """,
             allow_single_file = True,
-            default = ":linux-metropolis.config",
         ),
         "kernel_src": attr.label(
             doc = """

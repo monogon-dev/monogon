@@ -22,7 +22,7 @@ go_binary(
 
 kconfig_patch(
     name = "testing-config",
-    src = "//third_party/linux:linux-metropolis.config",
+    src = "//third_party/linux:kconfig",
     out = "testing.config",
     override_configs = {
         # Unlock command line

@@ -198,12 +198,5 @@ func GetBuiltinModulesInfo(f io.Reader) ([]ModuleInfo, error) {
 	if currModule.Name() != "" {
 		out = append(out, currModule)
 	}
-	seenModNames := make(map[string]bool)
-	for _, m := range out {
-		if seenModNames[m.Name()] {
-			return nil, fmt.Errorf("duplicate/out-of-order module metadata for module %q", m)
-		}
-		seenModNames[m.Name()] = true
-	}
 	return out, nil
 }

@@ -1,8 +1,16 @@
 load("//third_party/linux:def.bzl", "linux_image")
 
-exports_files(["linux-metropolis.config"])
+alias(
+    name = "kconfig",
+    actual = select({
+        "@platforms//cpu:aarch64": ":kconfig-aarch64",
+        "@platforms//cpu:x86_64": ":kconfig-x86_64",
+    }),
+    visibility = ["//visibility:public"],
+)
 
 linux_image(
     name = "linux",
+    kernel_config = ":kconfig",
     visibility = ["//visibility:public"],
 )
