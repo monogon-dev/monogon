@@ -177,6 +177,11 @@ OVERRIDES = {
             "gazelle:go_visibility //visibility:public",
         ],
     },
+    "github.com/bytecodealliance/wasmtime-go/v14": {
+        "directives": [
+            "gazelle:go_naming_convention go_default_library",
+        ],
+    },
     "github.com/containerd/ttrpc": {
         "directives": [
             "gazelle:proto disable",
@@ -213,6 +218,16 @@ OVERRIDES = {
         ],
     },
     "k8s.io/api": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "k8s.io/kms": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
+    "k8s.io/externaljwt": {
         "directives": [
             "gazelle:proto disable",
         ],
@@ -288,6 +303,11 @@ OVERRIDES = {
             "gazelle:proto disable",
         ],
     },
+    "github.com/containers/ocicrypt": {
+        "directives": [
+            "gazelle:proto disable",
+        ],
+    },
     "github.com/pingcap/tidb/parser": {
         "build_file_generation": "on",
     },
@@ -337,6 +357,11 @@ OVERRIDES = {
     "k8s.io/kubectl": {
         "patches": [
             "//third_party/com_k8s_io_kubectl:kubectl-fix-embed.patch",
+        ],
+    },
+    "sigs.k8s.io/apiserver-network-proxy/konnectivity-client": {
+        "directives": [
+            "gazelle:proto disable",
         ],
     },
     "github.com/seccomp/libseccomp-golang": {

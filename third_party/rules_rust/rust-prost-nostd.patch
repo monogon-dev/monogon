@@ -1,59 +1,59 @@
-From f9f2bdfd156f62c67af78ed7c0a46ae67ec148e2 Mon Sep 17 00:00:00 2001
+From 865b50b442368ba2a91a53d68b946e04022875e4 Mon Sep 17 00:00:00 2001
 From: Lorenz Brun <lorenz@monogon.tech>
 Date: Wed, 25 Sep 2024 02:37:42 +0200
-Subject: [PATCH 2/4] Support no_std in Prost toolchain
+Subject: [PATCH] Support no_std in Prost toolchain
 
 ---
  extensions/prost/private/prost.bzl         |  8 ++++++++
- extensions/prost/private/protoc_wrapper.rs | 18 +++++++++++++++++-
- 2 files changed, 25 insertions(+), 1 deletion(-)
+ extensions/prost/private/protoc_wrapper.rs | 23 ++++++++++++++++++++--
+ 2 files changed, 29 insertions(+), 2 deletions(-)
 
 diff --git a/extensions/prost/private/prost.bzl b/extensions/prost/private/prost.bzl
-index f06719db..6d9d4969 100644
+index c5917107b..b06e126e6 100644
 --- a/extensions/prost/private/prost.bzl
 +++ b/extensions/prost/private/prost.bzl
-@@ -86,6 +86,9 @@ def _compile_proto(
+@@ -89,6 +89,9 @@ def _compile_proto(
      additional_args.add("--additional_srcs={}".format(",".join([f.path for f in all_additional_srcs.to_list()])))
      additional_args.add_all(prost_toolchain.prost_opts + prost_opts, format_each = "--prost_opt=%s")
  
-+    if prost_toolchain.is_nostd:
-+        additional_args.add("--is_nostd")
++    if prost_toolchain.is_no_std:
++        additional_args.add("--is_no_std")
 +
      if prost_toolchain.tonic_plugin:
          tonic_plugin = prost_toolchain.tonic_plugin[DefaultInfo].files_to_run
          additional_args.add(prost_toolchain.tonic_plugin_flag % tonic_plugin.executable.path)
-@@ -442,6 +445,7 @@ def _rust_prost_toolchain_impl(ctx):
-         tonic_plugin_flag = ctx.attr.tonic_plugin_flag,
+@@ -459,6 +462,7 @@ def _rust_prost_toolchain_impl(ctx):
          tonic_runtime = ctx.attr.tonic_runtime,
          include_transitive_deps = ctx.attr.include_transitive_deps,
-+        is_nostd = ctx.attr.is_nostd,
+         compile_well_known_types = ctx.attr.compile_well_known_types,
++        is_no_std = ctx.attr.is_no_std,
      )]
  
  rust_prost_toolchain = rule(
-@@ -497,6 +501,10 @@ rust_prost_toolchain = rule(
-             doc = "The Tonic runtime crates to use.",
-             providers = [[rust_common.crate_info], [rust_common.crate_group_info]],
+@@ -474,6 +478,10 @@ rust_prost_toolchain = rule(
+             doc = "Whether to include transitive dependencies. If set to True, all transitive dependencies will directly accessible by the dependent crate.",
+             default = False,
          ),
-+        "is_nostd": attr.bool(
++        "is_no_std": attr.bool(
 +            doc = "If a no_std tag should be put into the generated code.",
 +            default = False,
 +        ),
-     }, **proto_toolchains.if_legacy_toolchain({
-         "_legacy_proto_toolchain": attr.label(
-             default = Label("//private:legacy_proto_toolchain"),
+         "prost_opts": attr.string_list(
+             doc = "Additional options to add to Prost.",
+         ),
 diff --git a/extensions/prost/private/protoc_wrapper.rs b/extensions/prost/private/protoc_wrapper.rs
-index a0403f82..1dded7aa 100644
+index 878f1c30c..8f09c77fc 100644
 --- a/extensions/prost/private/protoc_wrapper.rs
 +++ b/extensions/prost/private/protoc_wrapper.rs
 @@ -156,8 +156,17 @@ fn generate_lib_rs(
      is_tonic: bool,
      direct_dep_crate_names: Vec<String>,
      additional_content: String,
-+    is_nostd: bool,
++    is_no_std: bool,
  ) -> String {
 -    let mut contents = vec!["// @generated".to_string(), "".to_string()];
 +    let mut contents = vec![
-+        if is_nostd {
++        if is_no_std {
 +            "#![no_std]".to_string()
 +        } else {
 +            "".to_string()
@@ -64,59 +64,66 @@ index a0403f82..1dded7aa 100644
      for crate_name in direct_dep_crate_names {
          contents.push(format!("pub use {crate_name};"));
      }
-@@ -457,6 +462,9 @@ struct Args {
+@@ -471,6 +480,9 @@ struct Args {
      /// Whether to generate tonic code.
      is_tonic: bool,
  
 +    // Whether to put a no_std tag into the generated code.
-+    is_nostd: bool,
++    is_no_std: bool,
 +
      /// Extra arguments to pass to protoc.
      extra_args: Vec<String>,
  }
-@@ -479,6 +487,7 @@ impl Args {
-         let mut tonic_or_prost_opts = Vec::new();
+@@ -494,6 +506,7 @@ impl Args {
          let mut direct_dep_crate_names = Vec::new();
          let mut is_tonic = false;
-+        let mut is_nostd = false;
+         let mut compile_well_known_types = false;
++        let mut is_no_std = false;
  
          let mut extra_args = Vec::new();
  
-@@ -501,6 +510,10 @@ impl Args {
+@@ -516,6 +529,10 @@ impl Args {
                  is_tonic = true;
                  return;
              }
-+            if arg == "--is_nostd" {
-+                is_nostd = true;
++            if arg == "--is_no_std" {
++                is_no_std = true;
 +                return;
 +            }
  
-             if !arg.contains('=') {
-                 extra_args.push(arg);
-@@ -644,6 +657,7 @@ impl Args {
+             if arg == "--compile_well_known_types" {
+                 compile_well_known_types = true;
+@@ -664,6 +681,7 @@ impl Args {
              proto_paths,
              direct_dep_crate_names,
              is_tonic,
-+            is_nostd,
++            is_no_std,
              label: label.unwrap(),
              extra_args,
-         })
-@@ -748,6 +762,7 @@ fn main() {
+             compile_well_known_types,
+@@ -769,6 +787,7 @@ fn main() {
          proto_paths,
          direct_dep_crate_names,
          is_tonic,
-+        is_nostd,
++        is_no_std,
          extra_args,
+         compile_well_known_types,
      } = Args::parse().expect("Failed to parse args");
- 
-@@ -917,6 +932,7 @@ fn main() {
+@@ -947,6 +966,7 @@ fn main() {
              is_tonic,
              direct_dep_crate_names,
              additional_content,
-+            is_nostd,
++            is_no_std,
          ),
      )
      .expect("Failed to write file.");
+@@ -1002,7 +1022,6 @@ fn escape_keyword(s: String) -> String {
+ 
+ #[cfg(test)]
+ mod test {
+-
+     use super::*;
+ 
+     use prost_types::{FieldDescriptorProto, ServiceDescriptorProto};
 -- 
-2.47.0
-
+2.49.0

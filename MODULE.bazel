@@ -8,7 +8,7 @@
 # NOTE: When editing this file, also update the lockfile.
 #   bazel mod deps --lockfile_mode=update
 
-bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_go", repo_name = "io_bazel_rules_go")
 single_version_override(
     module_name = "rules_go",
@@ -17,7 +17,7 @@ single_version_override(
         "//third_party/rules_go:rules_go_absolute_embedsrc.patch",
         "//third_party/rules_go:introduce-all-scope-for-nogo.patch",
     ],
-    version = "0.54.0",
+    version = "0.55.1",
 )
 
 bazel_dep(name = "gazelle")
@@ -27,11 +27,13 @@ single_version_override(
     patches = [
         "//third_party/gazelle:add-prepatching.patch",
     ],
-    version = "0.42.0",
+    version = "0.44.0",
 )
 
 # rules_rust was split into multiple dependencies. Sadly, this means we have to
 # patch each include separately.
+RULES_RUST_VERSION = "0.61.0"
+
 bazel_dep(name = "rules_rust")
 single_version_override(
     module_name = "rules_rust",
@@ -40,7 +42,7 @@ single_version_override(
         "//third_party/rules_rust:rust-prost-nostd.patch",
         "//third_party/rules_rust:rust-reproducibility.patch",
     ],
-    version = "0.57.1",
+    version = RULES_RUST_VERSION,
 )
 
 bazel_dep(name = "rules_rust_prost")
@@ -50,33 +52,28 @@ single_version_override(
     patches = [
         "//third_party/rules_rust:rust-prost-nostd.patch",
     ],
-    version = "0.57.1",
+    version = RULES_RUST_VERSION,
 )
 
-bazel_dep(name = "rules_rust_protobuf", version = "0.57.1")
-bazel_dep(name = "zlib")
-single_version_override(
-    module_name = "zlib",
-    version = "1.3.1",
-)
-
+bazel_dep(name = "rules_rust_protobuf", version = RULES_RUST_VERSION)
+bazel_dep(name = "zlib", version = "1.3.1.bcr.6")
 bazel_dep(name = "boringssl", version = "0.20250514.0")
 bazel_dep(name = "glib", version = "2.82.2.bcr.5")
-bazel_dep(name = "buildifier_prebuilt", version = "8.0.1")
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.0.2")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
-bazel_dep(name = "rules_pkg", version = "1.0.1")
-bazel_dep(name = "rules_oci", version = "2.2.2")
+bazel_dep(name = "rules_pkg", version = "1.1.0")
+bazel_dep(name = "rules_oci", version = "2.2.6")
 bazel_dep(name = "aspect_bazel_lib", version = "2.13.0")
-bazel_dep(name = "rules_multirun", version = "0.10.0")
-bazel_dep(name = "rules_python", version = "1.1.0")
+bazel_dep(name = "rules_multirun", version = "0.12.0")
+bazel_dep(name = "rules_python", version = "1.4.1")
 bazel_dep(name = "rules_cc", version = "0.1.1")
 bazel_dep(name = "rules_proto", version = "7.1.0")
-bazel_dep(name = "rules_proto_grpc_doc", version = "5.0.1")
-bazel_dep(name = "rules_proto_grpc_buf", version = "5.0.1")
+bazel_dep(name = "rules_proto_grpc_doc", version = "5.1.0")
+bazel_dep(name = "rules_proto_grpc_buf", version = "5.1.0")
 
 # Currently supported version are listed here:
 # https://protobuf.dev/support/version-support/
-bazel_dep(name = "protobuf", version = "29.3")
+bazel_dep(name = "protobuf", version = "31.1")
 bazel_dep(name = "toolchain_cc_mngn")
 git_override(
     module_name = "toolchain_cc_mngn",
@@ -105,9 +102,6 @@ register_toolchains("@rules_rust_protobuf//:default_proto_toolchain")
 register_toolchains("//build/toolchain/rust-efi:prost_efi_toolchain")
 
 include("//build/bazel:rust.MODULE.bazel")
-
 include("//build/bazel:go.MODULE.bazel")
-
 include("//build/bazel:oci.MODULE.bazel")
-
 include("//build/bazel:third_party.MODULE.bazel")

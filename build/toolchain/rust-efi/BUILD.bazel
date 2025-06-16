@@ -10,7 +10,7 @@ rust_library_group(
 
 rust_prost_toolchain(
     name = "prost_efi_toolchain_impl",
-    is_nostd = True,
+    is_no_std = True,
     prost_plugin = "@crate_index//:protoc-gen-prost__protoc-gen-prost",
     prost_runtime = ":prost_runtime_efi",
     prost_types = "@crate_index_efi//:prost-types",
