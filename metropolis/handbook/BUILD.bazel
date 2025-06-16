@@ -1,7 +1,7 @@
-load("//metropolis/handbook:defs.bzl", "mdbook_html")
+load("@rules_rust_mdbook//:defs.bzl", "mdbook")
 
-mdbook_html(
+mdbook(
     name = "handbook",
     srcs = glob(["src/**/*.md"]),
-    title = "Metropolis Handbook",
+    book = ":book.toml",
 )

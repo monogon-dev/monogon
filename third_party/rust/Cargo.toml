@@ -7,5 +7,4 @@ version = "0.0.0"
 path = "fake_lib.rs"
 
 [dependencies]
-mdbook = "0"
 protoc-gen-prost = "0.2.3"
