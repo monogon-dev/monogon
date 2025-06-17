@@ -89,6 +89,7 @@ require (
 	github.com/mdlayher/ethtool v0.2.0
 	github.com/mdlayher/genetlink v1.3.2
 	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
+	github.com/mdlayher/lldp v0.0.0-20150915211757-afd9f83164c5
 	github.com/mdlayher/netlink v1.7.3-0.20250113171957-fbb4dce95f42
 	github.com/mdlayher/packet v1.1.2
 	github.com/miekg/dns v1.1.58

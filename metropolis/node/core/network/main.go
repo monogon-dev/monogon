@@ -239,7 +239,7 @@ func (s *Service) Run(ctx context.Context) error {
 		logger.Errorf("Failed to bring up loopback interface: %v", err)
 	}
 
-	supervisor.Run(ctx, "announce", s.runNeighborAnnounce)
+	supervisor.Run(ctx, "linkstate", s.runLinkState)
 
 	// Choose between autoconfig and static config runnables
 	if s.StaticConfig == nil {

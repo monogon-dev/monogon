@@ -4,7 +4,6 @@
 package network
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"net/netip"
@@ -17,64 +16,17 @@ import (
 	"golang.org/x/sys/unix"
 
 	"source.monogon.dev/metropolis/node/core/network/dhcp4c"
-	"source.monogon.dev/osbase/supervisor"
 )
 
 var ethernetNull = net.HardwareAddr{0, 0, 0, 0, 0, 0}
 
-// runNeighborAnnounce announces all configured IPs marked as permanent via ARP
-// every time an interface comes up. Non-permanent IPs are handled via
-// arpAnnounceCB. This is done to update ARP tables on all attached hosts,
-// which commonly has very large (hours) timeouts otherwise. The packets are
-// crafted to bypass EVPN ARP suppression to ensure every attached host gets
-// the update.
-func (s *Service) runNeighborAnnounce(ctx context.Context) error {
-	l := supervisor.Logger(ctx)
-	linkUpdates := make(chan netlink.LinkUpdate, 10)
-	options := netlink.LinkSubscribeOptions{
-		ErrorCallback: func(err error) {
-			l.Errorf("netlink subscription error: %v", err)
-		},
-	}
-	if err := netlink.LinkSubscribeWithOptions(linkUpdates, ctx.Done(), options); err != nil {
-		return fmt.Errorf("while subscribing to netlink link updates: %w", err)
-	}
-	lastIfState := make(map[string]bool)
-	for {
-		select {
-		case u, ok := <-linkUpdates:
-			if !ok {
-				return fmt.Errorf("link update channel closed")
-			}
-			attrs := u.Link.Attrs()
-			before := lastIfState[attrs.Name]
-			now := attrs.RawFlags&unix.IFF_RUNNING != 0
-			lastIfState[attrs.Name] = now
-
-			if !before && now {
-				if err := sendARPAnnouncements(u.Link); err != nil {
-					l.Warningf("Failed sending ARP announcements for interface %q: %v", attrs.Name, err)
-				}
-				// Send a second one after 10s if the network infrastructure is
-				// slow to configure itself after link up or the first one got
-				// lost.
-				time.AfterFunc(10*time.Second, func() {
-					if err := sendARPAnnouncements(u.Link); err != nil {
-						l.Warningf("Failed sending repeated ARP announcements for interface %q: %v", attrs.Name, err)
-					}
-				})
-				l.Infof("Interface %q is up", attrs.Name)
-			} else if before && !now {
-				l.Infof("Interface %q is down", attrs.Name)
-			}
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
-}
-
 // sendARPAnnouncements sends an ARP announcement (a form of gratuitous ARP)
 // for every permanent IPv4 address configured on the interface.
+// Non-permanent IPs are handled via arpAnnounceCB. This is done to update ARP
+// tables on all attached hosts, which commonly has very large (hours) timeouts
+// otherwise.
+// The packets are crafted to bypass EVPN ARP suppression to ensure every
+// attached host gets the update.
 func sendARPAnnouncements(l netlink.Link) error {
 	ac, err := arp.Dial(netlinkLinkToNetInterface(l))
 	if err != nil {

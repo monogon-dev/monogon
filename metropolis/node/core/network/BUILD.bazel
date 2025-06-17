@@ -3,6 +3,8 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "network",
     srcs = [
+        "linkstate.go",
+        "lldp.go",
         "main.go",
         "neigh.go",
         "quirks.go",
@@ -16,6 +18,7 @@ go_library(
         "//metropolis/node",
         "//metropolis/node/core/network/dhcp4c",
         "//metropolis/node/core/network/dhcp4c/callback",
+        "//metropolis/node/core/productinfo",
         "//osbase/event/memory",
         "//osbase/net/dns",
         "//osbase/net/dns/forward",
@@ -29,6 +32,8 @@ go_library(
         "@com_github_mdlayher_arp//:arp",
         "@com_github_mdlayher_ethernet//:ethernet",
         "@com_github_mdlayher_ethtool//:ethtool",
+        "@com_github_mdlayher_lldp//:lldp",
+        "@com_github_mdlayher_packet//:packet",
         "@com_github_vishvananda_netlink//:netlink",
         "@org_golang_x_sys//unix",
     ],

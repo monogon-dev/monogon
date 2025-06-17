@@ -1,6 +1,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
 load("//osbase/build:def.bzl", "build_static_target")
+load("//osbase/build/genproductinfo:defs.bzl", "product_info")
 load("//osbase/build/mkcpio:def.bzl", "node_initramfs")
 
 go_library(
@@ -46,12 +47,21 @@ static_binary_tarball(
     visibility = ["//visibility:public"],
 )
 
+product_info(
+    name = "product_info",
+    os_id = "monogon-cloud-agent",
+    os_name = "Monogon Cloud Agent",
+    out_os_release = ":product_info_os_release",
+    stamp_var = "STABLE_MONOGON_cloud_version",
+)
+
 node_initramfs(
     name = "initramfs",
     files = {
         "/init": "//cloud/agent:agent",
         "/etc/resolv.conf": "//osbase/net/dns:resolv.conf",
         "/etc/ssl/cert.pem": "@cacerts//file",
+        "/etc/product-info.json": ":product_info",
     },
     fsspecs = [
         "//osbase/build:earlydev.fsspec",

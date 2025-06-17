@@ -45,6 +45,7 @@ use_repo(
     "com_github_mdlayher_ethtool",
     "com_github_mdlayher_genetlink",
     "com_github_mdlayher_kobject",
+    "com_github_mdlayher_lldp",
     "com_github_mdlayher_netlink",
     "com_github_mdlayher_packet",
     "com_github_miekg_dns",
