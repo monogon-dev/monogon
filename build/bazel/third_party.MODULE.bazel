@@ -144,16 +144,6 @@ http_archive(
     urls = ["https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files/archive/refs/tags/microcode-%s.tar.gz" % INTEL_UCODE_VERSION],
 )
 
-MUSL_VERSION = "1.1.24"
-
-http_archive(
-    name = "musl",
-    build_file = "//third_party/musl:musl.bzl",
-    integrity = "sha256-E3DJqBKyzyp9koAlEMygBYzDfmanvt1wBR8KNAFQIqM=",
-    strip_prefix = "musl-" + MUSL_VERSION,
-    urls = ["https://www.musl-libc.org/releases/musl-%s.tar.gz" % MUSL_VERSION],
-)
-
 UTIL_LINUX_VERSION = "2.36.2"
 
 http_archive(
