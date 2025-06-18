@@ -130,7 +130,7 @@ func (i *plan) Apply() (*efivarfs.LoadOption, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open system image: %w", err)
 	}
-	if _, err := io.Copy(blockdev.NewRWS(i.systemPartitionA), systemImage); err != nil {
+	if _, err := io.CopyN(blockdev.NewRWS(i.systemPartitionA), systemImage, i.SystemImage.Size()); err != nil {
 		systemImage.Close()
 		return nil, fmt.Errorf("failed to write system partition A: %w", err)
 	}

@@ -299,6 +299,105 @@ func (d *File) WriteAt(p []byte, off int64) (n int, err error) {
 	return d.backend.WriteAt(p, off)
 }
 
+func (d *File) ReadFromAt(r io.Reader, off int64) (n int64, err error) {
+	size := d.blockSize * d.blockCount
+	if off > size || off < 0 {
+		return 0, ErrOutOfBounds
+	}
+	limit := size - off
+	ur := r
+	lr, lrOK := r.(*io.LimitedReader)
+	if lrOK {
+		ur = lr.R
+		limit = min(limit, lr.N)
+	}
+	n, handled, err := d.doCopyFileRange(ur, off, limit)
+	if lrOK {
+		lr.N -= n
+	}
+	off += n
+	if !handled {
+		var fallbackN int64
+		fallbackN, err = genericReadFromAt(d, r, off)
+		n += fallbackN
+		return
+	}
+	if err == nil && off == size {
+		// Return an error if we have not reached EOF.
+		moreN, moreErr := io.CopyN(io.Discard, r, 1)
+		if moreN != 0 {
+			err = ErrOutOfBounds
+		} else if moreErr != io.EOF {
+			err = moreErr
+		}
+	}
+	return
+}
+
+// Copied from Go src/internal/poll/copy_file_range_linux.go
+const maxCopyFileRangeRound = 0x7ffff000
+
+// doCopyFileRange attempts to copy using the copy_file_range syscall.
+//
+// This is only implemented for [File] because Linux does not support this
+// syscall on block devices.
+func (d *File) doCopyFileRange(r io.Reader, off int64, remain int64) (written int64, handled bool, err error) {
+	if remain <= 0 {
+		handled = true
+		return
+	}
+	// Note: We should also check for os.fileWithoutWriteTo, but that type isn't
+	// exported. This means that this optimization won't work if the top-level
+	// copy is io.Copy, but it does work with io.CopyN and w.ReadFrom(r).
+	src, srcOK := r.(*os.File)
+	if !srcOK {
+		return
+	}
+	srcConn, err := src.SyscallConn()
+	if err != nil {
+		return
+	}
+	// We need a read lock of src, because its file offset is used and updated.
+	// We don't need a lock of dest, because its file offset is not used.
+	readErr := srcConn.Read(func(srcFD uintptr) bool {
+		controlErr := d.rawConn.Control(func(destFD uintptr) {
+			handled = true
+			for remain > 0 {
+				n := int(min(remain, maxCopyFileRangeRound))
+				n, err = unix.CopyFileRange(int(srcFD), nil, int(destFD), &off, n, 0)
+				if n > 0 {
+					remain -= int64(n)
+					written += int64(n)
+					// The kernel adds n to off.
+				}
+				// See handleCopyFileRangeErr in
+				// src/internal/poll/copy_file_range_linux.go
+				if err != nil {
+					if errors.Is(err, unix.ENOSYS) || errors.Is(err, unix.EXDEV) ||
+						errors.Is(err, unix.EINVAL) || errors.Is(err, unix.EIO) ||
+						errors.Is(err, unix.EOPNOTSUPP) || errors.Is(err, unix.EPERM) {
+						handled = false
+					}
+					break
+				} else if n == 0 {
+					if written == 0 {
+						handled = false
+					}
+					break
+				}
+			}
+		})
+		if err == nil {
+			err = controlErr
+		}
+		return true
+	})
+	if err == nil {
+		err = readErr
+	}
+	return
+}
+
 func (d *File) Close() error {
 	return d.backend.Close()
 }

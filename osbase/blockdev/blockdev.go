@@ -97,6 +97,25 @@ type BlockDev interface {
 	Sync() error
 }
 
+// ReaderFromAt is similar to [io.ReaderFrom], except that the write starts at
+// offset off instead of using the file offset.
+type ReaderFromAt interface {
+	ReadFromAt(r io.Reader, off int64) (n int64, err error)
+}
+
+// writerOnly wraps an [io.Writer] and hides all methods other than Write
+// (such as ReadFrom).
+type writerOnly struct {
+	io.Writer
+}
+
+// genericReadFromAt is a generic implementation which does not use b.ReadFromAt
+// to prevent recursive calls.
+func genericReadFromAt(b BlockDev, r io.Reader, off int64) (int64, error) {
+	w := &writerOnly{Writer: &ReadWriteSeeker{b: b, currPos: off}}
+	return io.Copy(w, r)
+}
+
 func NewRWS(b BlockDev) *ReadWriteSeeker {
 	return &ReadWriteSeeker{b: b}
 }
@@ -117,6 +136,17 @@ func (s *ReadWriteSeeker) Read(p []byte) (n int, err error) {
 func (s *ReadWriteSeeker) Write(p []byte) (n int, err error) {
 	n, err = s.b.WriteAt(p, s.currPos)
 	s.currPos += int64(n)
+	return
+}
+
+func (s *ReadWriteSeeker) ReadFrom(r io.Reader) (n int64, err error) {
+	rfa, rfaOK := s.b.(ReaderFromAt)
+	if !rfaOK {
+		w := &writerOnly{Writer: s}
+		return io.Copy(w, r)
+	}
+	n, err = rfa.ReadFromAt(r, s.currPos)
+	s.currPos += n
 	return
 }
 
@@ -201,6 +231,40 @@ func (s *Section) WriteAt(p []byte, off int64) (n int, err error) {
 		return n, ErrOutOfBounds
 	}
 	return s.b.WriteAt(p, bOff)
+}
+
+func (s *Section) ReadFromAt(r io.Reader, off int64) (n int64, err error) {
+	rfa, rfaOK := s.b.(ReaderFromAt)
+	if !rfaOK {
+		return genericReadFromAt(s, r, off)
+	}
+	bOff := off + (s.startBlock * s.b.BlockSize())
+	bytesToEnd := (s.endBlock * s.b.BlockSize()) - bOff
+	if off < 0 || bytesToEnd < 0 {
+		return 0, ErrOutOfBounds
+	}
+	ur := r
+	lr, lrOK := r.(*io.LimitedReader)
+	if lrOK {
+		if bytesToEnd >= lr.N {
+			return rfa.ReadFromAt(r, bOff)
+		}
+		ur = lr.R
+	}
+	n, err = rfa.ReadFromAt(io.LimitReader(ur, bytesToEnd), bOff)
+	if lrOK {
+		lr.N -= n
+	}
+	if err == nil && n == bytesToEnd {
+		// Return an error if we have not reached EOF.
+		moreN, moreErr := io.CopyN(io.Discard, r, 1)
+		if moreN != 0 {
+			err = ErrOutOfBounds
+		} else if moreErr != io.EOF {
+			err = moreErr
+		}
+	}
+	return
 }
 
 func (s *Section) BlockCount() int64 {

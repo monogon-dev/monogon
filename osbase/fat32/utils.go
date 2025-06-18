@@ -11,8 +11,6 @@ import (
 
 // Wraps a writer and provides support for writing padding up to a specified
 // alignment.
-// TODO(lorenz): Implement WriterTo when w implements it to allow for copy
-// offload
 type blockWriter struct {
 	w io.Writer
 	n int64
@@ -25,6 +23,13 @@ func newBlockWriter(w io.Writer) *blockWriter {
 func (b *blockWriter) Write(p []byte) (n int, err error) {
 	n, err = b.w.Write(p)
 	b.n += int64(n)
+	return
+}
+
+func (b *blockWriter) ReadFrom(r io.Reader) (n int64, err error) {
+	// io.Copy forwards to b.w.ReadFrom if available.
+	n, err = io.Copy(b.w, r)
+	b.n += n
 	return
 }
 
