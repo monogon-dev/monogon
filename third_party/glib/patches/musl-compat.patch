@@ -1,0 +1,52 @@
+diff --git a/config.h-linux b/config.h-linux
+--- a/config.h-linux
++++ a/config.h-linux
+@@ -112,22 +112,10 @@
+ #define HAVE_IPV6
+ 
+ #define HAVE_IP_MREQN 1
+ 
+-#define HAVE_LANGINFO_ABALTMON 1
+-
+-#define HAVE_LANGINFO_ALTMON 1
+-
+ #define HAVE_LANGINFO_CODESET 1
+ 
+-#define HAVE_LANGINFO_ERA 1
+-
+-#define HAVE_LANGINFO_OUTDIGIT 1
+-
+-#define HAVE_LANGINFO_TIME 1
+-
+-#define HAVE_LANGINFO_TIME_CODESET 1
+-
+ #define HAVE_LCHMOD 1
+ 
+ #define HAVE_LCHOWN 1
+ 
+@@ -258,10 +246,8 @@
+ #define HAVE_STPCPY 1
+ 
+ #define HAVE_STRCASECMP 1
+ 
+-#define HAVE_STRERROR_R 1
+-
+ #define HAVE_STRINGS_H 1
+ 
+ #define HAVE_STRING_H 1
+ 
+@@ -270,14 +256,8 @@
+ #define HAVE_STRNLEN 1
+ 
+ #define HAVE_STRSIGNAL 1
+ 
+-#define HAVE_STRTOD_L 1
+-
+-#define HAVE_STRTOLL_L 1
+-
+-#define HAVE_STRTOULL_L 1
+-
+ #define HAVE_STRUCT_DIRENT_D_TYPE 1
+ 
+ #define HAVE_STRUCT_STATFS_F_BAVAIL 1
+ 
