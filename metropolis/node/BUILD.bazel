@@ -140,6 +140,17 @@ oci_os_image(
     visibility = ["//visibility:public"],
 )
 
+oci_os_image(
+    name = "oci_image_uncompressed",
+    srcs = {
+        "system": ":verity_rootfs",
+        "kernel.efi": ":kernel_efi",
+    },
+    compression_level = 0,
+    product_info = ":product_info",
+    visibility = ["//metropolis/test/launch:__pkg__"],
+)
+
 # An intermediary "bundle" format until we finalize the actual bundle format. This is NOT stable until migrated
 # to the actual bundle format.
 # TODO(lorenz): Replace this

@@ -46,12 +46,16 @@ import (
 	cpb "source.monogon.dev/metropolis/proto/common"
 
 	"source.monogon.dev/go/logging"
-	"source.monogon.dev/go/qcow2"
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
+	"source.monogon.dev/osbase/blockdev"
+	"source.monogon.dev/osbase/build/mkimage/osimage"
+	"source.monogon.dev/osbase/oci"
+	ociosimage "source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/oci/registry"
+	"source.monogon.dev/osbase/structfs"
 	"source.monogon.dev/osbase/test/qemu"
 )
 
@@ -161,23 +165,53 @@ func setupRuntime(ld, sd string, diskBytes uint64) (*NodeRuntime, error) {
 		return nil, fmt.Errorf("failed to create the state directory: %w", err)
 	}
 
-	// Initialize the node's storage with a prebuilt image.
-	st, err := os.Stat(xNodeImagePath)
+	// Initialize the node's storage.
+	ociImage, err := oci.ReadLayout(xNodeImagePath)
 	if err != nil {
-		return nil, fmt.Errorf("cannot read image file: %w", err)
+		return nil, fmt.Errorf("failed to read OS image: %w", err)
 	}
-	diskBytes = max(diskBytes, uint64(st.Size()))
+	osImage, err := ociosimage.Read(ociImage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read OS image: %w", err)
+	}
 
-	di := filepath.Join(stdp, "image.qcow2")
-	logf("Cluster: generating node QCOW2 snapshot image: %s -> %s", xNodeImagePath, di)
+	efiPayload, err := osImage.PayloadUnverified("kernel.efi")
+	if err != nil {
+		return nil, fmt.Errorf("cannot open EFI payload in OS image: %w", err)
+	}
+	systemImage, err := osImage.PayloadUnverified("system")
+	if err != nil {
+		return nil, fmt.Errorf("cannot open system image in OS image: %w", err)
+	}
 
-	df, err := os.Create(di)
+	abloader, err := structfs.OSPathBlob(xAbloaderPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open abloader: %w", err)
+	}
+
+	di := filepath.Join(stdp, "image.img")
+	logf("Cluster: generating node image: %s -> %s", xNodeImagePath, di)
+
+	df, err := blockdev.CreateFile(di, 512, int64(diskBytes/512))
 	if err != nil {
 		return nil, fmt.Errorf("while opening image for writing: %w", err)
 	}
 	defer df.Close()
-	if err := qcow2.Generate(df, qcow2.GenerateWithBackingFile(xNodeImagePath), qcow2.GenerateWithFileSize(diskBytes)); err != nil {
-		return nil, fmt.Errorf("while creating copy-on-write node image: %w", err)
+
+	installParams := &osimage.Params{
+		PartitionSize: osimage.PartitionSizeInfo{
+			ESP:    128,
+			System: 1024,
+			Data:   128,
+		},
+		Architecture: osImage.Config.ProductInfo.Architecture(),
+		SystemImage:  systemImage,
+		EFIPayload:   efiPayload,
+		ABLoader:     abloader,
+		Output:       df,
+	}
+	if _, err := osimage.Write(installParams); err != nil {
+		return nil, fmt.Errorf("while creating node image: %w", err)
 	}
 
 	// Initialize the OVMF firmware variables file.
@@ -249,6 +283,9 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 	if options.MemoryMiB == 0 {
 		options.MemoryMiB = 2048
 	}
+	if options.DiskBytes == 0 {
+		options.DiskBytes = 5 * 1024 * 1024 * 1024
+	}
 
 	// If it's the node's first start, set up its runtime directories.
 	if options.Runtime == nil {
@@ -295,7 +332,7 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 
 	tpmSocketPath := filepath.Join(r.sd, "tpm-socket")
 	fwVarPath := filepath.Join(r.ld, "OVMF_VARS.fd")
-	storagePath := filepath.Join(r.ld, "image.qcow2")
+	storagePath := filepath.Join(r.ld, "image.img")
 	qemuArgs := []string{
 		"-machine", "q35",
 		"-accel", "kvm",
@@ -306,7 +343,7 @@ func LaunchNode(ctx context.Context, ld, sd string, tpmFactory *TPMFactory, opti
 		"-smp", fmt.Sprintf("cores=%d,threads=%d", options.CPUs, options.ThreadsPerCPU),
 		"-drive", "if=pflash,format=raw,readonly=on,file=" + xOvmfCodePath,
 		"-drive", "if=pflash,format=raw,file=" + fwVarPath,
-		"-drive", "if=virtio,format=qcow2,cache=unsafe,file=" + storagePath,
+		"-drive", "if=virtio,format=raw,cache=unsafe,file=" + storagePath,
 		"-netdev", qemuNetConfig.ToOption(qemuNetType),
 		"-device", "virtio-net-pci,netdev=net0,mac=" + options.Mac.String(),
 		"-chardev", "socket,id=chrtpm,path=" + tpmSocketPath,

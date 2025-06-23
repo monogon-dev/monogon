@@ -100,6 +100,21 @@ func (i *Image) Payload(name string) (structfs.Blob, error) {
 	return nil, fmt.Errorf("payload %q not found", name)
 }
 
+// PayloadUnverified returns the contents of the payload of the given name.
+// Data is not verified against hashes. This only works for uncompressed images.
+func (i *Image) PayloadUnverified(name string) (structfs.Blob, error) {
+	for pi, info := range i.Config.Payloads {
+		if info.Name == name {
+			layer := &i.image.Manifest.Layers[pi]
+			if layer.MediaType != MediaTypePayloadUncompressed {
+				return nil, fmt.Errorf("unsupported media type %q for unverified payload", layer.MediaType)
+			}
+			return i.image.StructfsBlob(layer), nil
+		}
+	}
+	return nil, fmt.Errorf("payload %q not found", name)
+}
+
 type payloadBlob struct {
 	raw       structfs.Blob
 	mediaType string
