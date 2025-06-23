@@ -14,11 +14,11 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//cloud/agent/api",
+        "//metropolis/installer/install",
         "//metropolis/node/core/devmgr",
         "//metropolis/node/core/network",
         "//osbase/blockdev",
         "//osbase/bringup",
-        "//osbase/build/mkimage/osimage",
         "//osbase/efivarfs",
         "//osbase/net/proto",
         "//osbase/nvme",

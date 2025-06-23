@@ -11,11 +11,11 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"source.monogon.dev/metropolis/installer/install"
 	"source.monogon.dev/metropolis/node/core/network"
 	"source.monogon.dev/metropolis/node/core/update"
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/bringup"
-	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/gpt"
 	"source.monogon.dev/osbase/supervisor"
 
@@ -57,11 +57,11 @@ func testosRunnable(ctx context.Context) error {
 				return fmt.Errorf("unable to mkdir ESP mountpoint: %w", err)
 			}
 			updateSvc.ProvideESP("/esp", uint32(pn+1), p)
-		case osimage.SystemAType:
+		case install.SystemAType:
 			if err := unix.Symlink(fmt.Sprintf("/dev/vda%d", pn+1), "/dev/system-a"); err != nil {
 				return fmt.Errorf("failed to symlink system-a: %w", err)
 			}
-		case osimage.SystemBType:
+		case install.SystemBType:
 			if err := unix.Symlink(fmt.Sprintf("/dev/vda%d", pn+1), "/dev/system-b"); err != nil {
 				return fmt.Errorf("failed to symlink system-b: %w", err)
 			}

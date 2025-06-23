@@ -13,12 +13,12 @@ go_library(
     importpath = "source.monogon.dev/metropolis/node/core/update/e2e/testos",
     visibility = ["//visibility:private"],
     deps = [
+        "//metropolis/installer/install",
         "//metropolis/node/core/network",
         "//metropolis/node/core/update",
         "//metropolis/proto/api",
         "//osbase/blockdev",
         "//osbase/bringup",
-        "//osbase/build/mkimage/osimage",
         "//osbase/gpt",
         "//osbase/supervisor",
         "@org_golang_x_sys//unix",

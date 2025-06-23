@@ -18,10 +18,10 @@ import (
 	apb "source.monogon.dev/cloud/agent/api"
 	npb "source.monogon.dev/osbase/net/proto"
 
+	metropolisInstall "source.monogon.dev/metropolis/installer/install"
 	"source.monogon.dev/osbase/blockdev"
-	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
-	ociosimage "source.monogon.dev/osbase/oci/osimage"
+	"source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/oci/registry"
 	"source.monogon.dev/osbase/structfs"
 	"source.monogon.dev/osbase/supervisor"
@@ -80,7 +80,7 @@ func installMetropolis(ctx context.Context, req *apb.MetropolisInstallationReque
 		return fmt.Errorf("failed to fetch OS image: %w", err)
 	}
 
-	osImage, err := ociosimage.Read(image)
+	osImage, err := osimage.Read(image)
 	if err != nil {
 		return fmt.Errorf("failed to fetch OS image: %w", err)
 	}
@@ -106,8 +106,8 @@ func installMetropolis(ctx context.Context, req *apb.MetropolisInstallationReque
 		return fmt.Errorf("failed to open root device: %w", err)
 	}
 
-	installParams := osimage.Params{
-		PartitionSize: osimage.PartitionSizeInfo{
+	installParams := metropolisInstall.Params{
+		PartitionSize: metropolisInstall.PartitionSizeInfo{
 			ESP:    384,
 			System: 4096,
 			Data:   128,
@@ -120,7 +120,7 @@ func installMetropolis(ctx context.Context, req *apb.MetropolisInstallationReque
 		Output:         rootDev,
 	}
 
-	be, err := osimage.Write(&installParams)
+	be, err := metropolisInstall.Write(&installParams)
 	if err != nil {
 		return err
 	}

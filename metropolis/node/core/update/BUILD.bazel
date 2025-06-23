@@ -10,11 +10,11 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//go/logging",
+        "//metropolis/installer/install",
         "//metropolis/node/abloader/spec",
         "//metropolis/node/core/productinfo",
         "//metropolis/proto/api",
         "//osbase/blockdev",
-        "//osbase/build/mkimage/osimage",
         "//osbase/efivarfs",
         "//osbase/gpt",
         "//osbase/kexec",

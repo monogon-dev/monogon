@@ -44,6 +44,7 @@ go_library(
     deps = [
         "//go/logging",
         "//metropolis/cli/metroctl/core",
+        "//metropolis/installer/install",
         "//metropolis/node",
         "//metropolis/node/core/curator/proto/api",
         "//metropolis/node/core/rpc",
@@ -51,7 +52,6 @@ go_library(
         "//metropolis/proto/api",
         "//metropolis/proto/common",
         "//osbase/blockdev",
-        "//osbase/build/mkimage/osimage",
         "//osbase/logbuffer",
         "//osbase/oci",
         "//osbase/oci/osimage",

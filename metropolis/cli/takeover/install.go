@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 
 	"source.monogon.dev/go/logging"
+	"source.monogon.dev/metropolis/installer/install"
 	"source.monogon.dev/osbase/blockdev"
-	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
 	"source.monogon.dev/osbase/oci"
-	ociosimage "source.monogon.dev/osbase/oci/osimage"
+	"source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/structfs"
 )
 
@@ -47,7 +47,7 @@ func installMetropolis(l logging.Leveled) error {
 		return err
 	}
 
-	be, err := osimage.Write(installParams)
+	be, err := install.Write(installParams)
 	if err != nil {
 		return fmt.Errorf("failed to apply installation: %w", err)
 	}
@@ -62,13 +62,13 @@ func installMetropolis(l logging.Leveled) error {
 	return nil
 }
 
-func setupOSImageParams(image *oci.Image, metropolisSpecRaw []byte, installTarget string) (*osimage.Params, error) {
+func setupOSImageParams(image *oci.Image, metropolisSpecRaw []byte, installTarget string) (*install.Params, error) {
 	rootDev, err := blockdev.Open(filepath.Join("/dev", installTarget))
 	if err != nil {
 		return nil, fmt.Errorf("failed to open root device: %w", err)
 	}
 
-	osImage, err := ociosimage.Read(image)
+	osImage, err := osimage.Read(image)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read OS image: %w", err)
 	}
@@ -82,8 +82,8 @@ func setupOSImageParams(image *oci.Image, metropolisSpecRaw []byte, installTarge
 		return nil, fmt.Errorf("cannot open system image in OS image: %w", err)
 	}
 
-	return &osimage.Params{
-		PartitionSize: osimage.PartitionSizeInfo{
+	return &install.Params{
+		PartitionSize: install.PartitionSizeInfo{
 			ESP:    384,
 			System: 4096,
 			Data:   128,

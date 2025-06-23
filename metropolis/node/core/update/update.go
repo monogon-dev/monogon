@@ -26,13 +26,13 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"source.monogon.dev/go/logging"
+	"source.monogon.dev/metropolis/installer/install"
 	"source.monogon.dev/metropolis/node/core/productinfo"
 	"source.monogon.dev/osbase/blockdev"
-	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
 	"source.monogon.dev/osbase/gpt"
 	"source.monogon.dev/osbase/kexec"
-	ociosimage "source.monogon.dev/osbase/oci/osimage"
+	"source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/oci/registry"
 
 	abloaderpb "source.monogon.dev/metropolis/node/abloader/spec"
@@ -88,9 +88,9 @@ func (s Slot) String() string {
 func (s Slot) EFIBootPath() string {
 	switch s {
 	case SlotA:
-		return osimage.EFIBootAPath
+		return install.EFIBootAPath
 	case SlotB:
-		return osimage.EFIBootBPath
+		return install.EFIBootBPath
 	default:
 		return ""
 	}
@@ -294,7 +294,7 @@ func (s *Service) InstallImage(ctx context.Context, imageRef *apb.OSImageRef, wi
 		return fmt.Errorf("failed to fetch OS image: %w", err)
 	}
 
-	osImage, err := ociosimage.Read(image)
+	osImage, err := osimage.Read(image)
 	if err != nil {
 		return fmt.Errorf("failed to fetch OS image: %w", err)
 	}
@@ -428,7 +428,7 @@ func (s *Service) stageKexec(bootFile io.ReaderAt, targetSlot Slot) error {
 var abloader []byte
 
 func (s *Service) fixupPreloader() error {
-	efiBootPath, err := osimage.EFIBootPath(productinfo.Get().Info.Architecture())
+	efiBootPath, err := install.EFIBootPath(productinfo.Get().Info.Architecture())
 	if err != nil {
 		return err
 	}
@@ -473,7 +473,7 @@ func (s *Service) fixupPreloader() error {
 // fixupEFI checks for the existence and correctness of the EFI boot entry
 // repairs/recreates it if needed.
 func (s *Service) fixupEFI() error {
-	efiBootPath, err := osimage.EFIBootPath(productinfo.Get().Info.Architecture())
+	efiBootPath, err := install.EFIBootPath(productinfo.Get().Info.Architecture())
 	if err != nil {
 		return err
 	}

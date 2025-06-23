@@ -18,8 +18,8 @@ import (
 	apb "source.monogon.dev/metropolis/proto/api"
 	netapi "source.monogon.dev/osbase/net/proto"
 
+	"source.monogon.dev/metropolis/installer/install"
 	"source.monogon.dev/osbase/bootparam"
-	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/kexec"
 	netdump "source.monogon.dev/osbase/net/dump"
 	"source.monogon.dev/osbase/oci"
@@ -136,7 +136,7 @@ func setupTakeover(nodeParamsRaw []byte, target string) ([]string, error) {
 	}
 
 	// Validate that this installation will not fail because of disk issues
-	if _, err := osimage.Plan(oParams); err != nil {
+	if _, err := install.Plan(oParams); err != nil {
 		return nil, fmt.Errorf("failed to plan installation: %w", err)
 	}
 

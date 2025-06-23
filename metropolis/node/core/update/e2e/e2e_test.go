@@ -20,10 +20,10 @@ import (
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 
+	"source.monogon.dev/metropolis/installer/install"
 	"source.monogon.dev/osbase/blockdev"
-	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/oci"
-	ociosimage "source.monogon.dev/osbase/oci/osimage"
+	"source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/oci/registry"
 	"source.monogon.dev/osbase/structfs"
 )
@@ -150,7 +150,7 @@ func setup(t *testing.T) []string {
 		t.Fatal(err)
 	}
 
-	osImageY, err := ociosimage.Read(imageY)
+	osImageY, err := osimage.Read(imageY)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,13 +189,13 @@ func setup(t *testing.T) []string {
 		t.Fatal(err)
 	}
 
-	if _, err := osimage.Write(&osimage.Params{
+	if _, err := install.Write(&install.Params{
 		Output:       rootDisk,
 		Architecture: osImageY.Config.ProductInfo.Architecture(),
 		ABLoader:     loader,
 		EFIPayload:   boot,
 		SystemImage:  system,
-		PartitionSize: osimage.PartitionSizeInfo{
+		PartitionSize: install.PartitionSizeInfo{
 			ESP:    128,
 			System: 256,
 			Data:   10,

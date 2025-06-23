@@ -1,9 +1,9 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "osimage",
-    srcs = ["osimage.go"],
-    importpath = "source.monogon.dev/osbase/build/mkimage/osimage",
+    name = "install",
+    srcs = ["install.go"],
+    importpath = "source.monogon.dev/metropolis/installer/install",
     visibility = ["//visibility:public"],
     deps = [
         "//osbase/blockdev",

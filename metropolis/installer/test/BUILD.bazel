@@ -21,8 +21,8 @@ go_test(
     },
     deps = [
         "//metropolis/cli/metroctl/core",
+        "//metropolis/installer/install",
         "//metropolis/proto/api",
-        "//osbase/build/mkimage/osimage",
         "//osbase/cmd",
         "//osbase/oci",
         "//osbase/oci/osimage",

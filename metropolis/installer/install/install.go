@@ -1,9 +1,9 @@
 // Copyright The Monogon Project Authors.
 // SPDX-License-Identifier: Apache-2.0
 
-// This package provides self-contained implementation used to generate
-// Metropolis disk images.
-package osimage
+// Package install allows planning and executing the installation of Metropolis
+// to a block device.
+package install
 
 import (
 	"fmt"
@@ -68,10 +68,9 @@ type PartitionSizeInfo struct {
 	Data int64
 }
 
-// Params contains parameters used by Plan or Write to build a Metropolis OS
-// image.
+// Params contains parameters used by Plan or Write to install Metropolis OS.
 type Params struct {
-	// Output is the block device to which the OS image is written.
+	// Output is the block device to which the OS is installed.
 	Output blockdev.BlockDev
 	// Architecture is the CPU architecture of the OS image.
 	Architecture string
@@ -242,7 +241,7 @@ func Plan(p *Params) (*plan, error) {
 
 const Mi = 1024 * 1024
 
-// Write writes a Metropolis OS image to a block device.
+// Write installs Metropolis OS to a block device.
 func Write(params *Params) (*efivarfs.LoadOption, error) {
 	p, err := Plan(params)
 	if err != nil {

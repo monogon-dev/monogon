@@ -24,10 +24,10 @@ import (
 	"source.monogon.dev/metropolis/proto/api"
 
 	mctl "source.monogon.dev/metropolis/cli/metroctl/core"
-	"source.monogon.dev/osbase/build/mkimage/osimage"
+	"source.monogon.dev/metropolis/installer/install"
 	"source.monogon.dev/osbase/cmd"
 	"source.monogon.dev/osbase/oci"
-	ociosimage "source.monogon.dev/osbase/oci/osimage"
+	"source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/structfs"
 )
 
@@ -147,11 +147,11 @@ func TestMain(m *testing.M) {
 		log.Fatal(err)
 	}
 
-	osImage, err := ociosimage.Read(image)
+	osImage, err := osimage.Read(image)
 	if err != nil {
 		log.Fatal(err)
 	}
-	bootPath, err = osimage.EFIBootPath(osImage.Config.ProductInfo.Architecture())
+	bootPath, err = install.EFIBootPath(osImage.Config.ProductInfo.Architecture())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -284,22 +284,22 @@ func TestInstall(t *testing.T) {
 	// Check that the first partition is likely to be a valid ESP.
 	pi := ti.GetPartitions()
 	esp := (pi[0]).(*gpt.Partition)
-	if esp.Name != osimage.ESPLabel || esp.Start == 0 || esp.End == 0 {
+	if esp.Name != install.ESPLabel || esp.Start == 0 || esp.End == 0 {
 		t.Fatal("The node's ESP GPT entry looks off.")
 	}
 	// Verify the system partition's GPT entry.
 	system := (pi[1]).(*gpt.Partition)
-	if system.Name != osimage.SystemALabel || system.Start == 0 || system.End == 0 {
+	if system.Name != install.SystemALabel || system.Start == 0 || system.End == 0 {
 		t.Fatal("The node's system partition GPT entry looks off.")
 	}
 	// Verify the system partition's GPT entry.
 	systemB := (pi[2]).(*gpt.Partition)
-	if systemB.Name != osimage.SystemBLabel || systemB.Start == 0 || systemB.End == 0 {
+	if systemB.Name != install.SystemBLabel || systemB.Start == 0 || systemB.End == 0 {
 		t.Fatal("The node's system partition GPT entry looks off.")
 	}
 	// Verify the data partition's GPT entry.
 	data := (pi[3]).(*gpt.Partition)
-	if data.Name != osimage.DataLabel || data.Start == 0 || data.End == 0 {
+	if data.Name != install.DataLabel || data.Start == 0 || data.End == 0 {
 		t.Fatalf("The node's data partition GPT entry looks off: %+v", data)
 	}
 	// Verify that there are no more partitions.

@@ -47,13 +47,13 @@ import (
 
 	"source.monogon.dev/go/logging"
 	metroctl "source.monogon.dev/metropolis/cli/metroctl/core"
+	"source.monogon.dev/metropolis/installer/install"
 	"source.monogon.dev/metropolis/node"
 	"source.monogon.dev/metropolis/node/core/rpc"
 	"source.monogon.dev/metropolis/node/core/rpc/resolver"
 	"source.monogon.dev/osbase/blockdev"
-	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/oci"
-	ociosimage "source.monogon.dev/osbase/oci/osimage"
+	"source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/oci/registry"
 	"source.monogon.dev/osbase/structfs"
 	"source.monogon.dev/osbase/test/qemu"
@@ -170,7 +170,7 @@ func setupRuntime(ld, sd string, diskBytes uint64) (*NodeRuntime, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read OS image: %w", err)
 	}
-	osImage, err := ociosimage.Read(ociImage)
+	osImage, err := osimage.Read(ociImage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read OS image: %w", err)
 	}
@@ -198,8 +198,8 @@ func setupRuntime(ld, sd string, diskBytes uint64) (*NodeRuntime, error) {
 	}
 	defer df.Close()
 
-	installParams := &osimage.Params{
-		PartitionSize: osimage.PartitionSizeInfo{
+	installParams := &install.Params{
+		PartitionSize: install.PartitionSizeInfo{
 			ESP:    128,
 			System: 1024,
 			Data:   128,
@@ -210,7 +210,8 @@ func setupRuntime(ld, sd string, diskBytes uint64) (*NodeRuntime, error) {
 		ABLoader:     abloader,
 		Output:       df,
 	}
-	if _, err := osimage.Write(installParams); err != nil {
+
+	if _, err := install.Write(installParams); err != nil {
 		return nil, fmt.Errorf("while creating node image: %w", err)
 	}
 

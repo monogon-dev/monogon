@@ -18,12 +18,12 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"source.monogon.dev/metropolis/installer/install"
 	"source.monogon.dev/osbase/blockdev"
 	"source.monogon.dev/osbase/bringup"
-	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/efivarfs"
 	"source.monogon.dev/osbase/oci"
-	ociosimage "source.monogon.dev/osbase/oci/osimage"
+	"source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/structfs"
 	"source.monogon.dev/osbase/supervisor"
 	"source.monogon.dev/osbase/sysfs"
@@ -159,7 +159,7 @@ func installerRunnable(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to read OS image from ESP: %w", err)
 	}
-	osImage, err := ociosimage.Read(ociImage)
+	osImage, err := osimage.Read(ociImage)
 	if err != nil {
 		return fmt.Errorf("failed to read OS image from ESP: %w", err)
 	}
@@ -173,16 +173,16 @@ func installerRunnable(ctx context.Context) error {
 		return fmt.Errorf("cannot open system image in OS image: %w", err)
 	}
 
-	// Build the osimage parameters.
-	installParams := osimage.Params{
-		PartitionSize: osimage.PartitionSizeInfo{
+	// Build the install parameters.
+	installParams := install.Params{
+		PartitionSize: install.PartitionSizeInfo{
 			// ESP is the size of the node ESP partition, expressed in mebibytes.
 			ESP: 384,
 			// System is the size of the node system partition, expressed in
 			// mebibytes.
 			System: 4096,
 			// Data must be nonzero in order for the data partition to be created.
-			// osimage will extend the data partition to fill all the available space
+			// install will extend the data partition to fill all the available space
 			// whenever it's writing to block devices, such as now.
 			Data: 128,
 		},
@@ -207,7 +207,7 @@ func installerRunnable(ctx context.Context) error {
 	}
 	// Set the first suitable block device found as the installation target.
 	tgtBlkdevName := blkDevs[0]
-	// Update the osimage parameters with a path pointing at the target device.
+	// Update the install parameters with a path pointing at the target device.
 	tgtBlkdevPath := filepath.Join("/dev", tgtBlkdevName)
 
 	tgtBlockDev, err := blockdev.Open(tgtBlkdevPath)
@@ -216,10 +216,10 @@ func installerRunnable(ctx context.Context) error {
 	}
 	installParams.Output = tgtBlockDev
 
-	// Use osimage to partition the target block device and set up its ESP.
+	// Use install to partition the target block device and set up its ESP.
 	// Write will return an EFI boot entry on success.
 	l.Infof("Installing to %s...", tgtBlkdevPath)
-	be, err := osimage.Write(&installParams)
+	be, err := install.Write(&installParams)
 	if err != nil {
 		return fmt.Errorf("while installing: %w", err)
 	}

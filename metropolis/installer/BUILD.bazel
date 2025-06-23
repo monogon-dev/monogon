@@ -13,9 +13,9 @@ go_library(
     importpath = "source.monogon.dev/metropolis/installer",
     visibility = ["//visibility:private"],
     deps = [
+        "//metropolis/installer/install",
         "//osbase/blockdev",
         "//osbase/bringup",
-        "//osbase/build/mkimage/osimage",
         "//osbase/efivarfs",
         "//osbase/oci",
         "//osbase/oci/osimage",

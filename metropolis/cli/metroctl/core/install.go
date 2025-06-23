@@ -11,13 +11,13 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	"source.monogon.dev/metropolis/installer/install"
 	"source.monogon.dev/metropolis/proto/api"
 	"source.monogon.dev/osbase/blockdev"
-	"source.monogon.dev/osbase/build/mkimage/osimage"
 	"source.monogon.dev/osbase/fat32"
 	"source.monogon.dev/osbase/gpt"
 	"source.monogon.dev/osbase/oci"
-	ociosimage "source.monogon.dev/osbase/oci/osimage"
+	"source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/structfs"
 )
 
@@ -43,11 +43,11 @@ func MakeInstallerImage(args MakeInstallerImageArgs) error {
 		return errors.New("installer is mandatory")
 	}
 
-	osImage, err := ociosimage.Read(args.Image)
+	osImage, err := osimage.Read(args.Image)
 	if err != nil {
 		return fmt.Errorf("failed to read OS image: %w", err)
 	}
-	bootPath, err := osimage.EFIBootPath(osImage.Config.ProductInfo.Architecture())
+	bootPath, err := install.EFIBootPath(osImage.Config.ProductInfo.Architecture())
 	if err != nil {
 		return err
 	}
