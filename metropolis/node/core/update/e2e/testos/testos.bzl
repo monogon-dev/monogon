@@ -24,7 +24,6 @@ def testos(variant):
     verity_image(
         name = "verity_rootfs_" + variant,
         source = ":rootfs_" + variant,
-        visibility = ["//metropolis/node/core/update/e2e:__pkg__"],
     )
 
     efi_unified_kernel_image(
@@ -32,7 +31,6 @@ def testos(variant):
         cmdline = "console=ttyS0 quiet rootfstype=erofs init=/init loadpin.exclude=kexec-image,kexec-initramfs",
         kernel = "//third_party/linux",
         verity = ":verity_rootfs_" + variant,
-        visibility = ["//metropolis/node/core/update/e2e:__pkg__"],
     )
 
     test_product_info(

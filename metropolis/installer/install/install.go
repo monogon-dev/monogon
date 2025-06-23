@@ -15,6 +15,7 @@ import (
 	"source.monogon.dev/osbase/efivarfs"
 	"source.monogon.dev/osbase/fat32"
 	"source.monogon.dev/osbase/gpt"
+	"source.monogon.dev/osbase/oci/osimage"
 	"source.monogon.dev/osbase/structfs"
 )
 
@@ -72,17 +73,14 @@ type PartitionSizeInfo struct {
 type Params struct {
 	// Output is the block device to which the OS is installed.
 	Output blockdev.BlockDev
-	// Architecture is the CPU architecture of the OS image.
-	Architecture string
+	// OSImage is the image from which the OS is installed.
+	OSImage *osimage.Image
+	// UnverifiedPayloads disables verification of payloads if set.
+	// This only works with uncompressed OS images.
+	UnverifiedPayloads bool
 	// ABLoader provides the A/B loader which then loads the EFI loader for the
 	// correct slot.
 	ABLoader structfs.Blob
-	// EFIPayload provides contents of the EFI payload file. It must not be
-	// nil. This gets put into boot slot A.
-	EFIPayload structfs.Blob
-	// SystemImage provides contents of the Metropolis system partition.
-	// If nil, no contents will be copied into the partition.
-	SystemImage structfs.Blob
 	// NodeParameters provides contents of the node parameters file. If nil,
 	// the node parameters file won't be created in the target ESP
 	// filesystem.
@@ -102,6 +100,7 @@ type Params struct {
 
 type plan struct {
 	*Params
+	systemImage      structfs.Blob
 	efiBootPath      string
 	efiRoot          structfs.Tree
 	tbl              *gpt.Table
@@ -125,11 +124,11 @@ func (i *plan) Apply() (*efivarfs.LoadOption, error) {
 		return nil, fmt.Errorf("failed to write FAT32: %w", err)
 	}
 
-	systemImage, err := i.SystemImage.Open()
+	systemImage, err := i.systemImage.Open()
 	if err != nil {
 		return nil, fmt.Errorf("failed to open system image: %w", err)
 	}
-	if _, err := io.CopyN(blockdev.NewRWS(i.systemPartitionA), systemImage, i.SystemImage.Size()); err != nil {
+	if _, err := io.CopyN(blockdev.NewRWS(i.systemPartitionA), systemImage, i.systemImage.Size()); err != nil {
 		systemImage.Close()
 		return nil, fmt.Errorf("failed to write system partition A: %w", err)
 	}
@@ -161,7 +160,19 @@ func (i *plan) Apply() (*efivarfs.LoadOption, error) {
 func Plan(p *Params) (*plan, error) {
 	params := &plan{Params: p}
 
-	var err error
+	payload := p.OSImage.Payload
+	if p.UnverifiedPayloads {
+		payload = p.OSImage.PayloadUnverified
+	}
+	efiPayload, err := payload("kernel.efi")
+	if err != nil {
+		return nil, fmt.Errorf("cannot open EFI payload in OS image: %w", err)
+	}
+	params.systemImage, err = payload("system")
+	if err != nil {
+		return nil, fmt.Errorf("cannot open system image in OS image: %w", err)
+	}
+
 	params.tbl, err = gpt.New(params.Output)
 	if err != nil {
 		return nil, fmt.Errorf("invalid block device: %w", err)
@@ -178,11 +189,11 @@ func Plan(p *Params) (*plan, error) {
 		return nil, fmt.Errorf("failed to allocate ESP: %w", err)
 	}
 
-	if err := params.efiRoot.PlaceFile(EFIBootAPath, params.EFIPayload); err != nil {
+	if err := params.efiRoot.PlaceFile(EFIBootAPath, efiPayload); err != nil {
 		return nil, err
 	}
 	// Place the A/B loader at the EFI bootloader autodiscovery path.
-	params.efiBootPath, err = EFIBootPath(p.Architecture)
+	params.efiBootPath, err = EFIBootPath(p.OSImage.Config.ProductInfo.Architecture())
 	if err != nil {
 		return nil, err
 	}
@@ -205,26 +216,22 @@ func Plan(p *Params) (*plan, error) {
 		return nil, fmt.Errorf("failed to calculate size of FAT32: %w", err)
 	}
 
-	// Create the system partition only if its size is specified.
-	if params.PartitionSize.System != 0 && params.SystemImage != nil {
-		params.systemPartitionA = &gpt.Partition{
-			Type: SystemAType,
-			Name: SystemALabel,
-		}
-		if err := params.tbl.AddPartition(params.systemPartitionA, params.PartitionSize.System*Mi); err != nil {
-			return nil, fmt.Errorf("failed to allocate system partition A: %w", err)
-		}
-		params.systemPartitionB = &gpt.Partition{
-			Type: SystemBType,
-			Name: SystemBLabel,
-		}
-		if err := params.tbl.AddPartition(params.systemPartitionB, params.PartitionSize.System*Mi); err != nil {
-			return nil, fmt.Errorf("failed to allocate system partition B: %w", err)
-		}
-	} else if params.PartitionSize.System == 0 && params.SystemImage != nil {
-		// Safeguard against contradicting parameters.
-		return nil, fmt.Errorf("the system image parameter was passed while the associated partition size is zero")
+	// Create the system partition.
+	params.systemPartitionA = &gpt.Partition{
+		Type: SystemAType,
+		Name: SystemALabel,
 	}
+	if err := params.tbl.AddPartition(params.systemPartitionA, params.PartitionSize.System*Mi); err != nil {
+		return nil, fmt.Errorf("failed to allocate system partition A: %w", err)
+	}
+	params.systemPartitionB = &gpt.Partition{
+		Type: SystemBType,
+		Name: SystemBLabel,
+	}
+	if err := params.tbl.AddPartition(params.systemPartitionB, params.PartitionSize.System*Mi); err != nil {
+		return nil, fmt.Errorf("failed to allocate system partition B: %w", err)
+	}
+
 	// Create the data partition only if its size is specified.
 	if params.PartitionSize.Data != 0 {
 		params.dataPartition = &gpt.Partition{

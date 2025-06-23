@@ -175,15 +175,6 @@ func setupRuntime(ld, sd string, diskBytes uint64) (*NodeRuntime, error) {
 		return nil, fmt.Errorf("failed to read OS image: %w", err)
 	}
 
-	efiPayload, err := osImage.PayloadUnverified("kernel.efi")
-	if err != nil {
-		return nil, fmt.Errorf("cannot open EFI payload in OS image: %w", err)
-	}
-	systemImage, err := osImage.PayloadUnverified("system")
-	if err != nil {
-		return nil, fmt.Errorf("cannot open system image in OS image: %w", err)
-	}
-
 	abloader, err := structfs.OSPathBlob(xAbloaderPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open abloader: %w", err)
@@ -204,11 +195,10 @@ func setupRuntime(ld, sd string, diskBytes uint64) (*NodeRuntime, error) {
 			System: 1024,
 			Data:   128,
 		},
-		Architecture: osImage.Config.ProductInfo.Architecture(),
-		SystemImage:  systemImage,
-		EFIPayload:   efiPayload,
-		ABLoader:     abloader,
-		Output:       df,
+		OSImage:            osImage,
+		UnverifiedPayloads: true,
+		ABLoader:           abloader,
+		Output:             df,
 	}
 
 	if _, err := install.Write(installParams); err != nil {

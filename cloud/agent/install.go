@@ -85,15 +85,6 @@ func installMetropolis(ctx context.Context, req *apb.MetropolisInstallationReque
 		return fmt.Errorf("failed to fetch OS image: %w", err)
 	}
 
-	efiPayload, err := osImage.Payload("kernel.efi")
-	if err != nil {
-		return fmt.Errorf("cannot open EFI payload in OS image: %w", err)
-	}
-	systemImage, err := osImage.Payload("system")
-	if err != nil {
-		return fmt.Errorf("cannot open system image in OS image: %w", err)
-	}
-
 	l.Info("OS image config downloaded")
 
 	nodeParamsRaw, err := proto.Marshal(req.NodeParameters)
@@ -112,9 +103,7 @@ func installMetropolis(ctx context.Context, req *apb.MetropolisInstallationReque
 			System: 4096,
 			Data:   128,
 		},
-		Architecture:   osImage.Config.ProductInfo.Architecture(),
-		SystemImage:    systemImage,
-		EFIPayload:     efiPayload,
+		OSImage:        osImage,
 		ABLoader:       structfs.Bytes(abloader),
 		NodeParameters: structfs.Bytes(nodeParamsRaw),
 		Output:         rootDev,

@@ -164,15 +164,6 @@ func installerRunnable(ctx context.Context) error {
 		return fmt.Errorf("failed to read OS image from ESP: %w", err)
 	}
 
-	efiPayload, err := osImage.Payload("kernel.efi")
-	if err != nil {
-		return fmt.Errorf("cannot open EFI payload in OS image: %w", err)
-	}
-	systemImage, err := osImage.Payload("system")
-	if err != nil {
-		return fmt.Errorf("cannot open system image in OS image: %w", err)
-	}
-
 	// Build the install parameters.
 	installParams := install.Params{
 		PartitionSize: install.PartitionSizeInfo{
@@ -186,9 +177,7 @@ func installerRunnable(ctx context.Context) error {
 			// whenever it's writing to block devices, such as now.
 			Data: 128,
 		},
-		Architecture:   osImage.Config.ProductInfo.Architecture(),
-		SystemImage:    systemImage,
-		EFIPayload:     efiPayload,
+		OSImage:        osImage,
 		ABLoader:       structfs.Bytes(abloader),
 		NodeParameters: nodeParameters,
 	}

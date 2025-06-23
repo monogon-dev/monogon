@@ -73,24 +73,13 @@ func setupOSImageParams(image *oci.Image, metropolisSpecRaw []byte, installTarge
 		return nil, fmt.Errorf("failed to read OS image: %w", err)
 	}
 
-	efiPayload, err := osImage.Payload("kernel.efi")
-	if err != nil {
-		return nil, fmt.Errorf("cannot open EFI payload in OS image: %w", err)
-	}
-	systemImage, err := osImage.Payload("system")
-	if err != nil {
-		return nil, fmt.Errorf("cannot open system image in OS image: %w", err)
-	}
-
 	return &install.Params{
 		PartitionSize: install.PartitionSizeInfo{
 			ESP:    384,
 			System: 4096,
 			Data:   128,
 		},
-		Architecture:   osImage.Config.ProductInfo.Architecture(),
-		SystemImage:    systemImage,
-		EFIPayload:     efiPayload,
+		OSImage:        osImage,
 		ABLoader:       structfs.Bytes(abloader),
 		NodeParameters: structfs.Bytes(metropolisSpecRaw),
 		Output:         rootDev,

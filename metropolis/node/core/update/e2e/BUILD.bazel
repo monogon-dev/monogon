@@ -8,20 +8,18 @@ go_test(
         "//third_party/edk2:OVMF_CODE.fd",
         "//third_party/edk2:OVMF_VARS.fd",
         # For the initial image creation
-        "//metropolis/node/core/update/e2e/testos:verity_rootfs_x",
-        "//metropolis/node/core/update/e2e/testos:kernel_efi_x",
+        "//metropolis/node/core/update/e2e/testos:testos_image_x",
         "//metropolis/node/abloader",
         # For the two update tests
         "//metropolis/node/core/update/e2e/testos:testos_image_y",
         "//metropolis/node/core/update/e2e/testos:testos_image_z",
     ],
     x_defs = {
+        "xImageXPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:testos_image_x )",
         "xImageYPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:testos_image_y )",
         "xImageZPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:testos_image_z )",
         "xOvmfVarsPath": "$(rlocationpath //third_party/edk2:OVMF_VARS.fd )",
         "xOvmfCodePath": "$(rlocationpath //third_party/edk2:OVMF_CODE.fd )",
-        "xBootPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:kernel_efi_x )",
-        "xSystemXPath": "$(rlocationpath //metropolis/node/core/update/e2e/testos:verity_rootfs_x )",
         "xAbloaderPath": "$(rlocationpath //metropolis/node/abloader )",
     },
     deps = [

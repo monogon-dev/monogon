@@ -32,20 +32,19 @@ var (
 	// These are filled by bazel at linking time with the canonical path of
 	// their corresponding file. Inside the init function we resolve it
 	// with the rules_go runfiles package to the real path.
+	xImageXPath   string
 	xImageYPath   string
 	xImageZPath   string
 	xOvmfVarsPath string
 	xOvmfCodePath string
-	xBootPath     string
-	xSystemXPath  string
 	xAbloaderPath string
 )
 
 func init() {
 	var err error
 	for _, path := range []*string{
-		&xImageYPath, &xImageZPath, &xOvmfVarsPath,
-		&xOvmfCodePath, &xBootPath, &xSystemXPath,
+		&xImageXPath, &xImageYPath, &xImageZPath,
+		&xOvmfVarsPath, &xOvmfCodePath,
 		&xAbloaderPath,
 	} {
 		*path, err = runfiles.Rlocation(*path)
@@ -141,6 +140,10 @@ func setup(t *testing.T) []string {
 		Port: 80,
 	}
 
+	imageX, err := oci.ReadLayout(xImageXPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 	imageY, err := oci.ReadLayout(xImageYPath)
 	if err != nil {
 		t.Fatal(err)
@@ -150,7 +153,7 @@ func setup(t *testing.T) []string {
 		t.Fatal(err)
 	}
 
-	osImageY, err := osimage.Read(imageY)
+	osImageX, err := osimage.Read(imageX)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,26 +178,15 @@ func setup(t *testing.T) []string {
 	t.Cleanup(func() { os.Remove(rootDevPath) })
 	defer rootDisk.Close()
 
-	boot, err := structfs.OSPathBlob(xBootPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	system, err := structfs.OSPathBlob(xSystemXPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	loader, err := structfs.OSPathBlob(xAbloaderPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if _, err := install.Write(&install.Params{
-		Output:       rootDisk,
-		Architecture: osImageY.Config.ProductInfo.Architecture(),
-		ABLoader:     loader,
-		EFIPayload:   boot,
-		SystemImage:  system,
+		Output:   rootDisk,
+		OSImage:  osImageX,
+		ABLoader: loader,
 		PartitionSize: install.PartitionSizeInfo{
 			ESP:    128,
 			System: 256,
