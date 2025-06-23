@@ -69,6 +69,10 @@ func TestE2ECoreHA(t *testing.T) {
 		NumNodes:        3,
 		LocalRegistry:   lr,
 		NodeLogsToFiles: true,
+		Node: mlaunch.NodeOptions{
+			// ESP, 2 system partitions, and data partition.
+			DiskBytes: (128 + 2*1024 + 512) * 1024 * 1024,
+		},
 	}
 	cluster, err := mlaunch.LaunchCluster(ctx, clusterOptions)
 	if err != nil {
