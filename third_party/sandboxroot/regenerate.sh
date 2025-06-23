@@ -14,7 +14,7 @@ PKGS=(
   "glibc-static"
 
   # Required to build static CGO binaries
-  # see monogon-dev/monogon#192
+  # see https://github.com/monogon/monogon/issues/192
   "libstdc++-static"
 
   # Kernel build

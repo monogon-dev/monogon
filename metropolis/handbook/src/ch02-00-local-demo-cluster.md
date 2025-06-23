@@ -116,7 +116,7 @@ Approved node <node-id>
 
 ## Using the cluster
 
-At this point you can start exploring Metropolis. Try playing with *kubectl*, or take a look at the [Cluster API](https://github.com/monogon-dev/monogon/blob/main/metropolis/handbook/src/ch03-05-cluster-api.md) chapter of this handbook.
+At this point you can start exploring Metropolis. Try playing with *kubectl*, or take a look at the [Cluster API](ch03-05-cluster-api.md) chapter of this handbook.
 
 The cluster state should be reflected by *kubectl* output:
 ```shell

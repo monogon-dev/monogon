@@ -30,7 +30,7 @@ func TestValidateLabelKey(t *testing.T) {
 		{"../annotation", errDomainNameInvalid},
 		{"tcp:80.example.com/annotation", errDomainNameInvalid},
 		{"80/annotation", errDomainNameEndsInNumber},
-		{"github.com/monogon-dev/monogon/annotation", ErrLabelInvalidPrefix},
+		{"github.com/monogon/monogon/annotation", ErrLabelInvalidPrefix},
 	} {
 		if got := ValidateLabelKey(te.in); !errors.Is(got, te.want) {
 			t.Errorf("%d (%q): wanted %v, got %v", i, te.in, te.want, got)
@@ -61,7 +61,7 @@ func TestValidateLabelValue(t *testing.T) {
 		{"./annotation", ErrLabelInvalidFirstCharacter},
 		{"../annotation", ErrLabelInvalidFirstCharacter},
 		{"tcp:80.example.com/annotation", ErrLabelInvalidCharacter},
-		{"github.com/monogon-dev/monogon/annotation", ErrLabelInvalidCharacter},
+		{"github.com/monogon/monogon/annotation", ErrLabelInvalidCharacter},
 	} {
 		// Test our implementation against test cases.
 		if got := ValidateLabelValue(te.in); !errors.Is(got, te.want) {

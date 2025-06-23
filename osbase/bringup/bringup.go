@@ -231,7 +231,7 @@ func setupMounts() (err error) {
 		// Nothing currently uses /dev/shm, but it's required
 		// by containerd when the host IPC namespace is shared, which
 		// is required by "kubectl debug node/" and specific customer applications.
-		// https://github.com/monogon-dev/monogon/issues/305.
+		// https://github.com/monogon/monogon/issues/305.
 		{"/dev/shm", "tmpfs", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV, ""},
 		{"/sys/fs/cgroup", "cgroup2", unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV, "nsdelegate,memory_recursiveprot"},
 	} {

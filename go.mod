@@ -46,10 +46,6 @@ replace github.com/sassoftware/go-rpmutils v0.1.1 => github.com/rmohr/go-rpmutil
 // is outdated and gazelle needs it.
 replace github.com/bazelbuild/buildtools => github.com/bazelbuild/buildtools v0.0.0-20231103205921-433ea8554e82
 
-// Replace with our patched library to support hardware listings for a whole
-// organization at once.
-replace github.com/packethost/packngo => github.com/monogon-dev/packngo v0.0.0-20240122175436-ecbd9eb00ddb
-
 // https://github.com/mattn/go-sqlite3/issues/1164
 replace github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.14.24
 
