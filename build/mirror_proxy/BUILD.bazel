@@ -1,6 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("//build/static_binary_tarball:def.bzl", "static_binary_tarball")
 
 go_library(
     name = "mirror_proxy_lib",
@@ -19,9 +19,10 @@ go_binary(
     visibility = ["//visibility:public"],
 )
 
-pkg_tar(
+static_binary_tarball(
     name = "mirror_proxy_layer",
-    srcs = [":mirror_proxy"],
+    executable = ":mirror_proxy",
+    visibility = ["//visibility:private"],
 )
 
 oci_image(
