@@ -22,5 +22,6 @@
         "bazel-${workspaceFolderBasename}/**": true,
         "bazel-testlogs/**": true,
         ".bazeldnf/**": true,
-    }
+    },
+    "bazel.executable": "tools/bazel"
 }

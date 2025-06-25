@@ -125,7 +125,7 @@ intellij_patch() {
               echo "IntelliJ found at ${ij_home}, aspect repository already patched." >&2
           fi
       else
-        echo "IntelliJ found at ${ij_home}, but aspect repository is missing. Skipping..."
+        echo "IntelliJ found at ${ij_home}, but aspect repository is missing. Skipping..." >&2
       fi
   fi
 }
