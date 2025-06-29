@@ -6,7 +6,6 @@ go_library(
         "ca.go",
         "certificate.go",
         "crl.go",
-        "x509.go",
     ],
     importpath = "source.monogon.dev/osbase/pki",
     visibility = ["//visibility:public"],

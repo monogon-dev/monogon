@@ -15,6 +15,11 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
+var (
+	// From RFC 5280 Section 4.1.2.5
+	UnknownNotAfter = time.Unix(253402300799, 0)
+)
+
 // Issuer is an entity that can issue certificates. This interface is
 // implemented by SelfSigned, which is an issuer that emits self-signed
 // certificates, and any other Certificate that has been created with CA(),
@@ -40,16 +45,10 @@ func issueCertificate(req *Certificate, ca *x509.Certificate, caKey ed25519.Priv
 		return
 	}
 
-	skid, err := calculateSKID(req.PublicKey)
-	if err != nil {
-		return nil, err
-	}
-
 	req.Template.SerialNumber = serialNumber
 	req.Template.NotBefore = time.Now()
 	req.Template.NotAfter = UnknownNotAfter
 	req.Template.BasicConstraintsValid = true
-	req.Template.SubjectKeyId = skid
 
 	// Set the AuthorityKeyID to the SKID of the signing certificate (or self,
 	// if self-signing).
