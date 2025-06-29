@@ -4,7 +4,7 @@
          "enosys_unsupported.go",
      ],
      cgo = True,
-+    cdeps = ["@@//third_party/seccomp"],
++    cdeps = ["@seccomp"],
      importpath = "github.com/opencontainers/runc/libcontainer/seccomp/patchbpf",
      visibility = ["//visibility:public"],
      deps = select({

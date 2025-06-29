@@ -1,9 +1,39 @@
-load("@@//build/utils:template_file.bzl", "template_file")
+load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 
-template_file(
-    name = "config.h",
-    src = "@@//third_party/chrony:config.h.in",
+write_file(
+    name = "config.h_template",
+    out = "config.h.in",
+    content = ["""\
+#define LINUX
+#define DEBUG 0
+#define USE_PTHREAD_ASYNCDNS
+
+#define CHRONY_VERSION "%CHRONY_VERSION%"
+#define CHRONYD_FEATURES "NTP RTC SCFILTER ASYNCDNS"
+#define FEAT_NTP
+#define FEAT_RTC
+#define FEAT_SCFILTER
+#define FEAT_ASYNCDNS
+#define FEAT_PRIVDROP
+#define CAP_IS_SUPPORTED
+
+#define DEFAULT_COMMAND_SOCKET "/todo/chronyd.sock"
+#define DEFAULT_CONF_FILE "/todo/chrony.conf"
+#define DEFAULT_HWCLOCK_FILE ""
+#define DEFAULT_PID_FILE "/todo/chronyd.pid"
+#define DEFAULT_RTC_DEVICE "/dev/rtc"
+#define DEFAULT_USER "root"
+
+#define MAIL_PROGRAM "/todo/sendmail"
+"""],
+)
+
+expand_template(
+    name = "config.h_expanded",
+    template = ":config.h.in",
+    out = "config.h",
     substitutions = {
         # ONCHANGE(//build/bazel:third_party.MODULE.bazel): version needs to be kept in sync
         "%CHRONY_VERSION%": "4.1-monogon",
@@ -14,7 +44,7 @@ template_file(
 cc_library(
     name = "common_hdrs",
     srcs = [
-        ":config.h",
+        ":config.h_expanded",
 
         # Headers corresponding to .c files in :common.
         "addrfilt.h",

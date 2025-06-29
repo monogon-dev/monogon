@@ -53,8 +53,8 @@ index 0000000..acddc0e
 +cc_binary(
 +    name = "swtpm",
 +    deps = [
-+        "@@//third_party/libtpms:libtpms_tpm2",
-+        "@@//third_party/glib",
++        "@libtpms//:libtpms_tpm2",
++        "@glib//glib",
 +    ],
 +    srcs = glob([
 +        "src/swtpm/*.h",
@@ -82,8 +82,8 @@ index 0000000..acddc0e
 +cc_binary(
 +    name = "swtpm_localca",
 +    deps = [
-+        "@@//third_party/libtpms:libtpms_tpm2",
-+        "@@//third_party/glib",
++        "@libtpms//:libtpms_tpm2",
++        "@glib//glib",
 +    ],
 +    srcs = glob([
 +        "src/swtpm_localca/*.h",
@@ -106,8 +106,8 @@ index 0000000..acddc0e
 +cc_binary(
 +    name = "swtpm_setup",
 +    deps = [
-+        "@@//third_party/libtpms:libtpms_tpm2",
-+        "@@//third_party/glib",
++        "@libtpms//:libtpms_tpm2",
++        "@glib//glib",
 +    ],
 +    srcs = glob([
 +        "src/swtpm_setup/*.h",

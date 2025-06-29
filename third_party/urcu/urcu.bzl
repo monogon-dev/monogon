@@ -3,7 +3,7 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 
 template_file(
     name = "config.h",
-    src = "@@//third_party/urcu:config.h.in",
+    src = ":config.h.in",
     substitutions = {},
 )
 

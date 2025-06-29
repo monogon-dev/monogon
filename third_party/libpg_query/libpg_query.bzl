@@ -57,6 +57,6 @@ cc_library(
         "-Iexternal/libpg_query/vendor/xxhash",
     ],
     visibility = [
-        "@//third_party/libpg_query:__pkg__",
+        "//visibility:public",
     ],
 )

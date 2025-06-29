@@ -1,6 +1,0 @@
-# TODO: Workaround for https://github.com/bazelbuild/bazel/issues/19301
-alias(
-    name = "libtpms_tpm2",
-    actual = "@libtpms//:libtpms_tpm2",
-    visibility = ["//visibility:public"],
-)

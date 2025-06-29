@@ -8,6 +8,12 @@ go_sdk.nogo(
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")
 
+inject_repo(
+    go_deps,
+    "libpg_query",
+    "seccomp",
+)
+
 # All *direct* Go dependencies of the module have to be listed explicitly.
 # This list can be automatically updated by running "bazel mod tidy".
 use_repo(

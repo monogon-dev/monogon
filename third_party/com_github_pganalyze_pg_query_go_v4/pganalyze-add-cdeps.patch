@@ -5,7 +5,7 @@
      ],
      cgo = True,
 +    cdeps = [
-+        "@@//third_party/libpg_query",
++        "@libpg_query",
 +    ],
      clinkopts = [""],
      copts = ["-Iparser/include -g -fstack-protector -std=gnu99 -Wno-deprecated-non-prototype -Wno-unknown-warning-option"],
