@@ -59,8 +59,6 @@ go_test(
         "//metropolis/node:product_info",
     ],
     embed = [":roleserve"],
-    # TODO: https://github.com/monogon/monogon/issues/250
-    flaky = True,
     x_defs = {
         "source.monogon.dev/metropolis/node/core/productinfo.path": "$(rlocationpath //metropolis/node:product_info )",
     },
