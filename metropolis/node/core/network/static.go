@@ -341,8 +341,7 @@ var xmitHashPolicyMap = map[netpb.Bond_TransmitHashPolicy]netlink.BondXmitHashPo
 	netpb.Bond_TRANSMIT_HASH_POLICY_LAYER3_4:       netlink.BOND_XMIT_HASH_POLICY_LAYER3_4,
 	netpb.Bond_TRANSMIT_HASH_POLICY_ENCAP_LAYER2_3: netlink.BOND_XMIT_HASH_POLICY_ENCAP2_3,
 	netpb.Bond_TRANSMIT_HASH_POLICY_ENCAP_LAYER3_4: netlink.BOND_XMIT_HASH_POLICY_ENCAP3_4,
-	// TODO(vishvananda/netlink#860): constant not in netlink yet
-	netpb.Bond_TRANSMIT_HASH_POLICY_VLAN_SRCMAC: 5,
+	netpb.Bond_TRANSMIT_HASH_POLICY_VLAN_SRCMAC:    netlink.BOND_XMIT_HASH_POLICY_VLAN_SRCMAC,
 }
 
 func bondIfaceFromSpec(it *netpb.Interface_Bond, i *netpb.Interface) (*netlink.Bond, error) {
