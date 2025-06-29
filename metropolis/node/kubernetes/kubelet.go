@@ -84,7 +84,6 @@ func (s *kubeletService) configure(fargs *fileargs.FileArgs) *kubeletconfig.Kube
 				ClientCAFile: fargs.ArgPath("ca.crt", s.serverCACert),
 			},
 		},
-		// TODO(q3k): move reconciler.False to a generic package, fix the following references.
 		ClusterDomain:                s.ClusterDomain,
 		EnableControllerAttachDetach: ptr.To(false),
 		HairpinMode:                  "none",
