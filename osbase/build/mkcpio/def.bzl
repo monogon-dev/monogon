@@ -7,7 +7,6 @@ def _node_initramfs_impl(ctx):
 
     fsspec_core_impl(ctx, ctx.executable._mkcpio, initramfs)
 
-    # TODO(q3k): Document why this is needed
     return [DefaultInfo(runfiles = ctx.runfiles(files = [initramfs]), files = depset([initramfs]))]
 
 node_initramfs = rule(
