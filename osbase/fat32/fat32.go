@@ -444,7 +444,6 @@ func prepareFS(opts *Options, root structfs.Tree) (*bootSector, *fsinfo, *planni
 		// nop
 		// i.e. an infinite loop doing nothing. Nothing created in the last 35
 		// years should boot this anyway.
-		// TODO(q3k): write a stub
 		JmpInstruction: [3]byte{0xEB, 0xFE, 0x90},
 		// Identification
 		OEMName: [8]byte{'M', 'O', 'N', 'O', 'G', 'O', 'N'},
